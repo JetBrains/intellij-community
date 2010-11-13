@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -118,16 +119,6 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public boolean isProcessTerminating() {
     return myState.get() == STATE_TERMINATING;
-  }
-
-  public void addProcessListener(final ProcessListener listener, Disposable parentDisposable) {
-    addProcessListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeProcessListener(listener);
-      }
-    });
   }
 
   public void addProcessListener(final ProcessListener listener) {

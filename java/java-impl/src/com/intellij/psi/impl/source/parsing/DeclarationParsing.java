@@ -881,7 +881,7 @@ public class DeclarationParsing extends Parsing {
       lexer.advance();
     }
 
-    if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+    if (areTypeAnnotationsSupported()) {
       CompositeElement receiver = ASTFactory.composite(JavaElementType.METHOD_RECEIVER);
       parseAnnotationList(lexer, receiver);
       if (receiver.getFirstChildNode() != null) {

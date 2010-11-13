@@ -906,7 +906,6 @@ public class HighlightUtil {
     return false;
   }
 
-
   @Nullable
   static HighlightInfo checkBinaryOperatorApplicable(PsiBinaryExpression expression) {
     PsiExpression lOperand = expression.getLOperand();

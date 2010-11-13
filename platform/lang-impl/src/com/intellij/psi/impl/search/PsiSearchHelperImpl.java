@@ -646,10 +646,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           first = false;
         }
         else {
-          for (VirtualFile file : local.keySet()) {
-            if (intersection.containsKey(file)) {
-              intersection.putValues(file, local.get(file));
-            }
+          intersection.keySet().retainAll(local.keySet());
+          for (VirtualFile file : intersection.keySet()) {
+            intersection.get(file).retainAll(local.get(file));
           }
         }
       }

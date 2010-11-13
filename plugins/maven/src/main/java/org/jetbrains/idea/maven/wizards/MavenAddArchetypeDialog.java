@@ -39,7 +39,7 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
 
     init();
 
-    DocumentAdapter l =new DocumentAdapter() {
+    DocumentAdapter l = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         doValidateInput();
@@ -63,6 +63,11 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
     return myGroupIdField;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "Add_Archetype_Dialog";
+  }
+
   private void doValidateInput() {
     List<String> errors = new ArrayList<String>();
     if (StringUtil.isEmptyOrSpaces(myGroupIdField.getText())) errors.add("GroupId");
@@ -82,9 +87,9 @@ public class MavenAddArchetypeDialog extends DialogWrapper {
 
   public MavenArchetype getArchetype() {
     return new MavenArchetype(myGroupIdField.getText(),
-                             myArtifactIdField.getText(),
-                             myVersionField.getText(),
-                             myRepositoryField.getText(),
-                             null);
+                              myArtifactIdField.getText(),
+                              myVersionField.getText(),
+                              myRepositoryField.getText(),
+                              null);
   }
 }

@@ -495,7 +495,7 @@ public class CreateTestDialog extends DialogWrapper {
       TreeClassChooser dialog =
         f.createAllProjectScopeChooser(CodeInsightBundle.message("intention.create.test.dialog.choose.super.class"));
       dialog.showDialog();
-      PsiClass aClass = dialog.getSelectedClass();
+      PsiClass aClass = dialog.getSelected();
       if (aClass != null) {
         mySuperClassField.setText(aClass.getQualifiedName());
       }

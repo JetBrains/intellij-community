@@ -18,6 +18,7 @@ package com.siyeh.ig.ui;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -61,11 +62,11 @@ public class TreeClassChooserAction extends AbstractAction {
         }
         final TreeClassChooserFactory chooserFactory =
                 TreeClassChooserFactory.getInstance(project);
-        final TreeClassChooser.ClassFilter filter;
+        final ClassFilter filter;
         if (ancestorClasses.length == 0) {
-            filter = TreeClassChooser.ClassFilter.ALL;
+            filter = ClassFilter.ALL;
         } else {
-            filter = new TreeClassChooser.ClassFilter() {
+            filter = new ClassFilter() {
                 public boolean isAccepted(PsiClass aClass) {
                     for (String ancestorClass : ancestorClasses) {
                         if (ClassUtils.isSubclass(aClass, ancestorClass)) {
@@ -80,7 +81,7 @@ public class TreeClassChooserAction extends AbstractAction {
                 chooserFactory.createWithInnerClassesScopeChooser(chooserTitle,
                         GlobalSearchScope.allScope(project), filter, null);
         classChooser.showDialog();
-        final PsiClass selectedClass = classChooser.getSelectedClass();
+        final PsiClass selectedClass = classChooser.getSelected();
         if (selectedClass == null) {
             return;
         }

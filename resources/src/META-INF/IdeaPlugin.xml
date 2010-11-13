@@ -373,6 +373,7 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
+    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
@@ -799,10 +800,10 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
              order="after expectedType, before stats"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAbstractWeigher" id="abstract"
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.DispreferImplementationsWeigher" id="implementations"
              order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
-             order="after abstract"/>
+             order="after implementations"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"
              order="after nonGeneric"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferSimpleWeigher" id="simple"

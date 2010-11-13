@@ -24,6 +24,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -72,7 +73,13 @@ class CopyFilesOrDirectoriesDialog extends DialogWrapper{
         text = doClone ?
                RefactoringBundle.message("copy.files.clone.file.0", file.getVirtualFile().getPresentableUrl()) :
                RefactoringBundle.message("copy.files.copy.file.0", file.getVirtualFile().getPresentableUrl());
-        myNewNameField.setText(file.getName());
+        final String fileName = file.getName();
+        myNewNameField.setText(fileName);
+        final int dotIdx = fileName.lastIndexOf(".");
+        if (dotIdx > -1) {
+          myNewNameField.select(0, dotIdx);
+          myNewNameField.putClientProperty(DialogWrapperPeerImpl.HAVE_INITIAL_SELECTION, true);
+        }
       }
       else {
         PsiDirectory directory = (PsiDirectory)elements[0];

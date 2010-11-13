@@ -27,8 +27,8 @@ import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
-import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -307,13 +307,13 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       return getModuleSelector().findClass(className);
     }
 
-    protected TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException {
+    protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
       final ConfigurationModuleSelector moduleSelector = getModuleSelector();
       final Module module = moduleSelector.getModule();
       if (module == null) {
         throw NoFilterException.moduleDoesntExist(moduleSelector);
       }
-      final TreeClassChooser.ClassFilterWithScope classFilter;
+      final ClassFilter.ClassFilterWithScope classFilter;
       try {
         final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
         applyEditorTo(configurationCopy);

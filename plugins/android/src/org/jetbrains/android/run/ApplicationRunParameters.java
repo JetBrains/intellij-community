@@ -18,6 +18,7 @@ package org.jetbrains.android.run;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -52,7 +53,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
 
   private final ConfigurationModuleSelector myModuleSelector;
 
-  private class ActivityClassFilter implements TreeClassChooser.ClassFilter {
+  private class ActivityClassFilter implements ClassFilter {
     public boolean isAccepted(PsiClass c) {
       Module module = myModuleSelector.getModule();
       if (module != null) {
@@ -82,7 +83,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
           .createInheritanceClassChooser("Select activity class", module.getModuleWithDependenciesScope(), activityBaseClass,
                                          initialSelection, new ActivityClassFilter());
         chooser.showDialog();
-        PsiClass selClass = chooser.getSelectedClass();
+        PsiClass selClass = chooser.getSelected();
         if (selClass != null) {
           myActivityField.setText(selClass.getQualifiedName());
         }

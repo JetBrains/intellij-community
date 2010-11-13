@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
@@ -72,7 +73,7 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
     public void actionPerformed(ActionEvent e) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(myChooserTitle,
                                                                                                                    GlobalSearchScope.projectScope(myProject),
-                                                                                                                   new TreeClassChooser.ClassFilter() {
+                                                                                                                   new ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
@@ -81,7 +82,7 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
         chooser.selectDirectory(mySelectedClass.getContainingFile().getContainingDirectory());
       }
       chooser.showDialog();
-      mySelectedClass = chooser.getSelectedClass();
+      mySelectedClass = chooser.getSelected();
       if (mySelectedClass != null) {
         setText(mySelectedClass.getQualifiedName());
       }

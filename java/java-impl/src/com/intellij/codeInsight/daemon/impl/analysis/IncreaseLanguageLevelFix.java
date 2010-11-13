@@ -51,7 +51,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     acceptableJDKVersions.put(LanguageLevel.JDK_1_5, new String[]{"1.5", "5.0"});
     acceptableJDKVersions.put(LanguageLevel.JDK_1_6, new String[]{"1.6", "6.0"});
     acceptableJDKVersions.put(LanguageLevel.JDK_1_7, new String[]{"1.7", "7.0"});
+    acceptableJDKVersions.put(LanguageLevel.JDK_1_8, new String[]{"1.8", "8.0"});
   }
+
   public IncreaseLanguageLevelFix(LanguageLevel targetLevel) {
     myLevel = targetLevel;
   }

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -158,7 +157,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @NotNull
   private String getCombinedAnnosText() {
-    boolean typeAnnotationsSupported = PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_1_7);
+    final boolean typeAnnotationsSupported = PsiUtil.isLanguageLevel8OrHigher(this);
     if (!typeAnnotationsSupported) return "";
     return StringUtil.join(getApplicableAnnotations(), ANNOTATION_TEXT, " ");
   }
@@ -168,10 +167,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       return psiAnnotation.getText();
     }
   };
+
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
     PsiFile file = getContainingFile();
     String text;
-    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_7)) {
+    if (PsiUtil.isLanguageLevel8OrHigher(file)) {
       String combinedAnnos = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
       text = combinedAnnos.length() == 0 ? getText().trim() : combinedAnnos + " " + getText().trim();
     }

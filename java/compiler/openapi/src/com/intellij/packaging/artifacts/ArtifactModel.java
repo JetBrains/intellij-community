@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -37,4 +38,6 @@ public interface ArtifactModel {
   Artifact getOriginalArtifact(@NotNull Artifact artifact);
 
   Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type);
+
+  List<? extends Artifact> getAllArtifactsIncludingInvalid();
 }

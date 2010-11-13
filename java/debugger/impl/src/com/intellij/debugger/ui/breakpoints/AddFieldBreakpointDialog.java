@@ -75,7 +75,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
           }
         }
         chooser.showDialog();
-        PsiClass selectedClass = chooser.getSelectedClass();
+        PsiClass selectedClass = chooser.getSelected();
         if (selectedClass != null) {
           myClassChooser.setText(selectedClass.getQualifiedName());
         }

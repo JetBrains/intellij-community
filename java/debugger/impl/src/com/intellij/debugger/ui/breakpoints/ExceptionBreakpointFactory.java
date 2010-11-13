@@ -114,7 +114,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
           DebuggerBundle.message("add.exception.breakpoint.classchooser.title"), GlobalSearchScope.allScope(myProject),
           throwableClass, true, true, null);
       chooser.showDialog();
-      PsiClass selectedClass = chooser.getSelectedClass();
+      PsiClass selectedClass = chooser.getSelected();
       String qName = selectedClass == null ? null : JVMNameUtil.getNonAnonymousClassName(selectedClass);
 
       if (qName != null && qName.length() > 0) {

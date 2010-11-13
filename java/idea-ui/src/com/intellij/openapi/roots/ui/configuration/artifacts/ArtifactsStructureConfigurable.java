@@ -35,8 +35,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
+import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.LibraryElementType;
@@ -177,7 +179,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   protected void loadTree() {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
-    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getArtifacts()) {
+    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getAllArtifactsIncludingInvalid()) {
       addArtifactNode(artifact);
     }
   }
@@ -186,14 +188,21 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
-    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getArtifacts()) {
+    for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getAllArtifactsIncludingInvalid()) {
       elements.add(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
     }
     return elements;
   }
 
   private MyNode addArtifactNode(final Artifact artifact) {
-    final MyNode node = new MyNode(new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER));
+    final NamedConfigurable<Artifact> configurable;
+    if (artifact instanceof InvalidArtifact) {
+      configurable = new InvalidArtifactConfigurable((InvalidArtifact)artifact, myPackagingEditorContext, TREE_UPDATER);
+    }
+    else {
+      configurable = new ArtifactConfigurable(artifact, myPackagingEditorContext, TREE_UPDATER);
+    }
+    final MyNode node = new MyNode(configurable);
     addNode(node, myRoot);
     return node;
   }

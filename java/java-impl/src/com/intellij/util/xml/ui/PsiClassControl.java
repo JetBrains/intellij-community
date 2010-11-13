@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
@@ -78,11 +79,11 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
         final DomElement domElement = control.getDomElement();
         ExtendClass extend = domElement.getAnnotation(ExtendClass.class);
         PsiClass baseClass = null;
-        TreeClassChooser.ClassFilter filter = null;
+        ClassFilter filter = null;
         if (extend != null) {
           baseClass = JavaPsiFacade.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
           if (extend.instantiatable()) {
-            filter = TreeClassChooser.INSTANTIATABLE;
+            filter = ClassFilter.INSTANTIABLE;
           }
         }
 
@@ -96,7 +97,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
         TreeClassChooser chooser = TreeClassChooserFactory.getInstance(control.getProject())
           .createInheritanceClassChooser(UIBundle.message("choose.class"), resolveScope, baseClass, initialClass, filter);
         chooser.showDialog();
-        final PsiClass psiClass = chooser.getSelectedClass();
+        final PsiClass psiClass = chooser.getSelected();
         if (psiClass != null) {
           control.setValue(psiClass.getQualifiedName());
         }

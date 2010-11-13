@@ -78,9 +78,5 @@ public class GithubSettingsPanel {
   public String getPassword() {
     return String.valueOf(myPasswordField.getPassword());
   }
-
-  public JComponent getPreferrableFocusComponent() {
-    return myLoginTextField;
-  }
 }
 

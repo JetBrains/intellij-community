@@ -27,19 +27,16 @@ public class AnnotationParsingTest extends JavaParsingTestCase {
   public void testEnumSmartTypeCompletion() { doTest(true); }
 
   public void testTypeAnno() {
-    withLevel(LanguageLevel.JDK_1_7, new Runnable() {
-      @Override
-      public void run() {
-        doTest(true);
-        myFile.accept(new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitErrorElement(PsiErrorElement element) {
-            fail(element.getErrorDescription());
-            super.visitErrorElement(element);
-          }
-        });
-      }
-    });
+    withLevel(LanguageLevel.JDK_1_8, new Runnable() { @Override public void run() {
+      doTest(true);
+      myFile.accept(new PsiRecursiveElementVisitor() {
+        @Override
+        public void visitErrorElement(PsiErrorElement element) {
+          fail(element.getErrorDescription());
+          super.visitErrorElement(element);
+        }
+      });
+    }});
   }
 
   public void testErrors() { doTest(true); }

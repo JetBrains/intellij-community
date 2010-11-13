@@ -683,6 +683,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!force) {
           if (!showConfirmation()) {
             saveAll();
+            myExitCode = 0;
             return;
           }
         }
@@ -691,15 +692,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         saveSettings();
 
-        if (!canExit()) return;
-
-        boolean success = disposeSelf();
-        if (success && !isUnitTestMode()) {
-          System.exit(myExitCode);
+        if (!canExit()) {
+          myExitCode = 0;
+          return;
         }
+
+        final boolean success = disposeSelf();
+        if (!success || isUnitTestMode()) {
+          myExitCode = 0;
+          return;
+        }
+
+        System.exit(myExitCode);
       }
     };
-    
+
     if (!isDispatchThread()) {
       invokeLater(runnable, ModalityState.NON_MODAL);
     }

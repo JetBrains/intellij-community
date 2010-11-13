@@ -222,7 +222,7 @@ public class UpdateHighlightersUtil {
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
                                           @NotNull Collection<HighlightInfo> infos,
-                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                          @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                           int startOffset, int endOffset,
                                           @NotNull final ProperTextRange range,
                                           final int group) {
@@ -245,8 +245,8 @@ public class UpdateHighlightersUtil {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
-          boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                                  || !range.containsRange(hiStart, hiEnd);
+          boolean willBeRemoved = !(hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()) &&
+                                  !range.containsRange(hiStart, hiEnd);
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;
@@ -316,7 +316,7 @@ public class UpdateHighlightersUtil {
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
           boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                                  || range.intersectsStrict(hiStart, hiEnd) || range.containsRange(hiStart, hiEnd) || hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset();
+                                  /*|| range.intersectsStrict(hiStart, hiEnd)*/ || range.containsRange(hiStart, hiEnd) /*|| hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset()*/;
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
             info.highlighter = null;

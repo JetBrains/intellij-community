@@ -15,14 +15,13 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -33,7 +32,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiSuperMethodImplUtil {
-  private static final Key<CachedValue<Map<MethodSignature, HierarchicalMethodSignature>>> SIGNATURES_KEY = Key.create("MAP_KEY");
+  private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_KEY = PsiCacheKey
+    .create("SIGNATURES_KEY", new NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>() {
+      @NotNull
+      @Override
+      public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
+        return buildMethodHierarchy(dom, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
+      }
+    });
 
   private PsiSuperMethodImplUtil() {
   }
@@ -298,30 +304,6 @@ public class PsiSuperMethodImplUtil {
   }
 
   private static Map<MethodSignature, HierarchicalMethodSignature> getSignaturesMap(final PsiClass aClass) {
-    CachedValue<Map<MethodSignature, HierarchicalMethodSignature>> value = aClass.getUserData(SIGNATURES_KEY);
-    if (value == null) {
-      BySignaturesCachedValueProvider provider = new BySignaturesCachedValueProvider(aClass);
-      UserDataHolderEx dataHolder = (UserDataHolderEx)aClass;
-      value = dataHolder.putUserDataIfAbsent(SIGNATURES_KEY,
-                                             CachedValuesManager.getManager(aClass.getProject()).createCachedValue(provider, false));
-    }
-
-    return value.getValue();
-  }
-
-  private static class BySignaturesCachedValueProvider implements CachedValueProvider<Map<MethodSignature, HierarchicalMethodSignature>> {
-    private final PsiClass myClass;
-
-    private BySignaturesCachedValueProvider(final PsiClass aClass) {
-      myClass = aClass;
-    }
-
-    public Result<Map<MethodSignature, HierarchicalMethodSignature>> compute() {
-      Map<MethodSignature, HierarchicalMethodSignature> result = buildMethodHierarchy(myClass, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
-      assert result != null;
-
-
-      return new Result<Map<MethodSignature, HierarchicalMethodSignature>>(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    }
+    return SIGNATURES_KEY.getValue(aClass);
   }
 }

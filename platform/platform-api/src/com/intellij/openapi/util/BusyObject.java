@@ -30,6 +30,8 @@ public interface BusyObject {
     protected abstract boolean isReady();
 
     public final void onReady() {
+      if (!isReady()) return;
+
       ActionCallback[] ready = getReadyCallbacks(true);
       for (ActionCallback each : ready) {
         if (each != null) {
