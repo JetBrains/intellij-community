@@ -16,7 +16,9 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -24,6 +26,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -49,7 +52,10 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
@@ -330,17 +336,17 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshAndInfoPanel.repaint();
   }
 
-  public String setText(final String text, final String requestor) {
+  public Pair<String, String> setText(final String text, final String requestor) {
     if (text == null || text.length() == 0) {
       if ((requestor != null && !requestor.equals(myCurrentRequestor))
           || (myCurrentRequestor != null && !myCurrentRequestor.equals(requestor))) {
-        return myInfoPanel.getText();
+        return Pair.create(myInfoPanel.getText(), myCurrentRequestor);
       }
     }
 
     myInfoPanel.setText(text);
     myCurrentRequestor = requestor;
-    return text;
+    return Pair.create(text, requestor);
   }
 
   public void setRefreshVisible(final boolean visible) {

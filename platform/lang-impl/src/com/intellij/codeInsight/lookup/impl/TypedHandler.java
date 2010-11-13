@@ -26,8 +26,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
@@ -55,7 +57,7 @@ public class TypedHandler implements TypedActionHandler {
 
       final LookupElement currentItem = lookup.getCurrentItem();
       final CharFilter.Result result = getLookupAction(charTyped, currentItem, lookup);
-
+      CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
       lookup.performGuardedChange(new Runnable() {
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);

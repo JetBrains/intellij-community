@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -69,6 +70,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private JPanel myCenterPanel;
 
   private String myInfo;
+  private String myRequestor;
 
   private List<String> myCustomComponentIds = new ArrayList<String>();
 
@@ -377,7 +379,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         if (myInfoAndProgressPanel != null) {
-          myInfo = myInfoAndProgressPanel.setText(s, requestor);
+          Pair<String,String> pair = myInfoAndProgressPanel.setText(s, requestor);
+          myInfo = pair.first;
+          myRequestor = pair.second;
         }
       }
     });
@@ -385,6 +389,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public String getInfo() {
     return myInfo;
+  }
+
+  @Override
+  public String getInfoRequestor() {
+    return myRequestor;
   }
 
   public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {

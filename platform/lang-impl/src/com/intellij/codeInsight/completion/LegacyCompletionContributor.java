@@ -102,11 +102,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
       }
     }
     else if (ref instanceof PsiDynaReference) {
-      int offset = startOffset - ref.getElement().getTextRange().getStartOffset();
       for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
-        if (ReferenceRange.containsOffsetInElement(reference, offset)) {
-          processReference(result, startOffset, consumer, reference);
-        }
+        processReference(result, startOffset, consumer, reference);
       }
     }
     else if (ref != null) {
@@ -119,6 +116,10 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
     final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+    if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) {
+      return;
+    }
+
     final String prefix = reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
     consumer.consume(reference, result.withPrefixMatcher(prefix));
   }

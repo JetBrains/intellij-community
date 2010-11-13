@@ -15,22 +15,21 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class CompletionConfidence {
-
+public class UnfocusedComments extends CompletionConfidence {
   @NotNull
-  public abstract ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters);
-
-  @NotNull
-  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  @Override
+  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiComment.class) != null) {
+      return ThreeState.NO;
+    }
     return ThreeState.UNSURE;
   }
 }
