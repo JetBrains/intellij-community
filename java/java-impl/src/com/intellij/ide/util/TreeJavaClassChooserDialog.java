@@ -107,8 +107,8 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
 
   @NotNull
   @Override
-  protected BaseClassInheritorsProvider<PsiClass> getInheritorsProvider() {
-    return new JavaInheritorsProvider(getProject(), getBaseClass(), getScope());
+  protected BaseClassInheritorsProvider<PsiClass> getInheritorsProvider(@NotNull PsiClass baseClass) {
+    return new JavaInheritorsProvider(getProject(), baseClass, getScope());
   }
 
   private static class JavaInheritorsProvider extends BaseClassInheritorsProvider<PsiClass> {

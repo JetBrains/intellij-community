@@ -454,17 +454,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myDeferredUserInput.append(s);
       }
 
-      boolean needNew = true;
-      if (!myTokens.isEmpty()) {
-        final TokenInfo lastToken = myTokens.get(myTokens.size() - 1);
-        if (lastToken.contentType == contentType) {
-          lastToken.endOffset = myContentSize; // optimization
-          needNew = false;
-        }
-      }
-      if (needNew) {
-        myTokens.add(new TokenInfo(contentType, myContentSize - s.length(), myContentSize));
-      }
+      addToken(s.length(), contentType);
 
       if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
         if (contentType == ConsoleViewContentType.USER_INPUT) {
@@ -475,6 +465,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final boolean shouldFlushNow = USE_CYCLIC_BUFFER && myDeferredOutput.length() > CYCLIC_BUFFER_SIZE;
         myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow ? 0 : FLUSH_DELAY, getStateForUpdate());
       }
+    }
+  }
+
+  protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
+    myContentSize+=length;
+    addToken(length, contentType);
+  }
+
+  private void addToken(int length, ConsoleViewContentType contentType) {
+    boolean needNew = true;
+    if (!myTokens.isEmpty()) {
+      final TokenInfo lastToken = myTokens.get(myTokens.size() - 1);
+      if (lastToken.contentType == contentType) {
+        lastToken.endOffset = myContentSize; // optimization
+        needNew = false;
+      }
+    }
+    if (needNew) {
+      myTokens.add(new TokenInfo(contentType, myContentSize - length, myContentSize));
     }
   }
 

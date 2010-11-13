@@ -260,12 +260,12 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   protected ChooseByNameModel createChooseByNameModel() {
     if (myBaseClass == null) {
-      return new MyGotoClassModel(myProject, this);
+      return new MyGotoClassModel<T>(myProject, this);
     }
     else {
-      BaseClassInheritorsProvider<T> inheritorsProvider = getInheritorsProvider();
+      BaseClassInheritorsProvider<T> inheritorsProvider = getInheritorsProvider(myBaseClass);
       if (inheritorsProvider != null) {
-        return new SubclassGotoClassModel(myProject, this, inheritorsProvider);
+        return new SubclassGotoClassModel<T>(myProject, this, inheritorsProvider);
       }
       else {
         throw new IllegalStateException("inheritors provider is null");
@@ -273,8 +273,16 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
+  /**
+   * Makes sense only in case of not null base class.
+   *
+   * @param baseClass
+   * @return
+   */
   @Nullable
-  protected abstract BaseClassInheritorsProvider<T> getInheritorsProvider();
+  protected BaseClassInheritorsProvider<T> getInheritorsProvider(@NotNull T baseClass) {
+    return null;
+  }
 
   private void handleSelectionChanged() {
     T selection = calcSelectedClass();
