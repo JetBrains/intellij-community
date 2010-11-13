@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -29,18 +30,26 @@ import java.util.List;
  */
 public class IssueLinkRenderer {
   private final SimpleColoredComponent myColoredComponent;
+  private final HtmlListCellRenderer myHtmlListCellRenderer;
   private final IssueNavigationConfiguration myIssueNavigationConfiguration;
 
   public IssueLinkRenderer(final Project project, final SimpleColoredComponent coloredComponent) {
-    myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     myColoredComponent = coloredComponent;
+    myHtmlListCellRenderer = null;
+    myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
   }
 
-  public List<String> appendTextWithLinks(String text) {
+  public IssueLinkRenderer(final Project project, final HtmlListCellRenderer htmlListCellRenderer) {
+    myColoredComponent = null;
+    myHtmlListCellRenderer = htmlListCellRenderer;
+    myIssueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
+  }
+
+  public List<String> appendTextWithLinks(final String text) {
     return appendTextWithLinks(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public List<String> appendTextWithLinks(String text, SimpleTextAttributes baseStyle) {
+  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle) {
     final List<String> pieces = new ArrayList<String>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
@@ -49,23 +58,41 @@ public class IssueLinkRenderer {
       if (textRange.getStartOffset() > pos) {
         final String piece = text.substring(pos, textRange.getStartOffset());
         pieces.add(piece);
-        myColoredComponent.append(piece, baseStyle);
+        append(piece, baseStyle);
       }
       final String piece = textRange.substring(text);
       pieces.add(piece);
-      myColoredComponent.append(piece, getLinkAttributes(baseStyle),
-                                new TreeLinkMouseListener.BrowserLauncher(match.getTargetUrl()));
+      append(piece, getLinkAttributes(baseStyle), match);
       pos = textRange.getEndOffset();
     }
     if (pos < text.length()) {
       final String piece = text.substring(pos);
       pieces.add(piece);
-      myColoredComponent.append(piece, baseStyle);
+      append(piece, baseStyle);
     }
     return pieces;
   }
 
+  private void append(final String piece, final SimpleTextAttributes baseStyle) {
+    if (myColoredComponent != null) {
+      myColoredComponent.append(piece, baseStyle);
+    }
+    else {
+      myHtmlListCellRenderer.append(piece, baseStyle);
+    }
+  }
+
+  private void append(final String piece, final SimpleTextAttributes baseStyle, final IssueNavigationConfiguration.LinkMatch match) {
+    if (myColoredComponent != null) {
+      myColoredComponent.append(piece, baseStyle, new TreeLinkMouseListener.BrowserLauncher(match.getTargetUrl()));
+    }
+    else {
+      myHtmlListCellRenderer.appendLink(piece, baseStyle, match.getTargetUrl());
+    }
+  }
+
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
-    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ? SimpleTextAttributes.LINK_BOLD_ATTRIBUTES : SimpleTextAttributes.LINK_ATTRIBUTES;
+    return (baseStyle.getStyle() & SimpleTextAttributes.STYLE_BOLD) != 0 ?
+           SimpleTextAttributes.LINK_BOLD_ATTRIBUTES : SimpleTextAttributes.LINK_ATTRIBUTES;
   }
 }

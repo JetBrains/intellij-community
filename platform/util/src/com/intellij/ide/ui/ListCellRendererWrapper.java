@@ -20,7 +20,8 @@ import java.awt.*;
 
 /**
  * Please use this wrapper in case you need simple cell renderer with text and icon.
- * This avoids ugly UI under GTK+ look&feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer is used instead of DefaultComboBoxRenderer.
+ * This avoids ugly UI under GTK+ look&feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer
+ * is used instead of DefaultComboBoxRenderer.
  *
  * @author oleg
  * Date: 9/30/10

@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -65,13 +65,15 @@ public class ChangeListChooserPanel extends JPanel {
   public void init(final Project project) {
     myProject = project;
 
-    myExistingListsCombo.setRenderer(new ColoredListCellRenderer() {
-
+    myExistingListsCombo.setRenderer(new HtmlListCellRenderer(myExistingListsCombo.getRenderer()) {
       private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(project, this);
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+
+      @Override
+      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LocalChangeList) {
           myLinkRenderer.appendTextWithLinks(((LocalChangeList)value).getName(),
-                                             ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                                             ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                                                                  : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
