@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LookupStringWeigher extends CompletionWeigher {
   @Override
-  public String weigh(@NotNull LookupElement element, @Nullable CompletionLocation location) {
+  public String weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     if (location == null) {
       return null;
     }

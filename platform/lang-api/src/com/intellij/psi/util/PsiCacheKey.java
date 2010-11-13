@@ -22,19 +22,17 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class StructureDependentNotNullLazyKey <T,H extends PsiElement> extends Key<Pair<Long, T>> {
-  private final NotNullFunction<H,T> myFunction;
+public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
+  private final Function<H,T> myFunction;
 
-  private StructureDependentNotNullLazyKey(@NonNls String name, final NotNullFunction<H, T> function) {
+  private PsiCacheKey(@NonNls String name, final Function<H, T> function) {
     super(name);
     myFunction = function;
   }
 
-  @NotNull
   public final T getValue(H h) {
     Pair<Long, T> data = h.getUserData(this);
     final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
@@ -45,7 +43,7 @@ public class StructureDependentNotNullLazyKey <T,H extends PsiElement> extends K
     return data.getSecond();
   }
 
-  public static <T,H extends PsiElement> StructureDependentNotNullLazyKey<T,H> create(@NonNls String name, final NotNullFunction<H, T> function) {
-    return new StructureDependentNotNullLazyKey<T,H>(name, function);
+  public static <T,H extends PsiElement> PsiCacheKey<T,H> create(@NonNls String name, final Function<H, T> function) {
+    return new PsiCacheKey<T,H>(name, function);
   }
 }

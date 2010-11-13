@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 */
 public class PreferNonGenericWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     if (location == null) {
       return null;
     }
