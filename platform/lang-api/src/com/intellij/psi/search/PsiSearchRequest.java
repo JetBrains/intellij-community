@@ -18,6 +18,9 @@ public class PsiSearchRequest {
                        boolean caseSensitive,
                        @NotNull RequestResultProcessor processor) {
 
+    if (word.length() == 0) {
+      throw new IllegalArgumentException("Cannot search for elements with empty text");
+    }
     this.searchScope = searchScope;
     this.word = word;
     this.searchContext = searchContext;

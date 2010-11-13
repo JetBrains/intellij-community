@@ -396,21 +396,34 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return fixedTextRange;
   }
 
-  private static void addPatchedInfos(HighlightInfo info,
-                               PsiFile injectedPsi,
-                               DocumentWindow documentWindow,
-                               InjectedLanguageManager injectedLanguageManager,
-                               TextRange fixedTextRange,
-                               Collection<HighlightInfo> out) {
+  private static void addPatchedInfos(@NotNull HighlightInfo info,
+                                      @NotNull PsiFile injectedPsi,
+                                      @NotNull DocumentWindow documentWindow,
+                                      @NotNull InjectedLanguageManager injectedLanguageManager,
+                                      @Nullable TextRange fixedTextRange,
+                                      @NotNull Collection<HighlightInfo> out) {
     ProperTextRange textRange = new ProperTextRange(info.startOffset, info.endOffset);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, textRange);
     for (TextRange editable : editables) {
       TextRange hostRange = fixedTextRange == null ? documentWindow.injectedToHost(editable) : fixedTextRange;
 
+      boolean isAfterEndOfLine = info.isAfterEndOfLine;
+      if (isAfterEndOfLine) {
+        // convert injected afterEndOfLine to either host' afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
+        int hostEndOffset = hostRange.getEndOffset();
+        int lineNumber = documentWindow.getDelegate().getLineNumber(hostEndOffset);
+        int hostLineEndOffset = documentWindow.getDelegate().getLineEndOffset(lineNumber);
+        if (hostEndOffset < hostLineEndOffset) {
+          // convert to non-afterEndOfLine
+          isAfterEndOfLine = false;
+          hostRange = new ProperTextRange(hostRange.getStartOffset(), hostEndOffset+1);
+        }
+      }
+
       HighlightInfo patched =
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.description, info.toolTip, info.type.getSeverity(null), info.isAfterEndOfLine, null, false);
+                          info.description, info.toolTip, info.type.getSeverity(null), isAfterEndOfLine, null, false);
       patched.setHint(info.hasHint());
       patched.setGutterIconRenderer(info.getGutterIconRenderer());
 

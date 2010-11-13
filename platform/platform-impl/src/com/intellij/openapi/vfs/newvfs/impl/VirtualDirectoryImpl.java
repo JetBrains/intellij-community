@@ -103,8 +103,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       // do not extract getId from under the synchronized block since it will cause a concurrency problem.
       int id = ourPersistence.getId(this, name);
       if (id > 0) {
-        NewVirtualFile child = createChild(name, id);
-        map.put(name, child);
+        final String shorty = new String(name);
+        NewVirtualFile child = createChild(shorty, id); // So we don't hold whole char[] buffer of a lengthy path
+        map.put(shorty, child);
         return child;
       }
     }

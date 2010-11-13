@@ -43,7 +43,11 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
 
   @Override
   protected synchronized Collection<Language> getFilterItems() {
-    final Collection<Language> items = new HashSet<Language>(super.getFilterItems());
+    final Collection<Language> result = super.getFilterItems();
+    if (result == null) {
+      return result;
+    }
+    final Collection<Language> items = new HashSet<Language>(result);
     items.add(Language.ANY);
     return items;
   }

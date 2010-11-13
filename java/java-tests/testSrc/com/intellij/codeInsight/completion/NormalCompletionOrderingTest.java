@@ -4,8 +4,9 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiMethod;
 
 @SuppressWarnings({"ALL"})
@@ -103,6 +104,16 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDispreferDeclaredOfExpectedType() throws Throwable {
     checkPreferredItems(0, "aabbb", "aaa");
+  }
+
+  public void testDispreferImpls() throws Throwable {
+    VfsUtil.saveText(getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Xxx.java"), "package foo; public class Xxx {}");
+    checkPreferredItems(0, "Xxy", "Xxx", "XxxImpl");
+  }
+
+  public void testDontDispreferImplsAfterNew() throws Throwable {
+    VfsUtil.saveText(getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Xxx.java"), "package foo; public class Xxx {}");
+    checkPreferredItems(0, "XxxImpl", "Xxy", "Xxx");
   }
 
   public void testPreferLessParameters() throws Throwable {

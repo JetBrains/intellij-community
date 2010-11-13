@@ -51,7 +51,7 @@ public class PreferDefaultTypeWeigher extends CompletionWeigher {
     expectedNoSelect
   }
 
-  public MyResult weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
+  public MyResult weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     if (location == null) {
       return null;
     }

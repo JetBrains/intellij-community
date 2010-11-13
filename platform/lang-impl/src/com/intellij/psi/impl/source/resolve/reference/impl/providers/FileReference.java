@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.LangBundle;
@@ -215,7 +216,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   @Nullable
-  private String decode(final String text) {
+  public String decode(final String text) {
     // strip http get parameters
     String _text = text;
     if (text.indexOf('?') >= 0) {
@@ -267,22 +268,28 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     for (int i = 0; i < candidates.length; i++) {
       variants[i] = createLookupItem(candidates[i]);
     }
-
-    if (myFileReferenceSet.isUrlEncoded()) {
-      for (int i = 0; i < candidates.length; i++) {
-        final PsiElement element = candidates[i];
-        if (element instanceof PsiNamedElement) {
-          final PsiNamedElement psiElement = (PsiNamedElement)element;
-          String name = psiElement.getName();
-          final String encoded = encode(name);
-          if (!encoded.equals(name)) {
-            final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
-            variants[i] = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
-          }
+    if (!myFileReferenceSet.isUrlEncoded()) {
+      return variants;
+    }
+    List<Object> encodedVariants = new ArrayList<Object>(variants.length);
+    for (int i = 0; i < candidates.length; i++) {
+      final PsiElement element = candidates[i];
+      if (element instanceof PsiNamedElement) {
+        final PsiNamedElement psiElement = (PsiNamedElement)element;
+        String name = psiElement.getName();
+        final String encoded = encode(name, psiElement);
+        if (encoded == null) continue;
+        if (!encoded.equals(name)) {
+          final Icon icon = psiElement.getIcon(Iconable.ICON_FLAG_READ_STATUS | Iconable.ICON_FLAG_VISIBILITY);
+          LookupElementBuilder item = FileInfoManager.getFileLookupItem(candidates[i], encoded, icon);
+          encodedVariants.add(item.setTailText(" (" + name + ")"));
+        }
+        else {
+          encodedVariants.add(variants[i]);
         }
       }
     }
-    return variants;
+    return ArrayUtil.toObjectArray(encodedVariants);
   }
 
   protected Object createLookupItem(PsiElement candidate) {
@@ -306,7 +313,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return fileSystemItem;
   }
 
-  private static String encode(final String name) {
+  @Nullable
+  protected String encode(final String name, PsiElement psiElement) {
     try {
       return new URI(null, null, name, null).toString();
     }
@@ -480,7 +488,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
 
     if (myFileReferenceSet.isUrlEncoded()) {
-      newName = encode(newName);
+      newName = encode(newName, element);
     }
 
     return rename(newName);

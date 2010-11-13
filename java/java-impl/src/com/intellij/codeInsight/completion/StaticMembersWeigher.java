@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class StaticMembersWeigher extends CompletionWeigher {
-  public Comparable weigh(@NotNull LookupElement element, @Nullable CompletionLocation loc) {
+  public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation loc) {
     if (loc == null) {
       return null;
     }

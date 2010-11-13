@@ -21,6 +21,10 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -262,10 +266,21 @@ public class FileBasedIndex implements ApplicationComponent {
 
       final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
       final boolean currentVersionCorrupted = corruptionMarker.exists();
+      boolean versionChanged = false;
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        registerIndexer(extension, currentVersionCorrupted);
+        versionChanged |= registerIndexer(extension, currentVersionCorrupted);
       }
       FileUtil.delete(corruptionMarker);
+      String rebuildNotification = null;
+      if (currentVersionCorrupted) {
+        rebuildNotification = "Index files on disk are corrupted, global index rebuild scheduled.";
+      }
+      else if (versionChanged) {
+        rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
+      }
+      if (rebuildNotification != null) {
+        Notifications.Bus.notify(new Notification("Indexing", "Index Rebuild", rebuildNotification, NotificationType.INFORMATION), NotificationDisplayType.BALLOON_ONLY, null);      
+      }
       dropUnregisteredIndices();
 
       // check if rebuild was requested for any index during registration
@@ -332,7 +347,8 @@ public class FileBasedIndex implements ApplicationComponent {
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted @param extension
    * @param isCurrentVersionCorrupted
    */
-  private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
+  private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
+    boolean versionChanged = false;
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     if (!extension.dependsOnFileContent()) {
@@ -342,6 +358,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
       if (!isCurrentVersionCorrupted) {
+        versionChanged = true;
         LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
       }
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
@@ -364,6 +381,7 @@ public class FileBasedIndex implements ApplicationComponent {
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
+    return versionChanged;
   }
 
   private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {

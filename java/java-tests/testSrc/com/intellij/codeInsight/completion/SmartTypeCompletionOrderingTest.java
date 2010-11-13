@@ -203,10 +203,6 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "Goo", "InnerGoo", "Bar", "AGoo");
   }
 
-  public void testPreferInterfaces() throws Throwable {
-    checkPreferredItems(0, "IFoo", "Goo", "Bar");
-  }
-
   public void testLocalVariablesOutweighStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion(BASE_PATH + "/" + getTestName(false) + ".java");
     assertPreferredItems(0, "foo", "param", "this", "bar", "goo");

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PriorityWeigher extends CompletionWeigher {
   @Override
-  public Double weigh(@NotNull LookupElement element, @Nullable CompletionLocation location) {
+  public Double weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     if (location == null) {
       return null;
     }
