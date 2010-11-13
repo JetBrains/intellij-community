@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.HashMap;
@@ -29,18 +28,32 @@ import java.util.Map;
   name = "HgGlobalSettings",
   storages = @Storage(id = "HgGlobalSettings", file = "$APP_CONFIG$/vcs.xml")
 )
-public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings> {
+public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
 
   private static final String HG = HgVcs.HG_EXECUTABLE_FILE_NAME;
   private static final int FIVE_MINUTES = 300;
 
-  private String hgExecutable = HG;
+  private String myHgExecutable = HG;
 
   // visited URL -> list of logins for this URL. Passwords are remembered in the PasswordSafe.
   private Map<String, List<String>> myRememberedUrls = new HashMap<String, List<String>>();
+  private boolean myRunViaBash;
 
-  public static HgGlobalSettings getInstance() {
-    return ServiceManager.getService(HgGlobalSettings.class);
+  public static class State {
+    public String hgExecutable;
+    public boolean runViaBash;
+  }
+
+  public State getState() {
+    State s = new State();
+    s.hgExecutable = myHgExecutable;
+    s.runViaBash = myRunViaBash;
+    return s;
+  }
+
+  public void loadState(State state) {
+    myHgExecutable = state.hgExecutable;
+    myRunViaBash = state.runViaBash;
   }
 
   /**
@@ -77,31 +90,31 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   }
 
   public String getHgExecutable() {
-    return hgExecutable;
+    return myHgExecutable;
   }
 
   public void setHgExecutable(String hgExecutable) {
-    this.hgExecutable = hgExecutable;
+    this.myHgExecutable = hgExecutable;
   }
 
   public boolean isAutodetectHg() {
-    return HG.equals(hgExecutable);
+    return HG.equals(myHgExecutable);
   }
 
   public void enableAutodetectHg() {
-    hgExecutable = HG;
+    myHgExecutable = HG;
   }
 
   public static int getIncomingCheckIntervalSeconds() {
     return FIVE_MINUTES;
   }
 
-  public HgGlobalSettings getState() {
-    return this;
+  public boolean isRunViaBash() {
+    return myRunViaBash;
   }
 
-  public void loadState(HgGlobalSettings state) {
-    hgExecutable = state.hgExecutable;
+  public void setRunViaBash(boolean runViaBash) {
+    myRunViaBash = runViaBash;
   }
 
 }

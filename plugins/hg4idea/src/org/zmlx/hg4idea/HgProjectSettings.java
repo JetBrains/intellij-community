@@ -22,8 +22,13 @@ import com.intellij.openapi.components.Storage;
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
+  private final HgGlobalSettings myAppSettings;
   private boolean myCheckIncoming = true;
   private boolean myCheckOutgoing = true;
+
+  public HgProjectSettings(HgGlobalSettings appSettings) {
+    myAppSettings = appSettings;
+  }
 
   public static class State {
     public boolean myCheckIncoming = true;
@@ -59,19 +64,27 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public String getHgExecutable() {
-    return HgGlobalSettings.getInstance().getHgExecutable();
+    return myAppSettings.getHgExecutable();
   }
 
   public boolean isAutodetectHg() {
-    return HgGlobalSettings.getInstance().isAutodetectHg();
+    return myAppSettings.isAutodetectHg();
   }
 
   public void enableAutodetectHg() {
-    HgGlobalSettings.getInstance().enableAutodetectHg();
+    myAppSettings.enableAutodetectHg();
   }
 
   public void setHgExecutable(String text) {
-    HgGlobalSettings.getInstance().setHgExecutable(text);
+    myAppSettings.setHgExecutable(text);
+  }
+
+  public boolean isRunViaBash() {
+    return myAppSettings.isRunViaBash();
+  }
+
+  public void setRunViaBash(boolean runViaBash) {
+    myAppSettings.setRunViaBash(runViaBash);
   }
 
 }

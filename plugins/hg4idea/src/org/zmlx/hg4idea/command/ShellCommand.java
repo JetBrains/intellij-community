@@ -13,9 +13,11 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -24,11 +26,28 @@ final class ShellCommand {
   private static final Logger LOG = Logger.getInstance(ShellCommand.class.getName());
 
   private static final int BUFFER_SIZE = 1024;
+  private final boolean myRunViaBash;
+
+  public ShellCommand(boolean runViaBash) {
+    myRunViaBash = runViaBash;
+  }
 
   public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
     if (commandLine == null || commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
+
+    if (myRunViaBash) {
+      // run via bash -cl <hg command> => need to escape bash special symbols
+      // '-l' makes bash execute as a login shell thus reading .bash_profile
+      String hgCommand = StringUtil.join(commandLine, " ");
+      hgCommand = StringUtil.escapeStringCharacters(hgCommand.length(), hgCommand, "\b\t\n\f\r|>$\"'&", false, false, new StringBuilder()).toString(); // we don't escape backslash, because we want special unicode characters (\u0017 for hg log)
+      commandLine = new ArrayList<String>(3);
+      commandLine.add("bash");
+      commandLine.add("-cl");
+      commandLine.add(hgCommand);
+    }
+
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
     try {
