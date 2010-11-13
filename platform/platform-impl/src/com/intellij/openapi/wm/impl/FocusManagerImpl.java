@@ -379,8 +379,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void flushIdleRequests() {
+    int currentModalityCount = getCurrentModalityCount();
     try {
-      incFlushingRequests(1);
+      incFlushingRequests(1, currentModalityCount);
 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
       if (events.length > 0) {
@@ -435,7 +436,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
     finally {
-      incFlushingRequests(-1);
+      incFlushingRequests(-1, currentModalityCount);
       if (!isIdleQueueEmpty()) {
         restartIdleAlarm();
       }
@@ -527,8 +528,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
-  private void incFlushingRequests(int delta) {
-    int currentModalityCount = getCurrentModalityCount();
+  private void incFlushingRequests(int delta, final int currentModalityCount) {
     if (myModalityCount2FlushCount.containsKey(currentModalityCount)) {
       Integer requests = myModalityCount2FlushCount.get(currentModalityCount);
       myModalityCount2FlushCount.put(currentModalityCount, requests + delta);

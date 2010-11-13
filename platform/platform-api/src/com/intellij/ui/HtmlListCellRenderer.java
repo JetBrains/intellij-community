@@ -73,34 +73,54 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   protected abstract void doCustomize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
-  protected void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
+  public void append(@NotNull final String fragment) {
+    append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
+    if (fragment.length() > 0) {
+      myText.append("<span ");
+      formatStyle(myText, attributes);
+      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
+    }
+  }
+
+  public void appendLink(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, @NotNull final String url) {
+    if (fragment.length() > 0) {
+      myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\" ");
+      formatStyle(myText, attributes);
+      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
+    }
+  }
+
+  private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {
     final Color fgColor = attributes.getFgColor();
     final Color bgColor = attributes.getBgColor();
     final int style = attributes.getStyle();
 
-    myText.append("<span style=\"");
+    builder.append("style=\"");
     if (fgColor != null) {
-      myText.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+      builder.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
     }
     if (bgColor != null) {
-      myText.append("background-color:#").append(Integer.toString(bgColor.getRGB() & 0xFFFFFF, 16)).append(';');
+      builder.append("background-color:#").append(Integer.toString(bgColor.getRGB() & 0xFFFFFF, 16)).append(';');
     }
     if ((style & SimpleTextAttributes.STYLE_BOLD) != 0) {
-      myText.append("font-weight:bold;");
+      builder.append("font-weight:bold;");
     }
     if ((style & SimpleTextAttributes.STYLE_ITALIC) != 0) {
-      myText.append("font-style:italic;");
+      builder.append("font-style:italic;");
     }
     if ((style & SimpleTextAttributes.STYLE_UNDERLINE) != 0) {
-      myText.append("text-decoration:underline;");
+      builder.append("text-decoration:underline;");
     }
     else if ((style & SimpleTextAttributes.STYLE_STRIKEOUT) != 0) {
-      myText.append("text-decoration:line-through;");
+      builder.append("text-decoration:line-through;");
     }
-    myText.append("\">").append(StringUtil.escapeXml(fragment)).append("</span>");
+    builder.append('"');
   }
 
-  protected void render(@NotNull final ModifiableCellAppearance appearance) {
+  public void render(@NotNull final ModifiableCellAppearance appearance) {
     if (appearance instanceof SimpleTextCellAppearance) {
       final SimpleTextCellAppearance simple = (SimpleTextCellAppearance)appearance;
       append(simple.getText(), simple.getTextAttributes());

@@ -210,17 +210,54 @@ public class UtilTest extends TestCase {
   public void testCutFirst() {
     prepareForFragments();
 
-    CHECK.singleElement(Util.cutFirst(new DiffFragment[]{DiffFragment.unchanged("ab", "ac")}),
+    CHECK.singleElement(Util.cutFirst(new DiffFragment[]{
+                          DiffFragment.unchanged("ab", "ac")
+                        }),
                         DiffFragment.unchanged("b", "c"));
 
-    CHECK.compareAll(new DiffFragment[]{new DiffFragment(null, "c")},
-                     Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "b"),
-                                                      new DiffFragment(null, "c"),
-                                                      new DiffFragment("a", null)})
+    CHECK.compareAll(new DiffFragment[]{
+                       new DiffFragment(null, "c")
+                     },
+                     Util.cutFirst(new DiffFragment[]{
+                       new DiffFragment(null, "b"),
+                       new DiffFragment(null, "c"),
+                       new DiffFragment("a", null)})
                      );
 
-    CHECK.compareAll(new DiffFragment[]{new DiffFragment(null, "b"), new DiffFragment(null, "d")},
-                     Util.cutFirst(new DiffFragment[]{new DiffFragment(null, "ab"), new DiffFragment("c", "d")}));
+    CHECK.compareAll(new DiffFragment[]{
+                       new DiffFragment(null, "b"),
+                       new DiffFragment(null, "d")
+                     },
+                     Util.cutFirst(new DiffFragment[]{
+                       new DiffFragment(null, "ab"),
+                       new DiffFragment("c", "d")
+                     }));
+  }
+
+  public void testCutFirst2() {
+    prepareForFragments();
+
+    CHECK.compareAll(new DiffFragment[] {
+                       new DiffFragment(null, ")"),
+                       new DiffFragment(" {", " {")
+                     },
+                     Util.cutFirst(new DiffFragment[] {
+                       new DiffFragment(null, ")"),
+                       new DiffFragment(") {", ") {" )
+                     }));
+  }
+
+  public void testCutFirst3() {
+    prepareForFragments();
+
+    CHECK.compareAll(new DiffFragment[] {
+                       new DiffFragment(null, ", ?"),
+                       new DiffFragment(")\");", ")\");")
+                     },
+                     Util.cutFirst(new DiffFragment[] {
+                       new DiffFragment(null, "?, "),
+                       new DiffFragment("?)\");", "?)\");")
+                     }));
 
   }
 }

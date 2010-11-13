@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,17 +32,25 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * User: anna
@@ -65,6 +76,21 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     myFileEditorManager = fileEditorManager;
     myProject = project;
     myTemplateManager = templateManager;
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {
+        final Set<PsiFile> files = new HashSet<PsiFile>(myListenerMap.keySet());
+        for (PsiFile psiFile : files) {
+          removeDocListener(myPsiDocumentManager.getDocument(psiFile), psiFile);
+        }
+      }
+
+      public void rootsChanged(ModuleRootEvent event) {
+        final FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        for (VirtualFile file : myFileEditorManager.getOpenFiles()) {
+          addDocListener(documentManager.getDocument(file));
+        }
+      }
+    });
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -126,10 +152,9 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   @Override
   public void projectOpened() {
     myPsiManager.addPsiTreeChangeListener(this);
-    EditorFactory.getInstance().addEditorFactoryListener(this);
+    EditorFactory.getInstance().addEditorFactoryListener(this, myProject);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
-        EditorFactory.getInstance().removeEditorFactoryListener(ChangeSignatureGestureDetector.this);
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
         LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
       }

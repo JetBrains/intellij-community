@@ -23,7 +23,6 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -55,6 +54,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,8 +114,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       protected void paintBorder(final Graphics g) {
         super.paintBorder(g);
 
-        final LafManager lafManager = LafManager.getInstance();
-        if (!(lafManager.isUnderAquaLookAndFeel() || lafManager.isUnderQuaquaLookAndFeel()) && isFocusOwner()) {
+        if (!(UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderQuaquaLookAndFeel()) && isFocusOwner()) {
           final Rectangle bounds = getBounds();
           g.setColor(FOCUS_CATCHER_COLOR);
           g.drawRect(0, 0, bounds.width - 1, bounds.height - 1);

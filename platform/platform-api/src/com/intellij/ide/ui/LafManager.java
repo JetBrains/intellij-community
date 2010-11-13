@@ -33,8 +33,14 @@ public abstract class LafManager {
 
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
 
+  /**
+   * @deprecated use {@link com.intellij.util.ui.UIUtil#isUnderAquaLookAndFeel()}
+   */
   public abstract boolean isUnderAquaLookAndFeel();
 
+  /**
+   * @deprecated use {@link com.intellij.util.ui.UIUtil#isUnderQuaquaLookAndFeel()}
+   */
   public abstract boolean isUnderQuaquaLookAndFeel();
 
   public abstract void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);

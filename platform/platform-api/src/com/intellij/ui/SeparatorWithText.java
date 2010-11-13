@@ -15,14 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class SeparatorWithText extends JComponent {
-
   private static final int VGAP = 3;
   private static final int HGAP = 3;
 
@@ -73,16 +72,23 @@ public class SeparatorWithText extends JComponent {
     g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND);
 
     if (hasCaption()) {
-      FontMetrics fm = getFontMetrics(getFont());
-      int baseline = VGAP + fm.getAscent();
+      final FontMetrics fm = getFontMetrics(getFont());
+      final int baseline = VGAP + fm.getAscent();
 
       final int fontWidth = getPreferredFontSize().width;
       final int lineX = (getWidth() - fontWidth) / 2;
       final int lineY = VGAP + fm.getHeight() / 2;
 
       g.drawLine(0, lineY, lineX, lineY);
-      g.drawString(myCaption, lineX + HGAP, baseline);
       g.drawLine(lineX + fontWidth, lineY, getWidth() - 1, lineY);
+
+      final GraphicsConfig config = new GraphicsConfig(g);
+      config.setAntialiasing(true);
+
+      g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
+      g.drawString(myCaption, lineX + HGAP, baseline);
+
+      config.restore();
     }
     else {
       g.drawLine(0, VGAP, getWidth() - 1, VGAP);
@@ -92,5 +98,4 @@ public class SeparatorWithText extends JComponent {
   public void setCaption(String captionAboveOf) {
     myCaption = captionAboveOf;
   }
-
 }
