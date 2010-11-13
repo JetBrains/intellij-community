@@ -5,6 +5,8 @@ import org.jetbrains.jps.Project
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.dag.DagNode
 import org.jetbrains.jps.builders.BuildUtil
+import org.jetbrains.jps.artifacts.ant.AntPreBuildTask
+import org.jetbrains.jps.artifacts.ant.AntPostBuildTask
 
 /**
  * @author nik
@@ -18,6 +20,8 @@ class ArtifactBuilder {
 
   def ArtifactBuilder(Project project) {
     this.project = project;
+    preBuildTasks.add(new AntPreBuildTask(project));
+    postBuildTasks.add(new AntPostBuildTask(project));
   }
 
   def getSortedArtifacts() {
