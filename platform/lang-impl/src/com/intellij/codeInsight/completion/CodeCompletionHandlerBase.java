@@ -68,6 +68,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -207,8 +208,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        final Boolean result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset); // TODO: Peter Lazy API
-        if (result == Boolean.TRUE) return;
+        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset); // TODO: Peter Lazy API
+        if (result == ThreeState.YES) return;
+        if (result == ThreeState.NO) break;
       }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
@@ -224,9 +226,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      final Boolean result = confidence.shouldFocusLookup(parameters);
-      if (result != null) {
-        return result;
+      final ThreeState result = confidence.shouldFocusLookup(parameters);
+      if (result != ThreeState.UNSURE) {
+        return result == ThreeState.YES;
       }
     }
     return false;
