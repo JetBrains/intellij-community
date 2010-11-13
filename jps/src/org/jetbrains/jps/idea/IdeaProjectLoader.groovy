@@ -174,7 +174,8 @@ public class IdeaProjectLoader {
       def artifactName = artifactTag."@name"
       def outputPath = projectMacroExpander.expandMacros(artifactTag."output-path"[0]?.text())
       def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
-      def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath)
+      def options = artifactLoader.loadOptions(artifactTag)
+      def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath, options: options);
       project.artifacts[artifact.name] = artifact;
     }
   }

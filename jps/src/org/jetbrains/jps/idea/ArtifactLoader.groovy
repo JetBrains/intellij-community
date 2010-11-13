@@ -1,10 +1,10 @@
 package org.jetbrains.jps.idea
 
+import org.jetbrains.jps.MacroExpander
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.*
-import org.jetbrains.jps.MacroExpander
 
-/**
+ /**
  * @author nik
  */
 class ArtifactLoader {
@@ -76,6 +76,30 @@ class ArtifactLoader {
       }
     }
     return elementTypes[typeId]
+  }
+
+  Map<String, Options> loadOptions(Node artifactTag) {
+    def Map<String, Options> res = [:];
+    artifactTag.properties.each{Node el ->
+      def String id = el."@id";
+      el.options.each{Node optionsEl ->
+        def boolean enabled = optionsEl."@enabled";
+        if (enabled) {
+          def Map<String, String> options = [:];
+          res.put(id, new Options() {
+            Map<String, String> getAll() {
+              return options;
+            }
+          })
+          optionsEl.children().each{Node opt ->
+            def String key = opt.name();
+            def String value = macroExpander.expandMacros(opt.text());
+            options.put(key, value);
+          }
+        }
+      }
+    }
+    return res;
   }
 
   List<LayoutElement> loadChildren(Node node, String artifactName) {
