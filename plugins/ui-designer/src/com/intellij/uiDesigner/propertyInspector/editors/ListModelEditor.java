@@ -64,6 +64,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
 
   public JComponent getComponent(final RadComponent component, final String[] value, final InplaceContext inplaceContext) {
     myLastComponent = component;
+    myLastValue = value;
     if (inplaceContext != null) {
       if (inplaceContext.isStartedByTyping()) {
         openListEditorDialog(new String[] { Character.toString(inplaceContext.getStartChar()) });
@@ -74,7 +75,6 @@ public class ListModelEditor extends PropertyEditor<String[]> {
       inplaceContext.setModalDialogDisplayed(true);
     }
     else {
-      myLastValue = value;
       myTextField.setText(listValueToString(value));
     }
     return myTextField;
