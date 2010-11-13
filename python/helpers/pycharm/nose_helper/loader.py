@@ -40,7 +40,7 @@ class TestLoader(unittest.TestLoader):
         self.suiteClass = ContextSuiteFactory(config=self.config)
         unittest.TestLoader.__init__(self)     
 
-    def loadTestsFromGenerator(self, generator, module):
+    def loadTestsFromGenerator(self, generator, module, lineno):
         """The generator function may yield either:
         * a callable, or
         * a function name resolvable within the same module
@@ -51,7 +51,9 @@ class TestLoader(unittest.TestLoader):
                     test_func, arg = self.parseGeneratedTest(test)
                     if not hasattr(test_func, '__call__'):
                         test_func = getattr(m, test_func)
-                    yield FunctionTestCase(test_func, arg=arg, descriptor=g)
+                    test_case = FunctionTestCase(test_func, arg=arg, descriptor=g)
+                    test_case.lineno = lineno
+                    yield test_case
             except KeyboardInterrupt:
                 raise
             except:
@@ -84,7 +86,6 @@ class TestLoader(unittest.TestLoader):
                 test_funcs.sort(key = func_lineno)
                 tests = [self.makeTest(t, parent=module) for t in
                                         test_classes + test_funcs]
-
         return self.suiteClass(ContextList(tests, context=module))
 
 
@@ -109,11 +110,14 @@ class TestLoader(unittest.TestLoader):
         except:
             exc = sys.exc_info()
             return Failure(exc[0], exc[1])
-    
+
     def _makeTest(self, obj, parent=None):
         """Given a test object and its parent, return a test case
         or test suite.
         """
+        import inspect
+        lineno = inspect.getsourcelines(obj)
+
         if isinstance(obj, unittest.TestCase):
             return obj
         elif isclass(obj):
@@ -129,8 +133,11 @@ class TestLoader(unittest.TestLoader):
             if issubclass(parent, unittest.TestCase):
                 return parent(obj.__name__)
             else:
-                return MethodTestCase(obj)
+              test_case = MethodTestCase(obj)
+              test_case.lineno = lineno[1]
+              return test_case
         elif isfunction(obj):
+            setattr(obj, "lineno", lineno[1])
             if hasattr(obj, "__module__"):
                 if parent and obj.__module__ != parent.__name__:
                     obj = transplant_func(obj, parent.__name__)
@@ -141,7 +148,7 @@ class TestLoader(unittest.TestLoader):
                     obj = transplant_func(obj)
 
             if isgenerator(obj):
-                return self.loadTestsFromGenerator(obj, parent)
+                return self.loadTestsFromGenerator(obj, parent, lineno[1])
             else:
                 return FunctionTestCase(obj)
         else:

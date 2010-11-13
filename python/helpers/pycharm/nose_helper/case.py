@@ -61,7 +61,21 @@ class TestBase(unittest.TestCase):
     __test__ = False # do not collect
 
     def runTest(self):
+      try:
         self.test(*self.arg)
+      except TypeError:
+        raise TypeError("Test method shouldn't have arguments")
+
+    def __get_module__(self):
+      def get_class_that_defined_method(meth):
+        import inspect
+        obj = meth.im_self
+        for cls in inspect.getmro(meth.im_class):
+          if meth.__name__ in cls.__dict__: return (cls.__module__, cls.__name__)
+        return ("Unknown module", "")
+
+      func = self.test
+      return get_class_that_defined_method(func)
 
 class FunctionTestCase(TestBase):
     """TestCase wrapper for test functions.
@@ -76,8 +90,7 @@ class FunctionTestCase(TestBase):
         self.arg = arg
         self.descriptor = descriptor
         TestBase.__init__(self)
-        self.__class__.__module__ = self.__get_module__()
-        self.__class__.__name__ = ""
+        self.suite = "%s" % self.__get_module__()
 
     def _context(self):
         return resolve_name(self.test.__module__)
@@ -147,21 +160,22 @@ class MethodTestCase(TestBase):
         self.descriptor = descriptor
         self.cls = method.im_class
         self.inst = self.cls()
-
         if self.test is None:
             method_name = self.method.__name__
             self.test = getattr(self.inst, method_name)
         TestBase.__init__(self)
-        self.__class__.__module__ = self.__get_module__()
-        self.__class__.__name__ = ""
+        self.suite = "%s.%s" % self.__get_module__()
 
     def __get_module__(self):
-        func, arg = self._descriptors()
-        if hasattr(func, "__module__"):
-            return "%s.%s" % (func.__module__, self.cls.__name__)
-        else:
-            #TODO[kate]: get module of function in jython < 2.2
-            return "Unknown module."
+      def get_class_that_defined_method(meth):
+        import inspect
+        obj = meth.im_self
+        for cls in inspect.getmro(meth.im_class):
+          if meth.__name__ in cls.__dict__: return (cls.__module__, cls.__name__)
+        return ("Unknown module", "")
+
+      func, arg = self._descriptors()
+      return get_class_that_defined_method(func)
 
     def __str__(self):
         func, arg = self._descriptors()
