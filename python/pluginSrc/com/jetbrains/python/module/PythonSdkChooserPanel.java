@@ -22,7 +22,7 @@ public class PythonSdkChooserPanel extends JComponent {
   private final JdkChooserPanel myJdkChooser;
 
   /**
-   * RubySdkChooserPanel - the panel to choose Ruby SDK
+   * PythonSdkChooserPanel - the panel to choose Python SDK
    *
    * @param project Current project
    */
@@ -37,9 +37,9 @@ public class PythonSdkChooserPanel extends JComponent {
     add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                       GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
 
-    final JLabel jdklabel = new JLabel("Python Interpreter:");
-    jdklabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    add(jdklabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+    final JLabel jdkLabel = new JLabel("Python Interpreter:");
+    jdkLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    add(jdkLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                          GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
     add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
