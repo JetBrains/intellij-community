@@ -72,7 +72,6 @@ class TeamcityTestResult(TestResult):
 
     def startTest(self, test):
         suite, location, suite_location = self.__getSuite(test)
-        print "SUITE", suite, location
         if suite != self.current_suite:
             if self.current_suite:
                 self.messages.testSuiteFinished(self.current_suite)

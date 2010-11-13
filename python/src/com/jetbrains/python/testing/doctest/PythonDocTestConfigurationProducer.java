@@ -1,6 +1,5 @@
 /*
- * User: anna
- * Date: 13-May-2010
+ * User: catherine
  */
 package com.jetbrains.python.testing.doctest;
 
@@ -76,9 +75,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-    if (pyFunction == null || pyFunction.getDocStringExpression() == null) return null;
-    PythonDocStringParser parser = new PythonDocStringParser(pyFunction.getDocStringExpression().getStringValue());
-    if (!parser.hasExample()) return null;
+    if (pyFunction == null || !PythonDocTestUtil.isDocTestFunction(pyFunction)) return null;
     final PyClass containingClass = pyFunction.getContainingClass();
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from function");
 
@@ -100,7 +97,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromClass(Location location, PyElement element) {
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (pyClass == null) return null;
+    if (pyClass == null || !PythonDocTestUtil.isDocTestClass(pyClass)) return null;
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from class");
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();
 
@@ -160,7 +157,13 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PsiElement element) {
     PsiElement file = element.getContainingFile();
     if (file == null) return null;
-    
+
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      final List<PyStatement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
+      if (testCases.isEmpty()) return null;
+    }
+
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from file");
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();
 

@@ -126,6 +126,6 @@ if __name__ == "__main__":
               all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
 
 
-    debug("/ Loaded " + str(all.countTestCases()) + " tests")
-    TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
-    TeamcityTestRunner().run(all)
+  debug("/ Loaded " + str(all.countTestCases()) + " tests")
+  TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
+  TeamcityTestRunner().run(all)

@@ -179,7 +179,6 @@ def walkModulesUsingPattern(modules, dirname, names, pattern = ".*"):
   
   for name in names:
     path = os.path.join(dirname, name)
-    print name, prog.match(name) 
     if prog.match(name):
       if name.endswith(".py"):
         modules.append(loadSource(path))

@@ -17,12 +17,16 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.testing.PythonUnitTestConfigurationProducer;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.List;
 
 public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
@@ -44,6 +48,12 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     myPsiElement = file;
     String path = file.getVirtualFile().getPath();
 
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      final List<PyStatement> testCases = PyTestUtil.getPyTestCasesFromFile(pyFile);
+      if (testCases.isEmpty()) return null;
+    } else return null;
+    
     final RunnerAndConfigurationSettings result =
       RunManager.getInstance(location.getProject()).createRunConfiguration(file.getName(), getConfigurationFactory());
     PyTestRunConfiguration configuration = (PyTestRunConfiguration)result.getConfiguration();
