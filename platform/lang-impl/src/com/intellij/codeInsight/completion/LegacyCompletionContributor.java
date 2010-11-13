@@ -115,11 +115,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                        final int startOffset,
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
-    if (!ReferenceRange.containsOffsetInElement(reference, startOffset)) {
+    final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
+    if (!ReferenceRange.containsOffsetInElement(reference, offsetInElement)) {
       return;
     }
 
-    final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
     final String prefix = reference.getElement().getText().substring(reference.getRangeInElement().getStartOffset(), offsetInElement);
     consumer.consume(reference, result.withPrefixMatcher(prefix));
   }
