@@ -15,6 +15,9 @@
  */
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.command.HgCommandResult;
@@ -55,13 +59,18 @@ public class HgCheckoutProvider implements CheckoutProvider {
     }
     final String targetDir = destinationParent.getPath() + File.separator + dialog.getDirectoryName();
 
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", dialog.getSourceRepositoryURL()), true) {
+    final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
+    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
       @Override public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
-        clone.setRepositoryURL(dialog.getSourceRepositoryURL());
+        clone.setRepositoryURL(sourceRepositoryURL);
         clone.setDirectory(targetDir);
         final HgCommandResult myCloneResult = clone.execute();
-        if (myCloneResult != null && myCloneResult.getExitValue() == 0) {
+        if (myCloneResult == null) {
+          notifyError("Clone failed", "Clone failed due to unknown error", project);
+        } else if (myCloneResult.getExitValue() != 0) {
+          notifyError("Clone failed", "Clone from " + sourceRepositoryURL + " failed.<br/><br/>" + myCloneResult.getRawError(), project);
+        } else {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -75,6 +84,10 @@ public class HgCheckoutProvider implements CheckoutProvider {
       }
     }.queue();
 
+  }
+
+  private static void notifyError(String title, String description, Project project) {
+    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
   }
 
   /**
