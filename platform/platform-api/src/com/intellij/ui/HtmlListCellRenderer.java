@@ -73,16 +73,24 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   protected abstract void doCustomize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
+  public void append(@NotNull final String fragment) {
+    append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
-    myText.append("<span ");
-    formatStyle(myText, attributes);
-    myText.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
+    if (fragment.length() > 0) {
+      myText.append("<span ");
+      formatStyle(myText, attributes);
+      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
+    }
   }
 
   public void appendLink(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, @NotNull final String url) {
-    myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\" ");
-    formatStyle(myText, attributes);
-    myText.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
+    if (fragment.length() > 0) {
+      myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\" ");
+      formatStyle(myText, attributes);
+      myText.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
+    }
   }
 
   private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {
