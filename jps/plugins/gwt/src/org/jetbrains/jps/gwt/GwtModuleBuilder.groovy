@@ -55,7 +55,7 @@ class GwtModuleBuilder implements ModuleBuilder {
 
     gwtModules.each {String moduleName ->
       project.stage("Compiling GWT Module")
-      ant.java(fork: "true", classname: "com.google.gwt.dev.Compiler") {
+      ant.java(fork: "true", classname: "com.google.gwt.dev.Compiler", failonerror: "true") {
         jvmarg(line: "-Xmx${facet.compilerMaxHeapSize}m")
         if (!facet.additionalCompilerParameters.isEmpty()) {
           jvmarg(line: facet.additionalCompilerParameters)
