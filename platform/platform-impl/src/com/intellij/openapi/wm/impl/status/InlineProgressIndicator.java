@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -105,7 +104,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.add(myProcessName, BorderLayout.NORTH);
       final Font font = myProcessName.getFont();
 
-      final boolean aqua = LafManager.getInstance().isUnderAquaLookAndFeel();
+      final boolean aqua = UIUtil.isUnderAquaLookAndFeel();
 
       int size = font.getSize() - (aqua ? 4 : 2);
       if (size < (aqua ? 8 : 10)) {
