@@ -155,18 +155,6 @@ class TestLoader(unittest.TestLoader):
             return Failure(TypeError,
                            "Can't make a test from %s" % obj)
 
-    def resolve(self, name, module):
-        """Resolve name within module
-        """
-        obj = module
-        parts = name.split('.')
-        for part in parts:
-            parent, obj = obj, getattr(obj, part, None)
-        if obj is None:
-            # no such test
-            obj = Failure(ValueError, "No such test %s" % name)
-        return parent, obj
-
     def parseGeneratedTest(self, test):
         """Given the yield value of a test generator, return a func and args.
         """

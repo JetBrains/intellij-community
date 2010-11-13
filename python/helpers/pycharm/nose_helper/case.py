@@ -2,6 +2,7 @@ import sys
 import unittest
 from nose_helper.config import Config
 from nose_helper.util import resolve_name, try_run
+import imp
 
 class Test(unittest.TestCase):
     """The universal test case wrapper.
@@ -9,7 +10,7 @@ class Test(unittest.TestCase):
     __test__ = False # do not collect
     def __init__(self, test, config=None):
         if not hasattr(test, '__call__'):
-            raise TypeError("nose_helper.case.Test called with argument %r that "
+            raise TypeError("Test called with argument %r that "
                             "is not callable. A callable is required."
                             % test)
         self.test = test
@@ -60,22 +61,14 @@ class TestBase(unittest.TestCase):
     """
     __test__ = False # do not collect
 
+    class Suite:
+      pass
+
     def runTest(self):
       try:
         self.test(*self.arg)
       except TypeError:
         raise TypeError("Test method shouldn't have arguments")
-
-    def __get_module__(self):
-      def get_class_that_defined_method(meth):
-        import inspect
-        obj = meth.im_self
-        for cls in inspect.getmro(meth.im_class):
-          if meth.__name__ in cls.__dict__: return (cls.__module__, cls.__name__)
-        return ("Unknown module", "")
-
-      func = self.test
-      return get_class_that_defined_method(func)
 
 class FunctionTestCase(TestBase):
     """TestCase wrapper for test functions.
@@ -90,7 +83,12 @@ class FunctionTestCase(TestBase):
         self.arg = arg
         self.descriptor = descriptor
         TestBase.__init__(self)
-        self.suite = "%s" % self.__get_module__()
+        
+        self.suite = TestBase.Suite()
+        self.suite.__module__ = self.__get_module()
+        self.suite.__name__ = ""
+        self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
+        self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
 
     def _context(self):
         return resolve_name(self.test.__module__)
@@ -126,7 +124,7 @@ class FunctionTestCase(TestBase):
         return name
     __repr__ = __str__
 
-    def __get_module__(self):
+    def __get_module(self):
         func, arg = self._descriptors()
         if hasattr(func, "__module__"):
             return func.__module__
@@ -164,9 +162,13 @@ class MethodTestCase(TestBase):
             method_name = self.method.__name__
             self.test = getattr(self.inst, method_name)
         TestBase.__init__(self)
-        self.suite = "%s.%s" % self.__get_module__()
+        
+        self.suite = TestBase.Suite()
+        self.suite.__module__, self.suite.__name__ = self.__get_module()
+        self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
+        self.suite.location = "python_uttestid://" + self.suite.__module__ + "." + self.suite.__name__
 
-    def __get_module__(self):
+    def __get_module(self):
       def get_class_that_defined_method(meth):
         import inspect
         obj = meth.im_self

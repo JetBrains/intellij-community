@@ -54,29 +54,30 @@ class TeamcityTestResult(TestResult):
     def addSkip(self, test, reason):
         self.messages.testIgnored(self.getTestName(test), message=reason)
 
-    def startTest(self, test):
-        if hasattr(test, "suite"):
-          suite = str(test.suite)
-          import imp
-          ind = test.suite.find(".")
-          if ind != -1:
-            module = test.suite[:ind]
-          else:
-            module = test.suite
-          location = "file:///" + imp.find_module(module)[1]
-          if hasattr(test, "lineno"):
-            location = location + ":" + str(test.lineno)
-          else:
-            location = location + ":" + str(test.test.lineno)
+    def __getSuite(self, test):
+      if hasattr(test, "suite"):
+        suite = strclass(test.suite)
+        suite_location = test.suite.location
+        location = test.suite.abs_location
+        if hasattr(test, "lineno"):
+          location = location + ":" + str(test.lineno)
         else:
-          suite = strclass(test.__class__)
-          location="python_uttestid://" + str(test.id())
-          
+          location = location + ":" + str(test.test.lineno)
+      else:
+        suite = strclass(test.__class__)
+        suite_location = "python_uttestid://" + suite
+        location = "python_uttestid://" + str(test.id())
+
+      return (suite, location, suite_location)
+
+    def startTest(self, test):
+        suite, location, suite_location = self.__getSuite(test)
+        print "SUITE", suite, location
         if suite != self.current_suite:
             if self.current_suite:
                 self.messages.testSuiteFinished(self.current_suite)
             self.current_suite = suite
-            self.messages.testSuiteStarted(self.current_suite, location="python_uttestid://" + self.current_suite)
+            self.messages.testSuiteStarted(self.current_suite, location=suite_location)
         setattr(test, "startTime", datetime.datetime.now())
         self.messages.testStarted(self.getTestName(test), location=location)
 

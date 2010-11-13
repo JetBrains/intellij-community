@@ -2,11 +2,9 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
