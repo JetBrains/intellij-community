@@ -117,7 +117,12 @@ public abstract class RunConfigurationExtension {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       Element el = new Element("extension");
       el.setAttribute("name", extension.getName());
-      extension.writeExternal(runConfiguration, el);
+      try {
+        extension.writeExternal(runConfiguration, el);
+      }
+      catch (WriteExternalException e) {
+        continue;
+      }
       map.put(extension.getName(), el);
     }
 
