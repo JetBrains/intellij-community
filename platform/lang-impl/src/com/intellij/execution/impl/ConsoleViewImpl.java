@@ -947,6 +947,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFoldingAlarm.cancelAllRequests();
     final Runnable runnable = new Runnable() {
       public void run() {
+        if (myEditor == null || myEditor.isDisposed()) {
+          return;
+        }
+
         assertIsDispatchThread();
         final FoldingModel model = myEditor.getFoldingModel();
         final Runnable operation = new Runnable() {
