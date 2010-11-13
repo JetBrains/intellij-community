@@ -17,8 +17,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -36,7 +34,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   private final static String TEXT_CONSOLE_PANEL = "TEXT_CONSOLE_PANEL";
   private final static String PYDEV_CONSOLE_PANEL = "PYDEV_CONSOLE_PANEL";
 
-  private final PydevLanguageConsoleView myPydevConsoleView;
+  private final PythonDebugConsoleView myPydevConsoleView;
 
   private final ConsoleViewImpl myTextConsole;
 
@@ -54,17 +52,9 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     showDebugConsole(false);
   }
 
-  private static PydevLanguageConsoleView createConsoleView(Project project) {
-    return new PydevLanguageConsoleView(project, "") {
-      @Override
-      protected EditorEx createRealEditor() {
-        EditorEx editor = myConsole.getHistoryViewer();
-        editor.setHighlighter(createHighlighter());
-        return editor;
-      }
-    };
+  private static PythonDebugConsoleView createConsoleView(Project project) {
+    return new PythonDebugConsoleView(project, "");
   }
-
 
   private void doShowConsole(String type) {
     CardLayout cl = (CardLayout)(getLayout());
@@ -86,7 +76,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     myIsDebugConsole = flag;
   }
 
-  public PydevLanguageConsoleView getPydevConsoleView() {
+  public PythonDebugConsoleView getPydevConsoleView() {
     return myPydevConsoleView;
   }
 

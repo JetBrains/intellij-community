@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PydevLanguageConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
+import com.jetbrains.python.console.PythonDebugConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -92,14 +93,14 @@ public class PyDebugRunner extends GenericProgramRunner {
     ProcessHandler processHandler = result.getProcessHandler();
 
     if (console instanceof PythonDebugLanguageConsoleView) {
-      PydevLanguageConsoleView pydevConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
+      PythonDebugConsoleView pythonDebugConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
 
 
       ConsoleCommunication consoleCommunication =
         new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
-      pydevConsoleView.setConsoleCommunication(consoleCommunication);
+      pythonDebugConsoleView.setConsoleCommunication(consoleCommunication);
 
-      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pydevConsoleView,
+      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonDebugConsoleView,
                                                                                                                     processHandler,
                                                                                                                     consoleCommunication);
 
@@ -107,11 +108,11 @@ public class PyDebugRunner extends GenericProgramRunner {
 
       List<AnAction> actions = AbstractConsoleRunnerWithHistory
         .createConsoleExecActions(
-          pydevConsoleView.getConsole(), processHandler, consoleExecuteActionHandler).getActionsAsList();
+          pythonDebugConsoleView.getConsole(), processHandler, consoleExecuteActionHandler).getActionsAsList();
 
 
       AbstractConsoleRunnerWithHistory
-        .registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pydevConsoleView.getComponent());
+        .registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pythonDebugConsoleView.getComponent());
     }
   }
 
