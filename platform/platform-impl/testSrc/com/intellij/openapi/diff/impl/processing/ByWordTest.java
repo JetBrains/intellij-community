@@ -71,6 +71,37 @@ public class ByWordTest extends TestCase {
     }, fragments);
   }
 
+  public void testIdea58505Trim() {
+    DiffPolicy byWord = new ByWord(ComparisonPolicy.TRIM_SPACE);
+    DiffFragment[] fragments = byWord.buildFragments("   if (eventMerger!=null && !dataSelection.getValueIsAdjusting()) {",
+                                                     "   if (eventMerger!=null && (dataSelection==null || !dataSelection.getValueIsAdjusting())) {");
+    CHECK.compareAll(new DiffFragment[] {
+      new DiffFragment("   if (eventMerger!=null && ", "   if (eventMerger!=null && "),
+      new DiffFragment("!", "("),
+      new DiffFragment("dataSelection", "dataSelection"),
+      new DiffFragment(null, "=="),
+      new DiffFragment(null, "null || !dataSelection"),
+      new DiffFragment(".getValueIsAdjusting())", ".getValueIsAdjusting())"),
+      new DiffFragment(null, ")"),
+      new DiffFragment(" {", " {")
+    }, fragments);
+  }
+
+  public void testIdea56428() {
+    DiffPolicy byWord = new ByWord(ComparisonPolicy.DEFAULT);
+    DiffFragment[] fragments = byWord.buildFragments("messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?)\");\n",
+                                                     "messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, CREATION_TIMESTAMP, STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?, ?)\");\n");
+    CHECK.compareAll(new DiffFragment[] {
+      new DiffFragment("messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, ", "messageInsertStatement = connection.prepareStatement(\"INSERT INTO AUDIT (AUDIT_TYPE_ID, "),
+      new DiffFragment(null, "CREATION_TIMESTAMP"),
+      new DiffFragment(null, ","),
+      new DiffFragment(null, " "),
+      new DiffFragment("STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?", "STATUS, SERVER_ID, INSTANCE_ID, REQUEST_ID) VALUES (?, ?, ?, ?, ?"),
+      new DiffFragment(null, ", ?"),
+      new DiffFragment(")\");\n", ")\");\n"),
+    }, fragments);
+  }
+
   public void testExtractWords() {
     String text = "a b, c.d\n\n  x\n y";
     Word[] words = ByWord.buildWords(text, ComparisonPolicy.DEFAULT);

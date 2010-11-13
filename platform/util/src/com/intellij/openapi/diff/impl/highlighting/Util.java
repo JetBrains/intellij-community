@@ -17,10 +17,14 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import gnu.trove.TIntHashSet;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class Util {
@@ -284,6 +288,9 @@ public class Util {
   }
 
   public static DiffFragment[] cutFirst(DiffFragment[] fragments) {
+    fragments = transformHeadInsert(fragments, FragmentSide.SIDE1);
+    fragments = transformHeadInsert(fragments, FragmentSide.SIDE2);
+
     int nullCount = 0;
     for (int sideIndex = 0; sideIndex < 2; sideIndex++) {
       FragmentSide side = FragmentSide.fromIndex(sideIndex);
@@ -311,6 +318,34 @@ public class Util {
       dstIndex++;
     }
     return result;
+  }
+
+  private static DiffFragment[] transformHeadInsert(DiffFragment[] fragments, FragmentSide side) {
+    // transforms {abc}abcd into a{bca}bcd
+    if (fragments.length >= 2) {
+      DiffFragment first = fragments[0];
+      DiffFragment second = fragments[1];
+      if (first == null || second == null) {
+        return fragments;
+      }
+      if (side.getText(first) != null) {
+        return fragments;
+      }
+      String rightText = side.getOtherText(first);
+      String secondText = side.getText(second);
+      if (!Comparing.equal(side.getOtherText(second), secondText)) {
+        return fragments;
+      }
+      if (secondText.charAt(0) == rightText.charAt(0)) {
+        List<DiffFragment> result = new ArrayList<DiffFragment>();
+        result.add(side.createFragment(rightText.substring(0, 1), rightText.substring(0, 1), false));
+        result.add(side.createFragment(null, rightText.substring(1) + secondText.substring(0, 1), true));
+        result.add(side.createFragment(secondText.substring(1), secondText.substring(1), second.isModified()));
+        result.addAll(Arrays.asList(fragments).subList(2, fragments.length));
+        return result.toArray(new DiffFragment[result.size()]);
+      }
+    }
+    return fragments;
   }
 
   private static class MyChange extends Diff.Change {

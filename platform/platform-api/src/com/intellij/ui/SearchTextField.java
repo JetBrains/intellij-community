@@ -19,7 +19,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -157,7 +156,7 @@ public class SearchTextField extends JPanel {
   }
 
   private static boolean hasNativeLeopardSearchControl() {
-    return SystemInfo.isMacOSLeopard && LafManager.getInstance().isUnderAquaLookAndFeel();
+    return SystemInfo.isMacOSLeopard && UIUtil.isUnderAquaLookAndFeel();
   }
 
   public void addDocumentListener(DocumentListener listener) {

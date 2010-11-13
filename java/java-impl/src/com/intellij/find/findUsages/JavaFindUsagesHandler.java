@@ -349,7 +349,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     if (element instanceof PomTarget) {
        addAliasingUsages((PomTarget)element, processor, options);
     }
-    if (!ThrowSearchUtil.isSearchable(element) && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
+    final Boolean isSearchable = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return ThrowSearchUtil.isSearchable(element);
+      }
+    });
+    if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
       // todo add to fastTrack
       processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }

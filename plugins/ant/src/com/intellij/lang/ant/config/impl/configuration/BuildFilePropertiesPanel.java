@@ -401,8 +401,8 @@ public class BuildFilePropertiesPanel {
       mySetDefaultAnt.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           AntSetPanel antSetPanel = new AntSetPanel(myAntGlobalConfiguration);
-          antSetPanel.setSelection(myProjectDefaultAnt.find(myAntGlobalConfiguration));
           antSetPanel.reset();
+          antSetPanel.setSelection(myProjectDefaultAnt.find(myAntGlobalConfiguration));
           AntInstallation antInstallation = antSetPanel.showDialog(mySetDefaultAnt);
           if (antInstallation == null) {
             return;

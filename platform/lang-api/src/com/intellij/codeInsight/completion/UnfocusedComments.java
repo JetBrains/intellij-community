@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl;
+package com.intellij.codeInsight.completion;
 
-
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Jeka
+ * @author peter
  */
-public class DiffRange implements DiffFragmentBuilder.Range {
-  private final int myStart;
-  private final int myEnd;
-
-  public DiffRange(int start, int end) {
-    myStart = start;
-    myEnd = end;
-  }
-
-  public int getStart() {
-    return myStart;
-  }
-
-  public int getEnd() {
-    return myEnd;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String toString() {
-    return "DiffRange: " + myStart + "," + myEnd;
+public class UnfocusedComments extends CompletionConfidence {
+  @Override
+  public Boolean shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiComment.class) != null) {
+      return false;
+    }
+    return null;
   }
 }

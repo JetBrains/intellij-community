@@ -186,7 +186,13 @@ public class InlineUtil {
 
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
-        argumentList.addRange(initializers[0], initializers[initializers.length - 1]);
+        PsiElement lastInitializerSibling = initializers[initializers.length - 1];
+        while (lastInitializerSibling != null) {
+          final PsiElement nextSibling = lastInitializerSibling.getNextSibling();
+          if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
+          lastInitializerSibling = nextSibling;
+        }
+        argumentList.addRange(initializers[0], lastInitializerSibling);
       }
       args[args.length - 1].delete();
     }

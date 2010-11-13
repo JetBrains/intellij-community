@@ -34,7 +34,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -226,15 +226,15 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
           return new Dimension(0, 0);
         }
       };
-      myChooser.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          final LocalChangeList l = ((LocalChangeList)value);
-          if (l != null) {
-            String name = l.getName().trim();
+      myChooser.setRenderer(new HtmlListCellRenderer<LocalChangeList>(myChooser.getRenderer()) {
+        @Override
+        protected void doCustomize(JList list, LocalChangeList value, int index, boolean selected, boolean hasFocus) {
+          if (value != null) {
+            String name = value.getName().trim();
             if (name.length() > MAX_LEN) {
               name = name.substring(0, MAX_LEN - 3) + "...";
             }
-            append(name, l.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(name, value.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
         }
       });

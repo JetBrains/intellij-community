@@ -182,6 +182,7 @@
 
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence" id="groovyAdvanced" order="after groovyNameIdentifier"/>
+    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue" order="last"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>

@@ -174,7 +174,7 @@ public class ReassignVariableUtil {
   }
 
   @Nullable
-  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
+  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll, boolean canAdjustFinal) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
     final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     if (processor.size() > 0) {
@@ -189,10 +189,21 @@ public class ReassignVariableUtil {
         return "Press " + shortcuts[0] + " to change type";
       }
     }
+    return adjustFinalText(canAdjustFinal);
+  }
+
+  @Nullable
+  private static String adjustFinalText(boolean canBeFinalAdjusted) {
+    if (canBeFinalAdjusted) {
+      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("PreviousTemplateVariable");
+      if (shortcuts.length > 0) {
+        return "Press " + shortcuts[0] + " to adjust final modifier";
+      }
+    }
     return null;
   }
 
-  public static Expression createExpression(final TypeExpression expression, final String defaultType) {
+  public static Expression createExpression(final TypeExpression expression, final String defaultType, final boolean canBeFinalAdjusted) {
     return new Expression() {
       @Override
       public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
@@ -207,6 +218,11 @@ public class ReassignVariableUtil {
       @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         return expression.calculateLookupItems(context);
+      }
+
+      @Override
+      public String getAdvertisingText() {
+        return adjustFinalText(canBeFinalAdjusted);
       }
     };
   }
