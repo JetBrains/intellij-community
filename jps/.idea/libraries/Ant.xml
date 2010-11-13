@@ -2,6 +2,7 @@
   <library name="Ant">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/ant-1.7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ant-launcher.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
