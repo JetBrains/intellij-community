@@ -34,10 +34,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -53,6 +50,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -239,7 +237,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     pass.setProgressLimit(progressLimit);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    String oldInfo = saveStatusBarInfo(statusBar);
+    Pair<String, String> oldInfo = saveStatusBarInfo(statusBar);
     try {
       for (final VirtualFile virtualFile : files) {
         progress.checkCanceled();
@@ -313,19 +311,21 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return true;
   }
 
-  private static String saveStatusBarInfo(final StatusBar statusBar) {
-    String oldInfo = null;
+  @Nullable
+  private static Pair<String, String> saveStatusBarInfo(final StatusBar statusBar) {
+    Pair<String, String> oldInfo = null;
     if (statusBar instanceof StatusBarEx) {
-      oldInfo = statusBar.getInfo();
+      oldInfo = Pair.create(statusBar.getInfo(), ((StatusBarEx)statusBar).getInfoRequestor());
     }
+
     return oldInfo;
   }
 
-  private static void restoreStatusBarInfo(final StatusBar statusBar, final String oldInfo) {
+  private static void restoreStatusBarInfo(final StatusBar statusBar, final Pair<String, String> oldInfo) {
     if (statusBar instanceof StatusBarEx) {
       LaterInvocator.invokeLater(new Runnable() {
         public void run() {
-          statusBar.setInfo(oldInfo);
+          statusBar.setInfo(oldInfo.first, oldInfo.second);
         }
       });
     }

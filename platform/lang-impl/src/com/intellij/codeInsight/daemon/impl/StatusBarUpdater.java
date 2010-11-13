@@ -57,6 +57,13 @@ public class StatusBarUpdater implements Disposable {
         updateLater();
       }
     });
+
+    project.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+      @Override
+      public void daemonFinished() {
+        updateLater();
+      }
+    });
   }
 
   private void updateLater() {

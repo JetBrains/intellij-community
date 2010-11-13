@@ -103,6 +103,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void setInfo(@Nullable String s, @Nullable String requestor) {
     }
 
+    @Override
+    public String getInfoRequestor() {
+      return null;
+    }
+
     public boolean isVisible() {
       return false;
     }
