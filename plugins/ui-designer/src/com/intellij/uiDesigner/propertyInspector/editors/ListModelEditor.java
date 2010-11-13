@@ -71,6 +71,7 @@ public class ListModelEditor extends PropertyEditor<String[]> {
       else {
         openListEditorDialog(value);
       }
+      inplaceContext.setModalDialogDisplayed(true);
     }
     else {
       myLastValue = value;

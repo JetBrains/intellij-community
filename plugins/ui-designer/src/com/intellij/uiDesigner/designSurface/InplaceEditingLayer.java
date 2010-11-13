@@ -169,6 +169,12 @@ public final class InplaceEditingLayer extends JComponent{
       context.isKeepInitialValue() ? myInplaceProperty.getValue(myInplaceComponent) : null,
       context
     );
+
+    if (context.isModalDialogDisplayed()) {  // ListModel, for example
+      finishInplaceEditing();
+      return;
+    }
+
     LOG.assertTrue(myInplaceEditorComponent != null);
     myInplaceEditor.addPropertyEditorListener(myPropertyEditorListener);
 
