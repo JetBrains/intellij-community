@@ -405,7 +405,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private void launchDebug(Client client) {
-    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData())) {
+    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
       String port = Integer.toString(client.getDebuggerListenPort());
       myDebugLauncher.launchDebug(client.getDevice(), port);
       myDebugLauncher = null;

@@ -176,21 +176,27 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
 
     @SuppressWarnings({"EnumSwitchStatementWhichMissesCases"})
     @Override
-    public boolean isReadyForDebugging(ClientData data) {
+    public boolean isReadyForDebugging(ClientData data, ProcessHandler processHandler) {
       if (myActivityName == null) {
         ClientData.DebuggerStatus status = data.getDebuggerConnectionStatus();
         switch (status) {
           case ERROR:
+            if (processHandler != null) {
+              processHandler.notifyTextAvailable("Debug port is busy", STDOUT);
+            }
             LOG.info("Debug port is busy");
             return false;
           case ATTACHED:
+            if (processHandler != null) {
+              processHandler.notifyTextAvailable("Debugger already attached", STDOUT);
+            }
             LOG.info("Debugger already attached");
             return false;
           default:
             return true;
         }
       }
-      return super.isReadyForDebugging(data);
+      return super.isReadyForDebugging(data, processHandler);
     }
 
     public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException {
