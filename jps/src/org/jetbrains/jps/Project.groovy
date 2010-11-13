@@ -59,7 +59,7 @@ class Project {
 
     try {
       binding.getVariable(name);
-      warning("Variable '$name' is already defined in context. Equally named module will not be accessible. Use project.modules['$name'] instead")
+      debug("Variable '$name' is already defined in context. Equally named module will not be accessible. Use project.modules['$name'] instead")
     }
     catch (MissingPropertyException mpe) {
       binding.setVariable(name, module)
@@ -85,7 +85,7 @@ class Project {
 
     try {
       binding.getVariable(name)
-      warning("Variable '$name' is already defined in context. Equally named library will not be accessible. Use $accessor['$name'] instead")
+      debug("Variable '$name' is already defined in context. Equally named library will not be accessible. Use $accessor['$name'] instead")
     }
     catch (MissingPropertyException mpe) {
       binding.setVariable(name, lib)
@@ -120,6 +120,10 @@ class Project {
 
   def info(String message) {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_INFO)
+  }
+
+  def debug(String message) {
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
   }
 
   def makeAll() {
