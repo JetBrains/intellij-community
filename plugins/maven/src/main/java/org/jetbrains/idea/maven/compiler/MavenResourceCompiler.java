@@ -262,7 +262,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private List<Pattern> collectPatterns(List<String> values, String defaultValue) {
+  public static List<Pattern> collectPatterns(List<String> values, String defaultValue) {
     List<Pattern> result = new ArrayList<Pattern>();
     if (values == null || values.isEmpty()) {
       if (defaultValue == null) return Collections.emptyList();

@@ -17,20 +17,29 @@ package org.jetbrains.android.maven;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.compiler.MavenResourceCompiler;
 import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene.Kudelevsky
@@ -74,6 +83,52 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
     configuration.COPY_RESOURCES_FROM_ARTIFACTS = hasApkSources;
     configuration.ENABLE_AAPT_COMPILER = !hasApkSources;
+  }
+
+  static boolean processResources(@NotNull Module module,
+                                  @NotNull MavenProject mavenProject,
+                                  ResourceProcessor processor) {
+    for (MavenResource resource : mavenProject.getResources()) {
+      if (resource.isFiltered()) {
+        VirtualFile resDir = LocalFileSystem.getInstance().findFileByPath(resource.getDirectory());
+        if (resDir == null) continue;
+
+        List<Pattern> includes = MavenResourceCompiler.collectPatterns(resource.getIncludes(), "**/*");
+        List<Pattern> excludes = MavenResourceCompiler.collectPatterns(resource.getExcludes(), null);
+        String targetPath = FileUtil.toSystemIndependentName(resource.getTargetPath());
+
+        if (processResources(module.getProject(), resDir, resDir, includes, excludes, targetPath, processor)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static boolean processResources(Project project,
+                                  VirtualFile sourceRoot,
+                                  VirtualFile file,
+                                  List<Pattern> includes,
+                                  List<Pattern> excludes,
+                                  String resOutputDir,
+                                  ResourceProcessor processor) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!fileIndex.isIgnored(file)) {
+      String relPath = VfsUtil.getRelativePath(file, sourceRoot, '/');
+      if (relPath != null && MavenUtil.isIncluded(relPath, includes, excludes)) {
+        if (processor.process(file, resOutputDir + "/" + relPath)) {
+          return true;
+        }
+      }
+    }
+    if (file.isDirectory()) {
+      for (VirtualFile child : file.getChildren()) {
+        if (processResources(project, sourceRoot, child, includes, excludes, resOutputDir, processor)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -124,5 +179,9 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       }
     }
     return false;
+  }
+
+  interface ResourceProcessor {
+    boolean process(@NotNull VirtualFile resource, @NotNull String outputPath);
   }
 }
