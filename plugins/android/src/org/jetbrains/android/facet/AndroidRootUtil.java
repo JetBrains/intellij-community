@@ -74,17 +74,18 @@ public class AndroidRootUtil {
   @Nullable
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
-    if (moduleDirPath == null) return null;
-    String absPath = FileUtil.toSystemIndependentName(moduleDirPath + relativePath);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
-    if (file != null) {
-      return file;
+    if (moduleDirPath != null) {
+      String absPath = FileUtil.toSystemIndependentName(moduleDirPath + relativePath);
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
+      if (file != null) {
+        return file;
+      }
     }
 
     if (lookInContentRoot) {
       for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
-        absPath = FileUtil.toSystemIndependentName(contentRoot.getPath() + relativePath);
-        file = LocalFileSystem.getInstance().findFileByPath(absPath);
+        String absPath = FileUtil.toSystemIndependentName(contentRoot.getPath() + relativePath);
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
         if (file != null) {
           return file;
         }
