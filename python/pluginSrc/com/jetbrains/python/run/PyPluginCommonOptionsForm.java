@@ -53,7 +53,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
       }
     });
 
-    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>"));
+    myInterpreterComboBox.setRenderer(new SdkListCellRenderer("<Project Default>", myInterpreterComboBox.getRenderer()));
     myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", configuration.getProject(),
                                                   new FileChooserDescriptor(false, true, false, false, false, false));
 
