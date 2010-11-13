@@ -731,11 +731,6 @@ public class ExpressionParsing extends Parsing {
     return null;
   }
 
-  protected boolean areDiamondsSupported() {
-    return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7);
-  }
-
-
   private CompositeElement parseNewExpression(Lexer lexer,
                                               TreeElement qualifier,
                                               TreeElement dot) {

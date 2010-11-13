@@ -370,7 +370,9 @@ public class FileUtil {
     while(true){
       try{
         //noinspection SSBasedInspection
-        return File.createTempFile(prefix, suffix, dir).getCanonicalFile();
+        final File temp = File.createTempFile(prefix, suffix, dir);
+        final File canonical = temp.getCanonicalFile();
+        return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
       }
       catch(IOException e){ // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {

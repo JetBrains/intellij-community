@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class KnownPackageWeigher extends ProximityWeigher {
 
-  public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {

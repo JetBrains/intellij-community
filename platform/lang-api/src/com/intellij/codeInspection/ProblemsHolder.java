@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -137,7 +138,11 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiReference reference) {
     assert reference instanceof EmptyResolveMessageProvider;
-    registerProblem(reference, ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern(), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+    if (pattern.contains("{0}")) {
+      pattern = MessageFormat.format(pattern, reference.getCanonicalText());
+    }
+    registerProblem(reference, pattern, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
   public void registerProblem(@NotNull final PsiElement psiElement,

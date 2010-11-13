@@ -18,6 +18,8 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +35,18 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
   private boolean myShouldSynchronize;
   private final Alarm mySyncAlarm;
 
+  private BusyObject.Impl myActive;
+  private ApplicationImpl myApp;
+
   public FrameStateManagerImpl(final ApplicationImpl app) {
+    myApp = app;
+    myActive = new BusyObject.Impl() {
+      @Override
+      protected boolean isReady() {
+        return myApp.isActive();
+      }
+    };
+
 
     myShouldSynchronize = false;
     mySyncAlarm = new Alarm();
@@ -41,6 +54,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     app.addApplicationListener(new ApplicationAdapter() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
+        myActive.onReady();
         mySyncAlarm.cancelAllRequests();
         if (myShouldSynchronize) {
           myShouldSynchronize = false;
@@ -62,6 +76,11 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
       }
     });
 
+  }
+
+  @Override
+  public ActionCallback getApplicationActive() {
+    return myActive.getReady(this);
   }
 
   @NotNull
