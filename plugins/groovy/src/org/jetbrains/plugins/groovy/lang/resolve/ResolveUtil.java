@@ -197,7 +197,7 @@ public class ResolveUtil {
     return type;
   }
 
-  public static Map<String, PsiType> getAllSuperTypes(PsiType base, final Project project) {
+  public static Map<String, PsiType> getAllSuperTypes(@NotNull PsiType base, final Project project) {
     final Map<String, Map<String, PsiType>> cache =
       CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<String, Map<String, PsiType>>>() {
         @Override
@@ -209,9 +209,14 @@ public class ResolveUtil {
 
     final PsiClass cls = PsiUtil.resolveClassInType(base);
     //noinspection ConstantConditions
-    String key = cls instanceof PsiTypeParameter
-                 ? cls.getName() + cls.getSuperClass().getName()
-                 : TypeConversionUtil.erasure(base).getCanonicalText();
+    String key;
+    if (cls instanceof PsiTypeParameter) {
+      final PsiClass superClass = cls.getSuperClass();
+      key = cls.getName() + (superClass == null ? CommonClassNames.JAVA_LANG_OBJECT : superClass.getName());
+    }
+    else {
+      key = TypeConversionUtil.erasure(base).getCanonicalText();
+    }
     if (key == null) key = "";
     Map<String, PsiType> result = cache.get(key);
     if (result == null) {
