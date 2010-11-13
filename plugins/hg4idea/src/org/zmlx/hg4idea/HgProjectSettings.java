@@ -18,12 +18,17 @@ import com.intellij.openapi.components.Storage;
 
 @State(
   name = "hg4idea.settings",
-  storages = @Storage(id = "hg4idea.settings", file = "$PROJECT_FILE$")
+  storages = @Storage(id = "hg4idea.settings", file = "$WORKSPACE_FILE$")
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
   private boolean myCheckIncoming = true;
   private boolean myCheckOutgoing = true;
+
+  public static class State {
+    public boolean myCheckIncoming = true;
+    public boolean myCheckOutgoing = true;
+  }
 
   public State getState() {
     final State s = new State();
@@ -69,8 +74,4 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     HgGlobalSettings.getInstance().setHgExecutable(text);
   }
 
-  public static class State {
-    private boolean myCheckIncoming;
-    private boolean myCheckOutgoing;
-  }
 }
