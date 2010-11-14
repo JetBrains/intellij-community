@@ -18,6 +18,8 @@
 
 package org.intellij.images.actions;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,6 +40,8 @@ import org.intellij.images.options.impl.OptionsConfigurabe;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,20 +74,26 @@ public final class EditExternalyAction extends AnAction {
                 }
                 executablePath = FileUtil.toSystemDependentName(executablePath);
                 File executable = new File(executablePath);
-                StringBuffer commandLine = new StringBuffer(executable.exists() ? executable.getAbsolutePath() : executablePath);
+                final GeneralCommandLine command = new GeneralCommandLine();
+                final String path = executable.exists() ? executable.getAbsolutePath() : executablePath;
+                if (SystemInfo.isMac) {
+                  command.setExePath("open");
+                  command.addParameter("-a");
+                  command.addParameter(path);
+                } else {
+                  command.setExePath(path);
+                }
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 for (VirtualFile file : files) {
                     if (file.isInLocalFileSystem() && typeManager.isImage(file)) {
-                        commandLine.append(" \"");
-                        commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
-                        commandLine.append('\"');
+                        command.addParameter(VfsUtil.virtualToIoFile(file).getAbsolutePath());
                     }
                 }
+                command.setWorkingDirectory(VfsUtil.virtualToIoFile(project.getBaseDir()));
 
                 try {
-                    File executableFile = new File(executablePath);
-                    Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
-                } catch (IOException ex) {
+                    command.createProcess();
+                } catch (ExecutionException ex) {
                     Messages.showErrorDialog(project,
                             ex.getLocalizedMessage(),
                             ImagesBundle.message("error.title.launching.external.editor"));
