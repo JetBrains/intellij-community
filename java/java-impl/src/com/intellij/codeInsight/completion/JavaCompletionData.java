@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
@@ -30,6 +31,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.filters.element.ReferenceOnFilter;
+import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -619,6 +621,14 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       }
     }
 
+    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
+        !BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
+        !(position.getParent() instanceof PsiLiteralExpression) &&
+        !(position.getParent().getParent() instanceof PsiSwitchLabelStatement)) {
+      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        MembersGetter.addMembers(position, info.getDefaultType(), result);
+      }
+    }
   }
 
   private static LookupElement createKeyword(PsiElement position, String keyword) {

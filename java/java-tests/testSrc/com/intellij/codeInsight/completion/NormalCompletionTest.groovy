@@ -717,6 +717,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
+  public void testSuggestExpectedTypeMembers() throws Throwable {
+    configure()
+    selectItem myItems[0]
+    checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testSuggestExpectedTypeMembersInCall() throws Throwable {
+    configure()
+    selectItem myItems[0]
+    checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testRightShift() throws Throwable {
     configure()
     assertStringItems("myField1", "myField2");
