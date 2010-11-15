@@ -47,6 +47,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyInconsistentIndentationInspection.class,
       PyNestedDecoratorsInspection.class,
       PyCallByClassInspection.class,
+      PyBroadExceptionInspection.class,
     };
   }
 }

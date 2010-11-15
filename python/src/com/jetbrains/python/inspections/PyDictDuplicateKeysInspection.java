@@ -24,7 +24,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Dictionary contains duplicate keys";
+    return PyBundle.message("INSP.NAME.duplicate.keys");
   }
 
   @NotNull
@@ -49,13 +49,11 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
             PyExpression key = ((PyKeyValueExpression)exp).getKey();
             if (set.contains(key.getText())) {
               registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
-              break;
             }
             set.add(key.getText());
           }
         }
       }
     }
-
   }
 }
