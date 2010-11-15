@@ -15,8 +15,15 @@ class TeamcityDocTestResult(TeamcityTestResult):
     such as getTestName, getTestId.
     """
     def getTestName(self, test):
-        print test.__dict__
-        return test.source
+      name = self.current_suite.name + test.source
+      return name
+
+    def getSuiteName(self, suite):
+      if test.source.rfind(".") == -1:
+        name = self.current_suite.name + test.source
+      else:
+        name = test.source
+      return name
 
     def getTestId(self, test):
         return "file:///" + self.current_suite.filename + ":" + str( self.current_suite.lineno + test.lineno)
@@ -43,7 +50,7 @@ class TeamcityDocTestResult(TeamcityTestResult):
 
 class DocTestRunner(doctest.DocTestRunner):
     """
-    Specil runner for doctests,
+    Special runner for doctests,
     overrides __run method to report results using TeamcityDocTestResult
     """
     def __init__(self, verbose=None, optionflags=0):
@@ -129,7 +136,7 @@ class DocTestRunner(doctest.DocTestRunner):
 
 modules = {}
 
-from utrunner import debug, getModuleName, loadModulesFromFolderRec, loadModulesFromFolderUsingPattern
+from utrunner import debug, getModuleName, PYTHON_VERSION_MAJOR
 
 def loadSource(fileName):
   """
@@ -151,7 +158,7 @@ def loadSource(fileName):
   return module
 
 def testfile(filename):
-    text, filename = doctest._load_testfile(filename, package, module_relative)
+    text, filename = doctest._load_testfile(filename, None, False)
 
     name = os.path.basename(filename)
     globs = {}
@@ -161,66 +168,131 @@ def testfile(filename):
     parser = doctest.DocTestParser()
     # Read the file, convert it to a test, and run it.
     test = parser.get_doctest(text, globs, name, filename, 0)
-    runner.run(test)
+    if test.examples:
+      runner.run(test)
 
-runner = DocTestRunner()
-finder = doctest.DocTestFinder()
+def walkModules(modules, dirname, names):
+  walkModulesUsingPattern(modules, dirname, names)
 
-for arg in sys.argv[1:]:
-  arg = arg.strip()
-  if len(arg) == 0:
-    continue
+def walkModulesUsingPattern(modules, dirname, names, pattern = ".*"):
+  prog = re.compile(pattern)
+  
+  for name in names:
+    path = os.path.join(dirname, name)
+    if prog.match(name):
+      if name.endswith(".py"):
+        modules.append(loadSource(path))
+      elif not name.endswith(".pyc") and not name.endswith("$py.class")\
+                                                  and os.path.isfile(path):
+        testfile(path)
 
-  a = arg.split("::")
-  if len(a) == 1:
-    # From module or folder
-    a_splitted = a[0].split(";")
-    if len(a_splitted) != 1:
-      # means we have pattern to match against
-      if a_splitted[0].endswith("/"):
-        debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
-        modules = loadModulesFromFolderUsingPattern(a_splitted[0], a_splitted[1])
-    else:
-      if a[0].endswith("/"):
-        debug("/ from folder " + a[0])
-        modules = loadModulesFromFolderRec(a[0])
-      else:
-        debug("/ from module " + a[0])
-            # for doctests from non-python file
-        if a[0].rfind(".py") == -1:
-            testfile(a[0])
-            modules = []
-        else:
-            modules = [loadSource(a[0])]
+def testFilesInFolder(folder):
+  return testFilesInFolderUsingPattern(folder)
 
-    # for doctests
-    for module in modules:
-      tests = finder.find(module, module.__name__)
-      for test in tests:
-        runner.run(test)
+def testFilesInFolderUsingPattern(folder, pattern = ".*"):
+  ''' loads modules from folder ,
+      check if module name matches given pattern'''
+  modules = []
+  result = []
+  prog = re.compile(pattern)
 
-  elif len(a) == 2:
-    # From testcase
-    debug("/ from class " + a[1] + " in " + a[0])
-    module = loadSource(a[0])
-    testcase = getattr(module, a[1])
-    tests = finder.find(testcase, testcase.__name__)
-    for test in tests:
-        runner.run(test)
+  if PYTHON_VERSION_MAJOR == 3:
+    for root, dirs, files in os.walk(folder, walkModules, modules):
+      for name in files:
+        path = os.path.join(root, name)
+        if prog.match(name):
+          if name.endswith(".py"):
+            modules.append(loadSource(path))
+          elif not name.endswith(".pyc") and not name.endswith("$py.class")\
+                                  and os.path.isfile(path):
+            testfile(path)
   else:
-    # From method in class or from function
-    module = loadSource(a[0])
-    if a[1] == "":
-        # test function, not method
-        debug("/ from method " + a[2] + " in " + a[0])
-        testcase = getattr(module, a[2])
+    os.path.walk(folder, walkModulesUsingPattern, modules)
+
+  for module in modules:
+    if prog.match(module.__name__):
+      result.append(module)
+  return result
+
+if __name__ == "__main__":  
+  runner = DocTestRunner()
+  finder = doctest.DocTestFinder()
+
+  for arg in sys.argv[1:]:
+    arg = arg.strip()
+    if len(arg) == 0:
+      continue
+
+    a = arg.split("::")
+    if len(a) == 1:
+      # From module or folder
+      a_splitted = a[0].split(";")
+      if len(a_splitted) != 1:
+        # means we have pattern to match against
+        if a_splitted[0].endswith("/"):
+          debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
+          modules = testFilesInFolderUsingPattern(a_splitted[0], a_splitted[1])
+      else:
+        if a[0].endswith("/"):
+          debug("/ from folder " + a[0])
+          modules = testFilesInFolder(a[0])
+        else:
+          # from file
+          debug("/ from module " + a[0])
+          # for doctests from non-python file
+          if a[0].rfind(".py") == -1:
+              testfile(a[0])
+              modules = []
+          else:
+              modules = [loadSource(a[0])]
+
+      # for doctests
+      for module in modules:
+        tests = finder.find(module, module.__name__)
+        for test in tests:
+          if test.examples:
+            runner.run(test)
+
+    elif len(a) == 2:
+      # From testcase
+      debug("/ from class " + a[1] + " in " + a[0])
+      try:
+        module = loadSource(a[0])
+      except SyntaxError:
+        raise NameError('File "%s" is not python file' % (a[0], ))
+      if hasattr(module, a[1]):
+        testcase = getattr(module, a[1])
         tests = finder.find(testcase, testcase.__name__)
         for test in tests:
             runner.run(test)
+      else:
+        raise NameError('Module "%s" has no class "%s"' % (a[0], a[1]))
     else:
-        debug("/ from method " + a[2] + " in class " +  a[1] + " in " + a[0])
-        testCaseClass = getattr(module, a[1])
-        testcase = getattr(testCaseClass, a[2])
-        tests = finder.find(testcase, testcase.__name__)
-        for test in tests:
-            runner.run(test)
+      # From method in class or from function
+      try:
+        module = loadSource(a[0])
+      except SyntaxError:
+        raise NameError('File "%s" is not python file' % (a[0], ))
+      if a[1] == "":
+          # test function, not method
+          debug("/ from method " + a[2] + " in " + a[0])
+          if hasattr(module, a[2]):
+            testcase = getattr(module, a[2])
+            tests = finder.find(testcase, testcase.__name__)
+            for test in tests:
+              runner.run(test)
+          else:
+            raise NameError('Module "%s" has no method "%s"' % (a[0], a[2]))
+      else:
+          debug("/ from method " + a[2] + " in class " +  a[1] + " in " + a[0])
+          if hasattr(module, a[1]):
+            testCaseClass = getattr(module, a[1])
+            if hasattr(testCaseClass, a[2]):
+              testcase = getattr(testCaseClass, a[2])
+              tests = finder.find(testcase, testcase.__name__)
+              for test in tests:
+                runner.run(test)
+            else:
+              raise NameError('Class "%s" has no function "%s"' % (testCaseClass, a[2]))
+          else:
+            raise NameError('Module "%s" has no class "%s"' % (module, a[1]))

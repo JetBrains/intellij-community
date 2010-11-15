@@ -20,7 +20,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration.TestType;
 
 /**
- * @author Leonid Shalupov
+ * User: catherine
  */
 public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
   private JPanel myRootPanel;

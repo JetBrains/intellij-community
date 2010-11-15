@@ -17,7 +17,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Leonid Shalupov
+ * User: catherine
  */
 public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguration
     implements AbstractPythonRunConfigurationParams, PythonDocTestRunConfigurationParams {

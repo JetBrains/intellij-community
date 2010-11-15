@@ -73,58 +73,59 @@ def loadModulesFromFolderUsingPattern(folder, pattern):
       result.append(module)
   return result
 
-#testLoader = unittest.TestLoader()
-testLoader = TestLoader()
-
-#all = unittest.TestSuite()
-all = ContextSuite()
-
-for arg in sys.argv[1:]:
-  arg = arg.strip()
-  if len(arg) == 0:
-    continue
-
-  a = arg.split("::")
-  if len(a) == 1:
-    # From module or folder
-    a_splitted = a[0].split(";")
-    if len(a_splitted) != 1:
-      # means we have pattern to match against
-      if a_splitted[0].endswith("/"):
-        debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
-        modules = loadModulesFromFolderUsingPattern(a_splitted[0], a_splitted[1])
-    else:
-      if a[0].endswith("/"):
-        debug("/ from folder " + a[0])
-        modules = loadModulesFromFolderRec(a[0])
-      else:
-        debug("/ from module " + a[0])
-        modules = [loadSource(a[0])]
-
-    for module in modules:
-      all.addTests(testLoader.loadTestsFromModule(module, True))
-
-  elif len(a) == 2:
-    # From testcase
-    debug("/ from testcase " + a[1] + " in " + a[0])
-    module = loadSource(a[0])
-    all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
-  else:
-    # From method in class or from function
-    debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
-    module = loadSource(a[0])
-    if a[1] == "":
-        # test function, not method
-        all.addTest(testLoader.makeTest(getattr(module, a[2])))
-    else:
-        testCaseClass = getattr(module, a[1])
-        try:
-            all.addTest(testCaseClass(a[2]))
-        except:
-            # class is not a testcase inheritor
-            all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
-
 if __name__ == "__main__":
-    debug("/ Loaded " + str(all.countTestCases()) + " tests")
-    TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
-    TeamcityTestRunner().run(all)
+  #testLoader = unittest.TestLoader()
+  testLoader = TestLoader()
+
+  #all = unittest.TestSuite()
+  all = ContextSuite()
+
+  for arg in sys.argv[1:]:
+    arg = arg.strip()
+    if len(arg) == 0:
+      continue
+
+    a = arg.split("::")
+    if len(a) == 1:
+      # From module or folder
+      a_splitted = a[0].split(";")
+      if len(a_splitted) != 1:
+        # means we have pattern to match against
+        if a_splitted[0].endswith("/"):
+          debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
+          modules = loadModulesFromFolderUsingPattern(a_splitted[0], a_splitted[1])
+      else:
+        if a[0].endswith("/"):
+          debug("/ from folder " + a[0])
+          modules = loadModulesFromFolderRec(a[0])
+        else:
+          debug("/ from module " + a[0])
+          modules = [loadSource(a[0])]
+
+      for module in modules:
+        all.addTests(testLoader.loadTestsFromModule(module, True))
+
+    elif len(a) == 2:
+      # From testcase
+      debug("/ from testcase " + a[1] + " in " + a[0])
+      module = loadSource(a[0])
+      all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
+    else:
+      # From method in class or from function
+      debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
+      module = loadSource(a[0])
+      if a[1] == "":
+          # test function, not method
+          all.addTest(testLoader.makeTest(getattr(module, a[2])))
+      else:
+          testCaseClass = getattr(module, a[1])
+          try:
+              all.addTest(testCaseClass(a[2]))
+          except:
+              # class is not a testcase inheritor
+              all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
+
+
+  debug("/ Loaded " + str(all.countTestCases()) + " tests")
+  TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
+  TeamcityTestRunner().run(all)

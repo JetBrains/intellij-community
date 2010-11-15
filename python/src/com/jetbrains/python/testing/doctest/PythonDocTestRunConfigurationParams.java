@@ -3,7 +3,7 @@ package com.jetbrains.python.testing.doctest;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 
 /**
- * @author Leonid Shalupov
+ * User: catherine
  */
 public interface PythonDocTestRunConfigurationParams {
   AbstractPythonRunConfigurationParams getBaseParams();
