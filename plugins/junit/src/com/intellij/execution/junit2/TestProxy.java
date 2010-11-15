@@ -259,4 +259,14 @@ public class TestProxy extends AbstractTestProxy {
     return parents.toArray(new TestProxy[parents.size()]);
   }
 
+  @Override
+  public Integer getDuration() {
+    return getStatistics().getTime();
+  }
+
+  @Override
+  public boolean shouldSkipRootNodeForExport() {
+    return false;
+  }
+
 }

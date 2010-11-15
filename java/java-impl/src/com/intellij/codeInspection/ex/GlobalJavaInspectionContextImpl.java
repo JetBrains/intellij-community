@@ -209,12 +209,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)sortedID.getElement();
         if (psiClass == null) continue;
-        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
-            new Computable<String>() {
-              public String compute() {
-                return psiClass.getQualifiedName();
-              }
+        context.incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+          new Computable<String>() {
+            public String compute() {
+              return psiClass.getQualifiedName();
             }
+          }
         ));
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
@@ -231,7 +231,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final PsiMethod psiMethod = (PsiMethod)sortedID.getElement();
         final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
-        ((GlobalInspectionContextImpl)context)
+        context
           .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
@@ -249,8 +249,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (psiField == null) continue;
         final List<UsagesProcessor> processors = myFieldUsagesRequests.get(sortedID);
 
-        ((GlobalInspectionContextImpl)context)
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiField)));
+        context
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES,
+                                  refManager.getQualifiedName(refManager.getReference(psiField)));
 
         ReferencesSearch.search(psiField, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
@@ -266,12 +267,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (psiClass == null) continue;
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
-        ((GlobalInspectionContextImpl)context).incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
-            new Computable<String>() {
-              public String compute() {
-                return psiClass.getQualifiedName();
-              }
+        context.incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+          new Computable<String>() {
+            public String compute() {
+              return psiClass.getQualifiedName();
             }
+          }
         ));
 
         ReferencesSearch.search(psiClass, searchScope, false)
@@ -288,8 +289,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (psiMethod == null) continue;
         final List<UsagesProcessor> processors = myMethodUsagesRequests.get(sortedID);
 
-        ((GlobalInspectionContextImpl)context)
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiMethod)));
+        context
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES,
+                                  refManager.getQualifiedName(refManager.getReference(psiMethod)));
 
         MethodReferencesSearch.search(psiMethod, searchScope, true)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));

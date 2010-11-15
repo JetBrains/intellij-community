@@ -220,7 +220,8 @@ public class CreateFromUsageUtils {
 
     GuessTypeParameters guesser = new GuessTypeParameters(factory);
 
-    final boolean isInterface = method.getContainingClass().isInterface();
+    final PsiClass containingClass = method.getContainingClass();
+    final boolean isInterface = containingClass != null && containingClass.isInterface();
     for (int i = 0; i < arguments.size(); i++) {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
@@ -252,7 +253,7 @@ public class CreateFromUsageUtils {
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
-                               substitutor, builder, context, method.getContainingClass());
+                               substitutor, builder, context, containingClass);
 
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
