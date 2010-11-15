@@ -40,19 +40,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
-  private final EditorActionHandler myOriginalHandler;
+  protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
   }
 
   public void executeWriteAction(Editor editor, DataContext dataContext) {
-    if (!handleBackspace(editor, dataContext)){
+    if (!handleBackspace(editor, dataContext, false)) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }
 
-  private boolean handleBackspace(Editor editor, DataContext dataContext){
+  protected boolean handleBackspace(Editor editor, DataContext dataContext, boolean toWordStart) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -79,8 +79,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
-    for(BackspaceHandlerDelegate delegate: delegates) {
-      delegate.beforeCharDeleted(c, file, editor);
+    if (!toWordStart) {
+      for(BackspaceHandlerDelegate delegate: delegates) {
+        delegate.beforeCharDeleted(c, file, editor);
+      }
     }
 
     FileType fileType = file.getFileType();
@@ -91,9 +93,11 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     myOriginalHandler.execute(editor, dataContext);
 
-    for(BackspaceHandlerDelegate delegate: delegates) {
-      if (delegate.charDeleted(c, file, editor)) {
-        return true;
+    if (!toWordStart) {
+      for(BackspaceHandlerDelegate delegate: delegates) {
+        if (delegate.charDeleted(c, file, editor)) {
+          return true;
+        }
       }
     }
 
