@@ -183,6 +183,9 @@ public class SemServiceImpl extends SemService{
   @Nullable
   public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
     final PsiElement root = getRootElement(psi);
+    if (root == null) {
+      return Collections.emptyList();
+    }
 
     List<T> cached = _getCachedSemElements(key, true, psi, root);
     if (cached != null) {
@@ -206,7 +209,7 @@ public class SemServiceImpl extends SemService{
     return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
   }
 
-  @NotNull
+  @Nullable
   private static PsiElement getRootElement(@NotNull PsiElement psi) {
     if (psi instanceof PsiDirectory || psi instanceof PsiDirectoryContainer) {
       return psi;
@@ -240,7 +243,8 @@ public class SemServiceImpl extends SemService{
   }
 
   @Nullable
-  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element, PsiElement root) {
+  private <T extends SemElement> List<T> _getCachedSemElements(SemKey<T> key, boolean paranoid, final PsiElement element,
+                                                               @Nullable PsiElement root) {
     final FileChunk chunk = obtainChunk(root);
     if (chunk == null) return null;
 
@@ -284,13 +288,16 @@ public class SemServiceImpl extends SemService{
   }
 
   @Nullable
-  private FileChunk obtainChunk(PsiElement root) {
+  private FileChunk obtainChunk(@Nullable PsiElement root) {
     final SoftReference<FileChunk> ref = myCache.get(root);
     return ref == null ? null : ref.get();
   }
 
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
-    cacheOrGetMap(psi, getRootElement(psi)).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
+    final PsiElement rootElement = getRootElement(psi);
+    if (rootElement != null) {
+      cacheOrGetMap(psi, rootElement).put(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
+    }
   }
 
   @Override
