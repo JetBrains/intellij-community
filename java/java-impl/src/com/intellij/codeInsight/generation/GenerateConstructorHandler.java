@@ -259,7 +259,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static String getConstructorModifier(final PsiClass aClass) {
     @Modifier String modifier = PsiModifier.PUBLIC;
 
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
       modifier =  PsiModifier.PROTECTED;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {

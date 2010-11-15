@@ -343,6 +343,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
          if (!addRequiredSubTags(template, descriptor, file, context)) {
            if (completeIt) {
              template.addTextSegment(">");
+             template.addEndVariable();
              addTagEnd(template, descriptor, context);
            }
          }

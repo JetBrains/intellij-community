@@ -18,12 +18,22 @@ import com.intellij.openapi.components.Storage;
 
 @State(
   name = "hg4idea.settings",
-  storages = @Storage(id = "hg4idea.settings", file = "$PROJECT_FILE$")
+  storages = @Storage(id = "hg4idea.settings", file = "$WORKSPACE_FILE$")
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State> {
 
+  private final HgGlobalSettings myAppSettings;
   private boolean myCheckIncoming = true;
   private boolean myCheckOutgoing = true;
+
+  public HgProjectSettings(HgGlobalSettings appSettings) {
+    myAppSettings = appSettings;
+  }
+
+  public static class State {
+    public boolean myCheckIncoming = true;
+    public boolean myCheckOutgoing = true;
+  }
 
   public State getState() {
     final State s = new State();
@@ -54,23 +64,27 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public String getHgExecutable() {
-    return HgGlobalSettings.getInstance().getHgExecutable();
+    return myAppSettings.getHgExecutable();
   }
 
   public boolean isAutodetectHg() {
-    return HgGlobalSettings.getInstance().isAutodetectHg();
+    return myAppSettings.isAutodetectHg();
   }
 
   public void enableAutodetectHg() {
-    HgGlobalSettings.getInstance().enableAutodetectHg();
+    myAppSettings.enableAutodetectHg();
   }
 
   public void setHgExecutable(String text) {
-    HgGlobalSettings.getInstance().setHgExecutable(text);
+    myAppSettings.setHgExecutable(text);
   }
 
-  public static class State {
-    private boolean myCheckIncoming;
-    private boolean myCheckOutgoing;
+  public boolean isRunViaBash() {
+    return myAppSettings.isRunViaBash();
   }
+
+  public void setRunViaBash(boolean runViaBash) {
+    myAppSettings.setRunViaBash(runViaBash);
+  }
+
 }

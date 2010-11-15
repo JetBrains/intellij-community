@@ -127,7 +127,7 @@ public final class HgCommandService {
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
-    ShellCommand shellCommand = new ShellCommand();
+    ShellCommand shellCommand = new ShellCommand(mySettings.isRunViaBash());
     HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
@@ -154,7 +154,7 @@ public final class HgCommandService {
     result.setWarnings(warnings);
 
     // logging to the Version Control console (without extensions and configs)
-    final String cmdString = String.format("%s %s %s", HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
+    final String cmdString = String.format("%s %s %s", mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
             StringUtils.join(arguments, " "));
     myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.USER_INPUT.getAttributes());
     if (!silent) {

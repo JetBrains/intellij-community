@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
+  public static final String STANDARD_ESCAPABLE_CHARS = "\b\t\n\f\r\\";
   private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
   public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
     @NotNull
@@ -469,53 +470,28 @@ public class StringUtil {
   }
 
   @NotNull
-  public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull String str,
-                                                     @Nullable String additionalChars,
-                                                     @NotNull @NonNls StringBuilder buffer) {
+  public static StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, @NotNull @NonNls StringBuilder buffer) {
+    return escapeStringCharacters(length, str, additionalChars, true, true, buffer);
+  }
+
+  @NotNull
+  public static StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, boolean escapeStandardChars, boolean escapeControlCharacters, @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '\b':
-          buffer.append("\\b");
-          break;
-
-        case '\t':
-          buffer.append("\\t");
-          break;
-
-        case '\n':
-          buffer.append("\\n");
-          break;
-
-        case '\f':
-          buffer.append("\\f");
-          break;
-
-        case '\r':
-          buffer.append("\\r");
-          break;
-
-        case '\\':
-          buffer.append("\\\\");
-          break;
-
-        default:
-          if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
-            buffer.append("\\").append(ch);
-          }
-          else if (Character.isISOControl(ch)) {
-            String hexCode = Integer.toHexString(ch).toUpperCase();
-            buffer.append("\\u");
-            int paddingCount = 4 - hexCode.length();
-            while (paddingCount-- > 0) {
-              buffer.append(0);
-            }
-            buffer.append(hexCode);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (escapeStandardChars && STANDARD_ESCAPABLE_CHARS.indexOf(ch) > -1) {
+        buffer.append("\\").append(ch);
+      } else if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+        buffer.append("\\").append(ch);
+      } else if (escapeControlCharacters && Character.isISOControl(ch)) {
+        String hexCode = Integer.toHexString(ch).toUpperCase();
+        buffer.append("\\u");
+        int paddingCount = 4 - hexCode.length();
+        while (paddingCount-- > 0) {
+          buffer.append(0);
+        }
+        buffer.append(hexCode);
+      } else {
+        buffer.append(ch);
       }
     }
     return buffer;

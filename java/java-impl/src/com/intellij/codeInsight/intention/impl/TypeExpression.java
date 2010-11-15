@@ -21,11 +21,9 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.SmartTypePointer;
-import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -49,7 +47,12 @@ public class TypeExpression extends Expression {
     if (myItems.isEmpty()) return null;
 
     final PsiType type = myItems.iterator().next().getType();
-    return type == null? null : new PsiTypeResult(type, project);
+    return type == null? null : new PsiTypeResult(type, project) {
+      @Override
+      public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
+        if (myItems.size() <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+      }
+    };
   }
 
   public Result calculateQuickResult(ExpressionContext context) {

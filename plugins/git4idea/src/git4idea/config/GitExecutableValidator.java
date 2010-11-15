@@ -15,10 +15,14 @@
  */
 package git4idea.config;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecutableValidator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 
@@ -55,7 +59,16 @@ public class GitExecutableValidator extends ExecutableValidator {
     if (!executable.endsWith(SYSTEM_DEFAULT_EXECUTABLE) && !executable.endsWith(UNIX_EXECUTABLE)) {
       return false;
     }
-    return super.isExecutableValid(executable);
+    try {
+      GeneralCommandLine commandLine = new GeneralCommandLine();
+      commandLine.setExePath(executable);
+      commandLine.addParameter("--version");
+      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
+      ProcessOutput result = handler.runProcess(2000);
+      return !result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty();
+    } catch (Throwable e) {
+      return false;
+    }
   }
 
   @Override
