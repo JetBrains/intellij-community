@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,21 @@ import java.util.Set;
 
 public class CatchGenericClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "catch.generic.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "catch.generic.class.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CatchGenericClassVisitor();
     }
@@ -45,13 +48,14 @@ public class CatchGenericClassInspection extends BaseInspection {
     private static class CatchGenericClassVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(
+                @NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCodeBlock tryBlock = statement.getTryBlock();
             if (tryBlock == null) {
                 return;
             }
-            final Set<PsiType> exceptionsThrown =
+            final Set<PsiClassType> exceptionsThrown =
                     ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final PsiParameter[] parameters =
                     statement.getCatchBlockParameters();
@@ -61,7 +65,7 @@ public class CatchGenericClassInspection extends BaseInspection {
         }
 
         private void checkParameter(PsiParameter parameter,
-                                    Set<PsiType> exceptionsThrown) {
+                                    Set<PsiClassType> exceptionsThrown) {
             final PsiType type = parameter.getType();
             if (!ExceptionUtils.isGenericExceptionClass(type)) {
                 return;
