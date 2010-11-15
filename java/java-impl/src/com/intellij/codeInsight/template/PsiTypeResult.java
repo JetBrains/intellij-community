@@ -56,7 +56,7 @@ public class PsiTypeResult implements RecalculatableResult {
   }
 
   public String toString() {
-    return getType().getCanonicalText();
+    return getType().getPresentableText();
   }
 
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
@@ -64,6 +64,6 @@ public class PsiTypeResult implements RecalculatableResult {
   }
 
   public void handleRecalc(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
-    //JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd);
+    JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd);
   }
 }
