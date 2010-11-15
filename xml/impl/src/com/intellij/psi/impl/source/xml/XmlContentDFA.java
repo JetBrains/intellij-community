@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlElementsGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,92 +25,16 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlContentDFA {
+public abstract class XmlContentDFA {
 
-  enum Result {
-    NONE,
-    CONSUME,
-    PROCEED_TO_NEXT
-  }
+  public abstract List<XmlElementDescriptor> getPossibleElements();
 
-  private final XmlElementsGroup myGroup;
-  private int myOccurs;
-  private XmlContentDFA myLastChild;
-
-  public XmlContentDFA(@NotNull XmlElementsGroup group) {
-    myGroup = group;
-  }
-
-  public void getPossibleElements(List<XmlElementDescriptor> elements) {
-    switch (myGroup.getGroupType()) {
-      case SEQUENCE:
-        getLastChild();
-        while (myLastChild != null) {
-          myLastChild.getPossibleElements(elements);
-          if (myLastChild.myGroup.getMinOccurs() == 0) {
-            myLastChild = getNextSubGroup();
-          }
-          else return;
-        }
-        break;
-      case CHOICE:
-      case ALL:
-      case GROUP:
-        for (XmlElementsGroup group : myGroup.getSubGroups()) {
-          new XmlContentDFA(group).getPossibleElements(elements);
-        }
-        break;
-      case LEAF:
-        ContainerUtil.addIfNotNull(elements, myGroup.getLeafDescriptor());
-        break;
-    }
-  }
-
-  public Result transition(@NotNull XmlElementDescriptor element) {
-    if (myGroup.getGroupType() == XmlElementsGroup.Type.LEAF) {
-      if (element.equals(myGroup.getLeafDescriptor())) {
-        return consume();
-      }
-      else return Result.NONE;
-    }
-    return processSubGroups(element);
-  }
-
-  private Result consume() {
-    return ++myOccurs >= myGroup.getMaxOccurs() ? Result.PROCEED_TO_NEXT : Result.CONSUME;
-  }
-
-  private Result processSubGroups(XmlElementDescriptor element) {
-    getLastChild();
-    while (myLastChild != null) {
-      Result result = myLastChild.transition(element);
-      switch (result) {
-        case CONSUME:
-          return Result.CONSUME;
-        case NONE:
-          myLastChild = getNextSubGroup();
-          break;
-        case PROCEED_TO_NEXT:
-          myLastChild = getNextSubGroup();
-          return myLastChild == null ? Result.PROCEED_TO_NEXT : Result.CONSUME;
-      }
-    }
-    return Result.NONE;
-  }
-
-  private void getLastChild() {
-    if (myLastChild == null) {
-      List<XmlElementsGroup> subGroups = myGroup.getSubGroups();
-      if (!subGroups.isEmpty()) {
-        myLastChild = new XmlContentDFA(subGroups.get(0));
-      }
-    }
-  }
+  public abstract void transition(@NotNull XmlElementDescriptor element, XmlTag xmlTag);
 
   @Nullable
-  private XmlContentDFA getNextSubGroup() {
-    List<XmlElementsGroup> subGroups = myGroup.getSubGroups();
-    int i = subGroups.indexOf(myLastChild.myGroup) + 1;
-    return i == subGroups.size() ? null : new XmlContentDFA(subGroups.get(i));
+  public static XmlContentDFA getContentDFA(XmlTag parentTag) {
+    XmlContentDFA contentDFA = XsContentDFA.createContentDFA(parentTag);
+    if (contentDFA != null) return contentDFA;
+    return XmlContentDFAImpl.createContentDFA(parentTag);
   }
 }

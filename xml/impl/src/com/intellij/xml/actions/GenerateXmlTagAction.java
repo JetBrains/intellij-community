@@ -66,7 +66,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     try {
       final XmlTag contextTag = getContextTag(editor, file);
       if (contextTag == null) {
@@ -91,6 +91,15 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             protected void run() {
               if (selected == null) return;
               XmlTag newTag = createTag(contextTag, selected);
+              int offset = editor.getCaretModel().getOffset();
+              PsiElement element = file.findElementAt(offset);
+              if (element != null) {
+                XmlText xmlText = PsiTreeUtil.getParentOfType(element, XmlText.class);
+                if (xmlText != null) {
+
+                }
+              }
+
               newTag = contextTag.addSubTag(newTag, false);
               generateTag(newTag);
             }
