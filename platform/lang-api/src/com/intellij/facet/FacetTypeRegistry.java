@@ -28,7 +28,14 @@ public abstract class FacetTypeRegistry {
     return ServiceManager.getService(FacetTypeRegistry.class);
   }
 
+  /**
+   * @deprecated register {@code facetType} as an extension instead
+   */
   public abstract void registerFacetType(FacetType facetType);
+
+  /**
+   * @deprecated register {@code facetType} as an extension instead
+   */
   public abstract void unregisterFacetType(FacetType facetType);
 
   public abstract FacetTypeId[] getFacetTypeIds();
