@@ -113,7 +113,12 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                 final GlobalSearchScope productionScope = GlobalSearchScope.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
-                  if (psiFacade.findClass(aClass.getFQName(), productionScope) == null) {
+                  final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+                    public PsiClass compute() {
+                      return psiFacade.findClass(aClass.getFQName(), productionScope);
+                    }
+                  });
+                  if (psiClass == null) {
                     iterator.remove();
                   }
                 }
