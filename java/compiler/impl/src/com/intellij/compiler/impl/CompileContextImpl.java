@@ -26,6 +26,7 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
   private final CompilerTask myTask;
   private final Map<CompilerMessageCategory, Collection<CompilerMessage>> myMessages = new EnumMap<CompilerMessageCategory, Collection<CompilerMessage>>(CompilerMessageCategory.class);
@@ -334,11 +336,16 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public Module getModuleByFile(VirtualFile file) {
     final Module module = myProjectFileIndex.getModuleForFile(file);
     if (module != null) {
+      LOG.assertTrue(!module.isDisposed());
       return module;
     }
     for (final VirtualFile root : myRootToModuleMap.keySet()) {
       if (VfsUtil.isAncestor(root, file, false)) {
-        return myRootToModuleMap.get(root);
+        final Module mod = myRootToModuleMap.get(root);
+        if (mod != null) {
+          LOG.assertTrue(!mod.isDisposed());
+        }
+        return mod;
       }
     }
     return null;
