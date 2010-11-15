@@ -48,6 +48,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyNestedDecoratorsInspection.class,
       PyCallByClassInspection.class,
       PyBroadExceptionInspection.class,
+      PyRedundantParenthesesInspection.class,
     };
   }
 }
