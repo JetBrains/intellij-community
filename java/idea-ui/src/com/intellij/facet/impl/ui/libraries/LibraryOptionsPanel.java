@@ -221,6 +221,7 @@ public class LibraryOptionsPanel {
 
   private void updateState() {
     myMessageLabel.setIcon(null);
+    myConfigureButton.setVisible(true);
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
@@ -232,6 +233,7 @@ public class LibraryOptionsPanel {
         if (item == null) {
           myMessageLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
           message = "<b>Error:</b> library is not specified";
+          myConfigureButton.setVisible(false);
         }
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
