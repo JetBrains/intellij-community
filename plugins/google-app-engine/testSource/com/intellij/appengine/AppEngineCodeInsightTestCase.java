@@ -50,7 +50,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   protected abstract String getBaseDirectoryPath();
 
   private static void addAppEngineSupport(Module module, String version) {
-    final WebFacet webFacet = JavaeeUtil.addFacet(module, WebFacetType.INSTANCE);
+    final WebFacet webFacet = JavaeeUtil.addFacet(module, WebFacetType.getInstance());
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", webFacet);
     final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
     appEngine.getConfiguration().setSdkHomePath(sdkPath);

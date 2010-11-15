@@ -149,7 +149,8 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
           if (file != null) {
             JpaFacet facet = FacetManager.getInstance(module).getFacetByType(JpaFacet.ID);
             if (facet == null) {
-              final JpaFacet jpaFacet = FacetManager.getInstance(module).addFacet(JpaFacetType.INSTANCE, JpaFacetType.INSTANCE.getDefaultFacetName(), null);
+              final JpaFacet jpaFacet = FacetManager.getInstance(module).addFacet(
+                JpaFacetType.getInstance(), JpaFacetType.getInstance().getDefaultFacetName(), null);
               jpaFacet.getDescriptorsContainer().getConfiguration().replaceConfigFile(JavaeePersistenceDescriptorsConstants.PERSISTENCE_XML_META_DATA, file.getUrl());
             }
           }
