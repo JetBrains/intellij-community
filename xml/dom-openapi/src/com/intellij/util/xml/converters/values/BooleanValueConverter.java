@@ -38,6 +38,10 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
      return new BooleanValueConverter(allowEmpty);
   }
 
+  public BooleanValueConverter() {
+    this(false);
+  }
+
   public BooleanValueConverter(final boolean allowEmpty) {
     myAllowEmpty = allowEmpty;
   }

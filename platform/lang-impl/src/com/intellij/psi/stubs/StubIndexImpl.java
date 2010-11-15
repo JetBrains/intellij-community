@@ -387,13 +387,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   public void flush(StubIndexKey key) throws StorageException {
     final MyIndex<?> index = myIndices.get(key);
-    index.getReadLock().lock();
-    try {
-      index.flush();
-    }
-    finally {
-      index.getReadLock().unlock();
-    }
+    index.flush();
   }
 
   public <K> void updateIndex(StubIndexKey key, int fileId, final Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {

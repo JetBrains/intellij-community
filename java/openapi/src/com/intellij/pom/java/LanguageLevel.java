@@ -22,42 +22,39 @@ import com.intellij.psi.PsiBundle;
  * @author dsl
  */
 public enum LanguageLevel {
-  JDK_1_3 ("1.3 ", false, false),
-  JDK_1_4 (PsiBundle.message("jdk.1.4.language.level.description"), true, false), // assert keyword
-  JDK_1_5 (PsiBundle.message("jdk.1.5.language.level.description"), true, true), // enums etc.
-  JDK_1_6 (PsiBundle.message("jdk.1.6.language.level.description"), true, true), // changed rules for @Override
-  JDK_1_7 (PsiBundle.message("jdk.1.7.language.level.description"), true, true); // annotations on types
+  JDK_1_3(PsiBundle.message("jdk.1.3.language.level.description")),
+  JDK_1_4(PsiBundle.message("jdk.1.4.language.level.description")),
+  JDK_1_5(PsiBundle.message("jdk.1.5.language.level.description")),
+  JDK_1_6(PsiBundle.message("jdk.1.6.language.level.description")),
+  JDK_1_7(PsiBundle.message("jdk.1.7.language.level.description")),
+  JDK_1_8(PsiBundle.message("jdk.1.8.language.level.description"));
 
-  public static final LanguageLevel HIGHEST = JDK_1_7;
-  public static final Key<LanguageLevel> KEY = Key.create("LANGUGAGE_LEVEL");
-  private final boolean myHasAssertKeyword;
-  private final boolean myHasEnumKeywordAndAutoboxing;
+  public static final LanguageLevel HIGHEST = JDK_1_8;
+  public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
+
   private final String myPresentableText;
 
-
-  private LanguageLevel(String presentableText, boolean hasAssertKeyword, boolean hasEnumKeywordAndAutoboxing) {
-    myHasAssertKeyword = hasAssertKeyword;
-    myHasEnumKeywordAndAutoboxing = hasEnumKeywordAndAutoboxing;
+  private LanguageLevel(final String presentableText) {
     myPresentableText = presentableText;
   }
 
   public int getIndex() {
-    return ordinal() + 3;  //Solely for backward compatibility
+    return ordinal() + 3;  // solely for backward compatibility
   }
 
   public boolean hasAssertKeyword() {
-    return myHasAssertKeyword;
+    return isAtLeast(JDK_1_4);
   }
 
   public boolean hasEnumKeywordAndAutoboxing() {
-    return myHasEnumKeywordAndAutoboxing;
+    return isAtLeast(JDK_1_5);
   }
 
   public String getPresentableText() {
     return myPresentableText;
   }
 
-  public boolean isAtLeast(LanguageLevel level) {
+  public boolean isAtLeast(final LanguageLevel level) {
     return compareTo(level) >= 0;
   }
 }

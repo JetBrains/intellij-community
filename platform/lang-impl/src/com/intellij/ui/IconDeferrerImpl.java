@@ -19,22 +19,18 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.MessageHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +71,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
-        result = new DeferredIconImpl<T>(base, param, f).setDisposer(new DeferredIconImpl.Disposer<T>() {
+        result = new DeferredIconImpl<T>(base, param, f).setDisposer(new DeferredIconImpl.IconDisposer<T>() {
           @Override
           public void dispose(T key) {
             synchronized (LOCK) {

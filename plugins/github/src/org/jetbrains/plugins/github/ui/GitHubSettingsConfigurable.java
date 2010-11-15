@@ -13,7 +13,7 @@ import javax.swing.*;
  */
 public class GitHubSettingsConfigurable implements SearchableConfigurable {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
-  private GithubLoginPanel mySettingsPane;
+  private GithubSettingsPanel mySettingsPane;
   private final GithubSettings mySettings;
 
   public GitHubSettingsConfigurable() {
@@ -34,7 +34,7 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
 
   public JComponent createComponent() {
     if (mySettingsPane == null) {
-      mySettingsPane = new GithubLoginPanel();
+      mySettingsPane = new GithubSettingsPanel();
     }
     reset();
     return mySettingsPane.getPanel();

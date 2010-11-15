@@ -78,9 +78,9 @@ import java.util.concurrent.TimeoutException;
 public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenFacadeEmbedder {
   private final MavenEmbedder myImpl;
   private final MavenFacadeConsoleWrapper myConsoleWrapper;
-  private volatile MavenFacadeProgressIndicatorWrapper myCurrentIndicatorWrapper;
+  private volatile MavenFacadeProgressIndicator myCurrentIndicator;
 
-  public static MavenFacadeEmbedderImpl create(MavenFacadeSettings facadeSettings) {
+  public static MavenFacadeEmbedderImpl create(MavenFacadeSettings facadeSettings) throws RemoteException {
     MavenEmbedderSettings settings = new MavenEmbedderSettings();
 
     settings.setConfigurator(new PlexusComponentConfigurator() {
@@ -108,7 +108,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return new MavenFacadeEmbedderImpl(MavenEmbedder.create(settings), consoleWrapper);
   }
 
-  private static MavenEmbedderSettings.UpdatePolicy convertUpdatePolicy(MavenFacadeSettings.UpdatePolicy policy) {
+  private static MavenEmbedderSettings.UpdatePolicy convertUpdatePolicy(MavenFacadeSettings.UpdatePolicy policy) throws RemoteException {
     switch (policy) {
       case ALWAYS_UPDATE:
         return MavenEmbedderSettings.UpdatePolicy.ALWAYS_UPDATE;
@@ -128,7 +128,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   @NotNull
   public MavenWrapperExecutionResult resolveProject(@NotNull final File file,
                                                     @NotNull final Collection<String> activeProfiles)
-    throws MavenFacadeProcessCanceledException {
+    throws MavenFacadeProcessCanceledException, RemoteException {
     return doExecute(new Executor<MavenWrapperExecutionResult>() {
       public MavenWrapperExecutionResult execute() throws Exception {
         DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
@@ -141,7 +141,8 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   }
 
   @NotNull
-  private MavenWrapperExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode) {
+  private MavenWrapperExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode)
+    throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
 
@@ -199,7 +200,8 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
 
   @NotNull
   public MavenArtifact resolve(@NotNull final MavenArtifactInfo info,
-                               @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenFacadeProcessCanceledException {
+                               @NotNull final List<MavenRemoteRepository> remoteRepositories)
+    throws MavenFacadeProcessCanceledException, RemoteException {
     return doExecute(new Executor<MavenArtifact>() {
       public MavenArtifact execute() throws Exception {
         return doResolve(info, remoteRepositories);
@@ -209,7 +211,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
 
   @NotNull
   public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
-                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories) {
+                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     try {
       Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
       for (MavenArtifactInfo each : artifacts) {
@@ -231,7 +233,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return Collections.emptyList();
   }
 
-  private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) {
+  private MavenArtifact doResolve(MavenArtifactInfo info, List<MavenRemoteRepository> remoteRepositories) throws RemoteException {
     Artifact resolved = doResolve(createArtifact(info), convertRepositories(remoteRepositories));
     return MavenModelConverter.convertArtifact(resolved, getLocalRepositoryFile());
   }
@@ -244,7 +246,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
                                                                             info.getClassifier());
   }
 
-  private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) {
+  private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
     try {
       myImpl.resolve(artifact, remoteRepositories);
       return artifact;
@@ -255,7 +257,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return artifact;
   }
 
-  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) {
+  private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
     List<ArtifactRepository> result = new ArrayList<ArtifactRepository>();
     for (MavenRemoteRepository each : repositories) {
       try {
@@ -272,7 +274,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
                                                  @NotNull final List<MavenRemoteRepository> repositories,
                                                  final int nativeMavenProjectId,
-                                                 final boolean transitive) throws MavenFacadeProcessCanceledException {
+                                                 final boolean transitive) throws MavenFacadeProcessCanceledException, RemoteException {
     return doExecute(new Executor<Collection<MavenArtifact>>() {
       public Collection<MavenArtifact> execute() throws Exception {
         try {
@@ -308,7 +310,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
 
   private void resolveIfNecessary(MavenArtifactInfo info,
                                   List<MavenRemoteRepository> repos,
-                                  Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts) {
+                                  Map<MavenArtifactInfo, MavenArtifact> resolvedArtifacts) throws RemoteException {
     if (resolvedArtifacts.containsKey(info)) return;
     resolvedArtifacts.put(info, doResolve(info, repos));
   }
@@ -317,7 +319,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   public MavenWrapperExecutionResult execute(@NotNull final File file,
                                              @NotNull final Collection<String> activeProfiles,
                                              @NotNull final List<String> goals)
-    throws MavenFacadeProcessCanceledException {
+    throws MavenFacadeProcessCanceledException, RemoteException {
     return doExecute(new Executor<MavenWrapperExecutionResult>() {
       public MavenWrapperExecutionResult execute() throws Exception {
         MavenExecutionResult result = myImpl.execute(file, new ArrayList<String>(activeProfiles), goals);
@@ -329,7 +331,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   private void validate(File file,
                         Collection<Exception> exceptions,
                         Collection<MavenProjectProblem> problems,
-                        Collection<MavenId> unresolvedArtifacts) {
+                        Collection<MavenId> unresolvedArtifacts) throws RemoteException {
     for (Exception each : exceptions) {
       MavenFacadeGlobalsManager.getLogger().info(each);
 
@@ -362,7 +364,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return result;
   }
 
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
 
@@ -372,7 +374,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return MavenModelConverter.convertModel(result, null);
   }
 
-  private static Model doInterpolate(Model result, File basedir) {
+  private static Model doInterpolate(Model result, File basedir) throws RemoteException {
     try {
       AbstractStringBasedModelInterpolator interpolator = new CustomModelInterpolator(new DefaultPathTranslator());
       interpolator.initialize();
@@ -390,7 +392,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     return result;
   }
 
-  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
+  public static MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     new DefaultModelInheritanceAssembler().assembleModelInheritance(result, MavenModelConverter.toNativeModel(parentModel));
     return MavenModelConverter.convertModel(result, null);
@@ -399,7 +401,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
   public static ProfileApplicationResult applyProfiles(MavenModel model,
                                                        File basedir,
                                                        Collection<String> explicitProfiles,
-                                                       Collection<String> alwaysOnProfiles) {
+                                                       Collection<String> alwaysOnProfiles) throws RemoteException {
     Model nativeModel = MavenModelConverter.toNativeModel(model);
 
     List<Profile> activatedPom = new ArrayList<Profile>();
@@ -458,7 +460,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
                                         collectProfilesIds(activatedProfiles));
   }
 
-  private static ProfileActivator[] getProfileActivators() {
+  private static ProfileActivator[] getProfileActivators() throws RemoteException {
     SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
     DefaultContext context = new DefaultContext();
     context.put("SystemProperties", MavenFacadeUtil.collectSystemProperties());
@@ -497,7 +499,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     T execute() throws Exception;
   }
 
-  private <T> T doExecute(final Executor<T> executor) throws MavenFacadeProcessCanceledException {
+  private <T> T doExecute(final Executor<T> executor) throws MavenFacadeProcessCanceledException, RemoteException {
     final Ref<T> result = new Ref<T>();
     final boolean[] cancelled = new boolean[1];
     final Throwable[] exception = new Throwable[1];
@@ -516,7 +518,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
       }
     });
 
-    MavenFacadeProgressIndicatorWrapper indicator = myCurrentIndicatorWrapper;
+    MavenFacadeProgressIndicator indicator = myCurrentIndicator;
     while (true) {
       if (indicator.isCanceled()) throw new MavenFacadeProcessCanceledException();
 
@@ -537,6 +539,8 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
 
     if (cancelled[0]) throw new MavenFacadeProcessCanceledException();
     if (exception[0] != null) {
+      if (exception[0] instanceof RuntimeRemoteException) throw ((RuntimeRemoteException)exception[0]).getCause();
+
       throw getRethrowable(exception[0]);
     }
 
@@ -577,10 +581,10 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
 
   private void setConsoleAndIndicator(MavenFacadeConsole console, MavenFacadeProgressIndicator indicator) {
     myConsoleWrapper.setWrappee(console);
-    myCurrentIndicatorWrapper = new MavenFacadeProgressIndicatorWrapper(indicator);
+    myCurrentIndicator = indicator;
 
     WagonManager wagon = getComponent(WagonManager.class);
-    wagon.setDownloadMonitor(indicator == null ? null : new TransferListenerAdapter(new MavenFacadeProgressIndicatorWrapper(indicator)));
+    wagon.setDownloadMonitor(indicator == null ? null : new TransferListenerAdapter(indicator));
   }
 
   public void reset() {
@@ -607,7 +611,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     }
   }
 
-  public void clearCaches() {
+  public void clearCaches() throws RemoteException {
     withProjectCachesDo(new Function<Map, Object>() {
       public Object fun(Map map) {
         map.clear();
@@ -616,7 +620,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     });
   }
 
-  public void clearCachesFor(final MavenId projectId) {
+  public void clearCachesFor(final MavenId projectId) throws RemoteException {
     withProjectCachesDo(new Function<Map, Object>() {
       public Object fun(Map map) {
         map.remove(projectId.getKey());
@@ -625,7 +629,7 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     });
   }
 
-  private void withProjectCachesDo(Function<Map, ?> func) {
+  private void withProjectCachesDo(Function<Map, ?> func) throws RemoteException {
     MavenProjectBuilder builder = myImpl.getComponent(MavenProjectBuilder.class);
     Field field;
     try {

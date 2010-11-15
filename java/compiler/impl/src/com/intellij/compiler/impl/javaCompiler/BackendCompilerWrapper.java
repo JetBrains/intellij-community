@@ -723,9 +723,11 @@ public class BackendCompilerWrapper {
     final String realOutputDir;
     if (myCompileContext.isInTestSourceContent(sourceFile)) {
       realOutputDir = getTestsOutputDir(module);
+      LOG.assertTrue(realOutputDir != null);
     }
     else {
       realOutputDir = getOutputDir(module);
+      LOG.assertTrue(realOutputDir != null);
     }
 
     if (FileUtil.pathsEqual(tempOutputDir, realOutputDir)) { // no need to move

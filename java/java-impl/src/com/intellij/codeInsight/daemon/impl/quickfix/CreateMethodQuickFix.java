@@ -23,6 +23,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -70,7 +72,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
           }
         });
 
-      method = (PsiMethod)myTargetClass.add(method);
+      method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences((PsiMethod)myTargetClass.add(method));
       CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
     }
     catch (IncorrectOperationException e) {

@@ -89,7 +89,9 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       final String newName = ((PsiClass) element).getName();
       final GrReferenceElementImpl newElement = ((GrReferenceElementImpl)handleElementRename(newName));
       if (newElement.isReferenceTo(element)) return newElement;
-      return newElement.bindWithQualifiedRef(((PsiClass)element).getQualifiedName());
+      final String qualifiedName = ((PsiClass)element).getQualifiedName();
+      if (qualifiedName == null) return newElement;
+      return newElement.bindWithQualifiedRef(qualifiedName);
     } else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
       if (!isPhysical()) {
@@ -111,7 +113,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
   }
 
 
-  protected abstract PsiElement bindWithQualifiedRef(String qName);
+  protected abstract PsiElement bindWithQualifiedRef(@NotNull String qName);
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);

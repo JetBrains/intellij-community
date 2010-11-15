@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +26,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CompletionConfidence {
 
-  @Nullable
-  public abstract Boolean shouldFocusLookup(@NotNull CompletionParameters parameters);
+  @NotNull
+  public abstract ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters);
 
-
+  @NotNull
+  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    return ThreeState.UNSURE;
+  }
 }

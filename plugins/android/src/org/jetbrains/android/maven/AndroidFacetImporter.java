@@ -16,6 +16,7 @@
 package org.jetbrains.android.maven;
 
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
@@ -23,6 +24,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -33,6 +35,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.EmptySdkLog;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.FacetImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
@@ -51,7 +54,7 @@ import java.util.Map;
  */
 public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
   public AndroidFacetImporter() {
-    super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", new AndroidFacetType(), "Android");
+    super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", FacetType.findInstance(AndroidFacetType.class), "Android");
   }
 
   @Override
@@ -138,11 +141,12 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   }
 
   private void configurePaths(AndroidFacet facet, MavenProject project) {
-    String modulePath = facet.getModule().getModuleFilePath();
+    Module module = facet.getModule();
+    String modulePath = module.getModuleFilePath();
     String moduleDirPath = FileUtil.toSystemIndependentName(new File(modulePath).getParent());
     AndroidFacetConfiguration configuration = facet.getConfiguration();
 
-    String resFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceDirectory");
+    String resFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", true, true);
     if (resFolderRelPath != null) {
       configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
     }
@@ -164,33 +168,61 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
       }
     }
     else {
-      String resOverlayFolderRelPath = getPathFromConfig(project, moduleDirPath, "resourceOverlayDirectory");
+      String resOverlayFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceOverlayDirectory", true, true);
       if (resOverlayFolderRelPath != null) {
         configuration.RES_OVERLAY_FOLDERS = new String[]{'/' + resOverlayFolderRelPath};
       }
     }
 
-    String assetsFolderRelPath = getPathFromConfig(project, moduleDirPath, "assetsDirectory");
+    if (!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
+      // it may be already configured in setupFacet()
+      String resFolderForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", false, true);
+      if (resFolderForCompilerRelPath != null && !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
+        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
+        configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + resFolderForCompilerRelPath;
+      }
+    }
+
+    String assetsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "assetsDirectory", false, true);
     if (assetsFolderRelPath != null) {
       configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
     }
 
-    String manifestFileRelPath = getPathFromConfig(project, moduleDirPath, "androidManifestFile");
+    String manifestFileRelPath = getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", true, false);
     if (manifestFileRelPath != null) {
       configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
     }
 
-    String nativeLibsFolderRelPath = getPathFromConfig(project, moduleDirPath, "nativeLibrariesDirectory");
+    String manifestFileForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", false, false);
+    if (manifestFileForCompilerRelPath != null && !manifestFileForCompilerRelPath.equals(manifestFileRelPath)) {
+      configuration.USE_CUSTOM_COMPILER_MANIFEST = true;
+      configuration.CUSTOM_COMPILER_MANIFEST = '/' + manifestFileForCompilerRelPath;
+    }
+
+    String nativeLibsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "nativeLibrariesDirectory", false, true);
     if (nativeLibsFolderRelPath != null) {
       configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
   }
 
   @Nullable
-  private String getPathFromConfig(MavenProject project, String moduleDirPath, String configTagName) {
+  private String getPathFromConfig(Module module,
+                                   MavenProject project,
+                                   String moduleDirPath,
+                                   String configTagName,
+                                   boolean inResourceDir,
+                                   boolean directory) {
     String resourceDir = findConfigValue(project, configTagName);
     if (resourceDir != null) {
-      String resFolderRelPath = getRelativePath(moduleDirPath, makePath(project, resourceDir));
+      String path = makePath(project, resourceDir);
+      if (inResourceDir) {
+        MyResourceProcessor processor = new MyResourceProcessor(path, directory);
+        AndroidMavenProviderImpl.processResources(module, project, processor);
+        if (processor.myResult != null) {
+          path = processor.myResult.getPath();
+        }
+      }
+      String resFolderRelPath = getRelativePath(moduleDirPath, path);
       if (resFolderRelPath != null) {
         return resFolderRelPath;
       }
@@ -211,5 +243,32 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   public void collectExcludedFolders(MavenProject mavenProject, List<String> result) {
     result.add(mavenProject.getGeneratedSourcesDirectory(false) + "/combined-resources");
     result.add(mavenProject.getGeneratedSourcesDirectory(false) + "/extracted-dependencies");
+  }
+
+  private static class MyResourceProcessor implements AndroidMavenProviderImpl.ResourceProcessor {
+    private final String myResourceOutputPath;
+    private final boolean myDirectory;
+
+    private VirtualFile myResult;
+
+    private MyResourceProcessor(String resourceOutputPath, boolean directory) {
+      myResourceOutputPath = resourceOutputPath;
+      myDirectory = directory;
+    }
+
+    @Override
+    public boolean process(@NotNull VirtualFile resource, String outputPath) {
+      if (resource.isDirectory() != myDirectory) {
+        return false;
+      }
+      if (outputPath.endsWith("/")) {
+        outputPath = outputPath.substring(0, outputPath.length() - 1);
+      }
+      if (FileUtil.pathsEqual(outputPath, myResourceOutputPath)) {
+        myResult = resource;
+        return true;
+      }
+      return false;
+    }
   }
 }

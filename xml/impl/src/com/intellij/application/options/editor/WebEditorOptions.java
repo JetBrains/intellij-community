@@ -39,6 +39,7 @@ import java.io.File;
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions>, ExportableComponent {
 
   private boolean myBreadcrumbsEnabled = true;
+  private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
@@ -57,6 +58,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public boolean isBreadcrumbsEnabled() {
     return myBreadcrumbsEnabled;
+  }
+
+  public void setBreadcrumbsEnabledInXml(boolean b) {
+    myBreadcrumbsEnabledInXml = b;
+  }
+
+  public boolean isBreadcrumbsEnabledInXml() {
+    return myBreadcrumbsEnabledInXml;
   }
 
   public boolean isShowCssColorPreviewInGutter() {

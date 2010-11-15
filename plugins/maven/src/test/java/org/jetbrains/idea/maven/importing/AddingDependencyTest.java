@@ -41,7 +41,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
                                     new MavenId("junit", "junit", "4.0"));
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     List<MavenArtifact> deps = myProjectsTree.getProjects().get(0).getDependencies();
     assertEquals(1, deps.size());
@@ -59,7 +59,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
                                     new MavenId("junit", "junit", "4.0"));
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
 
     List<MavenArtifact> deps = myProjectsTree.getProjects().get(0).getDependencies();
@@ -84,7 +84,7 @@ public class AddingDependencyTest extends MavenImportingTestCase {
 
     myProjectsManager.addDependency(myProjectsTree.findProject(myProjectPom),
                                     new MavenId("junit", "junit", "4.0"));
-    myProjectsManager.performScheduledImport();
+    myProjectsManager.performScheduledImportInTests();
 
     assertTrue(jarFile.exists());
   }

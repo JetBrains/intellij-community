@@ -19,7 +19,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 
@@ -116,19 +115,19 @@ public class SuspendManagerImpl implements SuspendManager {
           LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
-        final ThreadReferenceProxyImpl thread = getThread();
-
-        if (thread != null) { // check that thread is suspended at the moment
-          try {
-            if (!thread.isSuspended()) {
-              final int status = thread.status();
-              if ((status != ThreadReference.THREAD_STATUS_ZOMBIE) && (status != ThreadReference.THREAD_STATUS_NOT_STARTED) && (status != ThreadReference.THREAD_STATUS_UNKNOWN)) {
-                LOG.error("Context thread must be suspended");
-              }
-            }
-          }
-          catch (ObjectCollectedException ignored) {}
-        }
+        //final ThreadReferenceProxyImpl thread = getThread();
+        //
+        //if (thread != null) { // check that thread is suspended at the moment
+        //  try {
+        //    if (!thread.isSuspended()) {
+        //      final int status = thread.status();
+        //      if ((status != ThreadReference.THREAD_STATUS_ZOMBIE) && (status != ThreadReference.THREAD_STATUS_NOT_STARTED) && (status != ThreadReference.THREAD_STATUS_UNKNOWN)) {
+        //        LOG.error("Context thread must be suspended");
+        //      }
+        //    }
+        //  }
+        //  catch (ObjectCollectedException ignored) {}
+        //}
 
         int attempts = 5;
         while (--attempts > 0) {

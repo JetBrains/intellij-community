@@ -128,16 +128,16 @@ public class JavaParserUtil {
     builder.putUserDataUnprotected(LANG_LEVEL_KEY, level);
   }
 
-  public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
-  }
-
   public static boolean areDiamondsSupported(final PsiBuilder builder) {
     return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_7);
   }
 
+  public static boolean areTypeAnnotationsSupported(final PsiBuilder builder) {
+    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_8);
+  }
+
   @NotNull
-  private static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
+  public static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     final LanguageLevel level = builder.getUserDataUnprotected(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;

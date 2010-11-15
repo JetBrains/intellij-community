@@ -70,57 +70,61 @@ public abstract class RemoteObjectWrapper<T> {
   }
 
   protected <T> T perform(Retriable<T> r) {
+    RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
         return r.execute();
       }
       catch (RemoteException e) {
-        handleRemoteError(e);
+        handleRemoteError(last = e);
       }
     }
-    throw new RuntimeException("Cannot reconnect.");
+    throw new RuntimeException("Cannot reconnect.", last);
   }
 
   protected <T> T perform(RetriableCancelable<T> r) throws MavenProcessCanceledException {
+    RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
         return r.execute();
       }
       catch (RemoteException e) {
-        handleRemoteError(e);
+        handleRemoteError(last = e);
       }
       catch (MavenFacadeProcessCanceledException e) {
         throw new MavenProcessCanceledException();
       }
     }
-    throw new RuntimeException("Cannot reconnect.");
+    throw new RuntimeException("Cannot reconnect.", last);
   }
 
   protected <T> T perform(IndexRetriable<T> r) throws MavenFacadeIndexerException {
+    RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
         return r.execute();
       }
       catch (RemoteException e) {
-        handleRemoteError(e);
+        handleRemoteError(last = e);
       }
     }
-    throw new RuntimeException("Cannot reconnect.");
+    throw new RuntimeException("Cannot reconnect.", last);
   }
 
   protected <T> T perform(IndexRetriableCancelable<T> r) throws MavenFacadeIndexerException, MavenProcessCanceledException {
+    RemoteException last = null;
     for (int i = 0; i < 2; i++) {
       try {
         return r.execute();
       }
       catch (RemoteException e) {
-        handleRemoteError(e);
+        handleRemoteError(last = e);
       }
       catch (MavenFacadeProcessCanceledException e) {
         throw new MavenProcessCanceledException();
       }
     }
-    throw new RuntimeException("Cannot reconnect.");
+    throw new RuntimeException("Cannot reconnect.", last);
   }
 
   protected interface Retriable<T> {

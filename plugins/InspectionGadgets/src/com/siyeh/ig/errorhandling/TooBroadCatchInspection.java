@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class TooBroadCatchInspection extends BaseInspection {
             if (tryBlock == null) {
                 return;
             }
-            final Set<PsiType> exceptionsThrown =
+            final Set<PsiClassType> exceptionsThrown =
                     ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final int numExceptionsThrown = exceptionsThrown.size();
             final Set<PsiType> exceptionsCaught =
@@ -205,18 +205,15 @@ public class TooBroadCatchInspection extends BaseInspection {
                 }
                 final PsiType typeCaught = parameter.getType();
                 if (onlyWarnOnRootExceptions) {
-                    final String canonicalText = typeCaught.getCanonicalText();
-                    if (!"java.lang.RuntimeException".equals(canonicalText) &&
-                        !"java.lang.Exception".equals(canonicalText) &&
-                        !"java.lang.Throwable".equals(canonicalText)) {
+                    if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
                         continue;
                     }
                 }
                 if (exceptionsThrown.contains(typeCaught)) {
                     exceptionsCaught.add(typeCaught);
                 }
-                final List<PsiType> typesMasked = new ArrayList();
-                for (PsiType typeThrown : exceptionsThrown) {
+                final List<PsiClassType> typesMasked = new ArrayList();
+                for (PsiClassType typeThrown : exceptionsThrown) {
                     if (!exceptionsCaught.contains(typeThrown) &&
                         typeCaught.isAssignableFrom(typeThrown)) {
                         exceptionsCaught.add(typeCaught);

@@ -52,6 +52,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -77,7 +78,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private int myMinPrefixLength;
   private int myPreferredItemsCount;
-  private long myShownStamp = -1;
   private String myInitialPrefix;
   private LookupArranger myArranger;
 
@@ -92,6 +92,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myDisposed = false;
   private boolean myHidden = false;
   private LookupElement myPreselectedItem = EMPTY_LOOKUP_ITEM;
+  private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   private String mySelectionInvariant = null;
   private boolean mySelectionTouched;
   private boolean myFocused = true;
@@ -187,6 +188,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   @TestOnly
   public void resort() {
     mySelectionTouched = false;
+    myFrozenItems.clear();
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
     final List<LookupElement> items = myModel.getItems();
     myModel.clearItems();
@@ -262,6 +264,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public void setAdditionalPrefix(final String additionalPrefix) {
     myAdditionalPrefix = additionalPrefix;
     myInitialPrefix = null;
+    myFrozenItems.clear();
     refreshUi();
   }
 
@@ -271,6 +274,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     if (myReused) {
+      myFrozenItems.clear();
       myModel.collectGarbage();
       myReused = false;
     }
@@ -289,7 +293,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     synchronized (myList) {
       model.clear();
 
-      Set<LookupElement> firstItems = new THashSet<LookupElement>();
+      Set<LookupElement> firstItems = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
       hasExactPrefixes = addExactPrefixItems(model, firstItems, items);
       addMostRelevantItems(model, firstItems, snapshot.second);
@@ -398,6 +402,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void addMostRelevantItems(DefaultListModel model, Set<LookupElement> firstItems, final Collection<List<LookupElement>> sortedItems) {
+    for (LookupElement item : myFrozenItems) {
+      if (prefixMatches(item) && firstItems.add(item)) {
+        model.addElement(item);
+      }
+    }
+
+    if (firstItems.size() > MAX_PREFERRED_COUNT) return;
+
     for (final List<LookupElement> elements : sortedItems) {
       final List<LookupElement> suitable = new SmartList<LookupElement>();
       for (final LookupElement item : elements) {
@@ -410,6 +422,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       for (final LookupElement item : suitable) {
         firstItems.add(item);
         model.addElement(item);
+        myFrozenItems.add(item);
       }
     }
   }
@@ -493,10 +506,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void finishLookup(final char completionChar) {
-    if (justShown()) {
-      return;
-    }
-
     final LookupElement item = (LookupElement)myList.getSelectedValue();
     doHide(false, true);
     if (item == null ||
@@ -535,10 +544,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     });
 
     fireItemSelected(item, completionChar);
-  }
-
-  public boolean justShown() {
-    return myShownStamp > 0 && System.currentTimeMillis() - myShownStamp < 42 && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public int getLookupStart() {
@@ -581,8 +586,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
 
     getComponent().getRootPane().getLayeredPane().add(myIconPanel, 42, 0);
-
-    myShownStamp = System.currentTimeMillis();
   }
 
   private void addListeners() {
@@ -709,6 +712,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     int index = myList.getSelectedIndex();
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
+      LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
       return null;
     }
     Point layeredPanePoint=SwingUtilities.convertPoint(myList,itmBounds.x,itmBounds.y,getComponent());

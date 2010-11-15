@@ -22,6 +22,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.lang.properties.PropertiesFileType;
@@ -29,7 +31,6 @@ import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -87,7 +88,7 @@ public final class PreviewFormAction extends AnAction{
   public void actionPerformed(final AnActionEvent e) {
     final GuiEditor editor = FormEditingUtil.getActiveEditor(e.getDataContext());
     if (editor != null) {
-      showPreviewFrame(editor.getModule(), editor.getFile(), e.getDataContext(), editor.getStringDescriptorLocale());
+      showPreviewFrame(editor.getModule(), editor.getFile(), editor.getStringDescriptorLocale());
     }
   }
 
@@ -107,7 +108,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void showPreviewFrame(@NotNull final Module module, @NotNull final VirtualFile formFile,
-                                       final DataContext dataContext, @Nullable final Locale stringDescriptorLocale) {
+                                       @Nullable final Locale stringDescriptorLocale) {
     final String tempPath;
     try {
       final File tempDirectory = FileUtil.createTempDirectory("FormPreview", "");
@@ -222,21 +223,24 @@ public final class PreviewFormAction extends AnAction{
       for(String bundleName: bundleSet) {
         for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
           virtualFiles.add(propFile.getVirtualFile());
-          modules.add(ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject()));
+          final Module moduleForFile = ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject());
+          if (moduleForFile != null) {
+            modules.add(moduleForFile);
+          }
         }
       }
-      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[]{}));
+      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
 
       CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
         public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
           if (!aborted && errors == 0) {
-            runPreviewProcess(tempPath, sources, module, formFile, dataContext, stringDescriptorLocale);
+            runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
           }
         }
       });
     }
     else {
-      runPreviewProcess(tempPath, sources, module, formFile, dataContext, stringDescriptorLocale);
+      runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
     }
   }
 
@@ -259,7 +263,7 @@ public final class PreviewFormAction extends AnAction{
   }
 
   private static void runPreviewProcess(final String tempPath, final PathsList sources, final Module module, final VirtualFile formFile,
-                                        final DataContext dataContext, @Nullable final Locale stringDescriptorLocale) {
+                                        @Nullable final Locale stringDescriptorLocale) {
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
@@ -286,7 +290,8 @@ public final class PreviewFormAction extends AnAction{
     }
 
     try {
-      final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
+      final RunProfile profile = new MyRunProfile(module, parameters, tempPath,
+                                                  UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
       ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
       LOG.assertTrue(defaultRunner != null);
       defaultRunner.execute(DefaultRunExecutor.getRunExecutorInstance(), new ExecutionEnvironment(profile, module.getProject(), null, null,
@@ -304,11 +309,13 @@ public final class PreviewFormAction extends AnAction{
   private static final class MyRunProfile implements ModuleRunProfile {
     private final Module myModule;
     private final JavaParameters myParams;
+    private final String myTempPath;
     private final String myStatusbarMessage;
 
-    public MyRunProfile(final Module module, final JavaParameters params, final String statusbarMessage) {
+    public MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
       myModule = module;
       myParams = params;
+      myTempPath = tempPath;
       myStatusbarMessage = statusbarMessage;
     }
 
@@ -324,7 +331,14 @@ public final class PreviewFormAction extends AnAction{
 
         public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
           try {
-            return super.execute(executor, runner);
+            ExecutionResult executionResult = super.execute(executor, runner);
+            executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
+              @Override
+              public void processTerminated(ProcessEvent event) {
+                FileUtil.asyncDelete(new File(myTempPath));
+              }
+            });
+            return executionResult;
           }
           finally {
             final Project project = myModule.getProject();

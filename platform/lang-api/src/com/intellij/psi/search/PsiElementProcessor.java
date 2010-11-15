@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
   class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
     private final Collection<T> myCollection;
 
-    public CollectElements(Collection<T> collection) {
+    public CollectElements(@NotNull Collection<T> collection) {
       myCollection = Collections.synchronizedCollection(collection);
     }
 
@@ -68,28 +69,31 @@ public interface PsiElementProcessor<T extends PsiElement> {
   class CollectFilteredElements<T extends PsiElement> extends CollectElements<T> {
     private final PsiElementFilter myFilter;
 
-    public CollectFilteredElements(PsiElementFilter filter, Collection<T> collection) {
+    public CollectFilteredElements(@NotNull PsiElementFilter filter, @NotNull Collection<T> collection) {
       super(collection);
       myFilter = filter;
     }
 
-    public CollectFilteredElements(PsiElementFilter filter) {
+    public CollectFilteredElements(@NotNull PsiElementFilter filter) {
       myFilter = filter;
     }
 
     public boolean execute(T element) {
-      if (myFilter.isAccepted(element)) return super.execute(element);
-      return true;
+      return !myFilter.isAccepted(element) || super.execute(element);
     }
   }
 
   class CollectElementsWithLimit<T extends PsiElement> extends CollectElements<T>{
     private final AtomicInteger myCount = new AtomicInteger(0);
     private volatile boolean myOverflow = false;
-
     private final int myLimit;
 
     public CollectElementsWithLimit(int limit) {
+      myLimit = limit;
+    }
+
+    public CollectElementsWithLimit(int limit, @NotNull Collection<T> collection) {
+      super(collection);
       myLimit = limit;
     }
 
@@ -131,13 +135,12 @@ public interface PsiElementProcessor<T extends PsiElement> {
   class FindFilteredElement<T extends PsiElement> extends FindElement<T> {
     private final PsiElementFilter myFilter;
 
-    public FindFilteredElement(PsiElementFilter filter) {
+    public FindFilteredElement(@NotNull PsiElementFilter filter) {
       myFilter = filter;
     }
 
     public boolean execute(T element) {
-      if (myFilter.isAccepted(element)) return super.execute(element);
-      return true;
+      return !myFilter.isAccepted(element) || super.execute(element);
     }
   }
 }

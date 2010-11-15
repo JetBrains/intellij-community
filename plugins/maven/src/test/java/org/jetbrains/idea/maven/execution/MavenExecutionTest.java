@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.Arrays;
 
@@ -32,6 +33,11 @@ import java.util.Arrays;
 public class MavenExecutionTest extends MavenImportingTestCase {
   @Override
   protected boolean runInWriteAction() {
+    return false;
+  }
+
+  @Override
+  protected boolean runInDispatchThread() {
     return false;
   }
 
@@ -78,6 +84,12 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), null);
     execute(params);
+
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+      }
+    });
 
     assertSources("project",
                   "src/main/java",

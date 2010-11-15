@@ -37,7 +37,7 @@ public class RecursionWeigher extends CompletionWeigher {
     delegation,
   }
 
-  public Result weigh(@NotNull final LookupElement element, @Nullable final CompletionLocation location) {
+  public Result weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     if (location == null) {
       return null;
     }

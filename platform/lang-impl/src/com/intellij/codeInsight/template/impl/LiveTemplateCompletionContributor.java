@@ -19,10 +19,17 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -39,23 +46,42 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final PsiFile file = parameters.getOriginalFile();
         final int offset = parameters.getOffset();
         final String prefix = result.getPrefixMatcher().getPrefix();
-        for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-          final String key = template.getKey();
-          if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
-            if (prefix.equals(key)) {
-              result.addElement(LookupElementBuilder.create(key).setTypeText(template.getDescription()).setInsertHandler(new InsertHandler<LookupElement>() {
-                @Override
-                public void handleInsert(InsertionContext context, LookupElement item) {
-                  context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-                  context.setAddCompletionChar(false);
-                  TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
-                }
-              }));
-            } else {
-              result.restartCompletionOnPrefixChange(key);
+        final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
+        if (template != null) {
+          result.addElement(LookupElementBuilder.create(prefix).setTypeText(template.getDescription()).setInsertHandler(new InsertHandler<LookupElement>() {
+            @Override
+            public void handleInsert(InsertionContext context, LookupElement item) {
+              context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+              context.setAddCompletionChar(false);
+              TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
             }
+          }));
+        } else {
+          for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
+            result.restartCompletionOnPrefixChange(possible.getKey());
           }
         }
+
+      }
+    });
+  }
+
+  private static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
+    final ArrayList<TemplateImpl> result = CollectionFactory.arrayList();
+    for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+      if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
+        result.add(template);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static TemplateImpl findApplicableTemplate(PsiFile file, int offset, final String key) {
+    return ContainerUtil.find(listApplicableTemplates(file, offset), new Condition<TemplateImpl>() {
+      @Override
+      public boolean value(TemplateImpl template) {
+        return key.equals(template.getKey());
       }
     });
   }

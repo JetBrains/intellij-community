@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -48,6 +47,7 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -120,6 +120,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       return null;
     }
 
+    if (JavaCompletionData.START_FOR.accepts(position)) {
+      return ElementClassFilter.VARIABLE;
+    }
+
     if (psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTryStatement.class)).accepts(position)) {
       return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)), ElementClassFilter.PACKAGE_FILTER);
     }
@@ -180,7 +184,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     final ASTNode node = lastElement.getNode();
     assert node != null;
-    if (node.getElementType() == JavaTokenType.DOUBLE_LITERAL) {
+    final IElementType elementType = node.getElementType();
+    if (elementType == JavaTokenType.DOUBLE_LITERAL || elementType == JavaTokenType.LONG_LITERAL || elementType == JavaTokenType.INTEGER_LITERAL || elementType == JavaTokenType.FLOAT_LITERAL) {
       return;
     }
 
@@ -250,15 +255,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     completionData.fillCompletions(parameters, result);
 
     for (final LookupElement item : lookupSet) {
-      if (item instanceof LookupItem && ((LookupItem)item).getInsertHandler() == null) {
-        ((LookupItem)item).setInsertHandler(new InsertHandler() {
-          public void handleInsert(final InsertionContext context, final LookupElement item) {
-            analyzeItem((LookupItem)item, item.getObject(), parameters.getPosition());
-            new DefaultInsertHandler().handleInsert(context, item);
-          }
-        });
-      }
-
       result.addElement(item);
     }
 
@@ -467,54 +463,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     final PsiElement parent = element.getParent();
     if (parent == null) return false;
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
-  }
-
-  public static void analyzeItem(final LookupItem item, final Object completion, final PsiElement position) {
-    if(completion instanceof PsiKeyword){
-      if(PsiKeyword.BREAK.equals(((PsiKeyword)completion).getText())
-         || PsiKeyword.CONTINUE.equals(((PsiKeyword)completion).getText())){
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile
-              || scope instanceof PsiMethod
-              || scope instanceof PsiClassInitializer){
-            item.setTailType(TailType.SEMICOLON);
-            break;
-          }
-          else if (scope instanceof PsiLabeledStatement){
-            item.setTailType(TailType.NONE);
-            break;
-          }
-          scope = scope.getParent();
-        }
-      }
-      if(PsiKeyword.RETURN.equals(((PsiKeyword)completion).getText())){
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile
-              || scope instanceof PsiClassInitializer){
-            item.setTailType(TailType.NONE);
-            break;
-          }
-          else if (scope instanceof PsiMethod){
-            final PsiMethod method = (PsiMethod)scope;
-            if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
-              item.setTailType(TailType.SEMICOLON);
-            }
-            else item.setTailType(TailType.SPACE);
-
-            break;
-          }
-          scope = scope.getParent();
-        }
-      }
-      if(PsiKeyword.SYNCHRONIZED.equals(((PsiKeyword)completion).getText())){
-        if (PsiTreeUtil.getParentOfType(position, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock){
-          item.setTailType(TailTypes.SYNCHRONIZED_LPARENTH);
-        }
-      }
-    }
-
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

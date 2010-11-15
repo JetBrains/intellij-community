@@ -601,15 +601,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       initIdeaDefaults(table);
     }
 
-    protected void initSystemColorDefaults(UIDefaults table) {
-      super.initSystemColorDefaults(table);
-      /*
-      table.put("control", new ColorUIResource(236, 233, 216));
-      table.put("controlHighlight", new ColorUIResource(255, 255, 255));
-      table.put("controlShadow", new ColorUIResource(172, 167, 153));
-      */
-    }
-
     @SuppressWarnings({"HardCodedStringLiteral"})
     private static void initIdeaDefaults(UIDefaults defaults) {
       defaults.put("Menu.maxGutterIconWidth", 18);

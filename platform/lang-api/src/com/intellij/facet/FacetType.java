@@ -47,6 +47,10 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   private final @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
 
+  public static <T extends FacetType> T findInstance(Class<T> aClass) {
+    return EP_NAME.findExtension(aClass);
+  }
+
   /**
    * @param id unique instance of {@link FacetTypeId}
    * @param stringId unique string id of the facet type

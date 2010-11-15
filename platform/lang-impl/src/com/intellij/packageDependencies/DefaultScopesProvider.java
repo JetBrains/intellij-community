@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
+import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class DefaultScopesProvider implements CustomScopesProvider {
-  private final NamedScope myProjectTestScope;
-  private final NamedScope myNonProjectScope;
   private final NamedScope myProblemsScope;
   private final Project myProject;
   private final List<NamedScope> myScopes;
@@ -47,8 +46,9 @@ public class DefaultScopesProvider implements CustomScopesProvider {
 
   public DefaultScopesProvider(Project project) {
     myProject = project;
-    myProjectTestScope = new TestsScope();
-    myNonProjectScope = new NonProjectFilesScope();
+    final NamedScope projectScope = new ProjectFilesScope();
+    final NamedScope projectTestScope = new TestsScope();
+    final NamedScope nonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
       public boolean contains(PsiFile file, NamedScopesHolder holder) {
@@ -56,7 +56,7 @@ public class DefaultScopesProvider implements CustomScopesProvider {
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
       }
     });
-    myScopes = Arrays.asList(getProblemsScope(), getAllScope(), myProjectTestScope, myNonProjectScope);
+    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), projectTestScope, nonProjectScope);
   }
 
   @NotNull

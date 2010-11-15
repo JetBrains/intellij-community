@@ -42,6 +42,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   private final HashMap<Pair<Target, Parameters>, Object> myProcMap =
     new HashMap<Pair<Target, Parameters>, Object>();
 
+  static {
+    RemoteServer.setupRMI();
+  }
+
   public RemoteProcessSupport(Class<EntryPoint> valueClass) {
     myValueClass = valueClass;
   }

@@ -399,7 +399,7 @@ public class HighlightClassUtil {
 
   static HighlightInfo checkExtendsClassAndImplementsInterface(PsiReferenceList referenceList,
                                                                JavaResolveResult resolveResult,
-                                                               PsiJavaCodeReferenceElement context) {
+                                                               PsiJavaCodeReferenceElement ref) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     boolean isImplements = referenceList.equals(aClass.getImplementsList());
     boolean isInterface = aClass.isInterface();
@@ -409,10 +409,10 @@ public class HighlightClassUtil {
     PsiClass extendFrom = (PsiClass)resolveResult.getElement();
     if (extendFrom.isInterface() != mustBeInterface) {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                      context,
+                                                      ref,
                                                       mustBeInterface ? INTERFACE_EXPECTED : NO_INTERFACE_EXPECTED);
       PsiClassType type =
-        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(ref);
       QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));
     }
     return errorResult;
@@ -664,7 +664,10 @@ public class HighlightClassUtil {
       return null;
     }
     PsiClass aClass = (PsiClass)grand;
-    if (aClass.getExtendsList() != parent || aClass instanceof PsiTypeParameter) {
+    if (aClass instanceof PsiTypeParameter) {
+      return null;
+    }
+    if (aClass.getExtendsList() != parent && aClass.getImplementsList() != parent) {
       return null;
     }
     if (!(resolved instanceof PsiClass)) {

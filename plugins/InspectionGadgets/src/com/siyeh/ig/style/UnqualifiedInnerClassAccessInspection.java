@@ -89,8 +89,10 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
                 return;
             }
             final PsiJavaFile javaFile = (PsiJavaFile) containingFile;
-            final String innerClassName =
-                    qualifiedName + '.' + referenceElement.getText();
+            final String innerClassName = aClass.getQualifiedName();
+            if (innerClassName == null) {
+                return;
+            }
             final PsiImportList importList = javaFile.getImportList();
             if (importList == null) {
                 return;
@@ -213,7 +215,7 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         private final Set<PsiJavaCodeReferenceElement> references =
                 new HashSet();
 
-        private ReferenceCollector(String name, boolean onDemand) {
+        ReferenceCollector(String name, boolean onDemand) {
             this.name = name;
             this.onDemand = onDemand;
         }
@@ -247,6 +249,12 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             }
         }
 
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            visitReferenceElement(expression);
+        }
+
         public Collection<PsiJavaCodeReferenceElement> getReferences() {
             return references;
         }
@@ -261,13 +269,13 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (expression.isQualified()) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            if (reference.isQualified()) {
                 return;
             }
-            final PsiElement target = expression.resolve();
+            final PsiElement target = reference.resolve();
             if (!(target instanceof PsiClass)) {
                 return;
             }
@@ -276,7 +284,12 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
             if (containingClass == null) {
                 return;
             }
-            registerError(expression, containingClass.getName());
+            registerError(reference, containingClass.getName());
         }
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitReferenceElement(expression);
+      }
     }
 }

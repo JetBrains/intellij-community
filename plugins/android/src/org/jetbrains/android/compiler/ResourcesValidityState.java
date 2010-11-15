@@ -49,7 +49,7 @@ public class ResourcesValidityState implements ValidityState {
     IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetName = target != null ? target.getFullName() : "";
 
-    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }
@@ -58,7 +58,7 @@ public class ResourcesValidityState implements ValidityState {
       collectFiles(resourcesDir);
     }
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-      VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet.getModule());
+      VirtualFile depManifest = AndroidRootUtil.getManifestFileForCompiler(depFacet);
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
       }

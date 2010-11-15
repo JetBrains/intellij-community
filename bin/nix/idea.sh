@@ -26,7 +26,11 @@ if [ -z "$IDEA_JDK" ]; then
   fi
   if [ -z "$IDEA_JDK" ]; then
     echo ERROR: cannot start IntelliJ IDEA.
-    echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
+    echo No JDK found to run IDEA. Please validate either IDEA_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+    echo
+    echo Press Enter to continue.
+    read IGNORE
+    exit 1
   fi
 fi
 
@@ -36,7 +40,7 @@ grep 'OpenJDK' $VERSION_LOG
 OPEN_JDK=$?
 grep '64-Bit' $VERSION_LOG
 BITS=$?
-rm /tmp/java.version.log
+rm $VERSION_LOG
 if [ $OPEN_JDK -eq 0 ]; then
   echo WARNING: You are launching IDE using OpenJDK Java runtime
   echo
@@ -84,7 +88,7 @@ fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
-JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
+JVM_ARGS=`eval echo $JVM_ARGS $REQUIRED_JVM_ARGS`
 
 CLASSPATH=../lib/bootstrap.jar
 CLASSPATH=$CLASSPATH:../lib/util.jar

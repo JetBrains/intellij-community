@@ -21,6 +21,7 @@ package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.make.BuildInstruction;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -64,7 +65,7 @@ public abstract class BuildInstructionBase extends UserDataHolderBase implements
   }
 
   protected File createTempFile(final String prefix, final String suffix) throws IOException {
-    final File tempFile = File.createTempFile(prefix +"___",suffix);
+    final File tempFile = FileUtil.createTempFile(prefix + "___", suffix);
     addFileToDelete(tempFile);
     return tempFile;
   }

@@ -30,7 +30,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerStatementEditor;
-import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -40,7 +40,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +62,8 @@ public abstract class BreakpointPropertiesPanel {
   private final FieldPanel myInstanceFiltersField;
 
   private final FieldPanel myClassFiltersField;
-  private ClassFilter[] myClassFilters;
-  private ClassFilter[] myClassExclusionFilters;
+  private com.intellij.ui.classFilter.ClassFilter[] myClassFilters;
+  private com.intellij.ui.classFilter.ClassFilter[] myClassExclusionFilters;
   private InstanceFilter[] myInstanceFilters;
 
   private JCheckBox myLogExpressionCheckBox;
@@ -221,7 +220,7 @@ public abstract class BreakpointPropertiesPanel {
       public void actionPerformed(ActionEvent e) {
         reloadClassFilters();
 
-        TreeClassChooser.ClassFilter classFilter;
+        ClassFilter classFilter;
         classFilter = createClassConditionFilter();
 
         EditClassFiltersDialog _dialog = new EditClassFiltersDialog(myProject, classFilter);
@@ -298,10 +297,10 @@ public abstract class BreakpointPropertiesPanel {
     mySuspendNoneRadio.setFont(DebuggerSettings.SUSPEND_NONE.equals(defPolicy)? boldFont : font);
   }
 
-  protected TreeClassChooser.ClassFilter createClassConditionFilter() {
-    TreeClassChooser.ClassFilter classFilter;
+  protected ClassFilter createClassConditionFilter() {
+    ClassFilter classFilter;
     if(myBreakpointPsiClass != null) {
-      classFilter = new TreeClassChooser.ClassFilter() {
+      classFilter = new ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
         }
@@ -476,14 +475,14 @@ public abstract class BreakpointPropertiesPanel {
   private void updateClassFilterEditor(boolean updateText) {
     List<String> filters = new ArrayList<String>();
     for (int i = 0; i < myClassFilters.length; i++) {
-      ClassFilter classFilter = myClassFilters[i];
+      com.intellij.ui.classFilter.ClassFilter classFilter = myClassFilters[i];
       if(classFilter.isEnabled()) {
         filters.add(classFilter.getPattern());
       }
     }
     List<String> excludeFilters = new ArrayList<String>();
     for (int i = 0; i < myClassExclusionFilters.length; i++) {
-      ClassFilter classFilter = myClassExclusionFilters[i];
+      com.intellij.ui.classFilter.ClassFilter classFilter = myClassExclusionFilters[i];
       if(classFilter.isEnabled()) {
         excludeFilters.add("-" + classFilter.getPattern());
       }
@@ -506,8 +505,8 @@ public abstract class BreakpointPropertiesPanel {
   private void reloadClassFilters() {
     String filtersText = myClassFiltersField.getText();
 
-    ArrayList<ClassFilter> classFilters     = new ArrayList<ClassFilter>();
-    ArrayList<ClassFilter> exclusionFilters = new ArrayList<ClassFilter>();
+    ArrayList<com.intellij.ui.classFilter.ClassFilter> classFilters     = new ArrayList<com.intellij.ui.classFilter.ClassFilter>();
+    ArrayList<com.intellij.ui.classFilter.ClassFilter> exclusionFilters = new ArrayList<com.intellij.ui.classFilter.ClassFilter>();
     int startFilter = -1;
     for(int i = 0; i <= filtersText.length(); i++) {
       if(i < filtersText.length() && !Character.isWhitespace(filtersText.charAt(i))){
@@ -515,24 +514,24 @@ public abstract class BreakpointPropertiesPanel {
       } else {
         if(startFilter >=0) {
           if(filtersText.charAt(startFilter) == '-'){
-            exclusionFilters.add(new ClassFilter(filtersText.substring(startFilter + 1, i)));
+            exclusionFilters.add(new com.intellij.ui.classFilter.ClassFilter(filtersText.substring(startFilter + 1, i)));
           } else {
-            classFilters.add(new ClassFilter(filtersText.substring(startFilter, i)));
+            classFilters.add(new com.intellij.ui.classFilter.ClassFilter(filtersText.substring(startFilter, i)));
           }
           startFilter = -1;
         }
       }
     }
     for (int i = 0; i < myClassFilters.length; i++) {
-      ClassFilter classFilter = myClassFilters[i];
+      com.intellij.ui.classFilter.ClassFilter classFilter = myClassFilters[i];
       if(!classFilter.isEnabled()) classFilters.add(classFilter);
     }
     for (int i = 0; i < myClassExclusionFilters.length; i++) {
-      ClassFilter classFilter = myClassExclusionFilters[i];
+      com.intellij.ui.classFilter.ClassFilter classFilter = myClassExclusionFilters[i];
       if(!classFilter.isEnabled()) exclusionFilters.add(classFilter);
     }
-    myClassFilters          = classFilters    .toArray(new ClassFilter[classFilters    .size()]);
-    myClassExclusionFilters = exclusionFilters.toArray(new ClassFilter[exclusionFilters.size()]);
+    myClassFilters          = classFilters    .toArray(new com.intellij.ui.classFilter.ClassFilter[classFilters    .size()]);
+    myClassExclusionFilters = exclusionFilters.toArray(new com.intellij.ui.classFilter.ClassFilter[exclusionFilters.size()]);
   }
 
   public void setEnabled(boolean enabled) {

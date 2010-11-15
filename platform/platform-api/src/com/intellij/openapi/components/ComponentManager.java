@@ -17,6 +17,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -98,4 +99,11 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   <T> T[] getExtensions(ExtensionPointName<T> extensionPointName);
 
   ComponentConfig getConfig(Class componentImplementation);
+
+  /**
+   * @return condition for this component being disposed.
+   * see {@link com.intellij.openapi.application.Application#invokeLater(Runnable, Condition)} for the usage example.
+   */
+  @NotNull
+  Condition getDisposed();
 }

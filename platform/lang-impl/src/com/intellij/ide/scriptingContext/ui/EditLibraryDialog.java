@@ -19,6 +19,7 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -42,14 +43,15 @@ public class EditLibraryDialog extends DialogWrapper {
   private static final int FILE_LOCATION_COL  = 0;
   private static final int FILE_TYPE_COL = 1;
 
-  private static final String SOURCE_TYPE = "Source";
-  private static final String COMPACT_TYPE = "Compact";
+  private final String mySourceTypeName;
+  private final String myCompactTypeName;
 
   private JPanel contentPane;
   private JTextField myLibName;
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
+  private JButton myAttachFromButton;
   private Project myProject;
   private FileTableModel myFileTableModel;
   private VirtualFile mySelectedFile;
@@ -59,12 +61,22 @@ public class EditLibraryDialog extends DialogWrapper {
     super(true);
     setTitle(title);
     myProvider = provider;
+    mySourceTypeName = provider.getLibraryTypeName(OrderRootType.SOURCES);
+    myCompactTypeName = provider.getLibraryTypeName(OrderRootType.CLASSES);
     myAddFileButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         addFiles();
       }
     });
+
+    myAttachFromButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        attachFromDirectory();
+      }
+    });
+
     myFileTableModel = new FileTableModel();
     myFileTable.setModel(myFileTableModel);
 
@@ -86,7 +98,7 @@ public class EditLibraryDialog extends DialogWrapper {
 
     TableColumn typeCol = myFileTable.getColumnModel().getColumn(FILE_TYPE_COL);
     typeCol.setMaxWidth(80);
-    MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {SOURCE_TYPE, COMPACT_TYPE}), myFileTableModel);
+    MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {mySourceTypeName, myCompactTypeName}), myFileTableModel);
     typeCol.setCellEditor(cellEditor);
   }
 
@@ -96,7 +108,7 @@ public class EditLibraryDialog extends DialogWrapper {
     myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
   }
 
-  private static class MyTableCellEditor extends DefaultCellEditor {
+  private class MyTableCellEditor extends DefaultCellEditor {
 
     private FileTableModel myFileTableModel;
     private VirtualFile myFile;
@@ -110,7 +122,7 @@ public class EditLibraryDialog extends DialogWrapper {
     public boolean stopCellEditing() {
       if (myFile != null) {
         Object value = getCellEditorValue();
-        myFileTableModel.setFileType(myFile, value.equals(COMPACT_TYPE));
+        myFileTableModel.setFileType(myFile, value.equals(myCompactTypeName));
       }
       return super.stopCellEditing();
     }
@@ -135,14 +147,31 @@ public class EditLibraryDialog extends DialogWrapper {
     FileChooserDescriptor chooserDescriptor = new LibFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
     if (files.length == 1 && files[0] != null) {
-      myFileTableModel.addFile(files[0], false);
+      myFileTableModel.addFile(files[0]);
+    }
+  }
+
+  private void attachFromDirectory() {
+    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+    chooserDescriptor.setTitle("Select a directory to attach files from");  //TODO<rv> Move to resources
+    VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
+    if (files.length == 1 && files[0] != null) {
+      VirtualFile chosenDir  = files[0];
+      if (chosenDir.isDirectory() && chosenDir.isValid()) {
+        if (myLibName.getText().isEmpty()) myLibName.setText(chosenDir.getName());
+        for (VirtualFile file : chosenDir.getChildren()) {
+          if (file.isValid() && !file.isDirectory() && myProvider.acceptsExtension(file.getExtension())) {
+            myFileTableModel.addFile(file);
+          }
+        }
+      }
     }
   }
 
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
       super (true, false, false, true, false, false);
-      setTitle("Select library file");
+      setTitle("Select library file"); //TODO<rv> Move to resources
     }
 
     @Override
@@ -158,14 +187,14 @@ public class EditLibraryDialog extends DialogWrapper {
     }
   }
 
-  private static class FileTableModel extends AbstractTableModel {
+  private class FileTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int column) {
       switch(column) {
         case FILE_LOCATION_COL:
-          return "Location";
-        case FILE_TYPE_COL:
+          return "Location"; //TODO<rv> Move to resources
+        case FILE_TYPE_COL: //TODO<rv> Move to resources
           return "Type";
       }
       return "";
@@ -182,9 +211,9 @@ public class EditLibraryDialog extends DialogWrapper {
     private ArrayList<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     private HashSet<VirtualFile> myCompactFiles = new HashSet<VirtualFile>();
 
-    public void addFile(VirtualFile file, boolean isCompact) {
+    public void addFile(VirtualFile file) {
       myFiles.add(file);
-      if (isCompact) {
+      if (myProvider.isCompact(file)) {
         myCompactFiles.add(file);
       }
       fireTableDataChanged();
@@ -228,7 +257,7 @@ public class EditLibraryDialog extends DialogWrapper {
         case FILE_LOCATION_COL:
           return file;
         case FILE_TYPE_COL:
-          return myCompactFiles.contains(file) ? COMPACT_TYPE : SOURCE_TYPE;
+          return myCompactFiles.contains(file) ? myCompactTypeName : mySourceTypeName;
       }
       return "";
     }
@@ -286,7 +315,7 @@ public class EditLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!isLibNameValid(myLibName.getText())) {
-      Messages.showErrorDialog(myProject, "Invalid library name", "Error");
+      Messages.showErrorDialog(myProject, "Invalid library name", "Error"); //TODO<rv> Move to resources
       return;
     }
     super.doOKAction();

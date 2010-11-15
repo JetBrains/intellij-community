@@ -18,6 +18,7 @@ package org.jetbrains.android.run;
 
 import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
+import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.io.IOException;
 public abstract class AndroidApplicationLauncher {
   public abstract boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device) throws IOException;
 
-  public boolean isReadyForDebugging(ClientData data) {
+  public boolean isReadyForDebugging(ClientData data, ProcessHandler processHandler) {
     return data.getDebuggerConnectionStatus() == ClientData.DebuggerStatus.WAITING;
   }
 }

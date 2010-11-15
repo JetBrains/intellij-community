@@ -135,7 +135,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        File projectFile = File.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
+        File projectFile = FileUtil.createTempFile(PROJECT_FILE_PREFIX, PROJECT_FILE_SUFFIX);
         myFilesToDelete.add(projectFile);
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);

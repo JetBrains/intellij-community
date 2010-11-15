@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,7 +56,7 @@ public abstract class HgChangesetsCommand {
 
     addArguments(args);
 
-    HgCommandResult result = commandService.execute(repo, Arrays.asList("--quiet"), command, args);
+    HgCommandResult result = commandService.execute(repo, Arrays.asList("--quiet"), command, args, Charset.defaultCharset(), isSilentCommand());
 
     if (result == null) {
       return Collections.emptyList();
@@ -79,6 +80,10 @@ public abstract class HgChangesetsCommand {
     }
     
     return revisions;
+  }
+
+  protected boolean isSilentCommand() {
+    return false;
   }
 
   protected abstract void addArguments(List<String> args);

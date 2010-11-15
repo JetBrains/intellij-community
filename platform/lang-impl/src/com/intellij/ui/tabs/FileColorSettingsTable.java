@@ -19,6 +19,7 @@ package com.intellij.ui.tabs;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -243,7 +244,7 @@ public abstract class FileColorSettingsTable extends StripeTable {
       setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
 
-      setBorder(hasFocus ? (UIManager.getBorder("Table.focusCellHighlightBorder"))
+      setBorder(hasFocus ? UIUtil.getTableFocusCellHighlightBorder()
                          : NO_FOCUS_BORDER);
     }
   }

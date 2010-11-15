@@ -2088,6 +2088,12 @@ public class AbstractTreeUi {
         processingDone.setDone();
         continue;
       }
+
+      if (index == null) {
+        index = Integer.MAX_VALUE;
+        needToUpdate = true;
+      }
+
       childDescr.get().setIndex(index.intValue());
 
       final ActionCallback update = new ActionCallback();

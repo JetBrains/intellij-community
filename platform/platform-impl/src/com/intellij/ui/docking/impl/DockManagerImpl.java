@@ -25,10 +25,15 @@ import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.MutualMap;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.docking.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -60,7 +65,8 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   private Map<String, DockContainerFactory> myFactories = new HashMap<String, DockContainerFactory>();
 
   private Set<DockContainer> myContainers = new HashSet<DockContainer>();
-  private Map<DockContainer, DockWindow> myWindows = new HashMap<DockContainer, DockWindow>();
+
+  private MutualMap<DockContainer, DockWindow> myWindows = new MutualMap<DockContainer, DockWindow>();
 
   private MyDragSession myCurrentDragSession;
 
@@ -117,12 +123,43 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
   @Override
+  public String getDimensionKeyForFocus(@NotNull String key) {
+    Component owner = IdeFocusManagerImpl.getInstance(myProject).getFocusOwner();
+    if (owner == null) return key;
+
+    DockWindow wnd = myWindows.getValue(getContainerFor(owner));
+
+    return wnd != null ? key + "#" + wnd.myId : key;
+  }
+
+  public DockContainer getContainerFor(Component c) {
+    if (c == null) return null;
+
+    for (DockContainer eachContainer : myContainers) {
+      if (SwingUtilities.isDescendingFrom(c, eachContainer.getComponent())) {
+        return eachContainer;
+      }
+    }
+
+    Component parent = UIUtil.findUltimateParent(c);
+    if (parent == null) return null;
+
+    for (DockContainer eachContainer : myContainers) {
+      if (parent == UIUtil.findUltimateParent(eachContainer.getComponent())) {
+        return eachContainer;
+      }
+    }
+
+    return null;
+  }
+
+  @Override
   public DragSession createDragSession(MouseEvent mouseEvent, DockableContent content) {
     stopCurrentDragSession();
 
     for (DockContainer each : myContainers) {
       if (each.isEmpty() && each.isDisposeWhenEmpty()) {
-        DockWindow window = myWindows.get(each);
+        DockWindow window = myWindows.getValue(each);
         if (window != null) {
           window.setTransparrent(true);
         }
@@ -142,7 +179,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
       for (DockContainer each : myContainers) {
         if (!each.isEmpty()) {
-          DockWindow window = myWindows.get(each);
+          DockWindow window = myWindows.getValue(each);
           if (window != null) {
             window.setTransparrent(false);
           }
@@ -347,7 +384,14 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myId = id;
       myContainer = container;
       setProject(project);
-      setComponent(myContainer.getComponent());
+
+      setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+
+      NonOpaquePanel comp = new NonOpaquePanel(new BorderLayout());
+      comp.add(myContainer.getComponent(), BorderLayout.CENTER);
+      comp.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+
+      setComponent(comp);
       addDisposable(container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
@@ -413,7 +457,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   public Element getState() {
     Element root = new Element("DockManager");
     for (DockContainer each : myContainers) {
-      DockWindow eachWindow = myWindows.get(each);
+      DockWindow eachWindow = myWindows.getValue(each);
       if (eachWindow != null) {
         if (each instanceof DockContainer.Persistent) {
           DockContainer.Persistent eachContainer = (DockContainer.Persistent)each;

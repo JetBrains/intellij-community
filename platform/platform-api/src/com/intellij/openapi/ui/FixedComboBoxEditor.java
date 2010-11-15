@@ -308,7 +308,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       g.setColor(bottomColor);
       g.drawLine(x + 4, y + height - 4, x + width - 2, y + height - 4);
 
-      g.setColor(UIManager.getColor("Panel.background"));
+      g.setColor(UIUtil.getPanelBackground());
 
       g.fillRect(x, y, width, 3);
       g.fillRect(x, y, 3, height);

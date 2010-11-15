@@ -117,8 +117,9 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           if (element instanceof PsiNewExpression) {
             PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
             if (reference != null) {
+              String qualifiedName = reference.getQualifiedName();
               for (String fqn : fqns) {
-                if( fqn.equals(reference.getQualifiedName())) return true;
+                if( fqn.equals(qualifiedName)) return true;
               }
             }
           }

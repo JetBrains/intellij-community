@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ public class SCR17650Test extends PsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = File.createTempFile(getName(), "");
+    final File root = FileUtil.createTempFile(getName(), "");
     root.delete();
     root.mkdir();
     myFilesToDelete.add(root);

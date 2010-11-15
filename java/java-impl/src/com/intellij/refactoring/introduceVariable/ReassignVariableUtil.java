@@ -12,8 +12,10 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
@@ -25,14 +27,17 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
@@ -50,6 +55,10 @@ import java.awt.*;
  */
 public class ReassignVariableUtil {
   static final Key<PsiDeclarationStatement> DECLARATION_KEY = Key.create("var.type");
+  static final Key<RangeMarker[]> OCCURRENCES_KEY = Key.create("occurrences");
+
+  private ReassignVariableUtil() {
+  }
 
   static boolean reassign(final Editor editor) {
     final PsiDeclarationStatement declaration = editor.getUserData(DECLARATION_KEY);
@@ -97,7 +106,7 @@ public class ReassignVariableUtil {
   }
 
   @Nullable
-  private static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
+  static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
     if (declaration != null) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiVariable) {
@@ -127,15 +136,29 @@ public class ReassignVariableUtil {
     return proc;
   }
 
-  static void replaceWithAssignment(final PsiDeclarationStatement declaration, final PsiVariable variable, Editor editor) {
+  static void replaceWithAssignment(final PsiDeclarationStatement declaration, final PsiVariable variable, final Editor editor) {
     final PsiVariable var = (PsiVariable)declaration.getDeclaredElements()[0];
     final PsiExpression initializer = var.getInitializer();
     new WriteCommandAction(declaration.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
+        final String chosenVariableName = variable.getName();
         //would generate red code for final variables
-        declaration.replace(JavaPsiFacade.getElementFactory(variable.getProject())
-                              .createStatementFromText(variable.getName() + " = " + initializer.getText() + ";", declaration));
+        PsiElement newDeclaration = elementFactory.createStatementFromText(chosenVariableName + " = " + initializer.getText() + ";",
+                                                                           declaration);
+        newDeclaration = declaration.replace(newDeclaration);
+        final PsiFile containingFile = newDeclaration.getContainingFile();
+        final RangeMarker[] occurrenceMarkers = editor.getUserData(OCCURRENCES_KEY);
+        if (occurrenceMarkers != null) {
+          for (RangeMarker marker : occurrenceMarkers) {
+            final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
+            final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+            if (expression != null) {
+              expression.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
+            }
+          }
+        }
       }
     }.execute();
     finishTemplate(editor);
@@ -150,40 +173,57 @@ public class ReassignVariableUtil {
     }
   }
 
-  static Expression createExpression(final TypeSelectorManagerImpl typeSelectorManager, final String defaultText) {
-    final PsiType[] types = typeSelectorManager.getTypesForAll();
-    return new Expression() {
-      @Override
-      public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-        return new TextResult(defaultText);
-      }
-
-      @Override
-      public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
-        return new TextResult(defaultText);
-      }
-
-      @Override
-      public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        LookupElement[] result = new LookupElement[types.length];
-        for (int i = 0, typesLength = types.length; i < typesLength; i++) {
-          result[i] = LookupElementBuilder.create(types[i], types[i].getPresentableText());
-        }
-        return result;
-      }
-    };
-  }
-
   @Nullable
-  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll) {
+  static String getAdvertisementText(Editor editor, PsiDeclarationStatement declaration, PsiType type, PsiType[] typesForAll, boolean canAdjustFinal) {
     final VariablesProcessor processor = findVariablesOfType(editor, declaration, type);
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     if (processor.size() > 0) {
-      final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
       final Shortcut[] shortcuts = keymap.getShortcuts("IntroduceVariable");
       if (shortcuts.length > 0) {
         return "Press " + shortcuts[0] + " to reassign existing variable";
       }
     }
-    return typesForAll.length > 1 ? "Press Shift Tab to change type" : null;
+    if (typesForAll.length > 1) {
+      final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
+      if  (shortcuts.length > 0) {
+        return "Press " + shortcuts[0] + " to change type";
+      }
+    }
+    return adjustFinalText(canAdjustFinal);
+  }
+
+  @Nullable
+  private static String adjustFinalText(boolean canBeFinalAdjusted) {
+    if (canBeFinalAdjusted) {
+      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("PreviousTemplateVariable");
+      if (shortcuts.length > 0) {
+        return "Press " + shortcuts[0] + " to adjust final modifier";
+      }
+    }
+    return null;
+  }
+
+  public static Expression createExpression(final TypeExpression expression, final String defaultType, final boolean canBeFinalAdjusted) {
+    return new Expression() {
+      @Override
+      public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
+        return new TextResult(defaultType);
+      }
+
+      @Override
+      public com.intellij.codeInsight.template.Result calculateQuickResult(ExpressionContext context) {
+        return new TextResult(defaultType);
+      }
+
+      @Override
+      public LookupElement[] calculateLookupItems(ExpressionContext context) {
+        return expression.calculateLookupItems(context);
+      }
+
+      @Override
+      public String getAdvertisingText() {
+        return adjustFinalText(canBeFinalAdjusted);
+      }
+    };
   }
 }

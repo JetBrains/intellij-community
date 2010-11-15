@@ -47,6 +47,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     return library.getName();
   }
 
+  public void reset() {
+    myLibraryManager.reset();
+  }
+
   @NotNull
   @Override
   protected String getValueAttribute() {
@@ -126,7 +130,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   }
 
   public static class CompoundLibrary extends  ScriptingLibraryTable.LibraryModel {
-    private List<ScriptingLibraryTable.LibraryModel> myLibraries = new ArrayList<ScriptingLibraryTable.LibraryModel>();
+    private final Map<String, ScriptingLibraryTable.LibraryModel> myLibraries = new TreeMap<String, ScriptingLibraryTable.LibraryModel>();
 
     public CompoundLibrary() {
       super(null);
@@ -137,26 +141,65 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
 
     public void toggleLibrary(@NotNull ScriptingLibraryTable.LibraryModel library) {
-      for (ScriptingLibraryTable.LibraryModel lib : myLibraries) {
-        if (lib == library) {
-          myLibraries.remove(library);
-          return;
-        }
+      String libName = library.getName();
+      if (myLibraries.containsKey(libName)) {
+        myLibraries.remove(libName);
+        return;
       }
-      myLibraries.add(library);
+      myLibraries.put(libName, library);
     }
 
     @Override
     public String getName() {
       StringBuffer allNames = new StringBuffer();
       boolean isFirst = true;
-      for (ScriptingLibraryTable.LibraryModel library : myLibraries) {
+      for (ScriptingLibraryTable.LibraryModel library : myLibraries.values()) {
         allNames.append(isFirst ? "" : ", ");
         allNames.append(library.getName());
         isFirst = false;
       }
       return allNames.toString();
     }
+
+    @Override
+    public boolean containsFile(VirtualFile file) {
+      for (ScriptingLibraryTable.LibraryModel library : myLibraries.values()) {
+        if (library.containsFile(file)) return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return myLibraries.isEmpty();
+    }
   }
+
+  /**
+   * Checks if the library file is applicable to the given source file being edited. If the file has
+   * assigned libraries neither for itself nor for any of its parent directories, returns true. Parent directory
+   * settings are added to source file settings: if a library file is applicable to a directory, it is also
+   * applicable to any of source files under that directory.
+   *
+   * @param libFile The library file.
+   * @param srcFile The source file to check the applicability for.
+   * @return        True if applicable, false otherwise.
+   */
+  public boolean isApplicable(VirtualFile libFile, VirtualFile srcFile) {
+    return isApplicable(libFile, srcFile, false);
+  }
+
+  private boolean isApplicable(VirtualFile libFile, VirtualFile srcFile, boolean specFound) {
+    if (srcFile == null) return !specFound;
+    ScriptingLibraryTable.LibraryModel libraryModel = getMapping(srcFile);
+    if (libraryModel == null || libraryModel.isEmpty()) {
+      return isApplicable(libFile, srcFile.getParent(), specFound);
+    }
+    if (libraryModel.containsFile(libFile)) {
+      return true;
+    }
+    return isApplicable(libFile, srcFile.getParent(), true);
+  }
+
 
 }

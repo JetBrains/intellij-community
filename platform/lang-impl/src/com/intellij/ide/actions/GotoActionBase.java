@@ -34,6 +34,17 @@ public abstract class GotoActionBase extends AnAction {
 
   protected static Class myInAction = null;
 
+  public static String getInitialText(Editor editor) {
+    if (editor == null) {
+      return "";
+    }
+    final String selectedText = editor.getSelectionModel().getSelectedText();
+    if (selectedText != null && selectedText.indexOf("\n") < 0) {
+      return selectedText;
+    }
+    return "";
+  }
+
   public final void actionPerformed(AnActionEvent e) {
     LOG.assertTrue (!getClass ().equals (myInAction));
     try {

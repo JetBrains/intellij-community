@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +34,9 @@ public class DuplicateConditionInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreMethodCalls = false;
+
+    // This is a dirty fix of 'squared' algorithm performance issue.
+    private static final int LIMIT_DEPTH = 20;
 
     @NotNull
     public String getDisplayName() {
@@ -73,7 +76,7 @@ public class DuplicateConditionInspection extends BaseInspection {
                 }
             }
             final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
-            collectConditionsForIfStatement(statement, conditions);
+            collectConditionsForIfStatement(statement, conditions, 0);
             final int numConditions = conditions.size();
             if (numConditions < 2) {
                 return;
@@ -113,13 +116,15 @@ public class DuplicateConditionInspection extends BaseInspection {
         }
 
         private void collectConditionsForIfStatement(
-                PsiIfStatement statement, Set<PsiExpression> conditions) {
+          PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
+            if (depth > LIMIT_DEPTH) return;
+
             final PsiExpression condition = statement.getCondition();
             collectConditionsForExpression(condition, conditions);
             final PsiStatement branch = statement.getElseBranch();
             if (branch instanceof PsiIfStatement) {
                 collectConditionsForIfStatement((PsiIfStatement)branch,
-                        conditions);
+                        conditions, depth + 1);
             }
         }
 

@@ -49,7 +49,9 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(DiffBundle.message("comparison.ignore.whitespace.acton.name")), BorderLayout.WEST);
+    final JLabel label = new JLabel(DiffBundle.message("comparison.ignore.whitespace.acton.name"));
+    label.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
+    panel.add(label, BorderLayout.WEST);
     panel.add(super.createCustomComponent(presentation), BorderLayout.CENTER);
     return panel;
   }
@@ -67,8 +69,8 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
     Presentation presentation = e.getPresentation();
     DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     if (diffPanel != null && diffPanel.getComponent().isDisplayable()) {
-      AnAction actoin = myActions.get(diffPanel.getComparisonPolicy());
-      Presentation templatePresentation = actoin.getTemplatePresentation();
+      AnAction action = myActions.get(diffPanel.getComparisonPolicy());
+      Presentation templatePresentation = action.getTemplatePresentation();
       presentation.setIcon(templatePresentation.getIcon());
       presentation.setText(templatePresentation.getText());
       presentation.setEnabled(true);

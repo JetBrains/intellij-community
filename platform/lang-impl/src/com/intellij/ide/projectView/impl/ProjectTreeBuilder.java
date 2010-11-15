@@ -57,7 +57,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final MyFileStatusListener myFileStatusListener;
 
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  //private final PropertiesFileListener myPropertiesFileListener;
   private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
@@ -82,11 +81,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
-    /*myPropertiesFileListener = new PropertiesFileListener();
-    final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
-    if (propertiesFilesManager != null) {
-      propertiesFilesManager.addPropertiesFileListener(myPropertiesFileListener);
-    }*/
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
 
@@ -100,10 +94,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-   /* final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
-    if (propertiesFilesManager != null) {
-      propertiesFilesManager.removePropertiesFileListener(myPropertiesFileListener);
-    }*/
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
@@ -187,26 +177,6 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
     return element;
   }
-
- /* private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {
-    public void fileAdded(VirtualFile propertiesFile) {
-      fileChanged(propertiesFile, null);
-    }
-
-    public void fileRemoved(VirtualFile propertiesFile) {
-      fileChanged(propertiesFile, null);
-    }
-
-    public void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
-      if (!myProject.isDisposed()) {
-        VirtualFile parent = propertiesFile.getParent();
-        if (parent != null && parent.isValid()) {
-          PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(parent);
-          myUpdater.addSubtreeToUpdateByElement(dir);
-        }
-      }
-    }
-  }*/
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();

@@ -46,7 +46,7 @@ public class FileContent extends UserDataHolderBase {
 
   public byte[] getBytes() throws IOException {
     if (myCachedBytes == null) {
-      myCachedBytes = myVirtualFile.contentsToByteArray();
+      myCachedBytes = myVirtualFile.contentsToByteArray(false);
     }
 
     return myCachedBytes;

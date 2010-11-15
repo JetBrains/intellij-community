@@ -48,7 +48,7 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
-                                          @NotNull final Executor executor) {
+                                            @NotNull final Executor executor, final boolean showSettings) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration.getConfiguration().getFactory().getName());
@@ -58,7 +58,7 @@ public class ProgramRunnerUtil {
       return;
     }
 
-    if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
+    if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && RunManagerImpl.isEditBeforeRun(configuration))) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
       if (!result) {
         return;
@@ -82,6 +82,11 @@ public class ProgramRunnerUtil {
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
     }
+  }
+
+  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
+                                          @NotNull final Executor executor) {
+    executeConfiguration(project, configuration, executor, true);
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {

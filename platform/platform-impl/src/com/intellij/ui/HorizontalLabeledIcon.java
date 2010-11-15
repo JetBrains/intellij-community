@@ -114,7 +114,7 @@ public class HorizontalLabeledIcon implements Icon {
         y += fontMetrics.getHeight();
       }
       if (myMnemonic != null) {
-        g.setColor(UIUtil.getTextInactiveTextColor());
+        g.setColor(UIUtil.getInactiveTextColor());
         int offset = fontMetrics.stringWidth(myStrings[myStrings.length-1]+" ");
         y -= fontMetrics.getHeight();
         g.drawString(myMnemonic, x + offset, y);

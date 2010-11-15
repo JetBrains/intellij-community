@@ -402,7 +402,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       label.setOpaque(true);
       final Color treeBg = UIManager.getColor("Tree.background");
       label.setBackground(new Color(treeBg.getRed(), treeBg.getGreen(), treeBg.getBlue(), 180));
-      final Color treeFg = UIManager.getColor("Tree.foreground");
+      final Color treeFg = UIUtil.getTreeForeground();
       label.setForeground(new Color(treeFg.getRed(), treeFg.getGreen(), treeFg.getBlue(), 180));
       final ToolWindowFactory factory = bean.getToolWindowFactory();
       final ToolWindowImpl toolWindow =
@@ -1823,7 +1823,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Nullable
     public Condition getExpireCondition() {
-      return Condition.FALSE;
+      return ApplicationManager.getApplication().getDisposed();
     }
   }
 

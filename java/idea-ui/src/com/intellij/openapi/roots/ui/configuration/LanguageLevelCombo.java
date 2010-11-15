@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -22,7 +23,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author ven
@@ -34,30 +34,27 @@ public class LanguageLevelCombo extends ComboBox {
     for (LanguageLevel level : LanguageLevel.values()) {
       addItem(level);
     }
-    setRenderer(new MyDefaultListCellRenderer());
+    setRenderer(new ListCellRendererWrapper(getRenderer()) {
+      @Override
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+        if (value instanceof LanguageLevel) {
+          setText(((LanguageLevel)value).getPresentableText());
+        }
+        else if (value instanceof String) {
+          setText((String)value);
+        }
+      }
+    });
   }
 
-  public void reset(Project project){
+  public void reset(Project project) {
     setSelectedItem(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
   }
 
   public void setSelectedItem(Object anObject) {
-    if (anObject == null){
+    if (anObject == null) {
       anObject = USE_PROJECT_LANGUAGE_LEVEL;
     }
     super.setSelectedItem(anObject);
-  }
-
-  private static class MyDefaultListCellRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof LanguageLevel) {
-        setText(((LanguageLevel)value).getPresentableText());
-      }
-      else if (value instanceof String) {
-        setText((String)value);
-      }
-      return this;
-    }
   }
 }

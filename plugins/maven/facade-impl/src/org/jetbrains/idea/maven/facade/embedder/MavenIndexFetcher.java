@@ -31,6 +31,7 @@ import org.sonatype.nexus.index.updater.ResourceFetcher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.rmi.RemoteException;
 
 public class MavenIndexFetcher implements ResourceFetcher {
   private final String myOriginalRepositoryId;
@@ -73,7 +74,7 @@ public class MavenIndexFetcher implements ResourceFetcher {
     }
   }
 
-  public void disconnect() {
+  public void disconnect() throws RemoteException {
     if (myWagon == null) return;
 
     try {

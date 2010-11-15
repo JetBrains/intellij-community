@@ -58,6 +58,14 @@ public class NullityInferrerTest extends CodeInsightTestCase {
     doTest(true);
   }
 
+  public void testConditionalReturnNotNull() throws Exception {
+    doTest(false);
+  }
+
+  public void testAssertParamNotNull() throws Exception {
+    doTest(true);
+  }
+
   //-----------------------fields---------------------------------------------------
   public void testFieldsAssignment() throws Exception {
     doTest(false);

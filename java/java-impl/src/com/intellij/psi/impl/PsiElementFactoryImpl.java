@@ -242,8 +242,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
     final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
-    final CompositeElement treeElement =
-    getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(type.getCanonicalText() + " " + name);
+    final String text = type.getCanonicalText() + " " + name;
+    final CompositeElement treeElement = getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(text);
+    if (treeElement == null) {
+      throw new AssertionError("Null element for text = " + text);
+    }
     treeHolder.rawAddChildren(treeElement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());

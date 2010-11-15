@@ -82,7 +82,9 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
     if (xmlElementsEqual(myElement, thatElement)) {
       if (myElement != thatElement) {
-        assert myElement.getNavigationElement() == thatElement.getNavigationElement();
+        final PsiElement nav1 = myElement.getNavigationElement();
+        final PsiElement nav2 = thatElement.getNavigationElement();
+        assert nav1 == nav2 : nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset();
       }
       return true;
     }

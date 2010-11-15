@@ -21,6 +21,10 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -262,10 +266,21 @@ public class FileBasedIndex implements ApplicationComponent {
 
       final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
       final boolean currentVersionCorrupted = corruptionMarker.exists();
+      boolean versionChanged = false;
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        registerIndexer(extension, currentVersionCorrupted);
+        versionChanged |= registerIndexer(extension, currentVersionCorrupted);
       }
       FileUtil.delete(corruptionMarker);
+      String rebuildNotification = null;
+      if (currentVersionCorrupted) {
+        rebuildNotification = "Index files on disk are corrupted, global index rebuild scheduled.";
+      }
+      else if (versionChanged) {
+        rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
+      }
+      if (rebuildNotification != null) {
+        Notifications.Bus.notify(new Notification("Indexing", "Index Rebuild", rebuildNotification, NotificationType.INFORMATION), NotificationDisplayType.BALLOON_ONLY, null);      
+      }
       dropUnregisteredIndices();
 
       // check if rebuild was requested for any index during registration
@@ -332,7 +347,8 @@ public class FileBasedIndex implements ApplicationComponent {
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted @param extension
    * @param isCurrentVersionCorrupted
    */
-  private <K, V> void registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
+  private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
+    boolean versionChanged = false;
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     if (!extension.dependsOnFileContent()) {
@@ -342,6 +358,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final File versionFile = IndexInfrastructure.getVersionFile(name);
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
       if (!isCurrentVersionCorrupted) {
+        versionChanged = true;
         LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
       }
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
@@ -364,6 +381,7 @@ public class FileBasedIndex implements ApplicationComponent {
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
+    return versionChanged;
   }
 
   private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {
@@ -437,7 +455,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return index;
   }
 
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(ID<K, ?> indexId,
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(final ID<K, ?> indexId,
                                                                                        final KeyDescriptor<K> keyDescriptor,
                                                                                        MemoryIndexStorage<K, ?> storage) throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
@@ -446,19 +464,35 @@ public class FileBasedIndex implements ApplicationComponent {
 
     final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
       public void save(DataOutput out, Collection<K> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size());
-        for (K key : value) {
-          keyDescriptor.save(out, key);
+        try {
+          DataInputOutputUtil.writeINT(out, value.size());
+          for (K key : value) {
+            keyDescriptor.save(out, key);
+          }
+        }
+        catch (IOException e) {
+          throw e;
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException("Error saving data for index " + indexId, e);
         }
       }
 
       public Collection<K> read(DataInput in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(in);
-        final List<K> list = new ArrayList<K>();
-        for (int idx = 0; idx < size; idx++) {
-          list.add(keyDescriptor.read(in));
+        try {
+          final int size = DataInputOutputUtil.readINT(in);
+          final List<K> list = new ArrayList<K>();
+          for (int idx = 0; idx < size; idx++) {
+            list.add(keyDescriptor.read(in));
+          }
+          return list;
         }
-        return list;
+        catch (IOException e) {
+          throw e;
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException("Error reading data for index " + indexId, e);
+        }
       }
     };
     
@@ -604,9 +638,12 @@ public class FileBasedIndex implements ApplicationComponent {
    */
   public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
-      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
-      return index == null || index.processAllKeys(processor);
+      if (index == null) {
+        return true;
+      }
+      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
+      return index.processAllKeys(processor);
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -779,13 +816,13 @@ public class FileBasedIndex implements ApplicationComponent {
                                         @Nullable final VirtualFile restrictToFile, ValueProcessor<V> processor,
                                         final GlobalSearchScope filter) {
     try {
-      final Project project = filter.getProject();
-      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
       }
+      final Project project = filter.getProject();
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      ensureUpToDate(indexId, project, filter);
 
       final Lock readLock = index.getReadLock();
       try {
@@ -850,13 +887,13 @@ public class FileBasedIndex implements ApplicationComponent {
 
   public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {
     try {
-      final Project project = filter.getProject();
-      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return true;
       }
+      final Project project = filter.getProject();
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      ensureUpToDate(indexId, project, filter);
 
       final Lock readLock = index.getReadLock();
       try {

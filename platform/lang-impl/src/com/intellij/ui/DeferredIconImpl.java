@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -47,7 +48,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private boolean myNeedReadAction;
   private boolean myDone;
 
-  private Disposer<T> myDisposer;
+  private IconDisposer<T> myDisposer;
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
@@ -139,7 +140,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                   final TreeUI ui = ((JTree)actualTarget).getUI();
                   if (ui instanceof BasicTreeUI) {
                     // this call is "fake" and only need to reset tree layout cache
-                    ((BasicTreeUI)ui).setLeftChildIndent(((Integer)UIManager.get("Tree.leftChildIndent")).intValue());
+                    ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
                   }
                 }
               }
@@ -276,12 +277,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
 
-  public DeferredIconImpl setDisposer(Disposer<T> disposer) {
+  public DeferredIconImpl setDisposer(IconDisposer<T> disposer) {
     myDisposer = disposer;
     return this;
   }
 
-  public interface Disposer<T> {
+  public interface IconDisposer<T> {
 
     void dispose(T key);
 

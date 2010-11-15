@@ -59,6 +59,8 @@ public class FrameWrapper implements Disposable {
   private ActionCallback myFocusedCallback;
   private boolean myDisposed;
 
+  protected StatusBar myStatusBar;
+
   public FrameWrapper(Project project) {
     this(project, null);
   }
@@ -90,6 +92,10 @@ public class FrameWrapper implements Disposable {
     }
 
     final JFrame frame = getFrame();
+
+    if (myStatusBar != null) {
+      myStatusBar.install((IdeFrame)frame);
+    }
 
     myFocusTrackback = new FocusTrackback(this, null, true);
 
@@ -130,6 +136,11 @@ public class FrameWrapper implements Disposable {
 
     getFrame().setVisible(false);
     getFrame().dispose();
+
+    if (myStatusBar != null) {
+      Disposer.dispose(myStatusBar);
+      myStatusBar = null;
+    }
 
     myDisposed = true;
   }
@@ -233,6 +244,13 @@ public class FrameWrapper implements Disposable {
     Disposer.register(this, disposable);
   }
 
+  protected void setStatusBar(StatusBar statusBar) {
+    if (myStatusBar != null) {
+      Disposer.dispose(myStatusBar);
+    }
+    myStatusBar = statusBar;
+  }
+
   private class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
 
     private boolean myDisposing;
@@ -249,7 +267,7 @@ public class FrameWrapper implements Disposable {
 
     @Override
     public StatusBar getStatusBar() {
-      return myParent.getStatusBar();
+      return myStatusBar != null ? myStatusBar : myParent.getStatusBar();
     }
 
     @Override

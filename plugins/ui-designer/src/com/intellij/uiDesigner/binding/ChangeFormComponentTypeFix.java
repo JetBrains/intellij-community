@@ -21,9 +21,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,12 +33,23 @@ import org.jetbrains.annotations.NotNull;
 public class ChangeFormComponentTypeFix implements IntentionAction {
   private final PsiPlainTextFile myFormFile;
   private final String myFieldName;
-  private final PsiType myComponentTypeToSet;
+  private final String myComponentTypeToSet;
 
   public ChangeFormComponentTypeFix(PsiPlainTextFile formFile, String fieldName, PsiType componentTypeToSet) {
     myFormFile = formFile;
     myFieldName = fieldName;
-    myComponentTypeToSet = componentTypeToSet;
+    if (componentTypeToSet instanceof PsiClassType) {
+      PsiClass psiClass = ((PsiClassType)componentTypeToSet).resolve();
+      if (psiClass != null) {
+        myComponentTypeToSet = ClassUtil.getJVMClassName(psiClass);
+      }
+      else {
+        myComponentTypeToSet = ((PsiClassType) componentTypeToSet).rawType().getCanonicalText();
+      }
+    }
+    else {
+      myComponentTypeToSet = componentTypeToSet.getCanonicalText();
+    }
   }
 
   @NotNull

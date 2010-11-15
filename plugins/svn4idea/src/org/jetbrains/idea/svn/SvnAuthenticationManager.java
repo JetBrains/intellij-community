@@ -206,7 +206,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       for (int i = 0; i < maxAttempts; i++) {
         final File parent = file.getParentFile();
         try {
-          final File tempFile = File.createTempFile("123", "1", parent);
+          final File tempFile = FileUtil.createTempFile(parent, "123", "1", true);
           FileUtil.delete(tempFile);
           if (! file.renameTo(tempFile)) continue;
           if (! file.createNewFile()) continue;

@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +52,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
 
   private final ArrayList<KeyEvent> myToDispatchOnDone = new ArrayList<KeyEvent>();
-  private int myFlushingIdleRequestsEntryCount = 0;
 
   private WeakReference<FocusCommand> myLastForcedRequest = new WeakReference<FocusCommand>(null);
 
@@ -70,7 +68,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
   private final EdtAlarm myIdleAlarm;
-  private final Set<Runnable> myIdleRequests = new HashSet<Runnable>();
+  private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
   private final EdtRunnable myIdleRunnable = new EdtRunnable() {
     public void runEdt() {
       if (canFlushIdleRequests()) {
@@ -81,6 +79,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
   };
+  private boolean myFlushWasDelayedToFixFocus;
 
   private boolean canFlushIdleRequests() {
     return isFocusTransferReady() && !isIdleQueueEmpty();
@@ -90,6 +89,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private final Map<IdeFrame, WeakReference<Component>> myLastFocusedAtDeactivation = new HashMap<IdeFrame, WeakReference<Component>>();
 
   private DataContext myRunContext;
+
+  private Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
@@ -114,8 +115,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             myLastFocused.put((IdeFrame)parent, new WeakReference<Component>(c));
           }
         } else if (e instanceof WindowEvent) {
+          Window wnd = ((WindowEvent)e).getWindow();
           if (e.getID() == WindowEvent.WINDOW_CLOSED) {
-            Window wnd = ((WindowEvent)e).getWindow();
             if (wnd instanceof IdeFrame) {
               myLastFocused.remove((IdeFrame)wnd);
               myLastFocusedAtDeactivation.remove((IdeFrame)wnd);
@@ -348,6 +349,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
+        if (isFlushingIdleRequests()) {
+          SwingUtilities.invokeLater(this);
+          return;
+        }
+
         if (myRunContext != null) {
           runnable.run();
           return;
@@ -356,7 +362,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         final boolean needsRestart = isIdleQueueEmpty();
         myIdleRequests.add(runnable);
 
-        if (isFocusTransferReady()) {
+        if (canFlushIdleRequests()) {
           flushIdleRequests();
         } else {
           if (needsRestart) {
@@ -373,8 +379,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void flushIdleRequests() {
+    int currentModalityCount = getCurrentModalityCount();
     try {
-      myFlushingIdleRequestsEntryCount++;
+      incFlushingRequests(1, currentModalityCount);
 
       final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
       if (events.length > 0) {
@@ -416,26 +423,32 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
       if (isPendingKeyEventsRedispatched()) {
-        boolean focusOk = getFocusOwner() != null;
-        boolean attemptedToFixFocus = IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+        boolean focusOk = getFocusOwner() != null || myFlushWasDelayedToFixFocus;
+        if (!focusOk) {
+          IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+          myFlushWasDelayedToFixFocus = true;
+        }
 
-        if (canFlushIdleRequests()) {
-          if (focusOk || !attemptedToFixFocus) {
-            final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
-            myIdleRequests.clear();
-            for (Runnable each : all) {
-              if (each != null) {
-                each.run();
-              }
-            }
-          }
+        if (canFlushIdleRequests() && getFlushingIdleRequests() <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
+          myFlushWasDelayedToFixFocus = false;
+          flushNow();
         }
       }
     }
     finally {
-      myFlushingIdleRequestsEntryCount--;
+      incFlushingRequests(-1, currentModalityCount);
       if (!isIdleQueueEmpty()) {
         restartIdleAlarm();
+      }
+    }
+  }
+
+  private void flushNow() {
+    final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
+    myIdleRequests.clear();
+    for (Runnable each : all) {
+      if (each != null) {
+        each.run();
       }
     }
   }
@@ -479,7 +492,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public boolean dispatch(KeyEvent e) {
     if (!Registry.is("actionSystem.fixLostTyping")) return false;
 
-    if (myFlushingIdleRequestsEntryCount > 0) return false;
+    if (isFlushingIdleRequests()) return false;
 
     if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
       for (FocusCommand each : myFocusRequests) {
@@ -500,6 +513,50 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     else {
       return false;
     }
+  }
+
+  private boolean isFlushingIdleRequests() {
+    return getFlushingIdleRequests() > 0;
+  }
+
+  private int getFlushingIdleRequests() {
+    int currentModalityCount = getCurrentModalityCount();
+    if (myModalityCount2FlushCount.containsKey(currentModalityCount)) {
+      return myModalityCount2FlushCount.get(currentModalityCount);
+    } else {
+      return 0;
+    }
+  }
+
+  private void incFlushingRequests(int delta, final int currentModalityCount) {
+    if (myModalityCount2FlushCount.containsKey(currentModalityCount)) {
+      Integer requests = myModalityCount2FlushCount.get(currentModalityCount);
+      myModalityCount2FlushCount.put(currentModalityCount, requests + delta);
+    } else {
+      myModalityCount2FlushCount.put(currentModalityCount, Integer.valueOf(delta));
+    }
+  }
+
+  private int getCurrentModalityCount() {
+    int modalDialogs = 0;
+    Window[] windows = Frame.getWindows();
+    for (Window each : windows) {
+      if (each instanceof Dialog) {
+        Dialog eachDialog = (Dialog)each;
+        if (eachDialog.isModal() && eachDialog.isShowing()) {
+          modalDialogs++;
+        }
+      }
+    }
+    Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
+    while (modalityCounts.hasNext()) {
+      Integer eachModalityCount = modalityCounts.next();
+      if (eachModalityCount > modalDialogs) {
+        modalityCounts.remove();
+      }
+    }
+
+    return modalDialogs;
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {

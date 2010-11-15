@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -432,7 +433,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private class ChooseClassAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new TreeClassChooser.ClassFilter() {
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new ClassFilter() {
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
@@ -441,7 +442,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
       }
       chooser.showDialog();
-      PsiClass aClass = chooser.getSelectedClass();
+      PsiClass aClass = chooser.getSelected();
       if (aClass != null) {
         myTfTargetClassName.setText(aClass.getQualifiedName());
       }

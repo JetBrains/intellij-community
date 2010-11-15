@@ -15,7 +15,9 @@
  */
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -84,7 +86,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
       public void fileStatusesChanged() {
-        if (myComponent != null) {
+        if (myComponent != null && myEditor != null) {
           final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
           myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
           updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
@@ -252,8 +254,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
     BreadcrumbsInfoProvider provider = null;
     if (viewProvider != null) {
+      final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();
       final Language baseLang = viewProvider.getBaseLanguage();
       provider = getInfoProvider(baseLang);
+      if (!webEditorOptions.isBreadcrumbsEnabledInXml() && baseLang == XMLLanguage.INSTANCE) return null;
+      if (!webEditorOptions.isBreadcrumbsEnabled() && baseLang != XMLLanguage.INSTANCE) return null;
       if (provider == null) {
         for (final Language language : viewProvider.getLanguages()) {
           provider = getInfoProvider(language);

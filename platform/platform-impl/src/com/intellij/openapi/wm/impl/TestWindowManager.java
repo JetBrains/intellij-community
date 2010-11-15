@@ -46,6 +46,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   public final void doNotSuggestAsParent(final Window window) {
   }
 
+  @Override
+  public StatusBar getStatusBar(@NotNull Component c) {
+    return null;
+  }
+
   public final Window suggestParentWindow(final Project project) {
     return null;
   }
@@ -75,7 +80,32 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     @Override
+    public StatusBar createChild() {
+      return null;
+    }
+
+
+    @Override
+    public IdeFrame getFrame() {
+      return null;
+    }
+
+    @Override
+    public StatusBar findChild(Component c) {
+      return null;
+    }
+
+    @Override
+    public void install(IdeFrame frame) {
+    }
+
+    @Override
     public void setInfo(@Nullable String s, @Nullable String requestor) {
+    }
+
+    @Override
+    public String getInfoRequestor() {
+      return null;
     }
 
     public boolean isVisible() {
@@ -118,6 +148,11 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return null;
     }
 
     public final String getInfo() {

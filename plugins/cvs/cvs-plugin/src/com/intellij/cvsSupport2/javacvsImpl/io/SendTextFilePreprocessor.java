@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.ISendTextFilePreprocessor;
@@ -31,7 +32,7 @@ public class SendTextFilePreprocessor implements ISendTextFilePreprocessor {
   @NonNls private static final String TEMP_FILE_PREFIX = "send";
 
   public File getPreprocessedTextFile(File originalTextFile, IWriterFactory writerFactory) throws IOException {
-    final File preprocessedTextFile = File.createTempFile(TEMP_FILE_PREFIX, null);
+    final File preprocessedTextFile = FileUtil.createTempFile(TEMP_FILE_PREFIX, null);
     final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(originalTextFile));
     Collection lines;
     try {

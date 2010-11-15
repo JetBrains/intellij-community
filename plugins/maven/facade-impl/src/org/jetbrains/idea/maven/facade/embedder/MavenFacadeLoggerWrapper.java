@@ -27,39 +27,19 @@ public class MavenFacadeLoggerWrapper extends MavenRemoteObject {
     myWrappee = wrappee;
   }
 
-  public void info(Throwable e)  {
-    try {
-      myWrappee.info(wrapException(e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+  public void info(Throwable e) throws RemoteException {
+    myWrappee.info(wrapException(e));
   }
 
-  public void warn(Throwable e)  {
-    try {
-      myWrappee.warn(wrapException(e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+  public void warn(Throwable e) throws RemoteException {
+    myWrappee.warn(wrapException(e));
   }
 
-  public void error(Throwable e) {
-    try {
-      myWrappee.error(wrapException(e));
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+  public void error(Throwable e) throws RemoteException {
+    myWrappee.error(wrapException(e));
   }
 
-  public void print(String o) {
-    try {
-      myWrappee.print(o);
-    }
-    catch (RemoteException e1) {
-      throw new RuntimeException(e1);
-    }
+  public void print(String o) throws RemoteException {
+    myWrappee.print(o);
   }
 }

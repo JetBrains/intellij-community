@@ -278,7 +278,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
     Font font = getFont();
     if (font == null) {
-      font = UIManager.getFont("Label.font");
+      font = UIUtil.getLabelFont();
     }
 
     LOG.assertTrue(font != null);
@@ -429,7 +429,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         color = getForeground();
       }
       if (!isEnabled()) {
-        color = UIUtil.getTextInactiveTextColor();
+        color = UIUtil.getInactiveTextColor();
       }
       g.setColor(color);
 

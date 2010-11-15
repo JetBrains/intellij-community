@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,11 @@ public class SynchronizationUtil {
         if (context instanceof PsiSynchronizedStatement) {
             return true;
         }
-        if (context != null) {
-            final PsiModifierListOwner modifierListOwner =
-                    (PsiModifierListOwner)context;
-            if (modifierListOwner.hasModifierProperty(
-                    PsiModifier.SYNCHRONIZED)) {
-                return true;
-            }
+        if (context == null) {
+            return false;
         }
-        return false;
+        final PsiModifierListOwner modifierListOwner =
+                (PsiModifierListOwner)context;
+        return modifierListOwner.hasModifierProperty(PsiModifier.SYNCHRONIZED);
     }
 }

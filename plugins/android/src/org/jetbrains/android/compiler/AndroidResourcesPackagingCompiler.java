@@ -45,7 +45,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     for (Module module : affectedModules) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
-        VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+        VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();

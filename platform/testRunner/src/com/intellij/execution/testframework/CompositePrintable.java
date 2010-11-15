@@ -38,11 +38,7 @@ public class CompositePrintable implements Printable, Disposable {
 
   public void flush() {
     if (myWrapper == null) {
-      try {
-        myWrapper = new PrintablesWrapper(File.createTempFile("frst", "scd"));
-      }
-      catch (IOException ignored) {
-      }
+      myWrapper = new PrintablesWrapper();
     }
     if (myWrapper != null) {
       synchronized (myNestedPrintables) {
@@ -103,13 +99,19 @@ public class CompositePrintable implements Printable, Disposable {
     @NonNls private static final String HYPERLINK = "hyperlink";
     private DataInputStream myReader;
     private ConsoleViewContentType myLastSelected;
-    private final File myFile;
 
-    PrintablesWrapper(File file) {
-      myFile = file;
-    }
+    private File myFile;
 
     public void flash(List<Printable> printables) {
+      if (printables.isEmpty()) return;
+      if (myFile == null) {
+        try {
+          myFile = FileUtil.createTempFile("frst", "scd");
+        }
+        catch (IOException e) {
+          return;
+        }
+      }
       final DataOutputStream fileWriter;
       try {
         fileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile, true)));
@@ -172,6 +174,7 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void printOn(Printer console) {
+      if (myFile == null || !myFile.exists()) return;
       try {
         myReader = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
         int lineNum = 0;
@@ -219,7 +222,7 @@ public class CompositePrintable implements Printable, Disposable {
     }
 
     public void dispose() {
-      FileUtil.delete(myFile);
+      if (myFile != null) FileUtil.delete(myFile);
     }
   }
 }

@@ -490,6 +490,10 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     myConfirmOpenNewProject = confirmOpenNewProject;
   }
 
+  public static final int OPEN_PROJECT_ASK = -1;
+  public static final int OPEN_PROJECT_NEW_WINDOW = 0;
+  public static final int OPEN_PROJECT_SAME_WINDOW = 1;
+
   public boolean isSearchInBackground() {
     return mySearchInBackground;
   }

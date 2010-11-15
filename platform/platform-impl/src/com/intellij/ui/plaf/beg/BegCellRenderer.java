@@ -48,15 +48,15 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
   }
 
   public Component getTreeCellRendererComponent(JTree tree, Object obj, boolean selected, boolean expanded, boolean leaf, int i1, boolean hasFocus) {
-    setFont(UIManager.getFont("Label.font"));
+    setFont(UIUtil.getLabelFont());
     setLeafIcon(UIManager.getIcon("Tree.leafIcon"));
     setClosedIcon(UIManager.getIcon("Tree.closedIcon"));
     setOpenIcon(UIManager.getIcon("Tree.openIcon"));
-    setSelectionForeground(UIManager.getColor("Tree.selectionForeground"));
-    setTextForeground(UIManager.getColor("Tree.textForeground"));
-    setSelectionBackground(UIManager.getColor("Tree.selectionBackground"));
-    setTextBackground(UIManager.getColor("Tree.textBackground"));
-    setSelectionBorderColor(UIManager.getColor("Tree.selectionBorderColor"));
+    setSelectionForeground(UIUtil.getTreeSelectionForeground());
+    setTextForeground(UIUtil.getTreeTextForeground());
+    setSelectionBackground(UIUtil.getTreeSelectionBackground());
+    setTextBackground(UIUtil.getTreeTextBackground());
+    setSelectionBorderColor(UIUtil.getTreeSelectionBorderColor());
     Object obj1 = UIManager.get("Tree.drawsFocusBorderAroundIcon");
     myDrawsFocusBorderAroundIcon = obj1 != null && ((Boolean)obj1).booleanValue();
 
@@ -80,12 +80,12 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
   }
 
   public Component getListCellRendererComponent(JList list, Object obj, int index, boolean selected, boolean hasFocus) {
-    setFont(UIManager.getFont("Label.font"));
-    setSelectionForeground(UIManager.getColor("List.selectionForeground"));
-    setTextForeground(UIManager.getColor("List.foreground"));
+    setFont(UIUtil.getLabelFont());
+    setSelectionForeground(UIUtil.getListSelectionForeground());
+    setTextForeground(UIUtil.getListForeground());
     setSelectionBackground(UIManager.getColor("List.selectionBackground"));
-    setTextBackground(UIManager.getColor("List.background"));
-    setSelectionBorderColor(UIManager.getColor("Tree.selectionBorderColor"));
+    setTextBackground(UIUtil.getListBackground());
+    setSelectionBorderColor(UIUtil.getTreeSelectionBorderColor());
     Object obj1 = UIManager.get("Tree.drawsFocusBorderAroundIcon");
     myDrawsFocusBorderAroundIcon = obj1 != null && ((Boolean)obj1).booleanValue();
 

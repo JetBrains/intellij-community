@@ -20,12 +20,12 @@ import java.util.Arrays;
 
 public class HgVersionCommand {
 
-  public boolean isValid(String executable) {
+  public boolean isValid(String executable, boolean isRunViaBash) {
     String hgExecutable = StringUtils.trim(executable);
     if (!hgExecutable.endsWith(HgVcs.HG_EXECUTABLE_FILE_NAME)) {
       return false;
     }
-    ShellCommand shellCommand = new ShellCommand();
+    ShellCommand shellCommand = new ShellCommand(isRunViaBash);
     try {
       return !shellCommand
         .execute(Arrays.asList(hgExecutable, "version"), null, Charset.defaultCharset())

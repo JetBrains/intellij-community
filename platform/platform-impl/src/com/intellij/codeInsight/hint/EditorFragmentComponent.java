@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,11 +36,13 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class EditorFragmentComponent extends JPanel {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
+    LOG.assertTrue(textWidth > 0, "TextWidth: "+textWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
@@ -51,6 +54,8 @@ public class EditorFragmentComponent extends JPanel {
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
     int y1 = p1.y;
     int y2 = p2.y;
+    int height = y2 - y1;
+    LOG.assertTrue(height > 0, "Height: " + height + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
     int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
     if (savedScrollOffset > 0) {
@@ -58,20 +63,20 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final Image textImage = new BufferedImage(textWidth, y2 - y1, BufferedImage.TYPE_INT_RGB);
+    final Image textImage = new BufferedImage(textWidth, height, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
 
     final JComponent rowHeader;
     final Image markersImage;
     if (showGutter) {
       rowHeader = editor.getGutterComponentEx();
-      markersImage = new BufferedImage(Math.max(1, rowHeader.getWidth()), y2 - y1, BufferedImage.TYPE_INT_RGB);
+      markersImage = new BufferedImage(Math.max(1, rowHeader.getWidth()), height, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
 
       markerGraphics.translate(0, -y1);
-      markerGraphics.setClip(0, y1, rowHeader.getWidth(), y2 - y1);
+      markerGraphics.setClip(0, y1, rowHeader.getWidth(), height);
       markerGraphics.setColor(getBackgroundColor(editor));
-      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), y2 - y1);
+      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), height);
       rowHeader.paint(markerGraphics);
     }
     else {
@@ -80,7 +85,7 @@ public class EditorFragmentComponent extends JPanel {
     }
 
     textGraphics.translate(0, -y1);
-    textGraphics.setClip(0, y1, textWidth, y2 - y1);
+    textGraphics.setClip(0, y1, textWidth, height);
     final boolean wasVisible = editor.setCaretVisible(false);
     editor.getContentComponent().paint(textGraphics);
     if (wasVisible) {
@@ -153,7 +158,8 @@ public class EditorFragmentComponent extends JPanel {
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManagerImpl.HIDE_BY_ANY_KEY : 0) | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p));
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
+                                                                      HintManager.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p));
     return hint;
   }
 

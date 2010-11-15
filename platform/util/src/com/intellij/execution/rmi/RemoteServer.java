@@ -24,6 +24,8 @@ import java.util.Random;
 
 public class RemoteServer {
   protected static void start(Remote remote) throws Exception {
+    setupRMI();
+
     Registry registry;
     int port = 0;
     for (Random random = new Random(); ;) {
@@ -51,5 +53,15 @@ public class RemoteServer {
       e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  public static void setupRMI() {
+    // this properties are necessary for RMI servers to work in some cases:
+    // if we are behind a firewall, if the network connection is lost, etc.
+
+    // do not use domain or http address for server
+    System.setProperty("java.rmi.server.hostname", "localhost");
+    // do not use http tunnelling
+    System.setProperty("java.rmi.server.disableHttp", "true");
   }
 }

@@ -21,7 +21,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -38,7 +38,7 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     super(project, ExceptionBreakpoint.CATEGORY);
   }
 
-  protected TreeClassChooser.ClassFilter createClassConditionFilter() {
+  protected ClassFilter createClassConditionFilter() {
     return null;
   }
 

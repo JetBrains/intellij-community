@@ -42,8 +42,7 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
-  public static final ID<String, Void> ID = new ID<String, Void>("html5.custom.attributes.index") {
-  };
+  public static final ID<String, Void> INDEX_ID = ID.create("html5.custom.attributes.index");
 
   private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
     @NotNull
@@ -84,7 +83,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
 
   @Override
   public ID<String, Void> getName() {
-    return ID;
+    return INDEX_ID;
   }
 
   @Override

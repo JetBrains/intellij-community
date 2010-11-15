@@ -29,36 +29,18 @@ import java.util.List;
  * The git stash dialog.
  */
 public class GitStashDialog extends DialogWrapper {
-  /**
-   * Git root selector
-   */
-  private JComboBox myGitRootComboBox;
-  /**
-   * The root panel for the form
-   */
-  private JPanel myPanel;
-  /**
-   * The current branch label
-   */
+  private JComboBox myGitRootComboBox; // Git root selector
+  private JPanel myRootPanel;
   private JLabel myCurrentBranch;
-  /**
-   * The text field that contains stash message
-   */
   private JTextField myMessageTextField;
-  /**
-   * The  keep index checkbox
-   */
-  private JCheckBox myKeepIndexCheckBox;
-  /**
-   * The project
-   */
+  private JCheckBox myKeepIndexCheckBox; // --keep-index
   private final Project myProject;
 
   /**
    * A constructor
    *
    * @param project     the project
-   * @param roots       the list of the roots
+   * @param roots       the list of Git roots
    * @param defaultRoot the default root to select
    */
   public GitStashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
@@ -70,9 +52,6 @@ public class GitStashDialog extends DialogWrapper {
     init();
   }
 
-  /**
-   * @return the handler
-   */
   public GitLineHandler handler() {
     GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
     handler.addParameters("save");
@@ -93,26 +72,22 @@ public class GitStashDialog extends DialogWrapper {
     return (VirtualFile)myGitRootComboBox.getSelectedItem();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
-    return myPanel;
+    return myRootPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Stash";
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myMessageTextField;
   }
 }

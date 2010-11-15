@@ -20,8 +20,6 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
@@ -52,17 +50,13 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
   }
 
   public static LookupElement createKeywordLookupItem(final PsiElement element, final String s) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<LookupItem>() {
-      public LookupItem compute() {
-        try {
-          final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
-          return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    try {
+      final PsiKeyword keyword = JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createKeyword(s);
+      return new KeywordLookupItem(keyword, element).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
+    }
+    catch (IncorrectOperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 

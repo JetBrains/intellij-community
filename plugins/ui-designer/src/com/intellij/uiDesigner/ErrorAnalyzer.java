@@ -95,6 +95,7 @@ public final class ErrorAnalyzer {
       }
     }
     else{
+      rootContainer.putClientProperty(CLIENT_PROP_CLASS_TO_BIND_ERROR, null);
       psiClass = null;
     }
 

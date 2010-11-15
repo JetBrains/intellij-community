@@ -4,6 +4,6 @@
   <contentEntry url="file://$MODULE_DIR$" />
   <lib name="test.jar" scope="COMPILE">
     <srcroot url="jar://$MODULE_DIR$/../jars/test.jar!/" />
-    <srcroot url="jar://$MODULE_DIR$/../jars/test-2.jar!/" />
+    <srcroot url="jar://$MODULE_DIR$/../jars/test-2.jar!/" bind="false" />
   </lib>
 </component>

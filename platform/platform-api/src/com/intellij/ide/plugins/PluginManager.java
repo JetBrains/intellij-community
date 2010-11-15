@@ -100,15 +100,29 @@ public class PluginManager {
   public static synchronized IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
-      getLogger().info("Loaded plugins:" + StringUtil.join(ourPlugins, new Function<IdeaPluginDescriptorImpl, String>() {
-        public String fun(IdeaPluginDescriptorImpl descriptor) {
-          final String version = descriptor.getVersion();
-          return descriptor.getName() + (version != null ? " (" + version + ")" : "");
-        }
-      }, ", "));
+      logPlugins();
       ClassloaderUtil.clearJarURLCache();
     }
     return ourPlugins;
+  }
+
+  private static void logPlugins() {
+    List<String> loaded = new ArrayList<String>();
+    List<String> disabled = new ArrayList<String>();
+    for (IdeaPluginDescriptorImpl descriptor : ourPlugins) {
+      final String version = descriptor.getVersion();
+      String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
+      if (descriptor.isEnabled()) {
+        loaded.add(s);
+      }
+      else {
+        disabled.add(s);
+      }
+    }
+    getLogger().info("Loaded plugins:" + StringUtil.join(loaded, ", "));
+    if (!disabled.isEmpty()) {
+      getLogger().info("Disabled plugins: " + StringUtil.join(disabled, ", "));
+    }
   }
 
   public static void invalidatePlugins() {

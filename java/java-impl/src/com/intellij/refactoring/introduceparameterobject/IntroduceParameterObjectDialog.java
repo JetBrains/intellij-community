@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.introduceparameterobject;
 
-import com.intellij.ide.util.TreeClassChooserDialog;
+import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -288,15 +288,15 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       public void actionPerformed(ActionEvent e) {
         final Project project = sourceMethod.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final TreeClassChooserDialog chooser =
-          new TreeClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
+        final TreeJavaClassChooserDialog chooser =
+          new TreeJavaClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
         final String classText = existingClassField.getText();
         final PsiClass currentClass = JavaPsiFacade.getInstance(project).findClass(classText, GlobalSearchScope.allScope(project));
         if (currentClass != null) {
-          chooser.selectClass(currentClass);
+          chooser.select(currentClass);
         }
         chooser.show();
-        final PsiClass selectedClass = chooser.getSelectedClass();
+        final PsiClass selectedClass = chooser.getSelected();
         if (selectedClass != null) {
           final String className = selectedClass.getQualifiedName();
           existingClassField.setText(className);

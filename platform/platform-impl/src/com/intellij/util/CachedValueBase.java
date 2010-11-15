@@ -24,9 +24,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,38 +32,27 @@ import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.*;
-
 /**
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
-
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
-  private final JBLock r;
-  private final JBLock w;
-
-  public CachedValueBase() {
-    JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
-    r = rw.readLock();
-    w = rw.writeLock();
-  }
 
   protected Data<T> computeData(T value, Object[] dependencies) {
     if (dependencies == null) {
       return new Data<T>(value, null, null);
     }
 
-    TLongArrayList timeStamps = new TLongArrayList();
-    List<Object> deps = new ArrayList<Object>();
+    TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
+    List<Object> deps = new ArrayList<Object>(dependencies.length);
     collectDependencies(timeStamps, deps, dependencies);
 
-    return  new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
+    return new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
-    myData.setData(computeData(value == null ? (T)NULL : value, getDependencies(result)));
+    myData.setData(computeData(value == null ? (T)ObjectUtils.NULL : value, getDependencies(result)));
     myData.setIsLocked(result != null && result.isLockValue());
   }
 
@@ -82,7 +68,8 @@ public abstract class CachedValueBase<T> {
     }
     else {
       Object[] items = result.getDependencyItems();
-      return result.getValue() == null ? items : items == null ? new Object[] {result.getValue()}: ArrayUtil.append(items, result.getValue());
+      T value = result.getValue();
+      return value == null ? items : items == null ? new Object[] {value}: ArrayUtil.append(items, value);
     }
   }
 
@@ -133,7 +120,7 @@ public abstract class CachedValueBase<T> {
 
   protected void collectDependencies(TLongArrayList timeStamps, List<Object> resultingDeps, Object[] dependencies) {
     for (Object dependency : dependencies) {
-      if (dependency == null || dependency == NULL) continue;
+      if (dependency == null || dependency == ObjectUtils.NULL) continue;
       if (dependency instanceof Object[]) {
         collectDependencies(timeStamps, resultingDeps, (Object[])dependency);
       }
@@ -168,16 +155,9 @@ public abstract class CachedValueBase<T> {
   }
 
   public T setValue(final CachedValueProvider.Result<T> result) {
-    w.lock();
-
-    try {
-      T value = result.getValue();
-      setValue(value, result);
-      return value;
-    }
-    finally {
-      w.unlock();
-    }
+    T value = result == null ? null : result.getValue();
+    setValue(value, result);
+    return value;
   }
 
   public abstract boolean isFromMyProject(Project project);
@@ -202,34 +182,15 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   protected <P> T getValueWithLock(P param) {
-    r.lock();
-    try {
-      T value = getUpToDateOrNull(true);
-      if (value != null) {
-        return value == NULL ? null : value;
-      }
-    }
-    finally {
-      r.unlock();
+    T value = getUpToDateOrNull(true);
+    if (value != null) {
+      return value == ObjectUtils.NULL ? null : value;
     }
 
     // compute outside lock to avoid deadlock
     CachedValueProvider.Result<T> result = doCompute(param);
-    T computed = result == null ? null : result.getValue();
 
-    w.lock();
-    try {
-      //T value = getUpToDateOrNull(false);
-      //if (value != null) {
-      //  return value == NULL ? null : value;
-      //}
-
-      setValue(computed, result);
-      return computed;
-    }
-    finally {
-      w.unlock();
-    }
+    return setValue(result);
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
@@ -237,16 +198,15 @@ public abstract class CachedValueBase<T> {
   private static class MyTimedReference<T> extends TimedReference<SoftReference<Data<T>>> {
     private boolean myIsLocked;
 
-
     public MyTimedReference() {
       super(null);
     }
 
-    public void setIsLocked(final boolean isLocked) {
+    public synchronized void setIsLocked(final boolean isLocked) {
       myIsLocked = isLocked;
     }
 
-    protected boolean isLocked() {
+    protected synchronized boolean isLocked() {
       return super.isLocked() || myIsLocked;
     }
 

@@ -28,6 +28,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   public GotoClassModel2(Project project) {
     super(project, ChooseByNameRegistry.getInstance().getClassModelContributors());
@@ -36,6 +39,17 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
   @Override
   protected Language filterValueFor(NavigationItem item) {
     return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
+  }
+
+  @Override
+  protected synchronized Collection<Language> getFilterItems() {
+    final Collection<Language> result = super.getFilterItems();
+    if (result == null) {
+      return result;
+    }
+    final Collection<Language> items = new HashSet<Language>(result);
+    items.add(Language.ANY);
+    return items;
   }
 
   @Nullable

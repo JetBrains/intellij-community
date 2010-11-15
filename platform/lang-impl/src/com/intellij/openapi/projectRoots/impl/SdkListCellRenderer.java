@@ -18,42 +18,42 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 
 /**
  * @author yole
 */
-public class SdkListCellRenderer extends ColoredListCellRenderer {
+public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   private String myNullText = "";
   private boolean myShowHomePath;
 
-  public SdkListCellRenderer() {
+  public SdkListCellRenderer(final ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
   }
 
-  public SdkListCellRenderer(final String nullText) {
+  public SdkListCellRenderer(final String nullText, final ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
     myNullText = nullText;
   }
 
-  public SdkListCellRenderer(String nullText, boolean showHomePath) {
+  public SdkListCellRenderer(final String nullText, final boolean showHomePath, final ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
     myNullText = nullText;
     myShowHomePath = showHomePath;
   }
 
-  protected void customizeCellRenderer(final JList list,
-                                       final Object value,
-                                       final int index,
-                                       final boolean selected,
-                                       final boolean hasFocus) {
-    final Sdk sdk = (Sdk) value;
+  @Override
+  protected void doCustomize(final JList list, final Sdk sdk, final int index, final boolean selected, final boolean hasFocus) {
     if (sdk != null) {
       // icon
       setIcon(sdk.getSdkType().getIcon());
       // text
       append(sdk.getName());
       if (myShowHomePath) {
-        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")");
+        append(" (" + FileUtil.toSystemDependentName(sdk.getHomePath()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else {

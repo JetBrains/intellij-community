@@ -15,24 +15,24 @@
  */
 package org.jetbrains.idea.maven.facade;
 
-import org.jetbrains.idea.maven.facade.embedder.MavenFacadeDownloadListenerWrapper;
+
 import org.jetbrains.idea.maven.facade.embedder.MavenFacadeLoggerWrapper;
 
 public class MavenFacadeGlobalsManager {
   private static MavenFacadeLoggerWrapper myLogger;
-  private static MavenFacadeDownloadListenerWrapper myDownloadListener;
+  private static MavenFacadeDownloadListener myDownloadListener;
 
   public static MavenFacadeLoggerWrapper getLogger() {
     return myLogger;
   }
 
-  public static MavenFacadeDownloadListenerWrapper getDownloadListener() {
+  public static MavenFacadeDownloadListener getDownloadListener() {
     return myDownloadListener;
   }
 
 
   public static void set(MavenFacadeLogger logger, MavenFacadeDownloadListener downloadListener) {
     myLogger = new MavenFacadeLoggerWrapper(logger);
-    myDownloadListener = new MavenFacadeDownloadListenerWrapper(downloadListener);
+    myDownloadListener = downloadListener;
   }
 }

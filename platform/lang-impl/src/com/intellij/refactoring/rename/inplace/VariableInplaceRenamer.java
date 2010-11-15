@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LanguageExtension;
@@ -460,10 +461,15 @@ public class VariableInplaceRenamer {
     }
 
     public Result calculateQuickResult(ExpressionContext context) {
-      return new TextResult(myName);
+      return calculateResult(context);
     }
 
     public Result calculateResult(ExpressionContext context) {
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+      final TextResult insertedValue = templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
+      if (insertedValue != null) {
+        if (!insertedValue.getText().isEmpty()) return insertedValue;
+      }
       return new TextResult(myName);
     }
 

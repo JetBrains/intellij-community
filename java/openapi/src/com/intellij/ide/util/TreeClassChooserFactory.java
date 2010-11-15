@@ -39,14 +39,14 @@ public abstract class TreeClassChooserFactory {
   @NotNull
   public abstract TreeClassChooser createWithInnerClassesScopeChooser(String title,
                                                                       GlobalSearchScope scope,
-                                                                      final TreeClassChooser.ClassFilter classFilter,
+                                                                      final ClassFilter classFilter,
                                                                       @Nullable PsiClass initialClass);
 
 
   @NotNull
   public abstract TreeClassChooser createNoInnerClassesScopeChooser(String title,
                                                                     GlobalSearchScope scope,
-                                                                    TreeClassChooser.ClassFilter classFilter,
+                                                                    ClassFilter classFilter,
                                                                     @Nullable PsiClass initialClass);
 
 
@@ -81,7 +81,7 @@ public abstract class TreeClassChooserFactory {
                                                                  GlobalSearchScope scope,
                                                                  PsiClass base,
                                                                  PsiClass initialClass,
-                                                                 TreeClassChooser.ClassFilter classFilter);
+                                                                 ClassFilter classFilter);
 
 
   @NotNull

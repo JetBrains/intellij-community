@@ -75,13 +75,13 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
-      for (FileStatusProvider extension : myExtensions.getValue()) {
-        FileStatus status = extension.getFileStatus(virtualFile);
-        if (status != null) {
-          return status;
-        }
+    for (FileStatusProvider extension : myExtensions.getValue()) {
+      FileStatus status = extension.getFileStatus(virtualFile);
+      if (status != null) {
+        return status;
       }
+    }
+    if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
       return myFileStatusProvider.getFileStatus(virtualFile);
     } else {
       return FileStatus.NOT_CHANGED;
@@ -114,7 +114,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public void initComponent() { }
 
-  public void addFileStatusListener(FileStatusListener listener) {
+  public void addFileStatusListener(@NotNull FileStatusListener listener) {
     myListeners.add(listener);
   }
 

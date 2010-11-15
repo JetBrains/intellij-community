@@ -114,7 +114,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public PsiClass chooseClassDialog(String title, Project project) {
     TreeClassChooser dialog = TreeClassChooserFactory.getInstance(project).createAllProjectScopeChooser(title);
     dialog.showDialog();
-    return dialog.getSelectedClass();
+    return dialog.getSelected();
   }
 
   public CompletionEditor createEditor(Project project, PsiElement context, String recentsId) {

@@ -16,6 +16,7 @@
 
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -67,6 +68,10 @@ public class ButtonGroupPropertiesPanel implements CustomPropertiesPanel {
       notifyListeners(new ChangeEvent(myGroup));
       if (myGroup.isBound()) {
         BindingProperty.updateBoundFieldName(myRootContainer, null, myGroup.getName(), ButtonGroup.class.getName());
+      }
+      else {
+        BindingProperty.checkRemoveUnusedField(myRootContainer, myGroup.getName(),
+                                               FormEditingUtil.getNextSaveUndoGroupId(myRootContainer.getProject()));
       }
     }
   }

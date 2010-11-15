@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -110,7 +111,7 @@ public enum MarkerType {
       if (!(parent instanceof PsiMethod)) return;
 
       final PsiMethod method = (PsiMethod)parent;
-      final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>();
+      final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>(new THashSet<PsiMethod>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(collectProcessor);
@@ -136,7 +137,7 @@ public enum MarkerType {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return null;
       PsiClass aClass = (PsiClass)parent;
-      PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
+      PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
       ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
       if (processor.isOverflow()) {
@@ -163,7 +164,7 @@ public enum MarkerType {
       if (!(parent instanceof PsiClass)) return;
 
       final PsiClass aClass = (PsiClass)parent;
-      final CommonProcessors.CollectProcessor<PsiClass> collectProcessor = new CommonProcessors.CollectProcessor<PsiClass>();
+      final CommonProcessors.CollectProcessor<PsiClass> collectProcessor = new CommonProcessors.CollectProcessor<PsiClass>(new THashSet<PsiClass>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(collectProcessor);
@@ -183,23 +184,23 @@ public enum MarkerType {
     }
   });
 
-  private final GutterIconNavigationHandler handler;
-  private final Function<? super PsiElement, String> myTooltip;
+  private final GutterIconNavigationHandler<PsiElement> handler;
+  private final Function<PsiElement, String> myTooltip;
 
-  MarkerType(Function<? super PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
+  MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
-    handler = new GutterIconNavigationHandler() {
+    handler = new GutterIconNavigationHandler<PsiElement>() {
       public void navigate(MouseEvent e, PsiElement elt) {
         navigator.browse(e, elt);
       }
     };
   }
 
-  public <T extends PsiElement> GutterIconNavigationHandler<T> getNavigationHandler() {
+  public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
   }
 
-  public <T extends PsiElement> Function<T, String> getTooltip() {
-    return (Function<T, String>)myTooltip;
+  public Function<PsiElement, String> getTooltip() {
+    return myTooltip;
   }
 }

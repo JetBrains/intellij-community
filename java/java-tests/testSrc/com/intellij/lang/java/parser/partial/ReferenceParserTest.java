@@ -30,18 +30,18 @@ public class ReferenceParserTest extends JavaParsingTestCase {
   public void testReference1() { doRefParserTest("a.", true); }
   public void testReference2() { doRefParserTest("a.b", false); }
 
-  public void testType0() { doTypeParserTest("int", false); }
-  public void testType1() { doTypeParserTest("a.b", false); }
-  public void testType2() { doTypeParserTest("int[]", false); }
-  public void testType3() { doTypeParserTest("int[][", false); }
-  public void testType4() { doTypeParserTest("Map<String,List<String>>", false); }
-  public void testType5() { doTypeParserTest("Object[]...", false); }
+  public void testType0() { doTypeParserTest("int"); }
+  public void testType1() { doTypeParserTest("a.b"); }
+  public void testType2() { doTypeParserTest("int[]"); }
+  public void testType3() { doTypeParserTest("int[]["); }
+  public void testType4() { doTypeParserTest("Map<String,List<String>>"); }
+  public void testType5() { doTypeParserTest("Object[]..."); }
   public void testType6() {
-    withLevel(LanguageLevel.JDK_1_7,
-              new Runnable() { @Override
-                               public void run() { doTypeParserTest("@English String @NonEmpty []", false); } });
+    withLevel(LanguageLevel.JDK_1_8, new Runnable() { @Override public void run() {
+      doTypeParserTest("@English String @NonEmpty []");
+    }});
   }
-  public void testType7() { doTypeParserTest("Diamond<>", true); }
+  public void testType7() { doTypeParserTest("Diamond<>"); }
 
   public void testTypeParams0() { doTypeParamsParserTest("<T>"); }
   public void testTypeParams1() { doTypeParamsParserTest("<T, U>"); }
@@ -56,19 +56,16 @@ public class ReferenceParserTest extends JavaParsingTestCase {
     doParserTest(text, new TestParser() {
       @Override
       public void parse(final PsiBuilder builder) {
-        ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false);
+        ReferenceParser.parseJavaCodeReference(builder, incomplete, false, false, false, false);
       }
     });
   }
 
-  private void doTypeParserTest(final String text, final boolean diamonds) {
+  private void doTypeParserTest(final String text) {
     doParserTest(text, new TestParser() {
       @Override
       public void parse(final PsiBuilder builder) {
-        if (diamonds)
-          ReferenceParser.parseType(builder, false, false, true);
-        else
-          ReferenceParser.parseTypeWithEllipsis(builder, false, false);
+        ReferenceParser.parseType(builder, ReferenceParser.DIAMONDS | ReferenceParser.ELLIPSIS);
       }
     });
   }

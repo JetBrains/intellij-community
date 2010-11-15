@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.project.*;
@@ -91,17 +92,23 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     restoreSettingsFile();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        try {
-          setUpInWriteAction();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              setUpInWriteAction();
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          }
+        });
       }
     });
+
     myCompileInBackground = CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND;
     CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = false;
   }
@@ -130,7 +137,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND = myCompileInBackground;
 
     myProject = null;
-    tearDownFixtures();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDownFixtures();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
     if (!FileUtil.delete(myDir)) {
       System.out.println("Cannot delete " + myDir);
       myDir.deleteOnExit();
@@ -196,6 +213,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
+  @Override
+  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+    runnable.run();
+  }
+
   protected boolean runInWriteAction() {
     return false;
   }
@@ -229,7 +251,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void setRepositoryPath(String path) {
-    getMavenGeneralSettings().setOverridenLocalRepository(path);
+    getMavenGeneralSettings().setOverriddenLocalRepository(path);
   }
 
   protected String getProjectPath() {

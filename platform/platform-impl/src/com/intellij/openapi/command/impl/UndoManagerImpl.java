@@ -152,7 +152,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
       public void commandStarted(CommandEvent event) {
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy());
-        if (event.getDocument() != null) addAffectedDocuments(event.getDocument());
       }
 
       public void commandFinished(CommandEvent event) {

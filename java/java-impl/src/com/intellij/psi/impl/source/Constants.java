@@ -106,6 +106,12 @@ public interface Constants extends ElementType {
     }
   };
 
+  PsiElementArrayConstructor<PsiAnnotation> PSI_ANNOTATION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotation>() {
+    public PsiAnnotation[] newPsiElementArray(int length) {
+      return length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[length];
+    }
+  };
+
   TokenSet CLASS_BIT_SET = TokenSet.create(CLASS, ANONYMOUS_CLASS, ENUM_CONSTANT_INITIALIZER);
   TokenSet FIELD_BIT_SET = TokenSet.create(FIELD, ENUM_CONSTANT);
   TokenSet METHOD_BIT_SET = TokenSet.create(METHOD, ANNOTATION_METHOD);

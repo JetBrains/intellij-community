@@ -59,14 +59,14 @@
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET" />
       <keyboard-shortcut first-keystroke="shift control P" />
     </action>
-    <action id="EditorCutLineEnd">
+    <action id="EditorDeleteToLineEnd">
       <keyboard-shortcut first-keystroke="shift control DELETE" />
     </action>
     <action id="EditorDeleteLine">
       <keyboard-shortcut first-keystroke="control D" />
     </action>
-    <action id="EditorDuplicate">
-      <keyboard-shortcut first-keystroke="control alt UP" />
+    <action id="EditorDuplicate"/>
+    <action id="EditorDuplicateLines">
       <keyboard-shortcut first-keystroke="control alt DOWN" />
     </action>
     <action id="EditorIndentSelection">

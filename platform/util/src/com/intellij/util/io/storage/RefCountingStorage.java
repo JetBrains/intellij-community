@@ -62,10 +62,10 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   @Override
-  public void writeBytes(int record, byte[] bytes) throws IOException {
+  public void writeBytes(int record, byte[] bytes, boolean fixedSize) throws IOException {
 
     if (myDoNotZipCaches) {
-      super.writeBytes(record, bytes);
+      super.writeBytes(record, bytes, fixedSize);
       return;
     }
 
@@ -78,7 +78,7 @@ public class RefCountingStorage extends AbstractStorage {
       finally {
         out.close();
       }
-      super.writeBytes(record, s.toByteArray());
+      super.writeBytes(record, s.toByteArray(), fixedSize);
     }
   }
 

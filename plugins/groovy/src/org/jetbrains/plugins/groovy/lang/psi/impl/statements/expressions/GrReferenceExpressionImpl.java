@@ -329,7 +329,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @Override
-  protected PsiElement bindWithQualifiedRef(String qName) {
+  protected PsiElement bindWithQualifiedRef(@NotNull String qName) {
     final GrTypeArgumentList list = getTypeArgumentList();
     final String typeArgs = (list != null) ? list.getText() : "";
     final String text = qName + typeArgs;

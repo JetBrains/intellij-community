@@ -23,6 +23,8 @@ import java.awt.*;
 
 /**
  * @author Vladimir Kondratyev
+ * @deprecated Causes UI defects (particularly under GTK+ and Nimbus LAFs).
+ *             Consider using {@link com.intellij.ui.HtmlListCellRenderer} instead.
  */
 public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
   protected boolean mySelected;

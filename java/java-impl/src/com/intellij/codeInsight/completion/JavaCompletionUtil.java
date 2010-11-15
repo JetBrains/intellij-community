@@ -618,17 +618,20 @@ public class JavaCompletionUtil {
       if (qualifier != null) {
         final Project project = qualifier.getProject();
         final PairFunction<PsiExpression, CompletionParameters, PsiType> evaluator = refExpr.getContainingFile().getCopyableUserData(DYNAMIC_TYPE_EVALUATOR);
+        PsiReferenceExpression context = refExpr;
         PsiType type = null;
         if (evaluator != null) {
           type = evaluator.fun(qualifier, parameters);
+          context = null;
         }
         if (type == null) {
           type = GuessManager.getInstance(project).getControlFlowExpressionType(qualifier);
+          context = refExpr;
         }
         if (type != null) {
           processor.clear();
 
-          return addQualifierCastingVariants(processor, refExpr, type, set);
+          return addQualifierCastingVariants(processor, refExpr, type, set, context);
         }
       }
     }
@@ -637,13 +640,13 @@ public class JavaCompletionUtil {
 
   private static PsiType addQualifierCastingVariants(JavaCompletionProcessor processor, PsiReferenceExpression refExpr,
                                                      PsiType castTo,
-                                                     THashSet<LookupElement> set) {
+                                                     THashSet<LookupElement> set, final PsiReferenceExpression context) {
     Project project = refExpr.getProject();
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
     assert qualifier != null;
     final String newText = "((" + castTo.getCanonicalText() + ") " + qualifier.getText() + ")." + refExpr.getReferenceName();
-    final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, refExpr);
+    final PsiExpression newRef = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, context);
     ((PsiReferenceExpression)newRef).processVariants(processor);
 
     final LookupElement castItem = PsiTypeLookupItem.createLookupItem(castTo, refExpr);
@@ -785,6 +788,9 @@ public class JavaCompletionUtil {
   public static boolean containsMethodCalls(@Nullable final PsiElement qualifier) {
     if (qualifier == null) return false;
     if (qualifier instanceof PsiMethodCallExpression) return true;
+    if (qualifier instanceof PsiArrayAccessExpression) {
+      return containsMethodCalls(((PsiArrayAccessExpression)qualifier).getArrayExpression());
+    }
     return containsMethodCalls(getQualifier(qualifier));
   }
 

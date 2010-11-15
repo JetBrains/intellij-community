@@ -37,6 +37,20 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
+  @NotNull
+  String ID();
+
+  @Nullable
+  WidgetPresentation getPresentation(@NotNull PlatformType type);
+
+  void install(@NotNull final StatusBar statusBar);
+
+  interface Multiframe extends StatusBarWidget {
+
+    StatusBarWidget copy();
+
+  }
+
   interface WidgetPresentation {
     @Nullable
     String getTooltipText();
@@ -71,14 +85,6 @@ public interface StatusBarWidget extends Disposable {
     String getMaxValue();
   }
 
-  @NotNull
-  String ID();
-
-  @Nullable
-  WidgetPresentation getPresentation(@NotNull PlatformType type);
-
-  void install(@NotNull final StatusBar statusBar);
-
   class WidgetBorder implements Border {
     public static final WidgetBorder INSTANCE = new WidgetBorder();
 
@@ -91,7 +97,7 @@ public interface StatusBarWidget extends Disposable {
     private static final Color PIXEL = LEFT1_FROM_INACTIVE;
     private static final Color LEFT1_TO_INACTIVE = new Color(180, 180, 180);
 
-    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackgound().darker();
+    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackground().darker();
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2 = (Graphics2D)g.create();

@@ -1,29 +1,11 @@
-<idea-plugin version="2" url="http://idea-android.googlecode.com/">
+<idea-plugin version="2">
   <name>Android Support</name>
   <id>org.jetbrains.android</id>
-  <description><![CDATA[
-    Supports development of Open Handset Alliance Android applications with IntelliJ IDEA
-    It works with Android SDK 1.5 and with earlier versions
-    <p>Features:
-    <ul>
-     <li>Run and debug Android applications on both the emulator and the real device
-     <li>Run Android Activity with one click or shortcut
-     <li>Completion, navigation and validation inside the AndroidManifest.xml, layouts, animations, and other resources
-     <li>Move string literal from Java code to the strings.xml file
-     <li>Quick Fix for adding resources for unresolved reference
-     <li>Navigation between code and resources
-     <li>AIDL syntax highlighting
-    </ul></p>
-   ]]></description>
-  <version>1.0.2</version>
-  <change-notes>
-    <![CDATA[
-     <ul>
-        <li>Error messages when plugin parses Android SDK.
-     </ul>
-   ]]></change-notes>
+  <description>
+    Supports development of Open Handset Alliance Android applications with IntelliJ IDEA.
+  </description>
+  <version>10.0</version>
   <vendor logo="/icons/android.png">JetBrains</vendor>
-  <idea-version since-build="10500"/>
   <application-components>
     <component>
       <implementation-class>org.jetbrains.android.AndroidPlugin</implementation-class>

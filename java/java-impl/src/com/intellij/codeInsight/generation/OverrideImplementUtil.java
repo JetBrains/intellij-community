@@ -41,6 +41,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -55,6 +57,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -103,6 +106,8 @@ public class OverrideImplementUtil {
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSigs) {
       PsiMethod method = signature.getMethod();
+      LOG.assertTrue(method.isValid());
+
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
@@ -306,8 +311,12 @@ public class OverrideImplementUtil {
     if (insertOverride && isInsertOverride(overridden, targetClass)) {
       annotate(method, Override.class.getName());
     }
+    final Module module = ModuleUtil.findModuleForPsiElement(targetClass);
+    final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(targetClass.getProject());
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
       for (String annotation : each.getAnnotations()) {
+        if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
         if (AnnotationUtil.isAnnotated(overridden, annotation, false)) {
           annotate(method, annotation, each.annotationsToRemove(annotation));
         }

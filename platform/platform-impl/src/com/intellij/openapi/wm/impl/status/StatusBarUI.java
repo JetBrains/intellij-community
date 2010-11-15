@@ -84,7 +84,7 @@ public class StatusBarUI extends ComponentUI {
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2d = (Graphics2D) g.create();
 
-      final Color background = UIUtil.getPanelBackgound();
+      final Color background = UIUtil.getPanelBackground();
 
       g2d.setColor(background);
       g2d.fillRect(0, 0, width, height);

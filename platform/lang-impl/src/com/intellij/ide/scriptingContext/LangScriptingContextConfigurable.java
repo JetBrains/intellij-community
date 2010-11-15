@@ -39,7 +39,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
     myPanel = useDedicatedLibraryUI() ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
-    myContextsConfigurable = new ScriptingContextsConfigurable(project, provider);
+    myContextsConfigurable = new ScriptingContextsConfigurable(project, provider.getLibraryMappings(project));
   }
 
   private boolean useDedicatedLibraryUI() {
@@ -70,13 +70,14 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
       public void run() {
         myLibManager.commitChanges();
         myPanel.resetTable();
+        myContextsConfigurable.resetMappings();
       }
     });
   }
 
   @Override
   public void reset() {
-    myLibManager.dropChanges();
+    myLibManager.reset();
     myPanel.resetTable();
   }
 
@@ -87,7 +88,6 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
 
   @Override
   public Configurable[] getConfigurables() {
-    //return new Configurable[] {myContextsConfigurable};
-    return new Configurable[] {};
+    return new Configurable[] {myContextsConfigurable};
   }
 }

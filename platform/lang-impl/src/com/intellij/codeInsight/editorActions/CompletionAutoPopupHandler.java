@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -48,7 +49,7 @@ import java.beans.PropertyChangeListener;
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Key<AutoPopupState> STATE_KEY = Key.create("AutopopupSTATE_KEY");
-  public static boolean ourTestingAutopopup = false;
+  public static volatile boolean ourTestingAutopopup = false;
 
   @Override
   public Result beforeCharTyped(char c,
@@ -98,6 +99,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
+        if (DumbService.getInstance(project).isDumb()) return;
 
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, true).invoke(project, editor);
 

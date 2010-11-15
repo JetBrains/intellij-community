@@ -44,7 +44,7 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   }
 
   public Language[] getLanguages() {
-    return new Language[]{XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE};
+    return new Language[]{XMLLanguage.INSTANCE, XHTMLLanguage.INSTANCE, HTMLLanguage.INSTANCE};
   }
 
   @NotNull
@@ -77,7 +77,7 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
   @Nullable
   public String getElementTooltip(@NotNull final PsiElement e) {
     final XmlTag tag = (XmlTag)e;
-    final StringBuffer result = new StringBuffer("<");
+    final StringBuffer result = new StringBuffer("&lt;");
     result.append(tag.getName());
     final XmlAttribute[] attributes = tag.getAttributes();
     for (final XmlAttribute each : attributes) {
@@ -85,10 +85,10 @@ public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider 
     }
 
     if (tag.isEmpty()) {
-      result.append("/>");
+      result.append("/&gt;");
     }
     else {
-      result.append(">...</").append(tag.getName()).append(">");
+      result.append("&gt;...&lt;/").append(tag.getName()).append("&gt;");
     }
 
     return result.toString();

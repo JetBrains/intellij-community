@@ -105,7 +105,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     }
   }
 
-  private class AttachSourcesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
+  private static class AttachSourcesDescriptor extends ChooserBasedAttachRootButtonDescriptor {
     private AttachSourcesDescriptor() {
       super(OrderRootType.SOURCES, ProjectBundle.message("module.libraries.attach.sources.button"));
     }

@@ -56,52 +56,18 @@ public class GitCloneDialog extends DialogWrapper {
     SSH_URL_PATTERN = Pattern.compile(all);
   }
 
-  /**
-   * repository URL
-   */
+  private JPanel myRootPanel;
   private JTextField myRepositoryURL;
-  /**
-   * parent directory
-   */
   private TextFieldWithBrowseButton myParentDirectory;
-  /**
-   * test repository URL button
-   */
-  private JButton myTestButton;
-  /**
-   * the repository URL at the time of the last test
-   */
-  private String myTestURL;
-  /**
-   * the test result of the last test or null if not tested
-   */
-  private Boolean myTestResult;
-  /**
-   * directory name button
-   */
+  private JButton myTestButton; // test repository
   private JTextField myDirectoryName;
-  /**
-   * current default directory name
-   */
+
+  private JTextField myOriginName; // origin name for cloned repository (-o option)
+  private String myTestURL; // the repository URL at the time of the last test
+  private Boolean myTestResult; // the test result of the last test or null if not tested
   private String myDefaultDirectoryName = "";
-  /**
-   * origin name for cloned repository (-o option)
-   */
-  private JTextField myOriginName;
-  /**
-   * panel that wraps it all
-   */
-  private JPanel myPanel;
-  /**
-   * the project for checkout
-   */
   private final Project myProject;
 
-  /**
-   * A constructor
-   *
-   * @param project a project for checkout action
-   */
   public GitCloneDialog(Project project) {
     super(project, true);
     myProject = project;
@@ -111,30 +77,18 @@ public class GitCloneDialog extends DialogWrapper {
     setOKButtonText(GitBundle.getString("clone.button"));
   }
 
-  /**
-   * @return the URL of the source repository
-   */
   public String getSourceRepositoryURL() {
     return myRepositoryURL.getText();
   }
 
-  /**
-   * @return the parent directory for checkout
-   */
   public String getParentDirectory() {
     return myParentDirectory.getText();
   }
 
-  /**
-   * @return the directory name to checkout to
-   */
   public String getDirectoryName() {
     return myDirectoryName.getText();
   }
 
-  /**
-   * @return the origin name to use
-   */
   public String getOriginName() {
     return myOriginName.getText();
   }
@@ -367,7 +321,7 @@ public class GitCloneDialog extends DialogWrapper {
    * {@inheritDoc}
    */
   protected JComponent createCenterPanel() {
-    return myPanel;
+    return myRootPanel;
   }
 
   /**

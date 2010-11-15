@@ -27,4 +27,8 @@ public class HgOutgoingCommand extends HgChangesetsCommand {
     args.add("--newest-first");
   }
 
+  @Override
+  protected boolean isSilentCommand() {
+    return true;
+  }
 }

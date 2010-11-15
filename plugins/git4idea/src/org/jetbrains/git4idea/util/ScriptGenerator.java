@@ -149,8 +149,8 @@ public class ScriptGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public File generate() throws IOException {
-    File scriptPath = myTempDir != null ? File.createTempFile(myPrefix, SCRIPT_EXT, myTempDir)
-                                        : File.createTempFile(myPrefix, SCRIPT_EXT);
+    File scriptPath = myTempDir != null ? FileUtil.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
+                                        : FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
     scriptPath.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
     try {

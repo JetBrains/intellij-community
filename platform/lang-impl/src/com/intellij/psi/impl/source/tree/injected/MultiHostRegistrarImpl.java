@@ -82,6 +82,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
   }
 
+  public List<Pair<Place, PsiFile>> getResult() {
+    return result;
+  }
+
   @NotNull
   public MultiHostRegistrar startInjecting(@NotNull Language language) {
     escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
@@ -432,13 +436,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-  // returns lexer elemet types with corresponsing ranges in encoded (injection host based) PSI
-  private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> obtainHighlightTokensFromLexer(Language language,
-                                                                                                                 StringBuilder outChars,
-                                                                                                                 List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
-                                                                                                                 Place shreds,
-                                                                                                                 VirtualFileWindow virtualFile,
-                                                                                                                 Project project) {
+  // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
+  private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>
+          obtainHighlightTokensFromLexer(Language language,
+                                         StringBuilder outChars,
+                                         List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
+                                         Place shreds,
+                                         VirtualFileWindow virtualFile,
+                                         Project project) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();

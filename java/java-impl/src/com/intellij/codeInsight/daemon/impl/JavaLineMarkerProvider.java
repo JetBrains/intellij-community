@@ -163,19 +163,20 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   }
 
   private static void collectInheritingClasses(PsiClass aClass, Collection<LineMarkerInfo> result) {
-    if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
+    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return;
+    }
+    if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
 
-      final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
-      if (inheritor != null) {
-        final Icon icon = aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER;
-        final MarkerType type = MarkerType.SUBCLASSED_CLASS;
-        PsiElement range = aClass.getNameIdentifier();
-        if (range == null) range = aClass;
-        LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
-                                                           GutterIconRenderer.Alignment.RIGHT);
-        result.add(info);
-      }
+    PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
+    if (inheritor != null) {
+      final Icon icon = aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER;
+      PsiElement range = aClass.getNameIdentifier();
+      if (range == null) range = aClass;
+      MarkerType type = MarkerType.SUBCLASSED_CLASS;
+      LineMarkerInfo info = new LineMarkerInfo<PsiElement>(range, range.getTextRange(), icon, Pass.UPDATE_OVERRIDEN_MARKERS, type.getTooltip(), type.getNavigationHandler(),
+                                                         GutterIconRenderer.Alignment.RIGHT);
+      result.add(info);
     }
   }
 
@@ -193,6 +194,8 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     for (final PsiClass aClass : classes) {
       AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
         public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
+          ProgressManager.checkCanceled();
+
           final PsiMethod superMethod = pair.getFirst();
           if (superMethod.isPhysical() && pair.getSecond().isPhysical() //groovy, scala
               && methods.remove(superMethod)) {
