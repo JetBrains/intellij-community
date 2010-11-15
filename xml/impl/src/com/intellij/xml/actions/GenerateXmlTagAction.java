@@ -101,7 +101,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
                 Document document = editor.getDocument();
                 document.insertString(offset, newTag.getText());
                 PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-                newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class, false);
+                newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
               }
               else {
                 newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
