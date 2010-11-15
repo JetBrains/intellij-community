@@ -35,8 +35,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public static final Color TRACK_BORDER = new SameColor(230);
 
   private final AdjustmentListener myAdjustmentListener;
-  private MouseMotionAdapter myMouseMotionListener;
-  private MouseAdapter myMouseListener;
+  private final MouseMotionAdapter myMouseMotionListener;
+  private final MouseAdapter myMouseListener;
 
   private final Animator myAnimator;
 
@@ -58,7 +58,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       public void paintNow(float frame, float totalFrames, float cycle) {
         myAnimationColorShift = 40;
         if (frame > delayFrames) {
-          myAnimationColorShift *= 1 - ((frame - delayFrames) / (totalFrames - delayFrames));
+          myAnimationColorShift *= 1 - (frame - delayFrames) / (totalFrames - delayFrames);
         }
 
         if (scrollbar != null) {
@@ -87,6 +87,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
+  }
+
+  public int getDecrButtonHeight() {
+    return decrButton.getHeight();
+  }
+  public int getIncrButtonHeight() {
+    return incrButton.getHeight();
   }
 
   private void resetAnimator() {
@@ -224,7 +231,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private boolean isVertical() {
-    return scrollbar.getOrientation() == JScrollBar.VERTICAL;
+    return scrollbar.getOrientation() == Adjustable.VERTICAL;
   }
 
   @Override

@@ -110,8 +110,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
@@ -172,8 +170,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final SoftWrapModelImpl mySoftWrapModel;
 
   private static final RepaintCursorCommand ourCaretBlinkingCommand;
-
-//  private final BorderEffect myBorderEffect = new BorderEffect();
 
   private int myMouseSelectionState = MOUSE_SELECTION_STATE_NONE;
   private FoldRegion myMouseSelectedRegion = null;
@@ -643,8 +639,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myPanel.add(myScrollPane);
     }
 
-    //myPanel.add(myScrollPane);
-
     myEditorComponent.addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent event) {
         if (Patches.APPLE_BUG_ID_3337563) return; // Everything is going through InputMethods under MacOS X in JDK releases earlier than 1.4.2_03-117.1
@@ -684,7 +678,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-//    myBorderEffect.reset();
     try {
       final DropTarget dropTarget = myEditorComponent.getDropTarget();
       if (dropTarget != null) { // might be null in headless environment
@@ -1047,8 +1040,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  // optimization: do not do column calculations here since we are interested in line number only
   public int offsetToVisualLine(int offset) {
-    return logicalToVisualPosition(offsetToLogicalPosition(offset)).line;
+    int line = calcLogicalLineNumber(offset);
+    return logicalToVisualLine(line);
+  }
+  private int logicalToVisualLine(int line) {
+    assertReadAccess();
+    return logicalToVisualPosition(new LogicalPosition(line, 0)).line;
   }
 
   @NotNull
@@ -1259,7 +1258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       endVisLine = 0;
     }
     else {
-      endVisLine = offsetToVisualPosition(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine))).line;
+      endVisLine = offsetToVisualLine(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine)));
     }
     int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + WAVE_HEIGHT;
 
@@ -1661,11 +1660,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       softWrapsToSkip.add(softWrap.getStart());
     }
 
-    // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
-    // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
-    // background is already drawn. We don't achieve concurrency stuff here, AtomicBoolean is used just as a data holder.
-    AtomicBoolean caretRowPainted = new AtomicBoolean();
-
     IterationState iterationState = new IterationState(this, start, paintSelection());
 
     LineIterator lIterator = createLineIterator();
@@ -1682,6 +1676,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int fontType = attributes.getFontType();
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
+
+    // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
+    // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
+    // background is already drawn.
+    boolean[] caretRowPainted = new boolean[1];
 
     while (!iterationState.atEnd() && !lIterator.atEnd()) {
       int hEnd = iterationState.getEndOffset();
@@ -1797,12 +1796,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                                   Rectangle clip,
                                                   int lineHeight,
                                                   final Color defaultBackground,
-                                                  AtomicBoolean caretRowPainted) {
+                                                  boolean[] caretRowPainted) {
     Color backColor = iterationState.getPastFileEndBackground();
     if (backColor == null || backColor.equals(defaultBackground)) {
       return;
     }
-    if (caretRowPainted.get() && backColor.equals(getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR))) {
+    if (caretRowPainted[0] && backColor.equals(getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR))) {
         return;
     }
     g.setColor(backColor);
@@ -1811,7 +1810,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
                                           int fontType, Color defaultBackground, Rectangle clip, TIntHashSet processSoftWrap,
-                                          AtomicBoolean caretRowPainted)
+                                          boolean[] caretRowPainted)
   {
     int startToUse = start;
     List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
@@ -1834,7 +1833,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip,
-                            AtomicBoolean caretRowPainted) {
+                            boolean[] caretRowPainted) {
     // The main idea is to to do the following:
     //     *) update given drawing position coordinates in accordance with the current soft wrap;
     //     *) draw 'active line' background at soft wrap-introduced virtual space if necessary;
@@ -1845,7 +1844,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw 'active line' background after soft wrap.
       Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
       drawBackground(g, caretRowColor, clip.x + clip.width - position.x, position, defaultBackground, clip);
-      caretRowPainted.set(true);
+      caretRowPainted[0] = true;
     }
 
     int i = CharArrayUtil.lastIndexOf(softWrapText, "\n", softWrapText.length()) + 1;
@@ -1952,13 +1951,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int visibleLineNumber = clip.y / lineHeight;
 
-    // We use AtomicReference here just as a holder for LogicalPosition
     // The main idea is that there is a possible case that we need to perform painting starting from soft-wrapped logical line.
     // We may want to skip necessary number of visual lines then. Hence, we remember logical position that corresponds to the starting
     // visual line in order to use it for further processing. As soon as necessary number of visual lines is skipped, logical
     // position is expected to be set to null as an indication that no soft wrap-introduced visual lines should be skipped on
     // current painting iteration.
-    AtomicReference<LogicalPosition> logicalPosition = new AtomicReference<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
+    Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
     int startLineNumber = logicalPosition.get().line;
 
     Point position = new Point(0, visibleLineNumber * lineHeight);
@@ -2177,7 +2175,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      int y = visibleLineNumberToYPosition(logicalToVisualPosition(new LogicalPosition(lineNumber, 0)).line);
+      int y = visibleLineNumberToYPosition(logicalToVisualLine(lineNumber));
       if (marker.getLineSeparatorPlacement() != SeparatorPlacement.TOP) {
         y += getLineHeight();
       }
@@ -2203,7 +2201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       int fontType,
                                       Color fontColor,
-                                      AtomicReference<LogicalPosition> startDrawingLogicalPosition)
+                                      Ref<LogicalPosition> startDrawingLogicalPosition)
   {
     return drawStringWithSoftWraps(g, text.toCharArray(), 0, text.length(), position, clip, effectColor, effectType,
                                    fontType, fontColor, startDrawingLogicalPosition);
@@ -2219,9 +2217,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                       EffectType effectType,
                                       int fontType,
                                       Color fontColor,
-                                      AtomicReference<LogicalPosition> startDrawingLogicalPosition)
-  {
-
+                                      Ref<LogicalPosition> startDrawingLogicalPosition) {
     int startToUse = start;
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
@@ -3655,7 +3651,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int getDecScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
-      if (barUI instanceof BasicScrollBarUI) {
+      if (barUI instanceof ButtonlessScrollBarUI) {
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getDecrButtonHeight();
+      }
+      else if (barUI instanceof BasicScrollBarUI) {
         try {
           JButton decrButtonValue = (JButton)decrButtonField.get(barUI);
           LOG.assertTrue(decrButtonValue != null);
@@ -3679,7 +3678,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int getIncScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
       Insets insets = getInsets();
-      if (barUI instanceof BasicScrollBarUI) {
+      if (barUI instanceof ButtonlessScrollBarUI) {
+        return insets.top + ((ButtonlessScrollBarUI)barUI).getIncrButtonHeight();
+      }
+      else if (barUI instanceof BasicScrollBarUI) {
         try {
           JButton incrButtonValue = (JButton)incrButtonField.get(barUI);
           LOG.assertTrue(incrButtonValue != null);
@@ -4942,15 +4944,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
     }
-
-    // Commented as nobody uses this method.
-    //private int getVisualPositionLine(int offset) {
-    //  // Do round up of offset to the nearest line start (valid since we need only line)
-    //  // This is needed for preventing access to lexer editor highlighter regions [that are reset] during bulk mode operation
-    //
-    //  int line = calcLogicalLineNumber(offset);
-    //  return logicalToVisualLine(line);
-    //}
 
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
