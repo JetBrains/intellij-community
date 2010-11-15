@@ -1,17 +1,29 @@
 package org.jetbrains.jps.artifacts.ant
 
-import org.jetbrains.jps.artifacts.Options
+import org.jetbrains.jps.Project
+import org.jetbrains.jps.artifacts.Artifact
+import org.jetbrains.jps.artifacts.ArtifactBuildTask
+import org.jetbrains.jps.artifacts.ArtifactProperties
 
-class CallAntBuildTask {
-  private final Object ant;
+class CallAntBuildTask implements ArtifactBuildTask {
+  private final Project project
+  private final String propertiesId
 
-  CallAntBuildTask(Object ant) {
-    this.ant = ant;
+  CallAntBuildTask(Project project, String propertiesId) {
+    this.project = project
+    this.propertiesId = propertiesId
   }
 
-  void invokeAnt(Options options) {
-    def String file = options.getAll()["file"].replace("file://", "");
-    def String target = options.getAll()["target"];
-    this.ant.ant([ 'antfile': file, 'target': target, 'dir': new File(file).getParent() ]);
-  };
+  def perform(Artifact artifact, String outputFolder) {
+    def ArtifactProperties properties = artifact.properties[propertiesId]
+    if (!(properties instanceof AntArtifactProperties)) return null
+    AntArtifactProperties antProperties = (AntArtifactProperties) properties
+
+    String filePath = antProperties.filePath
+    project.binding.ant.ant(
+        'antfile': filePath,
+        'target': antProperties.target,
+        'dir': new File(filePath).parent
+    )
+  }
 }

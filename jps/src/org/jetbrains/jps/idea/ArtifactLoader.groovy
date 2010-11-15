@@ -11,7 +11,9 @@ class ArtifactLoader {
   private final Project project
   private final MacroExpander macroExpander
   private static OwnServiceLoader<LayoutElementTypeService> elementTypeLoader = OwnServiceLoader.load(LayoutElementTypeService.class)
+  private static OwnServiceLoader<ArtifactPropertiesProviderService> propertiesProvidersLoader = OwnServiceLoader.load(ArtifactPropertiesProviderService.class)
   private static Map<String, LayoutElementTypeService> elementTypes = null
+  private static Map<String, ArtifactPropertiesProviderService> propertiesProviders = null
 
   def ArtifactLoader(Project project, MacroExpander macroExpander) {
     this.macroExpander = macroExpander
@@ -78,25 +80,26 @@ class ArtifactLoader {
     return elementTypes[typeId]
   }
 
-  Map<String, Options> loadOptions(Node artifactTag) {
-    def Map<String, Options> res = [:];
-    artifactTag.properties.each{Node el ->
-      def String id = el."@id";
-      el.options.each{Node optionsEl ->
-        def boolean enabled = optionsEl."@enabled";
-        if (enabled) {
-          def Map<String, String> options = [:];
-          res.put(id, new Options() {
-            Map<String, String> getAll() {
-              return options;
-            }
-          })
-          optionsEl.children().each{Node opt ->
-            def String key = opt.name();
-            def String value = macroExpander.expandMacros(opt.text());
-            options.put(key, value);
-          }
-        }
+  private ArtifactPropertiesProviderService findPropertiesProvider(String id) {
+    if (propertiesProviders == null) {
+      propertiesProviders = [:]
+      propertiesProvidersLoader.each {ArtifactPropertiesProviderService provider ->
+        propertiesProviders[provider.id] = provider
+      }
+    }
+    return propertiesProviders[id]
+  }
+
+  Map<String, ArtifactProperties> loadOptions(Node artifactTag, String artifactName) {
+    def Map<String, ArtifactProperties> res = [:];
+    artifactTag.properties.each {Node propertiesNode ->
+      def String id = propertiesNode."@id";
+      ArtifactPropertiesProviderService provider = findPropertiesProvider(id)
+      if (provider != null) {
+        res[id] = provider.loadProperties(propertiesNode.options[0], macroExpander)
+      }
+      else {
+        project.debug("Unknown properties '$id' in '$artifactName' artifact")
       }
     }
     return res;

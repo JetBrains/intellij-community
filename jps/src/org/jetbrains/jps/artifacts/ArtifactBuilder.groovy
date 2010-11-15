@@ -2,11 +2,12 @@ package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Module
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.artifacts.ant.CallAntBuildTask
+import org.jetbrains.jps.builders.BuildUtil
 import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.dag.DagNode
-import org.jetbrains.jps.builders.BuildUtil
-import org.jetbrains.jps.artifacts.ant.AntPreBuildTask
-import org.jetbrains.jps.artifacts.ant.AntPostBuildTask
+import org.jetbrains.jps.artifacts.ant.PreprocessingAntArtifactPropertiesProvider
+import org.jetbrains.jps.artifacts.ant.PostprocessingAntArtifactPropertiesProvider
 
 /**
  * @author nik
@@ -19,9 +20,9 @@ class ArtifactBuilder {
   private List<Artifact> sortedArtifacts
 
   def ArtifactBuilder(Project project) {
-    this.project = project;
-    preBuildTasks.add(new AntPreBuildTask(project));
-    postBuildTasks.add(new AntPostBuildTask(project));
+    this.project = project
+    preBuildTasks.add(new CallAntBuildTask(project, PreprocessingAntArtifactPropertiesProvider.ID))
+    postBuildTasks.add(new CallAntBuildTask(project, PostprocessingAntArtifactPropertiesProvider.ID))
   }
 
   def getSortedArtifacts() {
