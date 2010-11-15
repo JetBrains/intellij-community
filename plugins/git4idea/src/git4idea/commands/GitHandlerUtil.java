@@ -161,10 +161,10 @@ public class GitHandlerUtil {
    * @param setIndeterminateFlag if true handler is configured as indeterminate
    * @param operationName
    */
-  private static void runInCurrentThread(final GitHandler handler,
-                                         final ProgressIndicator indicator,
-                                         final boolean setIndeterminateFlag,
-                                         @Nullable final String operationName) {
+  public static void runInCurrentThread(final GitHandler handler,
+                                        final ProgressIndicator indicator,
+                                        final boolean setIndeterminateFlag,
+                                        @Nullable final String operationName) {
     runInCurrentThread(handler, new Runnable() {
       public void run() {
         if (indicator != null) {
@@ -467,7 +467,7 @@ public class GitHandlerUtil {
   /**
    * A base class for line handler listeners
    */
-  private static class GitLineHandlerListenerProgress extends GitLineHandlerListenerBase {
+  public static class GitLineHandlerListenerProgress extends GitLineHandlerListenerBase {
     /**
      * a progress manager to use
      */
