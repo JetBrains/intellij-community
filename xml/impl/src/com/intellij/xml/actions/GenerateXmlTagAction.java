@@ -141,22 +141,28 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   @Nullable
-  private static PsiElement getAnchor(XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+  private static XmlTag getAnchor(XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
     XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
-    PsiElement anchor = null;
     int offset = editor.getCaretModel().getOffset();
-    if (contentDFA != null) {
-      for (XmlTag subTag : contextTag.getSubTags()) {
-        if (contentDFA.getPossibleElements().contains(selected)) {
-          if (subTag.getTextOffset() > offset) {
-            break;
-          }
-          anchor = subTag;
-        }
-        contentDFA.transition(subTag);
-      }
+    if (contentDFA == null) {
+      return null;
     }
-    return anchor;
+    XmlTag anchor = null;
+    boolean previousPositionIsPossible = true;
+    for (XmlTag subTag : contextTag.getSubTags()) {
+      if (contentDFA.getPossibleElements().contains(selected)) {
+        if (subTag.getTextOffset() > offset) {
+          break;
+        }
+        anchor = subTag;
+        previousPositionIsPossible = true;
+      }
+      else {
+        previousPositionIsPossible = false;
+      }
+      contentDFA.transition(subTag);
+    }
+    return previousPositionIsPossible ? null : anchor;
   }
 
   public static void generateTag(XmlTag newTag) {
