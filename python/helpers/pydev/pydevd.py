@@ -740,10 +740,7 @@ class PyDB:
         """
         self.processInternalCommands()
 
-        try:
-            message = thread.additionalInfo.message
-        except:
-            message = None
+        message = getattr(thread.additionalInfo, "message", None)
 
         cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
