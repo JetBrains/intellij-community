@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.source.text;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,23 +66,7 @@ public class BlockSupportImpl extends BlockSupport {
     assert document != null;
     document.replaceString(startOffset, endOffset, newTextS);
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
-
-    //final CompositeElement element = psiFile.calcTreeElement();
-    //char[] newText = newTextS.toCharArray();
-    //int fileLength = element.getTextLength();
-    //int lengthShift = newText.length - (endOffset - startOffset);
-    //
-    //final PsiFileImpl fileImpl = (PsiFileImpl)file;
-    //final char[] newFileText = lengthShift > 0 ? new char[fileLength + lengthShift] : new char[fileLength];
-    //SourceUtil.toBuffer(fileImpl.getTreeElement(), newFileText, 0);
-    //
-    //System.arraycopy(newFileText, endOffset, newFileText, endOffset + lengthShift, fileLength - endOffset);
-    //System.arraycopy(newText, 0, newFileText, startOffset, newText.length);
-    //
-    //if(startOffset > 0) startOffset--;
-    //reparseRangeInternal(file, startOffset, endOffset, lengthShift, newFileText);
   }
-
 
   public void reparseRange(final PsiFile file,
                            final int startOffset,
@@ -146,39 +129,7 @@ public class BlockSupportImpl extends BlockSupport {
     makeFullParse(node, newFileText, textLength, fileImpl);
   }
 
-  private static boolean hasErrorElementChild(ASTNode element) {
-    if (element == null) return false;
-    if (element instanceof PsiErrorElement) return true;
-    for (ASTNode child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child instanceof PsiErrorElement) return true;
-    }
-    return false;
-  }
-
-  private static boolean optimizeLeafChange(final FileElement treeFileElement,
-                                            final CharSequence newFileText,
-                                            int startOffset,
-                                            final int endOffset,
-                                            final int lengthDiff,
-                                            final int changedOffset) {
-    final LeafElement leafElement = treeFileElement.findLeafElementAt(startOffset);
-    if (leafElement == null || hasErrorElementChild(leafElement.getTreeParent()) || hasErrorElementChild(leafElement.getTreeNext()) ||
-        hasErrorElementChild(leafElement.getTreePrev())) {
-      return false;
-    }
-    if (!leafElement.getTextRange().containsRange(startOffset, endOffset)) return false;
-    final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
-    if (leafElementToChange == null) return false;
-    TextRange leafRangeToChange = leafElementToChange.getTextRange();
-    LeafElement newElement = ASTFactory.leaf(leafElementToChange.getElementType(), treeFileElement.getCharTable().intern(
-        newFileText, leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff));
-    newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
-
-    leafElementToChange.getTreeParent().replaceChild(leafElementToChange, newElement);
-    return true;
-  }
-
-  private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl) {
+  private static void makeFullParse(final ASTNode parent, final CharSequence newFileText, final int textLength, final PsiFileImpl fileImpl) {
     if (fileImpl instanceof PsiCodeFragment) {
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
       holderElement.rawAddChildren(fileImpl.createContentLeafElement(holderElement.getCharTable().intern(newFileText, 0, textLength)));
@@ -189,11 +140,12 @@ public class BlockSupportImpl extends BlockSupport {
       FileType fileType = viewProvider.getVirtualFile().getFileType();
       final LightVirtualFile lightFile = new LightVirtualFile(fileImpl.getName(), fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
                                                               fileImpl.getModificationStamp());
-      FileViewProvider copy = viewProvider.createCopy(lightFile);
+      final FileViewProvider copy = viewProvider.createCopy(lightFile);
       final PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(fileImpl.getLanguage());
 
       if (newFile == null) {
-        LOG.error("View provider " + viewProvider + " refused to parse text with " + fileImpl.getLanguage()+"; base: "+viewProvider.getBaseLanguage()+"; copy: "+copy.getBaseLanguage()+"; fileType: "+fileType);
+        LOG.error("View provider " + viewProvider + " refused to parse text with " + fileImpl.getLanguage() +
+                  "; base: " + viewProvider.getBaseLanguage() + "; copy: " + copy.getBaseLanguage() + "; fileType: " + fileType);
         return;
       }
 
@@ -209,6 +161,7 @@ public class BlockSupportImpl extends BlockSupport {
         replaceFileElementWithEvents(fileImpl, oldFileElement, newFileElement);
       }
       else {
+        assert oldFileElement != null && newFileElement != null;
         mergeTrees(fileImpl, oldFileElement, newFileElement);
       }
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
@@ -235,12 +188,10 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   public static void mergeTrees(@NotNull final PsiFileImpl file, @NotNull final ASTNode oldRoot, @NotNull final ASTNode newRoot) {
-    //System.out.println("---------------------------------------------------");
     synchronized (PsiLock.LOCK) {
       if (newRoot instanceof FileElement) {
         ((FileElement)newRoot).setCharTable(file.getTreeElement().getCharTable());
       }
-
 
       final PomModel model = PomManager.getModel(file.getProject());
       try {
