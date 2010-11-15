@@ -1,5 +1,6 @@
 package org.jetbrains.jps
 
+import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.util.FileUtil
 
 class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
@@ -20,6 +21,14 @@ class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
           file("poststep.txt")
         }
       }
+    }
+  }
+
+  public void test_broken_artifact() throws Exception {
+    Project project = loadProject("testData/artifactWithAntPrePostTasks/.idea", [:])
+    assertEquals(2, project.artifacts.size());
+    for (Artifact a: project.artifacts) {
+      assertNull(project.artifacts.properties);
     }
   }
 }

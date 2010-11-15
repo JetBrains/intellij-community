@@ -18,12 +18,16 @@ class CallAntBuildTask implements ArtifactBuildTask {
     def ArtifactProperties properties = artifact.properties[propertiesId]
     if (!(properties instanceof AntArtifactProperties)) return null
     AntArtifactProperties antProperties = (AntArtifactProperties) properties
+    if (!antProperties.enabled) return;
 
     String filePath = antProperties.filePath
-    project.binding.ant.ant(
-        'antfile': filePath,
-        'target': antProperties.target,
-        'dir': new File(filePath).parent
-    )
+    def attrs = [:];
+    attrs['antfile'] = filePath;
+    if (antProperties.target != null && antProperties.target.length() > 0) {
+      attrs['target'] = antProperties.target
+    };
+    attrs['dir'] = new File(filePath).parent;
+
+    project.binding.ant.ant(attrs);
   }
 }

@@ -96,7 +96,11 @@ class ArtifactLoader {
       def String id = propertiesNode."@id";
       ArtifactPropertiesProviderService provider = findPropertiesProvider(id)
       if (provider != null) {
-        res[id] = provider.loadProperties(propertiesNode.options[0], macroExpander)
+        try {
+          res[id] = provider.loadProperties(propertiesNode.options[0], macroExpander)
+        } catch (Exception e) {
+          project.warning("Failed to load properties of the artifact: $artifactName, error: " + e.getMessage());
+        }
       }
       else {
         project.debug("Unknown properties '$id' in '$artifactName' artifact")

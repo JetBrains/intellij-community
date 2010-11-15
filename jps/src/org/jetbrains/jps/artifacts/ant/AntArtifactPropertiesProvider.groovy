@@ -14,8 +14,13 @@ class AntArtifactPropertiesProvider extends ArtifactPropertiesProviderService<An
 
   @Override
   AntArtifactProperties loadProperties(Node node, MacroExpander macroExpander) {
-    String file = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(node."file"[0].text()))
-    String target = node."target"[0].text()
+    def filePathNode = node."file"[0]
+    def targetNode = node."target"[0]
+
+    if (filePathNode == null) throw new IllegalArgumentException("Path to build.xml is not specified");
+
+    String file = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(filePathNode.text()))
+    String target = targetNode.text()
     boolean enabled = node."@enabled" == "true"
     return new AntArtifactProperties(enabled: enabled, filePath: file, target: target)
   }
