@@ -116,7 +116,7 @@ public enum MarkerType {
         public void run() {
           OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(collectProcessor);
         }
-      }, "Searching for overridding methods", true, method.getProject(), (JComponent)e.getComponent())) {
+      }, "Searching for overriding methods", true, method.getProject(), (JComponent)e.getComponent())) {
         return;
       }
 
