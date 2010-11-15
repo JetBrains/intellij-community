@@ -877,7 +877,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public StubTree calcStubTree() {
     synchronized (myStubLock) {
-      final FileElement fileElement = (FileElement)calcTreeElement();
+      final FileElement fileElement = calcTreeElement();
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
       if (tree == null) {
         final StubElement currentStubTree = ((IStubFileElementType)getContentElementType()).getBuilder().buildStubTree(this);
@@ -889,11 +889,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  private void bindFakeStubsToTree(StubTree stubTree) {
+  private void bindFakeStubsToTree(final StubTree stubTree) {
     final PsiFileImpl file = this;
 
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
-    stubs.next();// skip file root stub
+    stubs.next();  // skip file root stub
     final FileElement fileRoot = file.getTreeElement();
     assert fileRoot != null;
 
@@ -901,17 +901,17 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  private StubElement bindStubs(ASTNode tree, Iterator<StubElement<?>> stubs, StubBuilder builder) {
+  private StubElement bindStubs(final ASTNode tree, final Iterator<StubElement<?>> stubs, final StubBuilder builder) {
     final IElementType type = tree.getElementType();
 
     if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
       final StubElement stub = stubs.next();
       if (stub.getStubType() != tree.getElementType()) {
         rebuildStub();
-
-        assert false: "Stub and PSI element type mismatch:  stub " + stub + ", AST " + tree.getElementType();
+        assert false : "Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + tree.getElementType();
       }
 
+      //noinspection unchecked
       ((StubBase)stub).setPsi(tree.getPsi());
     }
 
