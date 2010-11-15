@@ -386,7 +386,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private void applyActivationState() {
-    if (isVisible() != myPaintingActive) {
+    boolean wasVisible = isVisible();
+
+    if (wasVisible != myPaintingActive) {
       setVisible(myPaintingActive);
     }
 
@@ -397,6 +399,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       queue.removeDispatcher(this);
     }
 
+    if (wasVisible != isVisible()) {
+      revalidate();
+      repaint();
+    }
   }
 
   public void addPainter(final Component component, final Painter painter, final Disposable parent) {
@@ -422,24 +428,29 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     deactivateIfNeeded();
   }
 
+
   @Override
-  public Component add(final Component comp) {
-    final Component result = super.add(comp);
-    activateIfNeeded();
+  protected void addImpl(Component comp, Object constraints, int index) {
+    super.addImpl(comp, constraints, index);
 
-    revalidate();
-    repaint();
-
-    return result;
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        activateIfNeeded();
+      }
+    });
   }
 
   @Override
   public void remove(final Component comp) {
     super.remove(comp);
-    deactivateIfNeeded();
 
-    revalidate();
-    repaint();
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        deactivateIfNeeded();
+      }
+    });
   }
 
   public boolean isInModalContext() {

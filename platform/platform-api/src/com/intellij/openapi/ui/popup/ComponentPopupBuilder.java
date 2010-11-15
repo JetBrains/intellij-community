@@ -54,6 +54,9 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
 
+  /**
+   * @deprecated all popups are heavyweight now, lightweight popups no linger supported
+   */
   @NotNull
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
 

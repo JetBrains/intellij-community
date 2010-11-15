@@ -71,8 +71,8 @@ public class AbstractPopup implements JBPopup {
   private JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
   private boolean myFocusable;
-  private boolean myForcedHeavyweight = false;
-  private boolean myLocateWithinScreen = true;
+  private boolean myForcedHeavyweight;
+  private boolean myLocateWithinScreen;
   private boolean myResizable = false;
   private JPanel myHeaderPanel;
   private CaptionPanel myCaption = null;
@@ -263,7 +263,7 @@ public class AbstractPopup implements JBPopup {
     myHeaderPanel.add(myCaption, BorderLayout.NORTH);
     myContent.add(myHeaderPanel, BorderLayout.NORTH);
 
-    myForcedHeavyweight = forceHeavyweight;
+    myForcedHeavyweight = true;
     myResizable = resizable;
     myPreferredFocusedComponent = preferredFocusedComponent;
     myRequestFocus = requestFocus;
@@ -914,7 +914,7 @@ public class AbstractPopup implements JBPopup {
     if (!cannotBeDialog && (isPersistent() || forceDialog)) {
       return new PopupComponent.Factory.Dialog();
     }
-    else if (forceHeavyweight || !SystemInfo.isWindows) {
+    else if (forceHeavyweight) {
       return new PopupComponent.Factory.AwtHeavyweight();
     }
     else {
