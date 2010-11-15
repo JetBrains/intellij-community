@@ -532,10 +532,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     boolean wasInjected = hostFile != oldFileCopy;
     Project project = hostFile.getProject();
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
-    // is null in tests
-    int hostStartOffset = injectedLanguageManager == null
-                          ? context.getStartOffset()
-                          : injectedLanguageManager.injectedToHost(oldFileCopy, context.getStartOffset());
+    int hostStartOffset = injectedLanguageManager.injectedToHost(oldFileCopy, context.getStartOffset());
 
     Document document = oldFileCopy.getViewProvider().getDocument();
     assert document != null;
@@ -566,7 +563,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         int injectedOffset = newContext.getStartOffset();
         PsiElement element = findElementAt(injectedFile, injectedOffset);
 
-        int toHost = injectedLanguageManager == null ? hostStartOffset : injectedLanguageManager.injectedToHost(injectedFile, injectedOffset);
+        int toHost = injectedLanguageManager.injectedToHost(injectedFile, injectedOffset);
         // maybe injected fragment is ended before hostStartOffset
         if (element != null && toHost == hostStartOffset) {
           EditorFactory.getInstance().releaseEditor(editor);
