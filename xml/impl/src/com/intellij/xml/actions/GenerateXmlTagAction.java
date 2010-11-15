@@ -27,6 +27,7 @@ import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -35,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
@@ -94,7 +96,16 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
               XmlTag newTag = createTag(contextTag, selected);
 
               PsiElement anchor = getAnchor(contextTag, editor, selected);
-              newTag = anchor == null ? contextTag.addSubTag(newTag, true) : (XmlTag)contextTag.addAfter(newTag, anchor);
+              if (anchor == null) { // insert it in the cursor position
+                int offset = editor.getCaretModel().getOffset();
+                Document document = editor.getDocument();
+                document.insertString(offset, newTag.getText());
+                PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+                newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class, false);
+              }
+              else {
+                newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
+              }
               generateTag(newTag);
             }
           }.execute();
@@ -143,15 +154,6 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
           anchor = subTag;
         }
         contentDFA.transition(subTag);
-      }
-    }
-    if (anchor == null) {  // insert it at caret position
-      PsiElement[] children = contextTag.getChildren();
-      for (PsiElement child : children) {
-        if (child.getTextOffset() > offset) {
-          break;
-        }
-        anchor = child;
       }
     }
     return anchor;
