@@ -15,11 +15,21 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,9 +48,40 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
     LOG.assertTrue(targetClass.isEnum());
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
-    final PsiEnumConstant enumConstant =
-      JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createEnumConstantFromText(name, null);
-    targetClass.add(enumConstant);
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory();
+    PsiEnumConstant enumConstant = elementFactory.createEnumConstantFromText(name, null);
+    enumConstant = (PsiEnumConstant)targetClass.add(enumConstant);
+
+    final PsiMethod[] constructors = targetClass.getConstructors();
+    if (constructors.length > 0) {
+      final PsiMethod constructor = constructors[0];
+      final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+      if (parameters.length > 0) {
+        final String params = StringUtil.join(parameters, new Function<PsiParameter, String>() {
+          @Override
+          public String fun(PsiParameter psiParameter) {
+            return psiParameter.getName();
+          }
+        }, ",");
+        enumConstant = (PsiEnumConstant)enumConstant.replace(elementFactory.createEnumConstantFromText(name + "(" + params + ")", null));
+        final TemplateBuilderImpl builder = new TemplateBuilderImpl(enumConstant);
+
+        final PsiExpressionList argumentList = enumConstant.getArgumentList();
+        LOG.assertTrue(argumentList != null);
+        for (PsiExpression expression : argumentList.getExpressions()) {
+          builder.replaceElement(expression, new EmptyExpression());
+        }
+
+        enumConstant = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(enumConstant);
+        final Template template = builder.buildTemplate();
+
+        final Project project = targetClass.getProject();
+        final Editor newEditor = positionCursor(project, targetClass.getContainingFile(), enumConstant);
+        final TextRange range = enumConstant.getTextRange();
+        newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+        startTemplate(newEditor, template, project);
+      }
+    }
   }
 
 

@@ -83,7 +83,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (!(statement instanceof GrReferenceExpression)) return null;
     final PsiElement element = ((GrReferenceExpression)statement).getReferenceNameElement();
     if (element == null) {
-      throw new IncorrectOperationException("Incorrect reference name: " + refName);
+      throw new IncorrectOperationException("Incorrect reference name: " + refName + ".");
     }
     return element;
   }
