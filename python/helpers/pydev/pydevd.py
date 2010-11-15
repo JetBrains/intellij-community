@@ -1045,8 +1045,6 @@ def usage(doExit=0):
     if doExit:
         sys.exit(0)
 
-
-
 def SetTraceForParents(frame, dispatch_func):
     frame = frame.f_back
     while frame:
