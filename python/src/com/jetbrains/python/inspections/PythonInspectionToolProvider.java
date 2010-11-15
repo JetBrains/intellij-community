@@ -24,6 +24,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnusedLocalInspection.class,
       PyDeprecatedModulesInspection.class,
       PyDictCreationInspection.class,
+      PyDictDuplicateKeysInspection.class,
       PyExceptClausesOrderInspection.class,
       PyTupleAssignmentBalanceInspection.class,
       PyClassicStyleClassInspection.class,
