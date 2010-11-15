@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -44,7 +43,7 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable, OptionalConfigurable {
+public class FileEncodingConfigurable implements SearchableConfigurable, OptionalConfigurable {
   private static final String SYSTEM_DEFAULT = IdeBundle.message("encoding.name.system.default");
   private final Project myProject;
   private FileTreeTable myTreeView;
@@ -79,6 +78,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, NonDefa
     return "reference.settingsdialog.project.file.encodings";
   }
 
+  @NotNull
   public String getId() {
     return "File.Encoding";
   }
