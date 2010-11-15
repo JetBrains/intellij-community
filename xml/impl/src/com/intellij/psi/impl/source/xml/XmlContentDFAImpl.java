@@ -90,8 +90,11 @@ class XmlContentDFAImpl extends XmlContentDFA {
   }
 
   @Override
-  public void transition(@NotNull XmlElementDescriptor element, XmlTag xmlTag) {
-    doTransition(element);
+  public void transition(XmlTag xmlTag) {
+    XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+    if (descriptor != null) {
+      doTransition(descriptor);
+    }
   }
 
   private Result doTransition(@NotNull XmlElementDescriptor element) {

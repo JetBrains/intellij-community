@@ -119,7 +119,7 @@ class XsContentDFA extends XmlContentDFA {
   }
 
   @Override
-  public void transition(@NotNull XmlElementDescriptor element, XmlTag xmlTag) {
+  public void transition(XmlTag xmlTag) {
     myContentModel.oneTransition(createQName(xmlTag), myState, myHandler);
   }
 

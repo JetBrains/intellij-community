@@ -40,6 +40,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -91,16 +92,9 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             protected void run() {
               if (selected == null) return;
               XmlTag newTag = createTag(contextTag, selected);
-              int offset = editor.getCaretModel().getOffset();
-              PsiElement element = file.findElementAt(offset);
-              if (element != null) {
-                XmlText xmlText = PsiTreeUtil.getParentOfType(element, XmlText.class);
-                if (xmlText != null) {
 
-                }
-              }
-
-              newTag = contextTag.addSubTag(newTag, false);
+              PsiElement anchor = getAnchor(contextTag, editor, selected);
+              newTag = anchor == null ? contextTag.addSubTag(newTag, true) : (XmlTag)contextTag.addAfter(newTag, anchor);
               generateTag(newTag);
             }
           }.execute();
@@ -133,6 +127,34 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       HintManager.getInstance().showErrorHint(editor, e.getMessage());
     }
+  }
+
+  @Nullable
+  private static PsiElement getAnchor(XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+    XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
+    PsiElement anchor = null;
+    int offset = editor.getCaretModel().getOffset();
+    if (contentDFA != null) {
+      for (XmlTag subTag : contextTag.getSubTags()) {
+        if (contentDFA.getPossibleElements().contains(selected)) {
+          if (subTag.getTextOffset() > offset) {
+            break;
+          }
+          anchor = subTag;
+        }
+        contentDFA.transition(subTag);
+      }
+    }
+    if (anchor == null) {  // insert it at caret position
+      PsiElement[] children = contextTag.getChildren();
+      for (PsiElement child : children) {
+        if (child.getTextOffset() > offset) {
+          break;
+        }
+        anchor = child;
+      }
+    }
+    return anchor;
   }
 
   public static void generateTag(XmlTag newTag) {

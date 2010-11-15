@@ -52,13 +52,10 @@ public class XmlSmartCompletionProvider {
           if (subTag == tag) {
             break;
           }
-          XmlElementDescriptor childDescriptor = subTag.getDescriptor();
-          if (childDescriptor != null) {
-            dfa.transition(childDescriptor, subTag);
-          }
+          dfa.transition(subTag);
         }
         List<XmlElementDescriptor> elements = dfa.getPossibleElements();
-        for (XmlElementDescriptor elementDescriptor : elements) {
+        for (XmlElementDescriptor elementDescriptor: elements) {
           addElementToResult(elementDescriptor, result);
         }
       }

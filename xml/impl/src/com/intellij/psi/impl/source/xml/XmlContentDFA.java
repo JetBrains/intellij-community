@@ -29,7 +29,7 @@ public abstract class XmlContentDFA {
 
   public abstract List<XmlElementDescriptor> getPossibleElements();
 
-  public abstract void transition(@NotNull XmlElementDescriptor element, XmlTag xmlTag);
+  public abstract void transition(XmlTag xmlTag);
 
   @Nullable
   public static XmlContentDFA getContentDFA(XmlTag parentTag) {
