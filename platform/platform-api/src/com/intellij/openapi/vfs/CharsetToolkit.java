@@ -32,6 +32,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -84,7 +85,7 @@ public class CharsetToolkit {
   private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
-  public static final byte[] UTF8_BOM = {-17, -69, -65, };
+  public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf, };
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
@@ -465,6 +466,11 @@ public class CharsetToolkit {
   @Nullable
   public static byte[] getBom(@NotNull Charset charset) {
     return CHARSET_TO_BOM.get(charset.name());
+  }
+
+  // byte sequence for this encoding is allowed to be prepended with this BOM
+  public static boolean canHaveBom(@NotNull Charset charset, @Nullable byte[] bom) {
+    return bom != null && charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM);
   }
 
   public static Charset forName(String name) {

@@ -443,10 +443,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public void setCharset(final Charset charset) {
     final Charset old = getUserData(CHARSET_KEY);
     putUserData(CHARSET_KEY, charset);
+    if (Comparing.equal(charset, old)) return;
     byte[] bom = charset == null ? null : CharsetToolkit.getBom(charset);
+    byte[] existingBOM = getBOM();
+    if (bom == null && charset != null && CharsetToolkit.canHaveBom(charset, existingBOM)) {
+      bom = existingBOM;
+    }
     setBOM(bom);
 
-    if (old != null && !old.equals(charset)) { //do not send on detect
+    if (old != null) { //do not send on detect
       final Application application = ApplicationManager.getApplication();
       application.invokeLater(new Runnable() {
         public void run() {
