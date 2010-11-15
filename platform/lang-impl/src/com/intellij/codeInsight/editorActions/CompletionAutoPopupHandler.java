@@ -49,7 +49,7 @@ import java.beans.PropertyChangeListener;
  */
 public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Key<AutoPopupState> STATE_KEY = Key.create("AutopopupSTATE_KEY");
-  public static boolean ourTestingAutopopup = false;
+  public static volatile boolean ourTestingAutopopup = false;
 
   @Override
   public Result beforeCharTyped(char c,

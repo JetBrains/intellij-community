@@ -271,7 +271,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly) {
+    if (!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) {
       indicator.notifyBackgrounded();
       return;
     }
