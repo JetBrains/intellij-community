@@ -59,24 +59,23 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   public TogglePopupHintsPanel(@NotNull final Project project) {
     super(project);
     myCurrentIcon = EMPTY_ICON;
-    final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        updateStatus();
-      }
-
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        updateStatus();
-      }
-    });
-    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+    myConnection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
         updateStatus();
       }
     });
+  }
+
+  @Override
+  public void selectionChanged(FileEditorManagerEvent event) {
+    updateStatus();
+  }
+
+
+  @Override
+  public void fileOpened(FileEditorManager source, VirtualFile file) {
+    updateStatus();
   }
 
   @Override
@@ -116,13 +115,6 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
-  }
-
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    //updateStatus();
-    //String text = componentSelected == null ? null : componentSelected.getToolTipText();
-    //setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
-    return "";
   }
 
   public void clear() {
