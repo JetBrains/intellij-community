@@ -64,7 +64,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 )
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<Element>, Disposable {
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private String myDefaultEncoding = "";
+  private String myDefaultEncoding = CharsetToolkit.UTF8;
   private Charset myCachedCharset = null;
 
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
