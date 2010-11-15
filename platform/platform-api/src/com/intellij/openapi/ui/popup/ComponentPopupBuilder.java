@@ -129,4 +129,7 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setSettingButtons(@NotNull Component button);
+
+  @NotNull
+  ComponentPopupBuilder setMayBeParent(boolean mayBeParent);
 }

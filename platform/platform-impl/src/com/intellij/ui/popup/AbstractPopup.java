@@ -640,7 +640,7 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = SystemInfo.isMac && !(myOwner instanceof IdeFrame);
+    boolean forcedDialog = (SystemInfo.isMac && !(myOwner instanceof IdeFrame)) || myMayBeParent;
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -1285,8 +1285,21 @@ public class AbstractPopup implements JBPopup {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     if (owner == null) return false;
+
+    Window wnd;
+    if (owner instanceof Window) {
+      wnd = (Window)owner;
+    } else {
+      wnd = SwingUtilities.getWindowAncestor(owner);
+    }
+
     for (Component each : components) {
-      if (each != null && SwingUtilities.isDescendingFrom(owner, each)) return true;
+      if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
+        Window eachWindow = SwingUtilities.getWindowAncestor(each);
+        if (eachWindow == wnd) {
+          return true;
+        }
+      }
     }
 
     return false;

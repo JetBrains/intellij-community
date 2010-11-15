@@ -86,6 +86,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     myPrefferedFocusedComponent = prefferedFocusedComponent;
   }
 
+  @NotNull
   public ComponentPopupBuilder setMayBeParent(boolean mayBeParent) {
     myMayBeParent = mayBeParent;
     return this;

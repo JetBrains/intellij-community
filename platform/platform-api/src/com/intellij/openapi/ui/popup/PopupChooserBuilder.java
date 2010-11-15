@@ -73,6 +73,7 @@ public class PopupChooserBuilder {
   private boolean myAutoselectOnMouseMove = true;
 
   private Function<Object,String> myItemsNamer = null;
+  private boolean myMayBeParent;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -243,7 +244,7 @@ public class PopupChooserBuilder {
     builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
       .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
-      setAdText(myAd).setKeyboardActions(myKeyboardActions);
+      setAdText(myAd).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -390,6 +391,11 @@ public class PopupChooserBuilder {
 
   public PopupChooserBuilder setSettingButton(Component abutton) {
     mySettingsButtons = abutton;
+    return this;
+  }
+
+  public PopupChooserBuilder setMayBeParent(boolean mayBeParent) {
+    myMayBeParent = mayBeParent;
     return this;
   }
 
