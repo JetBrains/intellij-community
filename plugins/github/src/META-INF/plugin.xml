@@ -2,13 +2,14 @@
   <name>GitHub</name>
   <id>org.jetbrains.plugins.github</id>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <description>GitHub intergation</description>
+  <description>GitHub integration</description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
   <depends>com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <checkoutProvider implementation="org.jetbrains.plugins.github.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
