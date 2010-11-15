@@ -446,6 +446,17 @@ def layoutFull(String target, Set usedJars) {
       fileset(dir: "$home/community/license")
     }
 
+    dir("plugins") {
+      dir("pycharm-spellchecker") {
+        dir("lib") {
+          jar("pycharm-spellchecker.jar") {
+            module("python-spellchecker-common")
+            module("pycharm-spellchecker")
+          }
+        }
+      }
+    }
+
     def layouts = includeFile("$home/build/scripts/layouts.gant")
     layouts.layoutPlugins()
 
