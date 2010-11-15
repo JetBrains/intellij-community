@@ -655,6 +655,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return myDefaultJavaCompiler;
   }
 
+  /**
+   * @param defaultCompiler The compiler that is passed as a parameter to setDefaultCompiler() 
+   * must be one of the registered compilers in compiler configuration. 
+   * Otherwise because of lazy compiler initialization, the value of default compiler will point to some other compiler instance
+   */
   public void setDefaultCompiler(BackendCompiler defaultCompiler) {
     myDefaultJavaCompiler = defaultCompiler;
     DEFAULT_COMPILER = defaultCompiler.getId();
