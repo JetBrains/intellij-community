@@ -24,7 +24,9 @@ setProperty("pluginFilter", [
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
         "sass", "less",
-        "hg4idea"
+        "hg4idea",
+        "tasks", "tasks-core", "tasks-api", "jira-connector",
+        "github"
 ])
 
 private List platformImplementationModules() {
