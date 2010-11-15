@@ -74,7 +74,7 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
 
   public void testImportingNotInstalledDependencies() throws Exception {
     if (ignore()) return;
-    
+
     setRepositoryPath(new File(myDir, "/repo").getPath());
     updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
@@ -144,20 +144,20 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
     updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
     VirtualFile parent = createModulePom("parent",
-                                      "<groupId>test</groupId>" +
-                                      "<artifactId>parent</artifactId>" +
-                                      "<packaging>pom</packaging>" +
-                                      "<version>1</version>" +
+                                         "<groupId>test</groupId>" +
+                                         "<artifactId>parent</artifactId>" +
+                                         "<packaging>pom</packaging>" +
+                                         "<version>1</version>" +
 
-                                      "<dependencyManagement>" +
-                                      "  <dependencies>" +
-                                      "    <dependency>" +
-                                      "      <groupId>junit</groupId>" +
-                                      "      <artifactId>junit</artifactId>" +
-                                      "      <version>4.0</version>" +
-                                      "    </dependency>" +
-                                      "  </dependencies>" +
-                                      "</dependencyManagement>");
+                                         "<dependencyManagement>" +
+                                         "  <dependencies>" +
+                                         "    <dependency>" +
+                                         "      <groupId>junit</groupId>" +
+                                         "      <artifactId>junit</artifactId>" +
+                                         "      <version>4.0</version>" +
+                                         "    </dependency>" +
+                                         "  </dependencies>" +
+                                         "</dependencyManagement>");
 
     VirtualFile project = createModulePom("project",
                                           "<groupId>test</groupId>" +

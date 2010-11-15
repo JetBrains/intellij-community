@@ -1640,7 +1640,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   public void testCustomSourcesAndJavadocPaths() throws Exception {
     if (!checkUltimate()) return;
-    
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -2041,4 +2041,51 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDep("project", "Maven: junit:junit:3.8.2",
                        "jar://" + repoPath + "/junit/junit/3.8.2/junit-3.8.2.jar!/");
   }
+
+  //public void testVersionRangeDoesntBreakIndirectDependency() throws Exception {
+  //  createProjectPom("<groupId>test</groupId>" +
+  //                   "<artifactId>project</artifactId>" +
+  //                   "<version>1</version>" +
+  //                   "<packaging>pom</packaging>" +
+  //
+  //                   "<modules>" +
+  //                   "  <module>m1</module>" +
+  //                   "  <module>m2</module>" +
+  //                   "</modules>");
+  //
+  //  createModulePom("m1", "<groupId>test</groupId>" +
+  //                        "<artifactId>m1</artifactId>" +
+  //                        "<version>1</version>" +
+  //
+  //                        "<dependencies>" +
+  //                        "  <dependency>" +
+  //                        "    <groupId>asm</groupId>" +
+  //                        "    <artifactId>asm</artifactId>" +
+  //                        "    <version>2.2.3</version>" +
+  //                        "  </dependency>" +
+  //                        "</dependencies>");
+  //
+  //  createModulePom("m2", "<groupId>test</groupId>" +
+  //                        "<artifactId>m2</artifactId>" +
+  //                        "<version>1</version>" +
+  //
+  //                        "<dependencies>" +
+  //                        "  <dependency>" +
+  //                        "    <groupId>test</groupId>" +
+  //                        "    <artifactId>m1</artifactId>" +
+  //                        "    <version>1</version>" +
+  //                        "  </dependency>" +
+  //                        "  <dependency>" +
+  //                        "    <groupId>asm</groupId>" +
+  //                        "    <artifactId>asm</artifactId>" +
+  //                        "    <version>[2.2.3]</version>" +
+  //                        "  </dependency>" +
+  //                        "</dependencies>");
+  //
+  //  importProject();
+  //
+  //  assertModuleModuleDeps("m2", "m1");
+  //  assertModuleLibDeps("m1", "Maven: asm:asm:2.2.3");
+  //  assertModuleLibDeps("m2", "Maven: asm:asm:2.2.3");
+  //}
 }
