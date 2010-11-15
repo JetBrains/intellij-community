@@ -31,7 +31,6 @@ import string
 import types
 import atexit
 import keyword
-#import __builtin__
 
 try:
     import inspect
@@ -113,14 +112,15 @@ STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, 
 IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with a following '='
 
 SIMPLE_VALUE_RE = re.compile(
-        "([+-]?[0-9]+\.?[0-9]*(?:[Ee]?[+-]?[0-9]+\.?[0-9]*)?)|" + # number
-        "('" + STR_CHAR_PATTERN + "*')|" + # single-quoted string
-        '("' + STR_CHAR_PATTERN + '*")|' + # double-quoted string
-        "(\[\])|" +
-        "(\{\})|" +
-        "(\(\))|" +
-        "(True|False|None)"
-        ) # $? = sane default value
+    "(\([+-]?[0-9](?:\s*,\s*[+-]?[0-9])*\))|" + # a numeric tuple, e.g. in pygame
+    "([+-]?[0-9]+\.?[0-9]*(?:[Ee]?[+-]?[0-9]+\.?[0-9]*)?)|" + # number
+    "('" + STR_CHAR_PATTERN + "*')|" + # single-quoted string
+    '("' + STR_CHAR_PATTERN + '*")|' + # double-quoted string
+    "(\[\])|" +
+    "(\{\})|" +
+    "(\(\))|" +
+    "(True|False|None)"
+) # $? = sane default value
 
 def _searchbases(cls, accum):
 # logic copied from inspect.py
@@ -175,6 +175,7 @@ def sortedNoCase(p_array):
     return p_array
 
 def cleanup(value):
+    # TODO: a possible perf hog, rewrite using a list of larger chunks
     result = ''
     for c in value:
         if c == '\n': result += '\\n'
@@ -327,7 +328,11 @@ paramname = spaced_ident | \
             APOS + spaced_ident + APOS | \
             QUOTE + spaced_ident + QUOTE
 
-initializer = (SP + Suppress("=") + SP + Combine(listItem | ident)).setName("=init") # accept foo=defaultfoo
+parenthesized_tuple = ( Literal("(") + Optional(delimitedList(listItem, combine=True)) +
+              Optional(Literal(",")) + Literal(")") ).setResultsName("(tuple)")
+
+
+initializer = (SP + Suppress("=") + SP + Combine(parenthesized_tuple | listItem | ident )).setName("=init") # accept foo=defaultfoo
 
 param = Group(Empty().setParseAction(replaceWith(T_SIMPLE)) + Combine(Optional(oneOf("* **")) + paramname) + Optional(initializer))
 
