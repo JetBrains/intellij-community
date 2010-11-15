@@ -1030,7 +1030,7 @@ def processCommandLine(argv):
             retVal['server'] = True
         elif (argv[i] == '--file'):
             del argv[i]            
-            retVal['file'] = argv[i];
+            retVal['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
         elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
             del argv[i]            
