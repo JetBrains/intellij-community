@@ -16,6 +16,8 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -35,10 +37,11 @@ public class DefaultLightProjectDescriptor implements LightProjectDescriptor {
 
   @Override
   public Sdk getSdk() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
+    return JavaSdkImpl.getMockJdk17();
   }
 
   @Override
   public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 }

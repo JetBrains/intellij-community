@@ -25,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -55,7 +57,23 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     }
   };
-  public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor();
+  public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor() {
+    @Override
+    public ModuleType getModuleType() {
+      return StdModuleTypes.JAVA;
+    }
+
+    @Override
+    public Sdk getSdk() {
+      return JavaSdkImpl.getMockJdk17("java 1.5");
+    }
+
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
+    }
+  };
+  public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();
 
 
   protected JavaCodeInsightTestFixture myFixture;
@@ -93,7 +111,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_5;
+    return JAVA_LATEST;
   }
 
 
