@@ -18,7 +18,10 @@ package git4idea.history;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
@@ -146,8 +149,8 @@ class GitLogParser {
     //
     // D       a.txt
 
-    // may have <RECORD_START> indicator, may not.
     if (line.isEmpty()) { return null; }
+    // may have <RECORD_START> indicator, may not. If we have, get rid of it.
     if (line.charAt(0) == RECORD_START.charAt(0)) {
       line = line.substring(1);
     }
@@ -158,25 +161,20 @@ class GitLogParser {
 
     if (myNameStatusOutputted != NameStatus.NONE) {
       final String[] infoAndPath = line.split(RECORD_END);
-      line = infoAndPath[0];
-      if (infoAndPath.length > 1) {
-        // taking the last element, thus avoiding possible blank line
-        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("[\\s]")));
-        // not relying that separator is tab => so splitting by any whitespace.
-        // Then removing blank (or whitespace) lines which could appear by this splitting:
-        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext();) {
-          if (it.next().trim().isEmpty()) {
-            it.remove();
-          }
-        }
+      line = infoAndPath[0]; // commit information
+      if (infoAndPath.length > 1) { // safety check
+        final String statusAndPaths = infoAndPath[1].replaceAll("[\\r\\n]", "");
+        final String[] statusAndPathsSplit = statusAndPaths.split("\\t"); // file status and path(s) are separated by tabs
 
-        if (!nameAndPathSplit.isEmpty()) { // safety check
-          final Iterator<String> pathIterator = nameAndPathSplit.iterator();
-          if (myNameStatusOutputted == NameStatus.STATUS) {  //  R100 dir/anew.txt    anew.txt
-            nameStatus = pathIterator.next().charAt(0); // for R100 we save R, it's enough for now.
+        if (statusAndPathsSplit.length > 0) { // safety check
+          int index = 0;
+          if (myNameStatusOutputted == NameStatus.STATUS) {
+            nameStatus = statusAndPathsSplit[0].charAt(0); // for R100 we save R, it's enough for us.
+            index = 1;
           }
-          while (pathIterator.hasNext()) {
-            String path = pathIterator.next().trim();
+          // extracting path or 2 paths in case of move/rename
+          for (; index < statusAndPathsSplit.length; index++) {
+            String path = statusAndPathsSplit[index];
             if (!path.isEmpty()) {
               paths.add(path);
             }
