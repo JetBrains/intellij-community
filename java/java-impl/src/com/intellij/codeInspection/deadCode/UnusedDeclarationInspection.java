@@ -39,7 +39,9 @@ import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,6 +50,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -84,11 +87,6 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   public boolean ADD_SERVLET_TO_ENTRIES = true;
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
 
-  public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
-  @NonNls private static final String[] ADDITIONAL_ANNOS = {
-    "javax.ws.rs.*"
-  };
-
   private HashSet<RefElement> myProcessedSuspicious = null;
   private int myPhase;
   private final QuickFixAction[] myQuickFixActions;
@@ -108,7 +106,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspection.class.getName());
 
   public UnusedDeclarationInspection() {
-    ContainerUtil.addAll(ADDITIONAL_ANNOTATIONS, ADDITIONAL_ANNOS);
+
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     final EntryPoint[] deadCodeAddins = new EntryPoint[point.getExtensions().length];
@@ -206,11 +204,18 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myNonJavaCheckbox, gc);
 
-      final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, InspectionsBundle.message(
-        "inspections.dead.code.entry.points.annotations.list.title"));
+      final JButton configureAnnotations = new JButton("Configure annotations");
+      configureAnnotations.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          EntryPointsManagerImpl.getInstance(project).configureAnnotations();
+        }
+      });
       gc.gridy++;
-      gc.weighty = 1;
-      add(listPanel, gc);
+
+      add(configureAnnotations, gc);
     }
   }
 
@@ -424,9 +429,12 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   private boolean isEntryPoint(final RefElement owner) {
     if (RefUtil.isEntryPoint(owner)) return true;
     final PsiElement element = owner.getElement();
-    if (element instanceof PsiModifierListOwner
-        && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
-      return true;
+    if (element instanceof PsiModifierListOwner) {
+      final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(element.getProject());
+      if (AnnotationUtil.isAnnotated((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
+          AnnotationUtil.isAnnotated((PsiModifierListOwner)element, entryPointsManager.getAdditionalAnnotations())) {
+        return true;
+      }
     }
     for (EntryPoint extension : myExtensions) {
       if (extension.isEntryPoint(owner, element)) {
@@ -462,9 +470,14 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       }
       if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
     }
-    if (element instanceof PsiModifierListOwner
-        && AnnotationUtil.checkAnnotatedUsingPatterns((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
-      return true;
+    if (element instanceof PsiModifierListOwner) {
+      final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
+      if (AnnotationUtil
+        .checkAnnotatedUsingPatterns((PsiModifierListOwner)element, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
+        AnnotationUtil
+        .checkAnnotatedUsingPatterns((PsiModifierListOwner)element, entryPointsManager.getAdditionalAnnotations())) {
+        return true;
+      }
     }
     for (EntryPoint extension : myExtensions) {
       if (extension.isEntryPoint(element)) {

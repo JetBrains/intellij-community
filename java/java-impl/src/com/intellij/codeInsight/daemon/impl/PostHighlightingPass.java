@@ -310,7 +310,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
 
   private boolean isImplicitUsage(final PsiModifierListOwner element, ProgressIndicator progress) {
-    if (UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection)) return true;
+    if (UnusedSymbolLocalInspection.isInjected(element)) return true;
     for (ImplicitUsageProvider provider : myImplicitUsageProviders) {
       progress.checkCanceled();
       if (provider.isImplicitUsage(element)) {
@@ -328,7 +328,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
-    return UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection);
+    return UnusedSymbolLocalInspection.isInjected(element);
   }
 
   private boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {
@@ -338,7 +338,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
-    return UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection);
+    return UnusedSymbolLocalInspection.isInjected(element);
   }
 
   private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
@@ -377,7 +377,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
         SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
           public boolean process(final String annoName) {
-            QuickFixAction.registerQuickFixAction(info, myUnusedSymbolInspection.createQuickFix(annoName, "fields"));
+            QuickFixAction.registerQuickFixAction(info, UnusedSymbolLocalInspection.createQuickFix(annoName, "fields", field.getProject()));
             return true;
           }
         });
@@ -496,7 +496,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(method), highlightDisplayKey);
     SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(method, new Processor<String>() {
       public boolean process(final String annoName) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, myUnusedSymbolInspection.createQuickFix(annoName, "methods"));
+        QuickFixAction.registerQuickFixAction(highlightInfo, UnusedSymbolLocalInspection.createQuickFix(annoName, "methods", method.getProject()));
         return true;
       }
     });
@@ -597,11 +597,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return USED;
   }
 
-  private HighlightInfo formatUnusedSymbolHighlightInfo(@PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String pattern,
-                                                        PsiNameIdentifierOwner aClass,
-                                                        final String element,
-                                                        final HighlightDisplayKey highlightDisplayKey,
-                                                        final HighlightInfoType highlightInfoType) {
+  private static HighlightInfo formatUnusedSymbolHighlightInfo(@PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String pattern,
+                                                               final PsiNameIdentifierOwner aClass,
+                                                               final String element,
+                                                               final HighlightDisplayKey highlightDisplayKey,
+                                                               final HighlightInfoType highlightInfoType) {
     String symbolName = aClass.getName();
     String message = JavaErrorMessages.message(pattern, symbolName);
     PsiElement identifier = aClass.getNameIdentifier();
@@ -609,7 +609,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(aClass), highlightDisplayKey);
     SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, new Processor<String>() {
       public boolean process(final String annoName) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, myUnusedSymbolInspection.createQuickFix(annoName, element));
+        QuickFixAction.registerQuickFixAction(highlightInfo, UnusedSymbolLocalInspection.createQuickFix(annoName, element, aClass.getProject()));
         return true;
       }
     });

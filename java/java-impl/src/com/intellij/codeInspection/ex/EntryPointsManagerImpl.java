@@ -24,19 +24,33 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.ExtensionPoints;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.*;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 @State(
@@ -44,6 +58,32 @@ import java.util.*;
     storages = {@Storage(id = "default", file = "$PROJECT_FILE$")}
 )
 public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager, Disposable {
+  @NonNls private static final String[] STANDARD_ANNOS = {
+    "javax.ws.rs.*",
+    "javax.annotation.Resource",
+    "javax.xml.ws.WebServiceRef",
+    "javax.persistence.PersistenceContext",
+    "javax.persistence.PersistenceUnit",
+    "javax.persistence.GeneratedValue"
+  };
+
+  private Collection<String> ADDITIONAL_ANNOS = null;
+
+  public Collection<String> getAdditionalAnnotations() {
+    if (ADDITIONAL_ANNOS == null) {
+      ADDITIONAL_ANNOS = new ArrayList<String>();
+      Collections.addAll(ADDITIONAL_ANNOS, STANDARD_ANNOS);
+      final EntryPoint[] extensions = Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
+      for (EntryPoint extension : extensions) {
+        final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
+        if (ignoredAnnotations != null) {
+          ContainerUtil.addAll(ADDITIONAL_ANNOS, ignoredAnnotations);
+        }
+      }
+    }
+    return ADDITIONAL_ANNOS;
+  }
+  public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
   private final Set<RefElement> myTemporaryEntryPoints;
   private static final String VERSION = "2.0";
@@ -59,6 +99,28 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myTemporaryEntryPoints = new HashSet<RefElement>();
     myPersistentEntryPoints =
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
+
+    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+      @Override
+      public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        extensionRemoved(extension, pluginDescriptor);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
+        if (ADDITIONAL_ANNOS != null) {
+          ADDITIONAL_ANNOS = null;
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              if (ApplicationManager.getApplication().isDisposed()) return;
+              InspectionProfileManager.getInstance().fireProfileChanged(null);
+            }
+          });
+        }
+      }
+    });
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
@@ -82,6 +144,11 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
         }
       }
     }
+    try {
+      DefaultJDOMExternalizer.readExternal(this, element);
+    }
+    catch (InvalidDataException ignored) {
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -101,6 +168,13 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
 
     element.addContent(entryPointsElement);
+    if (!ADDITIONAL_ANNOTATIONS.isEmpty()) {
+      try {
+        DefaultJDOMExternalizer.writeExternal(this, element);
+      }
+      catch (WriteExternalException ignored) {
+      }
+    }
   }
 
   public void resolveEntryPoints(final RefManager manager) {
@@ -263,6 +337,22 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   public boolean isAddNonJavaEntries() {
     return myAddNonJavaEntries;
+  }
+
+  @Override
+  public void configureAnnotations() {
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by");
+    new DialogWrapper(myProject) {
+      {
+        init();
+        setTitle("Configure annotations");
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        return listPanel;
+      }
+    }.show();
   }
 
   public void addAllPersistentEntries(EntryPointsManagerImpl manager) {
