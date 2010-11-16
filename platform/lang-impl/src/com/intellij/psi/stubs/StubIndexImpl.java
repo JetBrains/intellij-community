@@ -256,7 +256,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof IOException || cause instanceof StorageException) {
+      if (cause instanceof IOException || cause instanceof StorageException || cause instanceof IllegalArgumentException) {
         forceRebuild(e);
       }
       else {
