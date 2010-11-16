@@ -23,8 +23,13 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public interface FlyweightCapableTreeStructure<T> {
-  @NotNull T prepareForGetChildren(@NotNull T node);
-  @NotNull T getRoot();
+  @NotNull
+  T getRoot();
+
+  @NotNull
+  T prepareForGetChildren(@NotNull T node);
+
   int getChildren(@NotNull T parent, @NotNull Ref<T[]> into);
+
   void disposeChildren(T[] nodes, int count);
 }

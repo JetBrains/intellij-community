@@ -68,8 +68,10 @@ import java.util.Map;
  */
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
+
   // function stored in PsiBuilderImpl' user data which called during reparse when merge algorithm is not sure what to merge
-  public static final Key<TripleFunction<ASTNode,LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>> CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
+  public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
+    CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
 
   private final Project myProject;
   private PsiFile myFile;
@@ -283,7 +285,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private ProductionMarker myFirstChild;
     private ProductionMarker myLastChild;
     private int myHC = -1;
-    private LighterASTNode[] myCachedChildren;
 
     private StartMarker() {
       myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
@@ -298,7 +299,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myFirstChild = myLastChild = null;
       myHC = -1;
       myEdgeTokenBinder = DEFAULT_LEFT_EDGE_TOKEN_BINDER;
-      myCachedChildren = null;
     }
 
     public int hc() {
@@ -324,7 +324,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[myDoneMarker.myLexemeIndex]; i++) {
-          hc += bufArray != null ? bufArray[i]:buf.charAt(i);
+          hc += bufArray != null ? bufArray[i] : buf.charAt(i);
         }
 
         myHC = hc;
@@ -381,7 +381,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public void doneBefore(final IElementType type, final Marker before, final String errorMessage) {
       final StartMarker marker = (StartMarker)before;
-      myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(marker), new ErrorItem(myBuilder, errorMessage, marker.myLexemeIndex));
+      myBuilder.myProduction.add(myBuilder.myProduction.lastIndexOf(marker),
+                                 new ErrorItem(myBuilder, errorMessage, marker.myLexemeIndex));
       doneBefore(type, before);
     }
 
@@ -436,7 +437,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public int hc() {
       if (myHC == -1) {
         int hc = 0;
-        if (myTokenType instanceof TokenWrapper){
+        if (myTokenType instanceof TokenWrapper) {
           final String value = ((TokenWrapper)myTokenType).getValue();
           for (int i = 0; i < value.length(); i++) {
             hc += value.charAt(i);
@@ -1008,7 +1009,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void bind(final StartMarker rootMarker, final CompositeElement rootNode) {
-    final Stack<CompositeElement> nodes = new Stack<CompositeElement>();
     StartMarker curMarker = rootMarker;
     CompositeElement curNode = rootNode;
 
@@ -1026,7 +1026,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
           final CompositeElement childNode = createComposite(marker);
           curNode.rawAddChildren(childNode);
-          nodes.push(curNode);
           curNode = childNode;
 
           item = marker.myFirstChild != null ? marker.myFirstChild : marker.myDoneMarker;
@@ -1043,7 +1042,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       else if (item instanceof DoneMarker) {
         curMarker = (StartMarker)((DoneMarker)item).myStart.myParent;
-        curNode = nodes.pop();
+        curNode = curNode.getTreeParent();
         item = ((DoneMarker)item).myStart;
       }
 
@@ -1067,7 +1066,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return curToken;
   }
 
-  private int collapseLeaves(CompositeElement ast, StartMarker startMarker) {
+  private int collapseLeaves(final CompositeElement ast, final StartMarker startMarker) {
     final int start = myLexStarts[startMarker.myLexemeIndex];
     final int end = myLexStarts[startMarker.myDoneMarker.myLexemeIndex];
     final TreeElement leaf = createLeaf(startMarker.myType, start, end);
@@ -1093,7 +1092,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @Nullable
-  public static String getErrorMessage(LighterASTNode node) {
+  public static String getErrorMessage(final LighterASTNode node) {
     if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
     if (node instanceof StartMarker) {
       final StartMarker marker = (StartMarker)node;
@@ -1229,31 +1228,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myRoot = root;
     }
 
-    @NotNull
-    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode o) {
-      return o;
-    }
-
+    @Override
     @NotNull
     public LighterASTNode getRoot() {
       return myRoot;
     }
 
-    public void disposeChildren(final LighterASTNode[] nodes, final int count) {
-      if (nodes == null) return;
-      for (int i = 0; i < count; i++) {
-        final LighterASTNode node = nodes[i];
-        if (node instanceof LazyParseableToken) {
-          myLazyPool.recycle((LazyParseableToken)node);
-        }
-        else if (node instanceof Token) {
-          myPool.recycle((Token)node);
-        }
-      }
+    @Override
+    @NotNull
+    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode o) {
+      return o;
     }
 
     private int count;
 
+    @Override
     public int getChildren(@NotNull final LighterASTNode item, @NotNull final Ref<LighterASTNode[]> into) {
       if (item instanceof LazyParseableToken) {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
@@ -1265,20 +1254,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       StartMarker marker = (StartMarker)item;
 
       count = 0;
-
-      if (marker.myCachedChildren != null) {
-        count = marker.myCachedChildren.length;
-        if (into.get() == null || into.get().length < count) {
-          into.set(new LighterASTNode[count]);
-        }
-        System.arraycopy(marker.myCachedChildren, 0, into.get(), 0, count);
-        return count;
-      }
-
       ProductionMarker child = marker.myFirstChild;
-      ProductionMarker prevChild = null;
       int lexIndex = marker.myLexemeIndex;
-      boolean hasCollapsed = false;
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, into, marker.myBuilder);
 
@@ -1286,16 +1263,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           final int start = marker.myBuilder.myLexStarts[child.myLexemeIndex];
           final int end = marker.myBuilder.myLexStarts[((StartMarker)child).myDoneMarker.myLexemeIndex];
           insertLeaf(into, start, end, child.getTokenType(), marker.myBuilder);
-
-          if (prevChild != null) prevChild.myNext = child.myNext;
-          if (marker.myFirstChild == child) marker.myFirstChild = child.myNext;
-          if (marker.myLastChild == child) marker.myLastChild = prevChild;
-          hasCollapsed = true;
         }
         else {
           ensureCapacity(into);
           into.get()[count++] = child;
-          prevChild = child;
         }
 
         if (child instanceof StartMarker) {
@@ -1306,13 +1277,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, into, marker.myBuilder);
 
-      // kids with collapsed nodes have to be cached - in order for getChildren() to return a same result
-      if (hasCollapsed) {
-        marker.myCachedChildren = new LighterASTNode[count];
-        System.arraycopy(into.get(), 0, marker.myCachedChildren, 0, count);
-      }
-
       return count;
+    }
+
+    @Override
+    public void disposeChildren(final LighterASTNode[] nodes, final int count) {
+      if (nodes == null) return;
+      for (int i = 0; i < count; i++) {
+        final LighterASTNode node = nodes[i];
+        if (node instanceof LazyParseableToken) {
+          myLazyPool.recycle((LazyParseableToken)node);
+        }
+        else if (node instanceof Token) {
+          myPool.recycle((Token)node);
+        }
+      }
     }
 
     private void ensureCapacity(final Ref<LighterASTNode[]> into) {
@@ -1379,7 +1358,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       else {
         final StartMarker startMarker = (StartMarker)n;
-        final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot) : createComposite(startMarker);
+        final CompositeElement composite = (n == myRoot) ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
+                                                         : createComposite(startMarker);
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }
@@ -1417,12 +1397,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
    */
   private static class MyList extends ArrayList<ProductionMarker> {
     private static final Field ourElementDataField;
+
     static {
       Field f;
       try {
         f = ArrayList.class.getDeclaredField("elementData");
         f.setAccessible(true);
-      } catch(NoSuchFieldException e) {
+      }
+      catch(NoSuchFieldException e) {
         // IBM J9 does not have the field
         f = null;
       }
@@ -1441,8 +1423,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public int lastIndexOf(final Object o) {
       if (cachedElementData == null) return super.lastIndexOf(o);
-      for (int i = size()-1; i >= 0; i--)
-        if (cachedElementData[i]==o) return i;
+      for (int i = size() - 1; i >= 0; i--) {
+        if (cachedElementData[i] == o) return i;
+      }
       return -1;
     }
 
