@@ -61,7 +61,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       }
       else {
         Matcher m = Pattern.compile("(\\s*)(:)?(\\s*),?\\s?(\\s*)(.+)").matcher(s);
-        if (!m.matches()) throw new RuntimeException("This pattern must matches on any non-empty string!");
+        if (!m.matches()) throw new RuntimeException("This pattern must matches on any non-empty string! (" + s + ")");
 
         if (m.group(2) != null) {
           editor.getCaretModel().moveToOffset(tailOffset + m.end(3));
