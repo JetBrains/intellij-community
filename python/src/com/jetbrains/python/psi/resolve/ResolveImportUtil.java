@@ -467,19 +467,19 @@ public class ResolveImportUtil {
   /**
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    *
-   * @param elt     PSI element that defines the module and/or the project.
+   * @param context     PSI element that defines the module and/or the project.
    * @param refName module name to be found among roots.
    * @return a PsiFile, a child of a root.
    */
   @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement elt, final String refName) {
+  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String refName) {
     // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    PsiElement res = resolveInCurrentDir(elt, refName);
+    PsiElement res = resolveInCurrentDir(context, refName);
     if (res != null) {
       return res;
     }
     else {
-      return resolveModuleInRoots(PyQualifiedName.fromDottedString(refName), elt);
+      return resolveModuleInRoots(PyQualifiedName.fromDottedString(refName), context);
     }
   }
 

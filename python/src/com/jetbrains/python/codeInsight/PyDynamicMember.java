@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -58,28 +57,28 @@ public class PyDynamicMember {
     return myName;
   }
 
-  public Icon getIcon() {
+  public static Icon getIcon() {
     return IconLoader.getIcon("/nodes/method.png");
   }
 
   @Nullable
-  public PsiElement resolve(Project project, PyClass modelClass) {
+  public PsiElement resolve(PsiElement context) {
     if (myTarget != null) {
       return myTarget;
     }
-    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, project);
+    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, context.getProject());
     if (targetClass != null) {
-      return new MyInstanceElement(targetClass, findResolveTarget(modelClass));
+      return new MyInstanceElement(targetClass, findResolveTarget(context));
     }
     return null;
   }
 
   @Nullable
-  private PsiElement findResolveTarget(PyClass clazz) {
+  private PsiElement findResolveTarget(PsiElement context) {
     if (myResolveData == null) {
       return null;
     }
-    PsiElement module = ResolveImportUtil.resolveInRoots(clazz, myResolveData.getModuleName());
+    PsiElement module = ResolveImportUtil.resolveInRoots(context, myResolveData.getModuleName());
     if (module instanceof PsiDirectory) {
       module = PyUtil.turnDirIntoInit(module);
     }
