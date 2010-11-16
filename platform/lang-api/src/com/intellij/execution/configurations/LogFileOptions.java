@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -80,7 +81,7 @@ public class LogFileOptions implements JDOMExternalizable {
       final ArrayList<File> files = new ArrayList<File>();
       final String basePath = myPathPattern.substring(0, dirIndex);
       final String pattern = myPathPattern.substring(dirIndex + File.separator.length());
-      FileUtil.collectMatchedFiles(new File(basePath), Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
+      collectMatchedFiles(new File(basePath), Pattern.compile(FileUtil.convertAntToRegexp(pattern)), files);
       if (!files.isEmpty()) {
         if (myShowAll) {
           for (File file : files) {
@@ -105,6 +106,19 @@ public class LogFileOptions implements JDOMExternalizable {
       }
     }
     return result;
+  }
+
+  public static void collectMatchedFiles(final File root, final Pattern pattern, final List<File> files) {
+    final File[] dirs = root.listFiles();
+    if (dirs == null) return;
+    for (File dir : dirs) {
+      if (dir.isFile()) {
+        final String path = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(root, dir));
+        if (pattern.matcher(path).matches()) {
+          files.add(dir);
+        }
+      }
+    }
   }
 
   public boolean isEnabled() {
