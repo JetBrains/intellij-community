@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -482,6 +483,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   protected class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
+    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, LogConsoleBase.this);
 
     public ReaderThread(@Nullable Reader reader) {
       myReader = reader != null ? new BufferedReader(reader) : null;
@@ -490,26 +492,26 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     public void run() {
       if (myReader == null) return;
       while (myRunning) {
-        try {
-          int i = 0;
-          while (i++ < 100) {
-            if (myRunning && myReader != null && myReader.ready()) {
-              addMessage(myReader.readLine());
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            myAlarm.cancelAllRequests();
+            try {
+              int i = 0;
+              while (i++ < 1000) {
+                if (myRunning && myReader != null && myReader.ready()) {
+                  addMessage(myReader.readLine());
+                }
+                else {
+                  break;
+                }
+              }
             }
-            else {
-              break;
+            catch (IOException e) {
+              LOG.error(e);
             }
           }
-          synchronized (this) {
-            wait(100);
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-        catch (InterruptedException e) {
-          Disposer.dispose(LogConsoleBase.this);
-        }
+        };
+        myAlarm.addRequest(runnable, 200);
       }
     }
 
