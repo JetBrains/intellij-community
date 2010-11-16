@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,7 +100,7 @@ public class CreateNewLibraryAction extends AnAction {
       return new AnAction[]{new CreateNewLibraryAction(text, Icons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
     List<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new CreateNewLibraryAction("Java", Icons.LIBRARY_ICON, null, librariesConfigurable, project));
+    actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), Icons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : extensions) {
       actions.add(new CreateNewLibraryAction(type.getCreateActionName(), type.getIcon(), type, librariesConfigurable, project));
     }

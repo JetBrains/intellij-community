@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -49,6 +50,10 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
 
   @NotNull
   public abstract P createDefaultProperties();
+
+  public boolean isSuitableForModuleType(@NotNull ModuleType moduleType) {
+    return true;
+  }
 
   /**
    * Override this method to customize the library roots editor
