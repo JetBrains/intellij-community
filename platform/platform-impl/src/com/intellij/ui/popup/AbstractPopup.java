@@ -528,6 +528,9 @@ public class AbstractPopup implements JBPopup {
     Disposer.dispose(this, false);
   }
 
+  public FocusTrackback getFocusTrackback() {
+    return myFocusTrackback;
+  }
 
   private void disposePopup() {
     if (myPopup != null) {
