@@ -2088,4 +2088,54 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   //  assertModuleLibDeps("m1", "Maven: asm:asm:2.2.3");
   //  assertModuleLibDeps("m2", "Maven: asm:asm:2.2.3");
   //}
+  //
+  public void testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>" +
+
+                     "     <dependencyManagement>\n" +
+                     "         <dependencies>\n" +
+                     "              <dependency>\n" +
+                     "                 <artifactId>asm</artifactId>\n" +
+                     "                 <groupId>asm</groupId>\n" +
+                     "                 <version>[2.2.1]</version>\n" +
+                     "                 <scope>runtime</scope>\n" +
+                     "             </dependency>\n" +
+                     "             <dependency>\n" +
+                     "                 <artifactId>asm-attrs</artifactId>\n" +
+                     "                 <groupId>asm</groupId>\n" +
+                     "                 <version>[2.2.1]</version>\n" +
+                     "                 <scope>runtime</scope>\n" +
+                     "             </dependency>\n" +
+                     "         </dependencies>\n" +
+                     "     </dependencyManagement>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>1</version>" +
+                         "" +
+                         "    <parent>\n" +
+                         "        <groupId>test</groupId>\n" +
+                         "        <artifactId>project</artifactId>\n" +
+                         "        <version>1</version>\n" +
+                         "    </parent>" +
+
+                         "<dependencies>" +
+                         "  <dependency>" +
+                         "            <artifactId>asm-attrs</artifactId>\n" +
+                         "            <groupId>asm</groupId>\n" +
+                         "            <scope>test</scope>" +
+                         "  </dependency>" +
+                         "</dependencies>");
+
+    importProject();
+
+    assertModuleLibDeps("m", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:2.2.1");
+  }
 }

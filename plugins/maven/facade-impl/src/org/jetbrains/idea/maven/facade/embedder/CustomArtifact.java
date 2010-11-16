@@ -172,7 +172,19 @@ public class CustomArtifact implements Artifact {
   }
 
   public String getId() {
-    return myWrapee.getId();
+    try {
+      return myWrapee.getId();
+    }
+    catch (NullPointerException e) {
+      if (e.getMessage() != null && e.getMessage().contains("version was null")) {
+        VersionRange range = getVersionRange();
+        if (range != null) {
+          setBaseVersion(range.toString());
+          return myWrapee.getId();
+        }
+      }
+      throw e;
+    }
   }
 
   public String getDependencyConflictId() {
