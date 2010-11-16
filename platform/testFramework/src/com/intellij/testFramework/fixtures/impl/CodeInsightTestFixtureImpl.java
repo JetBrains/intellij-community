@@ -69,6 +69,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -82,6 +83,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -1467,7 +1469,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     if (loader.caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
-      int caretCol = loader.caretMarker.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, caretLine, 0);
+      int caretCol = EditorUtil.calcColumnNumber(null, loader.newFileText,
+                                                 StringUtil.lineColToOffset(loader.newFileText, caretLine, 0),
+                                                 loader.caretMarker.getStartOffset(),
+                                                 CodeStyleSettingsManager.getSettings(getProject()).getIndentOptions(StdFileTypes.JAVA).TAB_SIZE);
 
       Assert.assertEquals("caretLine in " + expectedFile, caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
       Assert.assertEquals("caretColumn in " + expectedFile, caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
