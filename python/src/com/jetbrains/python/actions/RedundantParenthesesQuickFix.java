@@ -14,16 +14,18 @@ import java.util.List;
 
 /**
  * User: catherine
+ *
+ * QuickFix to remove redundant parentheses from if/while/except statement
  */
 public class RedundantParenthesesQuickFix implements LocalQuickFix {
-  private final PyStatementWithElse myStatement;
-  private final List<PyIfPart> myStatements = new ArrayList<PyIfPart>();
+  private final PyStatement myStatement;
+  private final List<PyStatementPart> myStatements = new ArrayList<PyStatementPart>();
 
-  public RedundantParenthesesQuickFix(PyStatementWithElse statement) {
+  public RedundantParenthesesQuickFix(PyStatement statement) {
     myStatement = statement;
   }
 
-  public void addStatement(PyIfPart statement) {
+  public void addStatement(PyStatementPart statement) {
     myStatements.add(statement);
   }
 
@@ -46,8 +48,10 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
       condition = ((PyWhileStatement)myStatement).getWhilePart().getCondition();
     }
     replaceCondition(condition);
-    for (PyIfPart ifPart : myStatements) {
-      replaceCondition(ifPart.getCondition());
+    for (PyStatementPart part : myStatements) {
+      if (part instanceof PyIfPart) condition = ((PyIfPart)part).getCondition();
+      if (part instanceof PyExceptPart) condition = ((PyExceptPart)part).getExceptClass();
+      replaceCondition(condition);
     }
   }
 

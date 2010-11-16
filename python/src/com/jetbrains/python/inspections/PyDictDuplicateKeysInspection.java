@@ -18,6 +18,8 @@ import java.util.List;
 
 /**
  * User: catherine
+ *
+ * Inspection to detect using the same value as dictionary key twice.
  */
 public class PyDictDuplicateKeysInspection extends PyInspection {
   @Nls

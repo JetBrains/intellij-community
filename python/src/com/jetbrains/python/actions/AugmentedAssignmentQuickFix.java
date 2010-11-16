@@ -14,6 +14,9 @@ import java.util.List;
 
 /**
  * User: catherine
+ *
+ * QuickFix to replace assignment that can be replaced with augmented assignment.
+ * for instance, i = i + 1   --> i +=1
  */
 public class AugmentedAssignmentQuickFix implements LocalQuickFix {
 

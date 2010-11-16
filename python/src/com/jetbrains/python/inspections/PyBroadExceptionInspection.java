@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
+ *
+ * Inspection to detect too broad except clause
+ * such as no exception class specified, or specified as 'Exception'
  */
 public class PyBroadExceptionInspection extends PyInspection {
   @Nls

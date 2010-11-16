@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
+ *
+ * Inspection to detect  assignment that can be replaced with augmented assignment.
  */
 public class PyAugmentAssignmentInspection extends PyInspection {
   @Nls
