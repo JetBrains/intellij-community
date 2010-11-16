@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
@@ -47,9 +48,12 @@ public class PyAugmentAssignmentInspection extends PyInspection {
             if (rightExpression instanceof PyNumericLiteralExpression
                 || rightExpression instanceof PyStringLiteralExpression
                     || rightExpression instanceof PyReferenceExpression) {
-
-              AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-              registerProblem(node, "Augment assignment", quickFix);
+              PyElementType op = expression.getOperator();
+              if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
+                    op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
+                AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
+                registerProblem(node, "Augment assignment", quickFix);
+              }
             }
           }
         }

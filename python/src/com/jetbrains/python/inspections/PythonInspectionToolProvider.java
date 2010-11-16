@@ -50,6 +50,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyBroadExceptionInspection.class,
       PyRedundantParenthesesInspection.class,
       PyAugmentAssignmentInspection.class,
+      PyChainedComparisonsInspection.class,
     };
   }
 }
