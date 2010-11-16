@@ -51,7 +51,10 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   @NotNull
   public abstract P createDefaultProperties();
 
-  public boolean isSuitableForModuleType(@NotNull ModuleType moduleType) {
+  /**
+   * @return {@code true} if library of this type can be added as a dependency to a module of type {@code moduleType}
+   */
+  public boolean isSuitableModuleType(@NotNull ModuleType moduleType) {
     return true;
   }
 

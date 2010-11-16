@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.util.Icons;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,11 @@ public class CreateNewLibraryAction extends AnAction {
 
   private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
     final List<Module> modules = new ArrayList<Module>();
-    ContainerUtil.addAll(modules, rootConfigurable.getModules());
+    for (Module module : rootConfigurable.getModules()) {
+      if (myType == null || myType.isSuitableModuleType(module.getModuleType())) {
+        modules.add(module);
+      }
+    }
     if (modules.isEmpty()) return;
     final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                             modules, ProjectBundle.message("choose.modules.dialog.title"),
