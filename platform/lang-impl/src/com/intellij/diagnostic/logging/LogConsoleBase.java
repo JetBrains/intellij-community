@@ -258,17 +258,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void dispose() {
     myModel.removeFilterListener(this);
-    if (myReaderThread != null && myReaderThread.myReader != null) {
-      myReaderThread.stopRunning();
-      try {
-        myReaderThread.myReader.close();
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-      myReaderThread.myReader = null;
-      myReaderThread = null;
-    }
+    stopRunning(false);
     if (myConsole != null) {
       Disposer.dispose(myConsole);
       myConsole = null;
@@ -280,9 +270,29 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myOriginalDocument = null;
   }
 
-  private void stopRunning() {
-    if (myReaderThread != null && !isActive()) {
-      myReaderThread.stopRunning();
+  private void stopRunning(boolean checkActive) {
+    if (myReaderThread != null && myReaderThread.myReader != null) {
+      if (!checkActive) {
+        myReaderThread.stopRunning();
+        try {
+          myReaderThread.myReader.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+        myReaderThread.myReader = null;
+        myReaderThread = null;
+      }
+      else {
+        try {
+          final BufferedReader reader = myReaderThread.myReader;
+          while (reader != null && reader.ready()) {
+            addMessage(reader.readLine());
+          }
+        }
+        catch (IOException ignore) {}
+        stopRunning(false);
+      }
     }
   }
 
@@ -317,7 +327,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       final ProcessAdapter stopListener = new ProcessAdapter() {
         public void processTerminated(final ProcessEvent event) {
           process.removeProcessListener(this);
-          stopRunning();
+          stopRunning(true);
         }
       };
       process.addProcessListener(stopListener);
