@@ -17,8 +17,10 @@ package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,6 +58,8 @@ import java.util.ArrayList;
  & @author ven
  */
 public class UnusedDefInspection extends GroovyLocalInspectionBase {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection");
+
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -152,7 +156,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     if (var != null) {
       final GroovyPsiElement scope = getScope(var);
-      assert scope != null;
+      LOG.assertTrue(scope != null, DebugUtil.psiToString(var.getContainingFile(), true, false));
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
