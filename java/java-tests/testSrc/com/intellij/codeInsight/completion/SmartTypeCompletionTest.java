@@ -939,7 +939,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
-  public void testDuplicateMembersFromSuperClass() throws Throwable { doActionTest(); }
+  public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
+
+  public void testDuplicateMembersFromSuperClassInAnotherFile() throws Throwable {
+    myFixture.addClass("class Super { public static final Super FOO = null; }");
+    doTest();
+  }
 
   public void testInsideGenericClassLiteral() throws Throwable {
     configureByTestName();
