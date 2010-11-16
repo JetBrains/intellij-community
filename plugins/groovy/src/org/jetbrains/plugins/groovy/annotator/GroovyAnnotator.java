@@ -380,7 +380,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
       PsiModifierList modifiersList = variableDeclaration.getModifierList();
-      final GrMember member = variableDeclaration.getMembers()[0];
+      final GrMember[] members = variableDeclaration.getMembers();
+      if (members.length == 0) return;
+      final GrMember member = members[0];
       checkAccessModifiers(myHolder, modifiersList, member);
       checkDuplicateModifiers(myHolder, variableDeclaration.getModifierList(), member);
 
