@@ -4,103 +4,94 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Condition;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 
-public class SmartTypeCompletionTest extends LightCompletionTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/smartType";
+public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/";
   }
 
   public void testParenAfterCast1() throws Exception {
-    String path = BASE_PATH + "/parenAfterCast";
+    String path = "/parenAfterCast";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testParenAfterCast2() throws Exception {
-    String path = BASE_PATH + "/parenAfterCast";
+    String path = "/parenAfterCast";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
-
-
   }
 
 
   public void testParenAfterCast3() throws Exception {
-    String path = BASE_PATH + "/parenAfterCast";
+    String path = "/parenAfterCast";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
   public void testParenAfterCall1() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testParenAfterCall2() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
   public void testParenAfterCall3() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
   public void testParenAfterCall4() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before4.java");
     checkResultByFile(path + "/after4.java");
   }
 
   public void testParenAfterCall5() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before5.java");
     checkResultByFile(path + "/after5.java");
   }
 
   public void testParenAfterCall6() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     configureByFile(path + "/before6.java");
     checkResultByFile(path + "/after6.java");
   }
   
   public void testParenAfterCall1_SpaceWithinMethodCallParens() throws Exception {
-    String path = BASE_PATH + "/parenAfterCall";
+    String path = "/parenAfterCall";
 
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
-    configureByFileNoComplete(path + "/before1.java");
+    myFixture.configureByFile(path + "/before1.java");
     styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
     try{
       complete();
@@ -112,28 +103,28 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testParenAfterIf1() throws Exception {
-    String path = BASE_PATH + "/parenAfterIf";
+    String path = "/parenAfterIf";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testParenAfterIf2() throws Exception {
-    String path = BASE_PATH + "/parenAfterIf";
+    String path = "/parenAfterIf";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
   public void testForceLookupForAbstractClasses() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before9.java");
     checkResultByFile(path + "/after9.java");
   }
 
   public void testAfterNew1() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before1.java");
     select();
@@ -141,7 +132,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew2() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before2.java");
     select();
@@ -149,7 +140,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew3() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before3.java");
     select();
@@ -157,7 +148,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew4() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before4.java");
     select();
@@ -165,7 +156,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew5() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before5.java");
     select();
@@ -173,7 +164,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew6() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before6.java");
     select();
@@ -181,7 +172,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew7() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before7.java");
     select();
@@ -189,7 +180,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew8() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before8.java");
     select();
@@ -197,7 +188,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew9() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before10.java");
     select();
@@ -205,7 +196,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew10() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before12.java");
     //select();
@@ -213,7 +204,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterNew11() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before13.java");
     //select();
@@ -221,7 +212,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterThrowNew1() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before14.java");
     //select();
@@ -229,7 +220,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterThrowNew2() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before15.java");
     //select();
@@ -237,23 +228,17 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testAfterThrowNew3() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/before16.java");
     //select();
     checkResultByFile(path + "/after16.java");
   }
 
-  public void testAfterThrow1() throws Exception {
-    String path = BASE_PATH;
-
-    configureByFile(path + "/CastInThrow.java");
-    //select();
-    checkResultByFile(path + "/CastInThrow-out.java");
-  }
+  public void testCastInThrow() throws Exception { doTest(); }
 
   public void testParenAfterNewWithinInnerExpr() throws Exception {
-    String path = BASE_PATH + "/afterNew";
+    String path = "/afterNew";
 
     configureByFile(path + "/LastArgInInnerNewBefore.java");
     checkResultByFile(path + "/LastArgInInnerNewAfter.java");
@@ -270,105 +255,99 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testReturn1() throws Exception{
-    String path = BASE_PATH + "/return";
+    String path = "/return";
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testReturn2() throws Exception{
-    String path = BASE_PATH + "/return";
+    String path = "/return";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
   public void testReturn3() throws Exception{
-    String path = BASE_PATH + "/return";
+    String path = "/return";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
   public void testGenerics1() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testGenerics2() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
   public void testGenerics3() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before3.java");
     checkResultByFile(path + "/after3.java");
   }
 
   public void testGenerics4() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before4.java");
     checkResultByFile(path + "/after4.java");
   }
 
   public void testGenerics5() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before5.java");
     checkResultByFile(path + "/after5.java");
   }
 
   public void testAfterInstanceOf1() throws Exception {
-    String path = BASE_PATH + "/afterInstanceOf";
+    String path = "/afterInstanceOf";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
   public void testAfterInstanceOf2() throws Exception {
-    String path = BASE_PATH + "/afterInstanceOf";
+    String path = "/afterInstanceOf";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testInsideCatch() throws Exception {
-    String path = BASE_PATH;
-
-    configureByFile(path + "/InsideCatch.java");
-    checkResultByFile(path + "/InsideCatch-out.java");
-  }
-
+  public void testInsideCatch() throws Exception { doTest(); }
 
   public void testGenerics6() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before6.java");
     checkResultByFile(path + "/after6.java");
   }
 
   public void testWildcardNew1() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before7.java");
     checkResultByFile(path + "/after7.java");
   }
 
   public void testWildcardNew2() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before8.java");
     checkResultByFile(path + "/after8.java");
   }
 
   public void testWildcardEliminated() throws Exception {
-    String path = BASE_PATH + "/generics";
+    String path = "/generics";
 
     configureByFile(path + "/before9.java");
     checkResultByFile(path + "/after9.java");
@@ -379,13 +358,13 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testQualifiedThis() throws Exception { doTest(); }
 
   public void testBug2() throws Exception {
-    configureByFile(BASE_PATH + "/Bug2.java");
+    configureByFile("/Bug2.java");
   }
 
 
   public void testSillyAssignment1() throws Exception {
-    configureByFile(BASE_PATH + "/Silly1.java");
-    checkResultByFile(BASE_PATH + "/Silly1.java");
+    configureByFile("/Silly1.java");
+    checkResultByFile("/Silly1.java");
   }
 
   public void testVarargs1() throws Exception { doTest(); }
@@ -398,7 +377,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testDoubleEmptyArray() throws Exception {
     configureByTestName();
-    checkResultByFile(BASE_PATH + "/"+getTestName(false) + ".java");
+    checkResultByFile("/"+getTestName(false) + ".java");
     assertEquals(2, myItems.length);
   }
 
@@ -486,11 +465,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     assertNull(myItems);
   }
 
-  public void testSmartFinish() throws Throwable {
-    configureByTestName();
-    select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
-    checkResultByTestName();
-  }
+  public void testSmartFinish() throws Throwable { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
   public void testSillyAssignmentInTernary() throws Throwable { doTest(); }
 
@@ -504,9 +479,6 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testAbstractClassTwice() throws Throwable {
     configureByTestName();
-    final int offset = myEditor.getCaretModel().getOffset();
-    select();
-    myEditor.getCaretModel().moveToOffset(offset);
     assertOneElement(myItems);
   }
 
@@ -578,12 +550,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     assertEquals(1, myItems[1].as(PsiTypeLookupItem.class).getBracketsCount());
   }
 
-  public void testInsideStringLiteral() throws Throwable {
-    configureByTestName();
-    assertNull(myItems);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-
-  }
+  public void testInsideStringLiteral() throws Throwable { doAntiTest(); }
 
   public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
@@ -596,8 +563,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testNonStaticInnerClass() throws Throwable {
     configureByTestName();
-    assertNull(myItems);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    assertEmpty(myItems);
+    checkResultByFile("/" + getTestName(false) + ".java");
   }
 
   //todo 2nd completion
@@ -624,8 +591,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testNoNullAfterDot() throws Throwable {
     configureByTestName();
-    assertNull(myItems);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    assertEmpty(myItems);
+    checkResultByFile("/" + getTestName(false) + ".java");
   }
 
   public void testDefaultAnnoMethodValue() throws Throwable { doTest(); }
@@ -737,8 +704,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   private void doAntiTest() throws Exception {
     configureByTestName();
-    assertNull(myItems);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    assertEmpty(myItems);
+    checkResultByFile("/" + getTestName(false) + ".java");
   }
 
   public void testAfterNewWithGenerics() throws Exception {
@@ -762,11 +729,6 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     doActionItemTest();
   }
 
-  public void testAfterNew15() throws Exception {
-    setLanguageLevel(LanguageLevel.JDK_1_5);
-    doActionItemTest();
-  }
-
   public void testInsertOverride() throws Exception {
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
@@ -785,25 +747,19 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testAnnotation() throws Exception {
     doTest();
-    testByCount(8, "ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR", "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
-                "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER", "ElementType.TYPE");
-  }
-
-  @Override
-  protected void checkResultByFile(@NonNls final String filePath) throws Exception {
-    if (myItems != null) {
-      //System.out.println("items = " + Arrays.asList(myItems));
-    }
-    super.checkResultByFile(filePath);
+    assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
+                      "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
+                      "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
+                      "ElementType.TYPE", "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE");
   }
 
   public void testAnnotation2() throws Exception {
     doTest();
-    testByCount(3, "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
+    assertStringItems("RetentionPolicy.CLASS", "RetentionPolicy.RUNTIME", "RetentionPolicy.SOURCE");
   }
   public void testAnnotation2_2() throws Exception {
     doTest();
-    testByCount(3, "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
+    assertSameElements(myFixture.getLookupElementStrings(), "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
   }
 
   public void testAnnotation3() throws Exception {
@@ -817,20 +773,22 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   public void testAnnotation4() throws Exception {
     doTest();
 
-    testByCount(2, "true","false");
+    assertStringItems("false", "true");
   }
 
   public void testAnnotation5() throws Exception {
     doTest();
 
-    testByCount(2, "CONNECTION","NO_CONNECTION");
+    assertStringItems("CONNECTION", "NO_CONNECTION");
   }
 
   public void testAnnotation6() throws Exception {
     doTest();
 
-    testByCount(8, "ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR", "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
-                "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER", "ElementType.TYPE");
+    assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
+                      "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
+                      "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
+                      "ElementType.TYPE", "ElementType.TYPE_PARAMETER", "ElementType.TYPE_USE");
   }
 
   public void testArrayClone() throws Exception {
@@ -871,19 +829,15 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testConstructorArgsSmartEnter() throws Exception {
-    configureByTestName();
-    select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
-    checkResultByTestName();
-  }
+  public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
   private void configureByTestName() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByFile("/" + getTestName(false) + ".java");
   }
 
   public void testIDEADEV13148() throws Exception {
-    configureByFile(BASE_PATH + "/IDEADEV13148.java");
-    testByCount(0);
+    configureByFile("/IDEADEV13148.java");
+    assertStringItems("false", "true"); //todo don't suggest boolean literals in synchronized
   }
 
   public void testOverloadedMethods() throws Throwable {
@@ -989,7 +943,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testInsideGenericClassLiteral() throws Throwable {
     configureByTestName();
-    testByCount(3, "String.class", "StringBuffer.class", "StringBuilder.class");
+    assertStringItems("String.class", "StringBuffer.class", "StringBuilder.class");
   }
 
   public void testArrayAnnoParameter() throws Throwable {
@@ -1025,7 +979,7 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
       performAction();
     }
     if (selectItem) {
-      selectItem(myItems[0]);
+      selectItem(myFixture.getLookupElements()[0]);
     }
     checkResultByTestName();
   }
@@ -1072,34 +1026,22 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   private void checkResultByTestName() throws Exception {
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setType(CompletionType.SMART);
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.5");
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.SMART);
   }
 
   private void select() {
     select(Lookup.NORMAL_SELECT_CHAR);
   }
 
-  private static void select(final char c) {
-    if (c != '\n' && c != '\t' && c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      type(c);
-      return;
-    }
-
-    final LookupManagerImpl manager = (LookupManagerImpl) LookupManager.getInstance(getProject());
-    final Lookup lookup = manager.getActiveLookup();
-    if(lookup != null) {
-      manager.forceSelection(c, lookup.getCurrentItem());
+  private void select(final char c) {
+    final Lookup lookup = getLookup();
+    if (lookup != null) {
+      selectItem(lookup.getCurrentItem(), c);
     }
   }
+
 }

@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -28,7 +29,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   }
 
   protected void configureByFile(String path) {
-    myFixture.configureByFile(path);
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
     complete();
   }
 
@@ -47,7 +48,7 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   protected void selectItem(LookupElement item, final char completionChar) {
     final LookupImpl lookup = getLookup();
     lookup.setCurrentItem(item);
-    if (completionChar == 0 || completionChar == '\n' || completionChar == '\t') {
+    if (completionChar == 0 || completionChar == '\n' || completionChar == '\t' || completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       new WriteCommandAction.Simple(getProject()) {
         @Override
         protected void run() throws Throwable {
