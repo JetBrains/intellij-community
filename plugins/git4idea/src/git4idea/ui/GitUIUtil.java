@@ -15,6 +15,7 @@
  */
 package git4idea.ui;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -52,25 +52,19 @@ public class GitUIUtil {
   /**
    * A private constructor for utility class
    */
-  private GitUIUtil() {
-  }
+  private GitUIUtil() { }
 
   /**
    * @return a list cell renderer for virtual files (it renders presentable URL)
+   * @param listCellRenderer
    */
-  public static ListCellRenderer getVirtualFileListCellRenderer() {
-    return new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        VirtualFile file = (VirtualFile)value;
-        String text = file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl();
-        return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+  public static ListCellRenderer getVirtualFileListCellRenderer(final ListCellRenderer listCellRenderer) {
+    return new ListCellRendererWrapper<VirtualFile>(listCellRenderer) {
+      @Override
+      public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
+        setText(file == null || !file.isValid() ? "(invalid)" : file.getPresentableUrl());
       }
     };
-
   }
 
   /**
@@ -87,20 +81,19 @@ public class GitUIUtil {
    * Create list cell renderer for remotes. It shows both name and url and highlights the default
    * remote for the branch with bold.
    *
+   *
    * @param defaultRemote a default remote
    * @param fetchUrl      if true, the fetch url is shown
+   * @param listCellRenderer
    * @return a list cell renderer for virtual files (it renders presentable URL
    */
-  public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl) {
-    return new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final GitRemote remote = (GitRemote)value;
-        String text;
-        if (value == null) {
+  public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl,
+                                                              final ListCellRenderer listCellRenderer) {
+    return new ListCellRendererWrapper<GitRemote>(listCellRenderer) {
+      @Override
+      public void customize(final JList list, final GitRemote remote, final int index, final boolean selected, final boolean hasFocus) {
+        final String text;
+        if (remote == null) {
           text = GitBundle.getString("util.remote.renderer.none");
         }
         else if (".".equals(remote.name())) {
@@ -116,12 +109,10 @@ public class GitUIUtil {
           }
           text = GitBundle.message(key, remote.name(), fetchUrl ? remote.fetchUrl() : remote.pushUrl());
         }
-        return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+        setText(text);
       }
     };
-
   }
-
 
   /**
    * Setup root chooser with specified elements and link selection to the current branch label.
@@ -140,7 +131,7 @@ public class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
+    gitRootChooser.setRenderer(getVirtualFileListCellRenderer(gitRootChooser.getRenderer()));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
@@ -255,7 +246,6 @@ public class GitUIUtil {
 
   }
 
-
   /**
    * Setup remotes combobox. The default remote for the current branch is selected by default.
    *
@@ -276,7 +266,7 @@ public class GitUIUtil {
       if (currentBranch != null) {
         remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
       }
-      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl));
+      remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl, remoteCombobox.getRenderer()));
       GitRemote toSelect = null;
       remoteCombobox.removeAllItems();
       for (GitRemote r : remotes) {
