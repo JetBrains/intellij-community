@@ -225,12 +225,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       Annotation annotation = myHolder.createInfoAnnotation(elt, null);
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
-        if (!(parent instanceof GrCall)) {
-          registerCreateClassByTypeFix(referenceExpression, annotation);
-          registerAddImportFixes(referenceExpression, annotation);
+        if (parent instanceof GrMethodCall) {
+          registerStaticImportFix(referenceExpression, annotation);
         }
         else {
-          registerStaticImportFix(referenceExpression, annotation);
+          registerCreateClassByTypeFix(referenceExpression, annotation);
+          registerAddImportFixes(referenceExpression, annotation);
         }
       }
       else {
