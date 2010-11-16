@@ -50,7 +50,6 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           quickFix.addStatement(st);
         }
       }
-      
       if (quickFix == null) {
         return;
       }
