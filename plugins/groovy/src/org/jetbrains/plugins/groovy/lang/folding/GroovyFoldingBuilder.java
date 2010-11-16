@@ -102,38 +102,40 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     final String quote = GrStringUtil.getStartQuote(node.getText());
     final FoldingGroup group = FoldingGroup.newGroup("GString");
     final TextRange nodeRange = node.getTextRange();
-    int start = nodeRange.getStartOffset();
+    int startOffset = nodeRange.getStartOffset();
 
 
     GrStringInjection injection = injections[0];
     boolean hasClosableBlock = injection.getClosableBlock() != null;
     final String holderText = quote + "..." + (hasClosableBlock ? "${" : "$");
     TextRange injectionRange = injection.getTextRange();
-    descriptors.add(new FoldingDescriptor(node, new TextRange(start, injectionRange.getStartOffset() + (hasClosableBlock ? 2 : 1)), group) {
+    descriptors.add(new FoldingDescriptor(node, new TextRange(startOffset, injectionRange.getStartOffset() + (hasClosableBlock ? 2 : 1)), group) {
       @Override
       public String getPlaceholderText() {
         return holderText;
       }
     });
-    start = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+    startOffset = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
     for (int i = 1; i < injections.length; i++) {
       injection = injections[i];
       boolean hasClosableBlockNew = injection.getClosableBlock() != null;
       injectionRange = injection.getTextRange();
       final String text = (hasClosableBlock ? "}" : "") + "..." + (hasClosableBlockNew ? "${" : "$");
-      descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(),
-                                            new TextRange(start, injectionRange.getStartOffset() + (hasClosableBlockNew ? 2 : 1)), group) {
-        @Override
-        public String getPlaceholderText() {
-          return text;
-        }
-      });
-
+      final int endOffset = injectionRange.getStartOffset() + (hasClosableBlockNew ? 2 : 1);
+      if (endOffset - startOffset >= 2) {
+        descriptors.add(new FoldingDescriptor(injection.getNode().getTreePrev(),
+                                              new TextRange(startOffset, endOffset), group) {
+          @Override
+          public String getPlaceholderText() {
+            return text;
+          }
+        });
+      }
       hasClosableBlock = hasClosableBlockNew;
-      start = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
+      startOffset = injectionRange.getEndOffset() - (hasClosableBlock ? 1 : 0);
     }
     final String text = (hasClosableBlock ? "}" : "") + "..." + quote;
-    descriptors.add(new FoldingDescriptor(node.getLastChildNode(), new TextRange(start, nodeRange.getEndOffset()), group) {
+    descriptors.add(new FoldingDescriptor(node.getLastChildNode(), new TextRange(startOffset, nodeRange.getEndOffset()), group) {
       @Override
       public String getPlaceholderText() {
         return text;
