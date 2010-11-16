@@ -740,10 +740,7 @@ class PyDB:
         """
         self.processInternalCommands()
 
-        try:
-            message = thread.additionalInfo.message
-        except:
-            message = None
+        message = getattr(thread.additionalInfo, "message", None)
 
         cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
@@ -1033,7 +1030,7 @@ def processCommandLine(argv):
             retVal['server'] = True
         elif (argv[i] == '--file'):
             del argv[i]            
-            retVal['file'] = argv[i];
+            retVal['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
         elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
             del argv[i]            
@@ -1047,8 +1044,6 @@ def usage(doExit=0):
     sys.stdout.write('pydevd.py --port=N [(--client hostname) | --server] --file executable [file_options]\n')
     if doExit:
         sys.exit(0)
-
-
 
 def SetTraceForParents(frame, dispatch_func):
     frame = frame.f_back

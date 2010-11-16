@@ -224,12 +224,18 @@ class DictResolver:
 
         raise UnableToResolveVariableException()
 
+    def keyStr(self, key):
+        if isinstance(key, str):
+            return "'%s'"%key
+        else:
+            return key
+
     def getDictionary(self, dict):
         ret = {}
 
         for key, val in dict.items():
             #we need to add the id because otherwise we cannot find the real object to get its contents later on.
-            key = '%s (%s)' % (key, id(key))
+            key = '%s (%s)' % (self.keyStr(key), id(key))
             ret[key] = val
 
         ret['__len__'] = len(dict)
