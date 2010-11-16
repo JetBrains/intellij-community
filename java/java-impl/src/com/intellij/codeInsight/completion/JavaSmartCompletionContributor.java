@@ -164,7 +164,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (final LookupElement item : completeReference(element, reference, filter, true, parameters)) {
               if (item.getObject() instanceof PsiClass) {
-                result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
+                result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.SMART_INSTANCE), infos));
               }
             }
           }
@@ -530,7 +530,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
 
-    result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
+    result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE) : item, infos));
   }
 
   static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses, CompletionParameters parameters) {
@@ -541,7 +541,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (reference instanceof PsiJavaReference) {
       final PsiJavaReference javaReference = (PsiJavaReference)reference;
 
-      return JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
+      return   JavaCompletionUtil.processJavaReference(element, javaReference, new ElementFilter() {
         public boolean isAcceptable(Object element, PsiElement context) {
           return filter.isAcceptable(element, context);
         }
