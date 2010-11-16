@@ -161,78 +161,75 @@ public class TrafficProgressPanel extends JPanel {
 
   public void updatePanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     if (status == null) return;
-    if (PowerSaveMode.isEnabled()) {
-      statusLabel.setText("Code analysis is disabled in power save mode");
-      myPassStatuses.setVisible(false);
-      statistics.setText("");
-      return;
-    }
-    if (status.errorAnalyzingFinished) {
-      statusLabel.setText(DaemonBundle.message("analysis.completed"));
-      myPassStatuses.setVisible(true);
-      setPassesEnabled(false, Boolean.TRUE);
-      return;
-    }
-    if (!status.enabled) {
-      statusLabel.setText("Code analysis has been suspended");
-      myPassStatuses.setVisible(true);
-      setPassesEnabled(false, Boolean.FALSE);
-      statistics.setText("");
-      return;
-    }
-    if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
-      statusLabel.setText(DaemonBundle.message("analysis.hasnot.been.run"));
-      myPassStatuses.setVisible(true);
-      setPassesEnabled(false, Boolean.FALSE);
-      statistics.setText("");
-      return;
-    }
-
-    statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
-    myPassStatuses.setVisible(true);
-    setPassesEnabled(true, null);
-
-    if (!status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
-      // passes set has changed
-      rebuildPassesPanel(status);
-    }
-
-    for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
-      double progress = pass.getProgress();
-      Pair<JProgressBar, JLabel> pair = passes.get(pass);
-      JProgressBar progressBar = pair.first;
-      int percent = (int)Math.round(progress * MAX);
-      progressBar.setValue(percent);
-      JLabel percentage = pair.second;
-      percentage.setText(percent + "%");
-    }
-
-    int currentSeverityErrors = 0;
-    @Language("HTML")
-    String text = "<html><body>";
-    for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] > 0) {
-        final HighlightSeverity severity = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
-        String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
-        text +=  status.errorAnalyzingFinished
-                ? DaemonBundle.message("errors.found", status.errorCount[i], name)
-                : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
-        text += "<br>";
-        currentSeverityErrors += status.errorCount[i];
+    try {
+      if (PowerSaveMode.isEnabled()) {
+        statusLabel.setText("Code analysis is disabled in power save mode");
+        myPassStatuses.setVisible(false);
+        statistics.setText("");
+      } else if (status.errorAnalyzingFinished) {
+        statusLabel.setText(DaemonBundle.message("analysis.completed"));
+        myPassStatuses.setVisible(true);
+        setPassesEnabled(false, Boolean.TRUE);
+      } else if (!status.enabled) {
+        statusLabel.setText("Code analysis has been suspended");
+        myPassStatuses.setVisible(true);
+        setPassesEnabled(false, Boolean.FALSE);
+        statistics.setText("");
+      } else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+        statusLabel.setText(DaemonBundle.message("analysis.hasnot.been.run"));
+        myPassStatuses.setVisible(true);
+        setPassesEnabled(false, Boolean.FALSE);
+        statistics.setText("");
+      } else {
+        statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
+        myPassStatuses.setVisible(true);
+        setPassesEnabled(true, null);
       }
-    }
-    if (currentSeverityErrors == 0) {
-      text += status.errorAnalyzingFinished
-              ? DaemonBundle.message("no.errors.or.warnings.found")
-              : DaemonBundle.message("no.errors.or.warnings.found.so.far") + "<br>";
-    }
-    statistics.setText(text);
 
-    if (isFake) {
-      myEmptyPassStatuses.setPreferredSize(myPassStatuses.getPreferredSize());
-      myPassStatusesContainer.setContent(myEmptyPassStatuses);
-    } else {
-      myPassStatusesContainer.setContent(myPassStatuses);
+
+      if (!status.passStati.equals(new ArrayList<ProgressableTextEditorHighlightingPass>(passes.keySet()))) {
+        // passes set has changed
+        rebuildPassesPanel(status);
+      }
+
+      for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
+        double progress = pass.getProgress();
+        Pair<JProgressBar, JLabel> pair = passes.get(pass);
+        JProgressBar progressBar = pair.first;
+        int percent = (int)Math.round(progress * MAX);
+        progressBar.setValue(percent);
+        JLabel percentage = pair.second;
+        percentage.setText(percent + "%");
+      }
+
+      int currentSeverityErrors = 0;
+      @Language("HTML")
+      String text = "<html><body>";
+      for (int i = status.errorCount.length - 1; i >= 0; i--) {
+        if (status.errorCount[i] > 0) {
+          final HighlightSeverity severity = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
+          String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+          text +=  status.errorAnalyzingFinished
+                  ? DaemonBundle.message("errors.found", status.errorCount[i], name)
+                  : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
+          text += "<br>";
+          currentSeverityErrors += status.errorCount[i];
+        }
+      }
+      if (currentSeverityErrors == 0) {
+        text += status.errorAnalyzingFinished
+                ? DaemonBundle.message("no.errors.or.warnings.found")
+                : DaemonBundle.message("no.errors.or.warnings.found.so.far") + "<br>";
+      }
+      statistics.setText(text);
+    }
+    finally {
+      if (isFake) {
+        myEmptyPassStatuses.setPreferredSize(myPassStatuses.getPreferredSize());
+        myPassStatusesContainer.setContent(myEmptyPassStatuses);
+      } else {
+        myPassStatusesContainer.setContent(myPassStatuses);
+      }
     }
   }
 
