@@ -682,7 +682,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected void declareNecessaryVariablesAfterCall(final PsiVariable outputVariable) throws IncorrectOperationException {
       if (myMultipleExitPoints) {
-        final String object = StringUtil.decapitalize(myInnerClassName);
+        final String object = JavaCodeStyleManager.getInstance(myProject).suggestUniqueVariableName(StringUtil.decapitalize(myInnerClassName), outputVariable, true);
         final PsiStatement methodCallStatement = PsiTreeUtil.getParentOfType(getMethodCall(), PsiStatement.class);
         LOG.assertTrue(methodCallStatement != null);
         final PsiStatement declarationStatement = myElementFactory

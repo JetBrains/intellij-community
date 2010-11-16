@@ -43,7 +43,7 @@ public class LightTreeUtil {
   @NotNull
   public static LighterASTNode requiredChildOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
     final LighterASTNode child = firstChildOfType(tree, node, type);
-    assert child != null : "Required child " + type + " not found in " + node;
+    assert child != null : "Required child " + type + " not found in " + node.getTokenType() + ": " + tree.getChildren(node);
     return child;
   }
 

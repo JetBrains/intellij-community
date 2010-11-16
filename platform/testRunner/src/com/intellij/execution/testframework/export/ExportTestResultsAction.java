@@ -257,7 +257,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
     else {
       Source xslSource;
       if (config.getExportFormat() == ExportTestResultsConfiguration.ExportFormat.BundledTemplate) {
-        URL bundledXsltUrl = getClass().getResource("junit-noframes.xsl");
+        URL bundledXsltUrl = getClass().getResource("intellij-export.xsl");
         xslSource = new StreamSource(URLUtil.openStream(bundledXsltUrl));
       }
       else {

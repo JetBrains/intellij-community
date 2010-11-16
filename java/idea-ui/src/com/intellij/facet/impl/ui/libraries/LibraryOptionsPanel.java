@@ -15,12 +15,13 @@
  */
 package com.intellij.facet.impl.ui.libraries;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
@@ -65,6 +66,7 @@ public class LibraryOptionsPanel {
   private JRadioButton myDownloadRadioButton;
   private JRadioButton myUseLibraryRadioButton;
   private JLabel myUseLibraryLabel;
+  private JLabel myHiddenLabel;
   private ButtonGroup myButtonGroup;
 
   private final LibraryCompositionSettings mySettings;
@@ -135,6 +137,10 @@ public class LibraryOptionsPanel {
       myUseLibraryRadioButton.setVisible(false);
       myUseLibraryLabel.setVisible(true);
     }
+
+    final Dimension minimumSize = new Dimension(-1, myMessageLabel.getFontMetrics(myMessageLabel.getFont()).getHeight() * 2);
+    myMessageLabel.setMinimumSize(minimumSize);
+    myHiddenLabel.setMinimumSize(minimumSize);
 
     myCreateButton.addActionListener(new ActionListener() {
       @Override
@@ -215,6 +221,7 @@ public class LibraryOptionsPanel {
 
   private void updateState() {
     myMessageLabel.setIcon(null);
+    myConfigureButton.setVisible(true);
     String message = "";
     boolean showConfigurePanel = true;
     switch (myButtonEnumModel.getSelected()) {
@@ -226,14 +233,12 @@ public class LibraryOptionsPanel {
         if (item == null) {
           myMessageLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
           message = "<b>Error:</b> library is not specified";
+          myConfigureButton.setVisible(false);
         }
         else if (item instanceof NewLibraryEditor) {
           final LibraryEditor libraryEditor = (LibraryEditor)item;
-          message = MessageFormat.format("{0} level library <b>{1}</b>" +
-                                         " with {2} file(s) will be created",
-                                         mySettings.getNewLibraryLevel(),
-                                         libraryEditor.getName(),
-                                         libraryEditor.getFiles(OrderRootType.CLASSES).length);
+          message = IdeBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
+                                      libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
         else {
           message = MessageFormat.format("<b>{0}</b> library will be used", ((ExistingLibraryEditor)item).getName());
@@ -243,9 +248,13 @@ public class LibraryOptionsPanel {
         showConfigurePanel = false;
     }
 
-    if (!showConfigurePanel && mySettings.getDownloadSettings() != null) {
-        //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
-        message = getDownloadFilesMessage();
+    //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
+    if (mySettings.getDownloadSettings() != null) {
+      myHiddenLabel.setText(getDownloadFilesMessage());
+    }
+    else {
+      myHiddenLabel.setText(IdeBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
+                                              "name", 10));
     }
     ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");
     myMessageLabel.setText("<html>" + message + "</html>");

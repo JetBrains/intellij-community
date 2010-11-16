@@ -68,9 +68,11 @@ public class RecordUtil {
       if (child.getTokenType() == JavaElementType.ANNOTATION) {
         final LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, child, JavaElementType.JAVA_CODE_REFERENCE);
         if (ref != null) {
-          final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, ref, JavaTokenType.IDENTIFIER);
-          final String name = intern(tree.getCharTable(), id);
-          if (DEPRECATED_ANNOTATION_NAME.equals(name)) return true;
+          final LighterASTNode id = LightTreeUtil.firstChildOfType(tree, ref, JavaTokenType.IDENTIFIER);
+          if (id != null) {
+            final String name = intern(tree.getCharTable(), id);
+            if (DEPRECATED_ANNOTATION_NAME.equals(name)) return true;
+          }
         }
       }
     }

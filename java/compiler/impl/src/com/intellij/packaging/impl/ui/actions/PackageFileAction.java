@@ -27,16 +27,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
-import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.SyncDateFormat;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class PackageFileAction extends AnAction {
+  private static final SyncDateFormat TIME_FORMAT = new SyncDateFormat(new SimpleDateFormat("h:mm:ss a"));
+
   public PackageFileAction() {
     super(CompilerBundle.message("action.name.package.file"), CompilerBundle.message("action.description.package.file"), null);
   }
@@ -121,7 +124,7 @@ public class PackageFileAction extends AnAction {
         if (fileNames.length() != 0) fileNames.append(", ");
         fileNames.append("'").append(file.getName()).append("'");
       }
-      String time = DateFormatUtil.formatDateTime(Clock.getTime());
+      String time = TIME_FORMAT.format(Clock.getTime());
       final String statusText = CompilerBundle.message("status.text.file.has.been.packaged", files.size(), fileNames, time);
       WindowManager.getInstance().getStatusBar(project).setInfo(statusText);
     }

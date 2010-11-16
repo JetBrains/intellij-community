@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.util.*;
 import java.util.List;
 
 public class ElementsChooser<T> extends JPanel {
-  private Table myTable = null;
+  private JBTable myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
   private final List<ElementsMarkListener<T>> myListeners = new ArrayList<ElementsMarkListener<T>>();
@@ -95,7 +96,7 @@ public class ElementsChooser<T> extends JPanel {
       JComponent.WHEN_FOCUSED
     );
 
-    final SpeedSearchBase<Table> speedSearch = new SpeedSearchBase<Table>(myTable) {
+    final SpeedSearchBase<JBTable> speedSearch = new SpeedSearchBase<JBTable>(myTable) {
       public int getSelectedIndex() {
         return myTable.getSelectedRow();
       }
@@ -132,6 +133,15 @@ public class ElementsChooser<T> extends JPanel {
     };
     speedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
     setElements(elements, marked);
+    installActions(myTable);
+  }
+
+  private static void installActions(JTable table) {
+    InputMap inputMap = table.getInputMap(WHEN_FOCUSED);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "selectLastRow");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "selectFirstRow");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
   }
 
   public void setSingleSelectionMode() {

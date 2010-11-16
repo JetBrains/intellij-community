@@ -27,6 +27,7 @@ import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -35,11 +36,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.xml.XmlContentDFA;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -66,7 +69,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     try {
       final XmlTag contextTag = getContextTag(editor, file);
       if (contextTag == null) {
@@ -91,7 +94,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             protected void run() {
               if (selected == null) return;
               XmlTag newTag = createTag(contextTag, selected);
-              newTag = contextTag.addSubTag(newTag, false);
+
+              PsiElement anchor = getAnchor(contextTag, editor, selected);
+              if (anchor == null) { // insert it in the cursor position
+                int offset = editor.getCaretModel().getOffset();
+                Document document = editor.getDocument();
+                document.insertString(offset, newTag.getText());
+                PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+                newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
+              }
+              else {
+                newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
+              }
               generateTag(newTag);
             }
           }.execute();
@@ -124,6 +138,31 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       HintManager.getInstance().showErrorHint(editor, e.getMessage());
     }
+  }
+
+  @Nullable
+  private static XmlTag getAnchor(XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+    XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
+    int offset = editor.getCaretModel().getOffset();
+    if (contentDFA == null) {
+      return null;
+    }
+    XmlTag anchor = null;
+    boolean previousPositionIsPossible = true;
+    for (XmlTag subTag : contextTag.getSubTags()) {
+      if (contentDFA.getPossibleElements().contains(selected)) {
+        if (subTag.getTextOffset() > offset) {
+          break;
+        }
+        anchor = subTag;
+        previousPositionIsPossible = true;
+      }
+      else {
+        previousPositionIsPossible = false;
+      }
+      contentDFA.transition(subTag);
+    }
+    return previousPositionIsPossible ? null : anchor;
   }
 
   public static void generateTag(XmlTag newTag) {

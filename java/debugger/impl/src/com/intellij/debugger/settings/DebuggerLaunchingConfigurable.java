@@ -77,7 +77,7 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     final DebuggerSettings currentSettings = DebuggerSettings.getInstance();
     final DebuggerSettings debuggerSettings = currentSettings.clone();
     getSettingsTo(debuggerSettings);
-    return !debuggerSettings.equals(currentSettings) && Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") != myFocusAppCheckBox.isSelected();
+    return !debuggerSettings.equals(currentSettings) || Registry.is("debugger.mayBringFrameToFrontOnBreakpoint") != myFocusAppCheckBox.isSelected();
   }
 
   public String getDisplayName() {

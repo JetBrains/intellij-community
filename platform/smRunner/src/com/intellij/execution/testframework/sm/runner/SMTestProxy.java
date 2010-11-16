@@ -228,6 +228,7 @@ public class SMTestProxy extends AbstractTestProxy {
    * @return null if duration is unknown, otherwise duration value in milliseconds;
    */
   @Nullable
+  @Override
   public Integer getDuration() {
     // Returns duration value for tests
     // or cached duration for suites
@@ -244,6 +245,11 @@ public class SMTestProxy extends AbstractTestProxy {
     myDurationIsCached = true;
 
     return myDuration;
+  }
+
+  @Override
+  public boolean shouldSkipRootNodeForExport() {
+    return true;
   }
 
   /**
@@ -497,6 +503,8 @@ public class SMTestProxy extends AbstractTestProxy {
     }
     return myIsEmpty;
   }
+
+
 
   @Nullable
   private Integer calcSuiteDuration() {

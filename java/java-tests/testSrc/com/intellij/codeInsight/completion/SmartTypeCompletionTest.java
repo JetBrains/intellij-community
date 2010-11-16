@@ -985,6 +985,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     doItemTest();
   }
 
+  public void testDuplicateMembersFromSuperClass() throws Throwable { doActionTest(); }
+
   public void testInsideGenericClassLiteral() throws Throwable {
     configureByTestName();
     testByCount(3, "String.class", "StringBuffer.class", "StringBuilder.class");
