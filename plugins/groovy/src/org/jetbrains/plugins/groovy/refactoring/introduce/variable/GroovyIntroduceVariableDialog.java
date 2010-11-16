@@ -30,27 +30,26 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
-import java.util.EventListener;
-import java.util.HashMap;
+import java.util.*;
 
-public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog {
+public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
 
   private final Project myProject;
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
   private final GroovyIntroduceVariableBase.Validator myValidator;
-  private HashMap<String, PsiType> myTypeMap = null;
+  private Map<String, PsiType> myTypeMap = null;
   private final EventListenerList myListenerList = new EventListenerList();
 
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
@@ -282,7 +281,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
       return myEnteredName;
     }
 
-    public boolean replaceAllOccurences() {
+    public boolean replaceAllOccurrences() {
       return myIsReplaceAllOccurrences;
     }
 

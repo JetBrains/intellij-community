@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
@@ -23,6 +24,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -31,6 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -98,7 +104,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
     // gathering data for introduce variable
-    GroovyIntroduceVariableBase introduceVariableBase = new GroovyIntroduceVariableHandler();
+    final GroovyIntroduceVariableBase introduceVariableBase = new GroovyIntroduceVariableHandler();
 
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) myFixture.getFile()), startOffset, endOffset, GrExpression.class);
 
@@ -107,8 +113,8 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences((GrExpression)PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
-    String varName = "preved";
+    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+    final String varName = "preved";
     final PsiType varType;
     if (explicitType) {
       varType = selectedExpr.getType();
@@ -116,15 +122,37 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     else {
       varType = null;
     }
-    final GrVariableDeclaration varDecl = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(new String[0],
-                                                                                                                      (GrExpression)PsiUtil
-                                                                                                                        .skipParentheses(
-                                                                                                                          selectedExpr,
-                                                                                                                          false), varType, varName);
 
-    introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),
-        occurences, varName, varType, replaceAllOccurences, varDecl);
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    final GrIntroduceContext context = new GrIntroduceContext(getProject(), myEditor, selectedExpr, occurences, tempContainer);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        introduceVariableBase.runRefactoring(context, new GroovyIntroduceVariableSettings() {
+          @Override
+          public boolean isDeclareFinal() {
+            return false;
+          }
+
+          @Nullable
+          @Override
+          public PsiType getSelectedType() {
+            return varType;
+          }
+
+          @Override
+          public String getName() {
+            return varName;
+          }
+
+          @Override
+          public boolean replaceAllOccurrences() {
+            return replaceAllOccurences;
+          }
+        });
+        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      }
+    });
+
 
     result = myEditor.getDocument().getText();
     int caretOffset = myEditor.getCaretModel().getOffset();

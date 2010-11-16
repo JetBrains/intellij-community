@@ -29,7 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureHandler;
 import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler;
-import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableHandler;
 
 /**
  * @author ilyas
@@ -71,5 +72,10 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
     final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
     return scopeElements.length == 1 ||
            scopeElements.length == 2 && (scopeElements[0] instanceof GrDocComment ^ scopeElements[1] instanceof GrDocComment);
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceConstantHandler() {
+    return new GrIntroduceConstantHandler();
   }
 }

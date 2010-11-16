@@ -27,6 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -76,9 +78,6 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
     myEditor.getSelectionModel().setSelection(startOffset, endOffset);
 
-    // gathering data for introduce variable
-    GroovyIntroduceVariableBase introduceVariableBase = new GroovyIntroduceVariableHandler();
-
     GrExpression selectedExpr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) myFixture.getFile()), startOffset, endOffset, GrExpression.class);
 
     Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
@@ -86,10 +85,11 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
     final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
     Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences((GrExpression)PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
     String varName = "preved";
-    GroovyVariableValidator validator = new GroovyVariableValidator(introduceVariableBase, getProject(), selectedExpr, occurences, (GroovyPsiElement)tempContainer);
-      result = validator.isOKTest(varName, replaceAllOccurences);
+    GroovyVariableValidator validator =
+      new GroovyVariableValidator(new GrIntroduceContext(getProject(), myEditor, selectedExpr, occurences, tempContainer));
+    result = validator.isOKTest(varName, replaceAllOccurences);
     return result;
   }
 

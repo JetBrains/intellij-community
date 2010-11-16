@@ -30,10 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -45,17 +45,19 @@ public class GroovyNameSuggestionUtil {
   private GroovyNameSuggestionUtil() {
   }
 
-  public static String[] suggestVariableNames(GrExpression expr,
-                                              NameValidator validator) {
-    ArrayList<String> possibleNames = new ArrayList<String>();
+  public static String[] suggestVariableNames(GrExpression expr, NameValidator validator) {
+    return suggestVariableNames(expr, validator, false);
+  }
+
+  public static String[] suggestVariableNames(GrExpression expr, NameValidator validator, boolean forStaticVariable) {
+    Set<String> possibleNames = new LinkedHashSet<String>();
     PsiType type = expr.getType();
-    generateNameByExpr(expr, possibleNames, validator);
+    generateNameByExpr(expr, possibleNames, validator, forStaticVariable);
     if (type != null && !PsiType.VOID.equals(type)) {
       generateVariableNameByTypeInner(type, possibleNames,validator);
     }
-    while (possibleNames.contains("")) {
-      possibleNames.remove("");
-    }
+
+    possibleNames.remove("");
     if (possibleNames.size() == 0) {
       possibleNames.add(validator.validateName("var", true));
     }
@@ -63,12 +65,12 @@ public class GroovyNameSuggestionUtil {
   }
 
   public static String[] suggestVariableNameByType(PsiType type, NameValidator validator) {
-    ArrayList<String> possibleNames=new ArrayList<String>();
+    Set<String> possibleNames = new LinkedHashSet<String>();
     generateVariableNameByTypeInner(type, possibleNames, validator);
-    return possibleNames.toArray(new String[possibleNames.size()]);
+    return ArrayUtil.toStringArray(possibleNames);
   }
 
-  private static void generateVariableNameByTypeInner(PsiType type, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateVariableNameByTypeInner(PsiType type, Set<String> possibleNames, NameValidator validator) {
     String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
     if (unboxed != null && !unboxed.equals(type.getCanonicalText())) {
       String name = generateNameForBuiltInType(unboxed);
@@ -82,7 +84,7 @@ public class GroovyNameSuggestionUtil {
     }
   }
 
-  private static void generateNameByExpr(GrExpression expr, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
     if (expr instanceof GrThisReferenceExpression) {
       possibleNames.add(validator.validateName("thisInstance", true));
     }
@@ -102,11 +104,46 @@ public class GroovyNameSuggestionUtil {
       }
     }
     if (expr instanceof GrMethodCallExpression) {
-      generateNameByExpr(((GrMethodCallExpression) expr).getInvokedExpression(), possibleNames, validator);
+      generateNameByExpr(((GrMethodCallExpression) expr).getInvokedExpression(), possibleNames, validator, forStaticVariable);
+    }
+    if (expr instanceof GrLiteral) {
+      final Object value = ((GrLiteral)expr).getValue();
+      if (value instanceof String) {
+        generateNameByString(possibleNames, (String)value, forStaticVariable, expr.getProject());
+      }
     }
   }
 
-  private static void generateByType(PsiType type, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateNameByString(Set<String> possibleNames, String value, boolean forStaticVariable, Project project) {
+    if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(value)) return;
+    if (forStaticVariable) {
+      StringBuffer buffer = new StringBuffer(value.length() + 10);
+      char[] chars = new char[value.length()];
+      value.getChars(0, value.length(), chars, 0);
+      boolean wasLow = Character.isLowerCase(chars[0]);
+
+      buffer.append(Character.toUpperCase(chars[0]));
+      for (int i = 1; i < chars.length; i++) {
+        if (Character.isUpperCase(chars[i])) {
+          if (wasLow) {
+            buffer.append('_');
+            wasLow = false;
+          }
+        }
+        else {
+          wasLow = true;
+        }
+
+        buffer.append(Character.toUpperCase(chars[i]));
+      }
+      possibleNames.add(buffer.toString());
+    }
+    else {
+      possibleNames.add(value);
+    }
+  }
+
+  private static void generateByType(PsiType type, Set<String> possibleNames, NameValidator validator) {
     String typeName = type.getPresentableText();
     generateNamesForCollectionType(type, possibleNames, validator);
     generateNamesForArrayType(type, possibleNames, validator);
@@ -126,7 +163,7 @@ public class GroovyNameSuggestionUtil {
     }
   }
 
-  private static void generateNamesForExceptions(PsiType type, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateNamesForExceptions(PsiType type, Set<String> possibleNames, NameValidator validator) {
     if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ERROR)) {
       possibleNames.add(validator.validateName("error", true));
     }
@@ -135,7 +172,7 @@ public class GroovyNameSuggestionUtil {
     }
   }
 
-  private static void generateNamesForArrayType(PsiType type, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateNamesForArrayType(PsiType type, Set<String> possibleNames, NameValidator validator) {
     int arrayDim = type.getArrayDimensions();
     if (arrayDim == 0) return;
     PsiType deepType = type.getDeepComponentType();
@@ -154,7 +191,7 @@ public class GroovyNameSuggestionUtil {
     possibleNames.add(validator.validateName(candidateName, true));
   }
 
-  private static void generateNamesForCollectionType(PsiType type, ArrayList<String> possibleNames, NameValidator validator) {
+  private static void generateNamesForCollectionType(PsiType type, Set<String> possibleNames, NameValidator validator) {
     PsiType componentType = getCollectionComponentType(type, validator.getProject());
     if (!(type instanceof PsiClassType) || componentType == null) return;
     PsiClass clazz = ((PsiClassType) type).resolve();
@@ -191,7 +228,7 @@ public class GroovyNameSuggestionUtil {
     return typeName;
   }
 
-  private static void generateCamelNames(ArrayList<String> possibleNames, NameValidator validator, String typeName) {
+  private static void generateCamelNames(Set<String> possibleNames, NameValidator validator, String typeName) {
     ArrayList<String> camelTokens = GroovyNamesUtil.camelizeString(typeName);
     Collections.reverse(camelTokens);
     if (camelTokens.size() > 0) {

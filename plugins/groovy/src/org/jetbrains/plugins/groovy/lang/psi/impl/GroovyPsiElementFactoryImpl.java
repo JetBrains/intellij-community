@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,12 +136,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrVariableDeclaration createVariableDeclaration(String[] modifiers,
-                                                         GrExpression initializer,
-                                                         PsiType type,
+  public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
+                                                         @Nullable GrExpression initializer,
+                                                         @Nullable PsiType type,
                                                          String... identifiers) {
     StringBuffer text = writeModifiers(modifiers);
-    text.append("def ");
+    if (modifiers == null || modifiers.length == 0) {
+      text.append("def ");
+    }
     if (type != null) {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
       final String typeText = getTypeText(type);
@@ -331,7 +334,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText) {
-    String classText = "";
+    String classText;
     if (Character.isLowerCase(typeText.charAt(0))) {
       classText = "class A { def " + typeText + " " + name + "}";
     } else {

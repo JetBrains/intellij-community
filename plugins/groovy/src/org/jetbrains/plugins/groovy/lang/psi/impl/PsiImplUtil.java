@@ -200,7 +200,6 @@ public class PsiImplUtil {
       throw new IllegalArgumentException();
     }
 
-    final ASTNode varDeclNode = varDecl.getNode();
     final PsiElement parent = varDecl.getParent();
     final ASTNode owner = parent.getNode();
     if (variables.size() == 1 && owner != null) {
@@ -211,20 +210,15 @@ public class PsiImplUtil {
       while (next != null && next.getNode() != null && next.getNode().getElementType() == mSEMI) {
         PsiElement tmpNext = next.getNextSibling();
         //noinspection ConstantConditions
-        owner.removeChild(next.getNode());
+        next.delete();
         next = tmpNext;
       }
 
       removeNewLineAfter(varDecl);
-      owner.removeChild(varDeclNode);
-      PsiUtil.reformatCode(parent);
+      varDecl.delete();
       return;
     }
-    final ASTNode varNode = variable.getNode();
-    if (varNode != null) {
-      varDeclNode.removeChild(varNode);
-    }
-    PsiUtil.reformatCode(varDecl);
+    variable.delete();
   }
 
   @Nullable

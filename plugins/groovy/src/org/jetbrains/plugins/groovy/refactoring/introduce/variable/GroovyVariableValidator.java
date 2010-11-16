@@ -14,53 +14,63 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
+package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-
-import java.util.ArrayList;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
 
 /**
  * @author ilyas
  */
 public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Validator {
-  private final GroovyIntroduceVariableBase myIntroduceVariableBase;
-  private final Project myProject;
-  private GrExpression myExpression;
-  private final GroovyPsiElement myContainer;
-  private final PsiElement[] myOccurrences;
+  private final GrIntroduceContext myContext;
 
-  public boolean isOK(GroovyIntroduceVariableDialog dialog) {
-    String varName = dialog.getEnteredName();
-    boolean allOccurrences = dialog.isReplaceAllOccurrences();
-    final ArrayList<String> conflicts = isOKImpl(varName, allOccurrences);
-    return conflicts.size() <= 0 || myIntroduceVariableBase.reportConflicts(conflicts, getProject());
+  public boolean isOK(GrIntroduceDialog dialog) {
+    final GrIntroduceSettings settings = dialog.getSettings();
+    if (settings==null) return false;
+    String varName = settings.getName();
+    boolean allOccurrences = settings.replaceAllOccurrences();
+    final MultiMap<PsiElement, String> conflicts = isOKImpl(varName, allOccurrences);
+    return conflicts.size() <= 0 || reportConflicts(conflicts, getProject());
   }
 
-  private ArrayList<String> isOKImpl(String varName, boolean replaceAllOccurrences) {
+  private static boolean reportConflicts(final MultiMap<PsiElement, String> conflicts, final Project project) {
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    conflictsDialog.show();
+    return conflictsDialog.isOK();
+  }
+
+  private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
+    GrExpression firstOccurence = null;
     if (replaceAllOccurrences) {
-      GroovyRefactoringUtil.sortOccurrences(myOccurrences);
-      myExpression = ((GrExpression) myOccurrences[0]);
+      GroovyRefactoringUtil.sortOccurrences(myContext.occurrences);
+      firstOccurence = ((GrExpression)myContext.occurrences[0]);
+    } else {
+      firstOccurence = myContext.expression;
     }
-    final ArrayList<String> conflicts = new ArrayList<String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     assert varName != null;
-    validateVariableOccurrencesDown(myContainer, conflicts, varName);
-    if (!(myContainer instanceof GroovyFileBase)) {
-      validateVariableOccurrencesUp(myContainer, conflicts, varName);
+    validateVariableOccurrencesDown(myContext.scope, conflicts, varName, firstOccurence.getTextRange().getStartOffset());
+    if (!(myContext.scope instanceof GroovyFileBase)) {
+      validateVariableOccurrencesUp(myContext.scope, conflicts, varName, firstOccurence.getTextRange().getStartOffset());
     }
     return conflicts;
   }
@@ -69,9 +79,9 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
    * Use for validator tests
    */
   public String isOKTest(String varName, boolean allOccurences) {
-    ArrayList<String> list = isOKImpl(varName, allOccurences);
+    MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
-    for (String s : list) {
+    for (String s : list.values()) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";
     }
     if (list.size() > 0) {
@@ -84,60 +94,61 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
   }
 
 
-  public GroovyVariableValidator(
-      final GroovyIntroduceVariableBase introduceVariableBase,
-      Project project,
-      GrExpression selectedExpr,
-      PsiElement[] occurrences,
-      GroovyPsiElement enclosingContainer) {
-    myIntroduceVariableBase = introduceVariableBase;
-    myOccurrences = occurrences;
-    myProject = project;
-    myExpression = selectedExpr;
-    myContainer = enclosingContainer;
+  public GroovyVariableValidator(GrIntroduceContext context) {
+    myContext =context;
   }
 
   /**
    * @param startElement Container to start checking conflicts from
    * @param conflicts    Conflict accumulator
    * @param varName      Variable name
+   * @param startOffset
    */
-  private void validateVariableOccurrencesDown(PsiElement startElement, ArrayList<String> conflicts, @NotNull String varName) {
+  private static void validateVariableOccurrencesDown(PsiElement startElement,
+                                                      MultiMap<PsiElement, String> conflicts,
+                                                      @NotNull String varName,
+                                                      double startOffset) {
     PsiElement child = startElement.getFirstChild();
     while (child != null) {
       // Do not check defined classes, methods, closures and blocks before
       if (child instanceof GrTypeDefinition ||
           child instanceof GrMethod ||
           GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(child) &&
-              child.getTextRange().getEndOffset() < myExpression.getTextRange().getStartOffset()) {
+          child.getTextRange().getEndOffset() < startOffset) {
         child = child.getNextSibling();
         continue;
       }
       if (child instanceof GrVariable) {
         if (child instanceof GrField) return;
         if (child instanceof GrParameter &&
-            varName.equals(((GrParameter) child).getName())) {
-          conflicts.add(GroovyRefactoringBundle.message("introduced.variable.conflicts.with.parameter.0",
-              CommonRefactoringUtil.htmlEmphasize(varName)));
+            varName.equals(((GrParameter)child).getName())) {
+          conflicts.putValue(child, GroovyRefactoringBundle
+            .message("introduced.variable.conflicts.with.parameter.0", CommonRefactoringUtil.htmlEmphasize(varName)));
           return;
-        } else if (varName.equals(((GrVariable) child).getName())) {
-          conflicts.add(GroovyRefactoringBundle.message("introduced.variable.conflicts.with.variable.0",
-              CommonRefactoringUtil.htmlEmphasize(varName)));
-          return;
-        } else {
-          validateVariableOccurrencesDown(child, conflicts, varName);
         }
-      } else {
-        validateVariableOccurrencesDown(child, conflicts, varName);
+        else if (varName.equals(((GrVariable)child).getName())) {
+          conflicts.putValue(child, GroovyRefactoringBundle
+            .message("introduced.variable.conflicts.with.variable.0", CommonRefactoringUtil.htmlEmphasize(varName)));
+          return;
+        }
+        else {
+          validateVariableOccurrencesDown(child, conflicts, varName, startOffset);
+        }
+      }
+      else {
+        validateVariableOccurrencesDown(child, conflicts, varName, startOffset);
       }
       child = child.getNextSibling();
     }
   }
 
-  private void validateVariableOccurrencesUp(PsiElement startElement, ArrayList<String> conflicts, @NotNull String varName) {
+  private static void validateVariableOccurrencesUp(PsiElement startElement,
+                                                    MultiMap<PsiElement, String> conflicts,
+                                                    @NotNull String varName,
+                                                    double startOffset) {
     PsiElement prevSibling = startElement.getPrevSibling();
     while (prevSibling != null) {
-      validateVariableOccurrencesDown(prevSibling, conflicts, varName);
+      validateVariableOccurrencesDown(prevSibling, conflicts, varName, startOffset);
       prevSibling = prevSibling.getPrevSibling();
     }
 
@@ -147,9 +158,11 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
         parent instanceof GrMethod ||
         parent instanceof GrTypeDefinition ||
         parent instanceof GroovyFileBase ||
-        parent instanceof PsiDirectory) return;
+        parent instanceof PsiDirectory) {
+      return;
+    }
 
-    validateVariableOccurrencesUp(parent, conflicts, varName);
+    validateVariableOccurrencesUp(parent, conflicts, varName, startOffset);
   }
 
   /**
@@ -157,8 +170,7 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
    */
   public String validateName(String name, boolean increaseNumber) {
     String result = name;
-    if (!isOKTest(name, true).equals("ok") && !increaseNumber ||
-        name.length() == 0) {
+    if (!isOKTest(name, true).equals("ok") && !increaseNumber || name.length() == 0) {
       return "";
     }
     int i = 1;
@@ -170,6 +182,6 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
   }
 
   public Project getProject() {
-    return myProject;
+    return myContext.project;
   }
 }

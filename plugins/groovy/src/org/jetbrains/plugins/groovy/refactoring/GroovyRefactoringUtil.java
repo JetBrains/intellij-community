@@ -99,11 +99,11 @@ public abstract class GroovyRefactoringUtil {
                                                             final Class<T> klass) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
-    if (element1 instanceof PsiWhiteSpace) {
+    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     }
-    if (element2 instanceof PsiWhiteSpace) {
+    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(element2.getNode().getElementType())) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     }
@@ -142,26 +142,25 @@ public abstract class GroovyRefactoringUtil {
         son = son.getParent();
       }
       assert scope.equals(son.getParent());
-      collectOccurrences(expr, son, occurrences, comparator);
+      collectOccurrences(expr, son, occurrences, comparator, false);
     } else {
-      collectOccurrences(expr, scope, occurrences, comparator);
+      collectOccurrences(expr, scope, occurrences, comparator, scope instanceof GrTypeDefinition || scope instanceof GroovyFileBase);
     }
     return occurrences.toArray(new PsiElement[occurrences.size()]);
   }
 
 
-  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc, Comparator<PsiElement> comparator) {
+  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc, Comparator<PsiElement> comparator, boolean goIntoInner) {
     if (scope.equals(expr)) {
       acc.add(expr);
       return;
     }
     for (PsiElement child : scope.getChildren()) {
-      if (!(child instanceof GrTypeDefinition) &&
-          !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
+      if (goIntoInner || !(child instanceof GrTypeDefinition) && !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
         if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, comparator, false)) {
           acc.add(child);
         } else {
-          collectOccurrences(expr, child, acc, comparator);
+          collectOccurrences(expr, child, acc, comparator, goIntoInner);
         }
       }
     }
@@ -169,12 +168,24 @@ public abstract class GroovyRefactoringUtil {
 
 
   // todo add type hierarchy
-  public static HashMap<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
-    HashMap<String, PsiType> map = new HashMap<String, PsiType>();
+  public static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
+    Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
     final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
     if (unboxed != null) type = unboxed;
-    map.put(type.getPresentableText(), type);
-
+    final Set<PsiType> set = new LinkedHashSet<PsiType>();
+    set.add(type);
+    while (!set.isEmpty()) {
+      PsiType cur = set.iterator().next();
+      set.remove(cur);
+      if (!map.containsValue(cur)) {
+        map.put(cur.getPresentableText(), cur);
+        for (PsiType superType : cur.getSuperTypes()) {
+          if (!map.containsValue(superType)) {
+            set.add(superType);
+          }
+        }
+      }
+    }
     return map;
   }
 
@@ -183,49 +194,6 @@ public abstract class GroovyRefactoringUtil {
         tempContainer instanceof GrClosableBlock ||
         tempContainer instanceof GroovyFileBase ||
         tempContainer instanceof GrCaseSection || tempContainer instanceof GrLoopStatement;
-  }
-
-  /**
-   * Calculates position to which new variable definition will be inserted.
-   *
-   * @param container
-   * @param occurences
-   * @param replaceAllOccurences
-   * @param expr                 expression to be introduced as a variable
-   * @return PsiElement, before what new definition will be inserted
-   */
-  @Nullable
-  public static PsiElement calculatePositionToInsertBefore(@NotNull PsiElement container,
-                                                           PsiElement expr,
-                                                           PsiElement[] occurences,
-                                                           boolean replaceAllOccurences) {
-    if (occurences.length == 0) return null;
-    PsiElement candidate;
-    if (occurences.length == 1 || !replaceAllOccurences) {
-      candidate = expr;
-    } else {
-      sortOccurrences(occurences);
-      candidate = occurences[0];
-    }
-    while (candidate != null && !container.equals(candidate.getParent())) {
-      candidate = candidate.getParent();
-    }
-    if (candidate == null) {
-      return null;
-    }
-    if ((container instanceof GrWhileStatement) &&
-        candidate.equals(((GrWhileStatement) container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrIfStatement) &&
-        candidate.equals(((GrIfStatement) container).getCondition())) {
-      return container;
-    }
-    if ((container instanceof GrForStatement) &&
-        candidate.equals(((GrForStatement) container).getClause())) {
-      return container;
-    }
-    return candidate;
   }
 
   public static void sortOccurrences(PsiElement[] occurences) {
