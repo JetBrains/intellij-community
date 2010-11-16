@@ -68,6 +68,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
     type "e"
     assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+
+    println "typing r"
     type "r"
     assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
   }
