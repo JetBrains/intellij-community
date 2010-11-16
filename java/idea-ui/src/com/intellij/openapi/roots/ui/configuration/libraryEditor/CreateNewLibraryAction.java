@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.util.Icons;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,11 @@ public class CreateNewLibraryAction extends AnAction {
 
   private void appendLibraryToModules(final ModuleStructureConfigurable rootConfigurable, final Library libraryToSelect) {
     final List<Module> modules = new ArrayList<Module>();
-    ContainerUtil.addAll(modules, rootConfigurable.getModules());
+    for (Module module : rootConfigurable.getModules()) {
+      if (myType == null || myType.isSuitableModuleType(module.getModuleType())) {
+        modules.add(module);
+      }
+    }
     if (modules.isEmpty()) return;
     final ChooseModulesDialog dlg = new ChooseModulesDialog(myProject,
                                                             modules, ProjectBundle.message("choose.modules.dialog.title"),
@@ -99,7 +103,7 @@ public class CreateNewLibraryAction extends AnAction {
       return new AnAction[]{new CreateNewLibraryAction(text, Icons.LIBRARY_ICON, null, librariesConfigurable, project)};
     }
     List<AnAction> actions = new ArrayList<AnAction>();
-    actions.add(new CreateNewLibraryAction("Java", Icons.LIBRARY_ICON, null, librariesConfigurable, project));
+    actions.add(new CreateNewLibraryAction(IdeBundle.message("create.default.library.type.action.name"), Icons.LIBRARY_ICON, null, librariesConfigurable, project));
     for (LibraryType<?> type : extensions) {
       actions.add(new CreateNewLibraryAction(type.getCreateActionName(), type.getIcon(), type, librariesConfigurable, project));
     }

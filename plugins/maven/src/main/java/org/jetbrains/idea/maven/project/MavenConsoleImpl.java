@@ -40,7 +40,7 @@ public class MavenConsoleImpl extends MavenConsole {
   private static final Key<MavenConsoleImpl> CONSOLE_KEY = Key.create("MAVEN_CONSOLE_KEY");
 
   private static final String CONSOLE_FILTER_REGEXP =
-    RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
+    "(?:^|(?:\\[\\w+\\]\\s*))" + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
 
   private final String myTitle;
   private final Project myProject;
@@ -153,9 +153,9 @@ public class MavenConsoleImpl extends MavenConsole {
         }
 
         ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-        if (!toolWindow.isActive())  {
+        if (!toolWindow.isActive()) {
           toolWindow.activate(null, false);
-      }
+        }
       }
     });
   }

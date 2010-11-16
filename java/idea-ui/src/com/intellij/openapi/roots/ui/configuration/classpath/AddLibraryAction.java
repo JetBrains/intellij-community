@@ -23,8 +23,10 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.Nullable;
@@ -36,13 +38,21 @@ import java.util.List;
 */
 class AddLibraryAction extends AddItemPopupAction<Library> {
   private StructureConfigurableContext myContext;
-  private AddNewLibraryItemAction myNewLibraryAction;
 
   public AddLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
                           final StructureConfigurableContext context) {
     super(classpathPanel, index, title, Icons.LIBRARY_ICON);
     myContext = context;
-    myNewLibraryAction = new AddNewLibraryItemAction(classpathPanel, context);
+  }
+
+  @Override
+  public boolean hasSubStep() {
+    return !hasLibraries() && AddNewLibraryItemAction.hasSuitableTypes(myClasspathPanel);
+  }
+
+  @Override
+  public PopupStep createSubStep() {
+    return AddNewLibraryItemAction.createChooseTypeStep(myClasspathPanel, myContext, null);
   }
 
   @Override
@@ -51,16 +61,19 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
       super.run();
     }
     else {
-      myNewLibraryAction.run();
+      new AddNewLibraryItemAction(myClasspathPanel, myContext, null).run();
     }
   }
 
   private boolean hasLibraries() {
     final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
     for (LibraryTable table : ChooseLibrariesFromTablesDialog.getLibraryTables(myClasspathPanel.getProject(), true)) {
-      for (Library library : table.getLibraries()) {
-        if (condition.apply(library)) {
-          return true;
+      final LibrariesModifiableModel model = myContext.myLevel2Providers.get(table.getTableLevel());
+      if (model != null) {
+        for (Library library : model.getLibraries()) {
+          if (condition.apply(library)) {
+            return true;
+          }
         }
       }
     }
@@ -101,8 +114,8 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
 
     public void doChoose() {
       final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
-      ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel.getComponent(), myClasspathPanel.getProject(), myContext,
-                                                                                               condition, myNewLibraryAction);
+      ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
+                                                                                               condition);
       dialog.show();
       mySelectedLibraries = dialog.getSelectedLibraries();
     }

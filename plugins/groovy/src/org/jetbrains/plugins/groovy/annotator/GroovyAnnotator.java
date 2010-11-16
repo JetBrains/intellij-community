@@ -225,12 +225,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       Annotation annotation = myHolder.createInfoAnnotation(elt, null);
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
-        if (!(parent instanceof GrCall)) {
-          registerCreateClassByTypeFix(referenceExpression, annotation);
-          registerAddImportFixes(referenceExpression, annotation);
+        if (parent instanceof GrMethodCall) {
+          registerStaticImportFix(referenceExpression, annotation);
         }
         else {
-          registerStaticImportFix(referenceExpression, annotation);
+          registerCreateClassByTypeFix(referenceExpression, annotation);
+          registerAddImportFixes(referenceExpression, annotation);
         }
       }
       else {
@@ -380,7 +380,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
       PsiModifierList modifiersList = variableDeclaration.getModifierList();
-      final GrMember member = variableDeclaration.getMembers()[0];
+      final GrMember[] members = variableDeclaration.getMembers();
+      if (members.length == 0) return;
+      final GrMember member = members[0];
       checkAccessModifiers(myHolder, modifiersList, member);
       checkDuplicateModifiers(myHolder, variableDeclaration.getModifierList(), member);
 

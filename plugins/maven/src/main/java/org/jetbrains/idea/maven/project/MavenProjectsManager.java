@@ -343,18 +343,20 @@ public class MavenProjectsManager extends SimpleProjectComponent
       @Override
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
-        if (nativeMavenProject != null && shouldScheduleProject(projectWithChanges)) {
-          scheduleForNextImport(projectWithChanges);
+        if (nativeMavenProject != null) {
+          if (shouldScheduleProject(projectWithChanges)) {
+            scheduleForNextImport(projectWithChanges);
 
-          if (projectWithChanges.first.hasUnresolvedPlugins()) {
-            schedulePluginsResolve(projectWithChanges.first, nativeMavenProject);
+            scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
+                                         null,
+                                         getImportingSettings().isDownloadSourcesAutomatically(),
+                                         getImportingSettings().isDownloadDocsAutomatically(),
+                                         null);
           }
 
-          scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
-                                       null,
-                                       getImportingSettings().isDownloadSourcesAutomatically(),
-                                       getImportingSettings().isDownloadDocsAutomatically(),
-                                       null);
+          if (!projectWithChanges.first.hasReadingProblems() && projectWithChanges.first.hasUnresolvedPlugins()) {
+            schedulePluginsResolve(projectWithChanges.first, nativeMavenProject);
+          }
         }
       }
 

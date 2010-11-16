@@ -312,10 +312,18 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             return aValue.getIcon();
           }
 
+          @Override
+          public boolean hasSubstep(AddItemPopupAction<?> selectedValue) {
+            return selectedValue.hasSubStep();
+          }
+
           public boolean isMnemonicsNavigationEnabled() {
             return true;
           }
           public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
+            if (selectedValue.hasSubStep()) {
+              return selectedValue.createSubStep();
+            }
             return doFinalStep(new Runnable() {
               public void run() {
                 selectedValue.execute();
