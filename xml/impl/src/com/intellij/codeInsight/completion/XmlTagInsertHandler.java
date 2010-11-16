@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -48,6 +49,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.actions.GenerateXmlTagAction;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +78,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
         XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
 
-      Template t = TemplateManager.getInstance(project).getActiveTemplate(editor);
       if (descriptor != null) {
         insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
       }
@@ -307,7 +308,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         template.addVariable(new MacroCallNode(new CompleteSmartMacro()), true);
         continue;
       }
-      template.addTextSegment("<" + subTag.getName());
+      String qname = subTag.getName();
+      if (subTag instanceof XmlElementDescriptorImpl) {
+        String prefixByNamespace = context.getPrefixByNamespace(((XmlElementDescriptorImpl)subTag).getNamespace());
+        if (StringUtil.isNotEmpty(prefixByNamespace)) {
+          qname = prefixByNamespace + ":" + subTag.getName();
+        }
+      }
+      template.addTextSegment("<" + qname);
       addRequiredAttributes(subTag, null, template, file);
       completeTagTail(template, subTag, file, context, false);
     }
