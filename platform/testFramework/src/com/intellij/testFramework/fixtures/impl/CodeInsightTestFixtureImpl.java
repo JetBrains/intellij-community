@@ -1469,8 +1469,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int caretLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.caretMarker.getStartOffset());
       int caretCol = loader.caretMarker.getStartOffset() - StringUtil.lineColToOffset(loader.newFileText, caretLine, 0);
 
-      Assert.assertEquals("caretLine in " + expectedFile, myEditor.getCaretModel().getLogicalPosition().line + 1, caretLine + 1);
-      Assert.assertEquals("caretColumn in " + expectedFile, myEditor.getCaretModel().getLogicalPosition().column + 1, caretCol + 1);
+      Assert.assertEquals("caretLine in " + expectedFile, caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
+      Assert.assertEquals("caretColumn in " + expectedFile, caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);
     }
 
     if (loader.selStartMarker != null && loader.selEndMarker != null) {
@@ -1480,17 +1480,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selEndMarker.getEndOffset());
       int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
-      Assert.assertEquals("selectionStartCol in " + expectedFile, myEditor.getSelectionModel().getSelectionStart() -
-                                                                  StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1,
-                          selStartCol + 1);
+      Assert.assertEquals("selectionStartLine in " + expectedFile, selStartLine + 1,
+                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
 
-      Assert.assertEquals("selectionEndLine in " + expectedFile,
-                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1,
-                          selEndLine + 1);
+      Assert.assertEquals("selectionStartCol in " + expectedFile, selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
+                                                                StringUtil.lineColToOffset(loader.newFileText, selStartLine, 0) + 1);
 
-      Assert.assertEquals("selectionEndCol in " + expectedFile,
+      Assert.assertEquals("selectionEndLine in " + expectedFile, selEndLine + 1,
+                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
+
+      Assert.assertEquals("selectionEndCol in " + expectedFile, selEndCol + 1,
                           myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) +
-                          1, selEndCol + 1);
+                          1);
     }
     else if (myEditor != null) {
       Assert.assertTrue("has no selection in " + expectedFile, !myEditor.getSelectionModel().hasSelection());
