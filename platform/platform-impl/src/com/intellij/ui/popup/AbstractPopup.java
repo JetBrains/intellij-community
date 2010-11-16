@@ -1295,7 +1295,7 @@ public class AbstractPopup implements JBPopup {
 
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
-        Window eachWindow = SwingUtilities.getWindowAncestor(each);
+        Window eachWindow = each instanceof Window ? (Window)each : SwingUtilities.getWindowAncestor(each);
         if (eachWindow == wnd) {
           return true;
         }
