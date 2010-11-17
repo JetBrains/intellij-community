@@ -38,7 +38,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  */
 public class PyClassNameCompletionContributor extends CompletionContributor {
   public PyClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(false) {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     ProcessingContext context,
@@ -64,26 +64,18 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final Condition<T> condition) {
     final Project project = targetFile.getProject();
     final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
-    final Collection<String> allNames = ApplicationManager.getApplication().runReadAction(new Computable<Collection<String>>() {
-      public Collection<String> compute() {
-        return StubIndex.getInstance().getAllKeys(key, project);
-      }
-    });
+    final Collection<String> allNames = StubIndex.getInstance().getAllKeys(key, project);
     for (final String elementName : allNames) {
       if (resultSet.getPrefixMatcher().prefixMatches(elementName)) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            final Collection<T> elements = StubIndex.getInstance().get(key, elementName, project, scope);
-            for (T element : elements) {
-              if (condition.value(element)) {
-                resultSet.addElement(LookupElementBuilder.create(element)
-                                       .setIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
-                                       .setTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
-                                       .setInsertHandler(insertHandler));
-              }
-            }
+        final Collection<T> elements = StubIndex.getInstance().get(key, elementName, project, scope);
+        for (T element : elements) {
+          if (condition.value(element)) {
+            resultSet.addElement(LookupElementBuilder.create(element)
+                                   .setIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
+                                   .setTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
+                                   .setInsertHandler(insertHandler));
           }
-        });
+        }
       }
     }
   }
