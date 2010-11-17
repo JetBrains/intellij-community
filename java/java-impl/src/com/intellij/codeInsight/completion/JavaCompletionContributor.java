@@ -455,7 +455,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifier() != null) return false;
     if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiReferenceExpression) return true;
 
-    return new ExpectedTypesGetter().get(element, null).length > 0;
+    return ExpectedTypesGetter.getExpectedTypes(element, false).length > 0;
   }
 
   private static boolean shouldSuggestClassNameCompletion(final PsiElement element) {
