@@ -17,10 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -35,6 +32,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,28 +51,46 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final ExpectedTypeInfo[] infos = JavaSmartCompletionContributor.getExpectedTypes(parameters);
 
-    addArrayTypes(result, parameters.getPosition(), infos);
-
     final List<ExpectedTypeInfo> infoCollection = Arrays.asList(infos);
-    processInheritors(parameters, extractClassTypes(infos), result.getPrefixMatcher(), new Consumer<PsiType>() {
-      public void consume(final PsiType type) {
-        addExpectedType(result, type, parameters, infoCollection);
+    generateVariants(parameters, result.getPrefixMatcher(), infos, new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement lookupElement) {
+        result.addElement(JavaSmartCompletionContributor.decorate(lookupElement, infoCollection));
       }
     });
   }
 
-  private static void addArrayTypes(CompletionResultSet result,
-                                    PsiElement identifierCopy,
-                                    ExpectedTypeInfo[] infos) {
+  public void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher, final Consumer<LookupElement> consumer) {
+    generateVariants(parameters, prefixMatcher, JavaSmartCompletionContributor.getExpectedTypes(parameters), consumer);
+  }
+
+  private void generateVariants(final CompletionParameters parameters, final PrefixMatcher prefixMatcher,
+                                final ExpectedTypeInfo[] infos, final Consumer<LookupElement> consumer) {
+
+    addArrayTypes(parameters.getPosition(), infos, prefixMatcher, consumer);
+
+    processInheritors(parameters, extractClassTypes(infos), prefixMatcher, new Consumer<PsiType>() {
+      public void consume(final PsiType type) {
+        final LookupElement element = addExpectedType(type, parameters);
+        if (element != null) {
+          consumer.consume(element);
+        }
+      }
+    });
+  }
+
+  private static void addArrayTypes(PsiElement identifierCopy,
+                                    ExpectedTypeInfo[] infos, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
 
     for (final PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
-      if (type instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType && matcher.prefixMatches(type.getCanonicalText())) {
+
         final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
         }
         item.setInsertHandler(new DefaultInsertHandler()); //braces & shortening
-        result.addElement(JavaSmartCompletionContributor.decorate(item, Arrays.asList(infos)));
+        consumer.consume(item);
       }
     }
   }
@@ -92,18 +108,20 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     return expectedClassTypes;
   }
 
-  private void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters, Collection<ExpectedTypeInfo> infos) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
+  @Nullable
+  private LookupElement addExpectedType(final PsiType type,
+                                        final CompletionParameters parameters) {
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass == null) return;
+    if (psiClass == null) return null;
 
     final PsiClass parentClass = psiClass.getContainingClass();
     if (parentClass != null && !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
         !PsiTreeUtil.isAncestor(parentClass, parameters.getPosition(), false) &&
         !(parentClass.getContainingFile().equals(parameters.getOriginalFile()) &&
           parentClass.getTextRange().contains(parameters.getOffset()))) {
-      return;
+      return null;
     }
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), parameters.getPosition());
@@ -114,8 +132,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
 
-    result.addElement(JavaSmartCompletionContributor.decorate(type instanceof PsiClassType ? LookupElementDecorator
-      .withInsertHandler(item, myConstructorInsertHandler) : item, infos));
+    return LookupElementDecorator.withInsertHandler(item, myConstructorInsertHandler);
   }
 
   public static void processInheritors(final CompletionParameters parameters,

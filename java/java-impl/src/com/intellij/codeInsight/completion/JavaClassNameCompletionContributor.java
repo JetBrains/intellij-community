@@ -66,7 +66,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         return;
       }
 
-      if (completingRawConstructor(context, item)) {
+      if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(item.getObject(), file)) {
         ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
         DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
       } else {

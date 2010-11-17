@@ -582,6 +582,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testClassNameGenerics() throws Throwable {
+    configure()
+    type  '\n'
+    checkResult();
+  }
+
+  public void testClassNameAnonymous() throws Throwable {
+    configure()
+    type  '\n'
+    checkResult();
+  }
+
+  public void testClassNameWithInner() throws Throwable { doTest() }
+
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertStringItems("false", "finalize");

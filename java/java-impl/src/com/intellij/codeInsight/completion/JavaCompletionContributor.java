@@ -18,10 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -51,6 +48,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,7 +185,25 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    addReferenceVariants(parameters, result);
+    final Set<String> addedClasses = new THashSet<String>();
+    if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      final JavaInheritorsGetter getter = new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE);
+      getter.generateVariants(parameters, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement lookupElement) {
+          final Object object = lookupElement.getObject();
+          if (object instanceof PsiClass) {
+            final PsiClass psiClass = (PsiClass)object;
+            if (JavaCompletionUtil.hasAccessibleInnerClass(psiClass, position)) return;
+
+            ContainerUtil.addIfNotNull(addedClasses, psiClass.getQualifiedName());
+          }
+          result.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
+        }
+      });
+    }
+
+    addReferenceVariants(parameters, result, addedClasses);
 
     addKeywords(parameters, result);
 
@@ -196,14 +213,16 @@ public class JavaCompletionContributor extends CompletionContributor {
         new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement lookupElement) {
-          result.addElement(lookupElement);
+            if (!isAlreadyAdded(lookupElement, addedClasses)) {
+              result.addElement(lookupElement);
+            }
           }
         });
     }
     result.stopHere();
   }
 
-  private static void addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result) {
+  private static void addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final Set<String> addedClasses) {
     final PsiElement position = parameters.getPosition();
     final boolean checkAccess = parameters.getInvocationCount() <= 1;
     LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
@@ -218,6 +237,10 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                  new ElementExtractorFilter(filter),
                                                                                  checkAccess,
                                                                                  result.getPrefixMatcher(), parameters)) {
+              if (isAlreadyAdded(element, addedClasses)) {
+                continue;
+              }
+
               if (isSwitchLabel) {
                 result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
               }
@@ -244,11 +267,15 @@ public class JavaCompletionContributor extends CompletionContributor {
           if (completion == null) {
             LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
           }
-          if (completion instanceof LookupElement) {
+          if (completion instanceof LookupElement && !isAlreadyAdded((LookupElement)completion, addedClasses)) {
             result.addElement((LookupElement)completion);
           }
           else if (completion instanceof PsiClass) {
-            result.addElement(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true));
+            final PsiClass psiClass = (PsiClass)completion;
+            final String qname = psiClass.getQualifiedName();
+            if (qname == null || !addedClasses.contains(qname)) {
+              result.addElement(JavaClassNameCompletionContributor.createClassLookupItem(psiClass, true));
+            }
           }
           else {
             result.addElement(LookupItemUtil.objectToLookupItem(completion));
@@ -256,6 +283,17 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
     });
+  }
+
+  private static boolean isAlreadyAdded(LookupElement element, Set<String> addedClasses) {
+    final Object object = element.getObject();
+    if (object instanceof PsiClass) {
+      final String qualifiedName = ((PsiClass)object).getQualifiedName();
+      if (qualifiedName != null && addedClasses.contains(qualifiedName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {

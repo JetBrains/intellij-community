@@ -992,4 +992,17 @@ public class JavaCompletionUtil {
       JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences((PsiJavaCodeReferenceElement)ref);
     }
   }
+
+  public static boolean hasAccessibleInnerClass(@NotNull PsiClass psiClass, @NotNull PsiElement position) {
+    final PsiClass[] inners = psiClass.getAllInnerClasses();
+    if (inners.length > 0) {
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
+      for (PsiClass inner : inners) {
+        if (resolveHelper.isAccessible(inner, position, null)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
