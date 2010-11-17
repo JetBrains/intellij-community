@@ -215,7 +215,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   }
 
   public Object getData(String dataId) {
-    if (myTreeBrowser.isVisible()) {
+    if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return null;
     }
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
@@ -229,7 +229,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       return getFileArray();
     } else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       if (myGroupByChangeList) {
-        return myTreeBrowser.getTreeExpander();
+        return myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null;
       }
       else {
         return myTreeExpander;
