@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoryScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -64,12 +63,13 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class GradleScriptType extends GroovyScriptType {
-  @NonNls private static final String GRADLE_EXTENSION = "gradle";
+
   private static final Pattern MAIN_CLASS_NAME_PATTERN = Pattern.compile("\nSTARTER_MAIN_CLASS=(.*)\n");
 
-  @Override
-  public boolean isSpecificScriptFile(GroovyFile file) {
-    return GRADLE_EXTENSION.equals(file.getViewProvider().getVirtualFile().getExtension());
+  public static final GroovyScriptType INSTANCE = new GradleScriptType();
+
+  private GradleScriptType() {
+    super("gradle");
   }
 
   @NotNull

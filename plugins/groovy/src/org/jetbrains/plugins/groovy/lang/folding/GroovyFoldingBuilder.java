@@ -169,16 +169,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   private static boolean isWellEndedComment(PsiElement element) {
-    if (element instanceof PsiComment) {
-      PsiComment comment = (PsiComment)element;
-      ASTNode node = comment.getNode();
-      if (node != null &&
-          node.getElementType() == mML_COMMENT &&
-          node.getText().endsWith("*/")) {
-        return true;
-      }
-    }
-    return false;
+    return  element.getText().endsWith("*/");
   }
 
   private static boolean isWellEndedString(PsiElement element) {

@@ -85,8 +85,7 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
       return false;
     }
     final PsiReferenceList extendsList = targetClass.getExtendsList();
-    LOG.assertTrue(extendsList != null);
-    if (extendsList.getReferencedTypes().length > 0) {
+    if (extendsList != null && extendsList.getReferencedTypes().length > 0) {
       final List<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(targetClass.getAllMethods()));
       final PsiClass objectClass =
         JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));

@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.Method;
@@ -92,28 +91,11 @@ class FramesListRenderer extends ColoredListCellRenderer {
       }
       else {
         append(label.substring(0, openingBrace - 1), attributes);
-
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(" (");
-          builder.append(label.substring(openingBrace + 1, closingBrace));
-          builder.append(")");
-          append(builder.toString(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        append(" (" + label.substring(openingBrace + 1, closingBrace) + ")", SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
 
         append(label.substring(closingBrace + 1, label.length()), attributes);
         if (shouldHighlightAsRecursive && descriptor.isRecursiveCall()) {
-          final StringBuilder _builder = StringBuilderSpinAllocator.alloc();
-          try {
-            _builder.append(" [").append(descriptor.getOccurrenceIndex()).append("]");
-            append(_builder.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(_builder);
-          }
+          append(" [" + descriptor.getOccurrenceIndex() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     }

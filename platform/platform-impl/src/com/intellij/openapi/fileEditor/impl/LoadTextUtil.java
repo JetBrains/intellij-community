@@ -42,27 +42,28 @@ public final class LoadTextUtil {
   }
 
   private static Pair<CharSequence, String> convertLineSeparators(final CharBuffer buffer) {
-    final int LF = 1;
-    final int CR = 2;
-    int line_separator = 0;
-
     int dst = 0;
     char prev = ' ';
+    int crCount = 0;
+    int lfCount = 0;
+    int crlfCount = 0;
+
     final int length = buffer.length();
     for (int src = 0; src < length; src++) {
       char c = buffer.charAt(src);
       switch (c) {
         case '\r':
           buffer.put(dst++, '\n');
-          line_separator = CR;
+          crCount++;
           break;
         case '\n':
           if (prev == '\r') {
-            line_separator = CR + LF;
+            crCount--;
+            crlfCount++;
           }
           else {
             buffer.put(dst++, '\n');
-            line_separator = LF;
+            lfCount++;
           }
           break;
         default:
@@ -73,16 +74,14 @@ public final class LoadTextUtil {
     }
 
     String detectedLineSeparator = null;
-    switch (line_separator) {
-      case CR:
-        detectedLineSeparator = "\r";
-        break;
-      case LF:
-        detectedLineSeparator = "\n";
-        break;
-      case CR + LF:
-        detectedLineSeparator = "\r\n";
-        break;
+    if (crlfCount > crCount && crlfCount > lfCount) {
+      detectedLineSeparator = "\r\n";
+    }
+    else if (crCount > lfCount) {
+      detectedLineSeparator = "\r";
+    }
+    else if (lfCount > 0) {
+      detectedLineSeparator = "\n";
     }
 
     CharSequence result;

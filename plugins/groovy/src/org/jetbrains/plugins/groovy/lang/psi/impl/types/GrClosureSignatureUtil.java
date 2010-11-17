@@ -440,7 +440,7 @@ public class GrClosureSignatureUtil {
                                                                @NotNull GrClosableBlock[] closureArguments, final boolean partial) {
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 
-    boolean hasNamedArgs = namedArgs != null && namedArgs.length > 0;
+    boolean hasNamedArgs = namedArgs.length > 0;
     GrClosureParameter[] params = signature.getParameters();
 
     if (hasNamedArgs) {
@@ -454,10 +454,12 @@ public class GrClosureSignatureUtil {
       }
     }
 
-    if (expressionArgs != null) {
-      for (GrExpression expression : expressionArgs) {
-        innerArgs.add(new InnerArg(expression.getType(), expression));
+    for (GrExpression expression : expressionArgs) {
+      PsiType type = expression.getType();
+      if (expression instanceof GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
+        type = null;
       }
+      innerArgs.add(new InnerArg(type, expression));
     }
 
     for (GrClosableBlock closureArgument : closureArguments) {

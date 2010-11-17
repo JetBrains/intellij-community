@@ -37,7 +37,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -61,7 +61,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return GroovyScriptType.getScriptType((GroovyFile)scriptFile) instanceof GradleScriptType;
+    return GroovyScriptTypeDetector.isSpecificScriptFile((GroovyFile)scriptFile, GradleScriptType.INSTANCE);
   }
 
   @NotNull

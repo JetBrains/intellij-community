@@ -108,6 +108,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CodeCompletionHandlerBase.doComplete");
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
@@ -252,6 +256,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private void doComplete(final int invocationCount, CompletionInitializationContext initContext) {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CodeCompletionHandlerBase.doComplete");
+    }
     final Editor editor = initContext.getEditor();
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
@@ -542,7 +549,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Document document = fileCopy.getViewProvider().getDocument();
     assert document != null : "no document";
     initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
-    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(document);
+    final Document hostDocument = hostFile.getViewProvider().getDocument();
+    assert hostDocument != null : "no host document";
+    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
     assert hostFile.isValid() : "file became invalid";
     assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
 

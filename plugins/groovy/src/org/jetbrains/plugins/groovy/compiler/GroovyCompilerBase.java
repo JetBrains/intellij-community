@@ -72,6 +72,7 @@ import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -412,7 +413,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
         public Boolean compute() {
           PsiFile psiFile = manager.findFile(file);
           if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
-            final GroovyScriptType scriptType = GroovyScriptType.getScriptType((GroovyFile)psiFile);
+            final GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile);
             return scriptType.shouldBeCompiled((GroovyFile)psiFile);
           }
           return true;

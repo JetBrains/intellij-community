@@ -87,7 +87,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       public void rootsChanged(ModuleRootEvent event) {
         final FileDocumentManager documentManager = FileDocumentManager.getInstance();
         for (VirtualFile file : myFileEditorManager.getOpenFiles()) {
-          addDocListener(documentManager.getDocument(file));
+          final Document document = documentManager.getDocument(file);
+          if (document != null) {
+            addDocListener(document);
+          }
         }
       }
     });
@@ -101,8 +104,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
     if (adapter != null && adapter.getCurrentInfo() != null) {
       final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
-      LOG.assertTrue(detector != null);
-      return detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
+      return detector != null && detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
     }
     return false;
   }
@@ -112,9 +114,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
     if (adapter != null && adapter.getCurrentInfo() != null) {
       final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
-      LOG.assertTrue(detector != null);
       final ChangeInfo currentInfo = adapter.getCurrentInfo();
-      if (detector.isChangeSignatureAvailable(element, currentInfo)) {
+      if (detector != null && detector.isChangeSignatureAvailable(element, currentInfo)) {
         return currentInfo instanceof RenameChangeInfo ? ChangeSignatureDetectorAction.NEW_NAME
                                                        : ChangeSignatureDetectorAction.CHANGE_SIGNATURE;
       }

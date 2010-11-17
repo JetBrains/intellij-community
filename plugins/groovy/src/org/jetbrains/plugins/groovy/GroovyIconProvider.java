@@ -20,7 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -43,7 +43,7 @@ public class GroovyIconProvider extends IconProvider implements DumbAware {
         return GroovyIcons.GROOVY_ICON_16x16;
       }
 
-      return GroovyScriptType.getScriptType(file).getScriptIcon();
+      return GroovyScriptTypeDetector.getScriptType(file).getScriptIcon();
     }
 
     return null;

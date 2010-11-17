@@ -66,7 +66,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         return;
       }
 
-      if (completingRawConstructor(context, item)) {
+      if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(item.getObject(), file)) {
         ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
         DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
       } else {
@@ -97,7 +97,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   };
 
   public JavaClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>(false) {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         if (shouldShowSecondSmartCompletionHint(parameters) &&
             CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {

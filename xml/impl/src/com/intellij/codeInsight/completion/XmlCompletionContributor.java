@@ -83,7 +83,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   public XmlCompletionContributor() {
     extend(CompletionType.BASIC,
            XmlPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
-           new CompletionProvider<CompletionParameters>(false) {
+           new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            ProcessingContext context,

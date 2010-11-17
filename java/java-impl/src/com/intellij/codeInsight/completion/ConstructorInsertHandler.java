@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +32,13 @@ import java.util.List;
 */
 class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupItem>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
-  public static final ConstructorInsertHandler INSTANCE = new ConstructorInsertHandler();
+  public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
+  public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
+  private final boolean mySmart;
+
+  private ConstructorInsertHandler(boolean smart) {
+    mySmart = smart;
+  }
 
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
@@ -50,7 +55,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
     if (item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous) {
       if (((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT)) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
+        if (mySmart) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
+        }
 
         PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
@@ -69,7 +76,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
             CodeStyleManager.getInstance(context.getProject()).reformat(classReference);
           }
         }
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
+        if (mySmart) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
+        }
       }
     }
   }

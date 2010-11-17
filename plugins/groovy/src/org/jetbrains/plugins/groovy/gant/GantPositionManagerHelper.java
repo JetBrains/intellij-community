@@ -23,6 +23,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -36,7 +37,7 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
-    return GantUtils.isGantScriptFile(scriptFile);
+    return GroovyScriptTypeDetector.isSpecificScriptFile(scriptFile, GantScriptType.INSTANCE);
   }
 
   @NotNull
@@ -49,6 +50,20 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
       PsiFile[] files = FilenameIndex.getFilesByName(project, runtimeName + "." + GantScriptType.DEFAULT_EXTENSION,
                                                      GlobalSearchScope.allScope(project));
       if (files.length == 1) return files[0];
+
+      if (files.length == 0) {
+        files = FilenameIndex.getFilesByName(project, runtimeName + ".groovy", GlobalSearchScope.allScope(project));
+
+        PsiFile candidate = null;
+        for (PsiFile file : files) {
+          if (GroovyScriptTypeDetector.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
+            if (candidate != null) return null;
+            candidate = file;
+          }
+        }
+
+        return candidate;
+      }
     }
     catch (ProcessCanceledException ignored) {
     }
