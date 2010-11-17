@@ -330,7 +330,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           result.addElement(item);
         }
 
-        JavaSmartCompletionContributor.processInheritors(parameters, identifierCopy, file, expectedClassTypes, new Consumer<PsiType>() {
+        JavaInheritorsGetter.processInheritors(parameters, identifierCopy, file, expectedClassTypes, new Consumer<PsiType>() {
           public void consume(final PsiType type) {
             addExpectedType(result, type, identifierCopy);
           }
