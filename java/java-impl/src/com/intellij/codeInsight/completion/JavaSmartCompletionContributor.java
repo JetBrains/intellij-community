@@ -120,7 +120,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
              psiElement(PsiReferenceExpression.class).withParent(
                psiElement(PsiExpressionList.class).withParent(PsiMethodCallExpression.class))), new SameSignatureCallParametersProvider());
 
-    extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>(false) {
+    extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.INSTANCEOF), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiType[] leftTypes = InstanceOfLeftPartTypeGetter.getLeftTypes(position);
