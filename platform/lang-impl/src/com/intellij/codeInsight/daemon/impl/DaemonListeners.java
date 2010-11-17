@@ -190,11 +190,11 @@ class DaemonListeners implements Disposable {
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       public void enteredDumbMode() {
-        stopDaemon(true);
+        myDaemonCodeAnalyzer.restart();
       }
 
       public void exitDumbMode() {
-        stopDaemon(true);
+        myDaemonCodeAnalyzer.restart();
       }
     });
 
