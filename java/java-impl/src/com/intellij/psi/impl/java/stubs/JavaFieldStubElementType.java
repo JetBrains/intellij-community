@@ -49,6 +49,8 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
+  private static final int INITIALIZER_LENGTH_LIMIT = 1000;
+
   public JavaFieldStubElementType(@NotNull @NonNls final String id) {
     super(id);
   }
@@ -125,6 +127,10 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
       return PsiFieldStub.INITIALIZER_NOT_STORED;
     }
 
+    if (initializer.getTextLength() > INITIALIZER_LENGTH_LIMIT) {
+      return PsiFieldStub.INITIALIZER_TOO_LONG;
+    }
+
     return initializer.getText();
   }
 
@@ -132,6 +138,10 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     final IElementType type = initializer.getTokenType();
     if (type == JavaElementType.NEW_EXPRESSION || type == JavaElementType.METHOD_CALL_EXPRESSION) {
       return PsiFieldStub.INITIALIZER_NOT_STORED;
+    }
+
+    if (initializer.getEndOffset() - initializer.getStartOffset() > INITIALIZER_LENGTH_LIMIT) {
+      return PsiFieldStub.INITIALIZER_TOO_LONG;
     }
 
     return LightTreeUtil.toFilteredString(tree, initializer, null);

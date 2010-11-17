@@ -28,6 +28,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
@@ -149,10 +151,19 @@ public class JavaParserUtil {
     assert psi != null : chameleon;
     final Project project = psi.getProject();
 
+    CharSequence text;
+    if (TreeUtil.isCollapsedChameleon(chameleon)) {
+      text = chameleon.getChars();
+    }
+    else {
+      text = psi.getUserData(StubUpdatingIndex.FILE_TEXT_CONTENT_KEY);
+      if (text == null) text = chameleon.getChars();
+    }
+
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final LanguageLevel level = PsiUtil.getLanguageLevel(psi);
     final Lexer lexer = JavaParserDefinition.createLexer(level);
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, psi.getLanguage(), chameleon.getChars());
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, psi.getLanguage(), text);
     setLanguageLevel(builder, level);
 
     return builder;
