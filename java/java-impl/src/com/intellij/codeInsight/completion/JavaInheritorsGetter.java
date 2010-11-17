@@ -95,7 +95,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     }
   }
 
-  public static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {
+  private static List<PsiClassType> extractClassTypes(ExpectedTypeInfo[] infos) {
     final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
     for (PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
       if (type instanceof PsiClassType) {
