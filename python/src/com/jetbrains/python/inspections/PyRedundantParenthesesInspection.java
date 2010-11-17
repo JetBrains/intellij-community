@@ -34,62 +34,15 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyIfStatement(final PyIfStatement node) {
-      PyIfPart ifPart = node.getIfPart();
-      RedundantParenthesesQuickFix quickFix = null;
-
-      if (ifPart.getCondition() instanceof PyParenthesizedExpression) {
-        quickFix = new RedundantParenthesesQuickFix(node);
+    public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
+      if (node.getContainedExpression() instanceof PyReferenceExpression) {
+        registerProblem(node, "Redundant parentheses", new RedundantParenthesesQuickFix());
       }
-
-      PyIfPart[] elifParts = node.getElifParts();
-
-      for (PyIfPart st : elifParts) {
-        if (st.getCondition() instanceof PyParenthesizedExpression) {
-          if (quickFix == null) {
-            quickFix = new RedundantParenthesesQuickFix(node);
-          }
-          quickFix.addStatement(st);
-        }
-      }
-      if (quickFix == null) {
-        return;
-      }
-      registerProblem(node, "Redundant parentheses", quickFix);
-    }
-
-    @Override
-    public void visitPyWhileStatement(final PyWhileStatement node) {
-      PyWhilePart whilePart = node.getWhilePart();
-      RedundantParenthesesQuickFix quickFix = null;
-
-      if (whilePart.getCondition() instanceof PyParenthesizedExpression) {
-        quickFix = new RedundantParenthesesQuickFix(node);
-      }
-      if (quickFix == null) {
-        return;
-      }
-      registerProblem(node, "Redundant parentheses", quickFix);
-    }
-
-    @Override
-    public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
-      PyExceptPart[] exceptParts = node.getExceptParts();
-      RedundantParenthesesQuickFix quickFix = null;
-
-      for (PyExceptPart except : exceptParts) {
-        if (except.getExceptClass() instanceof PyParenthesizedExpression) {
-          if (quickFix == null) {
-            quickFix = new RedundantParenthesesQuickFix(node);
-          }
-          quickFix.addStatement(except);
-        }
-        if (quickFix == null) {
-          return;
-        }
-        registerProblem(node, "Redundant parentheses", quickFix);
-
+      else if (node.getParent() instanceof PyExceptPart ||
+              node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart) {
+        registerProblem(node, "Redundant parentheses", new RedundantParenthesesQuickFix());
       }
     }
+
   }
 }

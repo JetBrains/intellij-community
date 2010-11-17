@@ -18,15 +18,8 @@ import java.util.List;
  * QuickFix to remove redundant parentheses from if/while/except statement
  */
 public class RedundantParenthesesQuickFix implements LocalQuickFix {
-  private final PyStatement myStatement;
-  private final List<PyStatementPart> myStatements = new ArrayList<PyStatementPart>();
 
-  public RedundantParenthesesQuickFix(PyStatement statement) {
-    myStatement = statement;
-  }
-
-  public void addStatement(PyStatementPart statement) {
-    myStatements.add(statement);
+  public RedundantParenthesesQuickFix() {
   }
 
   @NotNull
@@ -40,27 +33,12 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyExpression condition = null;
-    if (myStatement instanceof PyIfStatement) {
-      condition = ((PyIfStatement)myStatement).getIfPart().getCondition();
-    }
-    else if (myStatement instanceof PyWhileStatement) {
-      condition = ((PyWhileStatement)myStatement).getWhilePart().getCondition();
-    }
-    replaceCondition(condition);
-    for (PyStatementPart part : myStatements) {
-      if (part instanceof PyIfPart) condition = ((PyIfPart)part).getCondition();
-      if (part instanceof PyExceptPart) condition = ((PyExceptPart)part).getExceptClass();
-      replaceCondition(condition);
-    }
-  }
-
-  private static void replaceCondition(PsiElement condition) {
-    if (null != condition) {
-      while (condition instanceof PyParenthesizedExpression) {
-        PyExpression expression = ((PyParenthesizedExpression)condition).getContainedExpression();
+    PsiElement element = descriptor.getPsiElement();
+    if (element != null && element.isWritable()) {
+      while (element instanceof PyParenthesizedExpression) {
+        PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
         if (expression != null) {
-          condition = condition.replace(expression);
+          element = element.replace(expression);
         }
       }
     }

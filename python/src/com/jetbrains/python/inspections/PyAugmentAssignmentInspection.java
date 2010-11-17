@@ -53,7 +53,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                 if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
                       op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
                   AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-                  registerProblem(node, "Augment assignment", quickFix);
+                  registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
                 }
               }
             }
