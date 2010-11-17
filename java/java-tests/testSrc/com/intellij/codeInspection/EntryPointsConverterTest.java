@@ -9,16 +9,25 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 
 public class EntryPointsConverterTest extends TestCase {
+  private boolean myUnregisterExtensionPoint = false;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL, EntryPoint.class.getName());
+    try {
+      Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
+    }
+    catch (IllegalArgumentException e) {
+      myUnregisterExtensionPoint = true;
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL, EntryPoint.class.getName());
+    }
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Extensions.getRootArea().unregisterExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    if (myUnregisterExtensionPoint) {
+      Extensions.getRootArea().unregisterExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    }
     super.tearDown();
   }
 
