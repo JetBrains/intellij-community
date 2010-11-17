@@ -17,8 +17,8 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
   }
 
   @Nullable
-  public PyType resolve(PsiElement context) {
-    return myCallable.getReturnType();
+  public PyType resolve(PsiElement context, TypeEvalContext typeEvalContext) {
+    return myCallable.getReturnType(typeEvalContext);
   }
 
   public String getName() {
@@ -27,7 +27,7 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
 
   @Override
   public boolean isBuiltin() {
-    PyType type = myCallable.getReturnType();
+    PyType type = myCallable.getReturnType(TypeEvalContext.slow());
     return type != null && type.isBuiltin();
   }
 }

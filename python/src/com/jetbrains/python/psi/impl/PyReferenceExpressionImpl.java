@@ -209,7 +209,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
               }
               PsiElement resolved = this.getReference().resolve(); // to a correct accessor
               if (resolved instanceof Callable) {
-                type = ((Callable)resolved).getReturnType();
+                type = ((Callable)resolved).getReturnType(context);
                 if (type != null) return type;
               }
             }

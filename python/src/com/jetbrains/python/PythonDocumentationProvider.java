@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -86,7 +87,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     cat.add("def ").addWith(func_name_wrapper, $(name));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
     if (!PyNames.INIT.equals(name)) {
-      final PyType returnType = fun.getReturnType();
+      final PyType returnType = fun.getReturnType(TypeEvalContext.slow());
       cat.add(escaper.apply("\nInferred return type: "));
       if (returnType == null) cat.add("unknown");
       else cat.add(returnType.getName());

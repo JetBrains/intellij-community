@@ -262,7 +262,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         hasReturns = returnStatements.length > 0; 
       }
       else {
-        hasReturns = !(callable.getReturnType() instanceof PyNoneType);
+        hasReturns = !(callable.getReturnType(myTypeEvalContext) instanceof PyNoneType);
       }
       if (allowed ^ hasReturns) {
         registerProblem(being_checked, message);

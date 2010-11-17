@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,7 @@ public class PyOverrideImplementUtil {
       statementBody.append("pass");
     }
     else {
-      if (baseFunction.getReturnType() != PyNoneType.INSTANCE) {
+      if (baseFunction.getReturnType(TypeEvalContext.slow()) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
       if (baseClass.isNewStyleClass()) {
