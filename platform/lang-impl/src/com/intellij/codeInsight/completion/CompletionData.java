@@ -328,7 +328,7 @@ public class CompletionData {
     }
   }
 
-  protected PsiReference[] getReferences(final PsiMultiReference multiReference) {
+  protected static PsiReference[] getReferences(final PsiMultiReference multiReference) {
     final PsiReference[] references = multiReference.getReferences();
     final List<PsiReference> hard = ContainerUtil.findAll(references, new Condition<PsiReference>() {
       public boolean value(final PsiReference object) {

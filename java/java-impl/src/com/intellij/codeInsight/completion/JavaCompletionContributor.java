@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -47,7 +46,6 @@ import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -87,6 +85,9 @@ public class JavaCompletionContributor extends CompletionContributor {
           return type instanceof PsiClassType;
         }
       })));
+  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
+    psiElement().afterLeaf(psiElement().withElementType(
+      elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
 
   @Nullable 
   private static ElementFilter getReferenceFilter(PsiElement position) {
@@ -165,7 +166,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet _result) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC) {
       return;
     }
@@ -175,46 +176,55 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    final PsiFile file = parameters.getOriginalFile();
-    final int offset = parameters.getOffset();
-    final PsiElement lastElement = file.findElementAt(offset - 1);
-    if (lastElement == null) {
-      return;
-    }
-
-    final ASTNode node = lastElement.getNode();
-    assert node != null;
-    final IElementType elementType = node.getElementType();
-    if (elementType == JavaTokenType.DOUBLE_LITERAL || elementType == JavaTokenType.LONG_LITERAL || elementType == JavaTokenType.INTEGER_LITERAL || elementType == JavaTokenType.FLOAT_LITERAL) {
+    if (AFTER_NUMBER_LITERAL.accepts(position)) {
       return;
     }
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position)) {
-      completeAnnotationAttributeName(_result, position, parameters);
-      _result.stopHere();
+      completeAnnotationAttributeName(result, position, parameters);
+      result.stopHere();
       return;
     }
 
-    final JavaAwareCompletionData completionData = PsiUtil.isLanguageLevel5OrHigher(lastElement) ? ourJava15CompletionData : ourJavaCompletionData;
-    final boolean checkAccess = parameters.getInvocationCount() <= 1;
+    addReferenceVariants(parameters, result);
 
-    LegacyCompletionContributor.processReferences(parameters, _result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
+    addKeywords(parameters, result);
+
+    if (shouldRunClassNameCompletion(result, position)) {
+      result.runRemainingContributors(
+        new CompletionParameters(position, parameters.getOriginalFile(), CompletionType.CLASS_NAME, parameters.getOffset(), parameters.getInvocationCount()),
+        new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement lookupElement) {
+          result.addElement(lookupElement);
+          }
+        });
+    }
+    result.stopHere();
+  }
+
+  private static void addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result) {
+    final PsiElement position = parameters.getPosition();
+    final boolean checkAccess = parameters.getInvocationCount() <= 1;
+    LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet result) {
         if (reference instanceof PsiJavaReference) {
           final ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
             final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
+            final PsiFile originalFile = parameters.getOriginalFile();
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
-                                                                                 (PsiJavaReference) reference,
+                                                                                 (PsiJavaReference)reference,
                                                                                  new ElementExtractorFilter(filter),
                                                                                  checkAccess,
                                                                                  result.getPrefixMatcher(), parameters)) {
               if (isSwitchLabel) {
                 result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
-              } else {
+              }
+              else {
                 final LookupItem item = element.as(LookupItem.class);
-                if (file instanceof PsiJavaCodeReferenceCodeFragment &&
-                    !((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted() && item != null) {
+                if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
+                    !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
                   item.setTailType(TailType.NONE);
                 }
 
@@ -246,27 +256,20 @@ public class JavaCompletionContributor extends CompletionContributor {
         }
       }
     });
+  }
 
+  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+    final JavaCompletionData completionData = PsiUtil.isLanguageLevel5OrHigher(position) ? ourJava15CompletionData : ourJavaCompletionData;
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
-    final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(position, offset));
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
     completionData.fillCompletions(parameters, result);
 
     for (final LookupElement item : lookupSet) {
       result.addElement(item);
     }
-
-    if (shouldRunClassNameCompletion(result, position)) {
-      result.runRemainingContributors(new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, parameters.getInvocationCount()), new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement lookupElement) {
-          result.addElement(lookupElement);
-        }
-      });
-    }
-    result.stopHere();
   }
 
   private static boolean shouldRunClassNameCompletion(CompletionResultSet result, PsiElement position) {
