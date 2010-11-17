@@ -1,7 +1,7 @@
 public class Test {
   void foo(Object o) {
     if (o instanceof A) {
-        newMethod((Object) o);
+        newMethod((A) o);
     }
   }
 
