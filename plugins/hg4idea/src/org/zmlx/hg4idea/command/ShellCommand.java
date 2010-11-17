@@ -41,7 +41,7 @@ final class ShellCommand {
       // run via bash -cl <hg command> => need to escape bash special symbols
       // '-l' makes bash execute as a login shell thus reading .bash_profile
       String hgCommand = StringUtil.join(commandLine, " ");
-      hgCommand = StringUtil.escapeStringCharacters(hgCommand.length(), hgCommand, "\b\t\n\f\r|>$\"'&", false, false, new StringBuilder()).toString(); // we don't escape backslash, because we want special unicode characters (\u0017 for hg log)
+      hgCommand = escapeBashControlCharacters(hgCommand);
       commandLine = new ArrayList<String>(3);
       commandLine.add("bash");
       commandLine.add("-cl");
@@ -96,6 +96,18 @@ final class ShellCommand {
     });
     readingThread.start();
     return readingThread;
+  }
+
+  private static String escapeBashControlCharacters(String source) {
+    String bashControlChars = "\b\t\n\f\r|>$\"'&";
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < source.length(); i++) {
+      char ch = source.charAt(i);
+      if (bashControlChars.indexOf(ch) > -1) {
+        sb.append("\\").append(ch);
+      }
+    }
+    return sb.toString();
   }
 
 }
