@@ -540,11 +540,46 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       return super.getCanonicallyCasedName(file);
     }
 
+    final String originalFileName = file.getName();
     try {
-      return convertToIOFile(file).getCanonicalFile().getName();
+      final File ioFile = convertToIOFile(file);
+      final File ioCanonicalFile = ioFile.getCanonicalFile();
+      String canonicalFileName = ioCanonicalFile.getName();
+      if (!SystemInfo.isUnix) {
+        return canonicalFileName;
+      }
+      // linux & mac support symbolic links
+      // unfortunately canonical file resolves sym links
+      // so its name may differ from name of origin file
+      //
+      // Here FS is case sensitive, so let's check that original and
+      // canonical file names are equal if we ignore name case
+      if (canonicalFileName.compareToIgnoreCase(originalFileName) == 0) {
+        // p.s. this should cover most cases related to not symbolic links
+        return canonicalFileName;
+      }
+
+      // Ok, names are not equal. Let's try to find corresponding file name
+      // among original file parent directory
+      final File parentFile = ioFile.getParentFile();
+      if (parentFile != null) {
+        // I hope ls works fast on Unix
+        final String[] canonicalFileNames = parentFile.list();
+        for (String name : canonicalFileNames) {
+          // if names are equals
+          if (name.compareToIgnoreCase(originalFileName) == 0) {
+            return name;
+          }
+        }
+      }
+      // No luck. So ein mist!
+      // Ok, garbage in, garbage out. We may return original or canonical name
+      // no difference. Let's return canonical name just to preserve previous
+      // behaviour of this code.
+      return canonicalFileName;
     }
     catch (IOException e) {
-      return file.getName();
+      return originalFileName;
     }
   }
 }
