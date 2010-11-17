@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.completion.handlers;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaCompletionFeatures;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -66,7 +67,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     });
 
     if (myTriggerFeature) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
     }
 
     if (hasParams) {

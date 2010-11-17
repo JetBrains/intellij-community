@@ -26,4 +26,6 @@ public interface JavaCompletionFeatures {
   @NonNls String SECOND_SMART_COMPLETION_ASLIST = "editing.completion.second.smarttype.aslist";
   @NonNls String SECOND_SMART_COMPLETION_ARRAY_MEMBER = "editing.completion.second.smarttype.array.member";
   @NonNls String IMPORT_STATIC = "editing.completion.import.static";
+  @NonNls String AFTER_NEW = "editing.completion.smarttype.afternew";
+  @NonNls String AFTER_NEW_ANONYMOUS = "editing.completion.smarttype.afternew";
 }
