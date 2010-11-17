@@ -98,13 +98,28 @@ final class ShellCommand {
     return readingThread;
   }
 
+  /**
+   * Escapes charactes in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
+   * @param source Original string.
+   * @return Escaped string.
+   */
   private static String escapeBashControlCharacters(String source) {
-    String bashControlChars = "\b\t\n\f\r|>$\"'&";
-    StringBuilder sb = new StringBuilder();
+    final String controlChars = "|>$\"'&";
+    final String standardChars = "\b\t\n\f\r";
+    final String standardCharsLetters = "btnfr";
+
+    final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < source.length(); i++) {
       char ch = source.charAt(i);
-      if (bashControlChars.indexOf(ch) > -1) {
+      if (controlChars.indexOf(ch) > -1) {
         sb.append("\\").append(ch);
+      } else {
+        final int index = standardChars.indexOf(ch);
+        if (index > -1) {
+          sb.append("\\").append(standardCharsLetters.charAt(index));
+        } else {
+          sb.append(ch);
+        }
       }
     }
     return sb.toString();
