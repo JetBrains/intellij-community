@@ -68,6 +68,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doSmartTest();
   }
 
+  public void testSmartAfterNewInCall() throws Throwable { doSmartTest(); }
+
   public void testNamedParametersForApplication() throws Throwable {
     doVariantableTest("abx", "aby");
   }

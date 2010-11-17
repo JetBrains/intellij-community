@@ -19,8 +19,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Iconable;
@@ -30,19 +28,15 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -70,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -88,10 +83,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces
  * @author ilyas
  */
 public class GroovyCompletionContributor extends CompletionContributor {
-
-  private static final ElementPattern<PsiElement> AFTER_NEW =
-    psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(psiElement().withText(PsiKeyword.THROW))))
-      .withSuperParent(3, GrVariable.class);
 
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".").withParent(GrReferenceExpression.class);
 
@@ -299,44 +290,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>(false) {
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                 final ProcessingContext matchingContext,
-                                 @NotNull final CompletionResultSet result) {
-        final PsiElement identifierCopy = parameters.getPosition();
-
-        final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
-        final List<PsiArrayType> expectedArrayTypes = new ArrayList<PsiArrayType>();
-
-        PsiType psiType = ((GrVariable)identifierCopy.getParent().getParent().getParent()).getTypeGroovy();
-        if (psiType instanceof PsiClassType) {
-          PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
-          final PsiClassType classType = (PsiClassType)type;
-          if (classType.resolve() != null) {
-            expectedClassTypes.add(classType);
-          }
-        }
-        else if (psiType instanceof PsiArrayType) {
-          expectedArrayTypes.add((PsiArrayType)psiType);
-        }
-
-        for (final PsiArrayType type : expectedArrayTypes) {
-          final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
-          if (item.getObject() instanceof PsiClass) {
-            JavaCompletionUtil.setShowFQN(item);
-          }
-          item.setInsertHandler(new ArrayInsertHandler());
-          result.addElement(item);
-        }
-
-        JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
-          public void consume(final PsiType type) {
-            addExpectedType(result, type, identifierCopy);
-          }
-        });
-      }
-    });
-
     //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {
       @Override
@@ -353,7 +306,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifier;
         final PsiElement resolved = referenceExpression.resolve();
         if (!(resolved instanceof PsiClass)) return;
-        if (!org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, position, false)) return;
+        if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, position, false)) return;
 
         for (String keyword : THIS_SUPER) {
           result.addElement(LookupElementBuilder.create(keyword));
@@ -494,7 +447,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     Map<String, PsiMethod> writableProperties = new HashMap<String, PsiMethod>();
     for (PsiMethod method : containingClass.getAllMethods()) {
       if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
-        if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK(method, call)) {
+        if (PsiUtil.isStaticsOK(method, call)) {
           final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
           if (name != null && !writableProperties.containsKey(name)) {
             writableProperties.put(name, method);
@@ -536,28 +489,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       }
     }
-  }
-
-
-  private static boolean checkForInnerClass(PsiClass psiClass, PsiElement identifierCopy) {
-    return !PsiUtil.isInnerClass(psiClass) ||
-           org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-             .hasEnclosingInstanceInScope(psiClass.getContainingClass(), identifierCopy, true);
-  }
-
-  private static void addExpectedType(final CompletionResultSet result, final PsiType type, final PsiElement place) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
-
-    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass == null) return;
-
-    if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-    if (!checkForInnerClass(psiClass, place)) return;
-
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), place);
-    JavaCompletionUtil.setShowFQN(item);
-    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
-    result.addElement(item);
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

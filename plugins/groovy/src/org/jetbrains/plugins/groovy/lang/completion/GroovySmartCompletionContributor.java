@@ -26,20 +26,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
+import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -69,6 +70,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                                                                                          GrAssignmentExpression.class),
                                                                                                                       psiElement(
                                                                                                                         GrVariable.class))));
+  private static final ElementPattern<PsiElement> AFTER_NEW =
+    psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(psiElement().withText(PsiKeyword.THROW))));
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
       public int computeHashCode(final TypeConstraint object) {
@@ -183,7 +186,75 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
+      protected void addCompletions(@NotNull final CompletionParameters parameters,
+                                 final ProcessingContext matchingContext,
+                                 @NotNull final CompletionResultSet result) {
+        final PsiElement identifierCopy = parameters.getPosition();
+        final GrExpression expression = PsiTreeUtil.getParentOfType(identifierCopy, GrExpression.class);
+        if (expression == null) return;
+
+        final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression);
+        for (PsiType type : types) {
+          if (type instanceof PsiArrayType) {
+            final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
+            if (item.getObject() instanceof PsiClass) {
+              JavaCompletionUtil.setShowFQN(item);
+            }
+            item.setInsertHandler(new ArrayInsertHandler());
+            result.addElement(item);
+          }
+        }
+
+
+        final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
+
+        for (PsiType psiType : types) {
+          if (psiType instanceof PsiClassType) {
+            PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
+            final PsiClassType classType = (PsiClassType)type;
+            if (classType.resolve() != null) {
+              expectedClassTypes.add(classType);
+            }
+          }
+        }
+
+        JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
+          public void consume(final PsiType type) {
+            addExpectedType(result, type, identifierCopy);
+          }
+        });
+      }
+    });
+
   }
+
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    super.fillCompletionVariants(parameters, result);
+  }
+
+  private static void addExpectedType(final CompletionResultSet result, final PsiType type, final PsiElement place) {
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
+
+    final PsiClass psiClass = com.intellij.psi.util.PsiUtil.resolveClassInType(type);
+    if (psiClass == null) return;
+
+    if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (!checkForInnerClass(psiClass, place)) return;
+
+    final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), place);
+    JavaCompletionUtil.setShowFQN(item);
+    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
+    result.addElement(item);
+  }
+
+  private static boolean checkForInnerClass(PsiClass psiClass, PsiElement identifierCopy) {
+    return !com.intellij.psi.util.PsiUtil.isInnerClass(psiClass) ||
+           PsiUtil.hasEnclosingInstanceInScope(psiClass.getContainingClass(), identifierCopy, true);
+  }
+
 
   @Override
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
