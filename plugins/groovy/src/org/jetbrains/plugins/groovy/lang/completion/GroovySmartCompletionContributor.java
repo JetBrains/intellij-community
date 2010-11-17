@@ -246,7 +246,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), place);
     JavaCompletionUtil.setShowFQN(item);
-    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
+    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place, true));
     result.addElement(item);
   }
 

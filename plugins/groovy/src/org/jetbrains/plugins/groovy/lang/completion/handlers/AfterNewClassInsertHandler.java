@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,10 +35,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiClassType>> {
   private final PsiClassType myClassType;
   private final PsiElement myPlace;
+  private final boolean myTriggerFeature;
 
-  public AfterNewClassInsertHandler(PsiClassType classType, PsiElement place) {
+  public AfterNewClassInsertHandler(PsiClassType classType, PsiElement place, boolean triggerFeature) {
     myClassType = classType;
     myPlace = place;
+    myTriggerFeature = triggerFeature;
   }
 
   public void handleInsert(InsertionContext context, LookupItem<PsiClassType> item) {
@@ -61,6 +64,10 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
         return psiMethod.getParameterList().getParametersCount() > 0;
       }
     });
+
+    if (myTriggerFeature) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
+    }
 
     if (hasParams) {
       ParenthesesInsertHandler.WITH_PARAMETERS.handleInsert(context, item);
