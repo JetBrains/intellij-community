@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -73,6 +72,9 @@ public class PyTypeTest extends PyLightFixtureTestCase {
   public void testSet() {
     PyClassType type = (PyClassType) doTest("expr = {1, 2, 3}");
     assertEquals("set", type.getName());
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.fast());
+    assertEquals("int", elementType.getName());
   }
 
   public void testNone() {   // PY-1425
@@ -104,6 +106,21 @@ public class PyTypeTest extends PyLightFixtureTestCase {
                          "    x = property(lambda self: object(), None, None)\n" +
                          "expr = C.x");
     assertNull(type);
+  }
+
+  public void testIterationType() {
+    PyClassType type = (PyClassType) doTest("for expr in [1, 2, 3]: pass");
+    assertEquals("int", type.getName());
+  }
+
+  public void testSubscriptType() {
+    PyClassType type = (PyClassType) doTest("l = [1, 2, 3]; expr = l[0]");
+    assertEquals("int", type.getName());
+  }
+
+  public void testSliceType() {
+    PyCollectionType type = (PyCollectionType) doTest("l = [1,2,3]; expr=l[0:1]");
+    assertEquals("int", type.getElementType(TypeEvalContext.fast()).getName());
   }
 
   private PyType doTest(final String text) {

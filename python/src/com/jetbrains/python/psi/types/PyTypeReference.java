@@ -8,5 +8,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyTypeReference extends PyType {
   @Nullable
-  PyType resolve(PsiElement context);
+  PyType resolve(PsiElement context, TypeEvalContext typeEvalContext);
 }

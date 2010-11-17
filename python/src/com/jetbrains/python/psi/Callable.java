@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ public interface Callable extends PyElement {
    * @return the type of returned value.
    */
   @Nullable
-  PyType getReturnType();
+  PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite);
 
   /**
    * @return a methods returns itself, non-method callables return null.
