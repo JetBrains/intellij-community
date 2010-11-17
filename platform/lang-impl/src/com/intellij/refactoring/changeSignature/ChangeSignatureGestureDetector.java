@@ -87,7 +87,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       public void rootsChanged(ModuleRootEvent event) {
         final FileDocumentManager documentManager = FileDocumentManager.getInstance();
         for (VirtualFile file : myFileEditorManager.getOpenFiles()) {
-          addDocListener(documentManager.getDocument(file));
+          final Document document = documentManager.getDocument(file);
+          if (document != null) {
+            addDocListener(document);
+          }
         }
       }
     });
