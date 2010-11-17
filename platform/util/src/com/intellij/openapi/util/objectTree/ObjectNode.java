@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
@@ -122,6 +123,9 @@ public final class ObjectNode<T> {
         try {
           action.execute(myObject);
           myTree.fireExecuted(myObject);
+        }
+        catch (ProcessCanceledException e) {
+          throw new ProcessCanceledException(e);
         }
         catch (Throwable e) {
           LOG.error(e);
