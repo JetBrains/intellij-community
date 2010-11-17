@@ -38,7 +38,7 @@ public abstract class ExpressionSmartCompletionContributor extends AbstractCompl
   public void fillCompletionVariants(final JavaSmartCompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<JavaSmartCompletionParameters>> pair : myList) {
       final ProcessingContext context = new ProcessingContext();
-      if (isPatternSuitable(pair.first, parameters, context)) {
+      if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
       }
     }

@@ -152,7 +152,7 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
   public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       final ProcessingContext context = new ProcessingContext();
-      if (isPatternSuitable(pair.first, parameters, context)) {
+      if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
           return;
@@ -161,7 +161,7 @@ public abstract class CompletionContributor extends AbstractCompletionContributo
     }
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(null)) {
       final ProcessingContext context = new ProcessingContext();
-      if (isPatternSuitable(pair.first, parameters, context)) {
+      if (pair.first.accepts(parameters.getPosition(), context)) {
         pair.second.addCompletionVariants(parameters, context, result);
         if (result.isStopped()) {
           return;
