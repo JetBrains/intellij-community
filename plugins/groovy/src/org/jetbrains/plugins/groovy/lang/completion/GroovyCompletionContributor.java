@@ -200,15 +200,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     };
 
-  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result) {
+  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
     result.stopHere();
-    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1,
-                                        new Consumer<PsiClass>() {
-                                          @Override
-                                          public void consume(PsiClass psiClass) {
-                                            result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
-                                          }
-                                        });
+    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
+      @Override
+      public void consume(PsiClass psiClass) {
+        if (!inheritors.alreadyProcessed(psiClass)) {
+          result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
+        }
+      }
+    });
   }
 
   public GroovyCompletionContributor() {
@@ -305,7 +306,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        addAllClasses(parameters, result);
+        addAllClasses(parameters, result, new InheritorsHolder(parameters.getPosition(), result));
       }
     });
 
@@ -313,6 +314,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static void completeReference(CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {
     PsiElement position = parameters.getPosition();
+
+    final InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
+    }
+
     final int invocationCount = parameters.getInvocationCount();
     final boolean secondCompletionInvoked = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION ? invocationCount > 0 : invocationCount > 1;
 
@@ -328,6 +335,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
+        if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
+          return;
+        }
+        if (element instanceof LookupElement && inheritors.alreadyProcessed((LookupElement)element)) {
+          return;
+        }
+
         final LookupElement lookupElement = element instanceof PsiClass
                                             ? GroovyCompletionUtil.createClassLookupItem((PsiClass)element)
                                             : GroovyCompletionUtil.getLookupElement(element);
@@ -337,7 +351,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           substitutor = ((GroovyResolveResult)object).getSubstitutor();
           object = ((GroovyResolveResult)object).getElement();
         }
-
 
         //skip default groovy methods
         if (!secondCompletionInvoked &&
@@ -391,7 +404,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
       final String s = result.getPrefixMatcher().getPrefix();
       if (!StringUtil.isEmpty(s) && Character.isUpperCase(s.charAt(0))) {
-        addAllClasses(parameters, result);
+        addAllClasses(parameters, result, inheritors);
       }
     }
     result.addAllElements(staticMembers.values());
