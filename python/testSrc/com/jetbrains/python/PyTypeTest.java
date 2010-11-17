@@ -113,6 +113,11 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("int", type.getName());
   }
 
+  public void testSubscriptType() {
+    PyClassType type = (PyClassType) doTest("l = [1, 2, 3]; expr = l[0]");
+    assertEquals("int", type.getName());
+  }
+
   private PyType doTest(final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
