@@ -174,7 +174,7 @@ public class PyOverrideImplementUtil {
       statementBody.append("pass");
     }
     else {
-      if (baseFunction.getReturnType(TypeEvalContext.slow()) != PyNoneType.INSTANCE) {
+      if (baseFunction.getReturnType(TypeEvalContext.slow(), null) != PyNoneType.INSTANCE) {
         statementBody.append("return ");
       }
       if (baseClass.isNewStyleClass()) {

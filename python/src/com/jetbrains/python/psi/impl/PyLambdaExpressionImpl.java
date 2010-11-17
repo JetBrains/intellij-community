@@ -33,7 +33,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     return childToPsiNotNull(PyElementTypes.PARAMETER_LIST_SET, 0);
   }
 
-  public PyType getReturnType(TypeEvalContext context) {
+  public PyType getReturnType(TypeEvalContext context, @Nullable PyReferenceExpression callSite) {
     final PyExpression body = getBody();
     if (body != null) return body.getType(context);
     else return null;

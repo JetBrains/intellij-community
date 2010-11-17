@@ -117,9 +117,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  public PyType getReturnType(TypeEvalContext typeEvalContext) {
+  public PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
     for(PyTypeProvider typeProvider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType returnType = typeProvider.getReturnType(this, typeEvalContext);
+      final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
       if (returnType != null) {
         return returnType;
       }

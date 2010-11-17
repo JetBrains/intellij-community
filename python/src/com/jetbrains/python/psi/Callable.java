@@ -23,7 +23,7 @@ public interface Callable extends PyElement {
    * @return the type of returned value.
    */
   @Nullable
-  PyType getReturnType(TypeEvalContext typeEvalContext);
+  PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite);
 
   /**
    * @return a methods returns itself, non-method callables return null.
