@@ -90,8 +90,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile("QualifiedNew1.java");
 
     assertEquals(2, myItems.length);
-    assertEquals("IInner", myItems[0].getLookupString());
-    assertEquals("Inner", myItems[1].getLookupString());
+    assertEquals("Inner", myItems[0].getLookupString());
+    assertEquals("IInner", myItems[1].getLookupString());
   }
 
   public void testQualifiedNew2() throws Exception {

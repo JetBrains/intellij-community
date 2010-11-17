@@ -33,7 +33,7 @@ public class ExportTestResultsDialog extends DialogWrapper {
     super(project);
     myProject = project;
     String defaultFolder = StringUtil.isNotEmpty(config.getOutputFolder()) ?
-                           FileUtil.toSystemDependentName(config.getOutputFolder()) : FileUtil.toSystemDependentName(project.getLocation());
+                           FileUtil.toSystemDependentName(config.getOutputFolder()) : FileUtil.toSystemDependentName(project.getBaseDir().getPresentableUrl());
     myForm = new ExportTestResultsForm(config, defaultFileName, defaultFolder);
     myForm.addChangeListener(new ChangeListener() {
       @Override

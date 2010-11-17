@@ -28,7 +28,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
-public final class InplaceButton extends JComponent implements ActiveComponent {
+public class InplaceButton extends JComponent implements ActiveComponent {
 
   private boolean myPainting = true;
   private boolean myActive = true;
@@ -42,6 +42,8 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
   private int myXTransform = 0;
   private int myYTransform = 0;
   private boolean myFill;
+
+  private boolean myHoveringEnabled;
 
   public InplaceButton(String tooltip, final Icon icon, final ActionListener listener) {
     this(new IconButton(tooltip, icon, icon), listener, null);
@@ -142,7 +144,7 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     g.translate(myXTransform, myYTransform);
 
 
-    if (myBehavior.isHovered()) {
+    if (myBehavior.isHovered() && myHoveringEnabled) {
       if (myBehavior.isPressedByMouse()) {
         myHovered.paintIcon(this, g, 1, 1);
       }
@@ -151,7 +153,7 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
       }
     }
     else {
-      if (myActive) {
+      if (isActive()) {
         myRegular.paintIcon(this, g, 0, 0);
       }
       else {
@@ -167,4 +169,13 @@ public final class InplaceButton extends JComponent implements ActiveComponent {
     myYTransform = y;
   }
 
+  public void setHoveringEnabled(boolean enabled) {
+    myHoveringEnabled = enabled;
+  }
+
+  public boolean isActive() {
+
+
+    return myActive;
+  }
 }
