@@ -119,6 +119,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitReferenceTracker myReferenceTracker;
   private boolean isActivated; // If true, the vcs was activated
   private GitExecutableValidator myExecutableValidator;
+  private GitIndexChangeListener myIndexChangeListener;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -423,6 +424,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myGitIgnoreTracker == null) {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
+    myIndexChangeListener = new GitIndexChangeListener(myProject);
     myReferenceTracker.activate();
     GitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
@@ -451,6 +453,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myConfigTracker != null) {
       myConfigTracker.dispose();
       myConfigTracker = null;
+    }
+    if (myIndexChangeListener != null) {
+      myIndexChangeListener.dispose();
     }
     myReferenceTracker.deactivate();
     GitUsersComponent.getInstance(myProject).deactivate();
@@ -695,4 +700,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public GitExecutableValidator getExecutableValidator() {
     return myExecutableValidator;
   }
+
+  public GitIndexChangeListener getIndexChangeListener() {
+    return myIndexChangeListener;
+  }
+
 }

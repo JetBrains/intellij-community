@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
+import git4idea.GitIndexChangeListener;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -361,6 +362,13 @@ public abstract class GitHandler {
    */
   public synchronized void start() {
     checkNotStarted();
+
+    GitIndexChangeListener indexChangeListener = null;
+    if (myCommand.modifiesIndex()) {
+      indexChangeListener = myVcs.getIndexChangeListener();
+      indexChangeListener.internalIndexChangeStarted();
+    }
+
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
@@ -386,6 +394,10 @@ public abstract class GitHandler {
     catch (Throwable t) {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
+    } finally {
+      if (indexChangeListener != null) {
+        indexChangeListener.internalIndexChangeEnded();
+      }
     }
   }
 
