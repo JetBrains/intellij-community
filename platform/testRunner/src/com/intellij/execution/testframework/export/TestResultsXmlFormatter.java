@@ -27,8 +27,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class TestResultsXmlFormatter {
 
@@ -39,13 +41,14 @@ public class TestResultsXmlFormatter {
   private static final String ATTR_DURATION = "duration";
   private static final String ELEM_COUNT = "count";
   private static final String ATTR_VALUE = "value";
-
+  private static final String ELEM_OUTPUT = "output";
+  private static final String ATTR_OUTPUT_TYPE = "type";
   private static final String ATTR_STATUS = "status";
+  private static final String TOTAL_STATUS = "total";
+
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
 
   public static void execute(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler)
     throws SAXException {
@@ -61,12 +64,19 @@ public class TestResultsXmlFormatter {
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    Map<String, Integer> counts = new HashMap<String, Integer>();
+    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+        return o1.compareTo(o2);
+      }
+    });
     for (AbstractTestProxy node : myTestRoot.getAllTests()) {
       if (!node.isLeaf()) continue;
       String status = getStatusString(node);
       increment(counts, status);
-      increment(counts, "total");
+      increment(counts, TOTAL_STATUS);
     }
 
     Map<String, String> runAttrs = new HashMap<String, String>();
