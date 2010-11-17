@@ -131,7 +131,7 @@ public class GitHistoryProvider implements VcsHistoryProvider {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.<VcsFileRevision>emptyList());
     partner.reportCreatedEmptySession(emptySession);
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitHistoryUtils.history(myProject, path, new Consumer<GitFileRevision>() {
+    GitHistoryUtils.history(myProject, path, null, new Consumer<GitFileRevision>() {
       public void consume(GitFileRevision gitFileRevision) {
         partner.acceptRevision(gitFileRevision);
       }

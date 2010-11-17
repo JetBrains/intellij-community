@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -142,11 +141,22 @@ public class GitHistoryUtils {
 
     TODO: handle multiple repositories configuration: a file can be moved from one repo to another
    */
-  public static void history(final Project project, FilePath path, final Consumer<GitFileRevision> consumer,
-                             final Consumer<VcsException> exceptionConsumer) throws VcsException {
+
+  /**
+   * Retrieves the history of the file, including renames.
+   * @param project
+   * @param path              FilePath which history is queried.
+   * @param root              Git root - optional: if this is null, then git root will be detected automatically.
+   * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
+   * @param exceptionConsumer This consumer is notified in case of error while executing git command.
+   * @param parameters        Optional parameters which will be added to the git log command just before the path.
+   * @throws VcsException     In case of git native execution error.
+   */
+  public static void history(final Project project, FilePath path, @Nullable VirtualFile root, final Consumer<GitFileRevision> consumer,
+                             final Consumer<VcsException> exceptionConsumer, String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(path);
+    final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(path) : root);
     final GitLogParser logParser = new GitLogParser(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY);
     logParser.setNameInOutput(false);
 
@@ -170,9 +180,9 @@ public class GitHistoryUtils {
         }
         final String message = record.getFullMessage();
 
-        FilePath revisionPath = new FilePathImpl(root);
+        FilePath revisionPath;
         try {
-          final List<FilePath> paths = record.getFilePaths(root);
+          final List<FilePath> paths = record.getFilePaths(finalRoot);
           if (paths.size() > 0) {
             revisionPath = paths.get(0);
           } else {
@@ -190,7 +200,7 @@ public class GitHistoryUtils {
     };
 
     while (currentPath.get() != null && firstCommitParent.get() != null) {
-      GitLineHandler logHandler = getLogHandler(project, root, logParser, currentPath.get(), firstCommitParent.get());
+      GitLineHandler logHandler = getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters);
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
       final Semaphore semaphore = new Semaphore();
 
@@ -224,16 +234,19 @@ public class GitHistoryUtils {
       logHandler.start();
       semaphore.waitFor();
 
-      currentPath.set(getFirstCommitRenamePath(project, root, firstCommit.get(), currentPath.get()));
+      currentPath.set(getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get()));
     }
 
   }
 
-  private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit) {
+  private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit, String... parameters) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8", lastCommit);
+    if (parameters != null && parameters.length > 0) {
+      h.addParameters(parameters);
+    }
     h.endOptions();
     h.addRelativePaths(path);
     return h;
@@ -328,30 +341,20 @@ public class GitHistoryUtils {
    * @throws VcsException if there is problem with running git
    */
   public static List<VcsFileRevision> history(final Project project, FilePath path, final VirtualFile root, final String... parameters) throws VcsException {
-    // adjust path using change manager
-    path = getLastCommitName(project, path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SUBJECT, BODY);
-    h.setNoSSH(true);
-    h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--follow", "--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.setNameInOutput(false);
-    if (parameters != null && parameters.length > 0) {
-      h.addParameters(parameters);
-    }
-    h.endOptions();
-    h.addRelativePaths(path);
-    String output = h.run();
-
-    final List<GitLogRecord> result = parser.parse(output);
     final List<VcsFileRevision> rc = new ArrayList<VcsFileRevision>();
-    for (GitLogRecord record : result) {
-      final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-      final String message = record.getFullMessage();
-      final FilePath revisionPath = record.getFilePaths(root).get(0);
-      final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
-      final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
-      rc.add(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null));
+    final List<VcsException> exceptions = new ArrayList<VcsException>();
+
+    history(project, path, root, new Consumer<GitFileRevision>() {
+      @Override public void consume(GitFileRevision gitFileRevision) {
+        rc.add(gitFileRevision);
+      }
+    }, new Consumer<VcsException>() {
+      @Override public void consume(VcsException e) {
+        exceptions.add(e);
+      }
+    }, parameters);
+    if (!exceptions.isEmpty()) {
+      throw exceptions.get(0);
     }
     return rc;
   }
