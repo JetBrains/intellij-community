@@ -138,7 +138,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
 
         JavaInheritorsGetter
-          .processInheritors(parameters, position, position.getContainingFile(), expectedClassTypes, new Consumer<PsiType>() {
+          .processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
             public void consume(PsiType type) {
               final PsiClass psiClass = PsiUtil.resolveClassInType(type);
               if (psiClass == null) return;
@@ -147,7 +147,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
               result.addElement(createInstanceofLookupElement(psiClass, parameterizedTypes));
             }
-          }, result.getPrefixMatcher());
+          });
       }
     });
 
@@ -319,21 +319,21 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                } else {
                  final List<PsiClassType> typeList = Collections.singletonList((PsiClassType)TypeConversionUtil.typeParameterErasure(targetParameter));
                  JavaInheritorsGetter
-                   .processInheritors(parameters, context, parameters.getOriginalFile(), typeList, new Consumer<PsiType>() {
+                   .processInheritors(parameters, typeList, resultSet.getPrefixMatcher(), new Consumer<PsiType>() {
                      public void consume(final PsiType type) {
                        final PsiClass psiClass = PsiUtil.resolveClassInType(type);
                        if (psiClass == null) return;
 
                        resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass), tail));
                      }
-                   }, resultSet.getPrefixMatcher());
+                   });
 
                }
              }
            });
 
 
-    extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter());
+    extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
   }
 
   public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {

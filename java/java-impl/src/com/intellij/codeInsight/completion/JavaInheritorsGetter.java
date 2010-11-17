@@ -44,9 +44,14 @@ import java.util.List;
 * @author peter
 */
 public class JavaInheritorsGetter extends CompletionProvider<CompletionParameters> {
+  private final ConstructorInsertHandler myConstructorInsertHandler;
+
+  public JavaInheritorsGetter(final ConstructorInsertHandler constructorInsertHandler) {
+    myConstructorInsertHandler = constructorInsertHandler;
+  }
+
   public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final PsiElement identifierCopy = parameters.getPosition();
-    final PsiFile file = parameters.getOriginalFile();
 
     final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
     final List<PsiArrayType> expectedArrayTypes = new SmartList<PsiArrayType>();
@@ -75,14 +80,14 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
       result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
     }
 
-    processInheritors(parameters, identifierCopy, file, expectedClassTypes, new Consumer<PsiType>() {
+    processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
       public void consume(final PsiType type) {
         addExpectedType(result, type, parameters, infos);
       }
-    }, result.getPrefixMatcher());
+    });
   }
 
-  private static void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters, Collection<ExpectedTypeInfo> infos) {
+  private void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters, Collection<ExpectedTypeInfo> infos) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -105,26 +110,48 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     }
 
     result.addElement(JavaSmartCompletionContributor.decorate(type instanceof PsiClassType ? LookupElementDecorator
-      .withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE) : item, infos));
+      .withInsertHandler(item, myConstructorInsertHandler) : item, infos));
   }
 
-  public static void processInheritors(final CompletionParameters parameters, final PsiElement identifierCopy, final PsiFile file, final Collection<PsiClassType> expectedClassTypes,
-                                       final Consumer<PsiType> consumer, final PrefixMatcher matcher) {
+  public static void processInheritors(final CompletionParameters parameters,
+                                       final Collection<PsiClassType> expectedClassTypes,
+                                       final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
     //quick
+    if (!processMostProbableInheritors(parameters, expectedClassTypes, consumer)) return;
+
+    //long
+    final Condition<String> shortNameCondition = new Condition<String>() {
+      public boolean value(String s) {
+        return matcher.prefixMatches(s);
+      }
+    };
+    for (final PsiClassType type : expectedClassTypes) {
+      final PsiClass psiClass = type.resolve();
+      if (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+        for (final PsiType psiType : CodeInsightUtil.addSubtypes(type, parameters.getPosition(), false, shortNameCondition)) {
+          consumer.consume(psiType);
+        }
+      }
+    }
+  }
+
+  private static boolean processMostProbableInheritors(CompletionParameters parameters,
+                                                       Collection<PsiClassType> expectedClassTypes,
+                                                       Consumer<PsiType> consumer) {
+    PsiFile file = parameters.getOriginalFile();
     for (final PsiClassType type : expectedClassTypes) {
       consumer.consume(type);
 
       final PsiClassType.ClassResolveResult baseResult = JavaCompletionUtil.originalize(type).resolveGenerics();
       final PsiClass baseClass = baseResult.getElement();
-      if (baseClass == null) return;
+      if (baseClass == null) return false;
 
       final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
 
       final THashSet<PsiType> statVariants = new THashSet<PsiType>();
       final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(parameters.getPosition(), type, 0, false,
                                                                                       statVariants, baseClass, baseSubstitutor);
-      final StatisticsInfo[] statisticsInfos =
-        StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
+      final StatisticsInfo[] statisticsInfos = StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
       for (final StatisticsInfo statisticsInfo : statisticsInfos) {
         final String value = statisticsInfo.getValue();
         if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
@@ -138,20 +165,6 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         consumer.consume(variant);
       }
     }
-
-    //long
-    final Condition<String> shortNameCondition = new Condition<String>() {
-      public boolean value(String s) {
-        return matcher.prefixMatches(s);
-      }
-    };
-    for (final PsiClassType type : expectedClassTypes) {
-      final PsiClass psiClass = type.resolve();
-      if (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-        for (final PsiType psiType : CodeInsightUtil.addSubtypes(type, identifierCopy, false, shortNameCondition)) {
-          consumer.consume(psiType);
-        }
-      }
-    }
+    return true;
   }
 }

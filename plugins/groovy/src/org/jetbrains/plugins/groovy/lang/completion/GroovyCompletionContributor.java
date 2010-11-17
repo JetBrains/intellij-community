@@ -156,7 +156,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         final GrCall call = (GrCall)argumentList.getParent();
         List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
-        //costructor call
+        //constructor call
         if (call instanceof GrConstructorCall) {
           GrConstructorCall constructorCall = (GrConstructorCall)call;
           ContainerUtil.addAll(results, constructorCall.multiResolveConstructor());
@@ -304,7 +304,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                  final ProcessingContext matchingContext,
                                  @NotNull final CompletionResultSet result) {
         final PsiElement identifierCopy = parameters.getPosition();
-        final PsiFile file = parameters.getOriginalFile();
 
         final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
         final List<PsiArrayType> expectedArrayTypes = new ArrayList<PsiArrayType>();
@@ -330,11 +329,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
           result.addElement(item);
         }
 
-        JavaInheritorsGetter.processInheritors(parameters, identifierCopy, file, expectedClassTypes, new Consumer<PsiType>() {
+        JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
           public void consume(final PsiType type) {
             addExpectedType(result, type, identifierCopy);
           }
-        }, result.getPrefixMatcher());
+        });
       }
     });
 
