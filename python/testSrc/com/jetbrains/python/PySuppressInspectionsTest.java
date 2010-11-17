@@ -10,29 +10,33 @@ import com.jetbrains.python.inspections.PyUnusedLocalInspection;
  * @author yole
  */
 public class PySuppressInspectionsTest extends PyLightFixtureTestCase {
-  public void testSuppressedForStatement() throws Exception {
+  public void testSuppressedForStatement() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testSuppressedForMethod() throws Exception {
+  public void testSuppressedForMethod() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testSuppressedForClass() throws Exception {
+  public void testSuppressedForClass() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testSuppressedUnusedLocal() throws Exception {
+  public void testSuppressedUnusedLocal() {
     doTestHighlighting(PyUnusedLocalInspection.class);
   }
 
-  private void doTestHighlighting(final Class<? extends PyInspection> inspectionClass) throws Exception {
+  public void testSuppressForImport() {  // PY-2240
+    doTestHighlighting(PyUnresolvedReferencesInspection.class);
+  }
+
+  private void doTestHighlighting(final Class<? extends PyInspection> inspectionClass) {
     myFixture.configureByFile("inspections/suppress/" + getTestName(true) + ".py");
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testSuppressForStatement() throws Exception {
+  public void testSuppressForStatement() {
     myFixture.configureByFile("inspections/suppress/suppressForStatement.py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     final IntentionAction suppressAction = myFixture.findSingleIntention("Suppress for statement");

@@ -78,7 +78,7 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
   }
 
   private boolean isSuppressedForParent(PsiElement element, final Class<? extends PyElement> parentClass) {
-    PyElement parent = PsiTreeUtil.getParentOfType(element, parentClass);
+    PyElement parent = PsiTreeUtil.getParentOfType(element, parentClass, false);
     if (parent == null) {
       return false;
     }

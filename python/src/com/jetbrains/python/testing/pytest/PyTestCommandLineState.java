@@ -29,7 +29,7 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     script_params.addParameter(myConfiguration.getTestToRun());
     String keywords = myConfiguration.getKeywords();
     if (!StringUtil.isEmptyOrSpaces(keywords)) {
-      script_params.addParameters("-k", "\"" + keywords + "\"");
-    }
+      script_params.addParameters("-k", keywords);
+    }    
   }
 }
