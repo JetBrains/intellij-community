@@ -20,7 +20,6 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecutableValidator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.GitVcs;
@@ -34,8 +33,6 @@ import git4idea.i18n.GitBundle;
 public class GitExecutableValidator extends ExecutableValidator {
 
   private GitVcs myVcs;
-  private static final String UNIX_EXECUTABLE = "git";
-  private static final String SYSTEM_DEFAULT_EXECUTABLE = SystemInfo.isWindows ? "git.exe": UNIX_EXECUTABLE;
 
   public GitExecutableValidator(Project project) {
     super(project, GitVcs.NOTIFICATION_GROUP_ID, GitVcs.getInstance(project).getConfigurable());
@@ -56,9 +53,6 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   @Override
   public boolean isExecutableValid(String executable) {
-    if (!executable.endsWith(SYSTEM_DEFAULT_EXECUTABLE) && !executable.endsWith(UNIX_EXECUTABLE)) {
-      return false;
-    }
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);

@@ -97,8 +97,6 @@ public abstract class ExecutableValidator {
   /**
    * Returns true if the supplied executable is valid.
    * Default implementation: try to execute the given executable and test if output returned errors.
-   * Try to make this method fast, because it is used in the filechooser to disable files which are not valid.
-   * (default implementation is thus not fast).
    * @param executable Path to executable.
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */

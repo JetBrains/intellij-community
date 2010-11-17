@@ -12,18 +12,18 @@
 // limitations under the License.
 package com.intellij.execution.util;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class ExecutableDialog extends DialogWrapper {
   private JPanel myCenterPanel;
-  private ExecutablePathPanel myExecutablePath;
+  private TextFieldWithBrowseButton myExecutablePath;
   private JLabel myInfoLabel;
   private final ExecutableValidator myExecutableValidator;
   private String myErrorNotValidText;
@@ -56,13 +56,11 @@ public class ExecutableDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myExecutablePath = new ExecutablePathPanel(myExecutableValidator);
-    myExecutablePath.addOKListener(new ActionListener() {
-      public void actionPerformed(ActionEvent event) {
-        setErrorText(null);
-        updateUI();
-      }
-    });
+    myExecutablePath = new TextFieldWithBrowseButton();
+    myExecutablePath.setText(myExecutableValidator.getCurrentExecutable());
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+    myExecutablePath.addBrowseFolderListener(myExecutableValidator.getFileChooserTitle(), myExecutableValidator.getFileChooserDescription(),
+                                             null, descriptor);
     myExecutablePath.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
