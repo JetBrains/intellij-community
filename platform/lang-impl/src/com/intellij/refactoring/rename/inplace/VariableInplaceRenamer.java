@@ -39,12 +39,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -109,8 +111,13 @@ public class VariableInplaceRenamer {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
-    
-    final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
+
+    VirtualFile vFile = myElementToRename.getContainingFile().getVirtualFile();
+    SearchScope referencesSearchScope = vFile == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(vFile)
+      ? ProjectScope.getProjectScope(myElementToRename.getProject())
+      : new LocalSearchScope(myElementToRename.getContainingFile());
+
+    final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
 
     addReferenceAtCaret(refs);
 

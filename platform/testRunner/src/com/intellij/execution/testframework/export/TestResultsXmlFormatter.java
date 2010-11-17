@@ -27,8 +27,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class TestResultsXmlFormatter {
 
@@ -37,16 +39,16 @@ public class TestResultsXmlFormatter {
   private static final String ELEM_SUITE = "suite";
   private static final String ATTR_NAME = "name";
   private static final String ATTR_DURATION = "duration";
-  private static final String ATTR_TOTAL = "total";
-  private static final String ATTR_PASSED = "passed";
-  private static final String ATTR_FAILED = "failed";
+  private static final String ELEM_COUNT = "count";
+  private static final String ATTR_VALUE = "value";
+  private static final String ELEM_OUTPUT = "output";
+  private static final String ATTR_OUTPUT_TYPE = "type";
   private static final String ATTR_STATUS = "status";
+  private static final String TOTAL_STATUS = "total";
 
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
   private final AbstractTestProxy myTestRoot;
-  private static final String ELEM_OUTPUT = "output";
-  private static final String ATTR_OUTPUT_TYPE = "type";
 
   public static void execute(AbstractTestProxy root, RuntimeConfiguration runtimeConfiguration, ContentHandler resultHandler)
     throws SAXException {
@@ -62,24 +64,37 @@ public class TestResultsXmlFormatter {
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    int total = 0;
-    int passed = 0;
+    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+        return o1.compareTo(o2);
+      }
+    });
     for (AbstractTestProxy node : myTestRoot.getAllTests()) {
       if (!node.isLeaf()) continue;
-      total++;
-      if (node.isPassed()) passed++;
+      String status = getStatusString(node);
+      increment(counts, status);
+      increment(counts, TOTAL_STATUS);
     }
 
-    Map<String, String> attrs = new HashMap<String, String>();
-    attrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
+    Map<String, String> runAttrs = new HashMap<String, String>();
+    runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
     Integer duration = myTestRoot.getDuration();
     if (duration != null) {
-      attrs.put(ATTR_DURATION, String.valueOf(duration));
+      runAttrs.put(ATTR_DURATION, String.valueOf(duration));
     }
-    attrs.put(ATTR_TOTAL, String.valueOf(total));
-    attrs.put(ATTR_PASSED, String.valueOf(passed));
-    attrs.put(ATTR_FAILED, String.valueOf(total - passed));
-    startElement(ELEM_RUN, attrs);
+    startElement(ELEM_RUN, runAttrs);
+
+    for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+      Map<String, String> a = new HashMap<String, String>();
+      a.put(ATTR_NAME, entry.getKey());
+      a.put(ATTR_VALUE, String.valueOf(entry.getValue()));
+      startElement(ELEM_COUNT, a);
+      endElement(ELEM_COUNT);
+    }
+
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
         processNode(node);
@@ -90,6 +105,11 @@ public class TestResultsXmlFormatter {
     }
     endElement(ELEM_RUN);
     myResultHandler.endDocument();
+  }
+
+  private static void increment(Map<String, Integer> counts, String status) {
+    Integer count = counts.get(status);
+    counts.put(status, count != null ? count + 1 : 1);
   }
 
   private void processNode(AbstractTestProxy node) throws SAXException {
@@ -145,7 +165,7 @@ public class TestResultsXmlFormatter {
       }
       if (buffer.length() > 0) {
         Map<String, String> a = new HashMap<String, String>();
-        a.put(ATTR_OUTPUT_TYPE, lastType.toString());
+        a.put(ATTR_OUTPUT_TYPE, getTypeString(lastType.get()));
         startElement(ELEM_OUTPUT, a);
         writeText(buffer.toString());
         endElement(ELEM_OUTPUT);
@@ -160,12 +180,26 @@ public class TestResultsXmlFormatter {
   }
 
   private static String getTypeString(ConsoleViewContentType type) {
-    return type == ConsoleViewContentType.ERROR_OUTPUT ? "error" : "normal";
+    return type == ConsoleViewContentType.ERROR_OUTPUT ? "stderr" : "stdout";
   }
 
   private static String getStatusString(AbstractTestProxy node) {
-    if (node.isPassed()) return "passed";
-    return "failed"; // TODO
+    int magnitude = node.getMagnitude();
+    // TODO enumeration!
+    switch (magnitude) {
+      case 0:
+        return "skipped";
+      case 5:
+        return "ignored";
+      case 1:
+        return "passed";
+      case 6:
+        return "failed";
+      case 8:
+        return "error";
+      default:
+        return node.isPassed() ? "passed" : "failed";
+    }
   }
 
   private void startElement(String name, Map<String, String> attributes) throws SAXException {

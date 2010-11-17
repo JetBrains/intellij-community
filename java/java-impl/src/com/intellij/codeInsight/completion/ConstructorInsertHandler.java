@@ -56,7 +56,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     if (item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous) {
       if (((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT)) {
         if (mySmart) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
         }
 
         PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
@@ -77,7 +77,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
           }
         }
         if (mySmart) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
         }
       }
     }

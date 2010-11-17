@@ -70,7 +70,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                                                                                          GrAssignmentExpression.class),
                                                                                                                       psiElement(
                                                                                                                         GrVariable.class))));
-  private static final ElementPattern<PsiElement> AFTER_NEW =
+  static final ElementPattern<PsiElement> AFTER_NEW =
     psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).andNot(psiElement().afterLeaf(psiElement().withText(PsiKeyword.THROW))));
   private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
     new TObjectHashingStrategy<TypeConstraint>() {
@@ -191,38 +191,10 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                  final ProcessingContext matchingContext,
                                  @NotNull final CompletionResultSet result) {
-        final PsiElement identifierCopy = parameters.getPosition();
-        final GrExpression expression = PsiTreeUtil.getParentOfType(identifierCopy, GrExpression.class);
-        if (expression == null) return;
-
-        final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression);
-        for (PsiType type : types) {
-          if (type instanceof PsiArrayType) {
-            final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
-            if (item.getObject() instanceof PsiClass) {
-              JavaCompletionUtil.setShowFQN(item);
-            }
-            item.setInsertHandler(new ArrayInsertHandler());
-            result.addElement(item);
-          }
-        }
-
-
-        final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
-
-        for (PsiType psiType : types) {
-          if (psiType instanceof PsiClassType) {
-            PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
-            final PsiClassType classType = (PsiClassType)type;
-            if (classType.resolve() != null) {
-              expectedClassTypes.add(classType);
-            }
-          }
-        }
-
-        JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, result.getPrefixMatcher(), new Consumer<PsiType>() {
-          public void consume(final PsiType type) {
-            addExpectedType(result, type, identifierCopy);
+        generateInheritorVariants(parameters, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement lookupElement) {
+            result.addElement(lookupElement);
           }
         });
       }
@@ -230,24 +202,65 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
   }
 
+  static void generateInheritorVariants(CompletionParameters parameters, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {
+    final PsiElement identifierCopy = parameters.getPosition();
+    final GrExpression expression = PsiTreeUtil.getParentOfType(identifierCopy, GrExpression.class);
+    if (expression == null) return;
+
+    final Set<PsiType> types = GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression);
+    for (PsiType type : types) {
+      if (type instanceof PsiArrayType) {
+        final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
+        if (item.getObject() instanceof PsiClass) {
+          JavaCompletionUtil.setShowFQN(item);
+        }
+        item.setInsertHandler(new ArrayInsertHandler());
+        consumer.consume(item);
+      }
+    }
+
+
+    final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
+
+    for (PsiType psiType : types) {
+      if (psiType instanceof PsiClassType) {
+        PsiType type = JavaCompletionUtil.eliminateWildcards(JavaCompletionUtil.originalize(psiType));
+        final PsiClassType classType = (PsiClassType)type;
+        if (classType.resolve() != null) {
+          expectedClassTypes.add(classType);
+        }
+      }
+    }
+
+    JavaInheritorsGetter.processInheritors(parameters, expectedClassTypes, matcher, new Consumer<PsiType>() {
+      public void consume(final PsiType type) {
+        final LookupElement element = addExpectedType(type, identifierCopy);
+        if (element != null) {
+          consumer.consume(element);
+        }
+      }
+    });
+  }
+
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
   }
 
-  private static void addExpectedType(final CompletionResultSet result, final PsiType type, final PsiElement place) {
-    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return;
+  @Nullable
+  private static LookupElement addExpectedType(final PsiType type, final PsiElement place) {
+    if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
 
     final PsiClass psiClass = com.intellij.psi.util.PsiUtil.resolveClassInType(type);
-    if (psiClass == null) return;
+    if (psiClass == null) return null;
 
-    if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-    if (!checkForInnerClass(psiClass, place)) return;
+    if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
+    if (!checkForInnerClass(psiClass, place)) return null;
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), place);
     JavaCompletionUtil.setShowFQN(item);
-    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place));
-    result.addElement(item);
+    item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, place, true));
+    return item;
   }
 
   private static boolean checkForInnerClass(PsiClass psiClass, PsiElement identifierCopy) {

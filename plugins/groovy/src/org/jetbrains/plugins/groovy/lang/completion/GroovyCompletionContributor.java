@@ -200,92 +200,27 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     };
 
+  private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
+    result.stopHere();
+    AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
+      @Override
+      public void consume(PsiClass psiClass) {
+        if (!inheritors.alreadyProcessed(psiClass)) {
+          result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
+        }
+      }
+    });
+  }
+
   public GroovyCompletionContributor() {
     extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
-        final PsiElement reference = position.getParent();
+        final PsiElement reference = parameters.getPosition().getParent();
         if (reference instanceof GrReferenceElement) {
-          final int invocationCount = parameters.getInvocationCount();
-          final boolean secondCompletionInvoked =
-            CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION ? invocationCount > 0 : invocationCount > 1;
-
-          final String prefix = result.getPrefixMatcher().getPrefix();
-          final boolean skipAccessors = !secondCompletionInvoked && !prefix.startsWith(GET_PREFIX) &&
-                                        !prefix.startsWith(SET_PREFIX) &&
-                                        !prefix.startsWith(IS_PREFIX);
-
-
-          result.restartCompletionOnPrefixChange(GET_PREFIX);
-          result.restartCompletionOnPrefixChange(SET_PREFIX);
-          result.restartCompletionOnPrefixChange(IS_PREFIX);
-          final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
-          ((GrReferenceElement)reference).processVariants(new Consumer<Object>() {
-            public void consume(Object element) {
-              final LookupElement lookupElement = element instanceof PsiClass
-                                                  ? GroovyCompletionUtil.createClassLookupItem((PsiClass)element)
-                                                  : GroovyCompletionUtil.getLookupElement(element);
-              Object object = lookupElement.getObject();
-              PsiSubstitutor substitutor = null;
-              if (object instanceof GroovyResolveResult) {
-                substitutor = ((GroovyResolveResult)object).getSubstitutor();
-                object = ((GroovyResolveResult)object).getElement();
-              }
-
-
-              //skip default groovy methods
-              if (!secondCompletionInvoked &&
-                  object instanceof GrGdkMethod &&
-                  GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor)) {
-                showInfo();
-                return;
-              }
-
-              //skip operator methods
-              if (!secondCompletionInvoked &&
-                  object instanceof PsiMethod &&
-                  GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
-                showInfo();
-                return;
-              }
-
-              //skip accessors if there is no get, set, is prefix
-              if (skipAccessors && object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
-                showInfo();
-                return;
-              }
-
-              if ((object instanceof PsiMethod || object instanceof PsiField) &&
-                  ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
-                if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
-                  staticMembers.put((PsiModifierListOwner)object, lookupElement);
-                  return;
-                }
-              }
-              result.addElement(lookupElement);
-            }
-          });
-
-          if (((GrReferenceElement)reference).getQualifier() == null) {
-            completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
-              @Override
-              public void consume(PsiMember member, PsiClass psiClass) {
-                if (member instanceof GrAccessorMethod) {
-                  member = ((GrAccessorMethod)member).getProperty();
-                }
-                final String name = member.getName();
-                if (name == null || !result.getPrefixMatcher().prefixMatches(name)) {
-                  staticMembers.remove(member);
-                  return;
-                }
-                staticMembers.put(member, new JavaGlobalMemberLookupElement(member, psiClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, true));
-              }
-            });
-          }
-          result.addAllElements(staticMembers.values());
+          completeReference(parameters, result, (GrReferenceElement)reference);
         }
       }
     });
@@ -366,37 +301,113 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
 
-    final CompletionProvider<CompletionParameters> classNameProvider = new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        result.stopHere();
-        AllClassesGetter
-          .processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
-            @Override
-            public void consume(PsiClass psiClass) {
-              result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
-            }
-          });
-      }
-    };
-    extend(CompletionType.CLASS_NAME, psiElement(), classNameProvider);
-
-    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
-        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
-
-        final String s = result.getPrefixMatcher().getPrefix();
-        if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return;
-
-        classNameProvider.addCompletionVariants(parameters, context, result);
+                                    @NotNull CompletionResultSet result) {
+        addAllClasses(parameters, result, new InheritorsHolder(parameters.getPosition(), result));
       }
     });
+
+  }
+
+  private static void completeReference(CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {
+    PsiElement position = parameters.getPosition();
+
+    final InheritorsHolder inheritors = new InheritorsHolder(position, result);
+    if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
+      GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
+    }
+
+    final int invocationCount = parameters.getInvocationCount();
+    final boolean secondCompletionInvoked = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION ? invocationCount > 0 : invocationCount > 1;
+
+    final String prefix = result.getPrefixMatcher().getPrefix();
+    final boolean skipAccessors = !secondCompletionInvoked && !prefix.startsWith(GET_PREFIX) &&
+                                  !prefix.startsWith(SET_PREFIX) &&
+                                  !prefix.startsWith(IS_PREFIX);
+
+
+    result.restartCompletionOnPrefixChange(GET_PREFIX);
+    result.restartCompletionOnPrefixChange(SET_PREFIX);
+    result.restartCompletionOnPrefixChange(IS_PREFIX);
+    final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
+    reference.processVariants(new Consumer<Object>() {
+      public void consume(Object element) {
+        if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
+          return;
+        }
+        if (element instanceof LookupElement && inheritors.alreadyProcessed((LookupElement)element)) {
+          return;
+        }
+
+        final LookupElement lookupElement = element instanceof PsiClass
+                                            ? GroovyCompletionUtil.createClassLookupItem((PsiClass)element)
+                                            : GroovyCompletionUtil.getLookupElement(element);
+        Object object = lookupElement.getObject();
+        PsiSubstitutor substitutor = null;
+        if (object instanceof GroovyResolveResult) {
+          substitutor = ((GroovyResolveResult)object).getSubstitutor();
+          object = ((GroovyResolveResult)object).getElement();
+        }
+
+        //skip default groovy methods
+        if (!secondCompletionInvoked &&
+            object instanceof GrGdkMethod &&
+            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor)) {
+          showInfo();
+          return;
+        }
+
+        //skip operator methods
+        if (!secondCompletionInvoked &&
+            object instanceof PsiMethod &&
+            GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
+          showInfo();
+          return;
+        }
+
+        //skip accessors if there is no get, set, is prefix
+        if (skipAccessors && object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
+          showInfo();
+          return;
+        }
+
+        if ((object instanceof PsiMethod || object instanceof PsiField) &&
+            ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
+          if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
+            staticMembers.put((PsiModifierListOwner)object, lookupElement);
+            return;
+          }
+        }
+        result.addElement(lookupElement);
+      }
+    });
+
+    if (reference.getQualifier() == null) {
+      completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+        @Override
+        public void consume(PsiMember member, PsiClass psiClass) {
+          if (member instanceof GrAccessorMethod) {
+            member = ((GrAccessorMethod)member).getProperty();
+          }
+          final String name = member.getName();
+          if (name == null || !result.getPrefixMatcher().prefixMatches(name)) {
+            staticMembers.remove(member);
+            return;
+          }
+          staticMembers.put(member, new JavaGlobalMemberLookupElement(member, psiClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, true));
+
+        }
+      });
+
+      final String s = result.getPrefixMatcher().getPrefix();
+      if (!StringUtil.isEmpty(s) && Character.isUpperCase(s.charAt(0))) {
+        addAllClasses(parameters, result, inheritors);
+      }
+    }
+    result.addAllElements(staticMembers.values());
   }
 
   private static void showInfo() {

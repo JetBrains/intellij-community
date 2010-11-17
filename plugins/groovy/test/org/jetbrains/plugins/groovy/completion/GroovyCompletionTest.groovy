@@ -320,4 +320,24 @@ class A {
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text
   }
+
+  void configure(String text) {
+    myFixture.configureByText("a.groovy", text)
+  }
+
+  public void testGenericsAfterNew() {
+    configure "List<String> l = new ArrLi<caret>"
+    myFixture.completeBasic()
+    myFixture.type '\n'
+    myFixture.checkResult "List<String> l = new ArrayList<String>(<caret>)"
+  }
+
+  public void testAfterNewWithInner() {
+    myFixture.addClass """class Zzoo {
+        static class Impl {}
+      }"""
+    configure "Zzoo l = new Zz<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult "Zzoo l = new Zzoo<caret>"
+  }
 }
