@@ -90,6 +90,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   @NonNls private static final String ATTRIBUTE_GROUP = "group";
   private long myModificationCount;
   private final MessageBusConnection myConnection;
+  private final ProgressManager myProgressManager;
   private final MessageBus myMessageBus;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
@@ -101,8 +102,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project, MessageBus bus) {
+  public ModuleManagerImpl(Project project, ProgressManager progressManager, MessageBus bus) {
     myProject = project;
+    myProgressManager = progressManager;
     myMessageBus = bus;
     myConnection = bus.connect(project);
 
@@ -568,7 +570,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
     };
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+    myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
 
     myModuleModel.projectOpened();
   }

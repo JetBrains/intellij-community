@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class DirectoryChooserUtil {
   }
 
   @Nullable
-  public static PsiDirectory getOrChooseDirectory(IdeView view) {
+  public static PsiDirectory getOrChooseDirectory(@NotNull IdeView view) {
     PsiDirectory[] dirs = view.getDirectories();
     if (dirs.length == 0) return null;
     if (dirs.length == 1) {
