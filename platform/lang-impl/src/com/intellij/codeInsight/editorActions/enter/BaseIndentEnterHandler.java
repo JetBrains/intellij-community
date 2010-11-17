@@ -114,7 +114,7 @@ public class BaseIndentEnterHandler implements EnterHandlerDelegate {
     }
 
     if (myIndentTokens.contains(type)) {
-      final String singleIndent = StringUtil.repeatSymbol(' ', CodeStyleSettingsManager.getInstance().getCurrentSettings().getIndentSize(myLanguage.getAssociatedFileType()));
+      final String singleIndent = getSingleIndent(file);
       EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
       return Result.Stop;
     }
@@ -122,6 +122,10 @@ public class BaseIndentEnterHandler implements EnterHandlerDelegate {
     EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
     return Result.Stop;
+  }
+
+  protected String getSingleIndent(final PsiFile file) {
+    return StringUtil.repeatSymbol(' ', CodeStyleSettingsManager.getInstance().getCurrentSettings().getIndentSize(myLanguage.getAssociatedFileType()));
   }
 
   @Nullable
