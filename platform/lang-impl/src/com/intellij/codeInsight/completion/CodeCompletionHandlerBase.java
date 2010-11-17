@@ -542,7 +542,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Document document = fileCopy.getViewProvider().getDocument();
     assert document != null : "no document";
     initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
-    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(document);
+    final Document hostDocument = hostFile.getViewProvider().getDocument();
+    assert hostDocument != null : "no host document";
+    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
     assert hostFile.isValid() : "file became invalid";
     assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
 
