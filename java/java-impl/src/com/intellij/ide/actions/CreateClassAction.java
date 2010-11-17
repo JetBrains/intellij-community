@@ -19,22 +19,15 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * The standard "New Class" action.
@@ -88,5 +81,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   @Override
   protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     JavaDirectoryService.getInstance().checkCreateClass(dir, className);
+  }
+
+  @Override
+  protected void postProcess(PsiClass createdElement, String templateName, Map<String, String> customProperties) {
+    super.postProcess(createdElement, templateName, customProperties);
+
+    moveCaretAfterNameIdentifier(createdElement);
   }
 }

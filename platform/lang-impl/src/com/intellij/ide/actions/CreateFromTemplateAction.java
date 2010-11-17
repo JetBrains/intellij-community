@@ -20,10 +20,15 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,5 +127,22 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
 
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
+  }
+
+  //todo append $END variable to templates?
+  protected static void moveCaretAfterNameIdentifier(PsiNameIdentifierOwner createdElement) {
+    final Project project = createdElement.getProject();
+    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor != null) {
+      final VirtualFile virtualFile = createdElement.getContainingFile().getVirtualFile();
+      if (virtualFile != null) {
+        if (FileDocumentManager.getInstance().getDocument(virtualFile) == editor.getDocument()) {
+          final PsiElement nameIdentifier = createdElement.getNameIdentifier();
+          if (nameIdentifier != null) {
+            editor.getCaretModel().moveToOffset(nameIdentifier.getTextRange().getEndOffset());
+          }
+        }
+      }
+    }
   }
 }
