@@ -22,6 +22,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -79,7 +80,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
     // ------- gant-specific
 
     PsiFile file = place.getContainingFile();
-    if (!GantUtils.isGantScriptFile(file)) {
+    if (file == null || !GroovyScriptTypeDetector.isSpecificScriptFile(file, GantScriptType.INSTANCE)) {
       return;
     }
 

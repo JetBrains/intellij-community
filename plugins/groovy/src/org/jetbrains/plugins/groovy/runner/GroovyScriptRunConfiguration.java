@@ -46,7 +46,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -128,7 +128,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       return new DefaultGroovyScriptRunner();
     }
 
-    return GroovyScriptType.getScriptType((GroovyFile)psiFile).getRunner();
+    return GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile).getRunner();
   }
 
   public void readExternal(Element element) throws InvalidDataException {

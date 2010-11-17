@@ -37,7 +37,7 @@
 
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
-    <extensionPoint name="scriptType" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
+    <extensionPoint name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
 
     <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
 
@@ -62,8 +62,8 @@
 
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" order="last" />
 
-    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
-    <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
+    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector" />
+    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gradle.GradleScriptTypeDetector"/>
 
     <!-- GroovyDSL extensions -->
     <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>

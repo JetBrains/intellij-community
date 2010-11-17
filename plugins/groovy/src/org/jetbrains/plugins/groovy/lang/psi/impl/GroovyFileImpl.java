@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -202,7 +202,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     result.add(getPackageName());
     ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
     if (isScript()) {
-      result.addAll(GroovyScriptType.getScriptType(this).appendImplicitImports(this));
+      result.addAll(GroovyScriptTypeDetector.getScriptType(this).appendImplicitImports(this));
     }
     return result;
   }
@@ -247,7 +247,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Nullable
   public Icon getIcon(int flags) {
-    final Icon baseIcon = isScript() ? GroovyScriptType.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
+    final Icon baseIcon = isScript() ? GroovyScriptTypeDetector.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
     return ElementBase.createLayeredIcon(baseIcon, ElementBase.transformFlags(this, flags));
   }
 
@@ -466,7 +466,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     protected CachedValue<GlobalSearchScope> compute(final GroovyFile file, final GlobalSearchScope baseScope) {
       return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<GlobalSearchScope>() {
         public Result<GlobalSearchScope> compute() {
-          GlobalSearchScope scope = GroovyScriptType.getScriptType(file).patchResolveScope(file, baseScope);
+          GlobalSearchScope scope = GroovyScriptTypeDetector.getScriptType(file).patchResolveScope(file, baseScope);
           return Result.create(scope, file, ProjectRootManager.getInstance(file.getProject()));
         }
       }, false);
