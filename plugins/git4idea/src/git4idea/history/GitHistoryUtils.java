@@ -253,24 +253,39 @@ public class GitHistoryUtils {
   }
 
   /**
-   * Gets info of the given commit and checks if it was RENAME. If yes, returns the old file path, which file was renamed from.
+   * Gets info of the given commit and checks if it was a RENAME.
+   * If yes, returns the older file path, which file was renamed from.
    * If it's not a rename, returns null.
    */
   @Nullable
   private static FilePath getFirstCommitRenamePath(Project project, VirtualFile root, String commit, FilePath filePath) throws VcsException {
+    // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
+    // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     final GitLogParser parser = new GitLogParser(HASH);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-
-    h.addParameters("-M", "--follow", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
     h.endOptions();
-    h.addRelativePaths(filePath);
     parser.setNameInOutput(true);
     final String output = h.run();
-    final GitLogRecord record = parser.parseOneRecord(output);
-    if (record.getNameStatus() == 'R') {
-      final List<FilePath> paths = record.getFilePaths(root);
+    final List<GitLogRecord> records = parser.parse(output);
+
+    // we have information about all changed files of the commit. Extracting information about the file we need.
+    GitLogRecord fileRecord = null;
+    for (GitLogRecord record : records) {
+      final List<String> paths = record.getPaths();
+      if (!paths.isEmpty()) {
+        String path = paths.get(paths.size()-1); // if the file is renamed, it has 2 paths - we are looking for the new name.
+        if (path.equals(GitUtil.relativePath(root, filePath))) {
+          fileRecord = record;
+          break;
+        }
+      }
+    }
+
+    if (fileRecord != null && fileRecord.getNameStatus() == 'R') {
+      final List<FilePath> paths = fileRecord.getFilePaths(root);
       final String message = "Rename commit should have 2 paths. Commit: " + commit;
       if (!LOG.assertTrue(paths.size() == 2, message + " Output: [" + output + "]")) {
         throw new VcsException(message);

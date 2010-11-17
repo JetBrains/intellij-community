@@ -39,7 +39,7 @@ class GitLogRecord {
   private final List<String> myPaths;
   private final char myNameStatus;
 
-  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, char nameStatus) {
+  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, char nameStatus) {
     myOptions = options;
     myPaths = paths;
     myNameStatus = nameStatus;
@@ -54,7 +54,7 @@ class GitLogRecord {
     return myNameStatus;
   }
 
-  Collection<String> getPaths() {
+  @NotNull List<String> getPaths() {
     return myPaths;
   }
 
