@@ -79,7 +79,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
   public void apply() {
     myConfiguration.removeAllExcludeEntryDescriptions();
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
-      myConfiguration.addExcludeEntryDescription(description);
+      myConfiguration.addExcludeEntryDescription(description.copy(myProject));
     }
   }
 
