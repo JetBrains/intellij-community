@@ -36,46 +36,34 @@ public class PyChainedComparisonsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(final PyAssignmentStatement node){
-      if (node.getAssignedValue() instanceof PyBinaryExpression) {
+    public void visitPyBinaryExpression(final PyBinaryExpression node){
+      PyExpression leftExpression = node.getLeftExpression();
+      PyExpression rightExpression = node.getRightExpression();
 
-        if (checkBinaryExpression((PyBinaryExpression)node.getAssignedValue()))
-          registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix());
+      if (leftExpression instanceof PyBinaryExpression &&
+                        rightExpression instanceof PyBinaryExpression) {
+        if (node.getOperator() == PyTokenTypes.AND_KEYWORD) {
+          if (checkOperator((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression))
+            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix());
+        }
       }
     }
 
-    private static boolean checkBinaryExpression(PyBinaryExpression expression) {
-      if (expression.getOperator() == PyTokenTypes.AND_KEYWORD) {
-        PyExpression leftExpression = expression.getLeftExpression();
-        PyExpression rightExpression = expression.getRightExpression();
-
-        if (leftExpression instanceof PyBinaryExpression && rightExpression instanceof PyBinaryExpression) {
-          if (((PyBinaryExpression)leftExpression).getOperator() == ((PyBinaryExpression)rightExpression).getOperator()) {
-            PyExpression leftRight = ((PyBinaryExpression)leftExpression).getRightExpression();
-            if (leftRight != null) {
-              if (leftRight.getText().equals(getLeftExpression((PyBinaryExpression)rightExpression).getText()))
-                return true;
-            }
-          }
+    static private boolean checkOperator(PyBinaryExpression leftExpression,PyBinaryExpression rightExpression) {
+      if (leftExpression.getRightExpression() instanceof PyBinaryExpression) {
+        if (checkOperator((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression))
+          return true;
+      }
+      
+      if (leftExpression.getOperator() == rightExpression.getOperator() &&
+                  PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
+        PyExpression leftRight = leftExpression.getRightExpression();
+        if (leftRight != null) {
+          if (leftRight.getText().equals(getLeftExpression(rightExpression).getText()))
+            return true;
         }
       }
       return false;
-    }
-
-    @Override
-    public void visitPyIfStatement(final PyIfStatement node){
-      if (node.getIfPart().getCondition() instanceof PyBinaryExpression) {
-        if (checkBinaryExpression((PyBinaryExpression)node.getIfPart().getCondition()))
-          registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix());
-      }
-    }
-
-    @Override
-    public void visitPyWhileStatement(final PyWhileStatement node){
-      if (node.getWhilePart().getCondition() instanceof PyBinaryExpression) {
-        if (checkBinaryExpression((PyBinaryExpression)node.getWhilePart().getCondition()))
-          registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix());
-      }
     }
 
     static private PyExpression getLeftExpression(PyBinaryExpression expression) {

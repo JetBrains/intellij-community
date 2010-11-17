@@ -31,55 +31,36 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    PyBinaryExpression expression = null;
-    if (element != null && element.isWritable()) {
-      if (element instanceof PyAssignmentStatement) {
-        PyAssignmentStatement statement = (PyAssignmentStatement)element;
-
-        if (statement.getAssignedValue() instanceof PyBinaryExpression) {
-          expression = (PyBinaryExpression)statement.getAssignedValue();
+    PsiElement expression = descriptor.getPsiElement();
+    if (expression != null && expression.isWritable()) {
+      if (expression instanceof PyBinaryExpression) {
+        PyExpression leftExpression = ((PyBinaryExpression)expression).getLeftExpression();
+        PyExpression rightExpression = ((PyBinaryExpression)expression).getRightExpression();
+        if (rightExpression instanceof PyBinaryExpression && leftExpression instanceof PyBinaryExpression) {
+          if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD) {
+            checkOperator((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression, project);
+          }
         }
       }
-      else if(element instanceof PyIfStatement) {
-        PyIfStatement statement = (PyIfStatement)element;
-
-        if (statement.getIfPart().getCondition() instanceof PyBinaryExpression) {
-          expression = (PyBinaryExpression)statement.getIfPart().getCondition();
-        }
-      }
-      else if(element instanceof PyWhileStatement) {
-        PyWhileStatement statement = (PyWhileStatement)element;
-
-        if (statement.getWhilePart().getCondition() instanceof PyBinaryExpression) {
-          expression = (PyBinaryExpression)statement.getWhilePart().getCondition();
-        }
-      }
-
-    }
-
-    if (expression != null) {
-      checkBinaryExpression(expression, project);
     }
   }
 
-  private static void checkBinaryExpression(PyBinaryExpression expression, Project project) {
-    if (expression.getOperator() == PyTokenTypes.AND_KEYWORD) {
-      PyExpression leftExpression = expression.getLeftExpression();
-      PyExpression rightExpression = expression.getRightExpression();
-
-      if (leftExpression instanceof PyBinaryExpression && rightExpression instanceof PyBinaryExpression) {
-        if (((PyBinaryExpression)leftExpression).getOperator() == ((PyBinaryExpression)rightExpression).getOperator()) {
-          PyExpression leftRight = ((PyBinaryExpression)leftExpression).getRightExpression();
-          if (leftRight != null) {
-            if (leftRight.getText().equals(getSmallLeftExpression((PyBinaryExpression)rightExpression).getText())) {
-                PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-                PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
-                        ((PyBinaryExpression)leftExpression).getPsiOperator().getText(), leftExpression,
-                                                              getLargeRightExpression((PyBinaryExpression)rightExpression, project));
-                expression.replace(binaryExpression);
-            }
-          }
+  static private void checkOperator(PyBinaryExpression leftExpression,
+                                                          PyBinaryExpression rightExpression, Project project) {
+    if (leftExpression.getRightExpression() instanceof PyBinaryExpression) {
+      checkOperator((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression, project);
+    }     
+    else if (leftExpression.getOperator() == rightExpression.getOperator() &&
+                PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
+      PyExpression leftRight = leftExpression.getRightExpression();
+      if (leftRight != null) {
+        if (leftRight.getText().equals(getSmallLeftExpression(rightExpression).getText())) {
+          PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+          PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
+                  (leftExpression).getPsiOperator().getText(), leftExpression,
+                                                        getLargeRightExpression(rightExpression, project));
+          leftExpression.replace(binaryExpression);
+          rightExpression.delete();
         }
       }
     }

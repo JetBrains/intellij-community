@@ -43,16 +43,18 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         PyBinaryExpression expression = (PyBinaryExpression)node.getAssignedValue();
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
-        if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
-          if (leftExpression.getName().equals(target.getName())) {
-            if (rightExpression instanceof PyNumericLiteralExpression
-                || rightExpression instanceof PyStringLiteralExpression
-                    || rightExpression instanceof PyReferenceExpression) {
-              PyElementType op = expression.getOperator();
-              if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
-                    op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
-                AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-                registerProblem(node, "Augment assignment", quickFix);
+        if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(expression.getOperator()) ||
+              PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(expression.getOperator())) {
+          if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
+            if (leftExpression.getName().equals(target.getName())) {
+              if (rightExpression instanceof PyNumericLiteralExpression
+                      || rightExpression instanceof PyReferenceExpression) {
+                PyElementType op = expression.getOperator();
+                if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
+                      op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
+                  AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
+                  registerProblem(node, "Augment assignment", quickFix);
+                }
               }
             }
           }
