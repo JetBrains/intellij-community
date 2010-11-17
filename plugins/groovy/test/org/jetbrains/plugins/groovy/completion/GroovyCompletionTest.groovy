@@ -14,14 +14,15 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy;
+package org.jetbrains.plugins.groovy.completion;
 
 
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import org.jetbrains.plugins.groovy.GroovyFileType
 
 /**
  * @author Maxim.Medvedev
@@ -36,36 +37,6 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
     myFixture.type('(');
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
-  }
-
-  public void testSmartCompletionAfterNewInDeclaration() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.SMART);
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Bar", "Foo");
-  }
-
-  public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable {
-    doSmartTest();
   }
 
   public void testNamedParametersForApplication() throws Throwable {
@@ -149,11 +120,6 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "Inner1", "Inner2");
   }
 
-  public void testInnerClassInStaticMethodCompletion() throws Throwable {
-    doSmartTest();
-  }
-
-
   public void testQualifiedThisCompletion() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "foo1", "foo2");
   }
@@ -206,41 +172,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
   }
 
-  public void testSmartCompletionInAssignmentExpression() throws Throwable {
-    doSmartTest();
-  }
-
-  public void testSimpleMethodParameter() throws Throwable {
-    doSmartCompletion("d1", "d2");
-  }
-
-  public void testReturnStatement() throws Exception {
-    doSmartCompletion("b", "b1", "b2", "foo");
-  }
-
-  public void testIncSmartCompletion() throws Exception {
-    doSmartCompletion("a", "b");
-  }
-
-  public void testInheritConstructorsAnnotation() throws Throwable {
-    myFixture.addFileToProject("groovy/transform/InheritConstructors.java", "package groovy.transform;\n" +
-                                                                            "\n" +
-                                                                            "import java.lang.annotation.ElementType;\n" +
-                                                                            "import java.lang.annotation.Retention;\n" +
-                                                                            "import java.lang.annotation.RetentionPolicy;\n" +
-                                                                            "import java.lang.annotation.Target;@Retention(RetentionPolicy.SOURCE)\n" +
-                                                                            "@Target({ElementType.TYPE})\n" +
-                                                                            "public @interface InheritConstructors {\n" +
-                                                                            "}");
-    doSmartTest();
-  }
-
   public void testIntCompletionInPlusMethod() {doBasicTest();}
   public void testIntCompletionInGenericParameter() {doBasicTest();}
-
-  public void testSmartCastCompletion() {doSmartTest();}
-  public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
-  public void testSmartCastCompletionWithRParenth() {doSmartTest();}
 
   public void testWhenSiblingIsStaticallyImported_Method() throws Exception {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
@@ -386,5 +319,25 @@ class A {
 
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text
+  }
+
+  void configure(String text) {
+    myFixture.configureByText("a.groovy", text)
+  }
+
+  public void testGenericsAfterNew() {
+    configure "List<String> l = new ArrLi<caret>"
+    myFixture.completeBasic()
+    myFixture.type '\n'
+    myFixture.checkResult "List<String> l = new ArrayList<String>(<caret>)"
+  }
+
+  public void testAfterNewWithInner() {
+    myFixture.addClass """class Zzoo {
+        static class Impl {}
+      }"""
+    configure "Zzoo l = new Zz<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult "Zzoo l = new Zzoo<caret>"
   }
 }

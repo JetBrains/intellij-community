@@ -66,8 +66,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(PsiDocToken.DOC_TAG_NAME), new TagChooser());
 
-    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>(
-      true) {
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);

@@ -74,7 +74,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
                                           final CompletionResultSet result,
                                           final CompletionData completionData) {
     final Ref<Boolean> hasVariants = Ref.create(false);
-    processReferences(parameters, result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
+    processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         completionData
@@ -92,12 +92,11 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
   public static void processReferences(final CompletionParameters parameters,
                                        final CompletionResultSet result,
-                                       final CompletionData completionData,
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
     final PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
     if (ref instanceof PsiMultiReference) {
-      for (final PsiReference reference : completionData.getReferences((PsiMultiReference)ref)) {
+      for (final PsiReference reference : CompletionData.getReferences((PsiMultiReference)ref)) {
         processReference(result, startOffset, consumer, reference);
       }
     }

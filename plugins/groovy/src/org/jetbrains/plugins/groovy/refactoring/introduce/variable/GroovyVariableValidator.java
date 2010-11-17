@@ -21,12 +21,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -36,6 +36,10 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceSettings;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * @author ilyas
@@ -59,7 +63,7 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
   }
 
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
-    GrExpression firstOccurence = null;
+    GrExpression firstOccurence;
     if (replaceAllOccurrences) {
       GroovyRefactoringUtil.sortOccurrences(myContext.occurrences);
       firstOccurence = ((GrExpression)myContext.occurrences[0]);
@@ -81,7 +85,15 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
   public String isOKTest(String varName, boolean allOccurences) {
     MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
-    for (String s : list.values()) {
+    final String[] strings = ArrayUtil.toStringArray((Collection<String>)list.values());
+    Arrays.sort(strings, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return o1.compareTo(o2);
+      }
+    });
+
+    for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";
     }
     if (list.size() > 0) {
@@ -170,11 +182,11 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
    */
   public String validateName(String name, boolean increaseNumber) {
     String result = name;
-    if (!isOKTest(name, true).equals("ok") && !increaseNumber || name.length() == 0) {
+    if (isOKImpl(name, true).size() > 0 && !increaseNumber || name.length() == 0) {
       return "";
     }
     int i = 1;
-    while (!isOKTest(result, true).equals("ok")) {
+    while (isOKImpl(result, true).size() > 0) {
       result = name + i;
       i++;
     }

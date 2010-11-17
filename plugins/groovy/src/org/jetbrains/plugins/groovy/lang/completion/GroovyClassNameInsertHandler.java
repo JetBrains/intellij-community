@@ -53,9 +53,9 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
 
     final boolean inNew = position != null && isReferenceInNewExpression(position.getParent());
 
+    final PsiClass psiClass = item.getObject();
     if (isInVariable(position) || GroovyCompletionContributor.isInClosurePropertyParameters(position)) {
       Project project = context.getProject();
-      PsiClass psiClass = item.getObject();
       String qname = psiClass.getQualifiedName();
       String shortName = psiClass.getName();
       if (qname == null) return;
@@ -71,8 +71,8 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     AllClassesGetter.TRY_SHORTENING.handleInsert(context, item);
 
-    if (inNew) {
-      JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(item.getObject()));
+    if (inNew && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, position)) {
+      JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(psiClass));
     }
 
   }

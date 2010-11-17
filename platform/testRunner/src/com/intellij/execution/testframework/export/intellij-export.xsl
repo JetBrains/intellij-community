@@ -61,6 +61,7 @@
           h1 {
             color: #151515;
             font-size: 180%;
+            line-height: 1.1em;
             font-weight: bold;
           }
 
@@ -88,8 +89,20 @@
             color: #ff0000
           }
 
-          span.success {
+          span.error {
+            color: #ff0000
+          }
+
+          span.passed {
             color: #1d9d01
+          }
+
+          span.ignored {
+            color: #f8d216
+          }
+
+          span.skipped {
+            color: #f8d216
           }
 
           hr {
@@ -101,31 +114,32 @@
           }
 
           #header {
-            padding: 1.3em 0 1em 0;
+            padding: 0;
             position: fixed;
             width: 100%;
-            height: 2em;
             z-index: 10;
             background-color: #c7ceda;
           }
 
+          #header h1.title {
+            margin-top: 1em;
+            margin-bottom: 0;
+          }
+
           #header h1 {
-            margin: 0 3em 0 1.7em;
+            margin: 0 3em 1em 1.7em;
           }
 
           #header .time {
-            margin-right: 3em;
+            margin-top: 2.2em;
+            margin-right: 3.4em;
             float: right;
           }
 
           #treecontrol {
             margin: 0;
-            padding: 1em 3em .5em 0;
-            position: fixed;
-            top: 4em;
-            right: 0;
+            padding: .5em 3em .5em 0;
             text-align: right;
-            width: 100%;
             background-color: #fff;
           }
 
@@ -136,7 +150,7 @@
           }
 
           #content {
-            padding: 7em 2.5em 2em 1.7em;
+            padding: 0 2.5em 2em 1.7em;
           }
 
           #content ul {
@@ -158,7 +172,7 @@
           }
 
           #content ul li.level.top > span {
-            padding: .5em 0 .5em 1em;
+            padding: .5em .4em .5em 1em;
             font-size: 120%;
             color: #151515;
             background-color: #f2f2f2;
@@ -167,6 +181,10 @@
 
           #content ul li.level.top.failed > span {
             border-left: solid 10px #f02525;
+          }
+
+          #content ul li.level.top.ignored > span {
+            border-left: solid 10px #f8d216;
           }
 
           #content ul li.level.suite > span {
@@ -183,6 +201,10 @@
             border-left: solid 15px #f02525;
           }
 
+          #content ul li.level.suite.ignored > span {
+            border-left: solid 15px #f8d216;
+          }
+
           #content ul li.level.suite > ul {
             margin-bottom: 1.5em;
           }
@@ -191,15 +213,19 @@
             padding: .3em 0 .3em 1em;
             color: #0046b0;
             font-size: 100%;
-            border-left: solid 3px #93e078;
+            border-left: solid 6px #93e078;
             border-bottom: solid 1px #dbdbdb;
           }
 
           #content ul li.level.test.failed > span {
-            border-left: solid 3px #f02525;
+            border-left: solid 6px #f02525;
           }
 
-          #content ul li.text span {
+          #content ul li.level.test.ignored > span {
+            border-left: solid 6px #f8d216;
+          }
+
+          #content ul li.text p, #content ul li.text span {
             margin-bottom: 1.5em;
             color: #151515 !important;
             font-size: 90% !important;
@@ -210,16 +236,24 @@
             border: none !important;
           }
 
+          #content ul li.text span {
+            margin-bottom: 0;
+            display: block;
+          }
+
+          #content ul li.text span.stderr {
+            color: #8b0000 !important;
+          }
+
           #content ul li .time {
             margin-right: .5em;
             width: 5em;
             text-align: right;
-            font-size: 90%;
+            font-size: 13px;
             color: #151515;
             font-style: normal;
             font-weight: normal;
             float: right;
-            background-color: #fff;
           }
 
           #content ul li span .status {
@@ -235,6 +269,11 @@
           #content ul li.failed > span .status {
             color: #ff0000;
           }
+
+          #content ul li.ignored > span .status {
+            color: #f8d216;
+          }
+
         </style>
         <xsl:text disable-output-escaping="yes"><![CDATA[
 
@@ -525,8 +564,9 @@ jQuery.cookie = function(name, value, options) {
                     window.console && console.log("%o was toggled", this);
                 }
             });
-        });
 
+            $("#content").css("padding-top", $("#header").height());
+        });
 	</script>
 
             ]]></xsl:text>
@@ -535,19 +575,22 @@ jQuery.cookie = function(name, value, options) {
         <div id="container">
           <div id="header">
             <xsl:call-template name="duration"/>
-            <h1>
+            <h1 class="title">
               <xsl:value-of select="@name"/>
               <xsl:text>: </xsl:text>
-              <xsl:value-of select="@total"/>
-              <xsl:text> total, </xsl:text>
-              <span class="success">
-                <xsl:value-of select="@passed"/>
-                <xsl:text> passed, </xsl:text>
-              </span>
-              <span class="failed">
-                <xsl:value-of select="@failed"/>
-                <xsl:text> failed</xsl:text>
-              </span>
+            </h1>
+            <h1>
+              <xsl:for-each select="count">
+                <xsl:variable name="status" select="@name"/>
+                <span class="{$status}">
+                  <xsl:value-of select="@value"/>
+                  <xsl:text> </xsl:text>
+                  <xsl:value-of select="$status"/>
+                  <xsl:if test="count(../count) > position()">
+                    <xsl:text>, </xsl:text>
+                  </xsl:if>
+                </span>
+              </xsl:for-each>
             </h1>
           </div>
           <div id="treecontrol">
@@ -569,6 +612,108 @@ jQuery.cookie = function(name, value, options) {
         </div>
       </body>
     </html>
+  </xsl:template>
+
+  <xsl:template match="suite">
+    <xsl:variable name="class">
+      <xsl:text>level </xsl:text>
+
+      <xsl:choose>
+        <xsl:when test="parent::suite">
+          <xsl:text>suite</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>top</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+
+      <xsl:call-template name="get-node-class"/>
+    </xsl:variable>
+    <xsl:element name="li">
+      <xsl:attribute name="class">
+        <xsl:value-of select="$class"/>
+      </xsl:attribute>
+      <span>
+        <em class="time">
+          <xsl:call-template name="duration"/>
+        </em>
+        <xsl:value-of select="@name"/>
+      </span>
+      <ul>
+        <xsl:apply-templates/>
+      </ul>
+    </xsl:element>
+  </xsl:template>
+
+  <xsl:template match="test">
+    <xsl:variable name="class">
+      <xsl:text>level test</xsl:text>
+      <xsl:call-template name="get-node-class"/>
+    </xsl:variable>
+    <li class="{$class}">
+      <span>
+        <em class="time">
+          <xsl:call-template name="duration"/>
+        </em>
+        <em class="status">
+          <xsl:value-of select="@status"/>
+        </em>
+        <xsl:value-of select="@name"/>
+      </span>
+      <ul>
+        <xsl:for-each select="output">
+          <xsl:variable name="displayText">
+            <xsl:call-template name="string-replace-all">
+              <xsl:with-param name="text" select="text()"/>
+              <xsl:with-param name="replace" select="'&#10;'"/>
+              <xsl:with-param name="by" select="'&lt;br/>'"/>
+            </xsl:call-template>
+          </xsl:variable>
+          <li class="text">
+            <xsl:variable name="output-type" select="@type"/>
+            <span class="{$output-type}">
+              <xsl:value-of disable-output-escaping="yes" select="$displayText"/>
+            </span>
+          </li>
+        </xsl:for-each>
+      </ul>
+    </li>
+  </xsl:template>
+
+  <xsl:template name="get-node-class">
+    <xsl:choose>
+      <xsl:when test="@status='failed' or @status='error'">
+        <xsl:text> failed open</xsl:text>
+      </xsl:when>
+      <xsl:when test="@status='ignored' or @status='skipped'">
+        <xsl:text> ignored open</xsl:text>
+      </xsl:when>
+      <xsl:when test="@status='passed'">
+        <xsl:if test="name(.) != 'test' and count(parent::*) = 1">
+          <xsl:text> open</xsl:text>
+        </xsl:if>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="string-replace-all">
+    <xsl:param name="text"/>
+    <xsl:param name="replace"/>
+    <xsl:param name="by"/>
+    <xsl:choose>
+      <xsl:when test="contains($text, $replace)">
+        <xsl:value-of select="substring-before($text,$replace)"/>
+        <xsl:value-of select="$by"/>
+        <xsl:call-template name="string-replace-all">
+          <xsl:with-param name="text" select="substring-after($text,$replace)"/>
+          <xsl:with-param name="replace" select="$replace"/>
+          <xsl:with-param name="by" select="$by"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$text"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="duration">
@@ -611,102 +756,6 @@ jQuery.cookie = function(name, value, options) {
         </xsl:choose>
       </div>
     </xsl:if>
-  </xsl:template>
-
-  <xsl:template match="suite">
-    <xsl:variable name="class">
-      <xsl:text>level </xsl:text>
-
-      <xsl:choose>
-        <xsl:when test="parent::suite">
-          <xsl:text>suite</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:text>top</xsl:text>
-        </xsl:otherwise>
-      </xsl:choose>
-
-      <xsl:choose>
-        <xsl:when test="@status!='passed'">
-          <xsl:text> failed open</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:if test="count(parent::*) = 1">
-            <xsl:text> open</xsl:text>
-          </xsl:if>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:variable>
-    <xsl:element name="li">
-      <xsl:attribute name="class">
-        <xsl:value-of select="$class"/>
-      </xsl:attribute>
-      <span>
-        <em class="time">
-          <xsl:call-template name="duration"/>
-        </em>
-        <xsl:value-of select="@name"/>
-      </span>
-      <ul>
-        <xsl:apply-templates/>
-      </ul>
-    </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="test">
-    <xsl:variable name="class">
-      <xsl:text>level test</xsl:text>
-      <xsl:if test="@status!='passed'">
-        <xsl:text> failed open</xsl:text>
-      </xsl:if>
-    </xsl:variable>
-    <li class="{$class}">
-      <span>
-        <em class="time">
-          <xsl:call-template name="duration"/>
-        </em>
-        <em class="status">
-          <xsl:value-of select="@status"/>
-        </em>
-        <xsl:value-of select="@name"/>
-      </span>
-      <ul>
-        <xsl:for-each select="output">
-          <xsl:variable name="displayText">
-            <xsl:call-template name="string-replace-all">
-              <xsl:with-param name="text" select="text()"/>
-              <xsl:with-param name="replace" select="'&#10;'"/>
-              <xsl:with-param name="by" select="'&lt;br/>'"/>
-            </xsl:call-template>
-          </xsl:variable>
-          <li class="text">
-            <span>
-              <xsl:value-of disable-output-escaping="yes" select="$displayText"/>
-            </span>
-          </li>
-        </xsl:for-each>
-      </ul>
-    </li>
-  </xsl:template>
-
-  <xsl:template name="string-replace-all">
-    <xsl:param name="text"/>
-    <xsl:param name="replace"/>
-    <xsl:param name="by"/>
-    <xsl:choose>
-      <xsl:when test="contains($text, $replace)">
-        <xsl:value-of select="substring-before($text,$replace)"/>
-        <xsl:value-of select="$by"/>
-        <xsl:call-template name="string-replace-all">
-          <xsl:with-param name="text" select="substring-after($text,$replace)"/>
-          <xsl:with-param name="replace" select="$replace"/>
-          <xsl:with-param name="by" select="$by"/>
-        </xsl:call-template>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:value-of select="$text"/>
-      </xsl:otherwise>
-    </xsl:choose>
   </xsl:template>
 
 </xsl:stylesheet>
