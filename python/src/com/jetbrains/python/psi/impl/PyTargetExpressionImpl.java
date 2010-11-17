@@ -19,10 +19,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +150,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
       if (getParent() instanceof PyTupleExpression) {
-        return getTypeFromTupleAssignment(context);
+        final PyType typeFromTupleAssignment = getTypeFromTupleAssignment(context);
+        if (typeFromTupleAssignment != null) {
+          return typeFromTupleAssignment;
+        }
+      }
+      PyType iterType = getTypeFromIteration(context);
+      if (iterType != null) {
+        return iterType;
       }
       return null;
     }
@@ -181,6 +185,26 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             return tupleType.getElementType(selfIndex);
           }
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType getTypeFromIteration(TypeEvalContext context) {
+    PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
+    if (forPart == null) {
+      return null;
+    }
+    final PyExpression target = forPart.getTarget();
+    final PyExpression source = forPart.getSource();
+    if (source == null) {
+      return null;
+    }
+    if (this == target) {
+      final PyType sourceType = source.getType(context);
+      if (sourceType instanceof PyCollectionType) {
+        return ((PyCollectionType) sourceType).getElementType(context);
       }
     }
     return null;
