@@ -71,9 +71,7 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     }
   }
 
-
-  @Nullable
   public PyType getType(@NotNull TypeEvalContext context) {
-    return PyBuiltinCache.getInstance(this).getListType();
+    return PyBuiltinCache.createLiteralCollectionType(this, "list");
   }
 }

@@ -2,9 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +16,7 @@ public class PySetLiteralExpressionImpl extends PyElementImpl implements PySetLi
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return PyBuiltinCache.getInstance(this).getSetType();
+    return PyBuiltinCache.createLiteralCollectionType(this, "set");
   }
 
   @Override

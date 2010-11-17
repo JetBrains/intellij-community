@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -73,6 +72,9 @@ public class PyTypeTest extends PyLightFixtureTestCase {
   public void testSet() {
     PyClassType type = (PyClassType) doTest("expr = {1, 2, 3}");
     assertEquals("set", type.getName());
+    assertInstanceOf(type, PyCollectionType.class);
+    final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.fast());
+    assertEquals("int", elementType.getName());
   }
 
   public void testNone() {   // PY-1425

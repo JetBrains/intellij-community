@@ -21,7 +21,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyLiteralCollectionType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,6 +157,16 @@ public class PyBuiltinCache {
    * Here we store projects whose ProjectRootManagers have our listeners already.
    */
   private static final List<Project> ourListenedProjects = new LinkedList<Project>();
+
+  @Nullable
+  static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
+    final PyBuiltinCache builtinCache = getInstance(sequence);
+    final PyClass setClass = builtinCache.getClass(name);
+    if (setClass != null) {
+      return new PyLiteralCollectionType(setClass, false, sequence);
+    }
+    return null;
+  }
 
 
   private static class CacheResetter implements ModuleRootListener {
