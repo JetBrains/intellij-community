@@ -279,10 +279,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (freezeSemaphore.waitFor(2000)) {
       final LookupElement[] allItems = data.get();
+      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+        System.out.println("allItems = " + allItems);
+      }
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems);
         return;
       }
+    }
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("backgrounded");
     }
 
     indicator.notifyBackgrounded();
