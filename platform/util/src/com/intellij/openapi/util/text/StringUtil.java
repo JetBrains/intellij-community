@@ -469,49 +469,53 @@ public class StringUtil {
   }
 
   @NotNull
-  public static StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, @NotNull @NonNls StringBuilder buffer) {
-    return escapeStringCharacters(length, str, additionalChars, true, true, buffer);
-  }
-
-  @NotNull
-  public static StringBuilder escapeStringCharacters(int length, @NotNull String str, @Nullable String additionalChars, boolean escapeStandardChars, boolean escapeControlCharacters, @NotNull @NonNls StringBuilder buffer) {
+  public static StringBuilder escapeStringCharacters(int length,
+                                                     @NotNull String str,
+                                                     @Nullable String additionalChars,
+                                                     @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
-        buffer.append("\\").append(ch);
-      } else if (escapeControlCharacters && Character.isISOControl(ch)) {
-        String hexCode = Integer.toHexString(ch).toUpperCase();
-        buffer.append("\\u");
-        int paddingCount = 4 - hexCode.length();
-        while (paddingCount-- > 0) {
-          buffer.append(0);
-        }
-        buffer.append(hexCode);
-      } else if (escapeStandardChars) {
-        switch (ch) {
-          case '\b':
-            buffer.append("\\b");
-            break;
-          case '\t':
-            buffer.append("\\t");
-            break;
-          case '\n':
-            buffer.append("\\n");
-            break;
-          case '\f':
-            buffer.append("\\f");
-            break;
-          case '\r':
-            buffer.append("\\r");
-            break;
-          case '\\':
-            buffer.append("\\\\");
-            break;
-          default:
+      switch (ch) {
+        case '\b':
+          buffer.append("\\b");
+          break;
+
+        case '\t':
+          buffer.append("\\t");
+          break;
+
+        case '\n':
+          buffer.append("\\n");
+          break;
+
+        case '\f':
+          buffer.append("\\f");
+          break;
+
+        case '\r':
+          buffer.append("\\r");
+          break;
+
+        case '\\':
+          buffer.append("\\\\");
+          break;
+
+        default:
+          if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+            buffer.append("\\").append(ch);
+          }
+          else if (Character.isISOControl(ch)) {
+            String hexCode = Integer.toHexString(ch).toUpperCase();
+            buffer.append("\\u");
+            int paddingCount = 4 - hexCode.length();
+            while (paddingCount-- > 0) {
+              buffer.append(0);
+            }
+            buffer.append(hexCode);
+          }
+          else {
             buffer.append(ch);
-        }
-      } else {
-          buffer.append(ch);
+          }
       }
     }
     return buffer;
