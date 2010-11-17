@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +168,21 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     handleSelectionChange(selected, false);
   }
 
-  protected void handleSelectionChange(KeyType selected, boolean processIfUnfocused) {
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  
+  protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      return;
+    }
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        doHandleSelectionChange(selected, processIfUnfocused);
+      }
+    }, 150);
+  }
+
+  private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
     if (!isEnabled) return;
 
     if (selected == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
@@ -193,7 +208,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
   }
 
-  protected final void hideHint() {
+  private void hideHint() {
+    myUpdateAlarm.cancelAllRequests();
     if (myHint != null) {
       myHint.hide();
       myHint = null;
