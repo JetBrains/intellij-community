@@ -42,18 +42,15 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-      if (node.getAssignedValue() instanceof PyDictLiteralExpression) {
-        PyDictLiteralExpression expression = (PyDictLiteralExpression)node.getAssignedValue();
-        if (expression.getElements().length != 0){
-          HashSet<String> set = new HashSet<String>();
-          for (PyExpression exp : expression.getElements()) {
-            PyExpression key = ((PyKeyValueExpression)exp).getKey();
-            if (set.contains(key.getText())) {
-              registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
-            }
-            set.add(key.getText());
+    public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
+      if (node.getElements().length != 0){
+        HashSet<String> set = new HashSet<String>();
+        for (PyExpression exp : node.getElements()) {
+          PyExpression key = ((PyKeyValueExpression)exp).getKey();
+          if (set.contains(key.getText())) {
+            registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
           }
+          set.add(key.getText());
         }
       }
     }
