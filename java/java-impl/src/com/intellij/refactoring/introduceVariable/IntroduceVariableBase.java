@@ -489,7 +489,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
-                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, declarationStatement);
+                  final SmartPsiElementPointer<PsiDeclarationStatement> pointer =
+                    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement);
+                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, pointer);
                   editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                                      occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
                   final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
@@ -511,8 +513,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                       public void consume(Boolean apply) {
                         if (apply) {
                           final Document document = editor.getDocument();
-                          final PsiVariable psiVariable =
-                            PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiVariable.class);
+                          final PsiDeclarationStatement declarationStatement = pointer.getElement();
+                          final PsiVariable psiVariable = declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
                           if (psiVariable != null) {
                             JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
                             FinalExpression.adjustLine(psiVariable, document);

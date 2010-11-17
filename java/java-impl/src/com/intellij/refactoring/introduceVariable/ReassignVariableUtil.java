@@ -54,14 +54,15 @@ import java.awt.*;
  * Date: 11/8/10
  */
 public class ReassignVariableUtil {
-  static final Key<PsiDeclarationStatement> DECLARATION_KEY = Key.create("var.type");
+  static final Key<SmartPsiElementPointer<PsiDeclarationStatement>> DECLARATION_KEY = Key.create("var.type");
   static final Key<RangeMarker[]> OCCURRENCES_KEY = Key.create("occurrences");
 
   private ReassignVariableUtil() {
   }
 
   static boolean reassign(final Editor editor) {
-    final PsiDeclarationStatement declaration = editor.getUserData(DECLARATION_KEY);
+    final SmartPsiElementPointer<PsiDeclarationStatement> pointer = editor.getUserData(DECLARATION_KEY);
+    final PsiDeclarationStatement declaration = pointer != null ? pointer.getElement() : null;
     final PsiType type = getVariableType(declaration);
     if (type != null) {
       VariablesProcessor proc = findVariablesOfType(editor, declaration, type);
@@ -126,7 +127,7 @@ public class ReassignVariableUtil {
         return TypeConversionUtil.isAssignable(var.getType(), type);
       }
     };
-    PsiElement scope = editor.getUserData(DECLARATION_KEY);
+    PsiElement scope = declaration;
     while (scope != null) {
       if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
