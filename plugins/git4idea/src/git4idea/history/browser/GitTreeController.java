@@ -31,10 +31,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.SLRUCache;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
@@ -233,7 +230,7 @@ class GitTreeController implements ManageGitTreeView {
       final List<GitCommit> newList = new ArrayList<GitCommit>(PageSizes.LOAD_SIZE);
       final Ref<Boolean> oldPointPassed = new Ref<Boolean>();
 
-      myAccess.loadCommits(startingPoints, lastDate, afterPoint, commandFilters, new Consumer<GitCommit>() {
+      myAccess.loadCommits(startingPoints, lastDate, afterPoint, commandFilters, new AsynchConsumer<GitCommit>() {
         @Override
         public void consume(GitCommit gitCommit) {
           myLastCommit = gitCommit;
@@ -250,7 +247,11 @@ class GitTreeController implements ManageGitTreeView {
           }
           newList.add(gitCommit);
         }
-      }, requestMaxCnt, myBranches.get());
+
+        @Override
+        public void finished() {
+        }
+      }, requestMaxCnt, null);
       return newList;
     }
 
@@ -306,7 +307,7 @@ class GitTreeController implements ManageGitTreeView {
   private Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                               final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) throws VcsException {
     final Portion portion = new Portion(null);
-    myAccess.loadCommits(startingPoints, beforePoint, afterPoint, filtersIn, portion, maxCnt, myBranches.get());
+    myAccess.loadCommits(startingPoints, beforePoint, afterPoint, filtersIn, portion, maxCnt, null);
     return portion;
   }
 

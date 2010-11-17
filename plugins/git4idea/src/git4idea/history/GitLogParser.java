@@ -15,9 +15,22 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.containers.Convertor;
+import git4idea.GitContentRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.history.wholeTree.AbstractHash;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -40,7 +53,7 @@ import java.util.*;
  * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' - otherwise the parser won't be able
  * to parse output of 'git log' (because special separator characters are used for that).</p>
  *
- * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #setNameInOutput(boolean)} with
+ * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #parseStatusBeforeName(boolean)} with
  * true or false respectively, because it also affects the output.</p>
  *  
  * @see git4idea.history.GitLogRecord
@@ -67,7 +80,7 @@ class GitLogParser {
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
   enum GitLogOption {
-    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
+    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
     SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d");
 
     private String myPlaceholder;
@@ -99,7 +112,7 @@ class GitLogParser {
    * The GitLogParser will parse the output concerning that output contains path or status and path.
    * @param nameStatus true if --name-status is passed, false if --name-only is passed.
    */
-  void setNameInOutput(boolean nameStatus) {
+  void parseStatusBeforeName(boolean nameStatus) {
     myNameStatusOutputted = nameStatus ? NameStatus.STATUS : NameStatus.NAME;
   }
 
@@ -155,32 +168,29 @@ class GitLogParser {
     // parsing status and path (if given)
     char nameStatus = 0;
     final List<String> paths = new ArrayList<String>(1);
+    final boolean includeStatus = myNameStatusOutputted == NameStatus.STATUS;
+    final List<List<String>> parts = includeStatus ? new ArrayList<List<String>>() : null;
 
     if (myNameStatusOutputted != NameStatus.NONE) {
       final String[] infoAndPath = line.split(RECORD_END);
       line = infoAndPath[0];
       if (infoAndPath.length > 1) {
-        // taking the last element, thus avoiding possible blank line
-        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("[\\s]")));
-        // not relying that separator is tab => so splitting by any whitespace.
-        // Then removing blank (or whitespace) lines which could appear by this splitting:
+        // separator is \n for paths, space for paths and status
+        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("\n")));
         for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext();) {
           if (it.next().trim().isEmpty()) {
             it.remove();
           }
         }
+        final int start = includeStatus ? 1 : 0;
 
-        if (!nameAndPathSplit.isEmpty()) { // safety check
-          final Iterator<String> pathIterator = nameAndPathSplit.iterator();
-          if (myNameStatusOutputted == NameStatus.STATUS) {  //  R100 dir/anew.txt    anew.txt
-            nameStatus = pathIterator.next().charAt(0); // for R100 we save R, it's enough for now.
+        for (String pathLine : nameAndPathSplit) {
+          final String[] partsArr = pathLine.split("[\\s]");
+          final List<String> stringList = Arrays.asList(partsArr);
+          if (includeStatus) {
+            parts.add(stringList);
           }
-          while (pathIterator.hasNext()) {
-            String path = pathIterator.next().trim();
-            if (!path.isEmpty()) {
-              paths.add(path);
-            }
-          }
+          paths.addAll(stringList.subList(start, stringList.size()));
         }
       }
     } else {
@@ -198,7 +208,53 @@ class GitLogParser {
     for (; i < myOptions.length; i++) {  // options which were not returned are set to blank string, extra options are ignored.
       res.put(myOptions[i], "");
     }
-    return new GitLogRecord(res, paths, nameStatus);
+    return new GitLogRecord(res, paths, parts);
   }
 
+  private Change coolChangesParser(Project project, VirtualFile vcsRoot,
+                                  GitRevisionNumber thisRevision, final List<AbstractHash> parents, final List<String> parts)
+    throws VcsException {
+    final ContentRevision before;
+    final ContentRevision after;
+    FileStatus status = null;
+    final String path = parts.get(1);
+    final List<GitRevisionNumber> parentRevisions = new ArrayList<GitRevisionNumber>(parents.size());
+    for (AbstractHash parent : parents) {
+      parentRevisions.add(new GitRevisionNumber(parent.getString()));
+    }
+
+    switch (parts.get(0).charAt(0)) {
+      case 'C':
+      case 'A':
+        before = null;
+        status = FileStatus.ADDED;
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        break;
+      case 'U':
+        status = FileStatus.MERGED_WITH_CONFLICTS;
+      case 'M':
+        if (status == null) {
+          status = FileStatus.MODIFIED;
+        }
+        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true);
+        before = GitContentRevision.createMultipleParentsRevision(project, filePath, parentRevisions);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        break;
+      case 'D':
+        status = FileStatus.DELETED;
+        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true);
+        before = GitContentRevision.createMultipleParentsRevision(project, filePathDeleted, parentRevisions);
+        after = null;
+        break;
+      case 'R':
+        status = FileStatus.MODIFIED;
+        final FilePath filePathBeforeRename = GitContentRevision.createPath(vcsRoot, parts.get(2), true, true);
+        before = GitContentRevision.createMultipleParentsRevision(project, filePathBeforeRename, parentRevisions);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        break;
+      default:
+        throw new VcsException("Unknown file status: " + Arrays.asList(parts));
+    }
+    return new Change(before, after, status);
+  }
 }

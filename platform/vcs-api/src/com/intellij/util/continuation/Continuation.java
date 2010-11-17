@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,13 @@ public class Continuation {
   public void run(final List<TaskDescriptor> tasks) {
     if (tasks.isEmpty()) return;
     myGeneralRunner.next(tasks);
+
+    pingRunnerInCorrectThread();
+  }
+
+  public void runIndirect(final Consumer<ContinuationContext> consumer) {
+    consumer.consume(myGeneralRunner);
+    if (myGeneralRunner.isEmpty()) return;
 
     pingRunnerInCorrectThread();
   }
@@ -119,11 +127,27 @@ public class Continuation {
       myQueue.addAll(0, next);
     }
 
+    @Override
+    public void last(List<TaskDescriptor> next) {
+      myQueue.addAll(next);
+    }
+
+    @Override
+    public void last(TaskDescriptor... next) {
+      myQueue.addAll(Arrays.asList(next));
+    }
+
+    public boolean isEmpty() {
+      return myQueue.isEmpty();
+    }
+
     @CalledInAwt
     public void ping() {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       while (true) {
+      // stop if project is being disposed
+        if (! myProject.isOpen()) return;
         if (myQueue.isEmpty()) return;
         if (myTriggerSuspend) {
           myTriggerSuspend = false;

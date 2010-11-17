@@ -29,7 +29,6 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with branch" />
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
-      <!-- <action id="Test" class="git4idea.history.wholeTree.FictiveAction" text="Test git log"/> -->
 
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
@@ -72,6 +71,9 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
 
+    <projectService
+      serviceInterface="git4idea.history.wholeTree.LogFactoryService"
+      serviceImplementation="git4idea.history.wholeTree.LogFactoryService"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>

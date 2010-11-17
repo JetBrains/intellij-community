@@ -15,18 +15,31 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.util.SmartList;
+
+import java.util.List;
+
 /**
  * @author irengrig
  */
 public class CommitHashPlusParents {
-  private final String myHash;
+  private final AbstractHash myHash;
   private final long myTime;
   private final String[] myParents;
+  private final String myAuthorName;
 
-  public CommitHashPlusParents(String hash, String[] parents, long time) {
+  public CommitHashPlusParents(AbstractHash hash, String[] parents, long time, String authorName) {
     myHash = hash;
     myParents = parents;
     myTime = time;
+    myAuthorName = authorName;
+  }
+
+  public CommitHashPlusParents(String hash, String[] parents, long time, String authorName) {
+    myHash = AbstractHash.create(hash);
+    myParents = parents;
+    myTime = time;
+    myAuthorName = authorName;
   }
 
   public long getTime() {
@@ -34,10 +47,22 @@ public class CommitHashPlusParents {
   }
 
   public String getHash() {
+    return myHash.getString();
+  }
+
+  public AbstractHash getAbstractHash() {
     return myHash;
   }
 
-  public String[] getParents() {
-    return myParents;
+  public List<AbstractHash> getParents() {
+    final SmartList<AbstractHash> result = new SmartList<AbstractHash>();
+    for (String parent : myParents) {
+      result.add(AbstractHash.create(parent));
+    }
+    return result;
+  }
+
+  public String getAuthorName() {
+    return myAuthorName;
   }
 }

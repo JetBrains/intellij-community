@@ -16,6 +16,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vcs.Ring;
+import com.intellij.util.containers.ReadonlyList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -24,7 +25,14 @@ import java.util.Iterator;
  * @author irengrig
  */
 public interface TreeNavigation {
+  /**
+   *
+   *
+   * @param row - commit idx
+   * @param commits
+   * @return pair: idx of closest commit with ring recorded; ring - ring for that commit
+   */
   @Nullable
-  Ring<Integer> getUsedWires(int row);
-  Iterator<TreeSkeletonImpl.WireEvent> createWireEventsIterator(int rowInclusive);
+  Ring<Integer> getUsedWires(int row, ReadonlyList<CommitI> commits);
+  Iterator<WireEvent> createWireEventsIterator(int rowInclusive);
 }

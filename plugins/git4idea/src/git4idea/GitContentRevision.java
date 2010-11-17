@@ -26,11 +26,13 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitFileUtils;
+import git4idea.history.wholeTree.GitMultipleContentsRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * Git content revision
@@ -96,6 +98,16 @@ public class GitContentRevision implements ContentRevision {
     return myFile.hashCode() + myRevision.hashCode();
   }
 
+  public static ContentRevision createMultipleParentsRevision(Project project,
+                                                              final FilePath file,
+                                                              final List<GitRevisionNumber> revisions) throws VcsException {
+    if (revisions.size() == 1) {
+      return new GitContentRevision(file, revisions.get(0), project);
+    } else {
+      return new GitMultipleContentsRevision(file, revisions, project);
+    }
+  }
+
   /**
    * Create revision
    *
@@ -113,18 +125,23 @@ public class GitContentRevision implements ContentRevision {
                                                VcsRevisionNumber revisionNumber,
                                                Project project,
                                                boolean isDeleted, final boolean canBeDeleted) throws VcsException {
-    final String absolutePath = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
-    FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
-    if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(file.getPath(), absolutePath)) {
-      // as for deleted file
-      file = FilePathImpl.createForDeletedFile(new File(absolutePath), false);
-    }
+    final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted);
     if (revisionNumber != null) {
       return new GitContentRevision(file, (GitRevisionNumber)revisionNumber, project);
     }
     else {
       return CurrentContentRevision.create(file);
     }
+  }
+
+  public static FilePath createPath(VirtualFile vcsRoot, String path, boolean isDeleted, boolean canBeDeleted) throws VcsException {
+    final String absolutePath = vcsRoot.getPath() + "/" + GitUtil.unescapePath(path);
+    FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
+    if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsUtil.caseDiffers(file.getPath(), absolutePath)) {
+      // as for deleted file
+      file = FilePathImpl.createForDeletedFile(new File(absolutePath), false);
+    }
+    return file;
   }
 
   public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project)

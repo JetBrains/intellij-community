@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ControlledCycle;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -263,11 +263,11 @@ public class GitUsersComponent {
                           @Nullable final Date before,
                           @Nullable final Date after,
                           final AtomicSectionsAware atomicSectionsAware) {
-      try {
+      /*try {
         final Ref<Long> beforeTick = new Ref<Long>(Long.MAX_VALUE); // min
         final Ref<Long> afterTick = new Ref<Long>(-1L);  // max
         lowLevelAccess.loadCommits(Collections.<String>emptyList(), before, after, Collections.<ChangesFilter.Filter>emptyList(),
-                                   new Consumer<GitCommit>() {
+                                   new AsynchConsumer<GitCommit>() {
                                      public void consume(GitCommit gitCommit) {
                                        atomicSectionsAware.checkShouldExit();
 
@@ -285,6 +285,10 @@ public class GitUsersComponent {
                                          myStartReached = true;
                                        }
                                      }
+
+                                     @Override
+                                     public void finished() {
+                                     }
                                    }, ourPackSize, Collections.<String>emptyList());
         if (myCloserDate.getT() < afterTick.get()) {
           myCloserDate.updateT(afterTick.get());
@@ -295,7 +299,7 @@ public class GitUsersComponent {
       }
       catch (VcsException e) {
         LOG.info(e);
-      }
+      }*/
     }
   }
 

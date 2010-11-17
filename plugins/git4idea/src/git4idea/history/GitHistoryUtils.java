@@ -17,11 +17,14 @@ package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -29,12 +32,15 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.*;
 import git4idea.commands.*;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
+import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +69,7 @@ public class GitHistoryUtils {
    */
   @Nullable
   public static VcsRevisionNumber getCurrentRevision(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(filePath);
+    //final VirtualFile root = GitUtil.getGitRoot(filePath);
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME);
@@ -102,7 +108,7 @@ public class GitHistoryUtils {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME);
-    parser.setNameInOutput(true);
+    parser.parseStatusBeforeName(true);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty(), "--name-status", t.getFullName());
@@ -113,7 +119,8 @@ public class GitHistoryUtils {
       return null;
     }
     GitLogRecord record = parser.parseOneRecord(result);
-    boolean exists = record.getNameStatus() != 'D';
+    final List<Change> changes = record.coolChangesParser(project, root);
+    boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
 
@@ -148,7 +155,7 @@ public class GitHistoryUtils {
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
     final GitLogParser logParser = new GitLogParser(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS, SUBJECT, BODY);
-    logParser.setNameInOutput(false);
+    logParser.parseStatusBeforeName(false);
 
     final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
     final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
@@ -253,10 +260,13 @@ public class GitHistoryUtils {
     h.addParameters("-M", "--follow", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
     h.endOptions();
     h.addRelativePaths(filePath);
-    parser.setNameInOutput(true);
+    parser.parseStatusBeforeName(true);
     final String output = h.run();
     final GitLogRecord record = parser.parseOneRecord(output);
-    if (record.getNameStatus() == 'R') {
+    final List<Change> changes = record.coolChangesParser(project, root);
+
+    final Change change = changes.get(0);
+    if (change.isMoved() || change.isRenamed()) {
       final List<FilePath> paths = record.getFilePaths(root);
       final String message = "Rename commit should have 2 paths. Commit: " + commit;
       if (!LOG.assertTrue(paths.size() == 2, message + " Output: [" + output + "]")) {
@@ -335,7 +345,7 @@ public class GitHistoryUtils {
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--follow", "--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.setNameInOutput(false);
+    parser.parseStatusBeforeName(false);
     if (parameters != null && parameters.length > 0) {
       h.addParameters(parameters);
     }
@@ -383,46 +393,140 @@ public class GitHistoryUtils {
     return rc;
   }
 
-  public static List<GitCommit> historyWithLinks(Project project,
+  public static void historyWithLinks(final Project project,
                                                  FilePath path,
-                                                 final Set<String> allBranchesSet,
+                                                 final SymbolicRefs refs,
+                                                 final AsynchConsumer<GitCommit> gitCommitConsumer,
+                                                 final Getter<Boolean> isCanceled,
                                                  final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY);
+    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    final GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
-    h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.setNameInOutput(false);
+    parser.parseStatusBeforeName(true);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");       // todo ?
     h.endOptions();
     h.addRelativePaths(path);
-    String output = h.run();
 
-    final List<GitCommit> rc = new ArrayList<GitCommit>();
-    for (GitLogRecord record : parser.parse(output)) {
-      final Pair<List<String>, List<String>> tagsAndBranches = record.getTagsAndBranches(allBranchesSet);
-      rc.add(new GitCommit(record.getShortHash(), new SHAHash(record.getHash()), record.getAuthorName(), record.getCommitterName(),
-                           record.getDate(), record.getFullMessage(), new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root), record.getAuthorEmail(),
-                             record.getCommitterEmail(), tagsAndBranches.first, tagsAndBranches.second));
+    final VcsException[] exc = new VcsException[1];
+    final Semaphore semaphore = new Semaphore();
+    final StringBuilder sb = new StringBuilder();
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(final String line, final Key outputType) {
+        try {
+          if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+            if (isCanceled != null && isCanceled.get()) {
+              h.cancel();
+              return;
+            }
+            //if (line.charAt(line.length() - 1) != '\u0003') {
+            if (! line.startsWith("\u0001")) {
+              sb.append("\n").append(line);
+              return;
+            }
+            takeLine(project, line, sb, parser, refs, root, exc, h, gitCommitConsumer);
+          }
+        } catch (ProcessCanceledException e) {
+          h.cancel();
+          semaphore.up();
+        }
+      }
+      @Override
+      public void processTerminated(int exitCode) {
+        semaphore.up();
+      }
+      @Override
+      public void startFailed(Throwable exception) {
+      }
+    });
+    semaphore.down();
+    h.start();
+    semaphore.waitFor();
+    takeLine(project, "", sb, parser, refs, root, exc, h, gitCommitConsumer);
+    gitCommitConsumer.finished();
+    if (exc[0] != null) {
+      throw exc[0];
     }
-    return rc;
+  }
+
+  private static void takeLine(final Project project, String line,
+                               StringBuilder sb,
+                               GitLogParser parser,
+                               SymbolicRefs refs,
+                               VirtualFile root,
+                               VcsException[] exc, GitLineHandler h, AsynchConsumer<GitCommit> gitCommitConsumer) {
+    final String text = sb.toString();
+    sb.setLength(0);
+    sb.append(line);
+    if (text.length() == 0) return;
+    GitLogRecord record = parser.parseOneRecord(text);
+
+    final GitCommit gitCommit;
+    try {
+      gitCommit = createCommit(project, refs, root, record);
+    }
+    catch (VcsException e) {
+      exc[0] = e;
+      h.cancel();
+      return;
+    }
+    gitCommitConsumer.consume(gitCommit);
+  }
+
+  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record) throws VcsException {
+    GitCommit gitCommit;
+    final Collection<String> currentRefs = record.getRefs();
+    List<String> locals = new ArrayList<String>();
+    List<String> remotes = new ArrayList<String>();
+    List<String> tags = new ArrayList<String>();
+    final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
+    gitCommit = new GitCommit(AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
+                                      record.getCommitterName(),
+                                      record.getDate(), record.getFullMessage(),
+                                      new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
+                                      record.getAuthorEmail(),
+                                      record.getCommitterEmail(), tags, locals, remotes,
+                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000);
+    gitCommit.setCurrentBranch(s);
+    return gitCommit;
+  }
+
+  private static String parseRefs(SymbolicRefs refs,
+                                Collection<String> currentRefs,
+                                List<String> locals,
+                                List<String> remotes,
+                                List<String> tags) {
+    for (String ref : currentRefs) {
+      final SymbolicRefs.Kind kind = refs.getKind(ref);
+      if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
+        locals.add(ref);
+      } else if (SymbolicRefs.Kind.REMOTE.equals(kind)) {
+        remotes.add(ref);
+      } else {
+        tags.add(ref);
+      }
+    }
+    if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) return refs.getCurrent().getName();
+    return null;
   }
 
   public static List<GitCommit> commitsDetails(Project project,
-                                                 FilePath path, Set<String> allBranchesSet,
+                                                 FilePath path, SymbolicRefs refs,
                                                  final Collection<String> commitsIds) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY);
+    GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.setNameInOutput(false);
+    parser.parseStatusBeforeName(true);      // todo ?
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
     h.endOptions();
@@ -431,20 +535,21 @@ public class GitHistoryUtils {
 
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
-      final Pair<List<String>, List<String>> tagsAndBranches = record.getTagsAndBranches(allBranchesSet);
-      rc.add(new GitCommit(record.getShortHash(), new SHAHash(record.getHash()), record.getAuthorName(), record.getCommitterName(),
-                           record.getDate(), record.getFullMessage(), new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root), record.getAuthorEmail(),
-                             record.getCommitterEmail(), tagsAndBranches.first, tagsAndBranches.second));
+      final GitCommit gitCommit = createCommit(project, refs, root, record);
+      rc.add(gitCommit);
     }
     return rc;
   }
 
-  public static Runnable hashesWithParents(Project project, FilePath path, final Consumer<CommitHashPlusParents> consumer, final String... parameters) throws VcsException {
+  public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
+                                       final Getter<Boolean> isCanceled,
+                                       final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    final GitLogParser parser = new GitLogParser(SHORT_HASH, COMMIT_TIME, SHORT_PARENTS);
+    final GitLogParser parser = new GitLogParser(SHORT_HASH, COMMIT_TIME, SHORT_PARENTS, AUTHOR_NAME);
+    parser.parseStatusBeforeName(false);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
@@ -457,12 +562,20 @@ public class GitHistoryUtils {
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(final String line, final Key outputType) {
-        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-          GitLogRecord record = parser.parseOneRecord(line);
-          String hash = record.getShortHash();
-          String[] parents = record.getParentsShortHashes();
-          long time = record.getLongTimeStamp();
-          consumer.consume(new CommitHashPlusParents(hash, parents, time));     // todo stop listen to output
+        try {
+          if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+            if (isCanceled != null && isCanceled.get()) {
+              h.cancel();
+              return;
+            }
+            GitLogRecord record = parser.parseOneRecord(line);
+            consumer.consume(new CommitHashPlusParents(record.getShortHash(),
+                                                       record.getParentsShortHashes(), record.getLongTimeStamp() * 1000,
+                                                       record.getAuthorName()));
+          }
+        } catch (ProcessCanceledException e) {
+          h.cancel();
+          semaphore.up();
         }
       }
 
@@ -479,13 +592,7 @@ public class GitHistoryUtils {
     semaphore.down();
     h.start();
     semaphore.waitFor();
-
-    return new Runnable() {
-      @Override
-      public void run() {
-        h.cancel();
-      }
-    };
+    consumer.finished();
   }
 
   /**

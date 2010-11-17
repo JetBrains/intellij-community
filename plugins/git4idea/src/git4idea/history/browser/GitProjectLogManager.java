@@ -19,8 +19,7 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
@@ -31,32 +30,30 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.util.CalculateContinuation;
-import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
-import git4idea.history.GitUsersComponent;
+import git4idea.history.wholeTree.GitLog;
+import git4idea.history.wholeTree.LogFactoryService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GitProjectLogManager {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitProjectLogManager");
+  private static final String CONTENT_KEY = "Log";
+
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private final GitUsersComponent myGitUsersComponent;
+  private final LogFactoryService myLogFactoryService;
 
-  private final AtomicReference<Map<VirtualFile, Content>> myComponentsMap;
+  //private final AtomicReference<Set<VirtualFile>> myCurrentState;
+  private final AtomicReference<Content> myCurrentContent;
   private VcsListener myListener;
 
   public static final Topic<CurrentBranchListener> CHECK_CURRENT_BRANCH =
@@ -64,11 +61,12 @@ public class GitProjectLogManager {
   private CurrentBranchListener myCurrentBranchListener;
   private MessageBusConnection myConnection;
 
-  public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager, final GitUsersComponent gitUsersComponent) {
+  public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager, final LogFactoryService logFactoryService) {
     myProject = project;
     myVcsManager = vcsManager;
-    myGitUsersComponent = gitUsersComponent;
-    myComponentsMap = new AtomicReference<Map<VirtualFile, Content>>(new HashMap<VirtualFile, Content>());
+    myLogFactoryService = logFactoryService;
+    myCurrentContent = new AtomicReference<Content>();
+    //myCurrentState = new AtomicReference<Set<VirtualFile>>();
     myListener = new VcsListener() {
       public void directoryMappingChanged() {
         new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
@@ -80,7 +78,7 @@ public class GitProjectLogManager {
     };
     myCurrentBranchListener = new CurrentBranchListener() {
       public void consume(VirtualFile file) {
-        final VirtualFile baseDir = myProject.getBaseDir();
+        /*final VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir == null) return;
         final Map<VirtualFile, Content> currentState = myComponentsMap.get();
         for (VirtualFile virtualFile : currentState.keySet()) {
@@ -96,7 +94,7 @@ public class GitProjectLogManager {
             }
             return;
           }
-        }
+        }*/
       }
     };
   }
@@ -137,97 +135,26 @@ public class GitProjectLogManager {
     final GitVcs vcs = GitVcs.getInstance(myProject);
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
 
-    final Map<VirtualFile, Content> currentState = myComponentsMap.get();
-    final Set<VirtualFile> currentKeys = new HashSet<VirtualFile>(currentState.keySet());
-    currentKeys.removeAll(Arrays.asList(roots));
-
-    final Map<VirtualFile, Content> newKeys = new HashMap<VirtualFile, Content>(currentState);
-
     final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
-
-    final VirtualFile baseDir = myProject.getBaseDir();
+    final Content currContent = myCurrentContent.get();
+    if (currContent != null) {
+      return;
+    }
+    final GitLog gitLog = myLogFactoryService.createComponent();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    for (final VirtualFile root : roots) {
-      if (! currentState.containsKey(root)) {
-        final GitLogTree tree = new GitLogTree(myProject, root, myGitUsersComponent);
-        tree.setParentDisposable(myProject);
-        tree.initView();
-        final Content content = contentFactory.createContent(tree.getComponent(), "", false);
-        content.setCloseable(false);
-        cvcm.addContent(content);
-        newKeys.put(root, content);
+    final Content content = contentFactory.createContent(gitLog.getVisualComponent(), CONTENT_KEY, false);
+    content.setCloseable(false);
+    cvcm.addContent(content);
+    Disposer.register(content, gitLog);
 
-        new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-          @Override
-          public void run() {
-            new CalculateContinuation<String>().calculateAndContinue(new ThrowableComputable<String, Exception>() {
-              public String compute() throws Exception {
-                return getCaption(baseDir, root);
-              }
-            }, new CatchingConsumer<String, Exception>() {
-              public void consume(Exception e) {
-                //should not
-                LOG.info(e);
-              }
-              public void consume(final String caption) {
-                content.setDisplayName(caption);
-              }
-            });
-          }
-        }.callMe();
-      }
-    }
-
-    for (VirtualFile currentKey : currentKeys) {
-      final Content content = newKeys.remove(currentKey);
-      cvcm.removeContent(content);
-    }
-
-    myComponentsMap.set(newKeys);
-  }
-
-  private String getCaption(@Nullable VirtualFile baseDir, final VirtualFile root) {
-    String result = root.getPresentableUrl();                                                                                      
-    if (baseDir != null) {
-      if (baseDir.equals(root)) {
-        result = "<Project root>";
-      } else {
-        if (VfsUtil.isAncestor(baseDir, root, true)) {
-          final String variant = VfsUtil.getRelativePath(root, baseDir, '/');
-          if (variant != null) {
-            result = variant;
-          }
-        }
-      }
-    }
-
-    GitBranchesSearcher searcher = null;
-    try {
-      searcher = new GitBranchesSearcher(myProject, root, false);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-    }
-
-    if (searcher != null) {
-      final GitBranch branch = searcher.getLocal();
-      if (branch != null) {
-        result += " (" + branch.getName() + ")";
-      }
-    }
-    return "Log: " + result;
+    myCurrentContent.set(content);
+    gitLog.rootsChanged(Arrays.asList(roots));
   }
 
   @NotNull
   public String getComponentName() {
     return "git4idea.history.browser.GitProjectLogManager";
   }
-
-  /*public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }*/
 
   public interface CurrentBranchListener extends Consumer<VirtualFile> {
   }

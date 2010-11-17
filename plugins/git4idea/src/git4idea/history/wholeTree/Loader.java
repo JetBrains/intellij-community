@@ -23,5 +23,8 @@ import java.util.Collection;
 * @author irengrig
 */
 public interface Loader {
-  void loadSkeleton(final Collection<String> startingPoints, final Collection<ChangesFilter.Filter> filters);
+  void loadSkeleton(Mediator.Ticket ticket,
+                    RootsHolder rootsHolder,
+                    final Collection<String> startingPoints,
+                    final Collection<ChangesFilter.Filter> filters, String[] possibleHashes);
 }

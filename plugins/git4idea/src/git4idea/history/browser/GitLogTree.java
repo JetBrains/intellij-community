@@ -742,7 +742,7 @@ public class GitLogTree implements GitTreeViewI {
       if (value instanceof GitCommit) {
         final GitCommit gc = (GitCommit)value;
 
-        final List<String> branches = gc.getBranches();
+        final List<String> branches = gc.getLocalBranches();
         final List<String> tags = gc.getTags();
         if (branches.isEmpty() && tags.isEmpty()) {
           myTextPartRenderer.setLeftPartWidth(0);
@@ -758,7 +758,7 @@ public class GitLogTree implements GitTreeViewI {
         for (String branch : branches) {
           Icon icon = myBranchMap.get(branch);
           if (icon == null) {
-            icon = new CaptionIcon(Colors.ourBranch, list.getFont(), branch, list);
+            icon = new CaptionIcon(Colors.ourBranch, list.getFont(), branch, list, null, false, false);
             myBranchMap.put(branch, icon);
           }
           leftWidth += icon.getIconWidth();
@@ -768,7 +768,7 @@ public class GitLogTree implements GitTreeViewI {
         for (String tag : tags) {
           Icon icon = myTagMap.get(tag);
           if (icon == null) {
-            icon = new CaptionIcon(Colors.ourTag, list.getFont(), tag, list);
+            icon = new CaptionIcon(Colors.ourTag, list.getFont(), tag, list, null, false, false);
             myTagMap.put(tag, icon);
           }
           leftWidth += icon.getIconWidth();
@@ -874,7 +874,7 @@ public class GitLogTree implements GitTreeViewI {
         }
         setBackground(usualColor);
 
-        drawRefs(commit.getBranches(), Color.green);
+        drawRefs(commit.getLocalBranches(), Color.green);
         drawRefs(commit.getTags(), Color.blue);
 
         append(" ");
