@@ -801,16 +801,14 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
              order="after expectedType, before stats"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.DispreferImplementationsWeigher" id="implementations"
-             order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
-             order="after implementations"/>
+             order="after stats"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"
              order="after nonGeneric"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferSimpleWeigher" id="simple"
              order="after accessible"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferEnumConstantsWeigher" id="constants"
-             order="after simple, before proximity"/>
+             order="after simple, before prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.SameWordsWeigher" id="sameWords"
              order="after proximity"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferFieldsAndGettersWeigher" id="fieldsAndGetters"

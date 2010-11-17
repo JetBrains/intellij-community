@@ -7,5 +7,6 @@ public class Aaaaaaa {
 
 }
 
+class XxxEx {}
 class XxxImpl {}
 class Xxy {}

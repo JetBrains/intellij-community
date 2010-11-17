@@ -2,7 +2,7 @@ class A{
 {
 String str;
 
-str.subSequence(<caret>);
+str.substring(<caret>);
 jhasgfjhsdgf();
 }
 }
