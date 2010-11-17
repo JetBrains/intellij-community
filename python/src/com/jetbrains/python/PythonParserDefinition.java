@@ -35,7 +35,7 @@ public class PythonParserDefinition implements ParserDefinition {
 
     myWhitespaceTokens = TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
     myCommentTokens = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
-    myStringLiteralTokens = TokenSet.create(PyTokenTypes.STRING_LITERAL);
+    myStringLiteralTokens = TokenSet.create(PyTokenTypes.STRING_LITERAL, PyElementTypes.STRING_LITERAL_EXPRESSION);
   }
 
   @NotNull
