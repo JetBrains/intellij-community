@@ -96,7 +96,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;
   private final InternalDecoratorListener myInternalDecoratorListener;
 
-  private boolean myEditorComponentActive;
+  private boolean myEditorWasActive;
+  private Boolean myEditorActive;
+
   private final ActiveStack myActiveStack;
   private final SideStack mySideStack;
 
@@ -127,10 +129,19 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
   };
+  private PropertyChangeListener myFocusListener;
 
   private enum KeyState {
     waiting, pressed, released, hold
   }
+
+  private Alarm myUpdateHeadersAlarm = new Alarm();
+  private Runnable myUpdateHeadersRunnable = new Runnable() {
+    @Override
+    public void run() {
+      updateToolWindowHeaders();
+    }
+  };
 
   /**
    * invoked by reflection
@@ -175,7 +186,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
     myInternalDecoratorListener = new MyInternalDecoratorListener();
 
-    myEditorComponentActive = false;
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
 
@@ -194,6 +204,39 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       public void selectionChanged(FileEditorManagerEvent event) {
+      }
+    });
+
+    myFocusListener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        myEditorActive = null;
+        if ("focusOwner".equals(evt.getPropertyName())) {
+          myUpdateHeadersAlarm.cancelAllRequests();
+          myUpdateHeadersAlarm.addRequest(myUpdateHeadersRunnable, 50);
+        }
+      }
+    };
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(myFocusListener);
+  }
+
+
+  private void updateToolWindowHeaders() {
+    getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        WindowInfoImpl[] infos = myLayout.getInfos();
+        for (WindowInfoImpl each : infos) {
+          if (each.isVisible()) {
+            ToolWindow tw = getToolWindow(each.getId());
+            if (tw instanceof ToolWindowImpl) {
+              InternalDecorator decorator = ((ToolWindowImpl)tw).getDecorator();
+              if (decorator != null) {
+                decorator.repaint();
+              }
+            }
+          }
+        }
       }
     });
   }
@@ -314,6 +357,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void disposeComponent() {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
   }
 
   public void projectOpened() {
@@ -346,7 +390,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myEditorComponentFocusWatcher.install(editorComponent);
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
-    if (myEditorComponentActive) {
+    if (myEditorWasActive) {
       activateEditorComponentImpl(editorManager.getSplitters(), commandsList, true);
     }
     execute(commandsList);
@@ -537,7 +581,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
         deactivateWindows(postExecute, null);
         myActiveStack.clear();
-        myEditorComponentActive = true;
 
         execute(postExecute);
       }
@@ -617,7 +660,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (toApplyInfo) {
       appendApplyWindowInfoCmd(info, commandsList);
       myActiveStack.push(id);
-      myEditorComponentActive = false;
     }
 
     if (autoFocusContents) {
@@ -1172,7 +1214,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     // if there is no any active tool window and editor is also inactive
     // then activate editor
-    if (!myEditorComponentActive && getActiveToolWindowId() == null) {
+    if (!myEditorWasActive && getActiveToolWindowId() == null) {
       activateEditorComponentImpl(getSplittersFromFocus(), commandList, true);
     }
     execute(commandList);
@@ -1308,7 +1350,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public boolean isEditorComponentActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myEditorComponentActive;
+
+    if (myEditorActive == null) {
+      Component owner = getFocusManager().getFocusOwner();
+      EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, owner);
+      myEditorActive = splitters != null;
+    }
+
+    return myEditorActive;
   }
 
   ToolWindowAnchor getToolWindowAnchor(final String id) {
@@ -1669,7 +1718,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (final Object o : element.getChildren()) {
       final Element e = (Element)o;
       if (EDITOR_ELEMENT.equals(e.getName())) {
-        myEditorComponentActive = Boolean.valueOf(e.getAttributeValue(ACTIVE_ATTR_VALUE)).booleanValue();
+        myEditorWasActive = Boolean.valueOf(e.getAttributeValue(ACTIVE_ATTR_VALUE)).booleanValue();
       }
       else if (DesktopLayout.TAG.equals(e.getName())) { // read layout of tool windows
         myLayout.readExternal(e);
@@ -1709,7 +1758,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     frameElement.setAttribute(EXTENDED_STATE_ATTR, Integer.toString(myFrame.getExtendedState()));
     // Save whether editor is active or not
     final Element editorElement = new Element(EDITOR_ELEMENT);
-    editorElement.setAttribute(ACTIVE_ATTR_VALUE, myEditorComponentActive ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+    editorElement.setAttribute(ACTIVE_ATTR_VALUE, isEditorComponentActive() ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
     element.addContent(editorElement);
     // Save layout of tool windows
     final Element layoutElement = new Element(DesktopLayout.TAG);
@@ -1836,7 +1885,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // Sometimes focus gained comes when editor is active. For example it can happen when
       // user switches between menus or closes some dialog. In that case we just ignore this event,
       // i.e. don't initiate deactivation of tool windows and requesting focus in editor.
-      if (myEditorComponentActive) {
+      if (isEditorComponentActive()) {
         return;
       }
 
@@ -2044,7 +2093,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private ActionCallback processDefaultFocusRequest(boolean forced) {
     if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
       final String activeId = getActiveToolWindowId();
-      if (myEditorComponentActive || activeId == null || getToolWindow(activeId) == null) {
+      if (isEditorComponentActive() || activeId == null || getToolWindow(activeId) == null) {
         activateEditorComponent(forced, true);
       }
       else {

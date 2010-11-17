@@ -28,7 +28,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class TitlePanel extends JPanel {
+public class TitlePanel extends JPanel {
   private static final Color CNT_COLOR = new SameColor(184);
   private static final Color BND_COLOR = CNT_COLOR;
 
@@ -80,8 +80,10 @@ public final class TitlePanel extends JPanel {
     final Graphics2D g2d = (Graphics2D) g;
 
 
-    Color bndColor = myActive ? BND_ACTIVE_COLOR : BND_COLOR;
-    Color cntColor = myActive ? CNT_ACTIVE_COLOR : CNT_COLOR;
+    boolean active = isActive();
+
+    Color bndColor = active ? BND_ACTIVE_COLOR : BND_COLOR;
+    Color cntColor = active ? CNT_ACTIVE_COLOR : CNT_COLOR;
 
     g2d.setPaint(new GradientPaint(0, STRUT, bndColor, 0, getHeight(), cntColor));
     if (mySideButtons.isVisible()) {
@@ -89,12 +91,12 @@ public final class TitlePanel extends JPanel {
       g2d.fillRect(0, STRUT, getWidth() - sideRec.width, getHeight());
 
       g2d.setColor(UIUtil.getHeaderInactiveColor());
-      final Color buttonInnerColor = myActive ? ACTIVE_SIDE_BUTTON_BG : INACTIVE_SIDE_BUTTON_BG;
+      final Color buttonInnerColor = active ? ACTIVE_SIDE_BUTTON_BG : INACTIVE_SIDE_BUTTON_BG;
       g2d.setPaint(new GradientPaint(sideRec.x, sideRec.y, Color.white, sideRec.x, (int)sideRec.getMaxY() - 1, buttonInnerColor));
       g2d.fillRect(sideRec.x + 2, sideRec.y, sideRec.width - 2, sideRec.height);
 
 
-      Icon separator = myActive ? mySeparatorActive : mySeparatorInactive;
+      Icon separator = active ? mySeparatorActive : mySeparatorInactive;
       separator.paintIcon(this, g, sideRec.x, sideRec.y);
 
     } else {
@@ -120,5 +122,9 @@ public final class TitlePanel extends JPanel {
     wrapper.add(allButtons, BorderLayout.CENTER);
 
     add(wrapper, BorderLayout.EAST);
+  }
+
+  public boolean isActive() {
+    return myActive;
   }
 }
