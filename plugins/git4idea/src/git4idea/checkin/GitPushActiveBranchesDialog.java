@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -85,8 +84,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
   private JRadioButton myStashRadioButton; // Save files policy option
   private JRadioButton myShelveRadioButton;
-
-  private BackgroundTaskQueue myTaskQueue;
+  private GitVcs myVcs;
 
   /**
    * A modification of Runnable with the roots-parameter.
@@ -104,9 +102,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    */
   private GitPushActiveBranchesDialog(final Project project, List<VirtualFile> vcsRoots, List<Root> roots) {
     super(project, true);
+    myVcs = GitVcs.getInstance(project);
     myProject = project;
     myVcsRoots = vcsRoots;
-    myTaskQueue = new BackgroundTaskQueue(myProject, "Update and Push operations...");
 
     updateTree(roots, null);
     updateUI();
@@ -244,7 +242,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
       }
     };
-    myTaskQueue.run(rebaseAndPushTask);
+    myVcs.runInBackground(rebaseAndPushTask);
   }
 
   /**
@@ -735,7 +733,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
       }
     };
-    myTaskQueue.run(fetchTask);
+    myVcs.runInBackground(fetchTask);
   }
 
   /**
