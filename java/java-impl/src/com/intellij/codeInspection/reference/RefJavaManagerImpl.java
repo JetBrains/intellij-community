@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -147,7 +148,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   public void cleanup() {
     if (myEntryPointsManager != null) {
-      myEntryPointsManager.cleanup();
+      Disposer.dispose(myEntryPointsManager);
       myEntryPointsManager = null;
     }
     myPackages = null;
