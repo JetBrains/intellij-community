@@ -3,12 +3,14 @@ package com.jetbrains.python.psi.types;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
@@ -46,6 +48,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Nullable
   public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
+    for(PyModuleMembersProvider provider: Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+      final PsiElement element = provider.resolveMember(myModule, name);
+      if (element != null) {
+        return new SmartList<PsiElement>(element);
+      }
+    }
+
     //return PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myModule, null, null);
     final PsiElement result = ResolveImportUtil.resolveChild(myModule, name, myModule, null, false);
     if (result != null) return new SmartList<PsiElement>(result);
@@ -94,6 +103,14 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public Object[] getCompletionVariants(String completionPrefix, PyExpression location, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
+
+    for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
+      for (PyDynamicMember member : provider.getMembers(myModule)) {
+        final String name = member.getName();
+        result.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
+      }
+    }
+
     ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(location);
     if (point.role == NONE || point.role == AS_NAME) { // when not imported from, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor(location);
