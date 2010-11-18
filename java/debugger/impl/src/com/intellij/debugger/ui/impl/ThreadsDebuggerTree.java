@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.xdebugger.XDebuggerBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -51,6 +52,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
 
   public ThreadsDebuggerTree(Project project) {
     super(project);
+    getEmptyText().setText(XDebuggerBundle.message("debugger.threads.not.available"));
   }
 
   protected NodeManagerImpl createNodeManager(Project project) {

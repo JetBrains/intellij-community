@@ -17,6 +17,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.Table;
+import com.intellij.xdebugger.XDebuggerBundle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -88,6 +89,8 @@ public class BreakpointTable extends Table {
       }
     });
     columnModel.getColumn(BreakpointTableModel.NAME).setCellRenderer(new BreakpointNameCellRenderer());
+
+    getEmptyText().setText(XDebuggerBundle.message("debugger.no.breakpoints"));
   }
 
   public BreakpointTableModel getModel() {

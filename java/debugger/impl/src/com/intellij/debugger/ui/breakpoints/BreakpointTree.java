@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -394,6 +395,7 @@ public class BreakpointTree extends CheckboxTree {
       }
     };
     myBreakpointManager.addBreakpointManagerListener(myNodeUpdateListener);
+    getEmptyText().setText(XDebuggerBundle.message("debugger.no.breakpoints"));
   }
 
   public boolean isGroupByMethods() {

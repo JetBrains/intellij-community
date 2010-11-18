@@ -18,7 +18,9 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -86,7 +88,9 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     //noinspection unchecked
     myActions = actions.toArray(new XBreakpointPanelAction[actions.size()]);
 
-    myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
+    myTreePanel.add(pane, BorderLayout.CENTER);
+    pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
     initButtons();
     onSelectionChanged();
   }

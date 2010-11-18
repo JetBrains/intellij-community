@@ -1263,7 +1263,7 @@ public class UIUtil {
               }
             }
             else {
-              scrollPane.setBorder(null);
+              scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
             }
           }
         }

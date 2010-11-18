@@ -45,6 +45,8 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
         }
       }
     });
+
+    getEmptyText().setText(XDebuggerBundle.message("debugger.frames.not.available"));
   }
 
   public DefaultListModel getModel() {
