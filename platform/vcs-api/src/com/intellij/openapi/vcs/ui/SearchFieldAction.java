@@ -16,21 +16,23 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.ui.SearchTextField;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 
 /**
  * @author irengrig
  */
 public abstract class SearchFieldAction extends AnAction implements CustomComponentAction {
+  private final JPanel myComponent;
   private final SearchTextField myField;
 
-  public SearchFieldAction() {
+  public SearchFieldAction(String text) {
     super("Find: ");
     myField = new SearchTextField(true) {
       @Override
@@ -49,6 +51,17 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
         actionPerformed(null);
       }
     };
+    myComponent = new JPanel();
+    final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
+    myComponent.setLayout(layout);
+    if (text.length() > 0) {
+      final JLabel label = new JLabel(text);
+      label.setFont(label.getFont().deriveFont(Font.ITALIC));
+      label.setForeground(UIUtil.getInactiveTextColor());
+      label.setBorder(BorderFactory.createEmptyBorder(0,3,0,0));
+      myComponent.add(label);
+    }
+    myComponent.add(myField);
   }
 
   public String getText() {
@@ -57,6 +70,6 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    return myField;
+    return myComponent;
   }
 }

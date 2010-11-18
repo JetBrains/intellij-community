@@ -28,6 +28,8 @@ import git4idea.GitBranch;
 import git4idea.history.browser.SymbolicRefs;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -36,34 +38,14 @@ import java.util.TreeSet;
 /**
  * @author irengrig
  */
-public class BranchSelectorAction extends AnAction implements CustomComponentAction {
-  private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
-  private final JLabel myLabel;
-  private final JPanel myPanel;
-  private final Project myProject;
+public class BranchSelectorAction extends BasePopupAction {
   private SymbolicRefs mySymbolicRefs;
   private final Consumer<String> myConsumer;
 
   public BranchSelectorAction(final Project project, Consumer<String> consumer) {
-    myProject = project;
+    super(project, "Branch:");
     myConsumer = consumer;
-    myPanel = new JPanel();
-    final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
-    myPanel.setLayout(layout);
-    myLabel = new JLabel(getText("All"));
-    final JLabel show = new JLabel("Show branch:");
-    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
-    myPanel.add(show);
-    myPanel.add(myLabel);
-    myPanel.setBorder(BorderFactory.createEmptyBorder(1,2,1,2));
-    myPanel.add(new JLabel(ARROWS_ICON), myLabel);
-    final MouseAdapter mouseAdapter = new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        doAction(e);
-      }
-    };
-    myPanel.addMouseListener(mouseAdapter);
+    myLabel.setText(getText("All"));
   }
 
   private String getText(final String branch) {
@@ -84,33 +66,7 @@ public class BranchSelectorAction extends AnAction implements CustomComponentAct
     mySymbolicRefs = symbolicRefs;
   }
 
-  @Override
-  public JComponent createCustomComponent(Presentation presentation) {
-    return myPanel;
-  }
-
-  private void doAction(final MouseEvent e) {
-    final DefaultActionGroup group = createActionGroup();
-    final DataContext parent = DataManager.getInstance().getDataContext((Component) myPanel.getParent());
-    final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
-    final ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
-                              new Runnable() {
-                                @Override
-                                public void run() {
-                                  // todo ?
-                                }
-                              }, 20);
-    if (e != null) {
-      popup.show(new RelativePoint(e));
-    } else {
-      final Dimension dimension = popup.getContent().getPreferredSize();
-      final Point at = new Point(-dimension.width / 2, -dimension.height);
-      popup.show(new RelativePoint(myLabel, at));
-    }
-  }
-
-  private DefaultActionGroup createActionGroup() {
+  protected DefaultActionGroup createActionGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
 
     group.add(new SelectBranchAction("All", null));

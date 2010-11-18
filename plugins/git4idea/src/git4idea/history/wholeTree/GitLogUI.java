@@ -37,7 +37,6 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
-import com.intellij.openapi.vcs.ui.TextFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -96,6 +95,7 @@ public class GitLogUI implements Disposable {
   private BranchSelectorAction myBranchSelectorAction;
   private MySpecificDetails myDetails;
   private final DescriptionRenderer myDescriptionRenderer;
+  private FilterAction myFilterAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -404,10 +404,12 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     });
-    group.add(new MyCherryPick());
-    group.add(new MyRefreshAction());
+    myFilterAction = new FilterAction(myProject);
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
+    group.add(myFilterAction);
+    group.add(new MyCherryPick());
+    group.add(new MyRefreshAction());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Git log", group, true);
 
     myJBTable = new JBTable(myTableModel) {
@@ -886,7 +888,7 @@ public class GitLogUI implements Disposable {
 
   private class MyTextFieldAction extends SearchFieldAction {
     private MyTextFieldAction() {
-      super();
+      super("Find:");
     }
 
     @Override
