@@ -34,7 +34,7 @@ import keyword
 
 try:
     import inspect
-except ImportError:
+except:
     inspect = None # it may fail
 
 import re
@@ -42,11 +42,9 @@ import re
 if sys.platform == 'cli':
     import clr
 
-string_mod = string
-
 version = (
-(sys.hexversion & (0xff << 24)) >> 24,
-(sys.hexversion & (0xff << 16)) >> 16
+    (sys.hexversion & (0xff << 24)) >> 24,
+    (sys.hexversion & (0xff << 16)) >> 16
 )
 
 if version[0] >= 3:
@@ -60,9 +58,6 @@ if version[0] >= 3:
     SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (None.__class__,)
     EASY_TYPES = NUM_TYPES + STR_TYPES + (None.__class__, dict, tuple, list)
 
-    def str_join(a_list, a_str):
-        return string.join(a_str, a_list)
-
     def the_exec(source, context):
         exec(source, context)
 
@@ -74,9 +69,6 @@ else: # < 3.0
     NUM_TYPES = (int, long, float)
     SIMPLEST_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType,)
     EASY_TYPES = NUM_TYPES + STR_TYPES + (types.NoneType, dict, tuple, list)
-
-    def str_join(a_list, a_str):
-        return string_mod.join(a_list, a_str)
 
     def the_exec(source, context):
         exec (source) in context
@@ -211,7 +203,6 @@ _prop_types = tuple(_prop_types)
 
 def isProperty(x):
     return isinstance(x, _prop_types)
-
 
 FAKE_CLASSOBJ_NAME = "___Classobj"
 
@@ -904,7 +895,7 @@ class ModuleRedeclarator(object):
                         for v in p_value:
                             if v in seen_values:
                                 v = SELF_VALUE
-                            else:
+                            elif not isinstance(v, SIMPLEST_TYPES):
                                 seen_values.append(v)
                             self.fmtValue(v, indent + 1, postfix=",", seen_values=seen_values)
                         self.out(rpar + postfix, indent)
@@ -919,7 +910,7 @@ class ModuleRedeclarator(object):
                             v = p_value[k]
                             if v in seen_values:
                                 v = SELF_VALUE
-                            else:
+                            elif not isinstance(v, SIMPLEST_TYPES):
                                 seen_values.append(v)
                             if isinstance(k, SIMPLEST_TYPES):
                                 self.fmtValue(v, indent + 1, prefix=repr(k) + ": ", postfix=",", seen_values=seen_values)
@@ -930,7 +921,7 @@ class ModuleRedeclarator(object):
                                 self.out(",", indent + 1)
                         self.out("}" + postfix, indent)
                 else: # something else, maybe representable
-                # look up this value in the module.
+                    # look up this value in the module.
                     if sys.platform == "cli":
                         self.out(prefix + "None" + postfix, indent)
                         return
@@ -1363,9 +1354,9 @@ class ModuleRedeclarator(object):
             self.out("# from file " + self.module.__file__, 0)
         self.outDocAttr(self.module, 0)
         # find whatever other self.imported_modules the module knows; effectively these are imports
-        for item_name in self.module.__dict__:
-            item = self.module.__dict__[item_name]
-            if isinstance(item, type(sys)):
+        module_type = type(sys)
+        for item_name, item in self.module.__dict__.items():
+            if isinstance(item, module_type):
                 self.imported_modules[item_name] = item
                 if hasattr(item, "__name__"):
                     self.out("import " + item.__name__ + " as " + item_name + " # refers to " + str(item))
@@ -1407,7 +1398,7 @@ class ModuleRedeclarator(object):
                     classes[item_name] = item
                 elif isCallable(item):
                     funcs[item_name] = item
-                elif isinstance(item, type(sys)):
+                elif isinstance(item, module_type):
                     continue # self.imported_modules handled above already
                 else:
                     if isinstance(item, SIMPLEST_TYPES):
@@ -1687,6 +1678,7 @@ if __name__ == "__main__":
             # restore all of them
             if imported_module_names:
                 for m in sys.modules.keys():
+                    action = "restoring submodule " + m
                     # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
                     if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
                         if not quiet:
