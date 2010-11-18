@@ -1004,6 +1004,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       }
       int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.spaceWidth);
       if (c == '\t') {
+        notifyListenersOnVisualLineStart(myContext.lineStartPosition);
         notifyListenersOnTabulation(widthInColumns);
       }
       

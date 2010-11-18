@@ -178,7 +178,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     // The main idea is to type on a logical line before soft wrap in order to ensure that its offset is correctly shifted back.
     String text = 
       "line1<caret>\n" +
-      "second line that is rather long to be soft wrapped";
+      "second line that is long enough to be soft wrapped";
     init(100, text);
 
     TIntHashSet offsetsBefore = collectSoftWrapStartOffsets(1);
@@ -194,6 +194,30 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
         return true;
       }
     });
+  }
+  
+  public void testSoftWrapAwareMappingAfterLeadingFoldRegionCollapsing() throws IOException {
+    String text =
+      "line to fold 1\n" +
+      "line to fold 2\n" +
+      "line to fold 3\n" +
+      "ordinary line 1\n" +
+      "ordinary line 2\n" +
+      "ordinary line 3\n" +
+      "ordinary line 4\n" +
+      "line that is long enough to be soft wrapped\n" +
+      "ordinary line 5\n" +
+      "ordinary line 6\n" +
+      "ordinary line 7\n" +
+      "ordinary line 8\n";
+    
+    init(200, text);
+    LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(8, 0));
+    assertSame(7, position.line); // Position from soft-wrapped part of the line
+    
+    addFoldRegion(0, text.indexOf("ordinary line 1") - 1, "...");
+    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
+    assertSame(7, myEditor.visualToLogicalPosition(new VisualPosition(6, 0)).line); // Check that soft wraps cache is correctly updated
   }
   
   //private void init(final int visibleWidth) throws Exception {

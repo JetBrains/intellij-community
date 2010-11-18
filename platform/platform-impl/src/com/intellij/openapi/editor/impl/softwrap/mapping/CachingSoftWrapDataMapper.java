@@ -285,7 +285,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
   @Override
   public void onTabulation(@NotNull EditorPosition position, int widthInColumns) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, true);
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, false);
     if (cacheEntry == null) {
       return;
     }
@@ -600,6 +600,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
         CacheEntry cacheEntry = myCache.get(i);
         foldedLines += cacheEntry.endFoldedLines - cacheEntry.startFoldedLines;
       }
+      visualLines -= foldedLines;
 
       if (DEBUG_SOFT_WRAP_PROCESSING) {
         log(String.format("CachingSoftWrapDataMapper$CacheState.updateByDocumentOffsets(). Collected %d fold lines for cache entry indices "
