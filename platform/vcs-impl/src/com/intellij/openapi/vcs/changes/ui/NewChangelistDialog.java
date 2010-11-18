@@ -61,7 +61,7 @@ public class NewChangelistDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myPanel.getPrefferedFocusedComponent();
+    return myPanel.getPreferredFocusedComponent();
   }
 
   protected String getDimensionServiceKey() {
