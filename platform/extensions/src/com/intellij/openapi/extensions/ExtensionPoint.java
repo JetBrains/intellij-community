@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public interface ExtensionPoint<T> {
 
   void unregisterExtension(@NotNull T extension);
 
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @NotNull Disposable parentDisposable);
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 

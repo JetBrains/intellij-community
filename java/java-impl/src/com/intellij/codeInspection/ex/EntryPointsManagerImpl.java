@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.Disposable;
@@ -120,7 +119,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
           });
         }
       }
-    });
+    }, project);
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
