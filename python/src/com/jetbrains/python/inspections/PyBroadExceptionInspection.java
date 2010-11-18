@@ -40,15 +40,16 @@ public class PyBroadExceptionInspection extends PyInspection {
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), "Too broad exception clause");
       }
-      if (exceptClass instanceof PyReferenceExpression) {
-        PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
-        PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
-        if (classRefType != null) {
-          if (classRefType.isBuiltin())
-            registerProblem(exceptClassRef, "Too broad exception clause");
+      else if ("Exception".equals(exceptClass.getName())) {
+        if (exceptClass instanceof PyReferenceExpression) {
+          PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
+          PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
+          if (classRefType != null) {
+            if (classRefType.isBuiltin())
+              registerProblem(exceptClassRef, "Too broad exception clause");
+          }
         }
       }
-
     }
   }
 }
