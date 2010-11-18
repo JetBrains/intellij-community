@@ -16,6 +16,7 @@
 package git4idea.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -32,6 +33,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -163,14 +165,36 @@ class ChangeCollector {
     }
     for (Iterator<FilePath> i = paths.iterator(); i.hasNext();) {
       FilePath p = i.next();
-      if (p.isUnder(toAdd, true)) {
+      if (isUnder(p, toAdd, true)) {
         i.remove();
       }
-      if (toAdd.isUnder(p, false)) {
+      if (isUnder(toAdd, p, false)) {
         return;
       }
     }
     paths.add(toAdd);
+  }
+
+  /**
+   * Returns true if childCandidate file is located under parentCandidate.
+   * This is an alternative to {@link com.intellij.openapi.vcs.FilePathImpl#isUnder(com.intellij.openapi.vcs.FilePath, boolean)}:
+   * it doesn't check VirtualFile associated with this FilePath.
+   * When we move a file we get a VcsDirtyScope with old and new FilePaths, but unfortunately the virtual file in the FilePath is
+   * refreshed ({@link com.intellij.openapi.vcs.changes.VirtualFileHolder#cleanAndAdjustScope(com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope)}
+   * and thus points to the new position which makes FilePathImpl#isUnder useless.
+   *
+   * @param parentCandidate FilePath which we check to be the parent of childCandidate.
+   * @param childCandidate  FilePath which we check to be a child of parentCandidate.
+   * @param strict          if false, the method also returns true if files are equal
+   * @return true if childCandidate is a child of parentCandidate.
+   */
+  private static boolean isUnder(FilePath parentCandidate, FilePath childCandidate, boolean strict) {
+    try {
+      return FileUtil.isAncestor(parentCandidate.getIOFile(), childCandidate.getIOFile(), strict);
+    }
+    catch (IOException e) {
+      return false;
+    }
   }
 
   /**
