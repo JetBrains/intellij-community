@@ -234,7 +234,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   @NotNull
-  private LookupImpl obtainLookup(Editor editor, CompletionParameters parameters) {
+  private LookupImpl obtainLookup(Editor editor) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
       existing.markReused();
@@ -251,7 +251,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       lookup.setResizable(false);
       lookup.setForceLightweightPopup(false);
     }
-    lookup.setFocused(shouldFocusLookup(parameters));
+    lookup.setFocused(!autopopup);
     return lookup;
   }
 
@@ -263,7 +263,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
 
-    final LookupImpl lookup = obtainLookup(editor, parameters);
+    final LookupImpl lookup = obtainLookup(editor);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
@@ -295,7 +295,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
+  private AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
                                                                         final CompletionProgressIndicator indicator,
                                                                         final CompletionInitializationContext initContext) {
 
@@ -316,6 +316,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             startSemaphore.up();
+            indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
             indicator.duringCompletion(initContext);
           }
         });
