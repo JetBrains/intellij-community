@@ -24,6 +24,7 @@ import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
@@ -86,10 +87,10 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
 
     addFoldRegion(startOffset, endOffset, "...");
 
-    final FoldRegion foldRegion = foldingModel.getAllFoldRegions()[0];
+    final FoldRegion foldRegion = getFoldRegion(startOffset);
     assertNotNull(foldRegion);
     assertTrue(foldRegion.isExpanded());
-    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
+    toggleFoldRegionState(foldRegion, false);
 
     // Expecting that all offsets that belong to collapsed fold region point to the region's start.
     assertEquals(foldStartPosition, myEditor.offsetToVisualPosition(startOffset + 5));
@@ -148,8 +149,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
 
     int startFoldOffset = text.indexOf('@');
     int endFoldOffset = text.indexOf(')');
-    addFoldRegion(startFoldOffset, endFoldOffset, "/SomeInspectionIWantToIgnore/");
-    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
+    addCollapsedFoldRegion(startFoldOffset, endFoldOffset, "/SomeInspectionIWantToIgnore/");
 
     int endSelectionOffset = text.lastIndexOf("}\n") + 1;
     myEditor.getSelectionModel().setSelection(startFoldOffset, endSelectionOffset);
@@ -215,9 +215,32 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(8, 0));
     assertSame(7, position.line); // Position from soft-wrapped part of the line
     
-    addFoldRegion(0, text.indexOf("ordinary line 1") - 1, "...");
-    toggleFoldRegionState(myEditor.getFoldingModel().getAllFoldRegions()[0], false);
+    addCollapsedFoldRegion(0, text.indexOf("ordinary line 1") - 1, "...");
     assertSame(7, myEditor.visualToLogicalPosition(new VisualPosition(6, 0)).line); // Check that soft wraps cache is correctly updated
+  }
+  
+  public void testCaretPositionOnFoldRegionExpand() throws IOException {
+    // We had a problem that caret preserved its visual position instead of offset. This test checks that.
+    
+    String text = 
+      "/**\n" +
+      " * This is a test comment\n" +
+      " */\n" +
+      "public class Test {\n" +
+      "}";
+    init(500, text);
+
+    addCollapsedFoldRegion(0, text.indexOf("public") - 1, "/**...*/");
+    
+    int offset = text.indexOf("class");
+    CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.moveToOffset(offset);
+    assertEquals(offset, caretModel.getOffset());
+    assertEquals(1, caretModel.getVisualPosition().line);
+    
+    toggleFoldRegionState(getFoldRegion(0), true);
+    assertEquals(3, caretModel.getVisualPosition().line);
+    assertEquals(offset, caretModel.getOffset());
   }
   
   //private void init(final int visibleWidth) throws Exception {
@@ -251,6 +274,11 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     });
   }
 
+  private static void addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
+    addFoldRegion(startOffset, endOffset, placeholder);
+    toggleFoldRegionState(getFoldRegion(startOffset), false);
+  }
+
   private static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
     myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
@@ -258,6 +286,19 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
         foldRegion.setExpanded(expanded);
       }
     });
+  }
+  
+  private static FoldRegion getFoldRegion(int startOffset) {
+    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
+    for (FoldRegion foldRegion : foldRegions) {
+      if (foldRegion.getStartOffset() == startOffset) {
+        return foldRegion;
+      }
+    }
+    throw new IllegalArgumentException(String.format(
+      "Can't find fold region with start offset %d. Registered fold regions: %s. Document text: '%s'",
+      startOffset, Arrays.toString(foldRegions), myEditor.getDocument().getCharsSequence()
+    ));
   }
 
   private static void initCommon(final int visibleWidth) {
