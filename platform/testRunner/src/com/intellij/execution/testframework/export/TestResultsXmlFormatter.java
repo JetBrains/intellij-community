@@ -16,21 +16,21 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.*;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class TestResultsXmlFormatter {
 
@@ -95,13 +95,22 @@ public class TestResultsXmlFormatter {
       endElement(ELEM_COUNT);
     }
 
+    CompositeFilter f = new CompositeFilter(myRuntimeConfiguration.getProject());
+    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
+      Filter[] filters = eachProvider.getDefaultFilters(myRuntimeConfiguration.getProject());
+      for (Filter filter : filters) {
+        f.addFilter(filter);
+      }
+    }
+
+
     if (myTestRoot.shouldSkipRootNodeForExport()) {
       for (AbstractTestProxy node : myTestRoot.getChildren()) {
-        processNode(node);
+        processNode(node, f);
       }
     }
     else {
-      processNode(myTestRoot);
+      processNode(myTestRoot, f);
     }
     endElement(ELEM_RUN);
     myResultHandler.endDocument();
@@ -112,7 +121,7 @@ public class TestResultsXmlFormatter {
     counts.put(status, count != null ? count + 1 : 1);
   }
 
-  private void processNode(AbstractTestProxy node) throws SAXException {
+  private void processNode(AbstractTestProxy node, final Filter filter) throws SAXException {
     Map<String, String> attrs = new HashMap<String, String>();
     attrs.put(ATTR_NAME, node.getName());
     attrs.put(ATTR_STATUS, getStatusString(node));
@@ -126,18 +135,14 @@ public class TestResultsXmlFormatter {
       final StringBuilder buffer = new StringBuilder();
       final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
       final Ref<SAXException> error = new Ref<SAXException>();
+
       node.printOn(new Printer() {
         @Override
         public void print(String text, ConsoleViewContentType contentType) {
           if (contentType != lastType.get()) {
             if (buffer.length() > 0) {
               try {
-                Map<String, String> a = new HashMap<String, String>();
-                a.put(ATTR_OUTPUT_TYPE, getTypeString(lastType.get()));
-                startElement(ELEM_OUTPUT, a);
-                writeText(buffer.toString());
-                buffer.delete(0, buffer.length());
-                endElement(ELEM_OUTPUT);
+                writeOutput(lastType.get(), buffer, filter);
               }
               catch (SAXException e) {
                 error.set(e);
@@ -164,19 +169,46 @@ public class TestResultsXmlFormatter {
         throw error.get();
       }
       if (buffer.length() > 0) {
-        Map<String, String> a = new HashMap<String, String>();
-        a.put(ATTR_OUTPUT_TYPE, getTypeString(lastType.get()));
-        startElement(ELEM_OUTPUT, a);
-        writeText(buffer.toString());
-        endElement(ELEM_OUTPUT);
+        writeOutput(lastType.get(), buffer, filter);
       }
     }
     else {
       for (AbstractTestProxy child : node.getChildren()) {
-        processNode(child);
+        processNode(child, filter);
       }
     }
     endElement(elemName);
+  }
+
+  private void writeOutput(ConsoleViewContentType type, StringBuilder text, Filter filter) throws SAXException {
+    StringBuilder output = new StringBuilder();
+    StringTokenizer t = new StringTokenizer(text.toString(), "\n");
+    while (t.hasMoreTokens()) {
+      String line = StringUtil.escapeXml(t.nextToken()) + "\n";
+      Filter.Result result = null;//filter.applyFilter(line, line.length());
+      if (result != null && result.hyperlinkInfo instanceof OpenFileHyperlinkInfo) {
+        output.append(line.substring(0, result.highlightStartOffset));
+        OpenFileDescriptor descriptor = ((OpenFileHyperlinkInfo)result.hyperlinkInfo).getDescriptor();
+        output.append("<a href=\"javascript://\" onclick=\"Activator.doOpen('file?file=");
+        output.append(descriptor.getFile().getPresentableUrl());
+        output.append("&line=");
+        output.append(descriptor.getLine());
+        output.append("')\">");
+        output.append(line.substring(result.highlightStartOffset, result.highlightEndOffset));
+        output.append("</a>");
+        output.append(line.substring(result.highlightEndOffset));
+      }
+      else {
+        output.append(line);
+      }
+    }
+
+    Map<String, String> a = new HashMap<String, String>();
+    a.put(ATTR_OUTPUT_TYPE, getTypeString(type));
+    startElement(ELEM_OUTPUT, a);
+    writeText(output.toString());
+    text.delete(0, text.length());
+    endElement(ELEM_OUTPUT);
   }
 
   private static String getTypeString(ConsoleViewContentType type) {
