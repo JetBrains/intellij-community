@@ -237,9 +237,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);
 
 
-    final String params = PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
-                                                     PsiFormatUtil.SHOW_PARAMETERS,
-                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
+    final String params = getUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE) == null
+                          ? PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
+                                                       PsiFormatUtil.SHOW_PARAMETERS,
+                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
+                          : "(...)";
     if (myShouldImportStatic && StringUtil.isNotEmpty(className)) {
       presentation.setTailText(params + " in " + className);
     } else {

@@ -7,6 +7,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -61,6 +63,15 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
         };
       }
 
+      @Override
+      protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
+                                                  @NotNull PsiClass containingClass,
+                                                  boolean shouldImport) {
+        final JavaMethodCallElement element = new JavaMethodCallElement(overloads.get(0), true);
+        element.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, overloads);
+        element.setShouldBeImported(shouldImport);
+        return element;
+      }
     };
     final PsiFile file = position.getContainingFile();
     if (file instanceof PsiJavaFile) {
