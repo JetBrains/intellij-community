@@ -22,9 +22,11 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -35,35 +37,89 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * Creates the form for the Maven2 build setup and is responsible for updating the
- * underlying data model.
- *
- * @author Ralf Quebbemann (ralfq@codehaus.org)
- */
 public abstract class MavenRunnerConfigurable implements SearchableConfigurable {
-  private JPanel panel;
-  private JCheckBox checkBoxRunMavenInBackground;
-  private JLabel labelVMParameters;
-  private RawCommandLineEditor textFieldVMParameters;
-  private JComboBox comboBoxChooseJDK;
-  private final DefaultComboBoxModel comboboxModelChooseJdk = new DefaultComboBoxModel();
-  private JCheckBox checkBoxSkipTests;
-  private JPanel panelForPropertiesEditor;
-  private final MyPropertiesPanel propertiesPanel;
   private final Project myProject;
+  private final boolean myRunConfigurationMode;
+
+  private JCheckBox myRunInBackgroundCheckbox;
+  private RawCommandLineEditor myVMParametersEditor;
+  private JComboBox myJdkCombo;
+  private final DefaultComboBoxModel myJdkComboModel = new DefaultComboBoxModel();
+  private JCheckBox mySkipTestsCheckBox;
+  private MyPropertiesPanel myPropertiesPanel;
+
   private Map<String, String> myProperties;
 
   public MavenRunnerConfigurable(Project p, boolean isRunConfiguration) {
     myProject = p;
+    myRunConfigurationMode = isRunConfiguration;
+  }
 
-    propertiesPanel = new MyPropertiesPanel();
-    panelForPropertiesEditor.add(propertiesPanel, BorderLayout.CENTER);
+  protected abstract MavenRunnerSettings getState();
 
-    textFieldVMParameters.setDialogCaption(labelVMParameters.getText());
+  public JComponent createComponent() {
+    JPanel panel = new JPanel(new GridBagLayout());
 
-    checkBoxRunMavenInBackground.setVisible(!isRunConfiguration);
+    GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.anchor = GridBagConstraints.NORTHWEST;
+
+    myRunInBackgroundCheckbox = new JCheckBox("Run in background");
+    myRunInBackgroundCheckbox.setDisplayedMnemonicIndex(myRunInBackgroundCheckbox.getText().indexOf('b'));
+    if (!myRunConfigurationMode) {
+      c.gridx = 0;
+      c.gridy++;
+      c.weightx = 1;
+      c.gridwidth = GridBagConstraints.REMAINDER;
+
+      panel.add(myRunInBackgroundCheckbox, c);
+    }
+    c.gridwidth = 1;
+
+    JLabel labelVMParameters = new JLabel("VM Parameters");
+    labelVMParameters.setDisplayedMnemonic('v');
+    labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
+    myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
+
+    c.gridx = 0;
+    c.gridy++;
+    c.weightx = 0;
+    panel.add(labelVMParameters, c);
+
+    c.gridx = 1;
+    c.weightx = 1;
+    panel.add(myVMParametersEditor, c);
+
+    JLabel jdkLabel = new JLabel("JRE");
+    jdkLabel.setDisplayedMnemonic('j');
+    jdkLabel.setLabelFor(myJdkCombo = new JComboBox());
+    c.gridx = 0;
+    c.gridy++;
+    c.weightx = 0;
+    panel.add(jdkLabel, c);
+    c.gridx = 1;
+    c.weightx = 1;
+    c.fill = GridBagConstraints.NONE;
+    panel.add(myJdkCombo, c);
+    c.fill = GridBagConstraints.HORIZONTAL;
+
+    JPanel propertiesPanel = new JPanel(new BorderLayout());
+    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder("Properties"));
+
+    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox("Skip tests"), BorderLayout.NORTH);
+    mySkipTestsCheckBox.setDisplayedMnemonicIndex(mySkipTestsCheckBox.getText().indexOf('t'));
+    propertiesPanel.add(myPropertiesPanel = new MyPropertiesPanel(), BorderLayout.CENTER);
+
+    c.gridx = 0;
+    c.gridy++;
+    c.weightx = c.weighty = 1;
+    c.gridwidth = c.gridheight = GridBagConstraints.REMAINDER;
+    c.fill = GridBagConstraints.BOTH;
+    panel.add(propertiesPanel, c);
+
     collectProperties();
+
+    return panel;
   }
 
   private void collectProperties() {
@@ -78,12 +134,6 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     }
 
     myProperties = result;
-  }
-
-  protected abstract MavenRunnerSettings getState();
-
-  public JComponent createComponent() {
-    return getRootComponent();
   }
 
   public boolean isModified() {
@@ -116,7 +166,9 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     return "reference.settings.project.maven.runner";
   }
 
+  @NotNull
   public String getId() {
+    //noinspection ConstantConditions
     return getHelpTopic();
   }
 
@@ -129,35 +181,31 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
   }
 
   private void fillComboboxJdk(MavenRunnerSettings data) {
-    comboboxModelChooseJdk.removeAllElements();
+    myJdkComboModel.removeAllElements();
     for (Pair<String, String> jdk : data.collectJdkNamesAndDescriptions()) {
-      ComboBoxUtil.addToModel(comboboxModelChooseJdk, jdk.getFirst(), jdk.getSecond());
+      ComboBoxUtil.addToModel(myJdkComboModel, jdk.getFirst(), jdk.getSecond());
     }
-    comboBoxChooseJDK.setModel(comboboxModelChooseJdk);
-  }
-
-  JComponent getRootComponent() {
-    return panel;
+    myJdkCombo.setModel(myJdkComboModel);
   }
 
   void getData(MavenRunnerSettings data) {
-    checkBoxRunMavenInBackground.setSelected(data.isRunMavenInBackground());
-    textFieldVMParameters.setText(data.getVmOptions());
-    checkBoxSkipTests.setSelected(data.isSkipTests());
+    myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
+    myVMParametersEditor.setText(data.getVmOptions());
+    mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
     fillComboboxJdk(data);
-    ComboBoxUtil.select(comboboxModelChooseJdk, data.getJreName());
+    ComboBoxUtil.select(myJdkComboModel, data.getJreName());
 
-    propertiesPanel.setDataFromMap(data.getMavenProperties());
+    myPropertiesPanel.setDataFromMap(data.getMavenProperties());
   }
 
   void setData(MavenRunnerSettings data) {
-    data.setRunMavenInBackground(checkBoxRunMavenInBackground.isSelected());
-    data.setVmOptions(textFieldVMParameters.getText().trim());
-    data.setSkipTests(checkBoxSkipTests.isSelected());
-    data.setJreName(ComboBoxUtil.getSelectedString(comboboxModelChooseJdk));
+    data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
+    data.setVmOptions(myVMParametersEditor.getText().trim());
+    data.setSkipTests(mySkipTestsCheckBox.isSelected());
+    data.setJreName(ComboBoxUtil.getSelectedString(myJdkComboModel));
 
-    data.setMavenProperties(propertiesPanel.getDataAsMap());
+    data.setMavenProperties(myPropertiesPanel.getDataAsMap());
   }
 
   private class MyPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
