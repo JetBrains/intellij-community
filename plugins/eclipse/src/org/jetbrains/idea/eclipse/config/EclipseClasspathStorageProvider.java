@@ -63,6 +63,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+    final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
@@ -72,18 +73,18 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
               libraryEntry.getRootUrls(OrderRootType.CLASSES).length != 1 ||
               library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
             throw new ConfigurationException(
-              "Library \'" + entry.getPresentableName() + "\' is incompatible with eclipse format which supports only one content root");
+              "Library \'" + entry.getPresentableName() + "\' from module \'" + moduleName + "\' dependencies is incompatible with eclipse format which supports only one library content root");
           }
         }
       }
     }
     if (model.getContentRoots().length == 0) {
-      throw new ConfigurationException("Module \'" + model.getModule().getName() + "\' has no content roots thus is not compatible with eclipse format");
+      throw new ConfigurationException("Module \'" + moduleName + "\' has no content roots thus is not compatible with eclipse format");
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
     if (output == null || !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot)) {
-      throw new ConfigurationException("Output path is incompatible with eclipse format which supports output under content root only");
+      throw new ConfigurationException("Module \'" + moduleName + "\' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
     }
   }
 
