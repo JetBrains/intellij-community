@@ -96,6 +96,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     final Runnable request = new Runnable() {
       @Override
       public void run() {
+        if (ourTestingAutopopup) {
+          System.out.println("inside request");
+        }
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway

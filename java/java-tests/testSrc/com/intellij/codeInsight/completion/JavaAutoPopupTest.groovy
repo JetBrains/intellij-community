@@ -60,7 +60,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     println "b2"
     type '\b'
-    println "typed"
+    println "typed backspace"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
     type "a"
     assertOrderedEquals myFixture.lookupElementStrings, "itaa"
