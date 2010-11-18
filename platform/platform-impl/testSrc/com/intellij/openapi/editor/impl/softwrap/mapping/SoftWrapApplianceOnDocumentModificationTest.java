@@ -17,22 +17,19 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
  * @since 09/16/2010
  */
-public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
-
-  //private static final String PATH = "/codeInsight/softwrap/";
+public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorProcessingOnDocumentModificationTest {
 
   @Override
   protected void tearDown() throws Exception {
@@ -243,11 +240,6 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     assertEquals(offset, caretModel.getOffset());
   }
   
-  //private void init(final int visibleWidth) throws Exception {
-  //  configureByFile(PATH + getFileName());
-  //  initCommon(visibleWidth);
-  //}
-
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {
@@ -256,52 +248,8 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     return result;
   }
   
-  private void init(int visibleWidth, String fileText) throws IOException {
-    configureFromFileText(getFileName(), fileText);
-    initCommon(visibleWidth);
-  }
-
-  private String getFileName() {
-    return getTestName(false) + ".txt";
-  }
-
-  private static void addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder);
-      }
-    });
-  }
-
-  private static void addCollapsedFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
-    addFoldRegion(startOffset, endOffset, placeholder);
-    toggleFoldRegionState(getFoldRegion(startOffset), false);
-  }
-
-  private static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldRegion.setExpanded(expanded);
-      }
-    });
-  }
-  
-  private static FoldRegion getFoldRegion(int startOffset) {
-    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
-    for (FoldRegion foldRegion : foldRegions) {
-      if (foldRegion.getStartOffset() == startOffset) {
-        return foldRegion;
-      }
-    }
-    throw new IllegalArgumentException(String.format(
-      "Can't find fold region with start offset %d. Registered fold regions: %s. Document text: '%s'",
-      startOffset, Arrays.toString(foldRegions), myEditor.getDocument().getCharsSequence()
-    ));
-  }
-
-  private static void initCommon(final int visibleWidth) {
+  private void init(final int visibleWidth, String fileText) throws IOException {
+    init(fileText);
     myEditor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
     model.refreshSettings();
