@@ -18,24 +18,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class HgRepositoryLocation implements RepositoryLocation {
 
-  private final String url;
-  private final VirtualFile root;
+  private final String myUrl;
+  private final VirtualFile myRoot;
 
   public HgRepositoryLocation(String url, VirtualFile root) {
-    this.url = url;
-    this.root = root;
+    myUrl = url;
+    myRoot = root;
   }
 
   public VirtualFile getRoot() {
-    return root;
+    return myRoot;
   }
 
   public String toPresentableString() {
-    return url;
+    return myUrl;
+  }
+
+  @Override
+  public String toString() {
+    return toPresentableString();
   }
 
   public String getKey() {
-    return url;
+    return myUrl;
   }
 
   @Override

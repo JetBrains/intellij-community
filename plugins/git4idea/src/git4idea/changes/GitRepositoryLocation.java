@@ -21,41 +21,24 @@ import com.intellij.openapi.vcs.VcsException;
 
 import java.io.File;
 
-/**
- * The git repository location
- */
 public class GitRepositoryLocation implements RepositoryLocation {
-  /**
-   * The URL of the repository
-   */
-  private final String myUrl;
-  /**
-   * The repository root
-   */
-  private final File myRoot;
+  private final String myUrl; // repository url
+  private final File myRoot; // repository root
 
-  /**
-   * A constructor
-   *
-   * @param url  an URL of the repository
-   * @param root the vcs root
-   */
   public GitRepositoryLocation(String url, File root) {
     myUrl = url;
     myRoot = root;
   }
 
-
-  /**
-   * {@inheritDoc}
-   */
   public String toPresentableString() {
     return myUrl;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
+  public String toString() {
+    return toPresentableString();
+  }
+
   public String getKey() {
     return myUrl;
   }
@@ -68,9 +51,6 @@ public class GitRepositoryLocation implements RepositoryLocation {
   public void onAfterBatch() {
   }
 
-  /**
-   * @return vcs root for the repository
-   */
   public File getRoot() {
     return myRoot;
   }
