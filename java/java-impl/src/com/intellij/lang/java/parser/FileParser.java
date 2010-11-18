@@ -115,7 +115,7 @@ public class FileParser {
       }
     }
 
-    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false);
+    final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, true, false, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;

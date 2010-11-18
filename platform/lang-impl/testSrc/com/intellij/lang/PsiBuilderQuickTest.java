@@ -522,11 +522,10 @@ public class PsiBuilderQuickTest {
 
     // check light tree composition
     final FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
-    final String lightExpected = expected.replaceAll("PsiErrorElement:.*\n", "PsiErrorElement\n");
-    assertEquals(lightExpected, DebugUtil.lightTreeToString(lightTree, false));
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree, false));
     // verify that light tree can be taken multiple times
     final FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();
-    assertEquals(lightExpected, DebugUtil.lightTreeToString(lightTree2, false));
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree2, false));
 
     // check heavy tree composition
     final ASTNode root = builder.getTreeBuilt();

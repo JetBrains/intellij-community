@@ -23,14 +23,20 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiMethod;
@@ -56,15 +62,6 @@ import java.util.List;
  * Date: 17-Feb-2006
  */
 public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
-  private static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new THashSet<String>(Arrays.asList(
-    "javax.annotation.Resource",
-    "javax.ejb.EJB",
-    "javax.xml.ws.WebServiceRef",
-    "javax.persistence.PersistenceContext",
-    "javax.persistence.PersistenceUnit",
-    "javax.persistence.GeneratedValue")));
-
-  private static List<String> ANNOTATIONS = null;
 
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
@@ -75,29 +72,8 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   public boolean CLASS = true;
   public boolean PARAMETER = true;
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
-  public JDOMExternalizableStringList INJECTION_ANNOS = new JDOMExternalizableStringList();
 
-  static {
-    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
-      @Override
-      public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        extensionRemoved(extension, pluginDescriptor);
-      }
 
-      @Override
-      public void extensionRemoved(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
-        ANNOTATIONS = null;
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (ApplicationManager.getApplication().isDisposed()) return;
-            InspectionProfileManager.getInstance().fireProfileChanged(null);
-          }
-        });
-      }
-    });
-  }
 
   @NotNull
   public String getGroupDisplayName() {
@@ -170,10 +146,16 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
 
-      String title = "Do not check if annotated by";
-      final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(INJECTION_ANNOS, title);
-
-      myAnnos.add(listPanel, BorderLayout.CENTER);
+      final JButton configureAnnotations = new JButton("Configure annotations");
+      configureAnnotations.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          EntryPointsManagerImpl.getInstance(project).configureAnnotations();
+        }
+      });
+      myAnnos.add(configureAnnotations, BorderLayout.NORTH);
     }
 
     public JComponent getPanel() {
@@ -186,36 +168,20 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return new OptionsPanel().getPanel();
   }
 
-  public IntentionAction createQuickFix(final String qualifiedName, String element) {
+  public static IntentionAction createQuickFix(final String qualifiedName, String element, Project project) {
+    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
+    final ArrayList<String> targetList = new ArrayList<String>();
+    targetList.addAll(entryPointsManager.ADDITIONAL_ANNOTATIONS);
+    targetList.addAll(entryPointsManager.getAdditionalAnnotations());
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      INJECTION_ANNOS, qualifiedName);
+      targetList, qualifiedName);
   }
 
-  private static List<String> getRegisteredAnnotations() {
-    List<String> annotations = ANNOTATIONS;
-    if (annotations == null) {
-      annotations = new ArrayList<String>();
-      EntryPoint[] extensions = Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
-      for (EntryPoint extension : extensions) {
-        final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
-        if (ignoredAnnotations != null) {
-          ContainerUtil.addAll(annotations, ignoredAnnotations);
-        }
-      }
-      ANNOTATIONS = annotations;
-    }
-    return annotations;
-  }
-
-  public static boolean isInjected(final PsiModifierListOwner modifierListOwner, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    if (modifierListOwner instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter((PsiMethod)modifierListOwner)) {
-      return AnnotationUtil.isAnnotated(modifierListOwner, getRegisteredAnnotations()) ||
-             AnnotationUtil.isAnnotated(modifierListOwner, unusedSymbolInspection.INJECTION_ANNOS);
-    }
-    return AnnotationUtil.isAnnotated(modifierListOwner, getRegisteredAnnotations()) ||
-           AnnotationUtil.isAnnotated(modifierListOwner, unusedSymbolInspection.INJECTION_ANNOS) ||
-           AnnotationUtil.isAnnotated(modifierListOwner, STANDARD_INJECTION_ANNOS);
+  public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
+    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(modifierListOwner.getProject());
+    return AnnotationUtil.isAnnotated(modifierListOwner, entryPointsManager.ADDITIONAL_ANNOTATIONS) ||
+           AnnotationUtil.isAnnotated(modifierListOwner, entryPointsManager.getAdditionalAnnotations());
   }
 }

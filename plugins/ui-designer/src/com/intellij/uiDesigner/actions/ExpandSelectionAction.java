@@ -44,7 +44,9 @@ public final class ExpandSelectionAction extends AnAction{
     selectionState.setInsideChange(true);
 
     ComponentTreeBuilder builder = UIDesignerToolWindowManager.getInstance(editor.getProject()).getComponentTreeBuilder();
-    builder.beginUpdateSelection();
+    if (builder != null) {
+      builder.beginUpdateSelection();
+    }
 
     final Stack<ComponentPtr[]> history = selectionState.getSelectionHistory();
 
@@ -79,8 +81,11 @@ public final class ExpandSelectionAction extends AnAction{
 
       // Store new selection
       history.push(SelectionState.getSelection(editor));
-    }finally{
-      builder.endUpdateSelection();
+    }
+    finally {
+      if (builder != null) {
+        builder.endUpdateSelection();
+      }
       selectionState.setInsideChange(false);
     }
   }

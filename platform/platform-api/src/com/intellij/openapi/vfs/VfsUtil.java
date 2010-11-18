@@ -92,6 +92,7 @@ public class VfsUtil {
    * @param separator character to use as files separator
    * @return the relative path
    */
+  @Nullable
   public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return null;
 

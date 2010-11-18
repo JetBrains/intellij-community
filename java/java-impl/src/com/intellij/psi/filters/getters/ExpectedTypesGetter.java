@@ -43,12 +43,13 @@ public class ExpectedTypesGetter implements ContextGetter{
   }
 
   public static PsiType[] getExpectedTypes(final PsiElement context, boolean defaultTypes) {
-    ExpectedTypesProvider typesProvider = ExpectedTypesProvider.getInstance(context.getProject());
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     if(expression == null) return PsiType.EMPTY_ARRAY;
 
-    ExpectedTypeInfo[] infos = typesProvider.getExpectedTypes(expression, true);
+    return extractTypes(ExpectedTypesProvider.getExpectedTypes(expression, true), defaultTypes);
+  }
 
+  public static PsiType[] extractTypes(ExpectedTypeInfo[] infos, boolean defaultTypes) {
     Set<PsiType> result = new THashSet<PsiType>(infos.length);
     for (ExpectedTypeInfo info : infos) {
       final PsiType type = info.getType();
@@ -60,5 +61,4 @@ public class ExpectedTypesGetter implements ContextGetter{
     }
     return result.toArray(new PsiType[result.size()]);
   }
-
 }

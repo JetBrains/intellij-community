@@ -54,7 +54,7 @@ class GitLogRecord {
     myParts = parts;
   }
 
-  Collection<String> getPaths() {
+  List<String> getPaths() {
     return myPaths;
   }
 

@@ -71,8 +71,8 @@ public class AbstractPopup implements JBPopup {
   private JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
   private boolean myFocusable;
-  private boolean myForcedHeavyweight = false;
-  private boolean myLocateWithinScreen = true;
+  private boolean myForcedHeavyweight;
+  private boolean myLocateWithinScreen;
   private boolean myResizable = false;
   private JPanel myHeaderPanel;
   private CaptionPanel myCaption = null;
@@ -263,7 +263,7 @@ public class AbstractPopup implements JBPopup {
     myHeaderPanel.add(myCaption, BorderLayout.NORTH);
     myContent.add(myHeaderPanel, BorderLayout.NORTH);
 
-    myForcedHeavyweight = forceHeavyweight;
+    myForcedHeavyweight = true;
     myResizable = resizable;
     myPreferredFocusedComponent = preferredFocusedComponent;
     myRequestFocus = requestFocus;
@@ -528,6 +528,9 @@ public class AbstractPopup implements JBPopup {
     Disposer.dispose(this, false);
   }
 
+  public FocusTrackback getFocusTrackback() {
+    return myFocusTrackback;
+  }
 
   private void disposePopup() {
     if (myPopup != null) {
@@ -640,7 +643,7 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = SystemInfo.isMac && !(myOwner instanceof IdeFrame);
+    boolean forcedDialog = (SystemInfo.isMac && !(myOwner instanceof IdeFrame)) || myMayBeParent;
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -914,7 +917,7 @@ public class AbstractPopup implements JBPopup {
     if (!cannotBeDialog && (isPersistent() || forceDialog)) {
       return new PopupComponent.Factory.Dialog();
     }
-    else if (forceHeavyweight || !SystemInfo.isWindows) {
+    else if (forceHeavyweight) {
       return new PopupComponent.Factory.AwtHeavyweight();
     }
     else {
@@ -1285,8 +1288,21 @@ public class AbstractPopup implements JBPopup {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     if (owner == null) return false;
+
+    Window wnd;
+    if (owner instanceof Window) {
+      wnd = (Window)owner;
+    } else {
+      wnd = SwingUtilities.getWindowAncestor(owner);
+    }
+
     for (Component each : components) {
-      if (each != null && SwingUtilities.isDescendingFrom(owner, each)) return true;
+      if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
+        Window eachWindow = each instanceof Window ? (Window)each : SwingUtilities.getWindowAncestor(each);
+        if (eachWindow == wnd) {
+          return true;
+        }
+      }
     }
 
     return false;

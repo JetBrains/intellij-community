@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PreferLessParametersWeigher extends CompletionWeigher {
   @Override
-  public Integer weigh(@NotNull LookupElement element, @Nullable CompletionLocation location) {
+  public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     if (location == null) {
       return null;
     }

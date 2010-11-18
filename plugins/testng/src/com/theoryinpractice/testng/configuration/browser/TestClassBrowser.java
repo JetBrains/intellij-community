@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -44,7 +45,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
 
   @Override
   protected String showDialog() {
-    TreeClassChooser.ClassFilterWithScope filter;
+    ClassFilter.ClassFilterWithScope filter;
     try {
       filter = getFilter();
     }
@@ -56,7 +57,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser("Choose Test Class", filter.getScope(), filter, null);
     init(chooser);
     chooser.showDialog();
-    PsiClass psiclass = chooser.getSelectedClass();
+    PsiClass psiclass = chooser.getSelected();
     if (psiclass == null) {
       return null;
     } else {
@@ -72,7 +73,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     return editor.getModuleSelector().findClass(className);
   }
 
-  protected TreeClassChooser.ClassFilterWithScope getFilter() throws MessageInfoException {
+  protected ClassFilter.ClassFilterWithScope getFilter() throws MessageInfoException {
     TestNGConfiguration config = new TestNGConfiguration("<no-name>", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     editor.applyEditorTo(config);
     GlobalSearchScope scope = getSearchScope(config.getModules());
@@ -99,6 +100,6 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     com.intellij.psi.PsiDirectory psidirectory = psiclass.getContainingFile().getContainingDirectory();
     if (psidirectory != null)
       chooser.selectDirectory(psidirectory);
-    chooser.selectClass(psiclass);
+    chooser.select(psiclass);
   }
 }

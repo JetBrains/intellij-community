@@ -50,6 +50,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
@@ -656,15 +657,14 @@ public class TemplateState implements Disposable {
     if (result == null) return;
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    // psiFile does not contain modifications from document at this point so we need to use template start offset for retrieving anchor 
-    PsiElement element = psiFile.findElementAt(myTemplateRange != null ? myTemplateRange.getStartOffset():start);
+    PsiElement element = psiFile.findElementAt(start);
     if (result.equalsToText(oldValue, element)) return;
 
     String newValue = result.toString();
     if (newValue == null) newValue = "";
 
     if (element != null && !(expressionNode instanceof SelectionNode)) {
-      newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(element.getLanguage()).getEscapedText(element, newValue);
+      newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, start)).getEscapedText(element, newValue);
     }
 
     replaceString(newValue, start, end, segmentNumber);

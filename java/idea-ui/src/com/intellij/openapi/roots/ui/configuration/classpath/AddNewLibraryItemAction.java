@@ -15,21 +15,37 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author nik
 */
 class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
+  private LibraryType myLibraryType;
 
   public AddNewLibraryItemAction(final ClasspathPanel classpathPanel,
-                                 StructureConfigurableContext context) {
+                                 StructureConfigurableContext context, LibraryType libraryType) {
     super(classpathPanel);
     myContext = context;
+    myLibraryType = libraryType;
   }
 
   protected ClasspathTableItem<?> createTableItem(final Library item) {
@@ -46,6 +62,64 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
   }
 
   protected ClasspathElementChooser<Library> createChooser() {
-    return new NewLibraryChooser(myClasspathPanel.getProject(), myClasspathPanel.getRootModel(), myContext, myClasspathPanel.getComponent());
+    return new NewLibraryChooser(myClasspathPanel.getProject(), myClasspathPanel.getRootModel(), myLibraryType, myContext, myClasspathPanel.getComponent());
+  }
+
+  public static void chooseTypeAndExecute(final ClasspathPanel classpathPanel,
+                                          final StructureConfigurableContext context,
+                                          final DialogWrapper parentDialog,
+                                          JButton contextButton) {
+    if (hasSuitableTypes(classpathPanel)) {
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(createChooseTypeStep(classpathPanel, context, parentDialog));
+      popup.showUnderneathOf(contextButton);
+    }
+    else {
+      if (parentDialog != null) parentDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      new AddNewLibraryItemAction(classpathPanel, context, null).execute();
+    }
+  }
+
+  public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
+                                                                    final StructureConfigurableContext context,
+                                                                    final DialogWrapper parentDialog) {
+    return new BaseListPopupStep<LibraryType>("Select Library Type", getSuitableTypes(classpathPanel)) {
+          @NotNull
+          @Override
+          public String getTextFor(LibraryType value) {
+            return value != null ? value.getCreateActionName() : IdeBundle.message("create.default.library.type.action.name");
+          }
+
+          @Override
+          public Icon getIconFor(LibraryType aValue) {
+            return aValue != null ? aValue.getIcon() : Icons.LIBRARY_ICON;
+          }
+
+          @Override
+          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
+            return doFinalStep(new Runnable() {
+              @Override
+              public void run() {
+                if (parentDialog != null) parentDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+                new AddNewLibraryItemAction(classpathPanel, context, selectedValue).execute();
+              }
+            });
+          }
+        };
+  }
+
+  public static boolean hasSuitableTypes(ClasspathPanel panel) {
+    return getSuitableTypes(panel).size() > 1;
+  }
+
+  private static List<LibraryType> getSuitableTypes(ClasspathPanel classpathPanel) {
+    List<LibraryType> suitableTypes = new ArrayList<LibraryType>();
+    suitableTypes.add(null);
+    final ModuleType moduleType = classpathPanel.getRootModel().getModule().getModuleType();
+    for (LibraryType libraryType : LibraryType.EP_NAME.getExtensions()) {
+      if (libraryType.isSuitableModuleType(moduleType)) {
+        suitableTypes.add(libraryType);
+      }
+    }
+    return suitableTypes;
   }
 }

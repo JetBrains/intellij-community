@@ -159,7 +159,12 @@ public class AnActionListEditor<T> extends JPanel {
     }
 
     public void select(T item) {
-      ListScrollingUtil.selectItem(myList, item);
+      if (item != null) {
+        ListScrollingUtil.selectItem(myList, item);
+      }
+      else {
+        ListScrollingUtil.ensureSelectionExists(myList);
+      }
     }
 
     public void updateItem(T item) {

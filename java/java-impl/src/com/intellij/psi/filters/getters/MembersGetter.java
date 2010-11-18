@@ -19,13 +19,12 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.completion.SmartCompletionDecorator;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -104,6 +103,15 @@ public class MembersGetter {
                                      final boolean acceptMethods, PsiType expectedType) {
     if (where == null) return;
 
+    PsiClass current = PsiTreeUtil.getContextOfType(context, PsiClass.class);
+    while (current != null) {
+      current = JavaCompletionUtil.getOriginalElement(current);
+      if (InheritanceUtil.isInheritorOrSelf(current, where, true)) {
+        return;
+      }
+      current = PsiTreeUtil.getContextOfType(current, PsiClass.class);
+    }
+
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
@@ -111,12 +119,10 @@ public class MembersGetter {
     for (final PsiElement result : processor.getResults()) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
-        if (member.hasModifierProperty(PsiModifier.STATIC) &&
-            !PsiTreeUtil.isAncestor(member.getContainingClass(), context, false) &&
-            resolveHelper.isAccessible(member, context, null)) {
+        if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;
-          final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(result);
+          final LookupItem item = result instanceof PsiMethod ? new JavaMethodCallElement((PsiMethod)result) : new VariableLookupItem((PsiVariable)result);
           item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
           JavaCompletionUtil.qualify(item);
           if (member instanceof PsiMethod) {
@@ -124,7 +130,10 @@ public class MembersGetter {
             final PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType);
             ((JavaMethodCallElement) item).setInferenceSubstitutor(substitutor);
           }
-          results.addElement(item);
+          final PsiType itemType = ((TypedLookupItem)item).getType();
+          if (itemType != null && expectedType.isAssignableFrom(itemType)) {
+            results.addElement(item);
+          }
         }
       }
     }

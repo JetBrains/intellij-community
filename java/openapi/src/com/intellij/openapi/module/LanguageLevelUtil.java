@@ -51,6 +51,9 @@ public class LanguageLevelUtil {
   }
 
   public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
+    if (isOfVersionOrHigher(versionString, "1.8") || isOfVersionOrHigher(versionString, "8.0")) {
+      return LanguageLevel.JDK_1_8;
+    }
     if (isOfVersionOrHigher(versionString, "1.7") || isOfVersionOrHigher(versionString, "7.0")) {
       return LanguageLevel.JDK_1_7;
     }
@@ -60,11 +63,9 @@ public class LanguageLevelUtil {
     if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
       return LanguageLevel.JDK_1_5;
     }
-
     if (isOfVersionOrHigher(versionString, "1.4")) {
       return LanguageLevel.JDK_1_4;
     }
-
     return LanguageLevel.JDK_1_3;
   }
 

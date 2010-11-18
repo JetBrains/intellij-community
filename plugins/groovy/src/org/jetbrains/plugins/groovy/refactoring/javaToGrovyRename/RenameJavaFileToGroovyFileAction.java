@@ -33,6 +33,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 /**
@@ -88,6 +91,12 @@ public class RenameJavaFileToGroovyFileAction extends AnAction implements DumbAw
 
     final Language language = file.getLanguage();
     if (language == GroovyFileType.GROOVY_LANGUAGE) {
+      if (((GroovyFile)file).isScript()) {
+        final GroovyScriptType type = GroovyScriptTypeDetector.getScriptType((GroovyFile)file);
+        if (type != GroovyScriptTypeDetector.DEFAULT_TYPE) {
+          return false;
+        }
+      }
       return true;
     }
 

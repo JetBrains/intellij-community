@@ -102,13 +102,13 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return typeRangePair != null? typeRangePair.getFirst() : null;
   }
 
-  public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, PsiType componentTypeToSet) {
+  public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
     if (typeRangePair != null) {
       final TextRange range = typeRangePair.getSecond();
       if (range != null) {
-        PsiDocumentManager.getInstance(file.getProject()).getDocument(file).replaceString(range.getStartOffset(), range.getEndOffset(), componentTypeToSet.getCanonicalText());
+        PsiDocumentManager.getInstance(file.getProject()).getDocument(file).replaceString(range.getStartOffset(), range.getEndOffset(), typeText);
       }
     }
   }

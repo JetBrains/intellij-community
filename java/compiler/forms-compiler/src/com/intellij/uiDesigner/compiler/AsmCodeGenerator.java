@@ -618,20 +618,26 @@ public class AsmCodeGenerator {
         if (value instanceof StringDescriptor) {
           generator.push(((StringDescriptor) value).getValue());
         }
+        else if (value instanceof Boolean) {
+          boolean boolValue = ((Boolean) value).booleanValue();
+          Type booleanType = Type.getType(Boolean.class);
+          if (boolValue) {
+            generator.getStatic(booleanType, "TRUE", booleanType);
+          }
+          else {
+            generator.getStatic(booleanType, "FALSE", booleanType);
+          }
+        }
         else {
           Type valueType = Type.getType(value.getClass());
           generator.newInstance(valueType);
           generator.dup();
-          if (value instanceof Boolean) {
-            generator.push(((Boolean) value).booleanValue());
-            generator.invokeConstructor(valueType, Method.getMethod("void <init>(boolean)"));
-          }
-          else if (value instanceof Integer) {
-            generator.push(((Integer) value).intValue());
+          if (value instanceof Integer) {
+            generator.push(((Integer)value).intValue());
             generator.invokeConstructor(valueType, Method.getMethod("void <init>(int)"));
           }
           else if (value instanceof Double) {
-            generator.push(((Double) value).doubleValue());
+            generator.push(((Double)value).doubleValue());
             generator.invokeConstructor(valueType, Method.getMethod("void <init>(double)"));
           }
           else {

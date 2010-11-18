@@ -107,9 +107,9 @@ public final class FormEditingUtil {
         wasPackedVert = parent.getHeight() == minSize.height;
       }
 
-      FormEditingUtil.iterate(component, new ComponentVisitor() {
+      iterate(component, new ComponentVisitor() {
         public boolean visit(final IComponent c) {
-          RadComponent rc = (RadComponent) c;
+          RadComponent rc = (RadComponent)c;
           BindingProperty.checkRemoveUnusedField(rootContainer, rc.getBinding(), null);
           deletedComponentIds.add(rc.getId());
           return true;
@@ -149,12 +149,12 @@ public final class FormEditingUtil {
       }
     }
 
-    FormEditingUtil.iterate(rootContainer, new ComponentVisitor() {
+    iterate(rootContainer, new ComponentVisitor() {
       public boolean visit(final IComponent component) {
-        RadComponent rc = (RadComponent) component;
-        for(IProperty p: component.getModifiedProperties()) {
+        RadComponent rc = (RadComponent)component;
+        for (IProperty p : component.getModifiedProperties()) {
           if (p instanceof IntroComponentProperty) {
-            IntroComponentProperty icp = (IntroComponentProperty) p;
+            IntroComponentProperty icp = (IntroComponentProperty)p;
             final String value = icp.getValue(rc);
             if (deletedComponentIds.contains(value)) {
               try {
@@ -783,7 +783,7 @@ public final class FormEditingUtil {
     popup.show(new RelativePoint(selectedComponent.getDelegee().getParent(), pnt));
   }
 
-  public static interface StringDescriptorVisitor<T extends IComponent> {
+  public interface StringDescriptorVisitor<T extends IComponent> {
     boolean visit(T component, StringDescriptor descriptor);
   }
 
@@ -868,7 +868,7 @@ public final class FormEditingUtil {
       .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
   }
 
-  public static interface ComponentVisitor <Type extends IComponent>{
+  public interface ComponentVisitor <Type extends IComponent>{
     /**
      * @return true if iteration should continue
      */

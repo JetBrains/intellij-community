@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -49,7 +50,7 @@ public final class NavigationUtil {
     return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title);
   }
 
-  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer renderer, final String title) {
+  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer<PsiElement> renderer, final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
       public boolean execute(final PsiElement element) {
         Navigatable descriptor = EditSourceUtil.getDescriptor(element);
@@ -87,15 +88,16 @@ public final class NavigationUtil {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
-  public static void activateFileWithPsiElement(PsiElement elt) {
+  public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
     if (!activatePsiElementIfOpen(elt)) {
       ((NavigationItem)elt).navigate(true);
     }
   }
 
-  private static boolean activatePsiElementIfOpen(PsiElement elt) {
+  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt) {
     if (!elt.isValid()) return false;
-    
+    elt = elt.getNavigationElement();
+    if (elt == null) return false;
     final PsiFile file = elt.getContainingFile();
     if (file == null || !file.isValid()) return false;
 

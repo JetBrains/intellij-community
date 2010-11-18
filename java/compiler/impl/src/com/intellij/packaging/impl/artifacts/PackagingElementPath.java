@@ -63,11 +63,16 @@ public class PackagingElementPath {
     return getPathString("/");
   }
 
-  @NotNull 
+  @NotNull
   public String getPathString(String separator) {
+    return getPathStringFrom(separator, null);
+  }
+
+  @NotNull
+  public String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      final List<CompositePackagingElement<?>> parents = getParents();
+      final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
       for (int i = parents.size() - 1; i >= 0; i--) {
         builder.append(parents.get(i).getName());
         if (i > 0) {
@@ -82,9 +87,13 @@ public class PackagingElementPath {
   }
   
   public List<CompositePackagingElement<?>> getParents() {
+    return getParentsFrom(null);
+  }
+
+  public List<CompositePackagingElement<?>> getParentsFrom(@Nullable CompositePackagingElement<?> ancestor) {
     List<CompositePackagingElement<?>> result = new SmartList<CompositePackagingElement<?>>();
     PackagingElementPath path = this;
-    while (path != EMPTY) {
+    while (path != EMPTY && path.myLastElement != ancestor) {
       if (path.myLastElement instanceof CompositePackagingElement<?>) {
         result.add((CompositePackagingElement)path.myLastElement);
       }

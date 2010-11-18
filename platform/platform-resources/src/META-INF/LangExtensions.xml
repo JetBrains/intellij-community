@@ -479,7 +479,7 @@
   <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler"/>
   <editorActionHandler action="EditorJoinLines" implementationClass="com.intellij.codeInsight.editorActions.JoinLinesHandler"/>
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
-  <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
+  <editorActionHandler action="EditorDeleteToWordStart" implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
 
   <!-- LookupManagerActions -->

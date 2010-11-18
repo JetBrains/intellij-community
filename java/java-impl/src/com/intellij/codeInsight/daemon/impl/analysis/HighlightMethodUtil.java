@@ -1288,9 +1288,9 @@ public class HighlightMethodUtil {
             if (highlightInfo != null) {
               holder.add(highlightInfo);
             }
-            if (PsiUtil.isLanguageLevel7OrHigher(constructorCall)) {
-              //check if not diamand - apply corresponding fix
-            }
+            //if (PsiUtil.isLanguageLevel7OrHigher(constructorCall)) {
+            //  // todo[anna] check if not diamond - apply corresponding fix
+            //}
           }
         }
       }

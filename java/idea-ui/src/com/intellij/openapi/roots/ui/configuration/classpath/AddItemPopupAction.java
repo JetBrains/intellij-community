@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.openapi.ui.popup.PopupStep;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -30,6 +33,15 @@ abstract class AddItemPopupAction<ItemType> extends ChooseAndAddAction<ItemType>
     myTitle = title;
     myIcon = icon;
     myIndex = index;
+  }
+
+  public boolean hasSubStep() {
+    return false;
+  }
+
+  @Nullable
+  public PopupStep createSubStep() {
+    return null;
   }
 
   public String getTitle() {

@@ -18,22 +18,28 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, @Nullable final CompletionLocation location) {
-    if (location == null) {
-      return null;
+  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+    final String prefix = item.getPrefixMatcher().getPrefix();
+
+    if (prefix.isEmpty()) {
+      return 0;
     }
-    if (location.getCompletionType() == CompletionType.CLASS_NAME) return 0;
 
     final String lookupString = item.getLookupString();
-    return (StringUtil.capitalsOnly(lookupString).startsWith(StringUtil.capitalsOnly(item.getPrefixMatcher().getPrefix())) ? 4 : 0) +
-           (lookupString.startsWith(item.getPrefixMatcher().getPrefix()) ? 2 : 0) +
-           (StringUtil.startsWithIgnoreCase(lookupString, item.getPrefixMatcher().getPrefix()) ? 1 : 0);
+    final String prefixHumps = StringUtil.capitalsOnly(prefix);
+    final String itemHumps = StringUtil.capitalsOnly(lookupString);
+
+    if (itemHumps.equals(prefixHumps)) return 20;
+    if (itemHumps.startsWith(prefixHumps)) return 10;
+
+    if (lookupString.startsWith(prefix)) return 5;
+    if (StringUtil.startsWithIgnoreCase(lookupString, prefix)) return 1;
+    return 0;
   }
 }

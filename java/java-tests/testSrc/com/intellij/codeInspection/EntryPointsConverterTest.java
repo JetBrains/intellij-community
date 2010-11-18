@@ -1,11 +1,35 @@
 package com.intellij.codeInspection;
 
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.reference.EntryPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
 public class EntryPointsConverterTest extends TestCase {
+  private boolean myUnregisterExtensionPoint = false;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    try {
+      Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
+    }
+    catch (IllegalArgumentException e) {
+      myUnregisterExtensionPoint = true;
+      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL, EntryPoint.class.getName());
+    }
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (myUnregisterExtensionPoint) {
+      Extensions.getRootArea().unregisterExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    }
+    super.tearDown();
+  }
 
   public void testMethodConverter1() throws Exception {
     doTest("method", "String java.lang.String.replace(char oldChar, char newChar)", "java.lang.String String replace(char oldChar, char newChar)");

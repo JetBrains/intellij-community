@@ -17,10 +17,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.semantic.SemService;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,59 +74,12 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     try {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (element) {
         if (myInitialized) return true;
 
-
         if (registrar != null) {
-          final SemService semService = SemService.getSemService(myInvocationHandler.getManager().getProject());
-
-          final List<DomExtensionImpl> fixeds = registrar.getFixeds();
-          final List<DomExtensionImpl> collections = registrar.getCollections();
-          final List<DomExtensionImpl> attributes = registrar.getAttributes();
-          if (!attributes.isEmpty()) {
-            ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> newAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
-            for (final DomExtensionImpl extension : attributes) {
-              newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
-            }
-            for (XmlAttribute attribute : ((XmlTag)element).getAttributes()) {
-              semService.clearCachedSemElements(attribute);
-            }
-            myAttributes = newAttributes;
-          }
-
-          boolean clearSubTags = false;
-          if (!fixeds.isEmpty()) {
-            ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
-            for (final DomExtensionImpl extension : fixeds) {
-              newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
-            }
-            clearSubTags = true;
-            myFixeds = newFixeds;
-          }
-          if (!collections.isEmpty()) {
-            ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
-            for (final DomExtensionImpl extension : collections) {
-              newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(),
-                                                                                                        Collections.<JavaMethod>emptyList()
-              )));
-            }
-            clearSubTags = true;
-            myCollections = newCollections;
-          }
-
-          final DomExtensionImpl extension = registrar.getCustomChildrenType();
-          if (extension != null) {
-            myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType(), extension.getTagNameDescriptor());
-            clearSubTags = true;
-          }
-
-          if (clearSubTags) {
-            for (XmlTag tag : ((XmlTag)element).getSubTags()) {
-              semService.clearCachedSemElements(tag);
-            }
-          }
-
+          applyExtensions(registrar);
         }
         myInitialized = true;
       }
@@ -138,6 +88,42 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       myComputing.set(null);
     }
     return true;
+  }
+
+  private void applyExtensions(DomExtensionsRegistrarImpl registrar) {
+    final List<DomExtensionImpl> fixeds = registrar.getFixeds();
+    final List<DomExtensionImpl> collections = registrar.getCollections();
+    final List<DomExtensionImpl> attributes = registrar.getAttributes();
+    if (!attributes.isEmpty()) {
+      ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> newAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
+      for (final DomExtensionImpl extension : attributes) {
+        newAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
+      }
+      myAttributes = newAttributes;
+    }
+
+    if (!fixeds.isEmpty()) {
+      ChildrenDescriptionsHolder<FixedChildDescriptionImpl> newFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
+      for (final DomExtensionImpl extension : fixeds) {
+        //noinspection unchecked
+        newFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
+      }
+      myFixeds = newFixeds;
+    }
+    if (!collections.isEmpty()) {
+      ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> newCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
+      for (final DomExtensionImpl extension : collections) {
+        newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(),
+                                                                                                  Collections.<JavaMethod>emptyList()
+        )));
+      }
+      myCollections = newCollections;
+    }
+
+    final DomExtensionImpl extension = registrar.getCustomChildrenType();
+    if (extension != null) {
+      myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType(), extension.getTagNameDescriptor());
+    }
   }
 
   @Nullable
@@ -155,6 +141,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       if (extenders != null) {
         if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
         for (final DomExtender extender : extenders) {
+          //noinspection unchecked
           extender.registerExtensions(domElement, registrar);
         }
       }

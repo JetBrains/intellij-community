@@ -21,9 +21,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,10 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionParameters> {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
-
-  public ClassLiteralGetter() {
-    super(false);
-  }
 
   @Override
   protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
@@ -52,12 +46,7 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
       }
     };
 
-    PsiType classParameter = ApplicationManager.getApplication().runReadAction(new Computable<PsiType>() {
-      @Nullable
-      public PsiType compute() {
-        return PsiUtil.substituteTypeParameter(parameters.getExpectedType(), CommonClassNames.JAVA_LANG_CLASS, 0, false);
-      }
-    });
+    PsiType classParameter = PsiUtil.substituteTypeParameter(parameters.getExpectedType(), CommonClassNames.JAVA_LANG_CLASS, 0, false);
 
     boolean addInheritors = false;
     if (classParameter instanceof PsiWildcardType) {
@@ -80,11 +69,7 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
                                                 Condition<String> shortNameCondition,
                                                 final PsiType classParameter,
                                                 CompletionResultSet result) {
-    final String canonicalText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return classParameter.getCanonicalText();
-      }
-    });
+    final String canonicalText = classParameter.getCanonicalText();
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) {
       return;
     }
@@ -95,22 +80,16 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
   }
 
   private static void addClassLiteralLookupElement(@Nullable final PsiType type, final CompletionResultSet resultSet, final PsiElement context) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (type instanceof PsiClassType &&
-            type.isValid() &&
-            PsiUtil.resolveClassInType(type) != null &&
-            !((PsiClassType)type).hasParameters() &&
-            !(((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
-          try {
-            resultSet.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
+    if (type instanceof PsiClassType &&
+        PsiUtil.resolveClassInType(type) != null &&
+        !((PsiClassType)type).hasParameters() &&
+        !(((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
+      try {
+        resultSet.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
       }
-    });
-
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 }

@@ -507,7 +507,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     CompilerManagerImpl.testSetup();
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(myProject, roots, roots.size(), true);
+    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
 
     final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
 

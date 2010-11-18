@@ -35,4 +35,6 @@ public interface EntryPointsManager {
   void cleanup();
 
   boolean isAddNonJavaEntries();
+
+  void configureAnnotations();
 }

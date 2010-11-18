@@ -109,37 +109,7 @@ public class SegmentedInputStream extends InputStream {
   }
 
   public int available() throws IOException {
-
-    final HashMap<String, String> map = new HashMap<String, String>();
-    map.keySet();
-    while (mySourceStream.ready()) {
-     
-      while(myStartupPassed < SegmentedStream.STARTUP_MESSAGE.length()) {
-        final int aChar = readNext();
-        if (aChar != SegmentedStream.STARTUP_MESSAGE.charAt(myStartupPassed)) {
-          mySourceStream.pushBack(aChar);
-          final char[] charsRead = SegmentedStream.STARTUP_MESSAGE.substring(0, myStartupPassed).toCharArray();
-          mySourceStream.pushBack(charsRead);
-          myStartupPassed = 0;
-          return charsRead.length + 1;
-        }
-        myStartupPassed++;
-      }
-
-      final int b = mySourceStream.next();
-      if (b != SegmentedStream.SPECIAL_SYMBOL) {
-        mySourceStream.pushBack(b);
-        return 1;
-      }
-      final Integer packetRead = readControlSequence();
-      if (packetRead != null) {
-        // push back quoted slash
-        mySourceStream.pushBack(packetRead);
-        mySourceStream.pushBack(b);
-        return 1;
-      }
-    }
-    return 0;
+    return mySourceStream.ready() ? 1 : 0;
   }
 
   public void close() throws IOException {

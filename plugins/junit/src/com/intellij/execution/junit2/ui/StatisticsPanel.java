@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.*;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ListTableModel;
 
@@ -58,6 +59,7 @@ class StatisticsPanel extends JPanel implements DataProvider{
         return new TestTableRenderer(TestColumnInfo.COLUMN_NAMES);
       }
     };
+    EditSourceOnDoubleClickHandler.install(myTable);
     PopupHandler.installPopupHandler(myTable,
                         IdeActions.GROUP_TESTSTATISTICS_POPUP,
                         ActionPlaces.TESTSTATISTICS_VIEW_POPUP);

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
@@ -44,6 +45,7 @@ import static com.intellij.patterns.StandardPatterns.not;
  * @author peter
  */
 public class BasicExpressionCompletionContributor extends ExpressionSmartCompletionContributor{
+  public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   private static void addKeyword(final CompletionResultSet result, final PsiElement element, final String s) {
     result.addElement(createKeywordLookupItem(element, s));
@@ -73,10 +75,10 @@ public class BasicExpressionCompletionContributor extends ExpressionSmartComplet
 
     });
 
-    extend(not(psiElement().afterLeaf(".")), new CollectionsUtilityMethodsProvider());
-    extend(not(psiElement().afterLeaf(".")), new ClassLiteralGetter());
+    extend(not(AFTER_DOT), new CollectionsUtilityMethodsProvider());
+    extend(not(AFTER_DOT), new ClassLiteralGetter());
 
-    extend(not(psiElement().afterLeaf(".")), new CompletionProvider<JavaSmartCompletionParameters>() {
+    extend(not(AFTER_DOT), new CompletionProvider<JavaSmartCompletionParameters>() {
       protected void addCompletions(@NotNull final JavaSmartCompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         final PsiType expectedType = parameters.getExpectedType();

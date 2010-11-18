@@ -73,7 +73,7 @@ public class FSRecords implements Forceable {
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private static final int HEADER_VERSION_OFFSET = 0;
-  private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // Reserverd
+  private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // Reserved
   private static final int HEADER_GLOBAL_MODCOUNT_OFFSET = 8;
   private static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
   private static final int HEADER_TIMESTAMP_OFFSET = 16;
@@ -612,7 +612,7 @@ public class FSRecords implements Forceable {
         }
       }
 
-      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
+      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
       int id;
       try {
         id = createRecord();
@@ -660,7 +660,7 @@ public class FSRecords implements Forceable {
       names = ArrayUtil.remove(names, index);
       ids = ArrayUtil.remove(ids, index);
 
-      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT);
+      final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
       try {
         output.writeInt(count - 1);
         for (int i = 0; i < names.length; i++) {
@@ -709,7 +709,7 @@ public class FSRecords implements Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        final DataOutputStream record = writeAttribute(id, CHILDREN_ATT);
+        final DataOutputStream record = writeAttribute(id, CHILDREN_ATT, false);
         record.writeInt(children.length);
         for (int child : children) {
           if (child == id) {
@@ -1043,12 +1043,12 @@ public class FSRecords implements Forceable {
   }
 
   @NotNull
-  public DataOutputStream writeContent(int fileId) {
-    return new ContentOutputStream(fileId);
+  public DataOutputStream writeContent(int fileId, boolean readOnly) {
+    return new ContentOutputStream(fileId, readOnly);
   }
 
-  public void writeContent(int fileId, byte[] bytes) throws IOException {
-    new ContentOutputStream(fileId).writeBytes(bytes, fileId);
+  public void writeContent(int fileId, byte[] bytes, boolean readOnly) throws IOException {
+    new ContentOutputStream(fileId, readOnly).writeBytes(bytes, fileId);
   }
 
   public int storeUnlinkedContent(byte[] bytes) {
@@ -1065,13 +1065,14 @@ public class FSRecords implements Forceable {
   }
 
   @NotNull
-  public DataOutputStream writeAttribute(final int fileId, final String attId) {
-    return new AttributeOutputStream(fileId, attId);
+  public DataOutputStream writeAttribute(final int fileId, final String attId, boolean fixedSize) {
+    return new AttributeOutputStream(fileId, attId, fixedSize);
   }
 
   private class ContentOutputStream extends BaseOutputStream {
-    private ContentOutputStream(final int fileId) {
-      super(fileId);
+
+    private ContentOutputStream(final int fileId, boolean readOnly) {
+      super(fileId, readOnly);
     }
 
     @Override
@@ -1088,8 +1089,8 @@ public class FSRecords implements Forceable {
   private class AttributeOutputStream extends BaseOutputStream {
     private final String myAttributeId;
 
-    private AttributeOutputStream(final int fileId, final String attributeId) {
-      super(fileId);
+    private AttributeOutputStream(final int fileId, final String attributeId, boolean fixedSize) {
+      super(fileId, fixedSize);
       myAttributeId = attributeId;
     }
 
@@ -1113,10 +1114,12 @@ public class FSRecords implements Forceable {
 
   private abstract static class BaseOutputStream extends DataOutputStream {
     protected final int myFileId;
+    protected final boolean myFixedSize;
 
-    private BaseOutputStream(final int fileId) {
+    private BaseOutputStream(final int fileId, boolean fixedSize) {
       super(new ByteArrayOutputStream());
       myFileId = fileId;
+      myFixedSize = fixedSize;
     }
 
     public void close() throws IOException {
@@ -1142,7 +1145,7 @@ public class FSRecords implements Forceable {
         page = findOrCreatePage();
       }
 
-      getStorage().writeBytes(page, bytes);
+      getStorage().writeBytes(page, bytes, myFixedSize);
     }
 
     protected abstract int findOrCreatePage() throws IOException;

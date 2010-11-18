@@ -37,6 +37,9 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     Project project = e.getData(PlatformDataKeys.PROJECT);
 
+    if (view == null) {
+      return;
+    }
     PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
@@ -51,7 +54,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
                                       Messages.getQuestionIcon(), "", validator);
 
     final PsiElement result = validator.getCreatedElement();
-    if (result != null && view != null) {
+    if (result != null) {
       view.selectElement(result);
     }
   }

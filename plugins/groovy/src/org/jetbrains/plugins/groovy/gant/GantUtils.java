@@ -49,16 +49,6 @@ public class GantUtils {
   private GantUtils() {
   }
 
-  public static boolean isGantScriptFile(PsiFile file) {
-    if (file instanceof GroovyFile) {
-      GroovyFile groovyFile = (GroovyFile)file;
-      if (!groovyFile.isScript()) return false;
-      String name = file.getName();
-      return name.endsWith(GantScriptType.DEFAULT_EXTENSION);
-    }
-    return false;
-  }
-
   public static GrArgumentLabel[] getScriptTargets(GroovyFile file) {
     ArrayList<GrArgumentLabel> labels = new ArrayList<GrArgumentLabel>();
     for (PsiElement child : file.getChildren()) {

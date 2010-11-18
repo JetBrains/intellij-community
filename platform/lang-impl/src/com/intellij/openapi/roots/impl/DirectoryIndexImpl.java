@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
@@ -175,8 +176,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void doInitialize() {
-    myState = new IndexState();
-    myState.doInitialize(false);
+    IndexState newState = new IndexState();
+    newState.doInitialize(false);
+    myState = newState;
   }
 
   private boolean isExcludeRootForModule(Module module, VirtualFile excludeRoot) {
@@ -219,12 +221,13 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   };
 
-  private class PackageSink extends QueryFactory<VirtualFile, List<VirtualFile>> {
+  private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
     private PackageSink() {
-      registerExecutor(new QueryExecutor<VirtualFile, List<VirtualFile>>() {
-        public boolean execute(@NotNull final List<VirtualFile> allDirs, @NotNull final Processor<VirtualFile> consumer) {
-          for (VirtualFile dir : allDirs) {
-            DirectoryInfo info = getInfoForDirectory(dir);
+      registerExecutor(new QueryExecutor<VirtualFile, Pair<IndexState, List<VirtualFile>>>() {
+        public boolean execute(@NotNull final Pair<IndexState, List<VirtualFile>> stateAndDirs,
+                               @NotNull final Processor<VirtualFile> consumer) {
+          for (VirtualFile dir : stateAndDirs.second) {
+            DirectoryInfo info = stateAndDirs.first.myDirToInfoMap.get(dir);
             assert info != null;
 
             if (!info.isInLibrarySource || info.libraryClassRoot != null) {
@@ -237,15 +240,21 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
-      List<VirtualFile> allDirs = doGetDirectoriesByPackageName(packageName);
-      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new CollectionQuery<VirtualFile>(allDirs) : createQuery(allDirs),
-                                            IS_VALID);
+      checkAvailability();
+      dispatchPendingEvents();
+
+      IndexState state = myState;
+      List<VirtualFile> allDirs = state.myPackageNameToDirsMap.get(packageName);
+      if (allDirs == null) allDirs = Collections.emptyList();
+
+      Query<VirtualFile> query = includeLibrarySources ? new CollectionQuery<VirtualFile>(allDirs)
+                                                       : createQuery(Pair.create(state, allDirs));
+      return new FilteredQuery<VirtualFile>(query, IS_VALID);
     }
   }
 
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    checkAvailability();
     return mySink.search(packageName, includeLibrarySources);
   }
 
@@ -253,14 +262,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   public String getPackageName(VirtualFile dir) {
     checkAvailability();
     return myState.myDirToPackageName.get(dir);
-  }
-
-  @NotNull
-  private List<VirtualFile> doGetDirectoriesByPackageName(@NotNull String packageName) {
-    dispatchPendingEvents();
-
-    List<VirtualFile> dirs = myState.myPackageNameToDirsMap.get(packageName);
-    return dirs != null ? dirs : Collections.<VirtualFile>emptyList();
   }
 
   private void dispatchPendingEvents() {
@@ -294,8 +295,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       VirtualFile parent = file.getParent();
       if (parent == null) return;
 
-      IndexState state = myState.copy();
+      IndexState newState = myState.copy();
+      updateStateWithNewFile(file, parent, newState);
+      myState = newState;
+    }
 
+    private void updateStateWithNewFile(VirtualFile file, VirtualFile parent, IndexState state) {
       DirectoryInfo parentInfo = state.myDirToInfoMap.get(parent);
 
       // fill info for all nested roots
@@ -347,7 +352,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (!parentInfo.getOrderEntries().isEmpty()) {
         state.fillMapWithOrderEntries(file, parentInfo.getOrderEntries(), null, null, null, parentInfo, null);
       }
-      myState = state;
     }
 
     public void beforeFileDeletion(VirtualFileEvent event) {
@@ -370,9 +374,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
       IndexState copy = null;
       for (VirtualFile dir : list) {
-        DirectoryInfo info = myState.myDirToInfoMap.remove(dir);
-        if (info != null) {
+        if (myState.myDirToInfoMap.containsKey(dir)) {
           if (copy == null) copy = myState.copy();
+
+          copy.myDirToInfoMap.remove(dir);
           copy.setPackageName(dir, null);
         }
       }

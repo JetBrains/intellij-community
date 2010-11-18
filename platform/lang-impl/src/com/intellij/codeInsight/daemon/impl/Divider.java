@@ -37,28 +37,28 @@ import java.util.List;
 public class Divider {
   private static final int STARTING_TREE_HEIGHT = 10;
 
-  public static void getInsideAndOutside(@NotNull PsiFile file,
-                                         int startOffset,
-                                         int endOffset,
-                                         @NotNull TextRange range,
-                                         @NotNull List<PsiElement> inside,
-                                         @NotNull List<PsiElement> outside,
-                                         @NotNull HighlightLevelUtil.AnalysisLevel level) {
+  public static void divideInsideAndOutside(@NotNull PsiFile file,
+                                            int startOffset,
+                                            int endOffset,
+                                            @NotNull TextRange range,
+                                            @NotNull List<PsiElement> inside,
+                                            @NotNull List<PsiElement> outside,
+                                            @NotNull HighlightLevelUtil.AnalysisLevel level) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightLevelUtil.shouldAnalyse(psiRoot, level)) {
-        getInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside);
+        divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside);
       }
     }
   }
 
-  private static void getInsideAndOutside(@NotNull PsiFile root,
-                                         int startOffset,
-                                         int endOffset,
-                                         @NotNull TextRange range,
-                                         @NotNull List<PsiElement> inside,
-                                         @NotNull List<PsiElement> outside
+  private static void divideInsideAndOutside(@NotNull PsiFile root,
+                                             int startOffset,
+                                             int endOffset,
+                                             @NotNull TextRange range,
+                                             @NotNull List<PsiElement> inside,
+                                             @NotNull List<PsiElement> outside
   ) {
     final int currentOffset = root.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(CollectHighlightsUtil.EP_NAME);

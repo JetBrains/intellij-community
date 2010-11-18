@@ -50,4 +50,7 @@ public interface StatusBarEx extends StatusBar, Disposable {
 
   Dimension getSize();
   boolean isVisible();
+
+  @Nullable
+  String getInfoRequestor();
 }

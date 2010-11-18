@@ -19,6 +19,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -153,7 +154,7 @@ public class DebugUtil {
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
     if (tokenType == TokenType.ERROR_ELEMENT) {
-      buffer.append("PsiErrorElement"); // todo: error message text
+      buffer.append("PsiErrorElement:").append(PsiBuilderImpl.getErrorMessage(node));
     }
     else if (tokenType == TokenType.WHITE_SPACE) {
       buffer.append("PsiWhiteSpace");

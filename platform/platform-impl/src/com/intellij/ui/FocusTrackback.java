@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -419,7 +420,26 @@ public class FocusTrackback {
     if (toFocus == null) return false;
     if (parent == toFocus) return true;
 
-    return SwingUtilities.isDescendingFrom(toFocus, parent);
+    if (SwingUtilities.isDescendingFrom(toFocus, parent)) return true;
+
+    Component eachToFocus = getFocusOwner();
+    FocusTrackback eachTrackback = this;
+    while (true) {
+      if (SwingUtilities.isDescendingFrom(eachToFocus, parent)) return true;
+
+      if (eachTrackback.getRequestor() instanceof AbstractPopup) {
+        FocusTrackback newTrackback = ((AbstractPopup)eachTrackback.getRequestor()).getFocusTrackback();
+        if (eachTrackback == newTrackback) break;
+        if (eachTrackback == null || eachTrackback.isConsumed()) break;
+
+        eachTrackback  = newTrackback;
+        eachToFocus = eachTrackback.getFocusOwner();
+      } else {
+        break;
+      }
+    }
+
+    return false;
   }
 
 

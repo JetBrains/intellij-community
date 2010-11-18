@@ -317,7 +317,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     boolean useSystem;
 
     if ("default".equalsIgnoreCase(myMode.asString())) {
-      useSystem = !SystemInfo.isMac;
+      useSystem = true;
     } else if ("system".equalsIgnoreCase(myMode.asString())) {
       useSystem = true;
     } else if ("graphite".equalsIgnoreCase(myMode.asString())) {

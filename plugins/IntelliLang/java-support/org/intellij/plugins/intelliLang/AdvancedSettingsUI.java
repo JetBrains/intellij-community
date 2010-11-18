@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
@@ -207,14 +208,14 @@ public class AdvancedSettingsUI implements Configurable {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(myField.getText(), scope);
       final TreeClassChooser chooser =
-        factory.createNoInnerClassesScopeChooser("Select Annotation Class", scope, new TreeClassChooser.ClassFilter() {
+        factory.createNoInnerClassesScopeChooser("Select Annotation Class", scope, new ClassFilter() {
           public boolean isAccepted(PsiClass aClass) {
             return aClass.isAnnotationType();
           }
         }, aClass);
 
       chooser.showDialog();
-      final PsiClass psiClass = chooser.getSelectedClass();
+      final PsiClass psiClass = chooser.getSelected();
       if (psiClass != null) {
         myField.setText(psiClass.getQualifiedName());
       }

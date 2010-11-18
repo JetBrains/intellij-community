@@ -68,7 +68,7 @@ public class LogFilesManager implements Disposable {
                 public boolean value(final String file) {
                   return !oldFiles.contains(file);
                 }
-              });
+              }, newFiles);
               for (String each : obsoleteFiles) {
                 myManager.removeLogConsole(each);
               }
@@ -105,14 +105,13 @@ public class LogFilesManager implements Disposable {
     final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
-        addConfigurationConsoles(logFile, Condition.TRUE);
+        addConfigurationConsoles(logFile, Condition.TRUE, logFile.getPaths());
       }
     }
     base.createAdditionalTabComponents(myManager, startedProcess);
   }
 
-  private void addConfigurationConsoles(final LogFileOptions logFile, Condition<String> shouldInclude) {
-    final Set<String> paths = logFile.getPaths();
+  private void addConfigurationConsoles(final LogFileOptions logFile, Condition<String> shouldInclude, final Set<String> paths) {
     if (!paths.isEmpty()) {
       final TreeMap<String, String> title2Path = new TreeMap<String, String>();
       if (paths.size() == 1) {

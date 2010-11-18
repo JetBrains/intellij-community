@@ -99,13 +99,15 @@ public class HighlightControlFlowUtil {
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         return HighlightInfo.createHighlightInfo(
-            HighlightInfoType.ERROR,
-            unreachableStatement,
-            JavaErrorMessages.message("unreachable.statement"));
+          HighlightInfoType.ERROR,
+          unreachableStatement,
+          JavaErrorMessages.message("unreachable.statement"));
       }
     }
     catch (AnalysisCanceledException e) {
       // incomplete code
+    }
+    catch (IndexNotReadyException ignored) {
     }
     return null;
   }

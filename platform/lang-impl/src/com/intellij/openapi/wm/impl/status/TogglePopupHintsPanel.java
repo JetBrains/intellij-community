@@ -47,7 +47,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
+public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/ide/hectorOn.png");
   private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/ide/hectorOff.png");
   private static final Icon SYNTAX_ONLY_ICON = IconLoader.getIcon("/ide/hectorSyntax.png");
@@ -55,23 +55,11 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
   private Icon myCurrentIcon;
   private String myToolTipText;
-  private StatusBar myStatusBar;
 
   public TogglePopupHintsPanel(@NotNull final Project project) {
+    super(project);
     myCurrentIcon = EMPTY_ICON;
-    final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        updateStatus();
-      }
-
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        updateStatus();
-      }
-    });
-    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+    myConnection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
         updateStatus();
@@ -79,7 +67,20 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
     });
   }
 
-  public void dispose() {
+  @Override
+  public void selectionChanged(FileEditorManagerEvent event) {
+    updateStatus();
+  }
+
+
+  @Override
+  public void fileOpened(FileEditorManager source, VirtualFile file) {
+    updateStatus();
+  }
+
+  @Override
+  public StatusBarWidget copy() {
+    return new TogglePopupHintsPanel(getProject());
   }
 
   @NotNull
@@ -114,17 +115,6 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return this;
-  }
-
-  public void install(@NotNull final StatusBar statusBar) {
-    myStatusBar = statusBar;
-  }
-
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    //updateStatus();
-    //String text = componentSelected == null ? null : componentSelected.getToolTipText();
-    //setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
-    return "";
   }
 
   public void clear() {
@@ -172,20 +162,11 @@ public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.I
 
   @Nullable
   private PsiFile getCurrentFile() {
-    final Project project = getCurrentProject();
-    if (project == null) {
-      return null;
-    }
-
-    final VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(project)).getCurrentFile();
+    VirtualFile virtualFile = getSelectedFile();
     if (virtualFile != null && virtualFile.isValid()){
-      return PsiManager.getInstance(project).findFile(virtualFile);
+      return PsiManager.getInstance(getProject()).findFile(virtualFile);
     }
     return null;
   }
 
-  @Nullable
-  private Project getCurrentProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
-  }
 }

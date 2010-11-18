@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
@@ -84,6 +85,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Update myUpdate = new Update("update") {
     public void run() {
       updateLookup();
+      myQueue.setMergingTimeSpan(100);
     }
   };
   private LightweightHint myHint;
@@ -136,7 +138,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
 
-    myQueue = new MergingUpdateQueue("completion lookup progress", 100, true, myEditor.getContentComponent());
+    myQueue = new MergingUpdateQueue("completion lookup progress", 200, true, myEditor.getContentComponent());
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     registerItself();
@@ -616,12 +618,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CompletionProgressIndicator.prefixUpdated");
+    }
+
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
+      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+        System.out.println("newPrefix = " + newPrefix);
+      }
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
+        myRestartingPrefixConditions.clear();
         return;
       }
     }
@@ -630,15 +640,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CompletionProgressIndicator.scheduleRestart");
+    }
+
+
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final int offset = myEditor.getCaretModel().getOffset();
     final long stamp = myEditor.getDocument().getModificationStamp();
     final Project project = getProject();
+    final boolean wasDumb = DumbService.getInstance(project).isDumb();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
           System.out.println("later");
         }
 
@@ -646,11 +662,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return;
         }
 
+        if (!wasDumb && DumbService.getInstance(project).isDumb()) {
+          return;
+        }
+
         if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
           return;
         }
 
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
           System.out.println("invoking");
         }
 

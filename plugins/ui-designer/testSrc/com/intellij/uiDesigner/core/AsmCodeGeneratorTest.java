@@ -308,6 +308,13 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertEquals(1, instance.getContentPane().getComponentCount());
   }
 
+  public void testClientProp() throws Exception {  // IDEA-46372
+    JComponent rootComponent = getInstrumentedRootComponent("TestClientProp.form", "BindingTest");
+    assertEquals(1, rootComponent.getComponentCount());
+    JTable table = (JTable) rootComponent.getComponent(0);
+    assertSame(Boolean.TRUE, table.getClientProperty("terminateEditOnFocusLost"));
+  }
+
   public void testIdeadev14081() throws Exception {
     // NOTE: That doesn't really reproduce the bug as it's dependent on a particular instrumentation sequence used during form preview
     // (the nested form is instrumented with a new AsmCodeGenerator instance directly in the middle of instrumentation of the current form)

@@ -159,8 +159,8 @@ class GitLogParser {
     //
     // D       a.txt
 
-    // may have <RECORD_START> indicator, may not.
     if (line.isEmpty()) { return null; }
+    // may have <RECORD_START> indicator, may not. If we have, get rid of it.
     if (line.charAt(0) == RECORD_START.charAt(0)) {
       line = line.substring(1);
     }

@@ -99,6 +99,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
       }
     });
     final MyChangeListener changeListener = new MyChangeListener();
+    myGrowSpinner.setModel(new SpinnerNumberModel(1.0, 0.0, 10.0, 0.1));
     myGrowSpinner.addChangeListener(changeListener);
     myMinSizeSpinner.addChangeListener(changeListener);
     myMaxSizeSpinner.addChangeListener(changeListener);

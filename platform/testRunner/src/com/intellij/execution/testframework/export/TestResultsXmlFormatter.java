@@ -21,32 +21,30 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
-
-// this class generates resulting XML compatible to that of XMLJUnitResultFormatter
+import java.util.TreeMap;
 
 public class TestResultsXmlFormatter {
 
-  // see org.apache.tools.ant.taskdefs.optional.junit.XmlConstants
-  private static final String TESTSUITES = "testsuites";
-  private static final String TESTSUITE = "testsuite";
-  private static final String TESTCASE = "testcase";
-  private static final String FAILURE = "failure";
+  private static final String ELEM_RUN = "testrun";
+  private static final String ELEM_TEST = "test";
+  private static final String ELEM_SUITE = "suite";
   private static final String ATTR_NAME = "name";
-  private static final String ATTR_FAILURES = "failures";
-  private static final String ATTR_TESTS = "tests";
-
-  
-  private static final Logger LOG = Logger.getInstance(TestResultsXmlFormatter.class.getName());
+  private static final String ATTR_DURATION = "duration";
+  private static final String ELEM_COUNT = "count";
+  private static final String ATTR_VALUE = "value";
+  private static final String ELEM_OUTPUT = "output";
+  private static final String ATTR_OUTPUT_TYPE = "type";
+  private static final String ATTR_STATUS = "status";
+  private static final String TOTAL_STATUS = "total";
 
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -64,134 +62,147 @@ public class TestResultsXmlFormatter {
   }
 
   private void execute() throws SAXException {
-    // we'll try to represent tree of any depth as the classic "Suite-Test" tree of a depth one
-
-    // first, figure out the maximum depth
-    final Ref<Integer> maxDepth = new Ref<Integer>(0);
-    AbstractTestProxy testRoot = myTestRoot;
-    visit(testRoot, 0, false, new PairProcessor<AbstractTestProxy, Integer>() {
-      @Override
-      public boolean process(AbstractTestProxy node, Integer depth) {
-        maxDepth.set(Math.max(maxDepth.get(), depth));
-        return true;
-      }
-    });
-
-    if (maxDepth.get() > 1 && testRoot.getChildren().size() == 1) {
-      testRoot = testRoot.getChildren().get(0);
-      maxDepth.set(maxDepth.get() - 1);
-    }
-
     myResultHandler.startDocument();
-    startElement(TESTSUITES, new LinkedHashMap<String, String>());
 
-    final Ref<SAXException> error = Ref.create(null);
-    visit(testRoot, 0, true, new PairProcessor<AbstractTestProxy, Integer>() {
+    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
       @Override
-      public boolean process(AbstractTestProxy node, Integer depth) {
-        if (depth == maxDepth.get() - 1) {
-          try {
-            processSuite(node);
-          }
-          catch (SAXException e) {
-            error.set(e);
-            return false;
-          }
-        }
-        return true;
+      public int compare(String o1, String o2) {
+        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+        return o1.compareTo(o2);
       }
     });
-
-    if (!error.isNull()) {
-      throw error.get();
+    for (AbstractTestProxy node : myTestRoot.getAllTests()) {
+      if (!node.isLeaf()) continue;
+      String status = getStatusString(node);
+      increment(counts, status);
+      increment(counts, TOTAL_STATUS);
     }
 
-    endElement(TESTSUITES);
+    Map<String, String> runAttrs = new HashMap<String, String>();
+    runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
+    Integer duration = myTestRoot.getDuration();
+    if (duration != null) {
+      runAttrs.put(ATTR_DURATION, String.valueOf(duration));
+    }
+    startElement(ELEM_RUN, runAttrs);
+
+    for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+      Map<String, String> a = new HashMap<String, String>();
+      a.put(ATTR_NAME, entry.getKey());
+      a.put(ATTR_VALUE, String.valueOf(entry.getValue()));
+      startElement(ELEM_COUNT, a);
+      endElement(ELEM_COUNT);
+    }
+
+    if (myTestRoot.shouldSkipRootNodeForExport()) {
+      for (AbstractTestProxy node : myTestRoot.getChildren()) {
+        processNode(node);
+      }
+    }
+    else {
+      processNode(myTestRoot);
+    }
+    endElement(ELEM_RUN);
     myResultHandler.endDocument();
   }
 
-  private void processSuite(AbstractTestProxy suite) throws SAXException {
-    int succeeded = 0;
-    int failed = 0;
-    int interrupted = 0;
-
-    for (AbstractTestProxy test : suite.getChildren()) {
-      if (test.isPassed()) {
-        succeeded++;
-      }
-      else if (test.isDefect()) {
-        failed++;
-      }
-      else if (test.isInterrupted()) {
-        interrupted++;
-      }
-      else {
-        LOG.error("Unexpected test status: " + test);
-      }
-    }
-
-    StringBuilder suiteName = new StringBuilder();
-    for (AbstractTestProxy node = suite; node != null; node = node.getParent()) {
-      if (suiteName.length() > 0) {
-        suiteName.insert(0, " - ");
-      }
-      suiteName.insert(0, node.getName());
-    }
-
-    LinkedHashMap<String, String> suiteAttrs = new LinkedHashMap<String, String>();
-    suiteAttrs.put(ATTR_NAME, suiteName.toString());
-    suiteAttrs.put(ATTR_TESTS, String.valueOf(succeeded + failed + interrupted));
-    suiteAttrs.put(ATTR_FAILURES, String.valueOf(failed));
-    startElement(TESTSUITE, suiteAttrs);
-
-    for (AbstractTestProxy test : suite.getChildren()) {
-      LinkedHashMap<String, String> testAttrs = new LinkedHashMap<String, String>();
-      testAttrs.put(ATTR_NAME, test.getName());
-      startElement(TESTCASE, testAttrs);
-      if (test.isDefect()) {
-        startElement(FAILURE, new LinkedHashMap<String, String>());
-        final StringBuilder output = new StringBuilder();
-        test.printOn(new Printer() {
-          @Override
-          public void print(String text, ConsoleViewContentType contentType) {
-            output.append(text);
-          }
-
-          @Override
-          public void onNewAvailable(@NotNull Printable printable) {
-          }
-
-          @Override
-          public void printHyperlink(String text, HyperlinkInfo info) {
-          }
-
-          @Override
-          public void mark() {
-          }
-        });
-        writeText(output.toString());
-        endElement(FAILURE);
-      }
-      endElement(TESTCASE);
-    }
-    endElement(TESTSUITE);
+  private static void increment(Map<String, Integer> counts, String status) {
+    Integer count = counts.get(status);
+    counts.put(status, count != null ? count + 1 : 1);
   }
 
-  private static boolean visit(AbstractTestProxy node, int depth, boolean visitSelf, PairProcessor<AbstractTestProxy, Integer> processor) {
-    if (visitSelf) {
-      if (!processor.process(node, depth)) {
-        return false;
+  private void processNode(AbstractTestProxy node) throws SAXException {
+    Map<String, String> attrs = new HashMap<String, String>();
+    attrs.put(ATTR_NAME, node.getName());
+    attrs.put(ATTR_STATUS, getStatusString(node));
+    Integer duration = node.getDuration();
+    if (duration != null) {
+      attrs.put(ATTR_DURATION, String.valueOf(duration));
+    }
+    String elemName = node.isLeaf() ? ELEM_TEST : ELEM_SUITE;
+    startElement(elemName, attrs);
+    if (node.isLeaf()) {
+      final StringBuilder buffer = new StringBuilder();
+      final Ref<ConsoleViewContentType> lastType = new Ref<ConsoleViewContentType>();
+      final Ref<SAXException> error = new Ref<SAXException>();
+      node.printOn(new Printer() {
+        @Override
+        public void print(String text, ConsoleViewContentType contentType) {
+          if (contentType != lastType.get()) {
+            if (buffer.length() > 0) {
+              try {
+                Map<String, String> a = new HashMap<String, String>();
+                a.put(ATTR_OUTPUT_TYPE, getTypeString(lastType.get()));
+                startElement(ELEM_OUTPUT, a);
+                writeText(buffer.toString());
+                buffer.delete(0, buffer.length());
+                endElement(ELEM_OUTPUT);
+              }
+              catch (SAXException e) {
+                error.set(e);
+              }
+            }
+            lastType.set(contentType);
+          }
+          buffer.append(text);
+        }
+
+        @Override
+        public void onNewAvailable(@NotNull Printable printable) {
+        }
+
+        @Override
+        public void printHyperlink(String text, HyperlinkInfo info) {
+        }
+
+        @Override
+        public void mark() {
+        }
+      });
+      if (!error.isNull()) {
+        throw error.get();
+      }
+      if (buffer.length() > 0) {
+        Map<String, String> a = new HashMap<String, String>();
+        a.put(ATTR_OUTPUT_TYPE, getTypeString(lastType.get()));
+        startElement(ELEM_OUTPUT, a);
+        writeText(buffer.toString());
+        endElement(ELEM_OUTPUT);
       }
     }
-    for (AbstractTestProxy child : node.getChildren()) {
-      if (!visit(child, depth + 1, true, processor)) {
-        return false;
+    else {
+      for (AbstractTestProxy child : node.getChildren()) {
+        processNode(child);
       }
     }
-    return true;
+    endElement(elemName);
   }
 
-  private void startElement(String name, LinkedHashMap<String, String> attributes) throws SAXException {
+  private static String getTypeString(ConsoleViewContentType type) {
+    return type == ConsoleViewContentType.ERROR_OUTPUT ? "stderr" : "stdout";
+  }
+
+  private static String getStatusString(AbstractTestProxy node) {
+    int magnitude = node.getMagnitude();
+    // TODO enumeration!
+    switch (magnitude) {
+      case 0:
+        return "skipped";
+      case 5:
+        return "ignored";
+      case 1:
+        return "passed";
+      case 6:
+        return "failed";
+      case 8:
+        return "error";
+      default:
+        return node.isPassed() ? "passed" : "failed";
+    }
+  }
+
+  private void startElement(String name, Map<String, String> attributes) throws SAXException {
     AttributesImpl attrs = new AttributesImpl();
     for (Map.Entry<String, String> entry : attributes.entrySet()) {
       attrs.addAttribute("", entry.getKey(), entry.getKey(), "CDATA", entry.getValue());
@@ -207,5 +218,4 @@ public class TestResultsXmlFormatter {
     final char[] chars = text.toCharArray();
     myResultHandler.characters(chars, 0, chars.length);
   }
-
 }

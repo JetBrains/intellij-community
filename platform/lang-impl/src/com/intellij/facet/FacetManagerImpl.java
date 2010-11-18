@@ -213,7 +213,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
   private void addInvalidFacet(final FacetState state, ModifiableFacetModel model, final Facet underlyingFacet, final String errorMessage) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
-    final String typeId = StringUtil.notNullize(state.getFacetType());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
     final InvalidFacet facet = createFacet(type, StringUtil.notNullize(state.getName()), configuration, underlyingFacet);

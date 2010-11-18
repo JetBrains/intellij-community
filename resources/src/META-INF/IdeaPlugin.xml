@@ -231,6 +231,7 @@
                            id="excludeFromCompletion" order="last"/>
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="javaNameIdentifier"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
@@ -373,6 +374,7 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
+    <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
@@ -799,16 +801,14 @@
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.NameEndMatchingDegreeWeigher" id="nameEnd"
              order="after expectedType, before stats"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAbstractWeigher" id="abstract"
-             order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
-             order="after abstract"/>
+             order="after stats"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"
              order="after nonGeneric"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferSimpleWeigher" id="simple"
              order="after accessible"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferEnumConstantsWeigher" id="constants"
-             order="after simple, before proximity"/>
+             order="after simple, before prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.SameWordsWeigher" id="sameWords"
              order="after proximity"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferFieldsAndGettersWeigher" id="fieldsAndGetters"

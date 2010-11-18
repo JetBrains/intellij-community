@@ -50,27 +50,28 @@ class JdkComboBox extends ComboBoxWithWidePopup {
 
   public JdkComboBox(final ProjectSdksModel jdksModel) {
     super(new JdkComboBoxModel(jdksModel));
-    setRenderer(new ProjectJdkListRenderer() {
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    setRenderer(new ProjectJdkListRenderer(getRenderer()) {
+      @Override
+      public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {
           if (value instanceof InvalidJdkComboBoxItem) {
             final String str = value.toString();
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
           else if (value instanceof ProjectJdkComboBoxItem){
-            final ProjectJdkComboBoxItem item = (ProjectJdkComboBoxItem)value;
-            final String str = item.toString();
             final Sdk jdk = jdksModel.getProjectSdk();
             if (jdk != null){
               setIcon(jdk.getSdkType().getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
             } else {
+              final String str = value.toString();
               append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
             }
           }
           else {
-            super.customizeCellRenderer(list, value != null ? ((JdkComboBoxItem)value).getJdk() : new NoneJdkComboBoxItem(), index, selected, hasFocus);
+            super.doCustomize(list, value != null ? ((JdkComboBoxItem)value).getJdk() : new NoneJdkComboBoxItem(), index, selected,
+                              hasFocus);
           }
         }
       }
@@ -182,9 +183,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
     for (int idx = 0; idx < count; idx++) {
       final JdkComboBoxItem elementAt = model.getElementAt(idx);
       if (jdk == null) {
-        if (elementAt instanceof NoneJdkComboBoxItem) {
-          return idx;
-        } else if (elementAt instanceof ProjectJdkComboBoxItem){
+        if (elementAt instanceof NoneJdkComboBoxItem || elementAt instanceof ProjectJdkComboBoxItem) {
           return idx;
         }
       }
@@ -293,5 +292,4 @@ class JdkComboBox extends ComboBoxWithWidePopup {
       return myName;
     }
   }
-  
 }

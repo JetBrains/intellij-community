@@ -82,6 +82,7 @@ public final class Properties implements BaseComponent, JDOMExternalizable{
           }
         }
       }
+      myClass2DeprecatedProperties.put(aClass.getName(), deprecated);
     }
 
     return deprecated.contains(propertyName);

@@ -39,7 +39,7 @@ public class LineBlocks {
     myTypes = types;
   }
 
-  public Interval getVisibleIndecies(Trapezium visibleArea) {
+  public Interval getVisibleIndices(Trapezium visibleArea) {
     Interval visible1 = visibleArea.getBase1();
     Interval visible2 = visibleArea.getBase2();
     Interval[] intervals1 = getIntervals(FragmentSide.SIDE1);

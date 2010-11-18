@@ -16,11 +16,10 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -29,7 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
+public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   private final PsiClass myBase;
   private final Project myProject;
   private final GlobalSearchScope myScope;

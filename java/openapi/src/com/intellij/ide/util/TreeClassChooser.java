@@ -17,43 +17,19 @@ package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * User: anna
  * Date: Jan 24, 2005
  */
-public interface TreeClassChooser{
-  ClassFilter INSTANTIATABLE = new ClassFilter() {
-    public boolean isAccepted(PsiClass aClass) {
-      return PsiUtil.isInstantiatable(aClass);
-    }
-  };
+public interface TreeClassChooser extends TreeChooser<PsiClass> {
+  PsiClass getSelected();
 
-  PsiClass getSelectedClass();
-
-  void selectClass(final PsiClass aClass);
+  void select(final PsiClass aClass);
 
   void selectDirectory(final PsiDirectory directory);
 
   void showDialog();
 
   void showPopup();
-
-  interface ClassFilter {
-    boolean isAccepted(PsiClass aClass);
-    ClassFilter ALL = new ClassFilter() {
-      public boolean isAccepted(PsiClass aClass) {
-        return true;
-      }
-    };
-  }
-
-  interface ClassFilterWithScope extends ClassFilter {
-    GlobalSearchScope getScope();
-  }
-
-  interface InheritanceClassFilter extends ClassFilter{
-  }
 }

@@ -1,21 +1,17 @@
 package org.jetbrains.plugins.github.ui;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.RepositoryInfo;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -31,7 +27,6 @@ public class GithubCloneProjectPane {
   private JComboBox mySelectRepositoryComboBox;
   private TextFieldWithBrowseButton myTextFieldWithBrowseButton;
   private JTextField myProjectNameText;
-  private JTextPane myDetailsTextField;
   private final GithubCloneProjectDialog myDialog;
 
   public GithubCloneProjectPane(final GithubCloneProjectDialog dialog) {
@@ -52,7 +47,6 @@ public class GithubCloneProjectPane {
           myProjectNameText.setText(repositoryInfo.getName());
           myDialog.updateOkButton();
         }
-        updateDetails(repositoryInfo);
       }
     });
 
@@ -72,24 +66,6 @@ public class GithubCloneProjectPane {
     };
     myProjectNameText.getDocument().addDocumentListener(updateOkButtonListener);
     myTextFieldWithBrowseButton.getChildComponent().getDocument().addDocumentListener(updateOkButtonListener);
-
-    myDetailsTextField.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(final HyperlinkEvent e) {
-        BrowserUtil.launchBrowser(e.getURL().toExternalForm());
-      }
-    });
-    myDetailsTextField.setBackground(myPanel.getBackground());
-    myDetailsTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
-  }
-
-  private void updateDetails(final RepositoryInfo repositoryInfo) {
-    if (repositoryInfo == null){
-      myDetailsTextField.setText("<html>No repository selected</html>");
-      return;
-    }
-    myDetailsTextField.setText(
-      "<html><a href=\"" + repositoryInfo.getUrl() + "\">" + "Details on '" + repositoryInfo.getName() + "' here" + "</a></html>");
   }
 
   public JComponent getPanel() {
@@ -142,7 +118,6 @@ public class GithubCloneProjectPane {
     if (preselectedRepository != null) {
       myProjectNameText.setText(preselectedRepository.getName());
     }
-    updateDetails(preselectedRepository);
   }
 
   public void setSelectedPath(final String path) {

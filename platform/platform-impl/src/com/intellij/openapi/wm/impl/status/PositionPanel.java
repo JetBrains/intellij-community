@@ -51,8 +51,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
 
   @Override
   public void selectionChanged(FileEditorManagerEvent event) {
-    final Editor editor = getEditor();
-    if (editor != null) updatePosition(editor);
+    updatePosition(getEditor());
   }
 
   @NotNull
@@ -149,9 +148,14 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   private void updatePosition(final Editor editor) {
-    if (!isOurEditor(editor)) return;
-    myText = getPositionText(editor);
-    myStatusBar.updateWidget(ID());
+    if (editor == null) {
+      myText = "";
+      myStatusBar.updateWidget(ID());
+    } else {
+      if (!isOurEditor(editor)) return;
+      myText = getPositionText(editor);
+      myStatusBar.updateWidget(ID());
+    }
   }
 
   private String getPositionText(Editor editor) {

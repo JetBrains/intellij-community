@@ -43,7 +43,7 @@ public class PsiMethodReceiverImpl extends CompositePsiElement implements PsiMet
 
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    return getChildrenAsPsiElements(ElementType.ANNOTATIONS, PsiAnnotation.PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(ElementType.ANNOTATIONS, Constants.PSI_ANNOTATION_ARRAY_CONSTRUCTOR);
   }
 
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {

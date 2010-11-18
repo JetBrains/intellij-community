@@ -36,7 +36,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
@@ -103,7 +103,7 @@ public class AntTasksProvider {
             ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
           }
 
-          if (groovyFile.isScript() && GroovyScriptType.getScriptType(groovyFile) instanceof GantScriptType) {
+          if (groovyFile.isScript() && GroovyScriptTypeDetector.getScriptType(groovyFile) instanceof GantScriptType) {
             jars.addAll(GantScriptType.additionalScopeFiles(groovyFile));
           }
 

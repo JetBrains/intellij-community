@@ -443,10 +443,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public void setCharset(final Charset charset) {
     final Charset old = getUserData(CHARSET_KEY);
     putUserData(CHARSET_KEY, charset);
+    if (Comparing.equal(charset, old)) return;
     byte[] bom = charset == null ? null : CharsetToolkit.getBom(charset);
+    byte[] existingBOM = getBOM();
+    if (bom == null && charset != null && CharsetToolkit.canHaveBom(charset, existingBOM)) {
+      bom = existingBOM;
+    }
     setBOM(bom);
 
-    if (old != null && !old.equals(charset)) { //do not send on detect
+    if (old != null) { //do not send on detect
       final Application application = ApplicationManager.getApplication();
       application.invokeLater(new Runnable() {
         public void run() {
@@ -517,13 +522,28 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * Returns file content as an array of bytes.
+   * Has the same effect as contentsToByteArray(true).
    *
    * @return file content
    * @throws IOException if an I/O error occurs
+   * @see #contentsToByteArray(boolean)
    * @see #getInputStream()
    */
   @NotNull
   public abstract byte[] contentsToByteArray() throws IOException;
+
+  /**
+   * Returns file content as an array of bytes.
+   *
+   * @param cacheContent set true to
+   * @return file content
+   * @throws IOException if an I/O error occurs
+   * @see #contentsToByteArray()
+   */
+  @NotNull
+  public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+    return contentsToByteArray();
+  }
 
 
   /**

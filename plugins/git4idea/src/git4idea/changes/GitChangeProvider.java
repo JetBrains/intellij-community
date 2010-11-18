@@ -26,7 +26,6 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.config.GitExecutableValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -80,7 +79,7 @@ public class GitChangeProvider implements ChangeProvider {
         holder.feedBuilder(builder);
       }
     } catch (VcsException e) {// most probably the error happened because git is not configured
-      GitExecutableValidator.getInstance(myProject).showNotificationOrThrow(e);
+      GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class DumpLookupElementWeights extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpLookupElementWeights");
 
   public void actionPerformed(final AnActionEvent e) {
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
@@ -80,9 +82,13 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
       for (String s : toExclude) {
         weight = StringUtil.replace(weight, s, "", false);
       }
-      System.out.println(item.getLookupString() + weight);
+      final String s = item.getLookupString() + weight;
+      System.out.println(s);
+      LOG.info(s);
       if (i == count - 1) {
-        System.out.println("------------");
+        final String separator = "------------";
+        System.out.println(separator);
+        LOG.info(separator);
       }
     }
   }

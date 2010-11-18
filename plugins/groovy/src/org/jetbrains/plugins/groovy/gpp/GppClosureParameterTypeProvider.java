@@ -49,20 +49,19 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
         assert argIndex >= 0;
         if (listType instanceof GrTupleType) {
           for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
-            if (type instanceof PsiClassType) {
-              for (GroovyResolveResult resolveResult : PsiUtil
-                .getConstructorCandidates((PsiClassType)type, ((GrTupleType)listType).getComponentTypes(), closure)) {
-                final PsiElement method = resolveResult.getElement();
-                if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
-                  final PsiType toCastTo =
-                    resolveResult.getSubstitutor().substitute(((PsiMethod)method).getParameterList().getParameters()[argIndex].getType());
-                  final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, closure);
-                  if (suggestion != null) {
-                    return suggestion;
-                  }
-                }
+            if (!(type instanceof PsiClassType)) continue;
 
-              }
+            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypes(),closure);
+            for (GroovyResolveResult resolveResult : candidates) {
+              final PsiElement method = resolveResult.getElement();
+              if (!(method instanceof PsiMethod) || !((PsiMethod)method).isConstructor()) continue;
+
+              final PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();
+              if (parameters.length <= argIndex) continue;
+
+              final PsiType toCastTo = resolveResult.getSubstitutor().substitute(parameters[argIndex].getType());
+              final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, closure);
+              if (suggestion != null) return suggestion;
             }
           }
         }

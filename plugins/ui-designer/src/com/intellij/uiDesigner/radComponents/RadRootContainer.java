@@ -17,21 +17,27 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.IButtonGroup;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.lw.LwInspectionSuppression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Collections;
 
 /**
  * @author Anton Katilin
@@ -161,13 +167,15 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     int groupNumber = 1;
     group: while(true) {
       @NonNls String suggestedName = "buttonGroup" + groupNumber;
+      SuggestedNameInfo nameInfo =
+        JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.FIELD, suggestedName, null, null);
       for(RadButtonGroup group: myButtonGroups) {
-        if (group.getName().equals(suggestedName)) {
+        if (group.getName().equals(nameInfo.names[0])) {
           groupNumber++;
           continue group;
         }
       }
-      return suggestedName;
+      return nameInfo.names[0];
     }
   }
 

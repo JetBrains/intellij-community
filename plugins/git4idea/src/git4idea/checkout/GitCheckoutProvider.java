@@ -15,6 +15,9 @@
  */
 package git4idea.checkout;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -70,27 +73,27 @@ public class GitCheckoutProvider implements CheckoutProvider {
                               final String directoryName,
                               final String originName,
                               final String parentDirectory) {
-    final GitLineHandler handler =
-      clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
-    final int code = GitHandlerUtil.doSynchronously(handler, GitBundle.message("cloning.repository", sourceRepositoryURL), "git clone");
+    final GitLineHandler handler = clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
 
-    destinationParent.refresh(true, true, new Runnable() {
-      public void run() {
-        if (project.isOpen() && (! project.isDisposed()) && (! project.isDefault())) {
-          final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-          mgr.fileDirty(destinationParent);
-        }
+    handler.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(ProgressManager.getInstance().getProgressIndicator(), handler, "git clone", true));
+    new Task.Backgroundable(project, GitBundle.message("cloning.repository", sourceRepositoryURL), true) {
+      @Override public void run(@NotNull ProgressIndicator indicator) {
+        GitHandlerUtil.runInCurrentThread(handler, indicator, true, "git clone");
       }
-    });
 
-    if (code == 0) {
-      if (listener != null) {
+      @Override public void onSuccess() {
+        destinationParent.refresh(true, true, new Runnable() {
+          public void run() {
+            if (project.isOpen() && (! project.isDisposed()) && (! project.isDefault())) {
+              final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
+              mgr.fileDirty(destinationParent);
+            }
+          }
+        });
         listener.directoryCheckedOut(new File(parentDirectory, directoryName));
+        listener.checkoutCompleted();
       }
-    }
-    if (listener != null) {
-      listener.checkoutCompleted();
-    }
+    }.queue();
   }
 
   /**

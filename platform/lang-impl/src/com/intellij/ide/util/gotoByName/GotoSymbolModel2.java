@@ -24,6 +24,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   public GotoSymbolModel2(Project project) {
@@ -33,6 +37,18 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
   @Override
   protected Language filterValueFor(NavigationItem item) {
     return item instanceof PsiElement ? ((PsiElement) item).getLanguage() : null;
+  }
+
+  @Nullable
+  @Override
+  protected synchronized Collection<Language> getFilterItems() {
+    final Collection<Language> result = super.getFilterItems();
+    if (result == null) {
+      return result;
+    }
+    final Collection<Language> items = new HashSet<Language>(result);
+    items.add(Language.ANY);
+    return items;
   }
 
   public String getPromptText() {

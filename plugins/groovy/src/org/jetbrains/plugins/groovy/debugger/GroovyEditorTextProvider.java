@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
@@ -60,7 +61,7 @@ public class GroovyEditorTextProvider implements EditorTextProvider {
   @Nullable
   private static PsiElement findExpression(PsiElement element) {
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiVariable && element == ((PsiVariable)parent).getNameIdentifier()) {
+    if (parent instanceof GrVariable && element == ((GrVariable)parent).getNameIdentifierGroovy()) {
       return element;
     }
     if (parent instanceof GrReferenceExpression) {

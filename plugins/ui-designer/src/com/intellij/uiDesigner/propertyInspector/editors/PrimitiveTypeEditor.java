@@ -17,8 +17,13 @@ public final class PrimitiveTypeEditor<T> extends AbstractTextFieldEditor<T> {
   }
 
   public T getValue() throws Exception {
-    final Method method = myClass.getMethod("valueOf", String.class);
-    //noinspection unchecked
-    return (T) method.invoke(null, myTf.getText());
+    try {
+      final Method method = myClass.getMethod("valueOf", String.class);
+      //noinspection unchecked
+      return (T) method.invoke(null, myTf.getText());
+    }
+    catch (NumberFormatException e) {
+      throw new RuntimeException("Entered value is not a valid number of this property type");
+    }
   }
 }

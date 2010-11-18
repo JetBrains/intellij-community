@@ -47,6 +47,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   private final Project myProject;
@@ -141,8 +143,16 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         final String descriptionPrefix = getDescriptionPrefix(problem);
         if (descriptionPrefix != null) {
           for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
-            final String description = handlerEP.getDescription(descriptionPrefix, editor);
+            String description = handlerEP.getDescription(descriptionPrefix, editor);
             if (description != null) {
+              final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
+              final Matcher matcher = pattern.matcher(description);
+              int startFindIdx = 0;
+              while (matcher.find(startFindIdx)) {
+                final int end = matcher.end(1);
+                startFindIdx = end;
+                description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
+              }
               text += IdeTooltipManager.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                      DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + IdeTooltipManager
                 .getHtmlBody(description) + BORDER_LINE;

@@ -25,7 +25,6 @@ import com.intellij.openapi.diff.impl.highlighting.LineBlockDivider;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
@@ -40,8 +39,7 @@ public class TextCompareProcessor {
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).
         correctAndNormalize(woFormattingBlocks);
     ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
-    for (Iterator<LineFragment> iterator = lineBlocks.iterator(); iterator.hasNext();) {
-      LineFragment lineBlock = iterator.next();
+    for (LineFragment lineBlock : lineBlocks) {
       if (lineBlock.isOneSide() || lineBlock.isEqual()) continue;
       String subText1 = lineBlock.getText(text1, FragmentSide.SIDE1);
       String subText2 = lineBlock.getText(text2, FragmentSide.SIDE2);
@@ -61,12 +59,10 @@ public class TextCompareProcessor {
     lines = Util.uniteFormattingOnly(lines);
 
     LineFragmentsCollector collector = new LineFragmentsCollector();
-    for (int i = 0; i < lines.length; i++) {
-      DiffFragment[] line = lines[i];
+    for (DiffFragment[] line : lines) {
       DiffFragment[][] subLines = LineBlockDivider.SINGLE_SIDE.divide(line);
       subLines = Util.uniteFormattingOnly(subLines);
-      for (int j = 0; j < subLines.length; j++) {
-        DiffFragment[] subLineFragments = subLines[j];
+      for (DiffFragment[] subLineFragments : subLines) {
         LineFragment subLine = collector.addDiffFragment(Util.concatenate(subLineFragments));
         if (!subLine.isOneSide()) {
           subLine.setChildren(processInlineFragments(subLineFragments));
@@ -76,11 +72,10 @@ public class TextCompareProcessor {
     return collector.getFragments();
   }
 
-  private ArrayList<Fragment> processInlineFragments(DiffFragment[] subLineFragments) {
+  private static ArrayList<Fragment> processInlineFragments(DiffFragment[] subLineFragments) {
     LOG.assertTrue(subLineFragments.length > 0);
     FragmentsCollector result = new FragmentsCollector();
-    for (int i = 0; i < subLineFragments.length; i++) {
-      DiffFragment fragment = subLineFragments[i];
+    for (DiffFragment fragment : subLineFragments) {
       result.addDiffFragment(fragment);
     }
     return result.getFragments();

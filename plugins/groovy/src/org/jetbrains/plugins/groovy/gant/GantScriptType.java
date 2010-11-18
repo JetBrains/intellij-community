@@ -47,8 +47,10 @@ import java.util.List;
 public class GantScriptType extends GroovyScriptType {
   @NonNls public static final String DEFAULT_EXTENSION = "gant";
 
-  public boolean isSpecificScriptFile(final GroovyFile file) {
-    return GantUtils.isGantScriptFile(file);
+  public static final GroovyScriptType INSTANCE = new GantScriptType();
+
+  private GantScriptType() {
+    super("gant");
   }
 
   @NotNull

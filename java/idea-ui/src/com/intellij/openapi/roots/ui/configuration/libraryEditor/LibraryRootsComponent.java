@@ -158,7 +158,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     myRemoveButton.addActionListener(new RemoveAction());
     final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
-    if (handlers.length == 0 || myProject == null || myDescriptor != null) {
+    if (handlers.length == 0 || myProject == null || getLibraryEditor().getType() != null) {
       myAttachMoreButton.setVisible(false);
     }
     else {

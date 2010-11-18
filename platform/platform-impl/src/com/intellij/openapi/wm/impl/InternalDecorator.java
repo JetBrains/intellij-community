@@ -101,11 +101,8 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private final MyDivider myDivider;
   private final TitlePanel myTitlePanel;
   private final MyTitleButton myToggleFloatingModeButton;
-  private final Separator myFloatingDockSeparator;
   private final MyTitleButton myToggleDockModeButton;
-  private final Separator myDockAutoHideSeparator;
   private final MyTitleButton myToggleAutoHideModeButton;
-  private final Separator myAutoHideHideSeparator;
   private final MyTitleButton myHideButton;
   private final EventListenerList myListenerList;
   /*
@@ -139,17 +136,18 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myToolWindow = toolWindow;
     myToolWindow.setDecorator(this);
     myDivider = new MyDivider();
-    myTitlePanel = new TitlePanel();
+    myTitlePanel = new TitlePanel() {
+      @Override
+      public boolean isActive() {
+        return computeActive();
+      }
+    };
     myTitleTabs = toolWindow.getContentUI().getTabComponent();
 
     myToggleFloatingModeAction = new ToggleFloatingModeAction();
     myToggleSideModeAction = new ToggleSideModeAction();
-    myFloatingDockSeparator = new Separator();
-    myFloatingDockSeparator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     myToggleDockModeAction = new ToggleDockModeAction();
-    myDockAutoHideSeparator = new Separator();
     myToggleAutoHideModeAction = new TogglePinnedModeAction();
-    myAutoHideHideSeparator = new Separator();
     myHideAction = new HideAction();
     HideSideAction hideSideAction = new HideSideAction();
     myToggleContentUiTypeAction = new ToggleContentUiTypeAction();
@@ -177,6 +175,14 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     apply(info);
   }
 
+  private boolean computeActive() {
+    Component component = IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(myToolWindow.getComponent());
+    if (component != null) return true;
+
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return owner != null && SwingUtilities.isDescendingFrom(owner, myToolWindow.getComponent());
+  }
+
   /**
    * Applies specified decoration.
    */
@@ -185,14 +191,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       return;
     }
     myInfo = info;
-    // Active
-    final boolean active = info.isActive();
-    myTitlePanel.setActive(active);
-
-    //todo myToolWindowBorder.setActive(active);
-    myFloatingDockSeparator.setActive(active);
-    myDockAutoHideSeparator.setActive(active);
-    myAutoHideHideSeparator.setActive(active);
 
     // Anchor
     final ToolWindowAnchor anchor = myInfo.getAnchor();
@@ -220,16 +218,16 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     if (!info.isFloating()) {
       myHideSideButton.setVisible(true);
       if (ToolWindowAnchor.TOP == anchor) {
-        myHideSideButton.setIcon(active ? ourHideSideUp : ourHideSideUpInactive);
+        myHideSideButton.setIcon(ourHideSideUp, ourHideSideUpInactive);
       }
       else if (ToolWindowAnchor.LEFT == anchor) {
-        myHideSideButton.setIcon(active ? ourHideSideLeft : ourHideSideLeftInactive);
+        myHideSideButton.setIcon(ourHideSideLeft, ourHideSideLeftInactive);
       }
       else if (ToolWindowAnchor.BOTTOM == anchor) {
-        myHideSideButton.setIcon(active ? ourHideSideDown : ourHideSideDownInactive);
+        myHideSideButton.setIcon(ourHideSideDown, ourHideSideDownInactive);
       }
       else if (ToolWindowAnchor.RIGHT == anchor) {
-        myHideSideButton.setIcon(active ? ourHideSideRight : ourHideSideRightInactive);
+        myHideSideButton.setIcon(ourHideSideRight, ourHideSideRightInactive);
       }
     }
     else {
@@ -240,38 +238,30 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     repaint();
     // Type
     if (myInfo.isDocked()) {
-      myToggleFloatingModeButton.setIcon(active ? ourFloatingIcon : ourFloatingInactiveIcon);
+      myToggleFloatingModeButton.setIcon(ourFloatingIcon, ourFloatingInactiveIcon);
       myToggleDockModeButton.setVisible(true);
-      myDockAutoHideSeparator.setVisible(true);
-      myToggleDockModeButton.setIcon(active ? ourSlidingIcon : ourSlidingInactiveIcon);
+      myToggleDockModeButton.setIcon(ourSlidingIcon, ourSlidingInactiveIcon);
       myToggleAutoHideModeButton.setVisible(true);
-      myAutoHideHideSeparator.setVisible(true);
-      myToggleAutoHideModeButton.setIcon(active
-                                         ? (myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon)
-                                         : (myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon));
+      myToggleAutoHideModeButton.setIcon((myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon),
+                                         (myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon));
       myHideButton.setVisible(true);
     }
     else if (myInfo.isFloating()) {
-      myToggleFloatingModeButton.setIcon(active ? ourFixIcon : ourFixInactiveIcon);
+      myToggleFloatingModeButton.setIcon(ourFixIcon, ourFixInactiveIcon);
       myToggleDockModeButton.setVisible(false);
-      myDockAutoHideSeparator.setVisible(false);
       myToggleAutoHideModeButton.setVisible(true);
-      myAutoHideHideSeparator.setVisible(true);
-      myToggleAutoHideModeButton.setIcon(active
-                                         ? myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon
-                                         : myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon);
+      myToggleAutoHideModeButton.setIcon(myInfo.isAutoHide() ? ourAuthoHideOnIcon : ourAuthoHideOffIcon,
+                                         myInfo.isAutoHide() ? ourAuthoHideOnInactiveIcon : ourAuthoHideOffInactiveIcon);
       myHideButton.setVisible(true);
     }
     else if (myInfo.isSliding()) {
-      myToggleFloatingModeButton.setIcon(active ? ourFloatingIcon : ourFloatingInactiveIcon);
+      myToggleFloatingModeButton.setIcon(ourFloatingIcon, ourFloatingInactiveIcon);
       myToggleDockModeButton.setVisible(true);
-      myDockAutoHideSeparator.setVisible(true);
-      myToggleDockModeButton.setIcon(active ? ourDockedIcon : ourDockedInactiveIcon);
+      myToggleDockModeButton.setIcon(ourDockedIcon, ourDockedInactiveIcon);
       myToggleAutoHideModeButton.setVisible(false);
-      myAutoHideHideSeparator.setVisible(false);
       myHideButton.setVisible(true);
     }
-    myHideButton.setIcon(active ? ourHideIcon : ourHideInactiveIcon);
+    myHideButton.setIcon(ourHideIcon, ourHideInactiveIcon);
 
     //
     updateTitle();
@@ -396,23 +386,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     // Compose title bar
     myTitlePanel.addTitle(myTitleTabs);
 
-    final JPanel buttonPanel = new JPanel(new GridBagLayout());
+    final JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 2, 0));
     buttonPanel.setOpaque(false);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
-    buttonPanel.add(myToggleFloatingModeButton, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-                                                                       new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myFloatingDockSeparator, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                    new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myToggleDockModeButton, new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                   new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myDockAutoHideSeparator, new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                    new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myToggleAutoHideModeButton, new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                       new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myAutoHideHideSeparator, new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                    new Insets(0, 0, 0, 0), 0, 0));
-    buttonPanel.add(myHideButton, new GridBagConstraints(6, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                         new Insets(0, 0, 0, 0), 0, 0));
+    buttonPanel.add(myToggleFloatingModeButton);
+    buttonPanel.add(myToggleDockModeButton);
+    buttonPanel.add(myToggleAutoHideModeButton);
+    buttonPanel.add(myHideButton);
 
     myTitlePanel.addButtons(buttonPanel, myHideSideButton);
 
@@ -926,15 +906,20 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   }
 
 
-  private static final class MyTitleButton extends Wrapper implements ActionListener {
+  private class MyTitleButton extends Wrapper implements ActionListener {
 
     private final InplaceButton myButton;
     private final AnAction myAction;
 
     public MyTitleButton(AnAction action) {
       myAction = action;
-      myButton = new InplaceButton(null, new EmptyIcon(16), this);
-      //myButton.setTransform(0, -1);
+      myButton = new InplaceButton(null, new EmptyIcon(16), this) {
+        @Override
+        public boolean isActive() {
+          return MyTitleButton.this.isActive();
+        }
+      };
+      myButton.setHoveringEnabled(false);
       setContent(myButton);
       setOpaque(false);
     }
@@ -952,8 +937,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       myAction.actionPerformed(event);
     }
 
-    public void setIcon(final Icon icon) {
-      myButton.setIcon(icon);
+    public boolean isActive() {
+      return InternalDecorator.this.computeActive();
+    }
+
+    public void setIcon(final Icon active, Icon inactive) {
+      myButton.setIcons(active, inactive, active);
     }
 
 
@@ -1009,20 +998,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   //    super.paintIcon(g, c, iconRect);
   //  }
   //}
-
-  private static final class Separator extends JLabel {
-    private static final Icon ourActiveSeparator = IconLoader.getIcon("/general/separator.png");
-    private static final Icon ourInactiveSeparator = IconLoader.getIcon("/general/inactiveSeparator.png");
-
-    public final void setActive(final boolean active) {
-      setIcon(active ? ourActiveSeparator : ourInactiveSeparator);
-    }
-
-    public final void updateUI() {
-      super.updateUI();
-      setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
-    }
-  }
 
   /**
    * Synchronizes decorator with IdeToolWindow changes.

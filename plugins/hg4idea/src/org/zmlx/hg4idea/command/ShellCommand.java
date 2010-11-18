@@ -13,9 +13,11 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -24,11 +26,28 @@ final class ShellCommand {
   private static final Logger LOG = Logger.getInstance(ShellCommand.class.getName());
 
   private static final int BUFFER_SIZE = 1024;
+  private final boolean myRunViaBash;
+
+  public ShellCommand(boolean runViaBash) {
+    myRunViaBash = runViaBash;
+  }
 
   public HgCommandResult execute(List<String> commandLine, String dir, Charset charset) throws ShellCommandException, InterruptedException {
     if (commandLine == null || commandLine.isEmpty()) {
       throw new IllegalArgumentException("commandLine is empty");
     }
+
+    if (myRunViaBash) {
+      // run via bash -cl <hg command> => need to escape bash special symbols
+      // '-l' makes bash execute as a login shell thus reading .bash_profile
+      String hgCommand = StringUtil.join(commandLine, " ");
+      hgCommand = escapeBashControlCharacters(hgCommand);
+      commandLine = new ArrayList<String>(3);
+      commandLine.add("bash");
+      commandLine.add("-cl");
+      commandLine.add(hgCommand);
+    }
+
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
     try {
@@ -77,6 +96,33 @@ final class ShellCommand {
     });
     readingThread.start();
     return readingThread;
+  }
+
+  /**
+   * Escapes charactes in the command which will be executed via 'bash -c' - these are standard chars like \n, and some bash specials.
+   * @param source Original string.
+   * @return Escaped string.
+   */
+  private static String escapeBashControlCharacters(String source) {
+    final String controlChars = "|>$\"'&";
+    final String standardChars = "\b\t\n\f\r";
+    final String standardCharsLetters = "btnfr";
+
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < source.length(); i++) {
+      char ch = source.charAt(i);
+      if (controlChars.indexOf(ch) > -1) {
+        sb.append("\\").append(ch);
+      } else {
+        final int index = standardChars.indexOf(ch);
+        if (index > -1) {
+          sb.append("\\").append(standardCharsLetters.charAt(index));
+        } else {
+          sb.append(ch);
+        }
+      }
+    }
+    return sb.toString();
   }
 
 }

@@ -55,6 +55,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -142,7 +143,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   protected String getDimensionServiceKey() {
-    return "#com.intellij.ide.util.FileStructureDialog";
+    return DockManager.getInstance(myProject).getDimensionKeyForFocus("#com.intellij.ide.util.FileStructureDialog");
   }
 
   public JComponent getPreferredFocusedComponent() {

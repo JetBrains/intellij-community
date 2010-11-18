@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="forms_rt" />
@@ -21,10 +20,9 @@
     <orderEntry type="module" module-name="xml-openapi" exported="" />
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="lang-api" exported="" />
-    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="vcs-api" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="testFramework" exported="" />
     <orderEntry type="module" module-name="resources-en" exported="" />
   </component>
   <component name="copyright">

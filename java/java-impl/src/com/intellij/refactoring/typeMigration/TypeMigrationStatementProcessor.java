@@ -388,7 +388,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       for (int i = 0; i < psiExpressions.length; i++) {
         PsiParameter originalParameter;
         if (originalParams.length <= i) {
-          if (originalParams[originalParams.length - 1].isVarArgs()) {
+          if (originalParams.length > 0 && originalParams[originalParams.length - 1].isVarArgs()) {
             originalParameter = originalParams[originalParams.length - 1];
           } else {
             continue;

@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,9 +34,11 @@ import gnu.trove.THashSet;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
+  private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   private final Project myProject;
   private final Collection<CacheUpdater> myUpdaters;
   private CacheUpdateSession mySession;
@@ -135,25 +136,27 @@ class CacheUpdateRunner {
     final Ref<Boolean> isFinished = new Ref<Boolean>(Boolean.FALSE);
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-      if (threadsCount == -1) {
-        threadsCount = Math.min(Runtime.getRuntime().availableProcessors(), 2);
+      if (threadsCount <= 0) {
+        threadsCount = Math.min(PROC_COUNT, ApplicationManager.getApplication().isUnitTestMode() ? 4 : 2);
       }
       if (threadsCount == 1) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
-        final Job<Object> job = JobScheduler.getInstance().createJob("Indexing", Thread.NORM_PRIORITY);
         final Ref[] finishedRefs = new Ref[threadsCount];
+        Future<?>[] futures = new Future<?>[threadsCount];
         for (int i = 0; i < threadsCount; i++) {
           final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
           finishedRefs[i] = ref;
           Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, application);
-          job.addTask(process);
+          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(getProcessWrapper(process));
         }
         try {
-          job.scheduleAndWaitForResults();
-          
+          for (Future<?> future : futures) {
+            future.get();
+          }
+
           boolean allFinished = true;
           for (Ref ref : finishedRefs) {
             if (!(Boolean)ref.get()) {
@@ -233,5 +236,20 @@ class CacheUpdateRunner {
         }
       }
     }
+  }
+
+  private static Runnable getProcessWrapper(final Runnable process) {
+    return ApplicationManager.getApplication().isWriteAccessAllowed() ? new Runnable() {
+      @Override
+      public void run() {
+        boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+        try {
+          process.run();
+        }
+        finally {
+          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(old);
+        }
+      }
+    } : process;
   }
 }

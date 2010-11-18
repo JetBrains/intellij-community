@@ -115,7 +115,7 @@ public class CompileDriver {
 
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
   private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
-  private boolean myInitialRefreshPerformed = false;
+  private static final Key<Boolean> REFRESH_DONE_KEY = Key.create("_compiler.initial.refresh.done_");
 
   private static final FileProcessingCompilerAdapterFactory FILE_PROCESSING_COMPILER_ADAPTER_FACTORY = new FileProcessingCompilerAdapterFactory() {
     public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -663,8 +663,8 @@ public class CompileDriver {
       }
 
       boolean needRecalcOutputDirs = false;
-      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH) || !myInitialRefreshPerformed) {
-        myInitialRefreshPerformed = true;
+      if (Registry.is(PROP_PERFORM_INITIAL_REFRESH) || !Boolean.valueOf(REFRESH_DONE_KEY.get(myProject, Boolean.FALSE))) {
+        REFRESH_DONE_KEY.set(myProject, Boolean.TRUE);
         final long refreshStart = System.currentTimeMillis();
 
         //need this to make sure the VFS is built
@@ -2047,183 +2047,189 @@ public class CompileDriver {
   }
 
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
-    final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
-    final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
-    boolean isProjectCompilePathSpecified = true;
-    final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
-    final Set<File> nonExistingOutputPaths = new HashSet<File>();
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
+    try {
+      final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
+      final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
+      boolean isProjectCompilePathSpecified = true;
+      final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
+      final Set<File> nonExistingOutputPaths = new HashSet<File>();
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
 
-    for (final Module module : scopeModules) {
-      final boolean hasSources = hasSources(module, false);
-      final boolean hasTestSources = hasSources(module, true);
-      if (!hasSources && !hasTestSources) {
-        // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
-        // todo still there may be problems with this approach if some generated files are attributed by this module
-        continue;
-      }
-      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-      if (jdk == null) {
-        modulesWithoutJdkAssigned.add(module.getName());
-      }
-      final String outputPath = getModuleOutputPath(module, false);
-      final String testsOutputPath = getModuleOutputPath(module, true);
-      if (outputPath == null && testsOutputPath == null) {
-        modulesWithoutOutputPathSpecified.add(module.getName());
-      }
-      else {
-        if (outputPath != null) {
-          final File file = new File(outputPath.replace('/', File.separatorChar));
-          if (!file.exists()) {
-            nonExistingOutputPaths.add(file);
-          }
+      for (final Module module : scopeModules) {
+        final boolean hasSources = hasSources(module, false);
+        final boolean hasTestSources = hasSources(module, true);
+        if (!hasSources && !hasTestSources) {
+          // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
+          // todo still there may be problems with this approach if some generated files are attributed by this module
+          continue;
+        }
+        final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
+        if (jdk == null) {
+          modulesWithoutJdkAssigned.add(module.getName());
+        }
+        final String outputPath = getModuleOutputPath(module, false);
+        final String testsOutputPath = getModuleOutputPath(module, true);
+        if (outputPath == null && testsOutputPath == null) {
+          modulesWithoutOutputPathSpecified.add(module.getName());
         }
         else {
-          if (hasSources) {
-            modulesWithoutOutputPathSpecified.add(module.getName());
-          }
-        }
-        if (testsOutputPath != null) {
-          final File f = new File(testsOutputPath.replace('/', File.separatorChar));
-          if (!f.exists()) {
-            nonExistingOutputPaths.add(f);
-          }
-        }
-        else {
-          if (hasTestSources) {
-            modulesWithoutOutputPathSpecified.add(module.getName());
-          }
-        }
-        if (config.isAnnotationProcessorsEnabled() && config.isAnnotationProcessingEnabled(module)) {
-          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-          if (path == null) {
-            final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
-            if (extension == null || extension.getCompilerOutputUrl() == null) {
-              isProjectCompilePathSpecified = false;
-            }
-            else {
-              modulesWithoutOutputPathSpecified.add(module.getName());
-            }
-          }
-          else {
-            final File file = new File(path);
+          if (outputPath != null) {
+            final File file = new File(outputPath.replace('/', File.separatorChar));
             if (!file.exists()) {
               nonExistingOutputPaths.add(file);
             }
           }
-        }
-      }
-    }
-    if (!modulesWithoutJdkAssigned.isEmpty()) {
-      showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
-      return false;
-    }
-
-    if (!isProjectCompilePathSpecified) {
-      final String message = CompilerBundle.message("error.project.output.not.specified");
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.error(message);
-      }
-
-      Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-      ProjectSettingsService.getInstance(myProject).openProjectSettings();
-      return false;
-    }
-
-    if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-      showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, CommonContentEntriesEditor.NAME);
-      return false;
-    }
-
-    if (!nonExistingOutputPaths.isEmpty()) {
-      for (File file : nonExistingOutputPaths) {
-        final boolean succeeded = file.mkdirs();
-        if (!succeeded) {
-          if (file.exists()) {
-            // for overlapping paths, this one might have been created as an intermediate path on a previous iteration
-            continue;
+          else {
+            if (hasSources) {
+              modulesWithoutOutputPathSpecified.add(module.getName());
+            }
           }
-          Messages.showMessageDialog(myProject, CompilerBundle.message("error.failed.to.create.directory", file.getPath()),
-                                     CommonBundle.getErrorTitle(), Messages.getErrorIcon());
-          return false;
-        }
-      }
-      final Boolean refreshSuccess =
-        new WriteAction<Boolean>() {
-          @Override
-          protected void run(Result<Boolean> result) throws Throwable {
-            LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
-            Boolean res = Boolean.TRUE;
-            for (File file : nonExistingOutputPaths) {
-              if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
-                res = Boolean.FALSE;
-                break;
+          if (testsOutputPath != null) {
+            final File f = new File(testsOutputPath.replace('/', File.separatorChar));
+            if (!f.exists()) {
+              nonExistingOutputPaths.add(f);
+            }
+          }
+          else {
+            if (hasTestSources) {
+              modulesWithoutOutputPathSpecified.add(module.getName());
+            }
+          }
+          if (config.isAnnotationProcessorsEnabled() && config.isAnnotationProcessingEnabled(module)) {
+            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+            if (path == null) {
+              final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
+              if (extension == null || extension.getCompilerOutputUrl() == null) {
+                isProjectCompilePathSpecified = false;
+              }
+              else {
+                modulesWithoutOutputPathSpecified.add(module.getName());
               }
             }
-            result.setResult(res);
+            else {
+              final File file = new File(path);
+              if (!file.exists()) {
+                nonExistingOutputPaths.add(file);
+              }
+            }
           }
-        }.execute().getResultObject();
-
-      if (!refreshSuccess.booleanValue()) {
+        }
+      }
+      if (!modulesWithoutJdkAssigned.isEmpty()) {
+        showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
         return false;
       }
-      dropScopesCaches();
-    }
 
-    if (checkOutputAndSourceIntersection) {
-      if (myShouldClearOutputDirectory) {
-        if (!validateOutputAndSourcePathsIntersection()) {
+      if (!isProjectCompilePathSpecified) {
+        final String message = CompilerBundle.message("error.project.output.not.specified");
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error(message);
+        }
+  
+        Messages.showMessageDialog(myProject, message, CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        ProjectSettingsService.getInstance(myProject).openProjectSettings();
+        return false;
+      }
+
+      if (!modulesWithoutOutputPathSpecified.isEmpty()) {
+        showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, CommonContentEntriesEditor.NAME);
+        return false;
+      }
+
+      if (!nonExistingOutputPaths.isEmpty()) {
+        for (File file : nonExistingOutputPaths) {
+          final boolean succeeded = file.mkdirs();
+          if (!succeeded) {
+            if (file.exists()) {
+              // for overlapping paths, this one might have been created as an intermediate path on a previous iteration
+              continue;
+            }
+            Messages.showMessageDialog(myProject, CompilerBundle.message("error.failed.to.create.directory", file.getPath()),
+                                       CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+            return false;
+          }
+        }
+        final Boolean refreshSuccess =
+          new WriteAction<Boolean>() {
+            @Override
+            protected void run(Result<Boolean> result) throws Throwable {
+              LocalFileSystem.getInstance().refreshIoFiles(nonExistingOutputPaths);
+              Boolean res = Boolean.TRUE;
+              for (File file : nonExistingOutputPaths) {
+                if (LocalFileSystem.getInstance().findFileByIoFile(file) == null) {
+                  res = Boolean.FALSE;
+                  break;
+                }
+              }
+              result.setResult(res);
+            }
+          }.execute().getResultObject();
+  
+        if (!refreshSuccess.booleanValue()) {
+          return false;
+        }
+        dropScopesCaches();
+      }
+
+      if (checkOutputAndSourceIntersection) {
+        if (myShouldClearOutputDirectory) {
+          if (!validateOutputAndSourcePathsIntersection()) {
+            return false;
+          }
+        }
+      }
+      final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
+      for (final Chunk<Module> chunk : chunks) {
+        final Set<Module> chunkModules = chunk.getNodes();
+        if (chunkModules.size() <= 1) {
+          continue; // no need to check one-module chunks
+        }
+        if (config.isAnnotationProcessorsEnabled()) {
+          for (Module chunkModule : chunkModules) {
+            if (config.isAnnotationProcessingEnabled(chunkModule)) {
+              showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
+              return false;
+            }
+          }
+        }
+        Sdk jdk = null;
+        LanguageLevel languageLevel = null;
+        for (final Module module : chunkModules) {
+          final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
+          if (jdk == null) {
+            jdk = moduleJdk;
+          }
+          else {
+            if (!jdk.equals(moduleJdk)) {
+              showCyclicModulesHaveDifferentJdksError(chunkModules.toArray(new Module[chunkModules.size()]));
+              return false;
+            }
+          }
+  
+          LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
+          if (languageLevel == null) {
+            languageLevel = moduleLanguageLevel;
+          }
+          else {
+            if (!languageLevel.equals(moduleLanguageLevel)) {
+              showCyclicModulesHaveDifferentLanguageLevel(chunkModules.toArray(new Module[chunkModules.size()]));
+              return false;
+            }
+          }
+        }
+      }
+      final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
+      for (Compiler compiler : allCompilers) {
+        if (!compiler.validateConfiguration(scope)) {
           return false;
         }
       }
+      return true;
     }
-    final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
-    for (final Chunk<Module> chunk : chunks) {
-      final Set<Module> chunkModules = chunk.getNodes();
-      if (chunkModules.size() <= 1) {
-        continue; // no need to check one-module chunks
-      }
-      if (config.isAnnotationProcessorsEnabled()) {
-        for (Module chunkModule : chunkModules) {
-          if (config.isAnnotationProcessingEnabled(chunkModule)) {
-            showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
-            return false;
-          }
-        }
-      }
-      Sdk jdk = null;
-      LanguageLevel languageLevel = null;
-      for (final Module module : chunkModules) {
-        final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
-        if (jdk == null) {
-          jdk = moduleJdk;
-        }
-        else {
-          if (!jdk.equals(moduleJdk)) {
-            showCyclicModulesHaveDifferentJdksError(chunkModules.toArray(new Module[chunkModules.size()]));
-            return false;
-          }
-        }
-
-        LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-        if (languageLevel == null) {
-          languageLevel = moduleLanguageLevel;
-        }
-        else {
-          if (!languageLevel.equals(moduleLanguageLevel)) {
-            showCyclicModulesHaveDifferentLanguageLevel(chunkModules.toArray(new Module[chunkModules.size()]));
-            return false;
-          }
-        }
-      }
+    catch (Throwable e) {
+      LOG.info(e);
+      return false;
     }
-    final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
-    for (Compiler compiler : allCompilers) {
-      if (!compiler.validateConfiguration(scope)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {
@@ -2378,7 +2384,9 @@ public class CompileDriver {
     final boolean justCreated = file.mkdirs();
     vFile = lfs.refreshAndFindFileByIoFile(file);
 
-    assert vFile != null: "Virtual file not found for " + file.getPath() + "; mkdirs() exit code is " + justCreated;
+    if (vFile == null) {
+      assert false: "Virtual file not found for " + file.getPath() + "; mkdirs() exit code is " + justCreated + "; file exists()? " + file.exists();
+    }
 
     return vFile;
   }

@@ -19,6 +19,7 @@ public class ReplaceMethodDuplicatesTestSuite {
     testSuite.addTestSuite(ExtractMethodObjectTest.class);
     testSuite.addTestSuite(FindMethodDuplicatesMiscTest.class);
     testSuite.addTestSuite(FindMethodDuplicatesTest.class);
+    testSuite.addTestSuite(SuggestedParamTypesTest.class);
     return testSuite;
   }
 }

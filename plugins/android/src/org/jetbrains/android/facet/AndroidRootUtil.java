@@ -47,13 +47,18 @@ public class AndroidRootUtil {
   public static VirtualFile getManifestFile(@NotNull Module module) {
     AndroidFacet facet = AndroidFacet.getInstance(module);
     return facet == null ? null : getFileByRelativeModulePath(module, facet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH, true);
+  }
 
-    /*VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-    for (VirtualFile contentRoot : files) {
-      VirtualFile manifest = contentRoot.findChild(SdkConstants.FN_ANDROID_MANIFEST_XML);
-      if (manifest != null) return manifest;
-    }
-    return null;*/
+  @Nullable
+  public static VirtualFile getCustomManifestFileForCompiler(@NotNull AndroidFacet facet) {
+    return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().CUSTOM_COMPILER_MANIFEST, false);
+  }
+
+  @Nullable
+  public static VirtualFile getManifestFileForCompiler(AndroidFacet facet) {
+    return facet.getConfiguration().USE_CUSTOM_COMPILER_MANIFEST
+           ? getCustomManifestFileForCompiler(facet)
+           : getManifestFile(facet.getModule());
   }
 
   @Nullable
@@ -69,17 +74,18 @@ public class AndroidRootUtil {
   @Nullable
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
-    if (moduleDirPath == null) return null;
-    String absPath = FileUtil.toSystemIndependentName(moduleDirPath + relativePath);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
-    if (file != null) {
-      return file;
+    if (moduleDirPath != null) {
+      String absPath = FileUtil.toSystemIndependentName(moduleDirPath + relativePath);
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
+      if (file != null) {
+        return file;
+      }
     }
 
     if (lookInContentRoot) {
       for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
-        absPath = FileUtil.toSystemIndependentName(contentRoot.getPath() + relativePath);
-        file = LocalFileSystem.getInstance().findFileByPath(absPath);
+        String absPath = FileUtil.toSystemIndependentName(contentRoot.getPath() + relativePath);
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
         if (file != null) {
           return file;
         }

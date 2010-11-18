@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DaemonCodeAnalyzer implements ProjectComponent {
@@ -50,4 +51,10 @@ public abstract class DaemonCodeAnalyzer implements ProjectComponent {
   public abstract void restart(@NotNull PsiFile file);
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
+
+  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<DaemonListener>("DAEMON_EVENT_TOPIC", DaemonListener.class);
+
+  public interface DaemonListener {
+    void daemonFinished();
+  }
 }

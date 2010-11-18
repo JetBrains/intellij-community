@@ -64,6 +64,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -471,7 +472,7 @@ class DaemonListeners implements Disposable {
           return;
         }
         LogicalPosition logical = editor.visualToLogicalPosition(visual);
-        if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
+        if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);

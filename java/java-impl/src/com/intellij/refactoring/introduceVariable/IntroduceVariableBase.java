@@ -28,8 +28,11 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -49,6 +52,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.PsiVariableEx;
+import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -459,7 +464,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
-      public void pass(OccurrencesChooser.ReplaceChoice choice) {
+      public void pass(final OccurrencesChooser.ReplaceChoice choice) {
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
@@ -468,6 +473,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
+        final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
+        for (PsiExpression occurrence : occurrences) {
+          occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
+        }
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -480,32 +489,51 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
-                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, declarationStatement);
+                  final SmartPsiElementPointer<PsiDeclarationStatement> pointer =
+                    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement);
+                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, pointer);
+                  editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
+                                     occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
+                  final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
                   final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
                     @Override
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
                       final PsiTypeElement typeElement = elementToRename.getTypeElement();
                       builder.replaceElement(typeElement, "Variable_Type",
-                                             ReassignVariableUtil.createExpression(expression, typeElement.getText()), false, true);
+                                             ReassignVariableUtil.createExpression(expression, typeElement.getText(), !cantChangeFinalModifier), false, true);
+                      if (!cantChangeFinalModifier) {
+                        builder.replaceElement(elementToRename.getModifierList(), "_FINAL_", new FinalExpression(project), false, true);
+                      }
                     }
                   };
                   renamer.setAdvertisementText(
-                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll()));
+                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll(), !cantChangeFinalModifier));
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
                       @Override
                       public void consume(Boolean apply) {
                         if (apply) {
+                          final Document document = editor.getDocument();
+                          final PsiDeclarationStatement declarationStatement = pointer.getElement();
+                          final PsiVariable psiVariable = declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
+                          if (psiVariable != null) {
+                            JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+                            FinalExpression.adjustLine(psiVariable, document);
+                          }
                           int startOffset = exprMarker.getStartOffset();
                           final PsiReference referenceAt = file.findReferenceAt(startOffset);
                           if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
                             startOffset = referenceAt.getElement().getTextRange().getEndOffset();
                           } else {
-                            startOffset = editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(startOffset));
+                            startOffset = document.getLineEndOffset(document.getLineNumber(startOffset));
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
+                          typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
-                        typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
+                        for (RangeMarker occurrenceMarker : occurrenceMarkers) {
+                          occurrenceMarker.dispose();
+                        }
+                        editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
                         exprMarker.dispose();
                       }
                     });
@@ -789,14 +817,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                                                final OccurrencesChooser.ReplaceChoice replaceChoice) {
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr);
     final String variableName = suggestedName.names[0];
-    final Boolean generateFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
     final boolean declareFinal =
       !anyAssignmentLHS && (replaceAll &&
-                            declareFinalIfAll || generateFinals == null ?
-                            CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS :
-                            generateFinals.booleanValue());
+                            declareFinalIfAll || createFinals(project));
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {
       @Override
@@ -832,6 +857,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     };
   }
 
+  private static boolean createFinals(Project project) {
+    final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
+    return createFinals == null ? CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS : createFinals.booleanValue();
+  }
+
   public interface Validator {
     boolean isOK(IntroduceVariableSettings dialog);
   }
@@ -853,6 +883,42 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         conflicts.putValue(variable, CommonRefactoringUtil.capitalize(message));
       }
       conflicts.putValue(occurence, RefactoringBundle.message("introducing.variable.may.break.code.logic"));
+    }
+  }
+
+  private static class FinalExpression extends Expression {
+    private final Project myProject;
+
+    public FinalExpression(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public Result calculateResult(ExpressionContext context) {
+      return new TextResult(createFinals(myProject) ? PsiKeyword.FINAL : "");
+    }
+
+    @Override
+    public Result calculateQuickResult(ExpressionContext context) {
+      return calculateResult(context);
+    }
+
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      LookupElement[] lookupElements = new LookupElement[2];
+      lookupElements[0] = LookupElementBuilder.create("");
+      lookupElements[1] = LookupElementBuilder.create(PsiModifier.FINAL + " ");
+      return lookupElements;
+    }
+
+    public static void adjustLine(final PsiVariable psiVariable, final Document document) {
+      final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
+      final int varLineNumber = document.getLineNumber(modifierListOffset);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() { //adjust line indent if final was inserted and then deleted
+        public void run() {
+          CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
+        }
+      });
     }
   }
 }

@@ -1084,7 +1084,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private class MyFilterComponent extends FilterComponent {
     public MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Arrays.asList("\"New in 9\""));
+      setHistory(Arrays.asList("\"New in 10\""));
     }
 
     public void filter() {

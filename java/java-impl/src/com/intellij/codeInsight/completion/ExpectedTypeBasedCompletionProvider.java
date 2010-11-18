@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,21 +29,11 @@ import java.util.Collection;
 */
 public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProvider<CompletionParameters> {
 
-  public ExpectedTypeBasedCompletionProvider() {
-    super(false);
-  }
-
   public void addCompletions(@NotNull final CompletionParameters params, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
     final PsiElement position = params.getPosition();
     if (position.getParent() instanceof PsiLiteralExpression) return;
 
-    final THashSet<ExpectedTypeInfo> infos = new THashSet<ExpectedTypeInfo>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        ContainerUtil.addAll(infos, JavaSmartCompletionContributor.getExpectedTypes(params));
-      }
-    });
-    addCompletions(params, result, infos);
+    addCompletions(params, result, Sets.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(params)));
   }
 
   protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<ExpectedTypeInfo> infos);

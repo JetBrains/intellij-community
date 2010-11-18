@@ -29,6 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
@@ -290,7 +291,7 @@ public class PsiUtil {
   }
 
 
-  public static void shortenReference(GrReferenceElement ref) {
+  public static boolean shortenReference(GrReferenceElement ref) {
     final PsiElement qualifier = ref.getQualifier();
     if (qualifier != null &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
@@ -298,29 +299,38 @@ public class PsiUtil {
         PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null &&
         PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
       final PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass) {
+      if (resolved != null) {
         setQualifier(ref, null);
-        if (ref.isReferenceTo(resolved)) return;
+        if (ref.isReferenceTo(resolved)) return true;
 
-        final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
-        final PsiClass clazz = (PsiClass)resolved;
-        final String qName = clazz.getQualifiedName();
-        if (qName != null) {
-          if (mayInsertImport(ref)) {
-            final GrImportStatement added = file.addImportForClass(clazz);
-            if (!ref.isReferenceTo(resolved)) {
-              file.removeImport(added);
-              setQualifier(ref, qualifier);
+        if (resolved instanceof PsiClass) {
+          final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
+          final PsiClass clazz = (PsiClass)resolved;
+          final String qName = clazz.getQualifiedName();
+          if (qName != null) {
+            if (mayInsertImport(ref)) {
+              final GrImportStatement added = file.addImportForClass(clazz);
+              if (!ref.isReferenceTo(resolved)) {
+                file.removeImport(added);
+              }
             }
           }
         }
+
+        if (!ref.isReferenceTo(resolved)) {
+          setQualifier(ref, qualifier);
+          return false;
+        } else {
+          return true;
+        }
       }
     }
+    return false;
   }
 
   private static void setQualifier(@NotNull GrReferenceElement ref, @Nullable PsiElement qualifier) {
     if (ref instanceof GrReferenceExpression) {
-      ((GrReferenceExpression)ref).setQualifierExpression((GrReferenceExpression)qualifier);
+      ((GrReferenceExpression)ref).setQualifierExpression((GrExpression)qualifier);
     }
     else if (ref instanceof GrCodeReferenceElement) {
       ((GrCodeReferenceElement)ref).setQualifier((GrCodeReferenceElement)qualifier);
@@ -977,7 +987,7 @@ public class PsiUtil {
 
     return null;
   }
-
+  
   @NotNull
   public static PsiClass getOriginalClass(@NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
@@ -998,5 +1008,21 @@ public class PsiUtil {
     }
 
     return aClass;
+  }
+  
+
+  private static String[] visibilityModifiers = new String[]{GrModifier.PRIVATE, GrModifier.PROTECTED, GrModifier.PUBLIC};
+
+  public static void escalateVisibility(PsiMember owner, PsiElement place) {
+    final String visibilityModifier = VisibilityUtil.getVisibilityModifier(owner.getModifierList());
+    int index;
+    for (index = 0; index < visibilityModifiers.length; index++) {
+      String modifier = visibilityModifiers[index];
+      if (modifier.equals(visibilityModifier)) break;
+    }
+    for (; index < visibilityModifiers.length && !isAccessible(place, owner); index++) {
+      String modifier = visibilityModifiers[index];
+      owner.getModifierList().setModifierProperty(modifier, true);
+    }
   }
 }

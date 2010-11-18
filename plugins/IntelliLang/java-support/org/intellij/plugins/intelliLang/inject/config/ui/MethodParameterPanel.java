@@ -54,7 +54,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.List;
 
 public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
 
@@ -378,7 +377,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       final TreeClassChooser chooser = factory.createAllProjectScopeChooser("Select Class");
       chooser.showDialog();
-      final PsiClass psiClass = chooser.getSelectedClass();
+      final PsiClass psiClass = chooser.getSelected();
       if (psiClass != null) {
         setPsiClass(psiClass.getQualifiedName());
         updateParamTree();

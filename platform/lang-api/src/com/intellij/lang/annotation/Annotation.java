@@ -71,7 +71,7 @@ public final class Annotation {
       this.options = options;
     }
 
-    public QuickFixInfo(final IntentionAction fix, final TextRange range, final HighlightDisplayKey key) {
+    public QuickFixInfo(final IntentionAction fix, final TextRange range, @Nullable final HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
@@ -139,7 +139,7 @@ public final class Annotation {
    * @param fix   the quick fix implementation.
    * @param range the text range (relative to the document) where the quick fix is available.
    */
-  public void registerFix(final IntentionAction fix, TextRange range, final HighlightDisplayKey key) {
+  public void registerFix(final IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }

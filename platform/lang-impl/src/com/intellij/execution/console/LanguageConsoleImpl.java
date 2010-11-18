@@ -64,6 +64,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
@@ -318,7 +319,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     final int offset = history.getTextLength();
-    history.insertString(offset, text);
+    appendToHistoryDocument(history, text);
     markupModel.addRangeHighlighter(offset,
                                     history.getTextLength(),
                                     HighlighterLayer.SYNTAX,
@@ -359,15 +360,15 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
-    history.insertString(history.getTextLength(), myPrompt);
+    appendToHistoryDocument(history, myPrompt);
     markupModel.addRangeHighlighter(history.getTextLength() - myPrompt.length(), history.getTextLength(), HighlighterLayer.SYNTAX,
                                     ConsoleViewContentType.USER_INPUT.getAttributes(),
                                     HighlighterTargetArea.EXACT_RANGE);
 
-    int offset = history.getTextLength();
     final String text = consoleEditor.getDocument().getText(textRange);
-    history.insertString(offset, text);
-    offset = history.getTextLength() - text.length(); //offset can be changed after text trimming after insert due to buffer constraints
+     //offset can be changed after text trimming after insert due to buffer constraints
+    appendToHistoryDocument(history, text);
+    int offset = history.getTextLength() - text.length();
     final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(0);
     while (!iterator.atEnd()) {
       final int localOffset = textRange.getStartOffset();
@@ -382,8 +383,14 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
       duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
     }
-    if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
+    if (!text.endsWith("\n")) {
+      appendToHistoryDocument(history, "\n");
+    }
     return text;
+  }
+
+  protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
+    history.insertString(history.getTextLength(), text);
   }
 
   private static void duplicateHighlighters(MarkupModel to, MarkupModel from, int offset, TextRange textRange) {

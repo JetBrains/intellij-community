@@ -785,6 +785,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ThrowCaughtLocallyInspection.class);
         m_inspectionClasses.add(ThrowFromFinallyBlockInspection.class);
         m_inspectionClasses.add(TooBroadCatchInspection.class);
+        m_inspectionClasses.add(TooBroadThrowsInspection.class);
         m_inspectionClasses.add(UncheckedExceptionClassInspection.class);
         m_inspectionClasses.add(UnusedCatchParameterInspection.class);
     }
@@ -821,7 +822,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerThreadingInspections() {
         m_inspectionClasses.add(AccessToNonThreadSafeStaticFieldFromInstanceInspection.class);
         m_inspectionClasses.add(AccessToStaticFieldLockedOnInstanceInspection.class);
-        m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         m_inspectionClasses.add(AwaitNotInLoopInspection.class);
         m_inspectionClasses.add(AwaitWithoutCorrespondingSignalInspection.class);
         m_inspectionClasses.add(BusyWaitInspection.class);
@@ -834,6 +834,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MethodMayBeSynchronizedInspection.class);
         m_inspectionClasses.add(NakedNotifyInspection.class);
         m_inspectionClasses.add(NestedSynchronizedStatementInspection.class);
+        m_inspectionClasses.add(NonAtomicOperationOnVolatileFieldInspection.class);
         m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
         m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
         m_inspectionClasses.add(NotifyNotInSynchronizedContextInspection.class);
@@ -1045,6 +1046,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerJUnitInspections() {
         m_inspectionClasses.add(AssertEqualsBetweenInconvertibleTypesInspection.class);
         m_inspectionClasses.add(AssertEqualsMayBeAssertSameInspection.class);
+        m_inspectionClasses.add(AssertEqualsCalledOnArrayInspection.class);
         m_inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         m_inspectionClasses.add(BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection.class);
         m_inspectionClasses.add(BeforeOrAfterIsPublicVoidNoArgInspection.class);

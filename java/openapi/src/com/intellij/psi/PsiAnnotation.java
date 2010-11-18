@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +31,6 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
-  PsiElementArrayConstructor<PsiAnnotation> PSI_ANNOTATION_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiAnnotation>() {
-    public PsiAnnotation[] newPsiElementArray(int length) {
-      return length == 0 ? EMPTY_ARRAY : new PsiAnnotation[length];
-    }
-  };
 
   ArrayFactory<PsiAnnotation> ARRAY_FACTORY = new ArrayFactory<PsiAnnotation>() {
     public PsiAnnotation[] create(final int count) {

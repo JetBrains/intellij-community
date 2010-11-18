@@ -56,7 +56,7 @@ public abstract class RemoteObjectWrapper<T> {
   }
 
   protected synchronized void handleRemoteError(RemoteException e) {
-    MavenLog.LOG.info("Connection failed. Will be reconnected on the next request.", e);
+    MavenLog.LOG.debug("Connection failed. Will be reconnected on the next request.", e);
     onError();
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -59,6 +60,13 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public abstract List<? extends AbstractTestProxy> getChildren();
 
   public abstract List<? extends AbstractTestProxy> getAllTests();
+
+  @Nullable
+  public Integer getDuration() {
+    return null;
+  }
+
+  public abstract boolean shouldSkipRootNodeForExport();
 
   public void fireOnNewPrintable(@NotNull final Printable printable) {
     if (myPrinter != null) {

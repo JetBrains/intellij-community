@@ -87,7 +87,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
-  private final boolean myTestModeFlag;
+  private boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
 
@@ -355,6 +355,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isUnitTestMode() {
     return myTestModeFlag;
+  }
+
+  public void setUnitTestMode(boolean testModeFlag) {
+    myTestModeFlag = testModeFlag;
   }
 
   public boolean isHeadlessEnvironment() {
@@ -679,6 +683,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!force) {
           if (!showConfirmation()) {
             saveAll();
+            myExitCode = 0;
             return;
           }
         }
@@ -687,12 +692,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         saveSettings();
 
-        if (!canExit()) return;
+        if (!canExit()) {
+          myExitCode = 0;
+          return;
+        }
 
-        if (disposeSelf()) System.exit(myExitCode);
+        final boolean success = disposeSelf();
+        if (!success || isUnitTestMode()) {
+          myExitCode = 0;
+          return;
+        }
+
+        System.exit(myExitCode);
       }
     };
-    
+
     if (!isDispatchThread()) {
       invokeLater(runnable, ModalityState.NON_MODAL);
     }

@@ -90,8 +90,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile("QualifiedNew1.java");
 
     assertEquals(2, myItems.length);
-    assertEquals("IInner", myItems[0].getLookupString());
-    assertEquals("Inner", myItems[1].getLookupString());
+    assertEquals("Inner", myItems[0].getLookupString());
+    assertEquals("IInner", myItems[1].getLookupString());
   }
 
   public void testQualifiedNew2() throws Exception {
@@ -106,7 +106,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.completeBasic()
     myFixture.type 'a\n'
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testSimpleVariable() throws Exception { doTest() }
@@ -311,7 +311,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     try {
       configureByFile(getTestName(false) + ".java");
       type('(');
-      checkResultByFile(getTestName(false) + "_after.java");
+      checkResult()
     }
     finally {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
@@ -336,7 +336,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testExcessSpaceInTypeCast() throws Throwable {
    configureByFile(getTestName(false) + ".java");
    selectItem(myItems[0]);
-   checkResultByFile(getTestName(false) + "_after.java");
+   checkResult()
   }
 
   public void testPackageInAnnoParam() throws Throwable {
@@ -359,9 +359,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testUndoCommonPrefixOnHide() throws Throwable {//actually don't undo
     configureByFile(getTestName(false) + ".java");
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
     LookupManager.getInstance(getProject()).hideActiveLookup();
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testOnlyKeywordsInsideSwitch() throws Throwable {
@@ -380,13 +380,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testChainedCallOnNextLine() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testFinishWithDot() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     type('.');
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testEnclosingThis() throws Throwable { doTest(); }
@@ -394,7 +394,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testSeamlessConstant() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testDefaultAnnoParam() throws Throwable { doTest(); }
@@ -403,7 +403,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     type(' ');
     assertNull(getLookup());
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testNoSpaceInParensWithoutParams() throws Throwable {
@@ -430,14 +430,14 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     type('g');
     complete();
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
     assertStringItems("getBar", "getFoo", "getClass");
   }
 
   public void testQualifierAsPackage() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testQualifierAsPackage2() throws Throwable {
@@ -459,7 +459,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodReturnTypeNoSpace() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     selectItem(myItems[0]);
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testEnumWithoutConstants() throws Throwable {
@@ -489,13 +489,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testFinishClassNameWithDot() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     type('.');
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testFinishClassNameWithLParen() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     type('(');
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testSelectNoParameterSignature() throws Throwable {
@@ -509,7 +509,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
       }
     }.execute().throwException();
 
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testCompletionInsideClassLiteral() throws Throwable {
@@ -520,7 +520,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
         getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
       }
     }.execute().throwException();
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testSuperInConstructor() throws Throwable {
@@ -575,12 +575,26 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java");
     type('~');
     assertNull(getLookup());
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testAnnotationQualifiedName() throws Throwable {
     doTest();
   }
+
+  public void testClassNameGenerics() throws Throwable {
+    configure()
+    type  '\n'
+    checkResult();
+  }
+
+  public void testClassNameAnonymous() throws Throwable {
+    configure()
+    type  '\n'
+    checkResult();
+  }
+
+  public void testClassNameWithInner() throws Throwable { doTest() }
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
@@ -613,6 +627,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configureByFile(getTestName(false) + ".java")
   }
 
+  public void testFinalInForLoop() throws Throwable {
+    configure()
+    checkResultByFile(getTestName(false) + ".java")
+    assertOrderedEquals myFixture.lookupElementStrings, 'final'
+  }
+
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }
@@ -631,7 +651,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     type('a');
     complete();
     assertStringItems("fai1", "fai2", "fai3");
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testSuggestInaccessibleOnSecondInvocation() throws Throwable {
@@ -640,13 +660,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
-    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
-      @Override
-      protected void run() throws Throwable {
-        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute().throwException();
-    checkResultByFile(getTestName(false) + "_after.java");
+    selectItem(lookup.items[2], Lookup.NORMAL_SELECT_CHAR)
+    checkResult()
   }
 
   public void testNoCommonPrefixInsideIdentifier() throws Throwable {
@@ -659,20 +674,17 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult()
   }
 
   public void testPropertyReferencePrefix() throws Throwable {
     myFixture.addFileToProject("test.properties", "foo.bar=Foo! Bar!").getVirtualFile();
-
-    configure()
-    checkResultByFile(getTestName(false) + ".java");
-    assertNull(getLookup());
+    doAntiTest()
   }
 
   private void doTest() throws Exception {
     configure()
-    checkResultByFile(getTestName(false) + "_after.java");
+    checkResult();
   }
 
   private void doAntiTest() throws Exception {
@@ -683,6 +695,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSecondAnonymousClassParameter() throws Throwable { doTest(); }
+
+  public void testSpaceAfterReturn() throws Throwable {
+    configure()
+    type '\n'
+    checkResult()
+  }
+
+  private def checkResult() {
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
@@ -705,6 +727,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
+  public void testSuggestExpectedTypeMembers() throws Throwable {
+    configure()
+    selectItem myItems[0]
+    checkResult()
+  }
+
+  public void testSuggestExpectedTypeMembersInCall() throws Throwable {
+    configure()
+    selectItem myItems[0]
+    checkResult();
+  }
+
   public void testRightShift() throws Throwable {
     configure()
     assertStringItems("myField1", "myField2");
@@ -717,24 +751,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
       public static void bar() {}
     }
     """)
-    myFixture.configureByText("a.java", """
-    import static foo.Foo.foo;
-
-    class Bar {{
-      foo();
-      ba<caret>
-    }}
-    """)
-    complete()
-    myFixture.checkResult """
-    import static foo.Foo.bar;
-    import static foo.Foo.foo;
-
-    class Bar {{
-      foo();
-      bar();<caret>
-    }}
-    """
+    doTest()
   }
 
   public void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
@@ -748,62 +765,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
         public static void bar() {}
       }
       """)
-      myFixture.configureByText("a.java", """
-      import foo.Foo;
-      import static foo.Foo.foo;
-
-      class Bar {{
-        foo();
-        new Foo().ba<caret>z
-      }}
-      """)
-      complete()
+      configure()
       assertOneElement(myFixture.getLookupElements())
       myFixture.type '\t'
-      myFixture.checkResult """
-      import foo.Foo;
-      import static foo.Foo.foo;
-
-      class Bar {{
-        foo();
-        new Foo().bar();<caret>
-      }}
-      """
+      checkResult()
     }
     finally {
       CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = old
     }
   }
 
-  public void testInstanceMagicMethod() throws Exception {
-    myFixture.configureByText("a.java", """
-      public class JavaClass {
-          <T> T magic() {}
-
-          void foo() {
-              mag<caret>
-          }
-      }
-      """)
-    myFixture.completeBasic()
-    myFixture.checkResult """
-      public class JavaClass {
-          <T> T magic() {}
-
-          void foo() {
-              magic()<caret>
-          }
-      }
-      """
-  }
+  public void testInstanceMagicMethod() throws Exception { doTest() }
 
   public void testNoMethodsInParameterType() {
-    myFixture.configureByText("a.java", """
-      class Foo {
-        static void foo(f<caret>int a) {}
-      }
-    """)
-    myFixture.completeBasic()
+    configure()
     assertOrderedEquals myFixture.lookupElementStrings, "final", "float"
   }
 

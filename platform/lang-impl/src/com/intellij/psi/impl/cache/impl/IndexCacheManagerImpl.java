@@ -21,7 +21,9 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -85,20 +87,25 @@ public class IndexCacheManagerImpl implements CacheManager{
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
     final Set<VirtualFile> vFiles = new THashSet<VirtualFile>();
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myProject);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          public boolean process(final VirtualFile file, final Integer value) {
-            ProgressManager.checkCanceled();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              vFiles.add(file);
+    try {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+            public boolean process(final VirtualFile file, final Integer value) {
+              ProgressManager.checkCanceled();
+              final int mask = value.intValue();
+              if ((mask & occurrenceMask) != 0) {
+                vFiles.add(file);
+              }
+              return true;
             }
-            return true;
-          }
-        }, projectScope);
-      }
-    });
+          }, projectScope);
+        }
+      });
+    }
+    catch (IndexNotReadyException e) {
+      throw new ProcessCanceledException();
+    }
 
     if (vFiles.isEmpty()) return true;
 

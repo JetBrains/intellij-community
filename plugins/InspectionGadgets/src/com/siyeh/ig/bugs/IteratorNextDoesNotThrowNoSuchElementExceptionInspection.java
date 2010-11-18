@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,23 +30,27 @@ import java.util.Set;
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "IteratorNextCanNotThrowNoSuchElementException";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "iterator.next.does.not.throw.nosuchelementexception.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
     }
@@ -60,7 +64,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                     HardcodedMethodConstants.NEXT)) {
                 return;
             }
-            final Set<PsiType> exceptions =
+            final Set<PsiClassType> exceptions =
                     ExceptionUtils.calculateExceptionsThrown(method);
             for (final PsiType exception : exceptions) {
                 if (exception.equalsToText(
@@ -97,7 +101,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             if (method == null) {
                 return;
             }
-            final Set<PsiType> exceptions =
+            final Set<PsiClassType> exceptions =
                     ExceptionUtils.calculateExceptionsThrown(method);
             for (final PsiType exception : exceptions) {
                 if (exception.equalsToText(

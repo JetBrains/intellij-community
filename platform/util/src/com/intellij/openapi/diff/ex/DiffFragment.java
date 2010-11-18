@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.ex;
 
 public class DiffFragment {
+  public static DiffFragment[] EMPTY_ARRAY = new DiffFragment[0];
+
   private final String myText1;
   private final String myText2;
   private boolean myIsModified;

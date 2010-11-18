@@ -20,10 +20,9 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
@@ -35,13 +34,13 @@ public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;
   private ClassFilterEditor myClassExclusionFilterEditor;
   private Project myProject;
-  private TreeClassChooser.ClassFilter myChooserFilter;
+  private ClassFilter myChooserFilter;
 
   public EditClassFiltersDialog(Project project) {
     this(project, null);
   }
 
-  public EditClassFiltersDialog(Project project, TreeClassChooser.ClassFilter filter) {
+  public EditClassFiltersDialog(Project project, ClassFilter filter) {
     super(project, true);
     myChooserFilter = filter;
     myProject = project;
@@ -75,7 +74,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public void setFilters(ClassFilter[] filters, ClassFilter[] inverseFilters) {
+  public void setFilters(com.intellij.ui.classFilter.ClassFilter[] filters, com.intellij.ui.classFilter.ClassFilter[] inverseFilters) {
     myClassFilterEditor.setFilters(filters);
     myClassExclusionFilterEditor.setFilters(inverseFilters);
   }
@@ -84,11 +83,11 @@ public class EditClassFiltersDialog extends DialogWrapper {
     return "#com.intellij.debugger.ui.breakpoints.EditClassFiltersDialog";
   }
 
-  public ClassFilter[] getFilters() {
+  public com.intellij.ui.classFilter.ClassFilter[] getFilters() {
     return myClassFilterEditor.getFilters();
   }
 
-  public ClassFilter[] getExclusionFilters() {
+  public com.intellij.ui.classFilter.ClassFilter[] getExclusionFilters() {
     return myClassExclusionFilterEditor.getFilters();
   }
 }

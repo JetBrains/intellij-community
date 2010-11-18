@@ -34,7 +34,7 @@
   <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
 
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="org.intellij.plugins.relaxNG.SimpleErrorReportSubmitter" />
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
     <xml.schemaProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceSchemaProvider" />
     <hectorComponentProvider implementation="org.intellij.plugins.relaxNG.config.NoNamespaceConfigImpl$HectorProvider" />

@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -37,18 +36,18 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
+  private final ClasspathPanel myClasspathPanel;
   private StructureConfigurableContext myContext;
   private Predicate<Library> myAcceptedLibraries;
-  private AddNewLibraryItemAction myNewLibraryAction;
+  private JButton myCreateLibraryButton;
 
-  public ProjectStructureChooseLibrariesDialog(JComponent parentComponent,
-                                               @Nullable Project project,
+  public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               Predicate<Library> acceptedLibraries, AddNewLibraryItemAction newLibraryAction) {
-    super(parentComponent, "Choose Libraries", project, true);
+                                               Predicate<Library> acceptedLibraries) {
+    super(classpathPanel.getComponent(), "Choose Libraries", classpathPanel.getProject(), true);
+    myClasspathPanel = classpathPanel;
     myContext = context;
     myAcceptedLibraries = acceptedLibraries;
-    myNewLibraryAction = newLibraryAction;
     setOKButtonText("Add Selected");
     init();
   }
@@ -96,6 +95,15 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   }
 
   @Override
+  protected JButton createJButtonForAction(Action action) {
+    final JButton button = super.createJButtonForAction(action);
+    if (action instanceof CreateNewLibraryAction) {
+      myCreateLibraryButton = button;
+    }
+    return button;
+  }
+
+  @Override
   protected LibrariesTreeNodeBase<Library> createLibraryDescriptor(NodeDescriptor parentDescriptor,
                                                                    Library library) {
     final String libraryName = getLibraryName(library);
@@ -121,8 +129,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
     @Override
     protected void doAction(ActionEvent e) {
-      close(CANCEL_EXIT_CODE);
-      myNewLibraryAction.execute();
+      AddNewLibraryItemAction.chooseTypeAndExecute(myClasspathPanel, myContext, ProjectStructureChooseLibrariesDialog.this, myCreateLibraryButton);
     }
   }
 }

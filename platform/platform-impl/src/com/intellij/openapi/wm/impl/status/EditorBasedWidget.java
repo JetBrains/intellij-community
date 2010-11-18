@@ -32,7 +32,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   protected StatusBar myStatusBar;
   private Project myProject;
 
-  private MessageBusConnection myConnection;
+  protected MessageBusConnection myConnection;
 
   protected EditorBasedWidget(Project project) {
     myProject = project;

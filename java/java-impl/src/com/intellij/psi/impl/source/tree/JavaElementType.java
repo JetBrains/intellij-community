@@ -236,7 +236,7 @@ public interface JavaElementType {
         return JavaParserUtil.parseFragment(chameleon,
                                             new JavaParserUtil.ParserWrapper() {
                                               public void parse(final PsiBuilder builder) {
-                                                ReferenceParser.parseJavaCodeReference(builder, false, true, false, false);
+                                                ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
                                               }
                                             });
       }

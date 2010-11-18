@@ -80,4 +80,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
   public void testOutputVariable() throws Exception {
     doTest();
   }
+
+  public void testUniqueObjectName() throws Exception {
+    doTest();
+  }
 }

@@ -52,6 +52,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -334,6 +335,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     root.add(top, BorderLayout.NORTH);
 
     myDetailsPane = new JTextPane();
+    myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
     myDetailsPane.setEditable(false);
     JPanel infoPanel = new JPanel(new BorderLayout());
     JPanel gapPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
@@ -342,6 +344,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     infoPanel.add(ScrollPaneFactory.createScrollPane(myDetailsPane), BorderLayout.CENTER);
 
     myMoreInfoPane = new JTextPane();
+    myMoreInfoPane.setBackground(UIUtil.getTextFieldBackground());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMoreInfoPane);
     scrollPane.setPreferredSize(new Dimension(100, 50));
     final LabeledComponent<JScrollPane> labeledComponent =

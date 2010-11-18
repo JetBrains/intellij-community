@@ -37,7 +37,7 @@
 
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
-    <extensionPoint name="scriptType" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeEP"/>
+    <extensionPoint name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
 
     <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
 
@@ -62,8 +62,8 @@
 
     <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator" order="last" />
 
-    <scriptType extensions="gant" descriptorClass="org.jetbrains.plugins.groovy.gant.GantScriptType"/>
-    <scriptType extensions="gradle" descriptorClass="org.jetbrains.plugins.groovy.gradle.GradleScriptType"/>
+    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector" />
+    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gradle.GradleScriptTypeDetector"/>
 
     <!-- GroovyDSL extensions -->
     <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>
@@ -90,7 +90,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <editorNotificationProvider implementation="org.jetbrains.plugins.groovy.annotator.ConfigureGroovyLibraryNotificationProvider"/>
-    <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduceParameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
+    <refactoring.introduceParameterMethodUsagesProcessor implementation="org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.GroovyIntroduceParameterMethodUsagesProcessor"/>
     <refactoring.changeSignatureUsageProcessor implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor" order="before javaProcessor"/>
 
     <constantExpressionEvaluator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator"/>
@@ -182,6 +182,7 @@
 
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence" id="groovyAdvanced" order="after groovyNameIdentifier"/>
+    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue" order="last"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>

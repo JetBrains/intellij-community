@@ -92,9 +92,9 @@ public class ExpectedExceptionNeverThrownInspection
             if (ClassUtils.isSubclass(aClass, "java.lang.RuntimeException")) {
                 return;
             }
-            final Set<PsiType> exceptionsThrown =
+            final Set<PsiClassType> exceptionsThrown =
                     ExceptionUtils.calculateExceptionsThrown(body);
-            if (exceptionsThrown.contains(type)) {
+            if (exceptionsThrown.contains(classType)) {
                 return;
             }
             registerError(operand, method);

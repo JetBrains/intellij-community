@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -123,7 +123,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       final RunnerAndConfigurationSettings settings = createConfiguration(scriptClass);
       if (settings != null) {
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
-        GroovyScriptType.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
+        GroovyScriptTypeDetector.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
       }
     }
@@ -157,7 +157,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
         if (file instanceof GroovyFile) {
           final VirtualFile vfile = file.getVirtualFile();
           if (vfile != null && FileUtil.toSystemIndependentName(path).equals(vfile.getPath())) {
-            if (GroovyScriptType.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
+            if (GroovyScriptTypeDetector.getScriptType((GroovyFile)file).isConfigurationByLocation(existing, location)) {
               return existingConfiguration;
             }
           }

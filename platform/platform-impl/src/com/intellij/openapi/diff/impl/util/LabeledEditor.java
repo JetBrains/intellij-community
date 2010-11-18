@@ -27,8 +27,8 @@ public class LabeledEditor extends JPanel {
     super(new BorderLayout());
   }
 
-  private String addReadOnly(String title, boolean readonly) {
-    if (readonly) title += DiffBundle.message("diff.content.read.only.content.title.suffix");
+  private static String addReadOnly(String title, boolean readonly) {
+    if (readonly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
     return title;
   }
 

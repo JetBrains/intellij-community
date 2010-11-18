@@ -34,6 +34,7 @@ public class HgConfigurationProjectPanel {
   private JRadioButton myAutoRadioButton;
   private JRadioButton mySelectRadioButton;
   private TextFieldWithBrowseButton myPathSelector;
+  private JCheckBox myRunHgAsBashCheckBox;
 
   public HgConfigurationProjectPanel(HgProjectSettings projectSettings) {
     myProjectSettings = projectSettings;
@@ -53,12 +54,14 @@ public class HgConfigurationProjectPanel {
                                  ? !myPathSelector.getText().equals(myProjectSettings.getHgExecutable())
                                  : myAutoRadioButton.isSelected() != myProjectSettings.isAutodetectHg();
     return executableModified || myCheckIncomingCbx.isSelected() != myProjectSettings.isCheckIncoming()
-           || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing();
+           || myCheckOutgoingCbx.isSelected() != myProjectSettings.isCheckOutgoing()
+           || myRunHgAsBashCheckBox.isSelected() != myProjectSettings.isRunViaBash();
   }
 
   public void saveSettings() {
     myProjectSettings.setCheckIncoming(myCheckIncomingCbx.isSelected());
     myProjectSettings.setCheckOutgoing(myCheckOutgoingCbx.isSelected());
+    myProjectSettings.setRunViaBash(myRunHgAsBashCheckBox.isSelected());
 
     if (myAutoRadioButton.isSelected()) {
       myProjectSettings.enableAutodetectHg();
@@ -70,6 +73,7 @@ public class HgConfigurationProjectPanel {
   public void loadSettings() {
     myCheckIncomingCbx.setSelected(myProjectSettings.isCheckIncoming());
     myCheckOutgoingCbx.setSelected(myProjectSettings.isCheckOutgoing());
+    myRunHgAsBashCheckBox.setSelected(myProjectSettings.isRunViaBash());
 
     boolean isAutodetectHg = myProjectSettings.isAutodetectHg();
     myAutoRadioButton.setSelected(isAutodetectHg);
@@ -94,7 +98,7 @@ public class HgConfigurationProjectPanel {
       hgExecutable = myPathSelector.getText();
     }
     HgVersionCommand command = new HgVersionCommand();
-    if (!command.isValid(hgExecutable)) {
+    if (!command.isValid(hgExecutable, myRunHgAsBashCheckBox.isSelected())) {
       throw new ConfigurationException(
         HgVcsMessages.message("hg4idea.configuration.executable.error", hgExecutable)
       );
@@ -102,7 +106,7 @@ public class HgConfigurationProjectPanel {
   }
 
   private void createUIComponents() {
-    myPathSelector = new HgSetExecutablePathPanel();
+    myPathSelector = new HgSetExecutablePathPanel(myProjectSettings);
   }
 
 }

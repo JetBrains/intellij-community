@@ -906,7 +906,6 @@ public class HighlightUtil {
     return false;
   }
 
-
   @Nullable
   static HighlightInfo checkBinaryOperatorApplicable(PsiBinaryExpression expression) {
     PsiExpression lOperand = expression.getLOperand();
@@ -1731,21 +1730,20 @@ public class HighlightUtil {
       rTypeParams = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
     }
 
-
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
-    @Language("HTML") @NonNls String requredRow = "";
+    @Language("HTML") @NonNls String requiredRow = "";
     @Language("HTML") @NonNls String foundRow = "";
     for (int i = 0; i < typeParamColumns; i++) {
       PsiTypeParameter lTypeParameter = i >= lTypeParams.length ? null : lTypeParams[i];
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
-      PsiType lSubstedType = lTypeParameter == null ? null : lTypeSubstitutor.substitute(lTypeParameter);
-      PsiType rSubstedType = rTypeParameter == null ? null : rTypeSubstitutor.substitute(rTypeParameter);
-      boolean matches = Comparing.equal(lSubstedType, rSubstedType);
+      PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeSubstitutor.substitute(lTypeParameter);
+      PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeSubstitutor.substitute(rTypeParameter);
+      boolean matches = Comparing.equal(lSubstitutedType, rSubstitutedType);
       @NonNls String openBrace = i == 0 ? "&lt;" : "";
       @NonNls String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
-      requredRow += "<td>" + (lTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(lSubstedType, matches) +
-                    (i < lTypeParams.length ? closeBrace : "") + "</td>";
-      foundRow += "<td>" + (rTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(rSubstedType, matches) +
+      requiredRow += "<td>" + (lTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(lSubstitutedType, matches) +
+                     (i < lTypeParams.length ? closeBrace : "") + "</td>";
+      foundRow += "<td>" + (rTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(rSubstitutedType, matches) +
                   (i < rTypeParams.length ? closeBrace : "") + "</td>";
     }
     PsiType lRawType = lType1 instanceof PsiClassType ? ((PsiClassType)lType1).rawType() : lType1;
@@ -1753,7 +1751,7 @@ public class HighlightUtil {
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
 
     String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
-                                               redIfNotMatch(lRawType, assignable), requredRow,
+                                               redIfNotMatch(lRawType, assignable), requiredRow,
                                                redIfNotMatch(rRawType, assignable), foundRow);
 
     String description = JavaErrorMessages.message("incompatible.types", formatType(lType1), formatType(rType1));

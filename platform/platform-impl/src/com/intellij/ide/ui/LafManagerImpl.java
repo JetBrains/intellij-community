@@ -33,6 +33,7 @@ import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
+import com.sun.java.swing.plaf.windows.WindowsTreeUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,9 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
+import javax.swing.plaf.synth.Region;
+import javax.swing.plaf.synth.SynthLookAndFeel;
+import javax.swing.plaf.synth.SynthStyle;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -59,11 +63,11 @@ import java.util.HashMap;
  * @author Vladimir Kondratyev
  */
 @State(
-    name = "LafManager",
-    roamingType = RoamingType.PER_PLATFORM,
-    storages = {@Storage(
-        id = "other",
-        file = "$APP_CONFIG$/options.xml")})
+  name = "LafManager",
+  roamingType = RoamingType.PER_PLATFORM,
+  storages = {@Storage(
+    id = "other",
+    file = "$APP_CONFIG$/options.xml")})
 public final class LafManagerImpl extends LafManager implements ApplicationComponent, PersistentStateComponent<Element> {
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
@@ -78,8 +82,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String HEAVY_WEIGHT_POPUP="heavy";
   /**
    * One of the possible values of -Didea.popup.weight property. Medium weight means
-   * that popup will be shouw inside the paren't JLayeredPane if it can be fit to it.
-   * Otherwise popup will be shown in the window. This mode is defaut for the Swing but
+   * that popup will be show inside the parent JLayeredPane if it can be fit to it.
+   * Otherwise popup will be shown in the window. This mode is default for the Swing but
    * it's very slow (much slower then heavy weight popups).
    */
   @NonNls private static final String MEDIUM_WEIGHT_POPUP="medium";
@@ -100,6 +104,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     "FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText", "FileChooser.listViewActionLabelText",
     "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
   };
+  @NonNls private static final String[] ourOptionPaneIconKeys = {
+    "OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"
+  };
 
   private final HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<UIManager.LookAndFeelInfo, HashMap<String, Object>>();
   private final UISettings myUiSettings;
@@ -107,23 +114,32 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
 
-  /** invoked by reflection
-   * @param uiSettings   */
-  LafManagerImpl(UISettings uiSettings){
+  /**
+   * invoked by reflection
+   *
+   * @param uiSettings
+   */
+  LafManagerImpl(UISettings uiSettings) {
     myUiSettings = uiSettings;
-    myListenerList=new EventListenerList();
+    myListenerList = new EventListenerList();
 
-    IdeaLookAndFeelInfo ideaLaf=new IdeaLookAndFeelInfo();
-    UIManager.LookAndFeelInfo[] installedLafs=UIManager.getInstalledLookAndFeels();
+    IdeaLookAndFeelInfo ideaLaf = new IdeaLookAndFeelInfo();
+    UIManager.LookAndFeelInfo[] installedLafs = UIManager.getInstalledLookAndFeels();
 
     // Get all installed LAFs
-    myLafs=new UIManager.LookAndFeelInfo[1+installedLafs.length];
-    myLafs[0]=ideaLaf;
-    System.arraycopy(installedLafs,0,myLafs,1,installedLafs.length);
-    Arrays.sort(myLafs,new MyComparator());
+    myLafs = new UIManager.LookAndFeelInfo[1 + installedLafs.length];
+    myLafs[0] = ideaLaf;
+    System.arraycopy(installedLafs, 0, myLafs, 1, installedLafs.length);
+    Arrays.sort(myLafs, new Comparator<UIManager.LookAndFeelInfo>() {
+      public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
+        String name1 = obj1.getName();
+        String name2 = obj2.getName();
+        return name1.compareToIgnoreCase(name2);
+      }
+    });
 
     // Setup current LAF. Unfortunately it's system depended.
-    myCurrentLaf=getDefaultLaf();    
+    myCurrentLaf = getDefaultLaf();
   }
 
   /**
@@ -202,13 +218,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   public boolean isUnderAquaLookAndFeel() {
-    //noinspection HardCodedStringLiteral
-    return "Mac OS X".equals(getCurrentLookAndFeel().getName());
+    return UIUtil.isUnderAquaLookAndFeel();
   }
 
   public boolean isUnderQuaquaLookAndFeel() {
-    //noinspection HardCodedStringLiteral
-    return "Quaqua".equals(getCurrentLookAndFeel().getName());
+    return UIUtil.isUnderQuaquaLookAndFeel();
   }
 
   /**
@@ -387,7 +401,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private Point fixPopupLocation(final Component contents, final int x, final int y) {
+  private static Point fixPopupLocation(final Component contents, final int x, final int y) {
     if (!(contents instanceof JToolTip)) return new Point(x, y);
 
     final PointerInfo info;
@@ -417,12 +431,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return rec.getLocation();
   }
 
-
   /**
    * Updates LAF of all windows. The method also updates font of components
    * as it's configured in <code>UISettings</code>.
    */
-  public void updateUI(){
+  public void updateUI() {
     UIDefaults lookAndFeelDefaults=UIManager.getLookAndFeelDefaults();
     initInputMapDefaults(lookAndFeelDefaults);
     patchFileChooserStrings(lookAndFeelDefaults);
@@ -433,6 +446,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     else {
       restoreOriginalFontDefaults(lookAndFeelDefaults);
     }
+    patchOptionPaneIcons(lookAndFeelDefaults);
 
     Frame[] frames=Frame.getFrames();
     for (Frame frame : frames) {
@@ -441,11 +455,24 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     fireLookAndFeelChanged();
   }
 
-  private void patchFileChooserStrings(final UIDefaults defaults) {
+  private static void patchFileChooserStrings(final UIDefaults defaults) {
     if (!defaults.containsKey(ourFileChooserTextKeys [0])) {
       // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
       for (String key : ourFileChooserTextKeys) {
         defaults.put(key, IdeBundle.message(key));
+      }
+    }
+  }
+
+  private static void patchOptionPaneIcons(final UIDefaults defaults) {
+    if (UIUtil.isUnderGTKLookAndFeel() && defaults.get(ourOptionPaneIconKeys[0]) == null) {
+      // GTK+ L&F keeps icons hidden in style
+      final SynthStyle style = SynthLookAndFeel.getStyle(new JOptionPane(""), Region.DESKTOP_ICON);
+      if (style != null) {
+        for (final String key : ourOptionPaneIconKeys) {
+          final Object icon = style.get(null, key);
+          if (icon != null) defaults.put(key, icon);
+        }
       }
     }
   }
@@ -527,7 +554,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   private static void initInputMapDefaults(UIDefaults defaults){
     // Make ENTER work in JTrees
     InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
-    if(treeInputMap!=null){ // it's really possible. For examle,  GTK+ doesn't have such map
+    if(treeInputMap!=null){ // it's really possible. For example,  GTK+ doesn't have such map
       treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"toggle");
     }
     // Cut/Copy/Paste in JTextAreas
@@ -540,7 +567,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if(textFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(textFieldInputMap, false);
     }
-    // Cut/Copy/Paste in JPAsswordField
+    // Cut/Copy/Paste in JPasswordField
     InputMap passwordFieldInputMap=(InputMap)defaults.get("PasswordField.focusInputMap");
     if(passwordFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
       installCutCopyPasteShortcuts(passwordFieldInputMap, false);
@@ -586,14 +613,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static final class MyComparator implements Comparator{
-    public int compare(Object obj1,Object obj2){
-      String name1=((UIManager.LookAndFeelInfo)obj1).getName();
-      String name2=((UIManager.LookAndFeelInfo)obj2).getName();
-      return name1.compareToIgnoreCase(name2);
-    }
-  }
-
   private static final class IdeaLaf extends MetalLookAndFeel{
     protected void initComponentDefaults(UIDefaults table) {
       super.initComponentDefaults(table);
@@ -613,8 +632,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("ScrollBar.background", col);
       defaults.put("ScrollBar.track", col);
 
-//      Border scrollPaneBorder = new BorderUIResource(new BegBorders.ScrollPaneBorder());
-//      defaults.put("ScrollPane.border", scrollPaneBorder);
+      //Border scrollPaneBorder = new BorderUIResource(new BegBorders.ScrollPaneBorder());
+      //defaults.put("ScrollPane.border", scrollPaneBorder);
       defaults.put("TextField.border", BegBorders.getTextFieldBorder());
       defaults.put("PasswordField.border", BegBorders.getTextFieldBorder());
       Border popupMenuBorder = new BegPopupMenuBorder();
@@ -628,7 +647,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("TabbedPaneUI", BegTabbedPaneUI.class.getName());
       defaults.put("TableUI", BegTableUI.class.getName());
       defaults.put("TreeUI", BegTreeUI.class.getName());
-//      defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
+      //defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
 
       defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
       defaults.put("ToolTip.background", new ColorUIResource(255, 255, 231));
@@ -645,8 +664,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
       defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
       defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
-      defaults.put("Tree.expandedIcon", com.sun.java.swing.plaf.windows.WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-      defaults.put("Tree.collapsedIcon", com.sun.java.swing.plaf.windows.WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
+      defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
+      defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
       defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
                          "ctrl C", "copy",
                          "ctrl V", "paste",

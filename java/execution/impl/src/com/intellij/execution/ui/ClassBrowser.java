@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configurations.ConfigurationUtil;
+import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
@@ -41,7 +42,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
 
   @Nullable
   protected String showDialog() {
-    final TreeClassChooser.ClassFilterWithScope classFilter;
+    final ClassFilter.ClassFilterWithScope classFilter;
     try {
       classFilter = getFilter();
     }
@@ -53,17 +54,17 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     final TreeClassChooser dialog = createClassChooser(classFilter);
     configureDialog(dialog);
     dialog.showDialog();
-    final PsiClass psiClass = dialog.getSelectedClass();
+    final PsiClass psiClass = dialog.getSelected();
     if (psiClass == null) return null;
     onClassChoosen(psiClass);
     return JavaExecutionUtil.getRuntimeQualifiedName(psiClass);
   }
 
-  protected TreeClassChooser createClassChooser(TreeClassChooser.ClassFilterWithScope classFilter) {
+  protected TreeClassChooser createClassChooser(ClassFilter.ClassFilterWithScope classFilter) {
     return TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser(myTitle, classFilter.getScope(), classFilter, null);
   }
 
-  protected abstract TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException;
+  protected abstract ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException;
 
   protected void onClassChoosen(final PsiClass psiClass) { }
 
@@ -73,20 +74,20 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     if (psiClass == null) return;
     final PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
     if (directory != null) dialog.selectDirectory(directory);
-    dialog.selectClass(psiClass);
+    dialog.select(psiClass);
   }
 
   protected abstract PsiClass findClass(String className);
 
   public static ClassBrowser createApplicationClassBrowser(final Project project,
                                                            final ConfigurationModuleSelector moduleSelector) {
-    final TreeClassChooser.ClassFilter applicationClass = new TreeClassChooser.ClassFilter() {
+    final ClassFilter applicationClass = new ClassFilter() {
       public boolean isAccepted(final PsiClass aClass) {
         return ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null;
       }
     };
     return new MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")){
-      protected TreeClassChooser.ClassFilter createFilter(final Module module) {
+      protected ClassFilter createFilter(final Module module) {
         return applicationClass;
       }
     };
@@ -98,7 +99,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     return new MainClassBrowser(project, moduleSelector, title) {
 
       @Override
-      protected TreeClassChooser createClassChooser(TreeClassChooser.ClassFilterWithScope classFilter) {
+      protected TreeClassChooser createClassChooser(ClassFilter.ClassFilterWithScope classFilter) {
         final Module module = moduleSelector.getModule();
         final GlobalSearchScope scope =
             module == null ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -124,13 +125,13 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       return myModuleSelector.findClass(className);
     }
 
-    protected TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException {
+    protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
       final Module module = myModuleSelector.getModule();
       final GlobalSearchScope scope;
       if (module == null) scope = GlobalSearchScope.allScope(myProject);
       else scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-      final TreeClassChooser.ClassFilter filter = createFilter(module);
-      return new TreeClassChooser.ClassFilterWithScope() {
+      final ClassFilter filter = createFilter(module);
+      return new ClassFilter.ClassFilterWithScope() {
         public GlobalSearchScope getScope() {
           return scope;
         }
@@ -141,7 +142,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
       };
     }
 
-    protected TreeClassChooser.ClassFilter createFilter(final Module module) { return null; }
+    protected ClassFilter createFilter(final Module module) { return null; }
   }
 
   public static class NoFilterException extends Exception {

@@ -110,7 +110,7 @@ public class HgRegularUpdater implements HgUpdater {
         abortOnMultipleLocalHeads(remainingOriginalBranchHeads);
 
         //update to the pulled in head, because we consider that head as the 'authoritative' head
-        updateToPulledHead(pulledBranchHeads.get(0), indicator);
+        updateToPulledHead(repository, updatedFiles, pulledBranchHeads.get(0), indicator);
 
         HgCommandResult mergeResult = doMerge(updatedFiles, indicator, warnings, remainingOriginalBranchHeads.get(0));
 
@@ -155,12 +155,16 @@ public class HgRegularUpdater implements HgUpdater {
     }
   }
 
-  private void updateToPulledHead(HgRevisionNumber newHead, ProgressIndicator indicator) {
+  private void updateToPulledHead(VirtualFile repo, UpdatedFiles updatedFiles, HgRevisionNumber newHead, ProgressIndicator indicator) {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.updating.to.pulled.head"));
+    HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
     HgUpdateCommand updateCommand = new HgUpdateCommand(project, repository);
     updateCommand.setRevision(newHead.getChangeset());
     updateCommand.setClean(true);
     updateCommand.execute();
+
+    HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
+    addUpdatedFiles(repo, updatedFiles, parentBeforeUpdate, parentAfterUpdate);
   }
 
   private void commitOrWarnAboutConflicts(List<VcsException> exceptions, HgCommandResult mergeResult) throws VcsException {

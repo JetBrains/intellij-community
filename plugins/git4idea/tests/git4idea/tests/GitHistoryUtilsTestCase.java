@@ -214,7 +214,7 @@ public class GitHistoryUtilsTestCase extends GitSingleUserTestCase {
         fail("No exception expected", exception);
       }
     };
-    GitHistoryUtils.history(myProject, bfilePath, consumer, exceptionConsumer);
+    GitHistoryUtils.history(myProject, bfilePath, null, consumer, exceptionConsumer);
     assertEquals(revisions.size(), myRevisions.size());
     for (int i = 0; i < revisions.size(); i++) {
       assertEqualRevisions(revisions.get(i), myRevisions.get(i));

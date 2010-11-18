@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -42,11 +43,13 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
   private StructureConfigurableContext myContext;
   private final JComponent myParentComponent;
   private final Project myProject;
+  private LibraryType myLibraryType;
 
   public NewLibraryChooser(final Project project,
-                             final ModifiableRootModel rootModel,
-                             StructureConfigurableContext context, final JComponent parentComponent) {
+                           final ModifiableRootModel rootModel,
+                           LibraryType libraryType, StructureConfigurableContext context, final JComponent parentComponent) {
     myRootModel = rootModel;
+    myLibraryType = libraryType;
     myContext = context;
     myParentComponent = parentComponent;
     myProject = project;
@@ -57,11 +60,20 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
   }
 
   public void doChoose() {
+    final NewLibraryEditor libraryEditor;
+    if (myLibraryType == null) {
+      libraryEditor = new NewLibraryEditor();
+    }
+    else {
+      libraryEditor = new NewLibraryEditor(myLibraryType, myLibraryType.createDefaultProperties());
+    }
+
     final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
     List<LibraryTable> tables = Arrays.asList(myRootModel.getModuleLibraryTable(),
                                               registrar.getLibraryTable(myProject),
                                               registrar.getLibraryTable());
-    CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, new NewLibraryEditor(), tables, 1);
+
+    CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, libraryEditor, tables, 1);
     final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
     dialog.setContextModule(contextModule);
     dialog.show();

@@ -26,7 +26,6 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.extapi.psi.MetadataPsiElementBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -40,7 +39,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,10 +49,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,6 +63,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +108,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CodeCompletionHandlerBase.doComplete");
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
@@ -193,6 +193,24 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
+
+      int offset = editor.getCaretModel().getOffset();
+
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      if (elementAt == null) {
+        elementAt = psiFile.findElementAt(offset);
+        if (elementAt == null && offset > 0) {
+          elementAt = psiFile.findElementAt(offset - 1);
+        }
+      }
+
+      Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
+
+      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset); // TODO: Peter Lazy API
+        if (result == ThreeState.YES) return;
+        if (result == ThreeState.NO) break;
+      }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
@@ -207,9 +225,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      final Boolean result = confidence.shouldFocusLookup(parameters);
-      if (result != null) {
-        return result;
+      final ThreeState result = confidence.shouldFocusLookup(parameters);
+      if (result != ThreeState.UNSURE) {
+        return result == ThreeState.YES;
       }
     }
     return false;
@@ -218,7 +236,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   @NotNull
   private LookupImpl obtainLookup(Editor editor, CompletionParameters parameters) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (existing != null) {
+    if (existing != null && existing.isCompletion()) {
       existing.markReused();
       if (!autopopup) {
         existing.setFocused(true);
@@ -238,31 +256,39 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private void doComplete(final int invocationCount, CompletionInitializationContext initContext) {
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("CodeCompletionHandlerBase.doComplete");
+    }
     final Editor editor = initContext.getEditor();
-    final OffsetMap offsetMap = initContext.getOffsetMap();
-    final CompletionContext context = new CompletionContext(initContext.getProject(), editor, initContext.getFile(), offsetMap);
 
-    final CompletionParameters parameters = createCompletionParameters(context, initContext.getFileCopyPatcher(), invocationCount);
+    final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
 
     final LookupImpl lookup = obtainLookup(editor, parameters);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore, offsetMap, lookup);
+    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
+                                                                                  initContext.getOffsetMap(), lookup);
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly) {
+    if (!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) {
       indicator.notifyBackgrounded();
       return;
     }
 
     if (freezeSemaphore.waitFor(2000)) {
       final LookupElement[] allItems = data.get();
+      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+        System.out.println("allItems = " + allItems);
+      }
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems);
         return;
       }
+    }
+    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+      System.out.println("backgrounded");
     }
 
     indicator.notifyBackgrounded();
@@ -347,25 +373,35 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  private CompletionParameters createCompletionParameters(final CompletionContext context, final FileCopyPatcher patcher, int invocationCount) {
-    final Ref<Pair<CompletionContext, PsiElement>> ref = Ref.create(null);
+  private CompletionParameters createCompletionParameters(int invocationCount, final CompletionInitializationContext initContext) {
+    final Ref<CompletionContext> ref = Ref.create(null);
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            ref.set(insertDummyIdentifier(context, patcher, context.file, context.editor));
+            ref.set(insertDummyIdentifier(initContext));
           }
         });
       }
     });
+    final CompletionContext newContext = ref.get();
 
-    final PsiElement insertedElement = ref.get().getSecond();
-    final CompletionContext newContext = ref.get().getFirst();
+    final int offset = newContext.getStartOffset();
+    final PsiFile fileCopy = newContext.file;
+    final PsiElement insertedElement = newContext.file.findElementAt(newContext.getStartOffset());
+    if (insertedElement == null) {
+      throw new AssertionError("offset " + newContext.getStartOffset() + " at:\n text=\"" + fileCopy.getText() + "\"\n instance=" + fileCopy);
+    }
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
 
-    return new CompletionParameters(insertedElement, newContext.file, myCompletionType, newContext.getStartOffset(), invocationCount);
+    LOG.assertTrue(fileCopy.findElementAt(offset) == insertedElement, "wrong offset");
+
+    final TextRange range = insertedElement.getTextRange();
+    LOG.assertTrue(range.substring(fileCopy.getText()).equals(insertedElement.getText()), "wrong text");
+
+    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);
   }
 
   private AutoCompletionDecision shouldAutoComplete(
@@ -502,78 +538,52 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     lookupItemSelected(context, item, completionChar, items);
   }
 
-  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context,
-                                                                    final FileCopyPatcher patcher,
-                                                                    final PsiFile file, final Editor originalEditor) {
-    PsiFile oldFileCopy = createFileCopy(file);
-    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
-    boolean wasInjected = hostFile != oldFileCopy;
-    Project project = hostFile.getProject();
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
-    // is null in tests
-    int hostStartOffset = injectedLanguageManager == null
-                          ? context.getStartOffset()
-                          : injectedLanguageManager.injectedToHost(oldFileCopy, context.getStartOffset());
+  private CompletionContext insertDummyIdentifier(CompletionInitializationContext initContext) {
+    final PsiFile originalFile = initContext.getFile();
+    PsiFile fileCopy = createFileCopy(originalFile);
+    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy);
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
+    int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy, initContext.getStartOffset());
+    final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
 
-    Document document = oldFileCopy.getViewProvider().getDocument();
-    assert document != null;
-    patcher.patchFileCopy(oldFileCopy, document, context.getOffsetMap());
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
-    if (fileCopy == null) {
-      PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
-      if (wasInjected) {
-        LOG.error("No injected fragment found at offset " + hostStartOffset + " in the patched file copy, found: " + elementAfterCommit);
+    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
+    final OffsetMap original = initContext.getOffsetMap();
+    for (final OffsetKey key : original.keySet()) {
+      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(fileCopy, original.getOffset(key)));
+    }
+
+    Document document = fileCopy.getViewProvider().getDocument();
+    assert document != null : "no document";
+    initContext.getFileCopyPatcher().patchFileCopy(fileCopy, document, initContext.getOffsetMap());
+    final Document hostDocument = hostFile.getViewProvider().getDocument();
+    assert hostDocument != null : "no host document";
+    PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostDocument);
+    assert hostFile.isValid() : "file became invalid";
+    assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
+
+    CompletionContext context;
+    PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
+    if (injected != null) {
+      assert hostStartOffset >= injectedLanguageManager.injectedToHost(injected, 0) : "startOffset before injected";
+      assert hostStartOffset <= injectedLanguageManager.injectedToHost(injected, injected.getTextLength()) : "startOffset after injected";
+
+      EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
+      assert injected == injectedEditor.getInjectedFile();
+      final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
+      for (final OffsetKey key : hostMap.keySet()) {
+        map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
       }
-      fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
+      context = new CompletionContext(initContext.getProject(), injectedEditor, injected, map);
+      assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
+    } else {
+      context = new CompletionContext(initContext.getProject(), hostEditor, hostFile, hostMap);
     }
 
-    if (oldFileCopy != fileCopy && !wasInjected) {
-      // newly inserted identifier can well end up in the injected language region
-      Editor editor = EditorFactory.getInstance().createEditor(document, project);
-      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, hostFile, context.getStartOffset());
-      if (newEditor instanceof EditorWindow) {
-        EditorWindow injectedEditor = (EditorWindow)newEditor;
-        PsiFile injectedFile = injectedEditor.getInjectedFile();
-        final OffsetMap map = new OffsetMap(newEditor.getDocument());
-        final OffsetMap oldMap = context.getOffsetMap();
-        for (final OffsetKey key : oldMap.keySet()) {
-          map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(originalEditor.offsetToLogicalPosition(oldMap.getOffset(key)))));
-        }
-        CompletionContext newContext = new CompletionContext(file.getProject(), injectedEditor, injectedFile, map);
-        int injectedOffset = newContext.getStartOffset();
-        PsiElement element = findElementAt(injectedFile, injectedOffset);
+    assert context.getStartOffset() < context.file.getTextLength() : "start outside the file";
+    assert context.getStartOffset() >= 0 : "start < 0";
 
-        int toHost = injectedLanguageManager == null ? hostStartOffset : injectedLanguageManager.injectedToHost(injectedFile, injectedOffset);
-        // maybe injected fragment is ended before hostStartOffset
-        if (element != null && toHost == hostStartOffset) {
-          EditorFactory.getInstance().releaseEditor(editor);
-          return Pair.create(newContext, element);
-        }
-
-        PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
-        fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
-      }
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
-    PsiElement element = findElementAt(fileCopy, context.getStartOffset());
-    if (element == null) {
-      LOG.error("offset " + context.getStartOffset() + " at:\ntext=\"" + fileCopy.getText() + "\"\ninstance=" + fileCopy);
-    }
-    return Pair.create(context, element);
+    return context;
   }
-
-  private static PsiElement findElementAt(final PsiFile fileCopy, int startOffset) {
-    PsiElement element = fileCopy.findElementAt(startOffset);
-    if (element instanceof MetadataPsiElementBase) {
-      final PsiElement source = ((MetadataPsiElementBase)element).getSourceElement();
-      if (source != null) {
-        return source.findElementAt(startOffset - source.getTextRange().getStartOffset());
-      }
-    }
-    return element;
-  }
-
 
   private boolean isAutocompleteCommonPrefixOnInvocation() {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;

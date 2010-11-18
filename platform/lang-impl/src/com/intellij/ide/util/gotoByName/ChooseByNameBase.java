@@ -523,7 +523,7 @@ public abstract class ChooseByNameBase {
   protected void doClose(final boolean ok) {
     if (myDisposedFlag) return;
 
-    if (posponeCloseWhenListReady(ok)) return;
+    if (postponeCloseWhenListReady(ok)) return;
 
     cancelListUpdater();
     close(ok);
@@ -535,7 +535,7 @@ public abstract class ChooseByNameBase {
     myListUpdater.cancelAll();
   }
 
-  private boolean posponeCloseWhenListReady(boolean ok) {
+  private boolean postponeCloseWhenListReady(boolean ok) {
     if (!isToFixLostTyping()) return false;
 
     final String text = myTextField.getText();
@@ -1375,7 +1375,7 @@ public abstract class ChooseByNameBase {
     private final ChooseByNameModel myModel;
     private final PsiProximityComparator myProximityComparator;
 
-    private PathProximityComparator(final ChooseByNameModel model, final PsiElement context) {
+    private PathProximityComparator(final ChooseByNameModel model, @Nullable final PsiElement context) {
       myModel = model;
       myProximityComparator = new PsiProximityComparator(context);
     }

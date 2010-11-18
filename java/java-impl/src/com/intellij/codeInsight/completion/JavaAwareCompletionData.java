@@ -19,7 +19,6 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.IncorrectOperationException;
@@ -72,7 +71,7 @@ public class JavaAwareCompletionData extends CompletionData{
     return TailType.NONE;
   }
 
-  protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
+  protected void addLookupItem(Set<LookupElement> set, final TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
     if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
       set.add((LookupElement)completion);
       return;
@@ -88,8 +87,11 @@ public class JavaAwareCompletionData extends CompletionData{
     ret.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
       public void handleInsert(InsertionContext context, LookupElement item) {
-        final TailType type = analyzeItem(item.getObject(), context.getFile().findElementAt(context.getStartOffset()));
-        new DefaultInsertHandler().handleInsert(context, item);
+        TailType type = analyzeItem(item.getObject(), context.getFile().findElementAt(context.getStartOffset()));
+        if (type == TailType.NONE) {
+          type = tailType;
+        }
+        //new DefaultInsertHandler().handleInsert(context, item);
         if (type != TailType.NONE) {
           context.setAddCompletionChar(false);
           type.processTail(context.getEditor(), context.getTailOffset());
@@ -102,11 +104,7 @@ public class JavaAwareCompletionData extends CompletionData{
       ret.setAttribute(key, itemProperties.get(key));
     }
 
-    if ((insertHandler == null || ret.getInsertHandler() != null) && tailType != TailType.NONE) {
-      set.add(TailTypeDecorator.withTail(ret, tailType));
-    } else {
-      set.add(ret);
-    }
+    set.add(ret);
   }
 
   protected void addKeywords(final Set<LookupElement> set, final PsiElement position, final PrefixMatcher matcher, final PsiFile file,

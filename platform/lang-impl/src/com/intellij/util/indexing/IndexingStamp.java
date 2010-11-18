@@ -43,7 +43,7 @@ public class IndexingStamp {
    * The class is meant to be accessed from synchronized block only 
    */
   private static class Timestamps {
-    private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1);
+    private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1, false);
     private TObjectLongHashMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 

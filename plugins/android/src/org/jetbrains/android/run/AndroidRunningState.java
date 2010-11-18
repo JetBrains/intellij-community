@@ -102,7 +102,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private volatile ProcessHandler myProcessHandler;
   private final Object myLock = new Object();
 
-  private boolean myDeploy;
+  private boolean myDeploy = true;
 
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
@@ -405,7 +405,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private void launchDebug(Client client) {
-    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData())) {
+    if (myDebugLauncher != null && myApplicationLauncher.isReadyForDebugging(client.getClientData(), getProcessHandler())) {
       String port = Integer.toString(client.getDebuggerListenPort());
       myDebugLauncher.launchDebug(client.getDevice(), port);
       myDebugLauncher = null;
@@ -419,7 +419,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     if (!isAndroidSdk15OrHigher()) {
       return true;
     }
-    String avdName = device.getAvdName();
+    String avdName = device.isEmulator() ? device.getAvdName() : null;
     if (myAvdName != null) {
       return myAvdName.equals(avdName);
     }

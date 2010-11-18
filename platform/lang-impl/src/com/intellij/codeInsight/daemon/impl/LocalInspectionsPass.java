@@ -195,14 +195,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     ArrayList<PsiElement> inside = new ArrayList<PsiElement>();
     ArrayList<PsiElement> outside = new ArrayList<PsiElement>();
-    Divider.getInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside, HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT);
+    Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
+                                   HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT);
 
     setProgressLimit(1L * tools.size() *2/** (inside.size() + outside.size())*/);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
     visitPriorityElementsAndInit(tools, iManager, isOnTheFly, ignoreSuppressed, indicator, inside, session, init);
-    visitRestElementsAndCleanup(tools,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
+    visitRestElementsAndCleanup(tools,iManager,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
 
     indicator.checkCanceled();
 
@@ -210,25 +211,26 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromResults(myInfos);
   }
 
-  private void visitPriorityElementsAndInit(List<LocalInspectionTool> tools,
-                                final InspectionManagerEx iManager,
-                                final boolean isOnTheFly,
-                                final boolean ignoreSuppressed,
-                                final ProgressIndicator indicator,
-                                final List<PsiElement> elements,
-                                final LocalInspectionToolSession session,
-                                final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
+  private void visitPriorityElementsAndInit(@NotNull List<LocalInspectionTool> tools,
+                                            @NotNull final InspectionManagerEx iManager,
+                                            final boolean isOnTheFly,
+                                            final boolean ignoreSuppressed,
+                                            @NotNull final ProgressIndicator indicator,
+                                            @NotNull final List<PsiElement> elements,
+                                            @NotNull final LocalInspectionToolSession session,
+                                            @NotNull final List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
     boolean result = JobUtil.invokeConcurrentlyUnderProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         indicator.checkCanceled();
 
         ApplicationManager.getApplication().assertReadAccessAllowed();
 
+        final boolean[] applyIncrementally = {isOnTheFly};
         ProblemsHolder holder = new ProblemsHolder(iManager, myFile, isOnTheFly) {
           @Override
           public void registerProblem(@NotNull ProblemDescriptor descriptor) {
             super.registerProblem(descriptor);
-            if (isOnTheFly) {
+            if (applyIncrementally[0]) {
               addDescriptorIncrementally(descriptor, tool, ignoreSuppressed, indicator);
             }
           }
@@ -243,19 +245,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (holder.hasResults()) {
           appendDescriptors(myFile, holder.getResults(), tool);
         }
+        applyIncrementally[0] = false; // do not apply incrementally outside visible range
         return true;
       }
     }, myFailFastOnAcquireReadAction, indicator);
     if (!result) throw new ProcessCanceledException();
-    inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, session);
+    inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, iManager, true);
   }
 
-  private static PsiElementVisitor createVisitorAndAcceptElements(LocalInspectionTool tool,
-                                                                  ProblemsHolder holder,
+  private static PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
+                                                                  @NotNull ProblemsHolder holder,
                                                                   boolean isOnTheFly,
-                                                                  LocalInspectionToolSession session,
-                                                                  List<PsiElement> elements,
-                                                                  ProgressIndicator indicator) {
+                                                                  @NotNull LocalInspectionToolSession session,
+                                                                  @NotNull List<PsiElement> elements,
+                                                                  @NotNull ProgressIndicator indicator) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if(visitor == null) {
@@ -272,54 +275,55 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return visitor;
   }
 
-  private void visitRestElementsAndCleanup(
-                            List<LocalInspectionTool> tools,
-                            final boolean isOnTheFly,
-                            final boolean ignoreSuppressed,
-                            final ProgressIndicator indicator,
-                            final List<PsiElement> elements,
-                            final LocalInspectionToolSession session,
-                            List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
-    boolean result = JobUtil.invokeConcurrentlyUnderProgress(init,
-                                                             new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
-                                                               @Override
-                                                               public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
-                                                                 LocalInspectionTool tool = trinity.first;
-                                                                 indicator.checkCanceled();
+  private void visitRestElementsAndCleanup(@NotNull List<LocalInspectionTool> tools,
+                                           @NotNull InspectionManagerEx iManager,
+                                           final boolean isOnTheFly,
+                                           final boolean ignoreSuppressed,
+                                           @NotNull final ProgressIndicator indicator,
+                                           @NotNull final List<PsiElement> elements,
+                                           @NotNull final LocalInspectionToolSession session,
+                                           @NotNull List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init) {
+    Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> processor =
+      new Processor<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>() {
+        @Override
+        public boolean process(Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity) {
+          LocalInspectionTool tool = trinity.first;
+          indicator.checkCanceled();
 
-                                                                 ApplicationManager.getApplication().assertReadAccessAllowed();
+          ApplicationManager.getApplication().assertReadAccessAllowed();
 
-                                                                 ProblemsHolder holder = trinity.second;
-                                                                 PsiElementVisitor elementVisitor = trinity.third;
-                                                                 for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-                                                                   PsiElement element = elements.get(i);
-                                                                   indicator.checkCanceled();
-                                                                   element.accept(elementVisitor);
-                                                                 }
+          ProblemsHolder holder = trinity.second;
+          PsiElementVisitor elementVisitor = trinity.third;
+          for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
+            PsiElement element = elements.get(i);
+            indicator.checkCanceled();
+            element.accept(elementVisitor);
+          }
 
-                                                                 advanceProgress(1);
+          advanceProgress(1);
 
-                                                                 tool.inspectionFinished(session, holder);
+          tool.inspectionFinished(session, holder);
 
-                                                                 if (holder.hasResults()) {
-                                                                   appendDescriptors(myFile, holder.getResults(), tool);
-                                                                 }
-                                                                 return true;
-                                                               }
-                                                             }, myFailFastOnAcquireReadAction, indicator);
+          if (holder.hasResults()) {
+            appendDescriptors(myFile, holder.getResults(), tool);
+          }
+          return true;
+        }
+      };
+    boolean result = JobUtil.invokeConcurrentlyUnderProgress(init, processor, myFailFastOnAcquireReadAction, indicator);
     if (!result) {
       throw new ProcessCanceledException();
     }
-    inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, session);
-
+    inspectInjectedPsi(elements, tools, isOnTheFly, ignoreSuppressed, indicator, iManager, false);
   }
 
-  private void inspectInjectedPsi(final List<PsiElement> elements,
-                                  final List<LocalInspectionTool> tools,
+  private void inspectInjectedPsi(@NotNull final List<PsiElement> elements,
+                                  @NotNull final List<LocalInspectionTool> tools,
                                   final boolean onTheFly,
                                   final boolean ignoreSuppressed,
-                                  final ProgressIndicator indicator,
-                                  final LocalInspectionToolSession session) {
+                                  @NotNull final ProgressIndicator indicator,
+                                  @NotNull final InspectionManagerEx iManager,
+                                  final boolean inVisibleRange) {
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -331,7 +335,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (injected.isEmpty()) return;
     if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
-        doInspectInjectedPsi(injectedPsi, tools, onTheFly, ignoreSuppressed, indicator, session);
+        doInspectInjectedPsi(injectedPsi, tools, onTheFly, ignoreSuppressed, indicator, iManager, inVisibleRange);
         return true;
       }
     }, myFailFastOnAcquireReadAction, indicator)) throw new ProcessCanceledException();
@@ -344,10 +348,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlights;
   }
 
-  private HighlightInfo highlightInfoFromDescriptor(final ProblemDescriptor problemDescriptor,
-                                                    final HighlightInfoType highlightInfoType,
-                                                    final String message,
-                                                    final String toolTip) {
+  private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
+                                                    @NotNull HighlightInfoType highlightInfoType,
+                                                    String message,
+                                                    String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
@@ -616,9 +620,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull List<LocalInspectionTool> tools,
                                     final boolean isOnTheFly,
                                     final boolean ignoreSuppressed,
-                                    final ProgressIndicator indicator,
-                                    LocalInspectionToolSession session) {
-    InspectionManager iManager  = InspectionManager.getInstance(injectedPsi.getProject());
+                                    @NotNull final ProgressIndicator indicator,
+                                    @NotNull InspectionManagerEx iManager,
+                                    final boolean inVisibleRange) {
     final PsiElement host = injectedPsi.getContext();
 
     final List<PsiElement> elements = getElementsFrom(injectedPsi);
@@ -634,7 +638,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         @Override
         public void registerProblem(@NotNull ProblemDescriptor descriptor) {
           super.registerProblem(descriptor);
-          if (isOnTheFly) {
+          if (isOnTheFly && inVisibleRange) {
             addDescriptorIncrementally(descriptor, tool, ignoreSuppressed, indicator);
           }
         }

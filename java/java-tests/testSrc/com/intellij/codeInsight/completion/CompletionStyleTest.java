@@ -5,6 +5,8 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -351,4 +353,22 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();    //To change body of overriden methods use Options | File Templates.
   }
+
+  public void testAfterNew15() throws Exception {
+    final LanguageLevelProjectExtension ll = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel old = ll.getLanguageLevel();
+    ll.setLanguageLevel(LanguageLevel.JDK_1_5);
+
+    try {
+      final String path = BASE_PATH;
+      configureByFile(path + "/AfterNew15.java");
+      performSmartCompletion();
+      select('\n', getSelected());
+      checkResultByFile(path + "/AfterNew15-out.java");
+    }
+    finally {
+      ll.setLanguageLevel(old);
+    }
+  }
+
 }

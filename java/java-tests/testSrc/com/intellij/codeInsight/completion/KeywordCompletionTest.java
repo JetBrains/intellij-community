@@ -223,7 +223,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testTryInExpression() throws Throwable {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    assertStringItems("toString", "this");
+    assertStringItems("this", "toString");
   }
 
   public void testNull() throws Exception{

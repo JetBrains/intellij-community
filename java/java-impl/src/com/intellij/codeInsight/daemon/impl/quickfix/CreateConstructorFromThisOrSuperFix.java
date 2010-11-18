@@ -98,7 +98,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
       targetClass = constructor.getContainingClass();
       myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
-      ((RangeMarkerEx)rangeMarker).dispose();
+      rangeMarker.dispose();
 
       Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);

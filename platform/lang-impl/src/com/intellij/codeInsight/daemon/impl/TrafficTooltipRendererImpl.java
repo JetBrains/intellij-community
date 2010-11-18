@@ -46,7 +46,7 @@ public class TrafficTooltipRendererImpl extends ComparableObject.Impl implements
     if (myPanel != null) {
       SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject());
       TrafficLightRenderer.DaemonCodeAnalyzerStatus status = myTrafficLightRenderer.getDaemonCodeAnalyzerStatus(true, severityRegistrar);
-      myPanel.updatePanel(status);
+      myPanel.updatePanel(status, false);
     }
   }
 
