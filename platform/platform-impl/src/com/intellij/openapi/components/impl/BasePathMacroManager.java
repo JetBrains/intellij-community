@@ -81,7 +81,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   protected static String getUserHome() {
-    return SystemProperties.getUserHome();
+    return StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
   }
 
 
