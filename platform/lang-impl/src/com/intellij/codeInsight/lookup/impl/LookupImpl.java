@@ -999,7 +999,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myPreselectedItem = null;
   }
 
-  boolean isDisposed() {
+  public boolean isLookupDisposed() {
     return myDisposed;
   }
 

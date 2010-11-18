@@ -156,7 +156,7 @@ public class LookupManagerImpl extends LookupManager {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
         }
         if (myActiveLookup == null) return;
-        LOG.assertTrue(myActiveLookup.isDisposed());
+        LOG.assertTrue(myActiveLookup.isLookupDisposed());
         myActiveLookup.removeLookupListener(this);
         Lookup lookup = myActiveLookup;
         myActiveLookup = null;
