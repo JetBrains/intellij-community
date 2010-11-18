@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -31,7 +32,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyClassType implements PyType {
+public class PyClassType extends UserDataHolderBase implements PyType {
 
   protected final PyClass myClass;
   protected final boolean myIsDefinition;
@@ -60,6 +61,11 @@ public class PyClassType implements PyType {
   public PyClassType(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
     myClass = PyClassNameIndex.findClass(classQualifiedName, project);
     myIsDefinition = isDefinition;
+  }
+
+  public <T> PyClassType withUserData(Key<T> key, T value) {
+    putUserData(key, value);
+    return this;
   }
 
   /**
