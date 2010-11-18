@@ -21,23 +21,21 @@ import org.apache.maven.artifact.resolver.AbstractArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.DefaultArtifactResolver;
-import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 
-import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 public class CustomArtifactResolver extends DefaultArtifactResolver {
-  private Map<MavenId, File> myProjectIdToFileMap;
+  private MavenWorkspaceMap myWorkspaceMap;
   private UnresolvedArtifactsCollector myUnresolvedCollector;
 
-  public void customize(Map<MavenId, File> projectIdToFileMap, boolean failOnUnresolved) {
-    myProjectIdToFileMap = projectIdToFileMap;
+  public void customize(MavenWorkspaceMap workspaceMap, boolean failOnUnresolved) {
+    myWorkspaceMap = workspaceMap;
     myUnresolvedCollector = new UnresolvedArtifactsCollector(failOnUnresolved);
   }
 
   public void reset() {
-    myProjectIdToFileMap = null;
+    myWorkspaceMap = null;
     myUnresolvedCollector = null;
   }
 
@@ -71,14 +69,15 @@ public class CustomArtifactResolver extends DefaultArtifactResolver {
 
   private boolean resolveAsModule(Artifact a) {
     // method is called from different threads, so we have to copy the reference so ensure there is no race conditions.
-    Map<MavenId, File> map = myProjectIdToFileMap;
+    MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    File file = map.get(MavenModelConverter.createMavenId(a));
-    if (file == null) return false;
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    if (resolved == null) return false;
 
     a.setResolved(true);
-    a.setFile(file);
+    a.setFile(resolved.file);
+    a.selectVersion(resolved.originalId.getVersion());
 
     return true;
   }

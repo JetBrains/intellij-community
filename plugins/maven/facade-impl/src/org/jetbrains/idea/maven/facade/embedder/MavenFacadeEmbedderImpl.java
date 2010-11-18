@@ -561,15 +561,15 @@ public class MavenFacadeEmbedderImpl extends MavenRemoteObject implements MavenF
     MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
   }
 
-  public void customize(@Nullable Map<MavenId, File> projectIdToFileMap,
+  public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenFacadeConsole console,
                         @NotNull MavenFacadeProgressIndicator indicator) {
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
-      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, failOnUnresolvedDependency);
-      ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(projectIdToFileMap);
+      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
       setConsoleAndIndicator(console, indicator);
