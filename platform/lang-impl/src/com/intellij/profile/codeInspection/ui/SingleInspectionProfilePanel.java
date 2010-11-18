@@ -143,6 +143,10 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (mySelectedProfile == null) return;
     restoreTreeState();
     repaintTableData();
+    updateSelection();
+  }
+
+  public void updateSelection() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       TreeUtil.selectNode(myTree, (TreeNode)selectionPath.getLastPathComponent());

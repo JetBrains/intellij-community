@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
@@ -86,6 +87,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
+  private Alarm mySelectionAlarm;
 
 
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
@@ -341,8 +343,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.setSelectedItem(inspectionProfile);
     myLayout.show(myPanel, inspectionProfile.getName());
     myDeleteButton.setEnabled(getProfiles().size() > 1 && inspectionProfile.getProfileManager() == myProfileManager);
-    SingleInspectionProfilePanel panel = getSelectedPanel();
+    final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
+      mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+      mySelectionAlarm.addRequest(new Runnable() {
+        public void run() {
+          panel.updateSelection();
+        }
+      }, 200);
+
       myShareProfileCheckBox.setSelected(panel.isProfileShared());
     }
   }
@@ -359,6 +368,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.disposeUI();
     }
     myPanels.clear();
+    Disposer.dispose(mySelectionAlarm);
   }
 
   public void selectProfile(String name) {
