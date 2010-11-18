@@ -24,11 +24,9 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitBranch;
+import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.ChangesFilter;
-import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.LowLevelAccessImpl;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.*;
 
 import java.util.*;
 
@@ -191,22 +189,11 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
     final List<List<AbstractHash>> parents = myLoadParents ? new ArrayList<List<AbstractHash>>() : null;
     for (String hash : hashes) {
       try {
-        final List<GitCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(hash), mySymbolicRefs);
+        final SHAHash shaHash = GitChangeUtils.commitExists(myProject, myRootHolder.getRoot(), hash);
+        if (shaHash == null) continue;
+        final List<GitCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(shaHash.getValue()), mySymbolicRefs);
         myDetailsCache.acceptAnswer(commits, myRootHolder.getRoot());
-        for (GitCommit commit : commits) {
-          final Commit commitObj =
-            new Commit(commit.getShortHash().getString(), commit.getDate().getTime(), myUsersIndex.put(commit.getAuthor()));
-          if (parents != null) {
-            final Set<String> parentsHashes = commit.getParentsHashes();
-            parents.add(ObjectsConvertor.convert(parentsHashes, new Convertor<String, AbstractHash>() {
-              @Override
-              public AbstractHash convert(String o) {
-                return AbstractHash.create(o);
-              }
-            }));
-          }
-          result.add(myRootHolder.decorateByRoot(commitObj));
-        }
+        appendCommits(result, parents, commits);
       }
       catch (VcsException e1) {
         continue;
@@ -214,6 +201,23 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
     }
     if (! result.isEmpty()) {
       myMediator.appendResult(myTicket, result, parents);
+    }
+  }
+
+  private void appendCommits(List<CommitI> result, List<List<AbstractHash>> parents, List<GitCommit> commits) {
+    for (GitCommit commit : commits) {
+      final Commit commitObj =
+        new Commit(commit.getShortHash().getString(), commit.getDate().getTime(), myUsersIndex.put(commit.getAuthor()));
+      if (parents != null) {
+        final Set<String> parentsHashes = commit.getParentsHashes();
+        parents.add(ObjectsConvertor.convert(parentsHashes, new Convertor<String, AbstractHash>() {
+          @Override
+          public AbstractHash convert(String o) {
+            return AbstractHash.create(o);
+          }
+        }));
+      }
+      result.add(myRootHolder.decorateByRoot(commitObj));
     }
   }
 
