@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  *
- * Inspection to detect redundant parentheses in if/while/except statement.
+ * Inspection to detect redundant parentheses in if/while statement.
  */
 public class PyRedundantParenthesesInspection extends PyInspection {
   @Nls
@@ -36,11 +36,10 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
       if (node.getContainedExpression() instanceof PyReferenceExpression) {
-        registerProblem(node, "Redundant parentheses", new RedundantParenthesesQuickFix());
+        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyExceptPart ||
-              node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart) {
-        registerProblem(node, "Redundant parentheses", new RedundantParenthesesQuickFix());
+      else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart) {
+        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
     }
 

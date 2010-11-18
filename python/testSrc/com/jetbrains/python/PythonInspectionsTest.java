@@ -257,9 +257,23 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testInconsistentIndentation() {
     doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
   }
-  /*
-  public void testChainedComparisonsInspection() {
-    LocalInspectionTool inspection = new PyChainedComparisonsInspection();
-    doTest(getTestName(false), inspection);
-  }*/
+  
+  public void testPyChainedComparisonsInspection() {
+    doHighlightingTest(PyChainedComparisonsInspection.class);
+  }
+
+  public void testPyRedundantParenthesesInspection() {
+    doHighlightingTest(PyRedundantParenthesesInspection.class);
+  }
+
+  public void testPyBroadExceptionInspection() {
+    doHighlightingTest(PyBroadExceptionInspection.class);
+  }
+
+  public void testPyAugmentAssignmentInspection() {
+    doHighlightingTest(PyAugmentAssignmentInspection.class);
+  }
+  public void testPyDictDuplicateKeysInspection() {
+    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+  }
 }
