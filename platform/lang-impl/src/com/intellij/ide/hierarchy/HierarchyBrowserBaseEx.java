@@ -122,8 +122,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     createTrees(myType2TreeMap);
 
+    final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(project).getState();
     for (String type : myType2TreeMap.keySet()) {
-      myType2ScopeMap.put(type, SCOPE_ALL);
+      myType2ScopeMap.put(type, state.SCOPE != null ? state.SCOPE : SCOPE_ALL);
     }
 
     final Enumeration<String> keys = myType2TreeMap.keys();
@@ -637,6 +638,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       public final void actionPerformed(final AnActionEvent e) {
         myType2ScopeMap.put(myCurrentViewType, myScopeType);
+        HierarchyBrowserManager.getInstance(myProject).getState().SCOPE = myScopeType;
 
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(new Runnable() {
