@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +42,11 @@ public class PyBroadExceptionInspection extends PyInspection {
       }
       if (exceptClass instanceof PyReferenceExpression) {
         PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
-        if (myTypeEvalContext.getType(exceptClassRef).isBuiltin())
-          registerProblem(node, "Too broad exception clause");
+        PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
+        if (classRefType != null) {
+          if (classRefType.isBuiltin())
+            registerProblem(node, "Too broad exception clause");
+        }
       }
 
     }
