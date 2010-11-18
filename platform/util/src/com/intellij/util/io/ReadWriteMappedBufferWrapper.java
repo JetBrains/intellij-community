@@ -41,18 +41,24 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
   public MappedByteBuffer map() {
     MappedByteBuffer buf;
     try {
-      RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      final FileChannel channel = raf.getChannel();
       buf = null;
+      RandomAccessFile raf = null;
+      FileChannel channel = null;
       try {
+        raf = new RandomAccessFile(myFile, RW);
+        channel = raf.getChannel();
         buf = channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
       }
       catch (IOException e) {
         throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength, e);
       }
       finally {
-        channel.close();
-        raf.close();
+        if (channel != null) {
+          channel.close();
+        }
+        if (raf != null) {
+          raf.close();
+        }
       }
     }
     catch (IOException e) {
