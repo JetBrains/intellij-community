@@ -24,6 +24,8 @@ import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -238,6 +240,19 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     toggleFoldRegionState(getFoldRegion(0), true);
     assertEquals(3, caretModel.getVisualPosition().line);
     assertEquals(offset, caretModel.getOffset());
+  }
+  
+  public void testBackspaceAtTheEndOfSoftWrappedLine() throws IOException {
+    // There was a problem that removing text from the last document line that was soft-wrapped removed soft wraps as well.
+    String text = 
+      "This a long string that is expected to be wrapped in more than one visual line<caret>";
+    init(150, text);
+
+    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(softWrapsBeforeModification.size() > 0);
+    
+    backspace();
+    assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
   }
   
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {

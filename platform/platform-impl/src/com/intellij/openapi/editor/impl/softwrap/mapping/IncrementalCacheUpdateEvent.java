@@ -172,7 +172,7 @@ class IncrementalCacheUpdateEvent {
   }
 
   private static int getLineStartOffset(int offset, Document document) {
-    if (offset >= document.getTextLength()) {
+    if (offset > document.getTextLength()) {
       return offset;
     }
     int lineNumber = document.getLineNumber(offset);
