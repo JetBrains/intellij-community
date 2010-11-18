@@ -174,8 +174,12 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   public void close() {
-    force();
-    myStorage.close();
+    try {
+      force();
+    }
+    finally {
+      myStorage.close();
+    }
   }
 
 }
