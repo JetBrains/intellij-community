@@ -1,6 +1,7 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -145,6 +146,28 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
 
     compileProject().assertDeleted("out/artifacts/a/a.txt");
     assertEmptyOutput(a);
+  }
+
+  //IDEA-51910
+  public void testTwoArtifactsWithSameOutput() throws Exception {
+    final VirtualFile res1 = createFile("res1/a.txt", "1").getParent();
+    final VirtualFile res2 = createFile("res2/a.txt", "2").getParent();
+    final Artifact a1 = addArtifact("a1", root().dirCopy(res1));
+    final Artifact a2 = addArtifact("a1", root().dirCopy(res2));
+    ArtifactsTestUtil.setOutput(myProject, a2.getName(), a1.getOutputPath());
+    assertEquals(a1.getOutputPath(), a2.getOutputPath());
+
+    compile(a1);
+    assertOutput(a1, fs().file("a.txt", "1"));
+    assertOutput(a2, fs().file("a.txt", "1"));
+    compile(a1).assertUpToDate();
+
+    compile(a2);
+    assertOutput(a2, fs().file("a.txt", "2"));
+    changeFile(LocalFileSystem.getInstance().findFileByPath(a2.getOutputPath() + "/a.txt"));
+
+    compile(a1);
+    assertOutput(a2, fs().file("a.txt", "1"));
   }
 
   //todo[nik] this test sometimes fails on server
