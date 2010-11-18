@@ -646,6 +646,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         setFocused(true);
+        markSelectionTouched();
 
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
@@ -697,6 +698,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void setCurrentItem(LookupElement item){
+    markSelectionTouched();
     ListScrollingUtil.selectItem(myList, item);
   }
 

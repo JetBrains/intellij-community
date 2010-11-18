@@ -17,7 +17,7 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.openapi.actionSystem.IdeActions
 
-/**
+ /**
  * @author peter
  */
 class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
@@ -96,6 +96,28 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
+  public void testExplicitMouseSelectionShouldSurvive() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(String iterable) {
+          int iterable2;
+          it<caret>
+        }
+      }
+    """)
+    type "e"
+    assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
+
+    assertEquals 'iterable', lookup.currentItem.lookupString
+    lookup.currentItem = lookup.items[1]
+    assertEquals 'iterable2', lookup.currentItem.lookupString
+
+    type "r"
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable", 'iterable2'
+    assertEquals 'iterable2', lookup.currentItem.lookupString
+
+  }
+
   public void testNoAutopopupInTheMiddleOfIdentifier() {
     myFixture.configureByText("a.java", """
       class Foo {
@@ -140,6 +162,37 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     type 'r'
     assertNull lookup
+  }
+
+  public void testExplicitSelectionShouldBeHonoredFocused() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        String foo() {
+          int abcd;
+          int abce;
+          a<caret>
+        }
+      }
+    """)
+    type 'b'
+    assert lookup.focused
+    type 'c'
+
+    assertOrderedEquals myFixture.lookupElementStrings, 'abcd', 'abce'
+    assertEquals 'abcd', lookup.currentItem.lookupString
+    lookup.currentItem = lookup.items[1]
+    assertEquals 'abce', lookup.currentItem.lookupString
+
+    type '\t'
+    myFixture.checkResult """
+      class Foo {
+        String foo() {
+          int abcd;
+          int abce;
+          abce<caret>
+        }
+      }
+    """
   }
 
 }
