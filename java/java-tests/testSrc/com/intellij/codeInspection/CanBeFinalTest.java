@@ -74,6 +74,10 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testFieldAssignmentsInInitializer() throws Exception {
+    doTest();
+  }
+
   public void testSCR7737() throws Exception {
     CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = false;
