@@ -119,7 +119,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitReferenceTracker myReferenceTracker;
   private boolean isActivated; // If true, the vcs was activated
   private GitExecutableValidator myExecutableValidator;
-  private GitIndexChangeListener myIndexChangeListener;
+  private RepositoryChangeListener myIndexChangeListener;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
@@ -155,6 +155,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(gitCheckinEnvironment);
     myReferenceTracker = new GitReferenceTracker(myProject, this, myReferenceListeners.getMulticaster());
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
+    myIndexChangeListener = new RepositoryChangeListener(myProject, ".git/index");
   }
 
   /**
@@ -424,7 +425,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     if (myGitIgnoreTracker == null) {
       myGitIgnoreTracker = new GitIgnoreTracker(myProject, this);
     }
-    myIndexChangeListener = new GitIndexChangeListener(myProject);
+    myIndexChangeListener.activate();
     myReferenceTracker.activate();
     GitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
@@ -454,9 +455,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myConfigTracker.dispose();
       myConfigTracker = null;
     }
-    if (myIndexChangeListener != null) {
-      myIndexChangeListener.dispose();
-    }
+    myIndexChangeListener.dispose();
     myReferenceTracker.deactivate();
     GitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
@@ -701,7 +700,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myExecutableValidator;
   }
 
-  public GitIndexChangeListener getIndexChangeListener() {
+  public RepositoryChangeListener getIndexChangeListener() {
     return myIndexChangeListener;
   }
 

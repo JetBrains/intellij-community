@@ -19,13 +19,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryChangeListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
-import git4idea.GitIndexChangeListener;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
@@ -363,10 +363,10 @@ public abstract class GitHandler {
   public synchronized void start() {
     checkNotStarted();
 
-    GitIndexChangeListener indexChangeListener = null;
+    RepositoryChangeListener indexChangeListener = null;
     if (myCommand.modifiesIndex()) {
       indexChangeListener = myVcs.getIndexChangeListener();
-      indexChangeListener.internalIndexChangeStarted();
+      indexChangeListener.internalOperationStarted();
     }
 
     try {
@@ -396,7 +396,7 @@ public abstract class GitHandler {
       myListeners.getMulticaster().startFailed(t);
     } finally {
       if (indexChangeListener != null) {
-        indexChangeListener.internalIndexChangeEnded();
+        indexChangeListener.internalOperationEnded();
       }
     }
   }
