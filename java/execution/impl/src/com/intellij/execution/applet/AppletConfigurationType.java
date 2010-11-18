@@ -16,8 +16,10 @@
 package com.intellij.execution.applet;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -33,9 +35,14 @@ public class AppletConfigurationType implements ConfigurationType {
 
   /**reflection*/
   AppletConfigurationType() {
-    myFactory = new ConfigurationFactory(this) {
+    myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new AppletConfiguration("", project, this);
+      }
+
+      @Override
+      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
+        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
       }
     };
   }

@@ -18,8 +18,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -36,7 +38,7 @@ public class JUnitConfigurationType implements ConfigurationType {
 
   /**reflection*/
   public JUnitConfigurationType() {
-    myFactory = new ConfigurationFactory(this) {
+    myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new JUnitConfiguration("", project, this);
       }
@@ -44,6 +46,11 @@ public class JUnitConfigurationType implements ConfigurationType {
       @Override
       public Icon getIcon(@NotNull final RunConfiguration configuration) {
         return RunConfigurationExtension.getIcon((JUnitConfiguration)configuration, getIcon());
+      }
+
+      @Override
+      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
+        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
       }
     };
   }

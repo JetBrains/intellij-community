@@ -114,4 +114,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     }
     if (modules.contains(originalModule)) setModule(originalModule);
   }
+
+  public void onNewConfigurationCreated() {
+    final RunConfigurationModule configurationModule = getConfigurationModule();
+    if (configurationModule.getModule() == null) {
+      final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+      configurationModule.setModule(modules.length == 1 ? modules[0] : null);
+    }
+  }
 }

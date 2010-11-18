@@ -17,8 +17,10 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -41,7 +43,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
   /**reflection*/
   public ApplicationConfigurationType() {
-    myFactory = new ConfigurationFactory(this) {
+    myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
@@ -49,6 +51,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
       @Override
       public Icon getIcon(@NotNull final RunConfiguration configuration) {
         return RunConfigurationExtension.getIcon((ApplicationConfiguration)configuration, getIcon());
+      }
+
+      @Override
+      public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
+        ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
       }
     };
   }
