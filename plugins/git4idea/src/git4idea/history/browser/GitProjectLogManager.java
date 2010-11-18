@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GitProjectLogManager {
@@ -52,8 +53,8 @@ public class GitProjectLogManager {
   private final ProjectLevelVcsManager myVcsManager;
   private final LogFactoryService myLogFactoryService;
 
-  //private final AtomicReference<Set<VirtualFile>> myCurrentState;
   private final AtomicReference<Content> myCurrentContent;
+  private final AtomicReference<GitLog> myLogRef;
   private VcsListener myListener;
 
   public static final Topic<CurrentBranchListener> CHECK_CURRENT_BRANCH =
@@ -66,7 +67,8 @@ public class GitProjectLogManager {
     myVcsManager = vcsManager;
     myLogFactoryService = logFactoryService;
     myCurrentContent = new AtomicReference<Content>();
-    //myCurrentState = new AtomicReference<Set<VirtualFile>>();
+    myLogRef = new AtomicReference<GitLog>();
+
     myListener = new VcsListener() {
       public void directoryMappingChanged() {
         new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
@@ -125,10 +127,12 @@ public class GitProjectLogManager {
   private void recalculateWindows() {
     final GitVcs vcs = GitVcs.getInstance(myProject);
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
+    final List<VirtualFile> fileList = Arrays.asList(roots);
 
     final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
     final Content currContent = myCurrentContent.get();
     if (currContent != null) {
+      myLogRef.get().rootsChanged(fileList);
       return;
     }
     final GitLog gitLog = myLogFactoryService.createComponent();
@@ -137,9 +141,10 @@ public class GitProjectLogManager {
     content.setCloseable(false);
     cvcm.addContent(content);
     Disposer.register(content, gitLog);
+    myLogRef.set(gitLog);
 
     myCurrentContent.set(content);
-    gitLog.rootsChanged(Arrays.asList(roots));
+    gitLog.rootsChanged(fileList);
   }
 
   public interface CurrentBranchListener extends Consumer<VirtualFile> {

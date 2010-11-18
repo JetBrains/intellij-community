@@ -544,13 +544,15 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8");
-    parser.parseStatusBeforeName(false);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    parser.parseStatusBeforeName(true);
     h.addParameters(new ArrayList<String>(commitsIds));
 
     h.endOptions();
     h.addRelativePaths(path);
-    String output = h.run();
+    String output;
+    try {
+      output = h.run();
 
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
@@ -558,6 +560,9 @@ public class GitHistoryUtils {
       rc.add(gitCommit);
     }
     return rc;
+    } catch (VcsException e) {
+      throw e;
+    }
   }
 
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,

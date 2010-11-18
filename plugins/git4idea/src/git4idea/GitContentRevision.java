@@ -101,10 +101,11 @@ public class GitContentRevision implements ContentRevision {
   public static ContentRevision createMultipleParentsRevision(Project project,
                                                               final FilePath file,
                                                               final List<GitRevisionNumber> revisions) throws VcsException {
+    final GitContentRevision contentRevision = new GitContentRevision(file, revisions.get(0), project);
     if (revisions.size() == 1) {
-      return new GitContentRevision(file, revisions.get(0), project);
+      return contentRevision;
     } else {
-      return new GitMultipleContentsRevision(file, revisions, project);
+      return new GitMultipleContentsRevision(file, revisions, contentRevision);
     }
   }
 

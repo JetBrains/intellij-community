@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,12 @@ public class GitMultipleContentsRevision implements ContentRevision {
   private final List<GitRevisionNumber> myList;
   private ContentRevision myRevision;
 
-  public GitMultipleContentsRevision(final FilePath path, final List<GitRevisionNumber> list, Project project) throws VcsException {
+  public GitMultipleContentsRevision(final FilePath path,
+                                     final List<GitRevisionNumber> list,
+                                     final GitContentRevision contentRevision) throws VcsException {
     myPath = path;
     myList = list;
-    myRevision = GitContentRevision.createRevision(path.getVirtualFile(), myList.get(0), project);
+    myRevision = contentRevision;
   }
 
   @Override
