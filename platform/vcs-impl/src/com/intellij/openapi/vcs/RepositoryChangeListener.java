@@ -90,7 +90,9 @@ public class RepositoryChangeListener extends VirtualFileAdapter implements VcsL
               break;
             }
           }
-          VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(vcsRoot);
+          if (vcsRoot != null) {
+            VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(vcsRoot);
+          }
         }
         break;
       }
