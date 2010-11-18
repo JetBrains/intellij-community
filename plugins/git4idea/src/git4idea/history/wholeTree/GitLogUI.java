@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.ui.TextFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -883,9 +884,9 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private class MyTextFieldAction extends TextFieldAction {
+  private class MyTextFieldAction extends SearchFieldAction {
     private MyTextFieldAction() {
-      super("", "Type words to filter by", IconLoader.getIcon("/actions/search.png"), 30);
+      super();
     }
 
     @Override
@@ -894,10 +895,9 @@ public class GitLogUI implements Disposable {
     }
 
     private void checkIfFilterChanged() {
-      final String newValue = myField.getText().trim();
+      final String newValue = getText().trim();
       if (! Comparing.equal(myPreviousFilter, newValue)) {
         myPreviousFilter = newValue;
-        //getUIRefresh().setLoadingShowNoDataState();
 
         reloadRequest();
       }
