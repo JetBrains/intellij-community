@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -92,7 +89,15 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self oneOf(final T... values) {
-    final List<T> list = Arrays.asList(values);
+    final Collection<T> list;
+
+    if (values.length >= 11) {
+      list = new HashSet<T>(Arrays.asList(values));
+    }
+    else {
+      list = Arrays.asList(values);
+    }
+
     return with(new ValuePatternCondition<T>("oneOf") {
 
       @Override

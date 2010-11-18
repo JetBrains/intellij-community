@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
@@ -174,11 +174,41 @@ public class SoftWrapApplianceOnDocumentModificationTest extends LightPlatformCo
     assertEquals(new VisualPosition(7, 1), myEditor.offsetToVisualPosition(myEditor.getDocument().getTextLength()));
   }
   
+  public void testTrailingSoftWrapOffsetShiftOnTyping() throws IOException {
+    // The main idea is to type on a logical line before soft wrap in order to ensure that its offset is correctly shifted back.
+    String text = 
+      "line1<caret>\n" +
+      "second line that is rather long to be soft wrapped";
+    init(100, text);
+
+    TIntHashSet offsetsBefore = collectSoftWrapStartOffsets(1);
+    assertTrue(!offsetsBefore.isEmpty());
+    
+    type('2');
+    final TIntHashSet offsetsAfter = collectSoftWrapStartOffsets(1);
+    assertSame(offsetsBefore.size(), offsetsAfter.size());
+    offsetsBefore.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int value) {
+        assertTrue(offsetsAfter.contains(value + 1));
+        return true;
+      }
+    });
+  }
+  
   //private void init(final int visibleWidth) throws Exception {
   //  configureByFile(PATH + getFileName());
   //  initCommon(visibleWidth);
   //}
 
+  private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
+    TIntHashSet result = new TIntHashSet();
+    for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {
+      result.add(softWrap.getStart());
+    }
+    return result;
+  }
+  
   private void init(int visibleWidth, String fileText) throws IOException {
     configureFromFileText(getFileName(), fileText);
     initCommon(visibleWidth);

@@ -372,7 +372,14 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
     
     if (myBeforeChangeState.endCacheEntryIndex < myCache.size() - 1) {
-      myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
+      int cacheIndexToUse = myBeforeChangeState.endCacheEntryIndex;
+      // There is a possible case that end cache entry index points to the entry that lays withing the changed document range,
+      // hence, we need not to store it then.
+      if (cacheIndexToUse < myCache.size() && myCache.get(cacheIndexToUse).startOffset < event.getNewEndOffset()) {
+        cacheIndexToUse++;
+      }
+      
+      myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(cacheIndexToUse, myCache.size()));
       if (DEBUG_SOFT_WRAP_PROCESSING) {
         log("xxxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationStart(). Marked the following " + myNotAffectedByUpdateTailCacheEntries.size()
             + " entries for update: ");
@@ -408,7 +415,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myAfterChangeState.updateByDocumentOffsets(event.getNewStartOffset(), event.getNewEndOffset(), event.getNewLogicalLinesDiff());
     myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
 
-    applyStateChange(event.getExactOffsetsDiff());
+    applyStateChange(event.getExactOffsetsDiff(), event.getNewEndOffset());
     myNotAffectedByUpdateTailCacheEntries.clear();
 
     if (DEBUG_SOFT_WRAP_PROCESSING) {
@@ -480,7 +487,20 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    * </ol>
    </pre>
    */
-  private void applyStateChange(int offsetsDiff) {
+  private void applyStateChange(int offsetsDiff, int endOffset) {
+    // Update offsets for soft wraps that lay beyond the changed region.
+    if (offsetsDiff != 0 && endOffset < myEditor.getDocument().getTextLength()) {
+      int softWrapIndex = myStorage.getSoftWrapIndex(endOffset);
+      if (softWrapIndex < 0) {
+        softWrapIndex = -softWrapIndex - 1;
+      }
+
+      List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
+      for (int i = softWrapIndex; i < softWraps.size(); i++) {
+        softWraps.get(i).advance(offsetsDiff);
+      }
+    }
+    
     if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
       return;
     }
@@ -512,21 +532,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       cacheEntry.endSoftWrapLinesBefore += softWrappedLinesDiff;
       cacheEntry.startFoldedLines += foldedLinesDiff;
       cacheEntry.endFoldedLines += foldedLinesDiff;
-    }
-
-    int offset = myNotAffectedByUpdateTailCacheEntries.get(0).startOffset + 1/* in order to exclude soft wrap from previous line if any*/;
-    if (offsetsDiff == 0 || offset >= myEditor.getDocument().getTextLength()) {
-      return;
-    }
-
-    int softWrapIndex = myStorage.getSoftWrapIndex(offset);
-    if (softWrapIndex < 0) {
-      softWrapIndex = -softWrapIndex - 1;
-    }
-
-    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
-    for (int i = softWrapIndex; i < softWraps.size(); i++) {
-      softWraps.get(i).advance(offsetsDiff);
     }
   }
 
@@ -579,8 +584,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
         endCacheEntryIndex = -endCacheEntryIndex - 1;
       }
       
-      logicalLines = logicalLinesDiff + 1;
-      visualLines = logicalLinesDiff + 1;
+      logicalLines = logicalLinesDiff;
+      visualLines = logicalLinesDiff;
       softWrapLines = myStorage.getNumberOfSoftWrapsInRange(startOffset, endOffset);
       visualLines += softWrapLines;
       
