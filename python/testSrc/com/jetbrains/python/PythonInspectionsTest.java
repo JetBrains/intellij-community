@@ -273,7 +273,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyAugmentAssignmentInspection() {
     doHighlightingTest(PyAugmentAssignmentInspection.class);
   }
+
   public void testPyDictDuplicateKeysInspection() {
     doHighlightingTest(PyDictDuplicateKeysInspection.class);
+  }
+
+  public void testPyOldStyleClassesInspection() {
+    doHighlightingTest(PyOldStyleClassesInspection.class);
   }
 }
