@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -204,49 +205,62 @@ public class PositionManagerImpl implements PositionManager {
 
   @NotNull
   public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>> () {
-      public List<ReferenceType> compute() {
+    final Trinity<String, Boolean, PsiClass> trinity = calcClassName(classPosition);
+    if (trinity == null) {
+      return Collections.emptyList();
+    }
+    final String className = trinity.getFirst();
+    final boolean isNonAnonymousClass = trinity.getSecond();
+    final PsiClass classAtPosition = trinity.getThird();
+
+    if (isNonAnonymousClass) {
+      return myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    }
+    
+    // the name is a parent class for a local or anonymous class
+    final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
+    for (ReferenceType outer : outers) {
+      final ReferenceType nested = findNested(outer, classAtPosition, classPosition);
+      if (nested != null) {
+        result.add(nested);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Trinity<String, Boolean, PsiClass> calcClassName(final SourcePosition classPosition) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Trinity<String, Boolean, PsiClass>> () {
+      public Trinity<String, Boolean, PsiClass> compute() {
         final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
 
         if(psiClass == null) {
-          return Collections.emptyList();
+          return null;
         }
 
         if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           final PsiClass parentNonLocal = JVMNameUtil.getTopLevelParentClass(psiClass);
           if(parentNonLocal == null) {
             LOG.error("Local or anonymous class has no non-local parent");
-            return Collections.emptyList();
+            return null;
           }
           final String parentClassName = JVMNameUtil.getNonAnonymousClassName(parentNonLocal);
           if(parentClassName == null) {
             LOG.error("The name of a parent of a local (anonymous) class is null");
-            return Collections.emptyList();
+            return null;
           }
-          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(parentClassName);
-          final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
-          
-          for (ReferenceType outer : outers) {
-            final ReferenceType nested = findNested(outer, psiClass, classPosition);
-            if (nested != null) {
-              result.add(nested);
-            }
-          }
-          return result;
+          return new Trinity<String, Boolean, PsiClass>(parentClassName, Boolean.FALSE, psiClass);
         }
-        else {
-          final String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-          if (className == null) {
-            return Collections.emptyList();
-          }
-          return myDebugProcess.getVirtualMachineProxy().classesByName(className);
-        }
+        
+        final String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        return className != null? new Trinity<String, Boolean, PsiClass>(className, Boolean.TRUE, psiClass) : null;
       }
     });
   }
 
   @Nullable
-  private ReferenceType findNested(ReferenceType fromClass, final PsiClass classToFind, SourcePosition classPosition) {
+  private ReferenceType findNested(final ReferenceType fromClass, final PsiClass classToFind, SourcePosition classPosition) {
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
       
@@ -280,11 +294,15 @@ public class PositionManagerImpl implements PositionManager {
           // Example of such line:
           // list.add(new Runnable(){......
           // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-          final int line = Math.min(rangeBegin + 1, rangeEnd); 
-          final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);
-          if (classToFind.equals(JVMNameUtil.getClassAt(candidatePosition))) {
-            return fromClass;
-          }
+          final int finalRangeBegin = rangeBegin;
+          final int finalRangeEnd = rangeEnd;
+          return ApplicationManager.getApplication().runReadAction(new Computable<ReferenceType>() {
+            public ReferenceType compute() {
+              final int line = Math.min(finalRangeBegin + 1, finalRangeEnd);
+              final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);
+              return classToFind.equals(JVMNameUtil.getClassAt(candidatePosition))? fromClass : null;
+            }
+          });
         }
       }
       catch (AbsentInformationException ignored) {
