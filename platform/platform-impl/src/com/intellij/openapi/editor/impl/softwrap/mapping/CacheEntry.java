@@ -74,7 +74,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myCache = cache;
   }
 
-  public void setLineStartPosition(@NotNull EditorPosition context, int i) {
+  public void setLineStartPosition(@NotNull EditorPosition context) {
     assert context.visualColumn == 0;
     startLogicalLine = context.logicalLine;
     startLogicalColumn = context.logicalColumn;
@@ -85,25 +85,21 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     startSoftWrapColumnDiff = context.softWrapColumnDiff;
     startFoldedLines = context.foldedLines;
     startFoldingColumnDiff = context.foldingColumnDiff;
-
-    if (i > 1 && (startOffset - myCache.get(i - 1).endOffset) > 1) {
-      assert false;
-    }
   }
 
-  public void setLineEndPosition(@NotNull EditorPosition context) {
-    endOffset = context.offset;
-    endLogicalLine = context.logicalLine;
-    endLogicalColumn = context.logicalColumn;
-    endVisualColumn = context.visualColumn;
-    endSoftWrapLinesBefore = context.softWrapLinesBefore;
-    endSoftWrapLinesCurrent = context.softWrapLinesCurrent;
-    endSoftWrapColumnDiff = context.softWrapColumnDiff;
-    endFoldedLines = context.foldedLines;
-    endFoldingColumnDiff = context.foldingColumnDiff;
+  public void setLineEndPosition(@NotNull EditorPosition position) {
+    endOffset = position.offset;
+    endLogicalLine = position.logicalLine;
+    endLogicalColumn = position.logicalColumn;
+    endVisualColumn = position.visualColumn;
+    endSoftWrapLinesBefore = position.softWrapLinesBefore;
+    endSoftWrapLinesCurrent = position.softWrapLinesCurrent;
+    endSoftWrapColumnDiff = position.softWrapColumnDiff;
+    endFoldedLines = position.foldedLines;
+    endFoldingColumnDiff = position.foldingColumnDiff;
   }
 
-  public EditorPosition buildStartLineContext() {
+  public EditorPosition buildStartLinePosition() {
     EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
     result.logicalLine = startLogicalLine;
     result.logicalColumn = startLogicalColumn;
@@ -118,7 +114,7 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return result;
   }
 
-  public EditorPosition buildEndLineContext() {
+  public EditorPosition buildEndLinePosition() {
     EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
     result.logicalLine = endLogicalLine;
     result.logicalColumn = endLogicalColumn;
@@ -144,16 +140,8 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     myFoldingData.put(offset, foldData);
   }
 
-  public TIntObjectHashMap<FoldingData> getFoldingData() {
-    return myFoldingData;
-  }
-
   public List<TabData> getTabData() {
     return myTabPositions;
-  }
-
-  public void storeTabData(EditorPosition context) {
-    storeTabData(new TabData(context));
   }
 
   public void storeTabData(TabData tabData) {

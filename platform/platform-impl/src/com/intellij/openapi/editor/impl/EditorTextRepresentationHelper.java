@@ -59,4 +59,16 @@ public interface EditorTextRepresentationHelper {
    * @return            width in pixels necessary for the target text sub-sequence representation
    */
   int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x);
+
+  /**
+   * This is specification of {@link #textWidth(CharSequence, int, int, int, int)} in case of the single character
+   * (in comparison with the situation when we need to calculate width of particular text).
+   * <p/>
+   * <b>Note:</b> it's assumed that given symbols is a regular one (non-tabulation, non-line feed etc). 
+   * 
+   * @param c           target char
+   * @param fontType    font type used for the given char representation
+   * @return            width in pixels necessary for the target char representation
+   */
+  int charWidth(char c, int fontType);
 }

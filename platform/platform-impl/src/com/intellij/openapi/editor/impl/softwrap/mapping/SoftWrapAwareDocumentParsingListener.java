@@ -33,12 +33,27 @@ import org.jetbrains.annotations.NotNull;
 interface SoftWrapAwareDocumentParsingListener {
 
   /**
-   * Notifies about processed symbol. Please note that given context points to the end of line (not to the start of the new line) if
-   * {@link EditorPosition#symbol processed symbol} is line feed.
+   * Notifies about editor position that points to the visual line start.
+   * <p/>
+   * Target visual line is assumed to belong to one of the categories below:
+   * <pre>
+   * <ul>
+   *   <li>it contains fold region;</li>
+   *   <li>it contains tabulation symbols;</li>
+   *   <li>it ends with soft wrap;</li>
+   * </ul>
+   * </pre>
    *
-   * @param context    context that points to the {@link EditorPosition#symbol processed symbol}
+   * @param position    position that points to the visual line start
    */
-  void onProcessedSymbol(@NotNull EditorPosition context);
+  void onVisualLineStart(@NotNull EditorPosition position);
+
+  /**
+   * Notifies about editor position that points to the visual line end
+   * 
+   * @param position      position that points to the visual line end
+   */
+  void onVisualLineEnd(@NotNull EditorPosition position);
 
   /**
    * Notifies about processed fold region.
@@ -50,21 +65,32 @@ interface SoftWrapAwareDocumentParsingListener {
   void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int collapsedFoldingWidthInColumns, int visualLine);
 
   /**
-   * Notifies that soft wrap is encountered.
-   *
-   * @param context   context that points to document position just before soft wrap
+   * Notifies about tabulation symbol encountered during document parsing.
+   * <p/>
+   * Tabulations are treated specially because they may occupy different number of visual columns during representation
+   * at IJ editor.
+   * 
+   * @param position        tabulation symbol position 
+   * @param widthInColumns  width in visual columns of the tabulation symbol identified by the given position
    */
-  void beforeSoftWrap(@NotNull EditorPosition context);
+  void onTabulation(@NotNull EditorPosition position, int widthInColumns);
+  
+  /**
+   * Notifies about soft wrap-introduced virtual line feed.
+   *
+   * @param position   position just before soft wrap
+   */
+  void beforeSoftWrapLineFeed(@NotNull EditorPosition position);
+  
+  /**
+   * Notifies about soft wrap-introduced virtual line feed.
+   *
+   * @param position   position just after soft wrap
+   */
+  void afterSoftWrapLineFeed(@NotNull EditorPosition position);
 
   /**
-   * Notifies about soft wrap-introduced line feed.
-   *
-   * @param context   context that points to document position just after soft wrap-introduced line feed
-   */
-  void afterSoftWrapLineFeed(@NotNull EditorPosition context);
-
-  /**
-   * There is a possible case that document parser steps back to particular offset, i.e. it may encounter a situation
+   * There is a possible case that document parser steps back to particular offset, e.g. it may encounter a situation
    * when long line should be soft-wrapped and the most appropriate place for a wrap is located couple of symbols below
    * the current parsing position.
    * <p/>
@@ -76,32 +102,16 @@ interface SoftWrapAwareDocumentParsingListener {
   void revertToOffset(int offset, int visualLine);
 
   /**
-   * Notifies that given document range is about to be recalculated.
-   * <p/>
-   * I.e. the listener should expect the following calls sequence during range recalculation:
-   * <p/>
-   * <pre>
-   * <ul>
-   *   <li>{@link #onRecalculationStart(int, int)};</li>
-   *   <li>number of calls like {@link #onProcessedSymbol(EditorPosition)}, {@link #onCollapsedFoldRegion(FoldRegion, int, int)} etc;</li>
-   *   <li>{@link #onRecalculationEnd(int, int)};</li>
-   * </ul>
-   * </pre>
-   *
-   * @param startOffset   start offset of document range that is about to be recalculated
-   * @param endOffset     end offset of document range that is about to be recalculated
+   * Notifies current listener that particular document region re-parsing is about to begin.
+   * 
+   * @param event   object that contains information about re-parsed document region
    */
-  void onRecalculationStart(int startOffset, int endOffset);
+  void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event);
 
   /**
-   * Notifies that given document range is recalculated.
-   * <p/>
-   * <b>Note:</b> given offsets may differ from the one given to {@link #onRecalculationStart(int, int)}. E.g. there is a possible
-   * case that user removes particular block of text. {@link #onRecalculationStart(int, int)} is called with offsets of logical lines
-   * that hold that block and this method is called with offsets of the logical lines that hold changed text region.
+   * Notifies current listener that particular document region re-parsing has just finished.
    *
-   * @param startOffset   start offset of document range that is recalculated (inclusive)
-   * @param endOffset     end offset of document range that is recalculated (inclusive)
+   * @param event   object that contains information about re-parsed document region
    */
-  void onRecalculationEnd(int startOffset, int endOffset);
+  void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event);
 }

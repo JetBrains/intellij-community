@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
 * @author Denis Zhdanov
 * @since Sep 9, 2010 9:21:22 AM
@@ -25,11 +23,6 @@ class TabData implements Cloneable {
 
   public final int widthInColumns;
   public int offset;
-
-  TabData(@NotNull EditorPosition context) {
-    widthInColumns = context.symbolWidthInColumns;
-    offset = context.offset;
-  }
 
   TabData(int widthInColumns, int offset) {
     this.widthInColumns = widthInColumns;

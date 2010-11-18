@@ -49,7 +49,7 @@ interface MappingStrategy<T> {
   /**
    * Notifies current strategy that there are no special symbols and regions between the document position identified
    * by the current state of the given position and given offset. I.e. it's safe to assume that all symbols between the offset
-   * identified by the given position and given offset have occupy one visual and logical column.
+   * identified by the given position and given offset occupy one visual and logical column.
    *
    * @param position  currently processed position
    * @param offset    nearest offset to the one identified by the given position that conforms to requirement that every symbol

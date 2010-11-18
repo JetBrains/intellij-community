@@ -58,6 +58,18 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   }
 
   @Override
+  public int charWidth(char c, int fontType) {
+    // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
+    // helper is editor-bound and cache size is not too big.
+    mySharedKey.fontName = myColorsScheme.getEditorFontName();
+    mySharedKey.fontSize = myColorsScheme.getEditorFontSize();
+    mySharedKey.fontType = fontType;
+    
+    mySharedKey.c = c;
+    return charWidth(c);
+  }
+
+  @Override
   public int textWidth(@NotNull CharSequence text, int start, int end, int fontType, int x) {
     int startToUse = start;
     for (int i = end - 1; i >= start; i--) {

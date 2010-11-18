@@ -18,12 +18,14 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * Abstract super class for mapping strategies that encapsulates shared logic of advancing the context to the points
@@ -42,15 +44,23 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected final Editor myEditor;
   protected final EditorTextRepresentationHelper myRepresentationHelper;
   protected final SoftWrapsStorage myStorage;
+  protected final List<CacheEntry> myCache;
+  private final DelayedRemovalMap<FoldingData> myFoldData;
 
-  private CacheEntry myCacheEntry;
+  private EditorPosition myInitialPosition;
+  private CacheEntry myTargetEntry;
   private T myEagerMatch;
 
-  AbstractMappingStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage,
-                          @NotNull EditorTextRepresentationHelper representationHelper) throws IllegalStateException
+  AbstractMappingStrategy(@NotNull Editor editor,
+                          @NotNull SoftWrapsStorage storage,
+                          @NotNull List<CacheEntry> cache,
+                          @NotNull DelayedRemovalMap<FoldingData> foldData,
+                          @NotNull EditorTextRepresentationHelper representationHelper)
   {
     myEditor = editor;
     myStorage = storage;
+    myCache = cache;
+    myFoldData = foldData;
     myRepresentationHelper = representationHelper;
   }
 
@@ -64,22 +74,44 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     myEagerMatch = eagerMatch;
   }
 
-  protected CacheEntry getCacheEntry() {
-    return myCacheEntry;
+  protected void setFirstInitialPosition() {
+    myInitialPosition = new EditorPosition(new LogicalPosition(0, 0), 0, myEditor, myRepresentationHelper);
   }
 
-  protected void setCacheEntry(CacheEntry cacheEntry) {
-    myCacheEntry = cacheEntry;
+  @Nullable
+  protected CacheEntry getTargetEntry() {
+    return myTargetEntry;
+  }
+
+  protected void setTargetEntry(@NotNull CacheEntry targetEntry, boolean anchorToStart) {
+    myTargetEntry = targetEntry;
+    if (anchorToStart) {
+      myInitialPosition = targetEntry.buildStartLinePosition();
+    }
+    else {
+      myInitialPosition = targetEntry.buildEndLinePosition();
+    }
+  }
+
+  protected void reset() {
+    myEagerMatch = null;
+    myTargetEntry = null;
+    myInitialPosition = null;
+  }
+  
+  protected void setInitialPosition(@NotNull EditorPosition position) {
+    myInitialPosition = position;
   }
 
   @NotNull
   @Override
   public EditorPosition buildInitialPosition() {
-    return myCacheEntry.buildStartLineContext();
+    return myInitialPosition;
   }
 
+  @Nullable
   protected FoldingData getFoldRegionData(FoldRegion foldRegion) {
-    return myCacheEntry.getFoldingData().get(foldRegion.getStartOffset());
+    return myFoldData.get(foldRegion.getStartOffset());
   }
 
   @Override
@@ -90,16 +122,27 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     }
 
     // Update context state and continue processing.
-    position.logicalLine = myEditor.getDocument().getLineNumber(offset);
-    int diff = offset - position.offset;
-    position.visualColumn += diff;
-    position.logicalColumn += diff;
+    Document document = myEditor.getDocument();
+    int linesDiff = document.getLineNumber(offset) - position.logicalLine;
+    position.logicalLine += linesDiff;
+    position.visualLine += linesDiff;
+    if (linesDiff <= 0) {
+      int columnsDiff = offset - position.offset;
+      position.visualColumn += columnsDiff;
+      position.logicalColumn += columnsDiff;
+    }
+    else {
+      int lineStartOffset = document.getLineStartOffset(position.logicalLine);
+      int column = offset - lineStartOffset;
+      position.visualColumn = column;
+      position.logicalColumn = column;
+    }
     position.offset = offset;
     return null;
   }
 
   @Nullable
-  protected abstract T buildIfExceeds(EditorPosition context, int offset);
+  protected abstract T buildIfExceeds(EditorPosition position, int offset);
 
   @Override
   public T processFoldRegion(EditorPosition position, FoldRegion foldRegion) {

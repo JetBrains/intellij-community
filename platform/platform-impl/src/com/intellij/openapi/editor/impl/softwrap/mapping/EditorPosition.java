@@ -105,6 +105,7 @@ class EditorPosition implements Cloneable {
     logicalLine++;
     logicalColumn = 0;
     x = 0;
+    offset++;
   }
 
   /**
@@ -187,5 +188,13 @@ class EditorPosition implements Cloneable {
     result.symbolWidthInColumns = symbolWidthInColumns;
     result.symbolWidthInPixels = symbolWidthInPixels;
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+      "visual position: (%d; %d); logical position: (%d; %d); offset: %d; soft wraps: before=%d, current=%d, column diff=%d; "
+      + "fold regions: lines=%d, column diff=%d", visualLine, visualColumn, logicalLine, logicalColumn, offset, softWrapLinesBefore,
+      softWrapLinesCurrent, softWrapColumnDiff, foldedLines, foldingColumnDiff);
   }
 }

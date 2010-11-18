@@ -21,8 +21,8 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.util.Pair;
-import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.List;
@@ -51,12 +51,15 @@ import java.util.List;
  */
 public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener {
 
+  private static final boolean DEBUG_SOFT_WRAP_PROCESSING = false;
+  
   /** Caches information for the document visual line starts sorted in ascending order. */
-  private final List<CacheEntry> myCache                               = new ArrayList<CacheEntry>();
-  private final CacheEntry       mySearchKey                           = new CacheEntry(0, null, null, null);
-  private final List<CacheEntry> myNotAffectedByUpdateTailCacheEntries = new ArrayList<CacheEntry>();
-  private final CacheState       myBeforeChangeState                   = new CacheState();
-  private final CacheState       myAfterChangeState                    = new CacheState();
+  private final List<CacheEntry>               myCache                               = new ArrayList<CacheEntry>();
+  private final DelayedRemovalMap<FoldingData> myFoldData                            = new DelayedRemovalMap<FoldingData>();
+  private final CacheEntry                     mySearchKey                           = new CacheEntry(0, null, null, null);
+  private final List<CacheEntry>               myNotAffectedByUpdateTailCacheEntries = new ArrayList<CacheEntry>();
+  private final CacheState                     myBeforeChangeState                   = new CacheState();
+  private final CacheState                     myAfterChangeState                    = new CacheState();
 
   private final OffsetToLogicalCalculationStrategy myOffsetToLogicalStrategy;
   private final VisualToLogicalCalculationStrategy myVisualToLogicalStrategy;
@@ -72,8 +75,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myStorage = storage;
     myRepresentationHelper = representationHelper;
 
-    myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, representationHelper);
-    myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, representationHelper);
+    myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, myCache, myFoldData, representationHelper);
+    myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, myCache, myFoldData, representationHelper);
   }
 
   @NotNull
@@ -83,20 +86,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       return new LogicalPosition(visual.line, visual.column, 0, 0, 0, 0, 0);
     }
 
-    // There is a possible case that we're asked to map visual position that lay beyond the document content (e.g. there is a
-    // 'virtual space' below the document text and it's perfectly possible to map visual position that points into it).
-    // We consider that there are no soft wraps, tabulations and fold regions between the last cached visual line and target line then.
-    if (!myCache.isEmpty()) {
-      CacheEntry cacheEntry = myCache.get(myCache.size() - 1);
-      if (visual.line > cacheEntry.visualLine) {
-        int lineDiff = visual.line - cacheEntry.visualLine;
-        return new LogicalPosition(
-          cacheEntry.endLogicalLine + lineDiff, visual.column, cacheEntry.endSoftWrapLinesBefore + cacheEntry.endSoftWrapLinesCurrent,
-          0, 0, cacheEntry.endFoldedLines, 0
-        );
-      }
-    }
-
     myVisualToLogicalStrategy.init(visual, myCache);
     return calculate(myVisualToLogicalStrategy);
   }
@@ -104,11 +93,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
+    //TODO den remove
     // There is a possible case that this method is called during the first refresh (the cache is empty). So, we delegate it to
     // soft wraps-unaware code.
-    if (myCache.isEmpty()) {
-      return myEditor.offsetToLogicalPosition(offset, false);
-    }
+    //if (myCache.isEmpty()) {
+    //  return myEditor.offsetToLogicalPosition(offset, false);
+    //}
     myOffsetToLogicalStrategy.init(offset, myCache);
     return calculate(myOffsetToLogicalStrategy);
   }
@@ -238,144 +228,96 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       tabs = myCache.get(i).getTabData();
     }
     else {
-      assert false;
       tabs = Collections.emptyList();
     }
     return new TabulationDataProvider(tabs);
   }
 
   @Override
-  public void onProcessedSymbol(@NotNull EditorPosition position) {
-    switch (position.symbol) {
-      case '\n': onLineFeed(position); break;
-      case '\t': onTabulation(position); break;
-      default: onNonLineFeedSymbol(position); break;
+  public void onVisualLineStart(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, true);
+    if (cacheEntry == null) {
+      return;
     }
+    cacheEntry.setLineStartPosition(position);
+  }
 
-    int documentLength = myEditor.getDocument().getTextLength();
-    if (documentLength > 0 && position.offset >= documentLength - 1 && position.symbol != '\n') {
-      // Update information about end position of the last visual line.
-      CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
-      cacheEntry.endLogicalColumn += position.symbolWidthInColumns;
-      cacheEntry.endVisualColumn += position.symbolWidthInColumns;
-      cacheEntry.endOffset++;
+  @Override
+  public void onVisualLineEnd(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, false);
+    if (cacheEntry == null) {
+      return;
     }
+    cacheEntry.setLineEndPosition(position);
   }
 
   @Override
   public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int x, int visualLine) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(visualLine);
-    cacheEntry.store(foldRegion, x);
+    myFoldData.put(foldRegion.getStartOffset(), new FoldingData(foldRegion, x, myRepresentationHelper, myEditor));
   }
 
   @Override
-  public void beforeSoftWrap(@NotNull EditorPosition position) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
+  public void beforeSoftWrapLineFeed(@NotNull EditorPosition position) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, false);
+    if (cacheEntry == null) {
+      return;
+    }
     cacheEntry.setLineEndPosition(position);
   }
 
   @Override
   public void afterSoftWrapLineFeed(@NotNull EditorPosition position) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
-    cacheEntry.setLineStartPosition(position, position.visualLine);
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, true);
+    if (cacheEntry == null) {
+      return;
+    }
+    cacheEntry.setLineStartPosition(position);
+    if (DEBUG_SOFT_WRAP_PROCESSING) {
+      log(String.format("Update cache entry on 'after soft wrap event'. Document position: %s, cache entry: %s", position, cacheEntry));
+    }
   }
 
   @Override
   public void revertToOffset(final int offset, int visualLine) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(visualLine);
-
-    // Remove information about cached tabulation symbol data.
-    int tabIndex = 0;
-    for (; tabIndex < cacheEntry.getTabData().size(); tabIndex++) {
-      if (cacheEntry.getTabData().get(tabIndex).offset >= offset) {
-        break;
-      }
-    }
-    if (tabIndex < cacheEntry.getTabData().size() - 1) {
-      cacheEntry.getTabData().subList(tabIndex, cacheEntry.getTabData().size()).clear();
-    }
-
-    // Remove information about cached single line fold regions.
-    cacheEntry.getFoldingData().retainEntries(new TIntObjectProcedure<FoldingData>() {
-      @Override
-      public boolean execute(int foldStartOffset, FoldingData data) {
-        return foldStartOffset < offset;
-      }
-    });
+    // Do nothing in assumption that we store only information about start and end visual line positions and
+    // that start information remains the same and end of line is not reached yet.
   }
 
-  /**
-   * Updates inner cache for the position that points to line feed symbol
-   *
-   * @param position    position that points to line feed symbol
-   */
-  private void onLineFeed(@NotNull EditorPosition position) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
-    cacheEntry.setLineEndPosition(position);
-
-    cacheEntry = getCacheEntryForVisualLine(position.visualLine + 1);
-
-    EditorPosition newLinePosition = position.clone();
-    newLinePosition.onNewLine();
-    newLinePosition.offset++;
-    cacheEntry.setLineStartPosition(newLinePosition, position.visualLine + 1);
-    cacheEntry.setLineEndPosition(newLinePosition);
-  }
-
-  /**
-   * Updates inner cache for the position that points to tabulation symbol.
-   *
-   * @param position    position that points to tabulation symbol
-   */
-  private void onTabulation(@NotNull EditorPosition position) {
-    onNonLineFeedSymbol(position);
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
-    cacheEntry.storeTabData(position);
-  }
-
-  /**
-   * Process given position in assumption that it points to non-line feed symbol.
-   *
-   * @param position   position that is assumed to point to non-line feed symbol
-   */
-  private void onNonLineFeedSymbol(@NotNull EditorPosition position) {
-    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine);
-    Document document = myEditor.getDocument();
-    if (position.offset >= document.getTextLength() - 1) {
-      cacheEntry.setLineEndPosition(position);
+  @Override
+  public void onTabulation(@NotNull EditorPosition position, int widthInColumns) {
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(position.visualLine, true);
+    if (cacheEntry == null) {
       return;
     }
-
-    if (position.offset < 0 || (position.offset > 0 && position.offset < document.getTextLength()
-                               && document.getCharsSequence().charAt(position.offset - 1) != '\n'))
-    {
-      return;
-    }
-
-    // Process first symbol on a new line.
-    cacheEntry.getTabData().clear();
-    cacheEntry.getFoldingData().clear();
-    cacheEntry.setLineStartPosition(position.clone(), position.visualLine);
+    cacheEntry.storeTabData(new TabData(widthInColumns, position.offset));
   }
 
-  private CacheEntry getCacheEntryForVisualLine(int visualLine) {
+  /**
+   * Tries to retrieve {@link CacheEntry} object that stores data for the given visual line.
+   * <p/>
+   * There is a possible case that no such object is registered yet and it may be created if necessary as a result of this
+   * method call.
+   * 
+   * @param visualLine          target visual line
+   * @param createIfNecessary   flag that indicates if new {@link CacheEntry} object should be created in case no information
+   *                            is stored for the target visual line 
+   * @return                    {@link CacheEntry} object that stores cache data for the target visual line if any;
+   *                            <code>null</code> otherwise
+   */
+  @Nullable
+  private CacheEntry getCacheEntryForVisualLine(int visualLine, boolean createIfNecessary) {
     // Blind guess, worth to perform in assumption that this method is called on document parsing most of the time.
     if (!myCache.isEmpty()) {
       CacheEntry lastEntry = myCache.get(myCache.size() - 1);
       if (lastEntry.visualLine == visualLine) {
-        if (lastEntry.locked) {
-          myCache.set(myCache.size() - 1, lastEntry = lastEntry.clone());
-        }
         return lastEntry;
       }
-      else if (lastEntry.visualLine < visualLine) {
+      else if (lastEntry.visualLine < visualLine && createIfNecessary) {
         CacheEntry result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache);
         myCache.add(result);
         return result;
       }
     }
-
-    mySearchKey.visualLine = visualLine;
 
     int start = 0;
     int end = myCache.size() - 1;
@@ -398,13 +340,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       break;
     }
 
-    CacheEntry result;
+    CacheEntry result = null;
     if (cacheEntryIndex < 0) {
       cacheEntryIndex = start;
-      myCache.add(cacheEntryIndex, result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache));
-    }
-    else if (myBeforeChangeState.valid && cacheEntryIndex > myBeforeChangeState.endCacheEntryIndex && myCache.get(cacheEntryIndex).locked) {
-      myCache.set(cacheEntryIndex, result = myCache.get(cacheEntryIndex).clone());
+      if (createIfNecessary) {
+        myCache.add(cacheEntryIndex, result = new CacheEntry(visualLine, myEditor, myRepresentationHelper, myCache));
+      }
     }
     else {
       result = myCache.get(cacheEntryIndex);
@@ -413,105 +354,100 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   @Override
-  public void onRecalculationStart(int startOffset, int endOffset) {
-    myBeforeChangeState.updateByDocumentOffsets(startOffset, endOffset);
-    if (!myBeforeChangeState.valid) {
+  public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
+    if (DEBUG_SOFT_WRAP_PROCESSING) {
+      log(String.format("xxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationStart(%s). Current cache size: %d", event, myCache.size()));
+    }
+    
+    myNotAffectedByUpdateTailCacheEntries.clear();
+    myFoldData.markForDeletion(event.getOldStartOffset(), event.getOldEndOffset());
+    myBeforeChangeState.updateByDocumentOffsets(event.getOldStartOffset(), event.getOldEndOffset(), event.getOldLogicalLinesDiff());
+    if (!myBeforeChangeState.cacheShouldBeUpdated) {
+      if (DEBUG_SOFT_WRAP_PROCESSING) {
+        log(String.format("xxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationStart(): performing eager return"));
+        dumpCache();
+        log("");
+      }
       return;
     }
-
-    //System.out.println("Before recalculation (" + startOffset + "-" + endOffset + ")");
-    //dumpCache();
-
-    myNotAffectedByUpdateTailCacheEntries.clear();
-    myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
     
-    // There is a possible case that the change is non-line feed symbol insertion to the document's end and its previous symbol
-    // is line feed. E.g.:
-    //    line1
-    //    line2
-    //    <caret>
-    // We stored cache entry that corresponds to offset just before the previous last symbol (line feed). However, last symbol is
-    // not line feed now, hence, we need to remove corresponding virtual cache entry.
-    int textLength = myEditor.getDocument().getTextLength();
-    if (endOffset >= textLength && !myNotAffectedByUpdateTailCacheEntries.isEmpty() 
-        && myNotAffectedByUpdateTailCacheEntries.get(myNotAffectedByUpdateTailCacheEntries.size() - 1).startOffset >= textLength) 
-    {
-      myNotAffectedByUpdateTailCacheEntries.remove(myNotAffectedByUpdateTailCacheEntries.size() - 1);
+    if (myBeforeChangeState.endCacheEntryIndex < myCache.size() - 1) {
+      myNotAffectedByUpdateTailCacheEntries.addAll(myCache.subList(myBeforeChangeState.endCacheEntryIndex + 1, myCache.size()));
+      if (DEBUG_SOFT_WRAP_PROCESSING) {
+        log("xxxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationStart(). Marked the following " + myNotAffectedByUpdateTailCacheEntries.size()
+            + " entries for update: ");
+        for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
+          log("\t" + cacheEntry);
+        }
+      }
     }
-    myCache.subList(myBeforeChangeState.startCacheEntryIndex + 1, myCache.size()).clear();
-    for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
-      entry.locked = true;
+    
+    if (myBeforeChangeState.startCacheEntryIndex < myCache.size()) {
+      myCache.subList(myBeforeChangeState.startCacheEntryIndex, myCache.size()).clear();
+      if (DEBUG_SOFT_WRAP_PROCESSING) {
+        log("Removed all cache entries starting from index " + myBeforeChangeState.startCacheEntryIndex + ". Remaining: " + myCache.size());
+        for (CacheEntry cacheEntry : myCache) {
+          log("\t" + cacheEntry);
+        }
+      }
     }
-    myCache.get(myBeforeChangeState.startCacheEntryIndex).collapse();
-
-    //System.out.println("Dropped all cache records starting from index " + (myBeforeChangeState.startCacheEntryIndex + 1));
   }
 
   @Override
-  public void onRecalculationEnd(int startOffset, int endOffset) {
-    if (!myBeforeChangeState.valid) {
-      return;
+  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
+    if (DEBUG_SOFT_WRAP_PROCESSING) {
+      log(String.format("xxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationEnd(%s). Current cache size: %d", event, myCache.size()));
+      if (myCache.size() < 10) {
+        log("\tCurrent cache:");
+        for (CacheEntry cacheEntry : myCache) {
+          log("\t\t" + cacheEntry);
+        }
+      }
     }
-    int endIndex = Math.max(0, myCache.size() - 1/*because of zero-based indexing*/);
-    if (endIndex > 0 && endOffset < myEditor.getDocument().getTextLength() - 1) {
-      endIndex--; // We assume that non-last document line ends with line feed symbol.
-    }
-    myAfterChangeState.updateByCacheIndices(myBeforeChangeState.startCacheEntryIndex, endIndex);
-    myCache.subList(myAfterChangeState.endCacheEntryIndex + 1, myCache.size()).clear();
+    myFoldData.deleteMarked();
+    myAfterChangeState.updateByDocumentOffsets(event.getNewStartOffset(), event.getNewEndOffset(), event.getNewLogicalLinesDiff());
     myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
-    for (CacheEntry entry : myNotAffectedByUpdateTailCacheEntries) {
-      entry.locked = false;
-    }
 
-    //System.out.println("Before applying state change:");
-    //dumpCache();
-
-    applyStateChange();
+    applyStateChange(event.getExactOffsetsDiff());
     myNotAffectedByUpdateTailCacheEntries.clear();
 
-    //System.out.println("After Applying state change");
-    //dumpCache();
+    if (DEBUG_SOFT_WRAP_PROCESSING) {
+      log("After Applying state change");
+      dumpCache();
+    }
 
-    myBeforeChangeState.valid = false;
+    myBeforeChangeState.cacheShouldBeUpdated = false;
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "UnusedDeclaration", "CallToPrintStackTrace"})
   private void dumpCache() {
     Document document = myEditor.getDocument();
     CharSequence text = document.getCharsSequence();
-    System.out.println("--------------------------------------------------");
-    System.out.println("|");
-    System.out.println("|");
-    System.out.println(text);
-    System.out.println("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
-    System.out.println("text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps());
+    log("--------------------------------------------------");
+    log("|");
+    log("| xxxxxxxxx START DUMP. Document:");
+    log(text);
+    log("-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -");
+    log("xxxxxxxxxx text length: " + text.length() + ", soft wraps: " + myStorage.getSoftWraps().size());
     for (int i = 0; i < myCache.size(); i++) {
       CacheEntry entry = myCache.get(i);
       if (text.length() <= 0 && i <= 0) {
         continue;
       }
+      if (entry.endOffset < entry.startOffset) {
+        assert false;
+      }
+      if (i > 0 && myCache.get(i - 1).endOffset > entry.startOffset) {
+        assert false;
+      }
       try {
-        System.out.printf("line %d. %d-%d: '%s'%n", i, entry.startOffset, entry.endOffset,
-                          text.subSequence(Math.min(text.length() - 1, entry.startOffset) ,Math.min(entry.endOffset, text.length() -  1)));
+        log(String.format("line %d. %d-%d: '%s'", i, entry.startOffset, entry.endOffset,
+                          text.subSequence(Math.min(text.length() - 1, entry.startOffset) ,Math.min(entry.endOffset, text.length() -  1))));
       }
       catch (Throwable e) {
         e.printStackTrace();
       }
-      if (i > 0 && myCache.size() > 1 && entry.startOffset < text.length()) {
-        CacheEntry previous = myCache.get(i - 1);
-        if (previous.endOffset < entry.startOffset - 1
-            || (previous.endOffset == entry.startOffset && myEditor.getSoftWrapModel().getSoftWrap(entry.startOffset) == null)
-            || previous.endOffset > entry.startOffset)
-        {
-          assert false;
-        }
-      }
     }
-    if (!myCache.isEmpty() && myCache.get(myCache.size() - 1).endOffset < text.length() - 1) {
-      System.out.printf("Incomplete re-parsing detected! Document length is %d but last processed offset is %s%n", text.length(),
-                        myCache.get(myCache.size() - 1).endOffset);
-    }
-
 
     for (CacheEntry cacheEntry : myCache) {
       if (cacheEntry.startOffset >= document.getTextLength()) {
@@ -522,18 +458,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
           assert false;
         }
       }
-      if (cacheEntry.endOffset < document.getTextLength() - 1) {
-        if (text.charAt(cacheEntry.endOffset) != '\n' && myStorage.getSoftWrap(cacheEntry.endOffset) == null) {
-          assert false;
-        }
-      }
     }
 
-    if (!myCache.isEmpty() && document.getTextLength() > 0) {
-      if (myCache.get(myCache.size() - 1).endOffset < myEditor.getDocument().getTextLength() - 1) {
-        assert false;
-      }
-    }
+    log("\nxxxxxxxxxxxxxxxx Soft wraps: " + myStorage.getSoftWraps());
+    
+    log("xxxxxxxxxx dump complete. Cache size: " + myCache.size() + "\n");
   }
 
   /**
@@ -551,7 +480,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    * </ol>
    </pre>
    */
-  private void applyStateChange() {
+  private void applyStateChange(int offsetsDiff) {
     if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
       return;
     }
@@ -560,8 +489,19 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     int logicalLinesDiff = myAfterChangeState.logicalLines - myBeforeChangeState.logicalLines;
     int softWrappedLinesDiff = myAfterChangeState.softWrapLines - myBeforeChangeState.softWrapLines;
     int foldedLinesDiff = myAfterChangeState.foldedLines - myBeforeChangeState.foldedLines;
-    int offsetsDiff = (myAfterChangeState.endOffset - myAfterChangeState.startOffset)
-                      - (myBeforeChangeState.endOffset - myBeforeChangeState.startOffset);
+    if (DEBUG_SOFT_WRAP_PROCESSING) {
+      log(String.format("Modifying trailing cache entries:" +
+                        "%n\tvisual lines: before=%d, current=%d, diff=%d" +
+                        "%n\tlogical lines: before=%d, current=%d, diff=%d" +
+                        "%n\tsoft wrap lines: before=%d, current=%d, diff=%d" +
+                        "%n\tfold lines: before=%d, current=%d, diff=%d" +
+                        "%n\toffsets: diff=%d",
+                        myBeforeChangeState.visualLines, myAfterChangeState.visualLines, visualLinesDiff,
+                        myBeforeChangeState.logicalLines, myAfterChangeState.logicalLines, logicalLinesDiff,
+                        myBeforeChangeState.softWrapLines, myAfterChangeState.softWrapLines, softWrappedLinesDiff,
+                        myBeforeChangeState.foldedLines, myAfterChangeState.foldedLines, foldedLinesDiff,
+                        offsetsDiff));
+    }
 
     for (CacheEntry cacheEntry : myNotAffectedByUpdateTailCacheEntries) {
       cacheEntry.visualLine += visualLinesDiff;
@@ -595,60 +535,80 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     return myCache.toString();
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
+  public static void log(Object o) {
+    //try {
+    //  doLog(o);
+    //}
+    //catch (Exception e) {
+    //  e.printStackTrace();
+    //}
+  }
+
+  //private static BufferedWriter myWriter;
+  //private static void doLog(Object o) throws Exception {
+  //  if (myWriter == null) {
+  //    myWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("/home/denis/log/softwrap.log")));
+  //  }
+  //  myWriter.write(o.toString());
+  //  myWriter.newLine();
+  //  myWriter.flush();
+  //}
+  
   private class CacheState {
 
-    public boolean valid = true;
+    public boolean cacheShouldBeUpdated = true;
 
     public int visualLines;
     public int logicalLines;
     public int softWrapLines;
     public int foldedLines;
-    public int startOffset;
-    public int endOffset;
     public int startCacheEntryIndex;
     public int endCacheEntryIndex;
 
-    public void updateByDocumentOffsets(int startOffset, int endOffset) {
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
+    public void updateByDocumentOffsets(int startOffset, int endOffset, int logicalLinesDiff) {
+      reset();
       Document document = myEditor.getDocument();
+      
       startCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(startOffset, document, myCache);
-
-      // There is a possible case that particular document tail fragment is removed (this is the case for cyclic buffer for example).
-      // We want to drop corresponding cache entries then.
-      endCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(Math.min(document.getTextLength(), endOffset), document, myCache);
-
-      if (startCacheEntryIndex < 0 || endCacheEntryIndex < 0) {
-        valid = false;
-        // This is correct situation for, say, initial cache update.
+      endCacheEntryIndex = MappingUtil.getCacheEntryIndexForOffset(endOffset, document, myCache);
+      if (startCacheEntryIndex < 0) {
+        startCacheEntryIndex = -startCacheEntryIndex - 1;
+      }
+      if (endCacheEntryIndex < 0) {
+        endCacheEntryIndex = -endCacheEntryIndex - 1;
+      }
+      
+      logicalLines = logicalLinesDiff + 1;
+      visualLines = logicalLinesDiff + 1;
+      softWrapLines = myStorage.getNumberOfSoftWrapsInRange(startOffset, endOffset);
+      visualLines += softWrapLines;
+      
+      if (startCacheEntryIndex >= myCache.size()) {
+        cacheShouldBeUpdated = false;
         return;
       }
-      updateByCacheIndices(startCacheEntryIndex, endCacheEntryIndex);
+      
+      // We assume here that the cache contains entries for all visual lines that contain collapsed fold regions.
+      foldedLines = 0;
+      for (int i = startCacheEntryIndex, max = Math.max(0, Math.min(myCache.size() - 1, endCacheEntryIndex)); i <= max; i++) {
+        CacheEntry cacheEntry = myCache.get(i);
+        foldedLines += cacheEntry.endFoldedLines - cacheEntry.startFoldedLines;
+      }
 
-    }
-
-    public void updateByCacheIndices(int startIndex, int endIndex) {
-      reset();
-      startOffset = myCache.get(startIndex).startOffset;
-      endOffset = myCache.get(endIndex).endOffset;
-      startCacheEntryIndex = startIndex;
-      endCacheEntryIndex = endIndex;
-      visualLines = endIndex - startIndex + 1;
-
-      CacheEntry startEntry = myCache.get(startIndex);
-      CacheEntry endEntry = myCache.get(endIndex);
-      logicalLines = endEntry.endLogicalLine - startEntry.startLogicalLine + 1;
-      foldedLines = endEntry.endFoldedLines - startEntry.startFoldedLines;
-      softWrapLines = endEntry.endSoftWrapLinesBefore + endEntry.endSoftWrapLinesCurrent - startEntry.startSoftWrapLinesBefore
-                      - startEntry.startSoftWrapLinesCurrent;
+      if (DEBUG_SOFT_WRAP_PROCESSING) {
+        log(String.format("CachingSoftWrapDataMapper$CacheState.updateByDocumentOffsets(). Collected %d fold lines for cache entry indices "
+                          + "%d-%d (cache size is %d)", foldedLines, startCacheEntryIndex, endCacheEntryIndex, myCache.size()));
+      }
     }
 
     public void reset() {
       logicalLines = 0;
+      visualLines = 0;
       softWrapLines = 0;
       foldedLines = 0;
       endCacheEntryIndex = 0;
-      valid = true;
+      cacheShouldBeUpdated = true;
     }
   }
 }
