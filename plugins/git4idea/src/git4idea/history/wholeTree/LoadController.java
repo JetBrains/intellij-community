@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class LoadController implements Loader {
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
   private LoadAlgorithm myPreviousAlgorithm;
+  private NewGitUsersComponent myUsersComponent;
 
   // todo: caches: in map - by root
 
@@ -42,6 +44,7 @@ public class LoadController implements Loader {
     myMediator = mediator;
     myDetailsCache = detailsCache;
     myUsersIndex = new UsersIndex();
+    myUsersComponent = NewGitUsersComponent.getInstance(myProject);
   }
 
   @CalledInAwt
@@ -66,6 +69,9 @@ public class LoadController implements Loader {
       list.add(loaderAndRefresher);
       ++ i;
     }
+
+    myUsersComponent.acceptUpdate(myUsersIndex.getKeys());
+
     //final List<String> abstractHashs = possibleHashes == null ? null : filterNumbers(possibleHashes);
     myPreviousAlgorithm = new LoadAlgorithm(myProject, list, possibleHashes == null ? null : Arrays.asList(possibleHashes));
     myPreviousAlgorithm.execute();

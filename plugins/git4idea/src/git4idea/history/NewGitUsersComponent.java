@@ -26,6 +26,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,19 +50,22 @@ public class NewGitUsersComponent {
   }
 
   @Nullable
-  public List<String> getForRoot(@NotNull final String root) {
+  public List<String> get() {
     synchronized (myLock) {
-      final List<String> data = myState.get(root);
+      final List<String> data = myState.get("");
       return data == null ? null : Collections.unmodifiableList(data);
     }
   }
 
-  public void acceptUpdate(@NotNull final String root, @NotNull final List<String> data) {
-    Collections.sort(data);
+  public void acceptUpdate(@NotNull final List<String> data) {
     synchronized (myLock) {
-      final List<String> wasData = myState.get(root);
+      final List<String> wasData = myState.get("");
       if (wasData == null || (! wasData.equals(data))) {
-        myState.put(root, data);
+        if (wasData != null) {
+          data.addAll(wasData);
+        }
+        Collections.sort(data);
+        myState.put("", data);
         myState.force();
       }
     }
