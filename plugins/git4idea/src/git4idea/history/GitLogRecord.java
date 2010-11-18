@@ -180,8 +180,10 @@ class GitLogRecord {
       parents.add(AbstractHash.create(parentsShortHash));
     }
     final List<List<String>> parts = getParts();
-    for (List<String> partsPart: parts) {
-      result.add(parseChange(project, vcsRoot, parents, partsPart, thisRevision));
+    if (parts != null) {
+      for (List<String> partsPart: parts) {
+        result.add(parseChange(project, vcsRoot, parents, partsPart, thisRevision));
+      }
     }
     return result;
   }

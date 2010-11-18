@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +67,7 @@ import java.util.List;
 public class GitLogUI implements Disposable {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitLogUI");
   public static final SimpleTextAttributes HIGHLIGHT_TEXT_ATTRIBUTES =
-    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new Color(40,157,130));
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, new Color(255,128,0));
   private final Project myProject;
   private BigTableTableModel myTableModel;
   private DetailsCache myDetailsCache;
@@ -213,9 +214,6 @@ public class GitLogUI implements Disposable {
 
   @Override
   public void dispose() {
-    if (myMyChangeListener != null) {
-      myMyChangeListener.stop();
-    }
   }
 
   private static class SelectorList extends AbstractList<Integer> {
@@ -261,6 +259,15 @@ public class GitLogUI implements Disposable {
     myUi.addContent(repoContent, 0, PlaceInGrid.right, false);
     repoContent.setCloseable(false);
     repoContent.setPinned(true);
+
+    Disposer.register(content, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myMyChangeListener != null) {
+          myMyChangeListener.stop();
+        }
+      }
+    });
 
     /*final JComponent specificDetails = myDetails.create();
     final Content specificDetailsContent = myUi.createContent("Specific0", specificDetails, "Details", Icons.UNSELECT_ALL_ICON, null);
@@ -449,7 +456,7 @@ public class GitLogUI implements Disposable {
     final Splitter splitter = new Splitter(true, 0.6f);
     splitter.setFirstComponent(wrapper);
     splitter.setSecondComponent(specificDetails);
-    splitter.setDividerWidth(2);
+    splitter.setDividerWidth(4);
     return splitter;
   }
 
@@ -480,16 +487,19 @@ public class GitLogUI implements Disposable {
     return true;
   }
 
-  private String preparse(String previousFilter) {
+  private Pair<String, List<String>> preparse(String previousFilter) {
     final String[] strings = previousFilter.split("[\\s]");
     StringBuilder sb = new StringBuilder();
     mySearchContext.clear();
+    final List<String> words = new ArrayList<String>();
     for (String string : strings) {
       mySearchContext.add(string.toLowerCase());
-      sb.append(StringUtil.escapeToRegexp(string)).append(".*");
+      final String word = StringUtil.escapeToRegexp(string);
+      sb.append(word).append(".*");
+      words.add(word);
     }
     new SubstringsFilter().doFilter(mySearchContext);
-    return sb.toString();
+    return new Pair<String, List<String>>(sb.toString(), words);
   }
 
   public static class SubstringsFilter extends AbstractFilterChildren<String> {
@@ -875,10 +885,13 @@ public class GitLogUI implements Disposable {
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, Collections.<ChangesFilter.Filter>emptyList(), null);
     } else {
       final List<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>();
-      String preparse = preparse(myPreviousFilter);
-      filters.add(new ChangesFilter.Comment(preparse));
-      filters.add(new ChangesFilter.Author(preparse));
-      filters.add(new ChangesFilter.Committer(preparse));
+      final Pair<String, List<String>> preparse = preparse(myPreviousFilter);
+      filters.add(new ChangesFilter.Comment(preparse.getFirst()));
+
+      for (String s : preparse.getSecond()) {
+        filters.add(new ChangesFilter.Author(s));
+        filters.add(new ChangesFilter.Committer(s));
+      }
 
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, filters, myPreviousFilter.split("[\\s]"));
     }

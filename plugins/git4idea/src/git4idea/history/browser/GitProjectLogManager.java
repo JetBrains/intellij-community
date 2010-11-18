@@ -103,12 +103,12 @@ public class GitProjectLogManager {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitProjectLogManager.class);
   }
 
-  /*public void projectClosed() {
-    myVcsManager.removeVcsListener(myListener);
-  }*/
-
   public void deactivate() {
     myVcsManager.removeVcsListener(myListener);
+    if (myCurrentContent.get() != null) {
+      final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
+      cvcm.removeContent(myCurrentContent.get());
+    }
     if (myConnection != null) {
       myConnection.disconnect();
       myConnection = null;
@@ -121,15 +121,6 @@ public class GitProjectLogManager {
     myConnection = myProject.getMessageBus().connect(myProject);
     myConnection.subscribe(CHECK_CURRENT_BRANCH, myCurrentBranchListener);
   }
-
-  /*public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      public void run() {
-        myVcsManager.addVcsListener(myListener);
-        recalculateWindows();
-      }
-    });
-  }*/
 
   private void recalculateWindows() {
     final GitVcs vcs = GitVcs.getInstance(myProject);
@@ -149,11 +140,6 @@ public class GitProjectLogManager {
 
     myCurrentContent.set(content);
     gitLog.rootsChanged(Arrays.asList(roots));
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "git4idea.history.browser.GitProjectLogManager";
   }
 
   public interface CurrentBranchListener extends Consumer<VirtualFile> {

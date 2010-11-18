@@ -114,7 +114,8 @@ public class CaptionIcon implements Icon {
         g.fillRoundRect(x + 2, y, width, height, 5, 5);
 
         g.setPaint(UIUtil.getTextAreaForeground());
-        final BasicStroke stroke = new BasicStroke(1, 1, 1, 1, new float[]{1f,2f}, 1f);
+        final BasicStroke stroke = new BasicStroke(1);
+        g.setColor(Color.gray);
         g.setStroke(stroke);
         g.drawRoundRect(x + 2, y, width, height - 1, 5, 5);
       }
