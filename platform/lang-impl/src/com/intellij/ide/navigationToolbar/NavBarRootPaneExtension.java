@@ -26,7 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +54,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       public void uiSettingsChanged(UISettings source) {
         toggleRunPanel(!source.SHOW_MAIN_TOOLBAR);
       }
-    }, project);
+    }, this);
+  }
+
+  @Override
+  public IdeRootPaneNorthExtension copy() {
+    return new NavBarRootPaneExtension(myProject);
   }
 
   public JComponent getComponent() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,8 @@ import java.awt.*;
 import java.io.File;
 
 public interface IdeFrame {
+
+  DataKey<IdeFrame> KEY = DataKey.create("IdeFrame");
 
   StatusBar getStatusBar();
 
@@ -32,6 +35,8 @@ public interface IdeFrame {
 
   void setFrameTitle(String title);
   void setFileTitle(String fileTitle, File ioFile);
+
+  IdeRootPaneNorthExtension getNorthExtension(String key);
 
   interface Child extends IdeFrame {
 

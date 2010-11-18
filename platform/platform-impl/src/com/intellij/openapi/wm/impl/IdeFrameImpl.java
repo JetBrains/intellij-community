@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -212,6 +213,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     updateTitle();
   }
 
+  @Override
+  public IdeRootPaneNorthExtension getNorthExtension(String key) {
+    return myRootPane.findByName(key);
+  }
+
   private void updateTitle() {
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
@@ -248,6 +254,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         return myProject.isInitialized() ? myProject : null;
       }
     }
+
+    if (IdeFrame.KEY.getName().equals(dataId)) {
+      return this;
+    }
+
     return null;
   }
 
@@ -336,7 +347,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public static Component findNearestModalComponent(@NotNull Component c) {
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent instanceof IdeFrameImpl) return eachParent;
+      if (eachParent instanceof IdeFrame) return eachParent;
       if (eachParent instanceof JDialog) {
         if (((JDialog)eachParent).isModal()) return eachParent;
       }

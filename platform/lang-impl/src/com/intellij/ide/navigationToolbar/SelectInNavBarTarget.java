@@ -15,13 +15,18 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
@@ -62,16 +67,24 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
   }
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
-    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    navBar(frame).selectTail();
+    selectTail();
   }
 
-  private static NavBarPanel navBar(IdeFrameImpl frame) {
-    return ((NavBarPanel)navBarComponent(frame).getClientProperty("NavBarPanel"));
-  }
-
-  private static JComponent navBarComponent(IdeFrameImpl frame) {
-    return ((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
+  private static void selectTail() {
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+      @Override
+      public void run(DataContext context) {
+        IdeFrame frame = IdeFrame.KEY.getData(context);
+        if (frame != null) {
+          IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
+          if (navBarExt != null) {
+            JComponent c = navBarExt.getComponent();
+            NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
+            panel.selectTail();
+          }
+        }
+      }
+    });
   }
 
   protected boolean canWorkWithCustomObjects() {
@@ -79,8 +92,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
   }
 
   protected void select(PsiElement element, boolean requestFocus) {
-    final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    navBar(frame).selectTail();
+    selectTail();
   }
 
 }

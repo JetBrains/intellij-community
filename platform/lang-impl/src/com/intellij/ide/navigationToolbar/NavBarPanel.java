@@ -711,7 +711,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         validate();
       }
 
-      if (item.isShowing()) {
+      if (item.isShowing() && step.getValues().size() > 0) {
         myNodePopup.showUnderneathOf(item);
       }
     }
@@ -1328,4 +1328,5 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       setBackground(selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
     }
   }
+
 }
