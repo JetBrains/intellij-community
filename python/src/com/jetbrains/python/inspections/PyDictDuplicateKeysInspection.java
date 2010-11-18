@@ -47,10 +47,13 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
         HashSet<String> set = new HashSet<String>();
         for (PyExpression exp : node.getElements()) {
           PyExpression key = ((PyKeyValueExpression)exp).getKey();
-          if (set.contains(key.getText())) {
-            registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
+          if (key instanceof PyNumericLiteralExpression
+                  || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {
+            if (set.contains(key.getText())) {
+              registerProblem(node, "Dictionary contains duplicate keys " + key.getText());
+            }
+            set.add(key.getText());
           }
-          set.add(key.getText());
         }
       }
     }
