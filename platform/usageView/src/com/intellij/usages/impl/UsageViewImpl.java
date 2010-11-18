@@ -157,6 +157,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     };
     myRootPanel = new MyPanel(myTree);
+    Disposer.register(this, myRootPanel);
     myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
@@ -798,7 +799,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
     myModelTracker.removeListener(this);
     myUpdateAlarm.cancelAllRequests();
-    myRootPanel.dispose();
     if (myUsagePreviewPanel != null) {
       UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
       myUsagePreviewPanel = null;
@@ -1061,7 +1061,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myModel.areTargetsValid();
   }
 
-  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator {
+  private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable {
     @Nullable private OccurenceNavigatorSupport mySupport;
 
     private MyPanel(JTree tree) {
@@ -1081,7 +1081,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       };
     }
 
-    private void dispose() {
+    public void dispose() {
       mySupport = null;
     }
 
