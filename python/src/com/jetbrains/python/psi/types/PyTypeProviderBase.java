@@ -18,9 +18,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
   public PyTypeProviderBase() {
   }
 
-  private interface ReturnTypeCallback {
+  protected interface ReturnTypeCallback {
     @Nullable
-    PyType getType(PyReferenceExpression callSite, TypeEvalContext context);
+    PyType getType(PyReferenceExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context);
   }
 
   private static class ReturnTypeDescriptor {
@@ -36,7 +36,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
       if (containingClass != null) {
         final ReturnTypeCallback typeCallback = myStringToReturnTypeMap.get(containingClass.getQualifiedName());
         if (typeCallback != null) {
-          return typeCallback.getType(callSite, context);
+          final PyExpression qualifier = callSite.getQualifier();
+          PyType qualifierType = qualifier != null ? qualifier.getType(context) : null;
+          return typeCallback.getType(callSite, qualifierType, context);
         }
       }
       return null;
@@ -45,13 +47,9 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   private final ReturnTypeCallback mySelfTypeCallback = new ReturnTypeCallback() {
     @Override
-    public PyType getType(PyReferenceExpression callSite, TypeEvalContext context) {
-      final PyExpression qualifier = callSite.getQualifier();
-      if (qualifier != null) {
-        final PyType type = qualifier.getType(context);
-        if (type instanceof PyClassType) {
-          return new PyClassType(((PyClassType)type).getPyClass(), false);
-        }
+    public PyType getType(PyReferenceExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
+      if (qualifierType instanceof PyClassType) {
+        return new PyClassType(((PyClassType)qualifierType).getPyClass(), false);
       }
       return null;
     }
@@ -90,8 +88,14 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   protected void registerSelfReturnType(String classQualifiedName, Collection<String> methods) {
+    registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
+  }
+
+  protected void registerReturnType(String classQualifiedName,
+                                    Collection<String> methods,
+                                    final ReturnTypeCallback callback) {
     for (String method : methods) {
-      myMethodToReturnTypeMap.get(method).put(classQualifiedName, mySelfTypeCallback);
+      myMethodToReturnTypeMap.get(method).put(classQualifiedName, callback);
     }
   }
 }
