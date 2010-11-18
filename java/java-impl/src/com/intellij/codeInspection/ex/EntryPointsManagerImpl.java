@@ -67,6 +67,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   };
 
   private Collection<String> ADDITIONAL_ANNOS = null;
+  private ExtensionPointListener<EntryPoint> myExtensionPointListener;
 
   public Collection<String> getAdditionalAnnotations() {
     if (ADDITIONAL_ANNOS == null) {
@@ -100,7 +101,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
 
     final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
+    myExtensionPointListener = new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);
@@ -119,7 +120,8 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
           });
         }
       }
-    }, project);
+    };
+    point.addExtensionPointListener(myExtensionPointListener);
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
@@ -300,6 +302,8 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   public void dispose() {
+    final ExtensionPoint<EntryPoint> extensionPoint = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+    extensionPoint.removeExtensionPointListener(myExtensionPointListener);
     cleanup();
   }
 
