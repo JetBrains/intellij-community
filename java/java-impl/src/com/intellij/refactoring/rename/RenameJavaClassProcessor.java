@@ -26,6 +26,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -33,6 +34,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -176,6 +178,15 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(referenceElement.getProject()).getResolveHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(newName, referenceElement);
       if (aClass == null) return;
+      if (aClass instanceof PsiTypeParameter && myRenamedClass instanceof PsiTypeParameter) {
+        final PsiTypeParameterListOwner member = PsiTreeUtil.getParentOfType(referenceElement, PsiTypeParameterListOwner.class);
+        if (member != null) {
+          final PsiTypeParameterList typeParameterList = member.getTypeParameterList();
+          if (typeParameterList != null && ArrayUtil.find(typeParameterList.getTypeParameters(), myRenamedClass) > -1) {
+            if (member.hasModifierProperty(PsiModifier.STATIC)) return;
+          }
+        }
+      }
       final PsiFile containingFile = referenceElement.getContainingFile();
       final String text = referenceElement.getText();
       if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
