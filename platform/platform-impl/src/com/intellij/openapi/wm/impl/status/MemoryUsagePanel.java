@@ -16,6 +16,10 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -70,7 +74,22 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     myFuture = null;
   }
 
+
+  private static final int CRITICAL_XMX_THRESHOLD_MB = 700;
+  private static final int CRITICAL_XMX_THRESHOLD = CRITICAL_XMX_THRESHOLD_MB /*Mb*/ * 1024 /*Kb*/ * 1024 /*Bytes*/;
+  
   public void install(@NotNull StatusBar statusBar) {
+    if (SystemInfo.isWindows && SystemInfo.is32Bit) {
+      final long maxMem = Runtime.getRuntime().maxMemory();
+      if (maxMem > CRITICAL_XMX_THRESHOLD) {
+        final String text = 
+          "Current maximum heap size is set to " + 
+          (maxMem / 1024 / 1024)  + " Mb. " +
+          "On a 32-bit system this may cause OutOfMemory errors. It is recommended to specify heap size not more than " + 
+          CRITICAL_XMX_THRESHOLD_MB + " Mb";
+        Notifications.Bus.notify(new Notification("Memory", "Too Large Heap Size", text, NotificationType.WARNING), NotificationDisplayType.STICKY_BALLOON, null);      
+      }
+    }
   }
 
   @Nullable
