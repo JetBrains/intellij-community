@@ -72,4 +72,9 @@ public class PyJavaTypeProvider implements PyTypeProvider {
     }
     return null;
   }
+
+  @Override
+  public PyType getReturnType(PyFunction function, PyReferenceExpression callSite, TypeEvalContext context) {
+    return null;
+  }
 }

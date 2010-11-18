@@ -7,7 +7,5 @@ import org.jetbrains.annotations.Nullable;
  * 
  * @author yole
  */
-public interface PySetLiteralExpression extends PyExpression {
-  @Nullable
-  PyExpression[] getElements();
+public interface PySetLiteralExpression extends PySequenceExpression {
 }

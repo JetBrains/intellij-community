@@ -1,11 +1,11 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -24,6 +24,7 @@ import javax.swing.*;
 public class PyDynamicMember {
   private String myName;
   private final boolean myResolveToInstance;
+  private final Function<PsiElement, PyType> myTypeCallback;
   private final String myTypeName;
 
   private ResolveData myResolveData;
@@ -44,6 +45,20 @@ public class PyDynamicMember {
     myResolveData = ResolveData.createFromPath(resolveTo);
 
     myTarget = null;
+    myTypeCallback = null;
+  }
+
+  public PyDynamicMember(@NotNull final String name,
+                         @NotNull final String type,
+                         @NotNull final String resolveTo,
+                         final Function<PsiElement, PyType> typeCallback) {
+    myName = name;
+    myResolveToInstance = false;
+    myTypeName = type;
+    myResolveData = ResolveData.createFromPath(resolveTo);
+
+    myTarget = null;
+    myTypeCallback = typeCallback;
   }
 
   public PyDynamicMember(@NotNull final String name, @Nullable final PsiElement target) {
@@ -52,34 +67,35 @@ public class PyDynamicMember {
     myResolveToInstance = false;
     myTypeName = null;
     myResolveData = null;
+    myTypeCallback = null;
   }
 
   public String getName() {
     return myName;
   }
 
-  public Icon getIcon() {
+  public static Icon getIcon() {
     return IconLoader.getIcon("/nodes/method.png");
   }
 
   @Nullable
-  public PsiElement resolve(Project project, PyClass modelClass) {
+  public PsiElement resolve(PsiElement context) {
     if (myTarget != null) {
       return myTarget;
     }
-    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, project);
+    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, context.getProject());
     if (targetClass != null) {
-      return new MyInstanceElement(targetClass, findResolveTarget(modelClass));
+      return new MyInstanceElement(targetClass, context, findResolveTarget(context));
     }
     return null;
   }
 
   @Nullable
-  private PsiElement findResolveTarget(PyClass clazz) {
+  private PsiElement findResolveTarget(PsiElement context) {
     if (myResolveData == null) {
       return null;
     }
-    PsiElement module = ResolveImportUtil.resolveInRoots(clazz, myResolveData.getModuleName());
+    PsiElement module = ResolveImportUtil.resolveInRoots(context, myResolveData.getModuleName());
     if (module instanceof PsiDirectory) {
       module = PyUtil.turnDirIntoInit(module);
     }
@@ -128,13 +144,18 @@ public class PyDynamicMember {
 
   private class MyInstanceElement extends PyElementImpl implements PyExpression {
     private final PyClass myClass;
+    private final PsiElement myContext;
 
-    public MyInstanceElement(PyClass clazz, PsiElement resolveTarget) {
+    public MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
+      myContext = context;
     }
 
     public PyType getType(@NotNull TypeEvalContext context) {
+      if (myTypeCallback != null) {
+        return myTypeCallback.fun(myContext);
+      }
       return new PyClassType(myClass, !myResolveToInstance);
     }
   }

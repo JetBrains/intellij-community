@@ -27,7 +27,8 @@ setProperty("pluginFilter", [
         "hg4idea",
         "tasks", "tasks-core", "tasks-api", "jira-connector",
         "github",
-        "python-spellchecker-common", "pycharm-spellchecker"
+        "python-spellchecker-common", "pycharm-spellchecker",
+        "webDeployment"
 ])
 
 private List platformImplementationModules() {
