@@ -98,6 +98,20 @@ class Bar {{ abcmethod()<caret> }}"""
 class Bar {{ abcmethod1()<caret> }}"""
   }
 
+  public void testMergeOverloads() throws Exception {
+    myFixture.addClass("""package foo;
+      public class Foo {
+        public static int abcmethod(int a) {}
+        public static int abcmethod(boolean a) {}
+        public static int abcmethod1(boolean a) {}
+      }
+    """)
+
+    myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}")
+    myFixture.complete(CompletionType.CLASS_NAME)
+    assertOrderedEquals myFixture.lookupElementStrings, "abcmethod", "abcmethod1"
+  }
+
   private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 

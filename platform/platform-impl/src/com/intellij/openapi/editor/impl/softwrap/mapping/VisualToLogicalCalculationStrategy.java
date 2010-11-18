@@ -32,81 +32,137 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   private VisualPosition myTargetVisual;
 
-  VisualToLogicalCalculationStrategy(Editor editor, SoftWrapsStorage storage, EditorTextRepresentationHelper representationHelper) {
-    super(editor, storage, representationHelper);
+  VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
+                                     @NotNull DelayedRemovalMap<FoldingData> foldData,
+                                     @NotNull EditorTextRepresentationHelper representationHelper) 
+  {
+    super(editor, storage, cache, foldData, representationHelper);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
-    setEagerMatch(null);
+    reset();
 
     myTargetVisual = targetVisual;
     SEARCH_KEY.visualLine = targetVisual.line;
     int i = Collections.binarySearch(cache, SEARCH_KEY);
     if (i >= 0) {
       CacheEntry cacheEntry = cache.get(i);
-      if (targetVisual.column == 0) {
-        setEagerMatch(cacheEntry.buildStartLineContext().buildLogicalPosition());
+      if (cacheEntry.visualLine == targetVisual.line) {
+        if (targetVisual.column == 0) {
+          setEagerMatch(cacheEntry.buildStartLinePosition().buildLogicalPosition());
+        }
+        else if (targetVisual.column == cacheEntry.endVisualColumn) {
+          setEagerMatch(cacheEntry.buildEndLinePosition().buildLogicalPosition());
+        }
+        else if (targetVisual.column > cacheEntry.endVisualColumn) {
+          EditorPosition position = cacheEntry.buildEndLinePosition();
+          int columnsDiff = targetVisual.column - cacheEntry.endVisualColumn;
+          position.visualColumn += columnsDiff;
+          if (myStorage.getSoftWrap(cacheEntry.endOffset) == null) {
+            position.logicalColumn += columnsDiff;
+          }
+          else {
+            position.softWrapColumnDiff += columnsDiff;
+          }
+          setEagerMatch(position.buildLogicalPosition());
+        }
+        else {
+          setTargetEntry(cacheEntry, true);
+        }
       }
       else {
-        setCacheEntry(cacheEntry);
+        setInitialPosition(cacheEntry.buildStartLinePosition());
       }
       return;
     }
-
-    // Handle situation with corrupted cache.
-    throw new IllegalStateException(String.format(
-      "Can't map visual position (%s) to logical. Reason: no cached information information about target visual line is found. "
-      + "Registered entries: %s", targetVisual, cache
-    ));
+    
+    i = -i - 1;
+    if (i > 0 && i <= cache.size()) {
+      CacheEntry entry = cache.get(i - 1);
+      EditorPosition position = entry.buildEndLinePosition();
+      position.onNewLine();
+      setInitialPosition(position);
+    }
+    else {
+      setFirstInitialPosition();
+    }
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, int offset) {
+  protected LogicalPosition buildIfExceeds(EditorPosition position, int offset) {
+    Document document = myEditor.getDocument();
+    
     // There is a possible case that target visual line starts with soft wrap. We want to process that at 'processSoftWrap()' method.
-    if (offset == getCacheEntry().startOffset && myStorage.getSoftWrap(offset) != null) {
+    CacheEntry targetEntry = getTargetEntry();
+    if (targetEntry != null && targetEntry.startOffset == offset && myStorage.getSoftWrap(offset) != null) {
       return null;
     }
 
-    // Return eagerly if target visual position remains between current context position and the one defined by the given offset.
-    if (offset > getCacheEntry().endOffset || (context.visualColumn + offset - context.offset >= myTargetVisual.column)) {
-      int diff = myTargetVisual.column - context.visualColumn;
-      context.offset = Math.min(getCacheEntry().endOffset, context.offset + diff);
-      context.logicalColumn += diff;
-      context.visualColumn = myTargetVisual.column;
-      return context.buildLogicalPosition();
+    int i = MappingUtil.getCacheEntryIndexForOffset(offset, document, myCache);
+    if (i < 0) {
+      return null;
     }
+
+    CacheEntry cacheEntry = myCache.get(i);
+    // Return eagerly if target visual position remains between current context position and the one defined by the given offset.
+    if (offset < cacheEntry.startOffset || (position.visualColumn + offset - position.offset >= myTargetVisual.column)) {
+      int linesDiff = myTargetVisual.line - position.visualLine;
+      if (linesDiff > 0) {
+        position.logicalColumn = myTargetVisual.column;
+        position.offset = document.getLineStartOffset(position.logicalLine + linesDiff);
+        position.offset += myTargetVisual.column;
+      }
+      else {
+        int columnsDiff = myTargetVisual.column - position.visualColumn;
+        position.logicalColumn += columnsDiff;
+        position.offset += columnsDiff;
+      }
+      
+      // There is a possible case that target visual position points to virtual space after line end. We need
+      // to define correct offset then
+      position.offset = Math.min(position.offset, document.getLineEndOffset(position.logicalLine));
+      
+      position.visualLine += linesDiff;
+      position.visualColumn = myTargetVisual.column;
+      position.logicalLine += linesDiff;
+      return position.buildLogicalPosition();
+    }
+
     return null;
   }
 
   @Nullable
   @Override
-  public LogicalPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
+  public LogicalPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
     // There is a possible case that current visual line starts with soft wrap and target visual position points to its
     // virtual space.
-    if (getCacheEntry().startOffset == softWrap.getStart()) {
+    CacheEntry targetEntry = getTargetEntry();
+    if (targetEntry != null && targetEntry.startOffset == softWrap.getStart()) {
       if (myTargetVisual.column <= softWrap.getIndentInColumns()) {
-        ProcessingContext resultingContext = getCacheEntry().buildStartLineContext();
+        EditorPosition resultingContext = targetEntry.buildStartLinePosition();
         resultingContext.visualColumn = myTargetVisual.column;
         resultingContext.softWrapColumnDiff += myTargetVisual.column;
         return resultingContext.buildLogicalPosition();
       }
       else {
-        context.visualColumn = softWrap.getIndentInColumns();
-        context.softWrapColumnDiff += softWrap.getIndentInColumns();
+        position.visualColumn = softWrap.getIndentInColumns();
+        position.softWrapColumnDiff += softWrap.getIndentInColumns();
         return null;
       }
     }
-
-    // We assume that target visual position points to soft wrap-introduced virtual space if this method is called (we expect
-    // to iterate only a single visual line and also expect soft wrap to have line feed symbol at the first position).
-    ProcessingContext targetContext = getCacheEntry().buildEndLineContext();
-    targetContext.softWrapColumnDiff += myTargetVisual.column - targetContext.visualColumn;
-    targetContext.visualColumn = myTargetVisual.column;
-    return targetContext.buildLogicalPosition();
+    
+    //TODO den implement
+    return null;
+    //// We assume that target visual position points to soft wrap-introduced virtual space if this method is called (we expect
+    //// to iterate only a single visual line and also expect soft wrap to have line feed symbol at the first position).
+    //EditorPosition targetContext = getAnchorCacheEntry().buildEndLineContext();
+    //targetContext.softWrapColumnDiff += myTargetVisual.column - targetContext.visualColumn;
+    //targetContext.visualColumn = myTargetVisual.column;
+    //return targetContext.buildLogicalPosition();
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
+  protected LogicalPosition buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion) {
     // We assume that fold region placeholder contains only 'simple' symbols, i.e. symbols that occupy single visual column.
     String placeholder = foldRegion.getPlaceholderText();
 
@@ -120,7 +176,7 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   }
 
   @Override
-  protected LogicalPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
+  protected LogicalPosition buildIfExceeds(EditorPosition context, TabData tabData) {
     if (context.visualColumn + tabData.widthInColumns >= myTargetVisual.column) {
       context.logicalColumn += myTargetVisual.column - context.visualColumn;
       context.visualColumn = myTargetVisual.column;
@@ -131,11 +187,28 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
 
   @NotNull
   @Override
-  public LogicalPosition build(ProcessingContext context) {
-    int diff = myTargetVisual.column - context.visualColumn;
-    context.logicalColumn += diff;
-    context.offset += diff;
-    context.visualColumn = myTargetVisual.column;
-    return context.buildLogicalPosition();
+  public LogicalPosition build(EditorPosition position) {
+    int linesDiff = myTargetVisual.line - position.visualLine;
+    if (linesDiff <= 0) {
+      int columnsDiff = myTargetVisual.column - position.visualColumn;
+      position.logicalColumn += columnsDiff;
+      position.offset += columnsDiff;
+    }
+    else {
+      position.logicalLine += linesDiff;
+      position.visualLine += linesDiff;
+      Document document = myEditor.getDocument();
+      if (document.getLineCount() <= position.logicalLine) {
+        position.offset = Math.max(0, document.getTextLength() - 1);
+      }
+      else {
+        int startLineOffset = document.getLineStartOffset(position.logicalLine);
+        position.offset = startLineOffset + myTargetVisual.column;
+      }
+      position.logicalColumn = myTargetVisual.column;
+    }
+    
+    position.visualColumn = myTargetVisual.column;
+    return position.buildLogicalPosition();
   }
 }

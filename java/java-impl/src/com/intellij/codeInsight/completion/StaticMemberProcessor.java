@@ -4,12 +4,15 @@ import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,24 +56,44 @@ public abstract class StaticMemberProcessor {
     final PsiShortNamesCache namesCache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
     for (final String methodName : namesCache.getAllMethodNames()) {
       if (matcher.prefixMatches(methodName)) {
+        Set<PsiClass> classes = new THashSet<PsiClass>();
         for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
           if (isStaticallyImportable(method)) {
             final PsiClass containingClass = method.getContainingClass();
             assert containingClass != null;
 
-            final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-            if (!myHintShown &&
-                !shouldImport &&
-                FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
-                CompletionService.getCompletionService().getAdvertisementText() == null) {
-              final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
-              if (shortcut != null) {
-                CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
+            if (classes.add(containingClass)) {
+              final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
+              if (!myHintShown &&
+                  !shouldImport &&
+                  FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
+                  CompletionService.getCompletionService().getAdvertisementText() == null) {
+                final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
+                if (shortcut != null) {
+                  CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);
+                }
+                myHintShown = true;
               }
-              myHintShown = true;
-            }
 
-            consumer.consume(createLookupElement(method, containingClass, shouldImport));
+              final PsiMethod[] allMethods = containingClass.getAllMethods();
+              final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, new Condition<PsiMethod>() {
+                @Override
+                public boolean value(PsiMethod psiMethod) {
+                  return methodName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod);
+                }
+              });
+
+              assert !overloads.isEmpty();
+              if (overloads.size() == 1) {
+                assert method == overloads.get(0);
+                consumer.consume(createLookupElement(method, containingClass, shouldImport));
+              } else {
+                if (overloads.get(0).getParameterList().getParametersCount() == 0) {
+                  overloads.add(0, overloads.remove(1));
+                }
+                consumer.consume(createLookupElement(overloads, containingClass, shouldImport));
+              }
+            }
           }
         }
       }
@@ -115,4 +138,6 @@ public abstract class StaticMemberProcessor {
 
   @NotNull
   protected abstract LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport);
+
+  protected abstract LookupElement createLookupElement(@NotNull List<PsiMethod> overloads, @NotNull PsiClass containingClass, boolean shouldImport);
 }

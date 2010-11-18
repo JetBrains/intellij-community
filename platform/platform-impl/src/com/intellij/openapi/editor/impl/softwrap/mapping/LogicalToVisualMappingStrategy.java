@@ -31,16 +31,17 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
 
   private LogicalPosition myTargetLogical;
 
-  LogicalToVisualMappingStrategy(@NotNull final LogicalPosition logical, Editor editor, final SoftWrapsStorage storage,
-                                 EditorTextRepresentationHelper representationHelper, final List<CacheEntry> cache)
+  LogicalToVisualMappingStrategy(@NotNull LogicalPosition logical, @NotNull Editor editor, @NotNull SoftWrapsStorage storage,
+                                 @NotNull EditorTextRepresentationHelper representationHelper, @NotNull List<CacheEntry> cache,
+                                 @NotNull DelayedRemovalMap<FoldingData> foldData)
     throws IllegalStateException
   {
-    super(editor, storage, representationHelper);
+    super(editor, storage, cache, foldData, representationHelper);
     myTargetLogical = logical;
   }
 
   public void init(@NotNull final LogicalPosition logical, final @NotNull List<CacheEntry> cache) {
-    setEagerMatch(null);
+    reset();
 
     myTargetLogical = logical;
     int start = 0;
@@ -75,11 +76,11 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
         CacheEntry nextLineCacheEntry = cache.get(i + 1);
         if (nextLineCacheEntry.startLogicalLine == logical.line
             && nextLineCacheEntry.startLogicalColumn == logical.column) {
-          setCacheEntry(nextLineCacheEntry);
+          setInitialPosition(nextLineCacheEntry.buildStartLinePosition());
           return;
         }
       }
-      setCacheEntry(cacheEntry);
+      setInitialPosition(cacheEntry.buildStartLinePosition());
       return;
     }
 
@@ -90,23 +91,23 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(ProcessingContext context, int offset) {
-    if (context.logicalLine < myTargetLogical.line) {
+  protected VisualPosition buildIfExceeds(EditorPosition position, int offset) {
+    if (position.logicalLine < myTargetLogical.line) {
        return null;
     }
 
-    int diff = myTargetLogical.column - context.logicalColumn;
-    if (offset - context.offset < diff) {
+    int diff = myTargetLogical.column - position.logicalColumn;
+    if (offset - position.offset < diff) {
       return null;
     }
 
-    context.visualColumn += diff;
+    position.visualColumn += diff;
     // Don't update other dimensions like logical position and offset because we need only visual position here.
-    return context.buildVisualPosition();
+    return position.buildVisualPosition();
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(@NotNull ProcessingContext context, @NotNull FoldRegion foldRegion) {
+  protected VisualPosition buildIfExceeds(@NotNull EditorPosition context, @NotNull FoldRegion foldRegion) {
     int foldEndLine = myEditor.getDocument().getLineNumber(foldRegion.getEndOffset());
     if (myTargetLogical.line > foldEndLine) {
       return null;
@@ -117,7 +118,16 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
       return context.buildVisualPosition();
     }
 
-    int foldEndColumn = getFoldRegionData(foldRegion).getCollapsedSymbolsWidthInColumns();
+    FoldingData data = getFoldRegionData(foldRegion);
+    int foldEndColumn;
+    if (data == null) {
+      foldEndColumn = myRepresentationHelper.toVisualColumnSymbolsNumber(
+        myEditor.getDocument().getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
+      );
+    } else {
+      foldEndColumn = data.getCollapsedSymbolsWidthInColumns();
+    }
+    
     if (foldEndLine == context.logicalLine) {
       // Single-line fold region.
       foldEndColumn += context.logicalColumn;
@@ -132,7 +142,7 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  protected VisualPosition buildIfExceeds(ProcessingContext context, TabData tabData) {
+  protected VisualPosition buildIfExceeds(EditorPosition context, TabData tabData) {
     if (context.logicalLine < myTargetLogical.line) {
       return null;
     }
@@ -149,23 +159,23 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   }
 
   @Override
-  public VisualPosition processSoftWrap(ProcessingContext context, SoftWrap softWrap) {
-    context.visualColumn = softWrap.getIndentInColumns();
-    context.softWrapColumnDiff += softWrap.getIndentInColumns();
+  public VisualPosition processSoftWrap(EditorPosition position, SoftWrap softWrap) {
+    position.visualColumn = softWrap.getIndentInColumns();
+    position.softWrapColumnDiff += softWrap.getIndentInColumns();
 
-    if (context.logicalLine < myTargetLogical.line || context.logicalColumn != myTargetLogical.column) {
+    if (position.logicalLine < myTargetLogical.line || position.logicalColumn != myTargetLogical.column) {
       return null;
     }
-    return context.buildVisualPosition();
+    return position.buildVisualPosition();
   }
 
   @NotNull
   @Override
-  public VisualPosition build(ProcessingContext context) {
-    int diff = myTargetLogical.column - context.logicalColumn;
-    context.logicalColumn += diff;
-    context.visualColumn += diff;
-    context.offset += diff;
-    return context.buildVisualPosition();
+  public VisualPosition build(EditorPosition position) {
+    int diff = myTargetLogical.column - position.logicalColumn;
+    position.logicalColumn += diff;
+    position.visualColumn += diff;
+    position.offset += diff;
+    return position.buildVisualPosition();
   }
 }

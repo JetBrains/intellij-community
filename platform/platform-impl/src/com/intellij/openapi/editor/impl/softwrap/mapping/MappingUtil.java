@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.Document;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,14 +32,16 @@ public class MappingUtil {
   }
 
   /**
-   * Maps given offset to the index of target {@link CacheEntry} that holds information about visual line with that offset.
+   * Tries to map given offset to the index of target {@link CacheEntry} that holds information about visual line with that offset.
    *
    * @param offset    target offset
    * @param document  document which dimensions are being mapped
    * @param cache     parsed cache entries list that hold information about given document positions and are sorted by visual lines
    *                  in ascending order
-   * @return          index of target {@link CacheEntry} that holds information about visual line with given offset if possible;
-   *                  <code>-1</code> if it's not possible to perform such mapping
+   * @return          non-negative index of target {@link CacheEntry} that holds information about visual line with given offset
+   *                  if possible; negative value that indicates insertion point of cache entry for the given offset is to be located.
+   *                  That value follows {@link Collections#binarySearch(List, Object)} contract, i.e. real index is calculated
+   *                  by <code>'-returned_index - 1'</code>
    */
   public static int getCacheEntryIndexForOffset(int offset, Document document, List<CacheEntry> cache) {
     if (offset >= document.getTextLength() && (cache.isEmpty() || cache.get(cache.size() - 1).endOffset < offset)) {
@@ -62,6 +65,9 @@ public class MappingUtil {
         continue;
       }
       if (cacheEntry.startOffset > offset) {
+        if (start == end) {
+          return start - 1;
+        }
         end = i - 1;
         continue;
       }
@@ -78,7 +84,7 @@ public class MappingUtil {
       return i;
     }
 
-    return -1;
+    return -(start + 1);
   }
 
 }

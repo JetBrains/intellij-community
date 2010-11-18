@@ -1,12 +1,14 @@
 <?xml version="1.0"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
   <xsl:output method="html" indent="yes" encoding="UTF-8"
-              doctype-public="-//W3C//DTD HTML 4.01 Transitional//EN"/>
+              doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN"
+              doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"/>
   <xsl:decimal-format decimal-separator="." grouping-separator=","/>
   <xsl:template match="testrun">
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>
+          <xsl:text disable-output-escaping="yes">Test Results &amp;mdash; </xsl:text>
           <xsl:value-of select="@name"/>
         </title>
 
@@ -98,11 +100,11 @@
           }
 
           span.ignored {
-            color: #f8d216
+            color: #fff600
           }
 
           span.skipped {
-            color: #f8d216
+            color: #fff600
           }
 
           hr {
@@ -121,13 +123,12 @@
             background-color: #c7ceda;
           }
 
-          #header h1.title {
-            margin-top: 1em;
-            margin-bottom: 0;
+          #header h1 {
+            margin: 1em 3em 1em 1.7em;
           }
 
-          #header h1 {
-            margin: 0 3em 1em 1.7em;
+          #header h1 strong {
+            white-space: nowrap;
           }
 
           #header .time {
@@ -172,7 +173,7 @@
           }
 
           #content ul li.level.top > span {
-            padding: .5em .4em .5em 1em;
+            padding: .5em 0 .5em 1em;
             font-size: 120%;
             color: #151515;
             background-color: #f2f2f2;
@@ -271,9 +272,17 @@
           }
 
           #content ul li.ignored > span .status {
-            color: #f8d216;
+            color: #d6b000;
           }
 
+          #footer {
+              height: 2em;
+              background-color: #c7ceda;
+          }
+          #footer p {
+              padding: .4em 0 0 3.6em;
+              font-size: 80%;
+          }
         </style>
         <xsl:text disable-output-escaping="yes"><![CDATA[
 
@@ -575,40 +584,45 @@ jQuery.cookie = function(name, value, options) {
         <div id="container">
           <div id="header">
             <xsl:call-template name="duration"/>
-            <h1 class="title">
+            <h1>
               <xsl:value-of select="@name"/>
               <xsl:text>: </xsl:text>
+              <strong>
+                <xsl:for-each select="count">
+                  <xsl:variable name="status" select="@name"/>
+                  <span class="{$status}">
+                    <xsl:value-of select="@value"/>
+                    <xsl:text> </xsl:text>
+                    <xsl:value-of select="$status"/>
+                    <xsl:if test="count(../count) > position()">
+                      <xsl:text>, </xsl:text>
+                    </xsl:if>
+                  </span>
+                </xsl:for-each>
+              </strong>
             </h1>
-            <h1>
-              <xsl:for-each select="count">
-                <xsl:variable name="status" select="@name"/>
-                <span class="{$status}">
-                  <xsl:value-of select="@value"/>
-                  <xsl:text> </xsl:text>
-                  <xsl:value-of select="$status"/>
-                  <xsl:if test="count(../count) > position()">
-                    <xsl:text>, </xsl:text>
-                  </xsl:if>
-                </span>
-              </xsl:for-each>
-            </h1>
-          </div>
-          <div id="treecontrol">
-            <ul>
-              <li>
-                <a title="Collapse the entire tree below" href="#">Collapse</a>
-                |
-              </li>
-              <li>
-                <a title="Expand the entire tree below" href="#">Expand</a>
-              </li>
-            </ul>
+            <div id="treecontrol">
+              <ul>
+                <li>
+                  <a title="Collapse the entire tree below" href="#">Collapse</a>
+                  |
+                </li>
+                <li>
+                  <a title="Expand the entire tree below" href="#">Expand</a>
+                </li>
+              </ul>
+            </div>
           </div>
           <div id="content">
             <ul id="tree">
               <xsl:apply-templates/>
             </ul>
           </div>
+        </div>
+        <div id="footer">
+          <p>
+            <xsl:value-of select="@footerText"/>
+          </p>
         </div>
       </body>
     </html>
@@ -660,23 +674,25 @@ jQuery.cookie = function(name, value, options) {
         </em>
         <xsl:value-of select="@name"/>
       </span>
-      <ul>
-        <xsl:for-each select="output">
-          <xsl:variable name="displayText">
-            <xsl:call-template name="string-replace-all">
-              <xsl:with-param name="text" select="text()"/>
-              <xsl:with-param name="replace" select="'&#10;'"/>
-              <xsl:with-param name="by" select="'&lt;br/>'"/>
-            </xsl:call-template>
-          </xsl:variable>
-          <li class="text">
-            <xsl:variable name="output-type" select="@type"/>
-            <span class="{$output-type}">
-              <xsl:value-of disable-output-escaping="yes" select="$displayText"/>
-            </span>
-          </li>
-        </xsl:for-each>
-      </ul>
+      <xsl:if test="count(./output) > 0">
+        <ul>
+          <xsl:for-each select="output">
+            <xsl:variable name="displayText">
+              <xsl:call-template name="string-replace-all">
+                <xsl:with-param name="text" select="text()"/>
+                <xsl:with-param name="replace" select="'&#10;'"/>
+                <xsl:with-param name="by" select="'&lt;br/>'"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <li class="text">
+              <xsl:variable name="output-type" select="@type"/>
+              <span class="{$output-type}">
+                <xsl:value-of disable-output-escaping="yes" select="$displayText"/>
+              </span>
+            </li>
+          </xsl:for-each>
+        </ul>
+      </xsl:if>
     </li>
   </xsl:template>
 

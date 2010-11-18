@@ -77,7 +77,12 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
     TextRange range = getFileHeader(file);
     if (range != null && range.getLength() > 1 && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
-      result.add(new FoldingDescriptor(file, range));
+      PsiElement anchorElementToUse = file;
+      PsiElement candidate = file.getFirstChild();
+      if (candidate != null && candidate.getTextRange().equals(range)) {
+        anchorElementToUse = candidate;
+      }
+      result.add(new FoldingDescriptor(anchorElementToUse, range));
     }
 
     return result.toArray(new FoldingDescriptor[result.size()]);

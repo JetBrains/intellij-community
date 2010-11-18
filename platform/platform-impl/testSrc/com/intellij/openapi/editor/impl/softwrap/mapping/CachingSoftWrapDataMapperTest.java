@@ -99,7 +99,7 @@ public class CachingSoftWrapDataMapperTest {
   private final TIntHashSet      myFoldedOffsets = new TIntHashSet();
   private final List<FoldRegion> myFoldRegions   = new ArrayList<FoldRegion>();
 
-  private CachingSoftWrapDataMapper myMapper;
+  private CachingSoftWrapDataMapper          myMapper;
   private Mockery                            myMockery;
   private EditorEx                           myEditor;
   private Document                           myDocument;
@@ -204,6 +204,12 @@ public class CachingSoftWrapDataMapperTest {
           return offsetToLogical((Integer)invocation.getParameter(0));
         }
       });
+      allowing(myEditor).offsetToLogicalPosition(with(any(int.class)), with(equal(false))); will(new CustomAction("offset2logical()") {
+        @Override
+        public Object invoke(Invocation invocation) throws Throwable {
+          return offsetToSoftWrapUnawareLogical((Integer)invocation.getParameter(0));
+        }
+      });
 
       // Soft wrap painter.
       allowing(painter).getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP); will(returnValue(SOFT_WRAP_DRAWING_WIDTH));
@@ -229,6 +235,18 @@ public class CachingSoftWrapDataMapperTest {
     test(document);
   }
 
+  @Test
+  public void singleSoftWrap() {
+    String document =
+      "class Test { \n" +
+      "  public void <WRAP>\n" +
+      "    </WRAP>foo() {\n" +
+      "  }  \n" +
+      "  \n" +
+      "}";
+    test(document);
+  }
+  
   @Test
   public void multipleSoftWrappedLogicalLines() {
     String document =
@@ -370,6 +388,7 @@ public class CachingSoftWrapDataMapperTest {
 
   @Test
   public void tabBeforeFolding() {
+    
     String document =
       "class Test\t \t <FOLD>{\n" +
       "    </FOLD> \t\t\n" +
@@ -447,6 +466,11 @@ public class CachingSoftWrapDataMapperTest {
     return toVisualPositionUnawareLogical(dataEntry);
   }
 
+  private LogicalPosition offsetToSoftWrapUnawareLogical(int offset) {
+    DataEntry dataEntry = myExpectedData.get(findIndex(new DataEntry(null, null, offset, false), OFFSETS_COMPARATOR));
+    return toVisualPositionUnawareLogical(dataEntry);
+  }
+
   private int findIndex(DataEntry key, Comparator<DataEntry> comparator) {
     int i = Collections.binarySearch(myExpectedData, key, comparator);
     if (i < 0 || i >= myExpectedData.size()) {
@@ -495,6 +519,8 @@ public class CachingSoftWrapDataMapperTest {
       // We don't to perform the check for the data that points to soft wrap location here. The reason is that it shares offset
       // with the first document symbol after soft wrap, hence, examination always fails.
       if (!data.virtualSpace && !data.insideTab && !equals(data.logical, actualLogicalByOffset)) {
+        //TODO den remove
+        myMapper.offsetToLogicalPosition(data.offset);
         throw new AssertionError(
           String.format("Detected unmatched logical position by offset. Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against offset: '%d' and soft wrap-unaware logical: '%s'",
@@ -523,7 +549,7 @@ public class CachingSoftWrapDataMapperTest {
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   private void init(final String documentText) {
-    final TestProcessingContext context = new TestProcessingContext();
+    final TestEditorPosition context = new TestEditorPosition();
     myMockery.checking(new Expectations() {{
       allowing(myDocument).getCharsSequence(); will(new CustomAction("getCharsSequence()") {
         @Override
@@ -627,10 +653,12 @@ public class CachingSoftWrapDataMapperTest {
     }
   }
 
-  private class TestProcessingContext extends ProcessingContext {
+  private class TestEditorPosition extends EditorPosition {
     private final StringBuilder mySoftWrapBuffer = new StringBuilder();
     final         StringBuilder document         = new StringBuilder();
 
+    EditorPosition lineStartPosition;
+    
     boolean insideSoftWrap;
     boolean insideFolding;
     boolean insideTab;
@@ -643,13 +671,15 @@ public class CachingSoftWrapDataMapperTest {
     int     foldingStartVisualColumn;
     int     foldingStartX;
 
-    TestProcessingContext() {
+    TestEditorPosition() {
       super(myEditor, myRepresentationHelper);
+      lineStartPosition = clone();
     }
 
     public void onSoftWrapStart() {
       softWrapStartOffset = offset;
       insideSoftWrap = true;
+      myMapper.onVisualLineStart(lineStartPosition);
     }
 
     public void onSoftWrapEnd() {
@@ -673,6 +703,7 @@ public class CachingSoftWrapDataMapperTest {
       foldingStartVisualColumn = visualColumn;
       foldingStartX = x;
       insideFolding = true;
+      myMapper.onVisualLineStart(lineStartPosition);
     }
 
     public void onFoldingEnd() {
@@ -729,8 +760,9 @@ public class CachingSoftWrapDataMapperTest {
       // Symbol inside soft wrap.
       if (insideSoftWrap) {
         if (c == '\n') {
-          myMapper.beforeSoftWrap(this);
 
+          myMapper.beforeSoftWrapLineFeed(this);
+          
           // Emulate the situation when the user works with a virtual space after document line end (add such virtual
           // positions two symbols behind the end).
           visualColumn++;
@@ -764,9 +796,6 @@ public class CachingSoftWrapDataMapperTest {
       }
 
       // Symbol outside soft wrap and folding.
-      if (c == '\n') {
-        myMapper.onProcessedSymbol(this);
-      }
       onNonSoftWrapSymbol(c);
       if (c == '\n') {
         visualLine++;
@@ -779,13 +808,15 @@ public class CachingSoftWrapDataMapperTest {
         softWrapSymbolsOnCurrentVisualLine = 0;
         foldingColumnDiff = 0;
         offset++;
+        lineStartPosition.from(this);
       }
       else if (c == '\t') {
+        myMapper.onVisualLineStart(lineStartPosition);
         symbolWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(c, x);
+        myMapper.onTabulation(this, symbolWidthInColumns);
         int oldX = x;
         x += myRepresentationHelper.charWidth(c, x);
         symbolWidthInPixels = x - oldX;
-        myMapper.onProcessedSymbol(this);
 
         // There is a possible case that single tabulation symbols is shown in more than one visual column at IJ editor.
         // We store data entry only for the first tab column without 'inside tab' flag then.
@@ -802,7 +833,6 @@ public class CachingSoftWrapDataMapperTest {
         offset++;
       }
       else {
-        myMapper.onProcessedSymbol(this);
         visualColumn++;
         logicalColumn++;
         offset++;
@@ -818,6 +848,7 @@ public class CachingSoftWrapDataMapperTest {
         // Emulate the situation when the user works with a virtual space after document line end (add such virtual
         // positions two symbols behind the end).
         if (!insideFolding) {
+          myMapper.onVisualLineEnd(this);
           visualColumn++;
           logicalColumn++;
           addData(true);

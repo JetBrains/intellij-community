@@ -49,6 +49,8 @@ public class ChooseItemReplaceAction extends EditorAction {
 
   static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
     final PsiFile file = lookup.getPsiFile();
+    if (file == null) return false;
+
     final Editor editor = lookup.getEditor();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 

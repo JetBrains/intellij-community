@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +93,35 @@ public class SoftWrapsStorage {
   }
 
   /**
+   * Allows to answer how many soft wraps which {@link TextChange#getStart() start offsets} belong to given
+   * <code>[start; end]</code> interval are registered withing the current storage.
+   * 
+   * @param startOffset   target start offset (inclusive)
+   * @param endOffset     target end offset (inclusive)
+   * @return              number of soft wraps which {@link TextChange#getStart() start offsets} belong to the target range
+   */
+  public int getNumberOfSoftWrapsInRange(int startOffset, int endOffset) {
+    int startIndex = getSoftWrapIndex(startOffset);
+    if (startIndex < 0) {
+      startIndex = -startIndex - 1;
+    }
+
+    if (startIndex >= myWraps.size()) {
+      return 0;
+    }
+    int result = 0;
+    int endIndex = startIndex;
+    for (; endIndex < myWraps.size(); endIndex++) {
+      SoftWrap softWrap = myWraps.get(endIndex);
+      if (softWrap.getStart() > endOffset) {
+        break;
+      }
+      result++;
+    }
+    return result;
+  }
+  
+  /**
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
@@ -118,29 +148,13 @@ public class SoftWrapsStorage {
   }
 
   /**
-   * Asks current storage to remove soft wrap registered for the current index if any (soft wraps are stored at collection
-   * ordered by soft wrap start offsets).
-   *
-   * @param index   target soft wrap index
-   * @return        removed soft wrap if the one was found for the given index; <code>null</code> otherwise
-   */
-  @Nullable
-  public SoftWrap removeByIndex(int index) {
-    if (index < 0 || index >= myWraps.size()) {
-      return null;
-    }
-    SoftWrap removed = myWraps.remove(index);
-    notifyListenersAboutRemoval();
-    return removed;
-  }
-
-  /**
    * Allows to remove all soft wraps registered at the current storage with offsets from <code>[start; end)</code> range if any.
    *
    * @param startOffset   start offset to use (inclusive)
    * @param endOffset     end offset to use (exclusive)
    */
   public void removeInRange(int startOffset, int endOffset) {
+    //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxx SoftWrapsStorage.removeInRange(%d, %d). Current number: %d", startOffset, endOffset, myWraps.size()));
     int startIndex = getSoftWrapIndex(startOffset);
     if (startIndex < 0) {
       startIndex = -startIndex - 1;
@@ -162,6 +176,8 @@ public class SoftWrapsStorage {
       myWraps.subList(startIndex, endIndex).clear();
       notifyListenersAboutRemoval();
     }
+    
+    //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxx SoftWrapsStorage.removeInRange(%d, %d). Remaining: %d", startOffset, endOffset, myWraps.size()));
   }
 
   /**

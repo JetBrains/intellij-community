@@ -550,6 +550,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
 
     myNameSuggestionsManager.nameSelected();
+    myTypeSelectorManager.typeSelected(getFieldType());
     super.doOKAction();
   }
 

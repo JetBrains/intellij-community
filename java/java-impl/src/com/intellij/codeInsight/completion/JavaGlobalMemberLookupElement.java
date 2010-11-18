@@ -8,6 +8,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
@@ -15,10 +17,23 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
   private final PsiMember myMember;
+  private final boolean myMergedOverloads;
   private final PsiClass myContainingClass;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
   private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsertion;
   private boolean myShouldImport = false;
+
+  public JavaGlobalMemberLookupElement(List<PsiMethod> overloads,
+                                       PsiClass containingClass,
+                                       InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
+                                       InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
+    myMember = overloads.get(0);
+    myContainingClass = containingClass;
+    myQualifiedInsertion = qualifiedInsertion;
+    myImportInsertion = importInsertion;
+    myShouldImport = shouldImport;
+    myMergedOverloads = true;
+  }
 
   public JavaGlobalMemberLookupElement(PsiMember member,
                                        PsiClass containingClass,
@@ -29,6 +44,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
     myShouldImport = shouldImport;
+    myMergedOverloads = false;
   }
 
   @NotNull
@@ -61,11 +77,13 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
       presentation.setItemText(methodName);
     }
 
-    final String params = myMember instanceof PsiMethod
-                          ? PsiFormatUtil.formatMethod((PsiMethod)myMember, PsiSubstitutor.EMPTY,
-                                                     PsiFormatUtil.SHOW_PARAMETERS,
-                                                     PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
-                          : "";
+    final String params = myMergedOverloads
+                          ? "(...)"
+                          : myMember instanceof PsiMethod
+                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, PsiSubstitutor.EMPTY,
+                                                         PsiFormatUtil.SHOW_PARAMETERS,
+                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
+                            : "";
     if (Boolean.TRUE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
       presentation.setTailText(params + " in " + className);
     } else {

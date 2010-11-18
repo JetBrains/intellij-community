@@ -122,6 +122,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
+  private volatile boolean myFocusLookupWhenDone;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
@@ -201,6 +202,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   void ensureDuringCompletionPassed() {
     myDuringCompletionSemaphore.waitFor();
+  }
+
+  public void setFocusLookupWhenDone(boolean focusLookup) {
+    myFocusLookupWhenDone = focusLookup;
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
@@ -381,6 +386,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       myLookup.show();
     }
     myLookup.refreshUi();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.assertTrue(myLookup.isVisible());
+    }
   }
 
   final boolean isInsideIdentifier() {
@@ -500,6 +508,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);
           }
         } else {
+          if (myFocusLookupWhenDone) {
+            myLookup.setFocused(true);
+          }
           updateLookup();
         }
 

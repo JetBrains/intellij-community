@@ -252,7 +252,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   public boolean isVisible(SoftWrap softWrap) {
     FoldingModel foldingModel = myEditor.getFoldingModel();
     int start = softWrap.getStart();
-    if (!foldingModel.isOffsetCollapsed(start)) {
+    if (foldingModel.isOffsetCollapsed(start)) {
       return false;
     }
 

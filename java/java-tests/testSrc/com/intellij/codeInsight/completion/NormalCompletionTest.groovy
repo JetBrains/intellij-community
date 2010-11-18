@@ -355,6 +355,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testNoThisInComment() throws Throwable { doAntiTest() }
+
   public void testLastExpressionInFor() throws Throwable { doTest(); }
 
   public void testUndoCommonPrefixOnHide() throws Throwable {//actually don't undo
