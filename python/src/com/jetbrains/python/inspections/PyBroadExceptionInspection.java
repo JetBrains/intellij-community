@@ -34,16 +34,17 @@ public class PyBroadExceptionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTryExceptStatement(final PyTryExceptStatement node){
-      PyExceptPart[] excepts = node.getExceptParts();
-      if (excepts.length > 0) {
-        for (PyExceptPart except : excepts) {
-          PyExpression exceptClass = except.getExceptClass();
-          if (exceptClass == null || exceptClass.getText().equals("Exception")) {
-            registerProblem(node, "Too broad exception clause");
-          }
-        }
+    public void visitPyExceptBlock(final PyExceptPart node){
+      PyExpression exceptClass= node.getExceptClass();
+      if (exceptClass == null) {
+        registerProblem(node, "Too broad exception clause");
       }
+      if (exceptClass instanceof PyReferenceExpression) {
+        PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
+        if (myTypeEvalContext.getType(exceptClassRef).isBuiltin())
+          registerProblem(node, "Too broad exception clause");
+      }
+
     }
   }
 }

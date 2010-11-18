@@ -227,7 +227,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
-    myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, false);
   }
@@ -256,5 +256,24 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testInconsistentIndentation() {
     doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
+  }
+  
+  public void testPyChainedComparisonsInspection() {
+    doHighlightingTest(PyChainedComparisonsInspection.class);
+  }
+
+  public void testPyRedundantParenthesesInspection() {
+    doHighlightingTest(PyRedundantParenthesesInspection.class);
+  }
+
+  public void testPyBroadExceptionInspection() {
+    doHighlightingTest(PyBroadExceptionInspection.class);
+  }
+
+  public void testPyAugmentAssignmentInspection() {
+    doHighlightingTest(PyAugmentAssignmentInspection.class);
+  }
+  public void testPyDictDuplicateKeysInspection() {
+    doHighlightingTest(PyDictDuplicateKeysInspection.class);
   }
 }
