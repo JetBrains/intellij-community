@@ -39,9 +39,11 @@ import java.util.Set;
 public class GitChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#git4idea.changes.GitChangeProvider");
   private final Project myProject;
+  private final ChangeListManager myChangeListManager;
 
-  public GitChangeProvider(@NotNull Project project) {
+  public GitChangeProvider(@NotNull Project project, ChangeListManager changeListManager) {
     myProject = project;
+    myChangeListManager = changeListManager;
   }
 
   /**
@@ -66,7 +68,7 @@ public class GitChangeProvider implements ChangeProvider {
     try {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
       for (VirtualFile root : roots) {
-        ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
+        ChangeCollector c = new ChangeCollector(myProject, myChangeListManager, dirtyScope, root);
         final Collection<Change> changes = c.changes();
         holder.changed(changes);
         for (Change file : changes) {

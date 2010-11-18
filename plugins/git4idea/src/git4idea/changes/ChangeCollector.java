@@ -39,47 +39,19 @@ import java.util.*;
  * cannot be got as a sum of stateless operations.
  */
 class ChangeCollector {
-  /**
-   * The dirty scope used in the collector
-   */
-  private final VcsDirtyScope myDirtyScope;
-  /**
-   * a vcs root for changes
-   */
-  private final VirtualFile myVcsRoot;
-  /**
-   * a project for change collection
-   */
   private final Project myProject;
-  /**
-   * Unversioned files
-   */
-  private final List<VirtualFile> myUnversioned = new ArrayList<VirtualFile>();
-  /**
-   * Names that are listed as unmerged
-   */
-  private final Set<String> myUnmergedNames = new HashSet<String>();
-  /**
-   * Names that are listed as unmerged
-   */
-  private final List<Change> myChanges = new ArrayList<Change>();
-  /**
-   * This flag indicates that collecting changes has been failed.
-   */
-  private boolean myIsFailed = true;
-  /**
-   * This flag indicates that collecting changes has been started
-   */
-  private boolean myIsCollected = false;
+  private final ChangeListManager myChangeListManager;
+  private final VcsDirtyScope myDirtyScope;
+  private final VirtualFile myVcsRoot;
 
-  /**
-   * A constructor
-   *
-   * @param project    a project
-   * @param dirtyScope the dirty scope to check
-   * @param vcsRoot    a vcs root
-   */
-  public ChangeCollector(final Project project, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) {
+  private final List<VirtualFile> myUnversioned = new ArrayList<VirtualFile>(); // Unversioned files
+  private final Set<String> myUnmergedNames = new HashSet<String>(); // Names of unmerged files
+  private final List<Change> myChanges = new ArrayList<Change>(); // all changes
+  private boolean myIsCollected = false; // indicates that collecting changes has been started
+  private boolean myIsFailed = true; // indicates that collecting changes has been failed.
+
+  public ChangeCollector(final Project project, ChangeListManager changeListManager, VcsDirtyScope dirtyScope, final VirtualFile vcsRoot) {
+    myChangeListManager = changeListManager;
     myDirtyScope = dirtyScope;
     myVcsRoot = vcsRoot;
     myProject = project;
@@ -87,9 +59,6 @@ class ChangeCollector {
 
   /**
    * Get unversioned files
-   *
-   * @return an unversioned files
-   * @throws VcsException if there is a problem with executing Git
    */
   public Collection<VirtualFile> unversioned() throws VcsException {
     ensureCollected();
@@ -98,9 +67,6 @@ class ChangeCollector {
 
   /**
    * Get changes
-   *
-   * @return an unversioned files
-   * @throws VcsException if there is a problem with executing Git
    */
   public Collection<Change> changes() throws VcsException {
     ensureCollected();
@@ -110,8 +76,6 @@ class ChangeCollector {
 
   /**
    * Ensure that changes has been collected.
-   *
-   * @throws VcsException an exception
    */
   private void ensureCollected() throws VcsException {
     if (myIsCollected) {
@@ -156,8 +120,7 @@ class ChangeCollector {
     candidatePaths.addAll(myDirtyScope.getDirtyFilesNoExpand());
     if (includeChanges) {
       try {
-        ChangeListManager cm = ChangeListManager.getInstance(myProject);
-        for (Change c : cm.getChangesIn(myVcsRoot)) {
+        for (Change c : myChangeListManager.getChangesIn(myVcsRoot)) {
           switch (c.getType()) {
             case NEW:
             case DELETED:
