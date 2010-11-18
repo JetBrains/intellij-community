@@ -27,7 +27,7 @@ public class UnfocusedComments extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiComment.class) != null) {
+    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiComment.class, false) != null) {
       return ThreeState.NO;
     }
     return ThreeState.UNSURE;
