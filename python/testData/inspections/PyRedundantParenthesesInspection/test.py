@@ -12,4 +12,7 @@ except (<warning descr="Remove redundant parentheses">(A)</warning>):
     pass
 except <warning descr="Remove redundant parentheses">(A)</warning> :
     pass
-    
+
+try:
+    foo()
+except (A, B):    

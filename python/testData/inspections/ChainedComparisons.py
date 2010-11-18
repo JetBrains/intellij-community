@@ -1,0 +1,1 @@
+<warning descr="Simplify chained comparison">a < b <caret>and b < c</warning>
