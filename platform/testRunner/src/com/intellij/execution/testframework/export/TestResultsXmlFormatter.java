@@ -15,21 +15,25 @@
  */
 package com.intellij.execution.testframework.export;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import java.text.DateFormat;
 import java.util.*;
 
 public class TestResultsXmlFormatter {
@@ -45,6 +49,7 @@ public class TestResultsXmlFormatter {
   private static final String ATTR_OUTPUT_TYPE = "type";
   private static final String ATTR_STATUS = "status";
   private static final String TOTAL_STATUS = "total";
+  private static final String ATTR_FOORTER_TEXT = "footerText";
 
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final ContentHandler myResultHandler;
@@ -81,6 +86,9 @@ public class TestResultsXmlFormatter {
 
     Map<String, String> runAttrs = new HashMap<String, String>();
     runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
+    String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
+                                                DateFormatUtil.formatDateTime(new Date()));
+    runAttrs.put(ATTR_FOORTER_TEXT, footerText);
     Integer duration = myTestRoot.getDuration();
     if (duration != null) {
       runAttrs.put(ATTR_DURATION, String.valueOf(duration));

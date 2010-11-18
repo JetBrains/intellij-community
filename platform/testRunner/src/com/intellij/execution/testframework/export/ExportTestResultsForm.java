@@ -184,6 +184,7 @@ public class ExportTestResultsForm {
 
   public void showMessage(@Nullable String message) {
     myMessageLabel.setText(message);
+    boolean visible = myMessageLabel.isVisible();
     myMessageLabel.setVisible(message != null);
   }
 
