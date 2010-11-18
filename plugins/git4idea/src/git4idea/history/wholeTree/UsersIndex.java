@@ -42,8 +42,8 @@ public class UsersIndex {
     return AssertProxy.createAWTAccess(new Read(myIsDirty, myIndex, myKeys));
   }
 
-  public List<String> getKeys() {
-    return new ArrayList<String>(myIndex.keySet());
+  public Collection<String> getKeys() {
+    return Collections.unmodifiableSet(myIndex.keySet());
   }
 
   public Ref<Integer> put(final String name) {

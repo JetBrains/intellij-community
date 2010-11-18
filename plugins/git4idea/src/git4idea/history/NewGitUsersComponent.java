@@ -25,10 +25,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -57,15 +54,17 @@ public class NewGitUsersComponent {
     }
   }
 
-  public void acceptUpdate(@NotNull final List<String> data) {
+  public void acceptUpdate(@NotNull final Collection<String> data) {
     synchronized (myLock) {
       final List<String> wasData = myState.get("");
       if (wasData == null || (! wasData.equals(data))) {
+        final HashSet<String> set = new HashSet<String>(data);
         if (wasData != null) {
-          data.addAll(wasData);
+          set.addAll(wasData);
         }
-        Collections.sort(data);
-        myState.put("", data);
+        final List<String> list = new ArrayList<String>(set);
+        Collections.sort(list);
+        myState.put("", list);
         myState.force();
       }
     }
