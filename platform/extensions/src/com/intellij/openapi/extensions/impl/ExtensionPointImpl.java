@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -286,6 +288,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         myLogger.error(e);
       }
     }
+  }
+
+  @Override
+  public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
+                                                     @NotNull Disposable parentDisposable) {
+    addExtensionPointListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeExtensionPointListener(listener);
+      }
+    });
   }
 
   public synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {

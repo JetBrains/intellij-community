@@ -20,6 +20,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -98,7 +99,12 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
         }
       }
     }
-    return ClasspathTableItem.createLibItem(rootModel.addLibraryEntry(item), myContext);
+    final LibraryOrderEntry orderEntry = rootModel.addLibraryEntry(item);
+    final LibraryTable table = item.getTable();
+    if (table instanceof LibraryTableBase) {
+      orderEntry.setScope(((LibraryTableBase)table).getDefaultDependencyScope());
+    }
+    return ClasspathTableItem.createLibItem(orderEntry, myContext);
   }
 
   protected ClasspathElementChooser<Library> createChooser() {
