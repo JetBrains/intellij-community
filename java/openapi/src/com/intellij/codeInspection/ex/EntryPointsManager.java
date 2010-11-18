@@ -22,8 +22,9 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.openapi.Disposable;
 
-public interface EntryPointsManager {
+public interface EntryPointsManager extends Disposable {
   void resolveEntryPoints(RefManager manager);
 
   void addEntryPoint(RefElement newEntryPoint, boolean isPersistent);

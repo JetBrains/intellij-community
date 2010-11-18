@@ -27,7 +27,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -56,7 +55,7 @@ import java.util.*;
     name = "EntryPointsManager",
     storages = {@Storage(id = "default", file = "$PROJECT_FILE$")}
 )
-public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager, Disposable {
+public class EntryPointsManagerImpl implements PersistentStateComponent<Element>, EntryPointsManager {
   @NonNls private static final String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
     "javax.annotation.Resource",
@@ -99,9 +98,9 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myTemporaryEntryPoints = new HashSet<RefElement>();
     myPersistentEntryPoints =
         new LinkedHashMap<String, SmartRefElementPointer>(); // To keep the order between readExternal to writeExternal
-
+    Disposer.register(project, this);
     final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    myExtensionPointListener = new ExtensionPointListener<EntryPoint>() {
+    point.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
       @Override
       public void extensionAdded(@NotNull EntryPoint extension, @Nullable PluginDescriptor pluginDescriptor) {
         extensionRemoved(extension, pluginDescriptor);
@@ -120,8 +119,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
           });
         }
       }
-    };
-    point.addExtensionPointListener(myExtensionPointListener);
+    }, this);
   }
 
   public static EntryPointsManagerImpl getInstance(Project project) {
@@ -133,7 +131,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     Element entryPointsElement = element.getChild("entry_points");
     final String version = entryPointsElement.getAttributeValue(VERSION_ATTR);
     if (!Comparing.strEqual(version, VERSION)) {
-      convert(entryPointsElement);
+      convert(entryPointsElement, myPersistentEntryPoints);
     }
     else {
       List content = entryPointsElement.getChildren();
@@ -146,7 +144,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       }
     }
     try {
-      DefaultJDOMExternalizer.readExternal(this, element);
+      ADDITIONAL_ANNOTATIONS.readExternal(element);
     }
     catch (InvalidDataException ignored) {
     }
@@ -155,23 +153,25 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     Element element = new Element("state");
-    writeExternal(element);
+    writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
     return element;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(final Element element) {
+  public static void writeExternal(final Element element,
+                            final Map<String, SmartRefElementPointer> persistentEntryPoints,
+                            final JDOMExternalizableStringList additional_annotations) {
     Element entryPointsElement = new Element("entry_points");
     entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
-    for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
+    for (SmartRefElementPointer entryPoint : persistentEntryPoints.values()) {
       assert entryPoint.isPersistent();
       entryPoint.writeExternal(entryPointsElement);
     }
 
     element.addContent(entryPointsElement);
-    if (!ADDITIONAL_ANNOTATIONS.isEmpty()) {
+    if (!additional_annotations.isEmpty()) {
       try {
-        DefaultJDOMExternalizer.writeExternal(this, element);
+        additional_annotations.writeExternal(element);
       }
       catch (WriteExternalException ignored) {
       }
@@ -302,8 +302,6 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
 
   public void dispose() {
-    final ExtensionPoint<EntryPoint> extensionPoint = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    extensionPoint.removeExtensionPointListener(myExtensionPointListener);
     cleanup();
   }
 
@@ -362,7 +360,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
   }
 
-  public void convert(Element element) {
+  public static void convert(Element element, final Map<String, SmartRefElementPointer> persistentEntryPoints) {
     List content = element.getChildren();
     for (final Object aContent : content) {
       Element entryElement = (Element)aContent;
@@ -401,7 +399,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
           }
         }
         SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(type, fqName);
-        myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
+        persistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
       }
     }
   }
