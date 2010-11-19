@@ -128,10 +128,10 @@ public class LowLevelAccessImpl implements LowLevelAccess {
                                        refs, consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
   }
 
-  public Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
+  public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
     final List<String> result = new ArrayList<String>();
-    GitBranch.listAsStrings(myProject, myRoot, false, true, result, hash.getValue());
-    GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
+    GitBranch.listAsStrings(myProject, myRoot, true, true, result, hash.getValue());
+    //GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
     return result;
   }
 

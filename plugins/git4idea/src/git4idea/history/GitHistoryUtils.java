@@ -487,7 +487,9 @@ public class GitHistoryUtils {
 
     final GitCommit gitCommit;
     try {
-      gitCommit = createCommit(project, refs, root, record);
+      final List<String> branches = new ArrayList<String>();
+      GitBranch.listAsStrings(project, root, true, true, branches, record.getHash());
+      gitCommit = createCommit(project, refs, root, record, branches);
     }
     catch (VcsException e) {
       exc[0] = e;
@@ -497,7 +499,7 @@ public class GitHistoryUtils {
     gitCommitConsumer.consume(gitCommit);
   }
 
-  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record) throws VcsException {
+  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record, List<String> branches) throws VcsException {
     GitCommit gitCommit;
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<String>();
@@ -510,7 +512,8 @@ public class GitHistoryUtils {
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
-                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000);
+                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000,
+                                      branches);
     gitCommit.setCurrentBranch(s);
     return gitCommit;
   }
@@ -556,7 +559,9 @@ public class GitHistoryUtils {
 
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
-      final GitCommit gitCommit = createCommit(project, refs, root, record);
+      final List<String> branches = new ArrayList<String>();
+      GitBranch.listAsStrings(project, root, true, true, branches, record.getHash());
+      final GitCommit gitCommit = createCommit(project, refs, root, record, branches);
       rc.add(gitCommit);
     }
     return rc;

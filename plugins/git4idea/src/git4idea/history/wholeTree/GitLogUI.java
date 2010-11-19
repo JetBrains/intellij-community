@@ -159,8 +159,8 @@ public class GitLogUI implements Disposable {
     keeper.put();
     myDataBeingAdded = true;
     myTableModel.fireTableDataChanged();
-    myDataBeingAdded = false;
     keeper.restore();
+    myDataBeingAdded = false;
     myJBTable.repaint();
   }
 
@@ -312,7 +312,9 @@ public class GitLogUI implements Disposable {
     myJBTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        selectionChanged();
+        if (! myDataBeingAdded) {
+          selectionChanged();
+        }
       }
     });
     myRepoPanel.add("main", myRepositoryChangesBrowser);
@@ -325,7 +327,6 @@ public class GitLogUI implements Disposable {
   }
 
   private void selectionChanged() {
-    //if (myDataBeingAdded) return;
     final int[] rows = myJBTable.getSelectedRows();
     myDetails.refresh(null);
     if (rows.length == 0) {
@@ -359,12 +360,14 @@ public class GitLogUI implements Disposable {
   }
 
   private void updateDetailsFromSelection() {
+    if (myDataBeingAdded) return;
     myMissingSelectionData = false;
     final int[] rows = myJBTable.getSelectedRows();
     if (rows.length == 1) {
       final CommitI commitI = myTableModel.getCommitAt(rows[0]);
       if (commitI != null && (! commitI.holdsDecoration())) {
-        final GitCommit convert = myDetailsCache.convert(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
+        final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
+        final GitCommit convert = myDetailsCache.convert(root, commitI.getHash());
         if (convert != null) {
           myDetails.refresh(convert);
         }
@@ -1027,6 +1030,7 @@ public class GitLogUI implements Disposable {
     }
 
     private String parseDetails(final GitCommit c) {
+      final List<String> branches = c.getBranches();
       final String hash = new HtmlHighlighter(c.getHash().getValue()).getResult();
       final String author = new HtmlHighlighter(c.getAuthor()).getResult();
       final String committer = new HtmlHighlighter(c.getCommitter()).getResult();
@@ -1038,16 +1042,31 @@ public class GitLogUI implements Disposable {
                                                                          }
                                                                        });
 
-      return new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
+      final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
         .append("</head><body><table><tr valign=\"top\"><td><i>Hash:</i></td><td>").append(
           hash).append("</td></tr>" + "<tr valign=\"top\"><td><i>Author:</i></td><td>")
         .append(author).append(" (").append(c.getAuthorEmail()).append(") <i>at</i> ")
-        .append(DateFormatUtil.formatPrettyDateTime(c.getAuthorTime())).append("</td></tr>" + "<tr valign=\"top\"><td><i>Commiter:</i></td><td>")
+        .append(DateFormatUtil.formatPrettyDateTime(c.getAuthorTime()))
+        .append("</td></tr>" + "<tr valign=\"top\"><td><i>Commiter:</i></td><td>")
         .append(committer).append(" (").append(c.getComitterEmail()).append(") <i>at</i> ")
         .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
           "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
-        .append(comment).append(
-          "</b></td></tr>" + "</table></body></html>").toString();
+        .append(comment).append("</b></td></tr>");
+      sb.append("<tr><td><i>Contained in branches:<i></td><td>");
+      if (branches != null && (! branches.isEmpty())) {
+        for (int i = 0; i < branches.size(); i++) {
+          String s = branches.get(i);
+          sb.append(s);
+          if (i + 1 < branches.size()) {
+            sb.append(", ");
+          }
+        }
+      } else {
+        sb.append("<font color=gray>no branches</font>");
+      }
+      sb.append("</td></tr>");
+      sb.append("</table></body></html>");
+      return sb.toString();
     }
   }
 

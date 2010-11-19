@@ -22,6 +22,7 @@ import com.intellij.util.containers.SLRUMap;
 import git4idea.history.browser.GitCommit;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author irengrig
