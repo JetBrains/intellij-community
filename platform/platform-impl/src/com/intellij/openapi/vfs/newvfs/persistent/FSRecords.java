@@ -98,7 +98,6 @@ public class FSRecords implements Forceable {
 
   private static class DbConnection {
     private static int refCount = 0;
-    private static final Object LOCK = new Object();
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
     private static PersistentStringEnumerator myNames;
@@ -112,7 +111,7 @@ public class FSRecords implements Forceable {
     private static boolean myCorrupted = false;
 
     public static DbConnection connect() {
-      synchronized (LOCK) {
+      synchronized (lock) {
         if (refCount == 0) {
           init();
           scanFreeRecords();
@@ -368,7 +367,7 @@ public class FSRecords implements Forceable {
     }
 
     public void dispose() throws IOException {
-      synchronized (LOCK) {
+      synchronized (lock) {
         refCount--;
         if (refCount == 0) {
           closeFiles();
