@@ -20,6 +20,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,9 +35,9 @@ import java.util.List;
  * @author oleg
  * This component is used to configure list of folders with add/remove buttons.
  */
-public class PathsChooserComponent {
+public class PathsChooserComponent implements ComponentWithEmptyText {
   private JPanel myContentPane;
-  private JList myList;
+  private JBList myList;
   private JButton myAddButton;
   private JButton myRemoveButton;
   private final DefaultListModel myListModel;
@@ -82,6 +85,11 @@ public class PathsChooserComponent {
         }
       }
     });
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myList.getEmptyText();
   }
 
   public JPanel getContentPane() {

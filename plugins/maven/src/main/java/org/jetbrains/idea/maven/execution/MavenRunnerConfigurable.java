@@ -65,7 +65,7 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     c.anchor = GridBagConstraints.NORTHWEST;
 
     myRunInBackgroundCheckbox = new JCheckBox("Run in background");
-    myRunInBackgroundCheckbox.setDisplayedMnemonicIndex(myRunInBackgroundCheckbox.getText().indexOf('b'));
+    myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -107,8 +107,9 @@ public abstract class MavenRunnerConfigurable implements SearchableConfigurable 
     propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder("Properties"));
 
     propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox("Skip tests"), BorderLayout.NORTH);
-    mySkipTestsCheckBox.setDisplayedMnemonicIndex(mySkipTestsCheckBox.getText().indexOf('t'));
+    mySkipTestsCheckBox.setMnemonic('t');
     propertiesPanel.add(myPropertiesPanel = new MyPropertiesPanel(), BorderLayout.CENTER);
+    myPropertiesPanel.getEmptyText().setText("No properties defined");
 
     c.gridx = 0;
     c.gridy++;

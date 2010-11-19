@@ -106,6 +106,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     myPropertiesFilesEncodingCombo.add(myAction.createCustomComponent(templatePresentation), BorderLayout.CENTER);
     myTreeView = new FileTreeTable(myProject);
     myTreePanel.setViewportView(myTreeView);
+    myTreeView.getEmptyText().setText(IdeBundle.message("file.encodings.not.configured"));
     return myPanel;
   }
 

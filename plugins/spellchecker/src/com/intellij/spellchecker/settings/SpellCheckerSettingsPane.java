@@ -125,7 +125,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     });
     panelForFolderChooser.setLayout(new BorderLayout());
     panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
-
+    pathsChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
 
     optionalChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
       @Override
@@ -144,6 +144,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     panelForDictionaryChooser.setLayout(new BorderLayout());
     panelForDictionaryChooser.add(optionalChooserComponent.getContentPane(), BorderLayout.CENTER);
+    optionalChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
 
 
     wordsPanel = new WordsPanel(manager);
@@ -270,6 +271,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     private WordsPanel(SpellCheckerManager manager) {
       super(null, new WordDescriber(manager.getUserDictionary()).process());
       this.manager = manager;
+      getEmptyText().setText(SpellCheckerBundle.message("no.words"));
     }
 
 

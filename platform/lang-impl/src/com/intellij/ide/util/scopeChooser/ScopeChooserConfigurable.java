@@ -251,6 +251,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
     }, true);
+
+    myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
   }
 
   protected void processRemovedItems() {
