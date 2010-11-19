@@ -81,6 +81,7 @@ public abstract class ChooseByNameBase {
   protected final String myInitialText;
   private boolean myPreselectInitialText;
   private final Reference<PsiElement> myContext;
+  private boolean mySearchInAnyPlace = false;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -164,6 +165,14 @@ public abstract class ChooseByNameBase {
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
     myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
+  }
+
+  public boolean isSearchInAnyPlace() {
+    return mySearchInAnyPlace;
+  }
+
+  public void setSearchInAnyPlace(boolean searchInAnyPlace) {
+    mySearchInAnyPlace = searchInAnyPlace;
   }
 
   /**
@@ -1195,6 +1204,10 @@ public abstract class ChooseByNameBase {
     private void addElementsByPattern(Set<Object> elementsArray, String pattern) {
       String namePattern = getNamePattern(pattern);
       String qualifierPattern = getQualifierPattern(pattern);
+
+      if (isSearchInAnyPlace() && namePattern.trim().length() > 0) {
+        namePattern = "*" + namePattern + "*";
+      }
 
       boolean empty = namePattern.length() == 0 || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
       if (empty && !canShowListForEmptyPattern()) return;

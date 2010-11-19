@@ -66,6 +66,7 @@ public class RunInspectionAction extends GotoActionBase {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoInspectionModel(project), getPsiContext(e));
+    popup.setSearchInAnyPlace(true);
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose() {
         if (RunInspectionAction.class.equals(myInAction)) {
