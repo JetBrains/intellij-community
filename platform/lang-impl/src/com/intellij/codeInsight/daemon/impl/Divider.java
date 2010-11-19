@@ -43,12 +43,13 @@ public class Divider {
                                             @NotNull TextRange range,
                                             @NotNull List<PsiElement> inside,
                                             @NotNull List<PsiElement> outside,
-                                            @NotNull HighlightLevelUtil.AnalysisLevel level) {
+                                            @NotNull HighlightLevelUtil.AnalysisLevel level,
+                                            boolean includeParents) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
       if (HighlightLevelUtil.shouldAnalyse(psiRoot, level)) {
-        divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside);
+        divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside, includeParents);
       }
     }
   }
@@ -58,8 +59,8 @@ public class Divider {
                                              int endOffset,
                                              @NotNull TextRange range,
                                              @NotNull List<PsiElement> inside,
-                                             @NotNull List<PsiElement> outside
-  ) {
+                                             @NotNull List<PsiElement> outside,
+                                             boolean includeParents) {
     final int currentOffset = root.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(CollectHighlightsUtil.EP_NAME);
 
@@ -120,6 +121,16 @@ public class Divider {
         elements.push(element);
         element = child;
         child = PsiUtilBase.NULL_PSI_ELEMENT;
+      }
+    }
+
+    if (includeParents) {
+      PsiElement parent = !outside.isEmpty() ? outside.get(outside.size() - 1) :
+                          !inside.isEmpty() ? inside.get(inside.size() - 1) :
+                          CollectHighlightsUtil.findCommonParent(root, startOffset, endOffset);
+      while (parent != null && parent != root) {
+        parent = parent.getParent();
+        if (parent != null) outside.add(parent);
       }
     }
   }
