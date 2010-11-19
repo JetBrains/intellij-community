@@ -203,16 +203,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           description_buf.append(errmsg);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
-        // look in other imported modules for this whole name
-        if (ref_is_importable) {
-          LocalQuickFix import_fix = PythonReferenceImporter.proposeImportFix(node, ref_text);
-          if (import_fix != null) {
-            actions.add(import_fix);
-            if (import_fix instanceof HintAction) {
-              hint_action = ((HintAction)import_fix);
-            }
-          }
-        }
       }
       if (reference instanceof PsiReferenceEx) {
         final String s = ((PsiReferenceEx)reference).getUnresolvedDescription();
@@ -264,6 +254,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         if (! marked_qualified) {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+
+          // look in other imported modules for this whole name
+          if (ref_is_importable) {
+            LocalQuickFix import_fix = PythonReferenceImporter.proposeImportFix(node, ref_text);
+            if (import_fix != null) {
+              actions.add(import_fix);
+              if (import_fix instanceof HintAction) {
+                hint_action = ((HintAction)import_fix);
+              }
+            }
+          }
+
           // add import hint; the rest of action will fend for itself.
           if (ref_element != null && ref_is_importable && hint_action == null) {
             final AddImportAction addImportAction = new AddImportAction(reference);
