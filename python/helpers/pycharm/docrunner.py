@@ -26,7 +26,7 @@ class TeamcityDocTestResult(TeamcityTestResult):
       return name
 
     def getTestId(self, test):
-        return "file:///" + self.current_suite.filename + ":" + str( self.current_suite.lineno + test.lineno)
+        return "file://" + self.current_suite.filename + ":" + str( self.current_suite.lineno + test.lineno)
 
     def startTest(self, test):
         setattr(test, "startTime", datetime.datetime.now())

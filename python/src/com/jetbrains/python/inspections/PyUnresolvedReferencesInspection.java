@@ -16,6 +16,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -146,7 +147,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean unresolved;
         if (reference instanceof PsiPolyVariantReference) {
           final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
-          final ResolveResult[] resolveResults = poly.multiResolve(false);
+          final ResolveResult[] resolveResults = poly.multiResolve(true);
           unresolved = (resolveResults.length == 0);
           for (ResolveResult resolveResult : resolveResults) {
             if (resolveResult instanceof ImportedResolveResult) {
@@ -158,6 +159,25 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
+          // try to find the same variable in class instance attributes
+          PyClass containedClass = null;
+          PsiElement parent = node.getParent();
+          while (! (parent instanceof PyFile)) {
+            if (parent instanceof PyClass) {
+              containedClass = (PyClass)parent;
+              break;
+            }
+            parent = parent.getParent();
+          }
+          if (containedClass != null) {
+            for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
+              if (node.getName().equals(target.getName())) {
+                registerProblem(node, "Unresolved reference. Possibly missed self",new UnresolvedReferenceQuickFix());
+                return;
+              }
+            }
+          }
+          // did not find
           registerUnresolvedReferenceProblem(node, reference, severity);
           // don't highlight unresolved imports as unused
           if (node.getParent() instanceof PyImportElement) {
