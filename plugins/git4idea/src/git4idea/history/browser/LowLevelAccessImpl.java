@@ -92,7 +92,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     loadAllTags(refs.getTags());
     final GitBranch localBranch = loadLocalBranches(refs.getLocalBranches());
     final GitBranch remoteBranch = loadRemoteBranches(refs.getRemoteBranches());
-    refs.setCurrent(localBranch == null ? remoteBranch : localBranch);
+    final GitBranch current = localBranch == null ? remoteBranch : localBranch;
+    refs.setCurrent(current);
+    refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
     return refs;
   }
 

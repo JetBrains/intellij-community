@@ -49,6 +49,8 @@ public class GitCommit {
 
   private final long myAuthorTime;
   private final List<String> myBranches;
+  private boolean myOnLocal;
+  private boolean myOnTracked;
 
   public GitCommit(@NotNull final AbstractHash shortHash,
                    @NotNull final SHAHash hash,
@@ -197,5 +199,21 @@ public class GitCommit {
   // branches that have this commit
   public List<String> getBranches() {
     return myBranches;
+  }
+
+  public boolean isOnLocal() {
+    return myOnLocal;
+  }
+
+  public void setOnLocal(boolean onLocal) {
+    myOnLocal = onLocal;
+  }
+
+  public boolean isOnTracked() {
+    return myOnTracked;
+  }
+
+  public void setOnTracked(boolean onTracked) {
+    myOnTracked = onTracked;
   }
 }

@@ -26,6 +26,7 @@ public class SymbolicRefs {
   private final TreeSet<String> myTags;
   private final TreeSet<String> myLocalBranches;
   private final TreeSet<String> myRemoteBranches;
+  private String myTrackedRemoteName;
 
   public SymbolicRefs() {
     myTags = new TreeSet<String>();
@@ -75,6 +76,14 @@ public class SymbolicRefs {
     myLocalBranches.clear();
     myRemoteBranches.clear();
     myTags.clear();
+  }
+
+  public void setTrackedRemote(String trackedRemoteName) {
+    myTrackedRemoteName = trackedRemoteName;
+  }
+
+  public String getTrackedRemoteName() {
+    return myTrackedRemoteName;
   }
 
   public static enum Kind {

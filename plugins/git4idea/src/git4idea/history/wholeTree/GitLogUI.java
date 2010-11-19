@@ -650,6 +650,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         return;
       }
@@ -688,7 +689,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private static class SimpleRenderer extends ColoredTableCellRenderer {
+  private class SimpleRenderer extends ColoredTableCellRenderer {
     private final SimpleTextAttributes myAtt;
     private final boolean myShowLoading;
 
@@ -699,6 +700,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+      setBackground(getLogicBackground(selected, row));
       if (BigTableTableModel.LOADING == value) {
         if (myShowLoading) {
           append("Loading...");
@@ -743,6 +745,7 @@ public class GitLogUI implements Disposable {
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
         final int remoteSize = commit.getRemoteBranches() == null ? 0 : commit.getRemoteBranches().size();
         final int tagsSize = commit.getTags().size();
+
         if (localSize + remoteSize > 0) {
           final String branch = localSize == 0 ? (commit.getRemoteBranches().get(0)) : commit.getLocalBranches().get(0);
 
@@ -756,7 +759,7 @@ public class GitLogUI implements Disposable {
           }
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
-          myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+          myPanel.setBackground(getLogicBackground(isSelected, row));
           myPanel.add(new JLabel(icon));
           myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           myPanel.add(myInner);
@@ -772,7 +775,7 @@ public class GitLogUI implements Disposable {
           }
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
-          myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
+          myPanel.setBackground(getLogicBackground(isSelected, row));
           myPanel.add(new JLabel(icon));
           myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           myPanel.add(myInner);
@@ -799,14 +802,38 @@ public class GitLogUI implements Disposable {
       }
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        setBackground(getLogicBackground(selected, row));
         if (value instanceof GitCommit) {
-          myIssueLinkRenderer.appendTextWithLinks(((GitCommit) value).getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
+          final GitCommit gitCommit = (GitCommit)value;
+          myIssueLinkRenderer.appendTextWithLinks(gitCommit.getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
           //super.customizeCellRenderer(table, ((GitCommit) value).getDescription(), selected, hasFocus, row, column);
         } else {
           super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
         }
       }
     }
+  }
+
+  private Color getLogicBackground(final boolean isSelected, final int row) {
+    final Color bkgColor;
+    final CommitI commitAt = myTableModel.getCommitAt(row);
+    GitCommit gitCommit = null;
+    if (commitAt != null & (! commitAt.holdsDecoration())) {
+      gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+    }
+
+    if (isSelected) {
+      bkgColor = UIUtil.getTableSelectionBackground();
+    } else {
+      if (gitCommit != null && gitCommit.isOnLocal() && gitCommit.isOnTracked()) {
+        bkgColor = Colors.commonThisBranch;
+      } else if (gitCommit != null && gitCommit.isOnLocal()) {
+        bkgColor = Colors.ownThisBranch;
+      } else {
+        bkgColor = UIUtil.getTableBackground();
+      }
+    }
+    return bkgColor;
   }
 
   private class MyTestDescriptionRenderer implements TableCellRenderer {
@@ -892,7 +919,7 @@ public class GitLogUI implements Disposable {
       return myRenderer;
     }
   };
-  private final static ColumnInfo<Object, String> DATE = new ColumnInfo<Object, String>("Date") {
+  private final ColumnInfo<Object, String> DATE = new ColumnInfo<Object, String>("Date") {
     private final TableCellRenderer myRenderer = new SimpleRenderer(SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
 
     @Override
@@ -972,6 +999,8 @@ public class GitLogUI implements Disposable {
     Color tag = new Color(241, 239, 158);
     Color remote = new Color(188,188,252);
     Color local = new Color(117,238,199);
+    Color ownThisBranch = new Color(198,255,226);
+    Color commonThisBranch = new Color(223,223,255);
   }
 
   private class MySpecificDetails {

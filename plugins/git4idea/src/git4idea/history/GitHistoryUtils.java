@@ -515,6 +515,16 @@ public class GitHistoryUtils {
                                       record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000,
                                       branches);
     gitCommit.setCurrentBranch(s);
+    final String current = refs.getCurrent().getName();
+    gitCommit.setOnLocal((current != null) && (! current.startsWith(GitBranch.REFS_REMOTES_PREFIX)) &&
+                         (! current.startsWith("remotes/")) && branches.contains(current));
+    String remoteName = refs.getTrackedRemoteName();
+    if (".".equals(remoteName)) {
+      gitCommit.setOnTracked(gitCommit.isOnLocal());
+    } else {
+      remoteName = remoteName.startsWith("refs/") ? remoteName.substring("refs/".length()) : remoteName;
+      gitCommit.setOnTracked(remoteName != null && branches.contains(remoteName));
+    }
     return gitCommit;
   }
 
