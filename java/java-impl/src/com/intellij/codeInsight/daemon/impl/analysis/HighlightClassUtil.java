@@ -654,7 +654,7 @@ public class HighlightClassUtil {
    * @param extendRef points to the class in the extends list
    * @param resolved  extendRef resolved
    */
-  public static HighlightInfo checkClassExtendsForeignInnerClass(PsiJavaCodeReferenceElement extendRef, PsiElement resolved) {
+  public static HighlightInfo checkClassExtendsForeignInnerClass(final PsiJavaCodeReferenceElement extendRef, PsiElement resolved) {
     PsiElement parent = extendRef.getParent();
     if (!(parent instanceof PsiReferenceList)) {
       return null;
@@ -663,7 +663,7 @@ public class HighlightClassUtil {
     if (!(grand instanceof PsiClass)) {
       return null;
     }
-    PsiClass aClass = (PsiClass)grand;
+    final PsiClass aClass = (PsiClass)grand;
     if (aClass instanceof PsiTypeParameter) {
       return null;
     }
@@ -673,17 +673,41 @@ public class HighlightClassUtil {
     if (!(resolved instanceof PsiClass)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, JavaErrorMessages.message("class.name.expected"));
     }
-    PsiClass base = (PsiClass)resolved;
-    // must be inner class
-    if (!PsiUtil.isInnerClass(base)) return null;
-    PsiClass baseClass = base.getContainingClass();
+    final HighlightInfo[] infos = new HighlightInfo[1];
+    extendRef.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (infos[0] != null) return;
+        super.visitElement(element);
+      }
 
-    if (!hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
-      String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
-    }
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+        final PsiElement resolve = reference.resolve();
+        if (resolve instanceof PsiClass) {
+          final PsiClass base = (PsiClass)resolve;
+          final PsiClass baseClass = base.getContainingClass();
+          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && !PsiTreeUtil.isAncestor(baseClass, aClass, true)) {
+            String description = JavaErrorMessages.message("private.symbol",
+                                                           HighlightUtil.formatClass(base),
+                                                           HighlightUtil.formatClass(baseClass));
+            infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
+            return;
+          }
 
-    return null;
+          // must be inner class
+          if (!PsiUtil.isInnerClass(base)) return;
+
+          if (!hasEnclosingInstanceInScope(baseClass, extendRef, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+            String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
+            infos[0] = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
+          }
+        }
+      }
+    });
+
+    return infos[0];
   }
 
   private static boolean qualifiedNewCalledInConstructors(final PsiClass aClass, final PsiClass baseClass) {
