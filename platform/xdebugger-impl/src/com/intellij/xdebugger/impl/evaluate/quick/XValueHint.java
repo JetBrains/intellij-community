@@ -33,6 +33,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -142,7 +143,7 @@ public class XValueHint extends AbstractValueHint {
 
   private void showTree(final XValue value, final String name) {
     XDebuggerTree tree = new XDebuggerTree(myDebugSession, myDebugSession.getDebugProcess().getEditorsProvider(),
-                                           myDebugSession.getCurrentPosition());
+                                           myDebugSession.getCurrentPosition(), XDebuggerActions.VALUE_HINT_TREE_POPUP_GROUP);
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     XValueHintTreeComponent component = new XValueHintTreeComponent(this, tree, Pair.create(value, name));
     showTreePopup(component, tree, name);

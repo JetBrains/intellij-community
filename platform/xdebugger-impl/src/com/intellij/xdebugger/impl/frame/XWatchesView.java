@@ -56,7 +56,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
-    myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), null,
+    myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
     ActionManager actionManager = ActionManager.getInstance();
 

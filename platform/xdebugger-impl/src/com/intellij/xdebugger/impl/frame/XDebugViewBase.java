@@ -15,10 +15,11 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.openapi.Disposable;
 
 /**
  * @author nik
@@ -32,6 +33,7 @@ public abstract class XDebugViewBase implements Disposable {
     mySession = session;
     mySessionListener = new MyDebugSessionListener();
     mySession.addSessionListener(mySessionListener);
+    Disposer.register(parentDisposable, this);
   }
 
   public void rebuildView() {
