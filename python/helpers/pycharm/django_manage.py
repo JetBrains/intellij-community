@@ -10,4 +10,4 @@ if not manage_file:
 
 if __name__ == "__main__":
     fixGetpass()
-    run_module(manage_file)
+    run_module(manage_file, None, '__main__')

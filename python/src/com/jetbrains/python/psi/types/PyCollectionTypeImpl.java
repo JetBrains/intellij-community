@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.project.Project;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,6 +13,11 @@ public class PyCollectionTypeImpl extends PyClassType implements PyCollectionTyp
 
   public PyCollectionTypeImpl(@Nullable PyClass source, boolean isDefinition, PyType elementType) {
     super(source, isDefinition);
+    myElementType = elementType;
+  }
+
+  public PyCollectionTypeImpl(@NotNull Project project, String classQualifiedName, boolean isDefinition, PyType elementType) {
+    super(project, classQualifiedName, isDefinition);
     myElementType = elementType;
   }
 

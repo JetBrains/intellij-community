@@ -74,7 +74,10 @@ public class PyDynamicMember {
     return myName;
   }
 
-  public static Icon getIcon() {
+  public Icon getIcon() {
+    if (myTarget != null) {
+      return myTarget.getIcon(0);
+    }
     return IconLoader.getIcon("/nodes/method.png");
   }
 

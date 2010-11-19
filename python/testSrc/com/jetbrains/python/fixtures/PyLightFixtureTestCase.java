@@ -1,11 +1,16 @@
 package com.jetbrains.python.fixtures;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -99,6 +104,15 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
 
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    }
+
+    protected void createLibrary(ModifiableRootModel model, final String name, final String path) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary(name).getModifiableModel();
+      final VirtualFile home =
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManager.getHomePath() + path);
+
+      modifiableModel.addRoot(home, OrderRootType.CLASSES);
+      modifiableModel.commit();
     }
   }
 

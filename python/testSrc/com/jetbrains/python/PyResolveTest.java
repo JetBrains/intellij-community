@@ -379,4 +379,9 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testImportInTryExcept() {  // PY-2197
     assertResolvesTo(PyFile.class, "sys.py");
   }
+
+  public void testModuleToBuiltins() {
+    final PsiElement element = doResolve();
+    assertNull(element);
+  }
 }

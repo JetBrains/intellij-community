@@ -21,19 +21,21 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Leonid Shalupov
@@ -191,10 +193,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
     if (pythonSdk != null) {
-      VirtualFile[] paths = pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES);
       List<String> pathList = Lists.newArrayList();
-      for (VirtualFile file : paths) {
-        pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+      final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
+        final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
+        for (VirtualFile file : addedPaths) {
+          pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+        }
       }
       PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);
     }

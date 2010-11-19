@@ -4,9 +4,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyClassType implements PyType {
+public class PyClassType extends UserDataHolderBase implements PyType {
 
   protected final PyClass myClass;
   protected final boolean myIsDefinition;
@@ -58,6 +58,16 @@ public class PyClassType implements PyType {
     myIsDefinition = is_definition;
   }
 
+  public PyClassType(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
+    myClass = PyClassNameIndex.findClass(classQualifiedName, project);
+    myIsDefinition = isDefinition;
+  }
+
+  public <T> PyClassType withUserData(Key<T> key, T value) {
+    putUserData(key, value);
+    return this;
+  }
+
   /**
    * @return a PyClass which defined this type.
    */
@@ -71,6 +81,10 @@ public class PyClassType implements PyType {
    */
   public boolean isDefinition() {
     return myIsDefinition;
+  }
+
+  public PyClassType toInstance() {
+    return myIsDefinition ? new PyClassType(myClass, false) : this;
   }
 
   @Nullable
@@ -291,7 +305,6 @@ public class PyClassType implements PyType {
   }
 
   public static PyClassType fromClassName(String typeName, Project project) {
-    PyClass clazz = PyClassNameIndex.findClass(typeName, project);
-    return new PyClassType(clazz, true);
+    return new PyClassType(project, typeName, true);
   }
 }
