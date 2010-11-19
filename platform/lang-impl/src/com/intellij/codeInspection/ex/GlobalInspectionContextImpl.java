@@ -36,6 +36,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
@@ -459,6 +461,11 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       cleanup((InspectionManagerEx)manager);
       throw e;
     }
+    catch (IndexNotReadyException e) {
+      cleanup((InspectionManagerEx)manager);
+      DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
+      throw new ProcessCanceledException();
+    }
     catch (Exception e) {
       LOG.error(e);
     }
@@ -489,6 +496,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         catch (ProcessCanceledException e) {
           throw e;
         }
+        catch (IndexNotReadyException e) {
+          throw e;
+        }
         catch (Exception e) {
           LOG.error(e);
         }
@@ -499,6 +509,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         extension.performPostRunActivities(needRepeatSearchRequest, this);
       }
       catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (IndexNotReadyException e) {
         throw e;
       }
       catch (Exception e) {
@@ -532,6 +545,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           pass.doInspectInBatch((InspectionManagerEx)manager, lTools, true);
         }
         catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (IndexNotReadyException e) {
           throw e;
         }
         catch (Exception e) {
