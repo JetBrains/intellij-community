@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
@@ -38,8 +39,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       if (node.getContainedExpression() instanceof PyReferenceExpression) {
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart) {
-        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+      else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
+                  || node.getParent() instanceof PyReturnStatement) {
+        String eol = System.getProperty("line.separator");
+        if (!node.getText().contains(eol)) {
+          registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+        }
       }
     }
 

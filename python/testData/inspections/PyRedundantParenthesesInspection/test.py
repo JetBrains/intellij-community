@@ -15,4 +15,13 @@ except <warning descr="Remove redundant parentheses">(A)</warning> :
 
 try:
     foo()
-except (A, B):    
+except (A, B):
+    pass
+    
+if (A and
+    B and
+    C):
+    pass
+
+if <warning descr="Remove redundant parentheses">(A == "\n")</warning>:
+    pass
