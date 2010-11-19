@@ -66,7 +66,7 @@ import java.util.List;
 
 public class KeymapPanel extends JPanel implements SearchableConfigurable {
   private JComboBox myKeymapList;
-  private JList myShortcutsList;
+  private JBList myShortcutsList;
 
   private final DefaultComboBoxModel myKeymapListModel = new DefaultComboBoxModel();
 
@@ -229,6 +229,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     panel.add(currentKeysLabel, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
 
     myShortcutsList = new JBList(new DefaultListModel());
+    myShortcutsList.getEmptyText().setText(KeyMapBundle.message("shortcuts.keymap.no.shortcuts"));
+
     myShortcutsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myShortcutsList.setCellRenderer(new ShortcutListRenderer());
     currentKeysLabel.setLabelFor(myShortcutsList);

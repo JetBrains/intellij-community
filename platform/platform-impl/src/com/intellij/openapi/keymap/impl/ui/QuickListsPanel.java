@@ -58,7 +58,7 @@ import java.util.List;
  */
 public class QuickListsPanel extends JPanel implements SearchableConfigurable, MasterDetails {
   private final DefaultListModel myQuickListsModel = new DefaultListModel();
-  private JList myQuickListsList = new JBList(myQuickListsModel);
+  private JBList myQuickListsList = new JBList(myQuickListsModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private int myCurrentIndex = -1;
   private QuickListPanel myQuickListPanel = null;
@@ -79,6 +79,8 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, M
   public void initUi() {
     myDetailsComponent = new DetailsComponent();
     myDetailsComponent.setContent(myRightPanel);
+
+    myQuickListsList.getEmptyText().setText(KeyMapBundle.message("no.quick.lists"));
   }
 
   public JComponent getToolbar() {

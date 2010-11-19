@@ -29,6 +29,7 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +56,8 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
    * UI resources
    */
   private JPanel myPanel;
-  private JTable myPatternsTable;
-  private JTable myFiltersTable;
+  private JBTable myPatternsTable;
+  private JBTable myFiltersTable;
   private JButton myAddPatternButton;
   private JButton myEditPatternButton;
   private JButton myRemovePatternButton;
@@ -160,6 +161,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         // JTable with TodoPaterns
 
         myPatternsTable = new Table(myPatternsModel);
+        myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
         myPatternsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         // Column "Icon"
@@ -287,6 +289,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
       protected JComponent createMainComponent() {
         myFiltersTable = new Table(myFiltersModel);
+        myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
         myFiltersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane myFiltersScroll = ScrollPaneFactory.createScrollPane(myFiltersTable);
 //        myFiltersScroll.getViewport().add(myFiltersTable);

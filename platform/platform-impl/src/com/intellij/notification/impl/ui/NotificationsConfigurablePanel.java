@@ -127,6 +127,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           return value.getTitle();
         }
       });
+
+      getEmptyText().setText("No notifications configured");
     }
 
     @Override

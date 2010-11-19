@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nls;
@@ -40,7 +41,7 @@ import java.util.List;
  */
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable {
   private JPanel myPanel;
-  private JTable myLinkTable;
+  private JBTable myLinkTable;
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myDeleteButton;
@@ -144,6 +145,8 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         updateButtons();
       }
     });
+
+    myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     updateButtons();
   }
 

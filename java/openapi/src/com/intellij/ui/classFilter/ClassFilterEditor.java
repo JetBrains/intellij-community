@@ -20,8 +20,9 @@
  */
 package com.intellij.ui.classFilter;
 
-import com.intellij.ide.util.*;
 import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -31,7 +32,9 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +51,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ClassFilterEditor extends JPanel {
-  protected JTable myTable = null;
+public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
+  protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
   private JButton myAddClassButton;
   protected JButton myAddPatternButton;
@@ -134,6 +137,13 @@ public class ClassFilterEditor extends JPanel {
 
     myRemoveButton.addActionListener(new RemoveAction());
     myRemoveButton.setEnabled(false);
+
+    getEmptyText().setText(UIBundle.message("no.patterns"));
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
   }
 
   protected String getAddButtonText() {

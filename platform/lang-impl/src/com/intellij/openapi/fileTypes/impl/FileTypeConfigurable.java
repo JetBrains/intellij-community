@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -492,7 +493,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   public static class PatternsPanel extends JPanel {
-    private JList myPatternsList;
+    private JBList myPatternsList;
     private JButton myAddButton;
     private JButton myRemoveButton;
     private JPanel myWholePanel;
@@ -508,6 +509,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           myRemoveButton.setEnabled(myPatternsList.getSelectedIndex() != -1 && getListModel().size() > 0);
         }
       });
+
+      myPatternsList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
     }
 
     public void attachActions(final FileTypeConfigurable controller) {

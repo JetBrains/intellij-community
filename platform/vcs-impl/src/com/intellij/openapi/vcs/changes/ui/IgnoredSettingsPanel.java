@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
@@ -39,7 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable {
-  private JList myList;
+  private JBList myList;
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
@@ -67,6 +68,8 @@ public class IgnoredSettingsPanel implements SearchableConfigurable {
       }
     });
     myChangeListManager = ChangeListManager.getInstance(myProject);
+
+    myList.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
   }
 
   private void setItems(final IgnoredFileBean[] filesToIgnore) {

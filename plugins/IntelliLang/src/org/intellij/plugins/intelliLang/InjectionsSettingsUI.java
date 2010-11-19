@@ -104,6 +104,7 @@ public class InjectionsSettingsUI implements Configurable {
     myRoot = new JPanel(new BorderLayout());
 
     myInjectionsTable = new InjectionsTable(myInjections);
+    myInjectionsTable.getEmptyText().setText("No injections configured");
     final JPanel tablePanel = new JPanel(new BorderLayout());
 
     tablePanel.add(ScrollPaneFactory.createScrollPane(myInjectionsTable), BorderLayout.CENTER);
