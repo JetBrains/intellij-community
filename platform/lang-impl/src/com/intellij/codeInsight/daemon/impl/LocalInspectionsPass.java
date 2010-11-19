@@ -196,9 +196,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     ArrayList<PsiElement> inside = new ArrayList<PsiElement>();
     ArrayList<PsiElement> outside = new ArrayList<PsiElement>();
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
-                                   HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT);
+                                   HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT,true);
 
-    setProgressLimit(1L * tools.size() *2/** (inside.size() + outside.size())*/);
+    setProgressLimit(1L * tools.size() * 2);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();

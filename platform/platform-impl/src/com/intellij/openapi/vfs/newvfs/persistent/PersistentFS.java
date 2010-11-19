@@ -549,10 +549,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return stream;
   }
 
-  public void restoreContent(VirtualFile file, Object requestor, final long modStamp, final long timeStamp) {
-    
-  }
-
   public int acquireContent(VirtualFile file) {
     return myRecords.acquireFileContent(getFileId(file));
   }

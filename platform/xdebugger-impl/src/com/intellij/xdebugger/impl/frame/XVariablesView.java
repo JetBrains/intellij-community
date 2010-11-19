@@ -43,7 +43,7 @@ public class XVariablesView extends XDebugViewBase {
   public XVariablesView(@NotNull XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
-    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
     DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
   }
 

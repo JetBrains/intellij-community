@@ -239,7 +239,8 @@ class CacheUpdateRunner {
   }
 
   private static Runnable getProcessWrapper(final Runnable process) {
-    return ApplicationManager.getApplication().isWriteAccessAllowed() ? new Runnable() {
+    // launching thread will hold read access for workers
+    return ApplicationManager.getApplication().isReadAccessAllowed() ? new Runnable() {
       @Override
       public void run() {
         boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);

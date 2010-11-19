@@ -12,7 +12,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -109,14 +108,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
       MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
       for (File file : files) {
         final String fileName = file.getName();
-        FileInputStream stream = new FileInputStream(file);
-        byte[] content;
-        try {
-          content = FileUtil.adaptiveLoadBytes(stream);
-        }
-        finally {
-          stream.close();
-        }
+        byte[] content = FileUtil.loadFileBytes(file);
 
         ClassReader reader = new ClassReader(content, 0, content.length);
         ClassWriter writer = new PsiClassWriter(myFixture.getProject(), false);

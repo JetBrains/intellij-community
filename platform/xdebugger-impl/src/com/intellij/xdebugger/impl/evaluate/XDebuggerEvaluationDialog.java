@@ -63,7 +63,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
+    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP);
     myResultPanel = new JPanel(new BorderLayout());
     myResultPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")), BorderLayout.NORTH);
     myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
@@ -147,11 +147,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     tree.setRoot(root, false);
     myResultPanel.invalidate();
     myInputComponent.getInputEditor().selectAll();
-  }
-
-  protected void dispose() {
-    myTreePanel.dispose();
-    super.dispose();
   }
 
   protected String getDimensionServiceKey() {

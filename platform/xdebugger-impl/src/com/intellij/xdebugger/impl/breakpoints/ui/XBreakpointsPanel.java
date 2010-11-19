@@ -69,7 +69,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
     myAllGroupingRules = new ArrayList<XBreakpointGroupingRule<B,?>>(myType.getGroupingRules());
     mySelectedGroupingRules = getInitialGroupingRules();
 
-    myTree = XBreakpointsTree.createTree(myType, mySelectedGroupingRules, myParentDialog);
+    myTree = XBreakpointsTree.createTree(myType, mySelectedGroupingRules, myParentDialog, getBreakpointManager());
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         onSelectionChanged();

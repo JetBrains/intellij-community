@@ -16,12 +16,11 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -29,14 +28,18 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -44,7 +47,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XDebuggerTree extends DnDAwareTree implements DataProvider {
+public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath,String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     public String convert(TreePath o) {
@@ -67,8 +70,12 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final XDebugSession mySession;
+  private final PopupHandler myPopupHandler;
 
-  public XDebuggerTree(final @NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition) {
+  public XDebuggerTree(final @NotNull XDebugSession session,
+                       final @NotNull XDebuggerEditorsProvider editorsProvider,
+                       final @Nullable XSourcePosition sourcePosition,
+                       final @NotNull String popupActionGroupId) {
     mySession = session;
     myProject = session.getProject();
     myEditorsProvider = editorsProvider;
@@ -104,6 +111,17 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
       }
     });
     new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    myPopupHandler = new PopupHandler() {
+      public void invokePopup(final Component comp, final int x, final int y) {
+        final ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
+        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+        popupMenu.getComponent().show(comp, x, y);
+      }
+    };
+    addMouseListener(myPopupHandler);
+    registerShortcuts();
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {
@@ -185,6 +203,20 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
     if (root instanceof XValueContainerNode<?>) {
       markNodesObsolete((XValueContainerNode<?>)root);
     }
+  }
+
+  public void dispose() {
+    ActionManager actionManager = ActionManager.getInstance();
+    actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
+    actionManager.getAction(XDebuggerActions.COPY_VALUE).unregisterCustomShortcutSet(this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
+  }
+
+  private void registerShortcuts() {
+    ActionManager actionManager = ActionManager.getInstance();
+    actionManager.getAction(XDebuggerActions.SET_VALUE).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
+    actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
   }
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {

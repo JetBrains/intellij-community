@@ -38,7 +38,12 @@ public class RemoveBreakpointAction<B extends XBreakpoint<?>> extends XBreakpoin
   }
 
   public boolean isEnabled(@NotNull final Collection<? extends B> breakpoints) {
-    return !breakpoints.isEmpty();
+    for (B breakpoint : breakpoints) {
+      if (!myBreakpointsPanel.getBreakpointManager().isDefaultBreakpoint(breakpoint)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void perform(@NotNull final Collection<? extends B> breakpoints) {
@@ -46,7 +51,9 @@ public class RemoveBreakpointAction<B extends XBreakpoint<?>> extends XBreakpoin
     new WriteAction() {
       protected void run(final Result result) {
         for (B breakpoint : breakpoints) {
-          breakpointManager.removeBreakpoint(breakpoint);
+          if (!breakpointManager.isDefaultBreakpoint(breakpoint)) {
+            breakpointManager.removeBreakpoint(breakpoint);
+          }
         }
       }
     }.execute();

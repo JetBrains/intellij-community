@@ -185,7 +185,7 @@ public class VfsUtil {
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName)
     throws IOException {
     final VirtualFile newChild = toDir.createChildData(requestor, newName);
-    // [jeka] TODO: to be duscussed if the copy should have the same timestamp as the original
+    // [jeka] TODO: to be discussed if the copy should have the same timestamp as the original
     //OutputStream out = newChild.getOutputStream(requestor, -1, file.getActualTimeStamp());
     newChild.setBinaryContent(file.contentsToByteArray());
     return newChild;

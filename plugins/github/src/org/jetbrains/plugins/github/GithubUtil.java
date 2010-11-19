@@ -61,7 +61,7 @@ public class GithubUtil {
 
   public static List<RepositoryInfo> getAvailableRepos(final String login, final String password) {
     try {
-      final HttpMethod method = doREST(login, password, "/repos/show/" + login, false);
+      final HttpMethod method = doREST(login, password, "/repos/watched/" + login, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       final List repositories = element.getChildren();

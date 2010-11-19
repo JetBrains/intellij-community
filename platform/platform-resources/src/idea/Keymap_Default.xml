@@ -215,6 +215,9 @@
   <action id="GotoAction">
     <keyboard-shortcut first-keystroke="control shift A"/>
   </action>
+  <action id="RunInspection">
+    <keyboard-shortcut first-keystroke="control shift alt I"/>
+  </action>
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="control F12"/>
   </action>

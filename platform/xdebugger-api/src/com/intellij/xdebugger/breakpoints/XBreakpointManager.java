@@ -50,6 +50,8 @@ public interface XBreakpointManager {
   XLineBreakpoint<P> findBreakpointAtLine(@NotNull XLineBreakpointType<P> type, @NotNull VirtualFile file, int line);
 
 
+  boolean isDefaultBreakpoint(@NotNull XBreakpoint<?> breakpoint);
+
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
   void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener);
 

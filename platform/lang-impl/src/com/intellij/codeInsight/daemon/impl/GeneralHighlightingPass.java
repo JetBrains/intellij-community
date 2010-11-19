@@ -177,7 +177,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final List<PsiElement> outside = new ArrayList<PsiElement>();
     try {
       Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
-                                     HighlightLevelUtil.AnalysisLevel.HIGHLIGHT);
+                                     HighlightLevelUtil.AnalysisLevel.HIGHLIGHT,false);
       final Set<PsiFile> injected = new THashSet<PsiFile>();
       getInjectedPsiFiles(inside, outside, progress, injected);
 

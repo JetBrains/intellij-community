@@ -182,7 +182,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
               selectedForRecompilation.add(file);
               if (pathsToRecompile == null || !pathsToRecompile.contains(fileId)) {
-                addSourceForRecompilation(projectId, file, null);
+                loadInfoAndAddSourceForRecompilation(projectId, file);
               }
             }
             else {
@@ -286,7 +286,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       throws IOException {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
-    if (successfullyCompiled.size() > 0) {
+    if (!successfullyCompiled.isEmpty()) {
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
       final IOException[] exceptions = {null};
       // need read action here to ensure that no modifications were made to VFS while updating file attributes
@@ -354,7 +354,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 }
               }
               removeSourceForRecompilation(projectId, Math.abs(getFileId(file)));
-              if ((fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file)) || forceRecompile.contains(file)) {
+              if (fileStamp > compilationStartStamp && !((CompileContextEx)context).isGenerated(file) || forceRecompile.contains(file)) {
                 // changes were made during compilation, need to re-schedule compilation
                 // it is important to invoke removeSourceForRecompilation() before this call to make sure
                 // the corresponding output paths will be scheduled for deletion
@@ -377,7 +377,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         public void run() {
           for (VirtualFile file : filesToRecompile) {
             if (file.isValid()) {
-              addSourceForRecompilation(projectId, file, null);
+              loadInfoAndAddSourceForRecompilation(projectId, file);
             }
           }
         }
@@ -903,7 +903,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   // made public for tests
   public void scanSourceContent(final ProjectRef projRef, final Collection<VirtualFile> roots, final int totalRootCount, final boolean isNewRoots) {
-    if (roots.size() == 0) {
+    if (roots.isEmpty()) {
       return;
     }
     final int projectId = getProjectId(projRef.get());
@@ -1029,7 +1029,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         final String srcPath = outputInfo.getSourceFilePath();
         final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
         if (srcFile != null) {
-          addSourceForRecompilation(projectId, srcFile, null);
+          loadInfoAndAddSourceForRecompilation(projectId, srcFile);
         }
       }
     }
@@ -1317,7 +1317,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               processRecursively(file, false, new FileProcessor() {
                 public void execute(final VirtualFile file) {
                   if (isCompilable(file)) {
-                    addSourceForRecompilation(projectId, file, null);
+                    loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
                 }
 
@@ -1335,7 +1335,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               if (belongsToIntermediateSources(file, project)) {
                 processRecursively(file, false, new FileProcessor() {
                   public void execute(final VirtualFile file) {
-                    addSourceForRecompilation(projectId, file, null);
+                    loadInfoAndAddSourceForRecompilation(projectId, file);
                   }
                 });
               }
@@ -1356,9 +1356,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return false;
   }
 
-  private void addSourceForRecompilation(final int projectId, final VirtualFile srcFile, @Nullable final SourceFileInfo preloadedInfo) {
-    final SourceFileInfo srcInfo = preloadedInfo != null? preloadedInfo : loadSourceInfo(srcFile);
-
+  private void loadInfoAndAddSourceForRecompilation(final int projectId, final VirtualFile srcFile) {
+    addSourceForRecompilation(projectId, srcFile, loadSourceInfo(srcFile));
+  }
+  private void addSourceForRecompilation(final int projectId, final VirtualFile srcFile, @Nullable final SourceFileInfo srcInfo) {
     final boolean alreadyMarked;
     synchronized (myDataLock) {
       TIntHashSet set = mySourcesToRecompile.get(projectId);
