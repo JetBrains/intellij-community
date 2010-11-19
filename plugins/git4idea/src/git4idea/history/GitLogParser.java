@@ -182,15 +182,25 @@ class GitLogParser {
             it.remove();
           }
         }
-        final int start = includeStatus ? 1 : 0;
 
         for (String pathLine : nameAndPathSplit) {
-          final String[] partsArr = pathLine.split("[\\s]");
-          final List<String> stringList = Arrays.asList(partsArr);
+          String[] partsArr;
           if (includeStatus) {
-            parts.add(stringList);
+            final int idx = pathLine.indexOf("\t");
+            if (idx != -1) {
+              final String whatLeft = pathLine.substring(idx).trim();
+              partsArr = whatLeft.split("\\t");
+              final List<String> strings = new ArrayList<String>(partsArr.length + 1);
+              strings.add(pathLine.substring(0, 1));
+              strings.addAll(Arrays.asList(partsArr));
+              parts.add(strings);
+            } else {
+              partsArr = pathLine.split("\\t"); // should not
+            }
+          } else {
+            partsArr = pathLine.split("\\t");
           }
-          paths.addAll(stringList.subList(start, stringList.size()));
+          paths.addAll(Arrays.asList(partsArr));
         }
       }
     } else {
