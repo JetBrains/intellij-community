@@ -18,10 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,6 +88,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private LightweightHint myHint;
   private final Semaphore myFreezeSemaphore;
   private Boolean myToRestart;
+  private boolean myRestartScheduled;
 
   private boolean myModifiersReleased;
 
@@ -273,9 +271,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean isOutdated() {
-    return myDisposed ||
-           myEditor.isDisposed() ||
-           !ApplicationManager.getApplication().isUnitTestMode() && myEditor.getComponent().getRootPane() == null;
+    if (!myDisposed) {
+      LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+    }
+    return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
 
   private void trackModifiers() {
@@ -430,11 +429,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void closeAndFinish(boolean hideLookup) {
+    LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+
     if (myHint != null) {
       myHint.hide();
     }
 
-    if (LookupManager.getActiveLookup(myEditor) == myLookup) {
+    Lookup lookup = LookupManager.getActiveLookup(myEditor);
+    if (lookup != null) {
+      LOG.assertTrue(lookup == myLookup);
       myLookup.removeLookupListener(myLookupListener);
       finishCompletionProcess();
 
@@ -485,14 +488,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     invokeLaterIfNotDispatch(new Runnable() {
       public void run() {
         if (isOutdated()) return;
-        if (isCanceled() && myToRestart != Boolean.TRUE) return;
-
-        //what if a new completion was invoked by the user before this 'later'?
-        if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
+        if (!isBackgrounded()) return;
+        if (isCanceled() && !myRestartScheduled) return;
 
         myLookup.setCalculating(false);
-
-        if (!isBackgrounded()) return;
 
         if (hideAutopopupIfMeaningless()) {
           return;
@@ -651,17 +650,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
+    myRestartScheduled = true;
+
     if (CompletionAutoPopupHandler.ourTestingAutopopup) {
       System.out.println("CompletionProgressIndicator.scheduleRestart");
     }
 
-
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final int offset = myEditor.getCaretModel().getOffset();
-    final long stamp = myEditor.getDocument().getModificationStamp();
     final Project project = getProject();
-    final boolean wasDumb = DumbService.getInstance(project).isDumb();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -669,15 +666,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           System.out.println("later");
         }
 
-        if (myEditor.isDisposed() || project.isDisposed()) {
-          return;
-        }
-
-        if (!wasDumb && DumbService.getInstance(project).isDumb()) {
-          return;
-        }
-
-        if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
+        if (isOutdated()) {
           return;
         }
 
@@ -685,10 +674,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           System.out.println("invoking");
         }
 
-
-        if (!isOutdated()) {
-          closeAndFinish(false);
-        }
+        closeAndFinish(false);
 
         final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
         final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);

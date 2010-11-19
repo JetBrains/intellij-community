@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,6 +67,7 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public void setCurrentCompletion(@Nullable final CompletionProgressIndicator indicator) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (indicator != null) {
       final CompletionProgressIndicator oldCompletion = myCurrentCompletion;
       final Throwable oldTrace = myTrace;
