@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.TestFileType;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,13 +31,17 @@ import java.util.Arrays;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorProcessingOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
-  
+
   protected void init(String fileText) throws IOException {
-    configureFromFileText(getFileName(), fileText);
+    init(fileText, TestFileType.TEXT);
+  }
+  
+  protected void init(String fileText, TestFileType type) throws IOException {
+    configureFromFileText(getFileName(type), fileText);
   }
 
-  private String getFileName() {
-    return getTestName(false) + ".txt";
+  private String getFileName(TestFileType type) {
+    return getTestName(false) + type.getExtension();
   }
 
   protected static void addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {

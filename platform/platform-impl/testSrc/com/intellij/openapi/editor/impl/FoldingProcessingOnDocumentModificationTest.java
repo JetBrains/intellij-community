@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.testFramework.TestFileType;
 
 import java.io.IOException;
 
@@ -35,19 +37,25 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorP
       " */\n" +
       "public <caret>class Test {\n" +
       "}";
-    init(text);
+    init(text, TestFileType.JAVA);
 
     CaretModel caretModel = myEditor.getCaretModel();
     int caretOffset = caretModel.getOffset();
     
-    addCollapsedFoldRegion(0, text.indexOf("public") - 1, "/***/");
     assertEquals(caretOffset, caretModel.getOffset());
-    
+
+    updateFoldRegions();
+    toggleFoldRegionState(getFoldRegion(0), false);
     type('a');
+    updateFoldRegions();
 
     assertEquals(caretOffset + 1, caretModel.getOffset());
     assertEquals(1, myEditor.getFoldingModel().getAllFoldRegions().length);
     FoldRegion foldRegion = getFoldRegion(0);
     assertFalse(foldRegion.isExpanded());
+  }
+  
+  private static void updateFoldRegions() {
+    CodeFoldingManager.getInstance(getProject()).updateFoldRegions(myEditor);
   }
 }
