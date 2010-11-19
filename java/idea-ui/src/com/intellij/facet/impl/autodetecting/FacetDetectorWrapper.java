@@ -40,25 +40,25 @@ import java.util.Map;
 public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.autodetecting.FacetDetectorWrapper");
   private final AutodetectionFilter myAutodetectionFilter;
-  private final FileContentFilter myFileContentFilter;
+  private final FileContentPattern myFileContentPattern;
   private final FacetDetector<S,C> myFacetDetector;
   private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
   private final ProjectFacetInfoSet myDetectedFacetSet;
   private final FacetType<F,C> myFacetType;
 
-  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final FileContentFilter fileContentFilter,
+  protected FacetDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType, final AutodetectionFilter autodetectionFilter, final FileContentPattern fileContentPattern,
                                  final FacetDetector<S, C> facetDetector,
                                  final UnderlyingFacetSelector<VirtualFile, U> selector) {
     myDetectedFacetSet = projectFacetSet;
     myFacetType = facetType;
     myAutodetectionFilter = autodetectionFilter;
-    myFileContentFilter = fileContentFilter;
+    myFileContentPattern = fileContentPattern;
     myFacetDetector = facetDetector;
     myUnderlyingFacetSelector = selector;
   }
 
-  public FileContentFilter getFileContentFilter() {
-    return myFileContentFilter;
+  public FileContentPattern getFileContentPattern() {
+    return myFileContentPattern;
   }
 
   public FacetType<?, C> getFacetType() {

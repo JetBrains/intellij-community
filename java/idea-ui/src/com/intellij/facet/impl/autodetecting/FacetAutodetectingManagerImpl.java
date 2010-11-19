@@ -198,7 +198,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
                                            FileContent fileContent,
                                            final FacetDetectorWrapper<?, ?, ?, ?> detector,
                                            List<FacetInfo2<Module>> facets) {
-    if (!myDetectionInProgress && detector.getFileContentFilter().accept(fileContent)) {
+    if (!myDetectionInProgress && detector.getFileContentPattern().accepts(fileContent)) {
       try {
         myDetectionInProgress = true;
         FacetInfo2<Module> facet = detector.detectFacet(virtualFile, myPsiManager);
@@ -349,7 +349,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
       myType = type;
     }
 
-    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentFilter fileContentFilter,
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentPattern fileContentFilter,
                                                         @NotNull final FacetDetector<VirtualFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;
@@ -359,7 +359,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
                                                                                facetDetector, selector));
     }
 
-    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentFilter fileContentFilter,
+    public <U extends FacetConfiguration> void register(@NotNull final FileType fileType, @NotNull final FileContentPattern fileContentFilter,
                                                         @NotNull final Condition<PsiFile> psiFileFilter, @NotNull final FacetDetector<PsiFile, C> facetDetector,
                                                         final UnderlyingFacetSelector<VirtualFile, U> selector) {
       myHasDetectors = true;

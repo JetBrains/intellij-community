@@ -21,15 +21,16 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
+import com.intellij.facet.impl.autodetecting.FileContentPattern;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -107,8 +108,9 @@ public class FacetDetectionProcessor {
     Collection<MyFacetDetectorWrapper> detectors = detectorsMap.get(fileType);
     if (detectors == null) return;
 
+    final FileContent content = new FileContent(file);
     for (MyFacetDetectorWrapper detector : detectors) {
-      detector.detectFacet(file);
+      detector.detectFacet(content);
     }
   }
 
@@ -127,16 +129,16 @@ public class FacetDetectionProcessor {
   private class MyFacetDetectorWrapper<C extends FacetConfiguration, U extends FacetConfiguration> {
     private final FacetType<?, C> myFacetType;
     private final FileType myFileType;
-    private final VirtualFileFilter myVirtualFileFilter;
+    private final FileContentPattern myFileContentPattern;
     private final FacetDetector<VirtualFile, C> myDetector;
     private final UnderlyingFacetSelector<VirtualFile, U> myUnderlyingFacetSelector;
 
-    public MyFacetDetectorWrapper(final FacetType<?, C> facetType, final FileType fileType, final VirtualFileFilter virtualFileFilter, final FacetDetector<VirtualFile, C> detector,
+    public MyFacetDetectorWrapper(final FacetType<?, C> facetType, final FileType fileType, final FileContentPattern fileContentFilter, final FacetDetector<VirtualFile, C> detector,
                                   final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
       myUnderlyingFacetSelector = underlyingFacetSelector;
       myFacetType = facetType;
       myFileType = fileType;
-      myVirtualFileFilter = virtualFileFilter;
+      myFileContentPattern = fileContentFilter;
       myDetector = detector;
     }
 
@@ -148,8 +150,9 @@ public class FacetDetectionProcessor {
       return myFacetType;
     }
 
-    public void detectFacet(VirtualFile file) {
-      if (!myVirtualFileFilter.accept(file)) return;
+    public void detectFacet(final FileContent fileContent) {
+      if (!myFileContentPattern.accepts(fileContent)) return;
+      final VirtualFile file = fileContent.getVirtualFile();
 
       FacetInfo underlyingFacet = null;
       if (myUnderlyingFacetSelector != null) {
@@ -222,11 +225,17 @@ public class FacetDetectionProcessor {
       myLevel=level;
     }
 
-    public void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter,
-                         @NotNull final FacetDetector<VirtualFile, C> facetDetector) {
-      LOG.assertTrue(myFacetType.getUnderlyingFacetType() == null, "This method must not be used for sub-facets");
-      getDetectorsMap().put(fileType, new MyFacetDetectorWrapper<C, FacetConfiguration>(myFacetType, fileType, virtualFileFilter,
-                                                                                        facetDetector, null));
+    public <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final FileContentPattern fileContentPattern, final FacetDetector<VirtualFile, C> facetDetector,
+                                                        final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
+      if (myFacetType.getUnderlyingFacetType() != null) {
+        LOG.assertTrue(underlyingFacetSelector != null, "UnderlyingFacetSelector must be specified for " + myFacetType.getPresentableName() + " detector");
+      }
+      else {
+        LOG.assertTrue(underlyingFacetSelector == null, "UnderlyingFacetSelector must not be specified for " + myFacetType.getPresentableName() + " detector");
+      }
+      MyFacetDetectorWrapper<C, U> detector = new MyFacetDetectorWrapper<C, U>(myFacetType, fileType, fileContentPattern,
+                                                                               facetDetector, underlyingFacetSelector);
+      getDetectorsMap().put(fileType, detector);
     }
 
     private MultiValuesMap<FileType, MyFacetDetectorWrapper> getDetectorsMap() {
@@ -234,14 +243,6 @@ public class FacetDetectionProcessor {
         myDetectors.add(new MultiValuesMap<FileType, MyFacetDetectorWrapper>());
       }
       return myDetectors.get(myLevel);
-    }
-
-    public <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, final FacetDetector<VirtualFile, C> facetDetector,
-                                                        final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
-      LOG.assertTrue(myFacetType.getUnderlyingFacetType() != null, "This method can be used only for sub-facets");
-      MyFacetDetectorWrapper<C, U> detector = new MyFacetDetectorWrapper<C, U>(myFacetType, fileType, virtualFileFilter,
-                                                                               facetDetector, underlyingFacetSelector);
-      getDetectorsMap() .put(fileType, detector);
     }
   }
 
