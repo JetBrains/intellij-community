@@ -712,16 +712,16 @@ public class GitLogUI implements Disposable {
   }
 
   private class DescriptionRenderer implements TableCellRenderer {
-    private final Map<String, Icon> myTagMap;
-    private final Map<String, Icon> myBranchMap;
+    //private final Map<String, Icon> myTagMap;
+    //private final Map<String, Icon> myBranchMap;
     private final JPanel myPanel;
     private final Inner myInner;
     private int myCurrentWidth;
 
     private DescriptionRenderer() {
       myInner = new Inner();
-      myTagMap = new HashMap<String, Icon>();
-      myBranchMap = new HashMap<String, Icon>();
+      //myTagMap = new HashMap<String, Icon>();
+      //myBranchMap = new HashMap<String, Icon>();
       myPanel = new JPanel();
       final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
       myPanel.setLayout(layout);
@@ -729,8 +729,8 @@ public class GitLogUI implements Disposable {
     }
 
     public void resetIcons() {
-      myBranchMap.clear();
-      myTagMap.clear();
+      //myBranchMap.clear();
+      //myTagMap.clear();
     }
 
     public int getCurrentWidth() {
@@ -749,14 +749,14 @@ public class GitLogUI implements Disposable {
         if (localSize + remoteSize > 0) {
           final String branch = localSize == 0 ? (commit.getRemoteBranches().get(0)) : commit.getLocalBranches().get(0);
 
-          Icon icon = myBranchMap.get(branch);
-          if (icon == null) {
+          //Icon icon = myBranchMap.get(branch);
+          //if (icon == null) {
             final boolean plus = localSize + remoteSize + tagsSize > 1;
             final Color color = localSize == 0 ? Colors.remote : Colors.local;
-            icon = new CaptionIcon(color, table.getFont().deriveFont((float) table.getFont().getSize() - 1), branch, table,
+            Icon icon = new CaptionIcon(color, table.getFont().deriveFont((float) table.getFont().getSize() - 1), branch, table,
                                    CaptionIcon.Form.SQUARE, plus, branch.equals(commit.getCurrentBranch()));
-            myBranchMap.put(branch, icon);
-          }
+            //myBranchMap.put(branch, icon);
+          //}
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(getLogicBackground(isSelected, row));
@@ -767,12 +767,12 @@ public class GitLogUI implements Disposable {
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
-          Icon icon = myTagMap.get(tag);
-          if (icon == null) {
-            icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
+          //Icon icon = myTagMap.get(tag);
+          //if (icon == null) {
+            Icon icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
                                    tag, table, CaptionIcon.Form.ROUNDED, tagsSize > 1, false);
-            myTagMap.put(tag, icon);
-          }
+            //myTagMap.put(tag, icon);
+          //}
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(getLogicBackground(isSelected, row));
