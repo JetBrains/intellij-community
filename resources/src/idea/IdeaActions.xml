@@ -125,6 +125,7 @@
 
     <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
       <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="first"/>
