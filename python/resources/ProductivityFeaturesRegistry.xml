@@ -240,6 +240,12 @@
       first-show="7"
       successive-show="3"
       min-usage-count="1"/>
+    <feature
+      id="navigation.goto.inspection"
+      tip-file="GoToInspection.html"
+      min-usage-count="3"
+      first-show="5"
+      successive-show="5"/>
     <feature id="find.recent.search"
       tip-file="RecentSearch.html"
       first-show="10"
