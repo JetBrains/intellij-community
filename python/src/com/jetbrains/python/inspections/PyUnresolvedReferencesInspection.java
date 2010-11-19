@@ -176,7 +176,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PsiElement ref_element = reference.getElement();
       final boolean ref_is_importable = SyntaxMatchers.IN_IMPORT.search(ref_element) == null && IN_GLOBAL.search(ref_element) == null;
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
-      HintAction hint_action = null;
+      HintAction hintAction = null;
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
       if (reference.getElement() instanceof PyReferenceExpression) {
         PyReferenceExpression refex = (PyReferenceExpression)reference.getElement();
@@ -202,16 +202,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
           description_buf.append(errmsg);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
-        }
-        // look in other imported modules for this whole name
-        if (ref_is_importable) {
-          LocalQuickFix import_fix = PythonReferenceImporter.proposeImportFix(node, ref_text);
-          if (import_fix != null) {
-            actions.add(import_fix);
-            if (import_fix instanceof HintAction) {
-              hint_action = ((HintAction)import_fix);
-            }
-          }
         }
       }
       if (reference instanceof PsiReferenceEx) {
@@ -264,8 +254,26 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         if (! marked_qualified) {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
+
+          // look in other imported modules for this whole name
+          if (ref_is_importable) {
+            ImportFromExistingFix importFix = PythonReferenceImporter.proposeImportFix(node, ref_text);
+            if (importFix != null) {
+              // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+              // as a quickfix but no popup balloon (PY-2312)
+              if ((isCall(node) || !importFix.hasOnlyFunctions()) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+                final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
+                actions.add(autoImportHintAction);
+                hintAction = autoImportHintAction;
+              }
+              else {
+                actions.add(importFix);
+              }
+            }
+          }
+
           // add import hint; the rest of action will fend for itself.
-          if (ref_element != null && ref_is_importable && hint_action == null) {
+          if (ref_element != null && ref_is_importable && hintAction == null) {
             final AddImportAction addImportAction = new AddImportAction(reference);
             if (addImportAction.hasSomethingToImport(ref_element.getContainingFile())) {
               actions.add(addImportAction);
@@ -295,6 +303,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
       registerProblem(point, description, hl_type, null, actions.toArray(new LocalQuickFix[actions.size()]));
+    }
+
+    private static boolean isCall(PyElement node) {
+      final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(node, PyCallExpression.class);
+      return callExpression != null && node == callExpression.getCallee();
     }
 
     private static boolean overridesGetAttr(PyClass cls) {

@@ -3,7 +3,6 @@ package com.jetbrains.python.actions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author dcheryasov
  */
-public class ImportFromExistingFix implements HintAction, LocalQuickFix {
+public class ImportFromExistingFix implements LocalQuickFix {
 
   PyElement myNode;
 
@@ -71,8 +71,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
    * @param path import path for the file, as a qualified name (a.b.c)
    * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable String path, @Nullable String asName
-  ) {
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable String path, @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
   }
 
@@ -101,7 +100,7 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
     }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
     final String message = ShowAutoImportPass.getMessage(
-      myImports.size() > 1, 
+      myImports.size() > 1,
       ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
@@ -145,5 +144,14 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
 
   public int getCandidatesCount() {
     return myImports.size();
+  }
+
+  public boolean hasOnlyFunctions() {
+    for (ImportCandidateHolder holder : myImports) {
+      if (!(holder.getImportable() instanceof PyFunction)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

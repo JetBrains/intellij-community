@@ -129,16 +129,18 @@ public class PyArgumentListInspection extends PyInspection {
     for (PyExpression arg : node.getArguments()) {
       if (arg instanceof PyStarArgument) {
         PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
-        PyType inside_type = context.getType(content);
-        if (inside_type != null) {
-          if (((PyStarArgument)arg).isKeyword()) {
-            if (! isMappingType(inside_type)) {
-              holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
+        if (content != null) {
+          PyType inside_type = context.getType(content);
+          if (inside_type != null) {
+            if (((PyStarArgument)arg).isKeyword()) {
+              if (! isMappingType(inside_type)) {
+                holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
+              }
             }
-          }
-          else { // * arg
-            if (! isSequenceType(inside_type)) {
-              holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
+            else { // * arg
+              if (! isSequenceType(inside_type)) {
+                holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
+              }
             }
           }
         }

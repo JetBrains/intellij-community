@@ -1,0 +1,64 @@
+package com.jetbrains.python.actions;
+
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author yole
+ */
+public class AutoImportHintAction implements LocalQuickFix, HintAction {
+  private final ImportFromExistingFix myDelegate;
+
+  public AutoImportHintAction(ImportFromExistingFix delegate) {
+    myDelegate = delegate;
+  }
+
+  @Override
+  public boolean showHint(Editor editor) {
+    return myDelegate.showHint(editor);
+  }
+
+  @NotNull
+  @Override
+  public String getText() {
+    return myDelegate.getText();
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return myDelegate.isAvailable(project, editor, file);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    myDelegate.invoke(project, editor, file);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return myDelegate.startInWriteAction();
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myDelegate.getName();
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return myDelegate.getFamilyName();
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    myDelegate.applyFix(project, descriptor);
+  }
+}
