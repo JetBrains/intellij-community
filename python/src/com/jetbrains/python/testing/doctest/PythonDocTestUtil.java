@@ -1,10 +1,7 @@
 package com.jetbrains.python.testing.doctest;
 
 import com.google.common.collect.Lists;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 
 import java.util.List;
 import java.util.Set;
@@ -14,8 +11,8 @@ import java.util.Set;
  */
 public class PythonDocTestUtil {
 
-  public static List<PyStatement> getDocTestCasesFromFile(PyFile file) {
-    List<PyStatement> result = Lists.newArrayList();
+  public static List<PyElement> getDocTestCasesFromFile(PyFile file) {
+    List<PyElement> result = Lists.newArrayList();
     for (PyClass cls : file.getTopLevelClasses()) {
       if (isDocTestClass(cls)) {
         result.add(cls);
@@ -24,6 +21,12 @@ public class PythonDocTestUtil {
     for (PyFunction cls : file.getTopLevelFunctions()) {
       if (isDocTestFunction(cls)) {
         result.add(cls);
+      }
+    }
+    if (file.getDocStringExpression() != null) {
+      PythonDocStringParser parser = new PythonDocStringParser(file.getDocStringExpression().getStringValue());
+      if (!parser.hasExample()) {
+        result.add(file);
       }
     }
     return result;
@@ -41,6 +44,12 @@ public class PythonDocTestUtil {
     for (PyFunction cls : pyClass.getMethods()) {
       if (isDocTestFunction(cls)) {
         result.add(cls);
+      }
+    }
+    if (pyClass.getDocStringExpression() != null) {
+      PythonDocStringParser parser = new PythonDocStringParser(pyClass.getDocStringExpression().getStringValue());
+      if (!parser.hasExample()) {
+        result.add(pyClass);
       }
     }
     if (result.isEmpty()) return false;

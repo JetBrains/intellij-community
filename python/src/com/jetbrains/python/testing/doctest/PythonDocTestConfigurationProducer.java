@@ -160,7 +160,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
 
     if (file instanceof PyFile) {
       final PyFile pyFile = (PyFile)file;
-      final List<PyStatement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
+      final List<PyElement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
       if (testCases.isEmpty()) return null;
     }
 
