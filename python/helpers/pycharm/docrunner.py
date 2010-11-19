@@ -59,11 +59,18 @@ class DocTestRunner(doctest.DocTestRunner):
         self.result = TeamcityDocTestResult(self.stream)
 
     def __run(self, test, compileflags, out):
+        failures = tries = 0
+
+        original_optionflags = self.optionflags
         SUCCESS, FAILURE, BOOM = range(3) # `outcome` state
         check = self._checker.check_output
-
         self.result.startSuite(test)
         for examplenum, example in enumerate(test.examples):
+
+            quiet = (self.optionflags & doctest.REPORT_ONLY_FIRST_FAILURE and
+                     failures > 0)
+
+            self.optionflags = original_optionflags
             if example.options:
                 for (optionflag, val) in example.options.items():
                     if val:
@@ -74,31 +81,35 @@ class DocTestRunner(doctest.DocTestRunner):
             if self.optionflags & doctest.SKIP:
                 continue
 
+            tries += 1
+            if not quiet:
+                self.report_start(out, test, example)
+
             filename = '<doctest %s[%d]>' % (test.name, examplenum)
 
             try:
-                exec compile(example.source, filename, "single",
-                             compileflags, 1) in test.globs
-                self.debugger.set_continue()
+                exec(compile(example.source, filename, "single",
+                             compileflags, 1), test.globs)
+                self.debugger.set_continue() # ==== Example Finished ====
                 exception = None
             except KeyboardInterrupt:
                 raise
             except:
                 exception = sys.exc_info()
-                self.debugger.set_continue()
+                self.debugger.set_continue() # ==== Example Finished ====
 
-            got = self._fakeout.getvalue()
+            got = self._fakeout.getvalue()  # the actual output
             self._fakeout.truncate(0)
-            outcome = FAILURE
+            outcome = FAILURE   # guilty until proved innocent or insane
 
             if exception is None:
                 if check(example.want, got, self.optionflags):
                     outcome = SUCCESS
 
             else:
-                exc_info = sys.exc_info()
-                exc_msg = traceback.format_exception_only(*exc_info[:2])[-1]
-                got += doctest._exception_traceback(exc_info)
+                exc_msg = traceback.format_exception_only(*exception[:2])[-1]
+                if not quiet:
+                    got += doctest._exception_traceback(exception)
 
                 if example.exc_msg is None:
                     outcome = BOOM
@@ -119,17 +130,20 @@ class DocTestRunner(doctest.DocTestRunner):
                 self.result.stopTest(example)
             elif outcome is FAILURE:
                 self.result.startTest(example)
-                err = self._failure_header(test, example) + \
-                            self._checker.output_difference(example, got, self.optionflags)
+                err = self._failure_header(test, example) +\
+                                self._checker.output_difference(example, got, self.optionflags)
                 self.result.addFailure(example, err)
 
             elif outcome is BOOM:
                 self.result.startTest(example)
-                err = self._failure_header(test, example) + \
-                                'Exception raised:\n' + doctest._indent(doctest._exception_traceback(exc_info))
+                err=self._failure_header(test, example) + \
+                                'Exception raised:\n' + doctest._indent(doctest._exception_traceback(exception))
                 self.result.addError(example, err)
+
             else:
                 assert False, ("unknown outcome", outcome)
+
+        self.optionflags = original_optionflags
 
         self.result.stopSuite(test)
 

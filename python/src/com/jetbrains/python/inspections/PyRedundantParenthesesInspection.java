@@ -1,7 +1,9 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
@@ -35,11 +37,16 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
-      if (node.getContainedExpression() instanceof PyReferenceExpression) {
-        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+      if (node.getContainedExpression() instanceof PyReferenceExpression ||
+            node.getContainedExpression() instanceof PyStringLiteralExpression
+              || node.getContainedExpression() instanceof PyNumericLiteralExpression) {
+        registerProblem(node, "Remove redundant parentheses", ProblemHighlightType.INFORMATION, null, new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart) {
-        registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
+      else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
+                  || node.getParent() instanceof PyReturnStatement) {
+        if (!node.getText().contains("\n")) {
+          registerProblem(node, "Remove redundant parentheses", ProblemHighlightType.INFORMATION, null, new RedundantParenthesesQuickFix());
+        }
       }
     }
 

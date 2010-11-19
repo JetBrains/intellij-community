@@ -263,7 +263,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyRedundantParenthesesInspection() {
-    doHighlightingTest(PyRedundantParenthesesInspection.class);
+    myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/test.py");
+    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyBroadExceptionInspection() {
