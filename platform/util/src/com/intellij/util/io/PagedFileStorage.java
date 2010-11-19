@@ -215,8 +215,12 @@ public class PagedFileStorage implements Forceable {
   }
 
   public void close() {
-    force();
-    unmapAll();
+    try {
+      force();
+    }
+    finally {
+      unmapAll();
+    }
   }
 
   private void unmapAll() {
