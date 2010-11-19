@@ -39,8 +39,9 @@ import java.util.Comparator;
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
+ * <p><p>
  *
- * Use this class only for breakpoints like an exception breakpoints in Java. If a breakpoint will be put on some line in a file use
+ * Use this class only for breakpoints like exception breakpoints in Java. If a breakpoint will be put on some line in a file use
  * {@link XLineBreakpointType} instead 
  *
  * @author nik
@@ -142,6 +143,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    */
   @Nullable
   public B addBreakpoint(final Project project, JComponent parentComponent) {
+    return null;
+  }
+
+  /**
+   * Returns properties of the default breakpoint. The default breakpoints cannot be deleted and is always shown on top of the breakpoints
+   * list in the dialog. It is disabled by default.
+   *
+   * @return a default breakpoint properties or {@code null} if default breakpoint isn't supported
+   */
+  @Nullable
+  public P createDefaultBreakpointProperties() {
     return null;
   }
 

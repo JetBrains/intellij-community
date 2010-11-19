@@ -35,12 +35,12 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
     assertSameElements(myBreakpointManager.getAllBreakpoints(), breakpoint, lineBreakpoint);
     assertSame(lineBreakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE)));
-    assertSame(breakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE)));
+    assertSame(breakpoint, getSingleBreakpoint());
 
     myBreakpointManager.removeBreakpoint(lineBreakpoint);
     assertSame(breakpoint, assertOneElement(myBreakpointManager.getAllBreakpoints()));
     assertTrue(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE).isEmpty());
-    assertSame(breakpoint, assertOneElement(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE)));
+    assertSame(breakpoint, getSingleBreakpoint());
 
     myBreakpointManager.removeBreakpoint(breakpoint);
     assertEquals(0, myBreakpointManager.getAllBreakpoints().length);
@@ -56,13 +56,14 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     breakpoint.setLogMessage(true);
     myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("123"));
 
-    Element element = save();
-    //System.out.println(JDOMUtil.writeElement(element, SystemProperties.getLineSeparator()));
-    load(element);
+    reload();
     XBreakpoint<?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
-    assertEquals(2, breakpoints.length);
+    assertEquals(3, breakpoints.length);
 
-    XLineBreakpoint lineBreakpoint = assertInstanceOf(breakpoints[0], XLineBreakpoint.class);
+    assertTrue(myBreakpointManager.isDefaultBreakpoint(breakpoints[0]));
+    assertEquals("default", assertInstanceOf(breakpoints[0].getProperties(), MyBreakpointProperties.class).myOption);
+
+    XLineBreakpoint lineBreakpoint = assertInstanceOf(breakpoints[1], XLineBreakpoint.class);
     assertEquals(239, lineBreakpoint.getLine());
     assertEquals("myurl", lineBreakpoint.getFileUrl());
     assertEquals("abc", assertInstanceOf(lineBreakpoint.getProperties(), MyBreakpointProperties.class).myOption);
@@ -71,9 +72,36 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertTrue(lineBreakpoint.isLogMessage());
     assertEquals(SuspendPolicy.NONE, lineBreakpoint.getSuspendPolicy());
 
-    assertEquals("123", assertInstanceOf(breakpoints[1].getProperties(), MyBreakpointProperties.class).myOption);
-    assertEquals(SuspendPolicy.ALL, breakpoints[1].getSuspendPolicy());
-    assertFalse(breakpoints[1].isLogMessage());
+    assertEquals("123", assertInstanceOf(breakpoints[2].getProperties(), MyBreakpointProperties.class).myOption);
+    assertEquals(SuspendPolicy.ALL, breakpoints[2].getSuspendPolicy());
+    assertFalse(breakpoints[2].isLogMessage());
+  }
+
+  public void testDoNotSaveUnmodifiedDefaultBreakpoint() throws Exception {
+    reload();
+
+    assertEquals("default", getSingleBreakpoint().getProperties().myOption);
+    Element element = save();
+    assertEquals(0, element.getContent().size());
+  }
+
+  public void testSaveEnabledDefaultBreakpoint() throws Exception {
+    reload();
+    final XBreakpoint<MyBreakpointProperties> breakpoint = getSingleBreakpoint();
+    breakpoint.setEnabled(true);
+
+    assertFalse(save().getContent().isEmpty());
+    reload();
+    assertTrue(getSingleBreakpoint().isEnabled());
+  }
+
+  public void testSaveDefaultBreakpointWithModifiedProperties() throws Exception {
+    reload();
+    getSingleBreakpoint().getProperties().myOption = "changed";
+
+    assertFalse(save().getContent().isEmpty());
+    reload();
+    assertEquals("changed", getSingleBreakpoint().getProperties().myOption);
   }
 
   public void testListener() throws Exception {
@@ -105,5 +133,14 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     out.setLength(0);
     myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "url", 239, new MyBreakpointProperties("a"));
     assertEquals("", out.toString());
+  }
+
+  private XBreakpoint<MyBreakpointProperties> getSingleBreakpoint() {
+    return assertOneElement(myBreakpointManager.getBreakpoints(MY_SIMPLE_BREAKPOINT_TYPE));
+  }
+
+  private void reload() {
+    Element element = save();
+    load(element);
   }
 }
