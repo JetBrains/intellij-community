@@ -152,7 +152,7 @@ public class PyCallExpressionHelper {
       final Callable callable = (Callable)resolved;
       int implicitOffset = getImplicitArgumentCount(callable, wrappedFlag, flags, is_by_instance);
       if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
-        implicitOffset = Math.min(implicitOffset - 1, 0); // case of Class.__new__
+        implicitOffset = Math.max(implicitOffset - 1, 0); // case of Class.__new__
       }
       return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
@@ -219,30 +219,20 @@ public class PyCallExpressionHelper {
       } // Both Foo.method() and foo.method() have implicit the first arg
     }
     if (!isByInstance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // __new__ call
+
     // decorators?
-    PyDecoratorList decolist = method.getDecoratorList();
-    if (decolist != null) {
-      PyDecorator[] decos = decolist.getDecorators();
-      // look for closest decorator
-      // TODO: look for all decorators
-      if (decos.length == 1) {
-        PyDecorator deco = decos[0];
-        String deconame = deco.getName();
-        // rare case, remove check for better performance: if (deco.isBuiltin()) {
-        if (PyNames.STATICMETHOD.equals(deconame)) {
-          if (flags != null) {
-            flags.add(PyFunction.Flag.STATICMETHOD);
-          }
-          if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
-        }
-        else if (PyNames.CLASSMETHOD.equals(deconame)) {
-          if (flags != null) {
-            flags.add(PyFunction.Flag.CLASSMETHOD);
-          }
-          if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
-        }
-        //}
+    final String deconame = PyUtil.getClassOrStaticMethodDecorator(method);
+    if (PyNames.STATICMETHOD.equals(deconame)) {
+      if (flags != null) {
+        flags.add(PyFunction.Flag.STATICMETHOD);
       }
+      if (isByInstance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+    }
+    else if (PyNames.CLASSMETHOD.equals(deconame)) {
+      if (flags != null) {
+        flags.add(PyFunction.Flag.CLASSMETHOD);
+      }
+      if (!isByInstance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
     }
     return implicit_offset;
   }
