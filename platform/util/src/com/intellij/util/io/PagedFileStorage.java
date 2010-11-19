@@ -16,9 +16,10 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
-import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author max
@@ -46,9 +48,14 @@ public class PagedFileStorage implements Forceable {
       this.checkThreadAccess = checkThreadAccess;
     }
 
-    final SLRUCache<PageKey, MappedBufferWrapper> myBuffersCache = new SLRUCache<PageKey, MappedBufferWrapper>(20, 10) {
+    final BuffersCache myBuffersCache = new BuffersCache();
+
+    private class BuffersCache extends MyCache {
+      public BuffersCache() {
+        super(20 * BUFFER_SIZE);
+      }
+
       @NotNull
-      @Override
       public MappedBufferWrapper createValue(PageKey key) {
         if (checkThreadAccess && !Thread.holdsLock(StorageLock.this)) {
           throw new IllegalStateException("Must hold StorageLock lock to access PagedFileStorage");
@@ -61,11 +68,10 @@ public class PagedFileStorage implements Forceable {
         return new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
       }
 
-      @Override
-      protected void onDropFromCache(PageKey key, MappedBufferWrapper buf) {
+      public void onDropFromCache(PageKey key, MappedBufferWrapper buf) {
         buf.dispose();
       }
-    };
+    }
   }
 
   private static class PageKey {
@@ -228,7 +234,7 @@ public class PagedFileStorage implements Forceable {
     unmapAll();
     resizeFile(newSize);
 
-    // it is not guaranteed that new portition will consist of null
+    // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     int delta = newSize - oldSize;
     if (delta > 0) fillWithZeros(oldSize, delta);
@@ -281,5 +287,61 @@ public class PagedFileStorage implements Forceable {
 
   public boolean isDirty() {
     return isDirty;
+  }
+
+  private static abstract class MyCache {
+
+    private final LinkedHashMap<PageKey, MappedBufferWrapper> myMap;
+    private final long mySizeLimit;
+    private long mySize;
+
+    protected MyCache(long sizeLimit) {
+      mySizeLimit = sizeLimit;
+      myMap = new LinkedHashMap<PageKey, MappedBufferWrapper>(10) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<PageKey, MappedBufferWrapper> eldest) {
+          return mySize > mySizeLimit;
+        }
+
+        @Nullable
+        @Override
+        public MappedBufferWrapper remove(Object key) {
+          // this method can be called after removeEldestEntry
+          MappedBufferWrapper wrapper = super.remove(key);
+          if (wrapper != null) {
+            mySize -= wrapper.myLength;
+            onDropFromCache((PageKey)key, wrapper);
+          }
+          return wrapper;
+        }
+      };
+    }
+
+    public MappedBufferWrapper get(PageKey key) {
+      MappedBufferWrapper wrapper = myMap.get(key);
+      if (wrapper != null) {
+        return wrapper;
+      }
+      wrapper = createValue(key);
+      mySize += wrapper.myLength;
+      myMap.put(key, wrapper);
+      while (mySize > mySizeLimit) {
+        // we still have to drop something
+        myMap.doRemoveEldestEntry();
+      }
+      return wrapper;
+    }
+
+    public Set<Map.Entry<PageKey, MappedBufferWrapper>> entrySet() {
+      return myMap.entrySet();
+    }
+
+    public void remove(PageKey key) {
+      myMap.remove(key);
+    }
+
+    protected abstract MappedBufferWrapper createValue(PageKey key);
+
+    protected abstract void onDropFromCache(PageKey key, MappedBufferWrapper wrapper);
   }
 }

@@ -18,12 +18,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -91,6 +87,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private LightweightHint myHint;
   private final Semaphore myFreezeSemaphore;
   private Boolean myToRestart;
+  private boolean myRestartScheduled;
 
   private boolean myModifiersReleased;
 
@@ -98,7 +95,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldCaret;
   private int myOldStart;
   private int myOldEnd;
-  private boolean myBackgrounded = true;
+  private boolean myBackgrounded;
   private OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
@@ -273,9 +270,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean isOutdated() {
-    return myDisposed ||
-           myEditor.isDisposed() ||
-           !ApplicationManager.getApplication().isUnitTestMode() && myEditor.getComponent().getRootPane() == null;
+    if (!myDisposed) {
+      LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+    }
+    return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
 
   private void trackModifiers() {
@@ -374,6 +372,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (isOutdated()) return;
 
     if (!myShownLookup) {
+      if (hideAutopopupIfMeaningless()) {
+        return;
+      }
       myShownLookup = true;
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
@@ -389,6 +390,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.assertTrue(myLookup.isVisible());
     }
+    hideAutopopupIfMeaningless();
   }
 
   final boolean isInsideIdentifier() {
@@ -430,11 +432,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void closeAndFinish(boolean hideLookup) {
+    LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+
     if (myHint != null) {
       myHint.hide();
     }
 
-    if (LookupManager.getActiveLookup(myEditor) == myLookup) {
+    Lookup lookup = LookupManager.getActiveLookup(myEditor);
+    if (lookup != null) {
+      LOG.assertTrue(lookup == myLookup);
       myLookup.removeLookupListener(myLookupListener);
       finishCompletionProcess();
 
@@ -482,17 +488,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.cancelAllUpdates();
     myFreezeSemaphore.up();
 
-    invokeLaterIfNotDispatch(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+          System.out.println("CompletionProgressIndicator.stop.later");
+        }
         if (isOutdated()) return;
-        if (isCanceled() && myToRestart != Boolean.TRUE) return;
-
-        //what if a new completion was invoked by the user before this 'later'?
-        if (CompletionProgressIndicator.this != CompletionServiceImpl.getCompletionService().getCurrentCompletion()) return;
+        if (!isBackgrounded()) return;
+        if (isCanceled() && !myRestartScheduled) return;
 
         myLookup.setCalculating(false);
-
-        if (!isBackgrounded()) return;
 
         if (hideAutopopupIfMeaningless()) {
           return;
@@ -504,41 +509,39 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
           assert current == null : current + "!=" + CompletionProgressIndicator.this;
 
-          if (!isAutopopupCompletion() ) {
+          if (!isAutopopupCompletion()) {
             myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);
           }
-        } else {
+        }
+        else {
           if (myFocusLookupWhenDone) {
             myLookup.setFocused(true);
           }
           updateLookup();
         }
-
       }
-    });
-
+    }, myQueue.getModalityState());
   }
 
   public boolean hideAutopopupIfMeaningless() {
-    if (isAutopopupCompletion() && !myLookup.isCalculating()) {
+    if (isAutopopupCompletion() && !myLookup.isSelectionTouched()) {
       myLookup.refreshUi();
       final List<LookupElement> items = myLookup.getItems();
-      if (items.size() == 0 || items.size() == 1 && (items.get(0).getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(items.get(0).getLookupString())) {
+      if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
         assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
         return true;
       }
+
+      for (LookupElement item : items) {
+        if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+          myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
+          assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
+          return true;
+        }
+      }
     }
     return false;
-  }
-
-  private void invokeLaterIfNotDispatch(final Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      runnable.run();
-    } else {
-      application.invokeLater(runnable, myQueue.getModalityState());
-    }
   }
 
   public void cancelByWriteAction() {
@@ -651,17 +654,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
+    myRestartScheduled = true;
+
     if (CompletionAutoPopupHandler.ourTestingAutopopup) {
       System.out.println("CompletionProgressIndicator.scheduleRestart");
     }
 
-
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final int offset = myEditor.getCaretModel().getOffset();
-    final long stamp = myEditor.getDocument().getModificationStamp();
     final Project project = getProject();
-    final boolean wasDumb = DumbService.getInstance(project).isDumb();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -669,15 +670,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           System.out.println("later");
         }
 
-        if (myEditor.isDisposed() || project.isDisposed()) {
-          return;
-        }
-
-        if (!wasDumb && DumbService.getInstance(project).isDumb()) {
-          return;
-        }
-
-        if (myEditor.getCaretModel().getOffset() != offset || myEditor.getDocument().getModificationStamp() != stamp) {
+        if (isOutdated()) {
           return;
         }
 
@@ -685,10 +678,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           System.out.println("invoking");
         }
 
-
-        if (!isOutdated()) {
-          closeAndFinish(false);
-        }
+        closeAndFinish(false);
 
         final CodeCompletionHandlerBase newHandler = new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, isAutopopupCompletion());
         final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(myEditor, project);

@@ -646,6 +646,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         setFocused(true);
+        markSelectionTouched();
 
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
@@ -697,6 +698,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void setCurrentItem(LookupElement item){
+    markSelectionTouched();
     ListScrollingUtil.selectItem(myList, item);
   }
 
@@ -895,6 +897,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myPositionedAbove != null && myPositionedAbove.booleanValue();
   }
 
+  public boolean isSelectionTouched() {
+    return mySelectionTouched;
+  }
+
   public void hide(){
     hideLookup(true);
   }
@@ -929,7 +935,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void restorePrefix() {
     if (myInitialPrefix != null) {
-      myEditor.getDocument().replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
+      performGuardedChange(new Runnable() {
+        @Override
+        public void run() {
+          myEditor.getDocument().replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
+        }
+      });
     }
   }
 
@@ -997,7 +1008,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myPreselectedItem = null;
   }
 
-  boolean isDisposed() {
+  public boolean isLookupDisposed() {
     return myDisposed;
   }
 

@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -37,16 +36,19 @@ public class ChooseItemAction extends EditorAction {
       assert lookup != null;
       lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
-  }
 
-  public void update(Editor editor, Presentation presentation, DataContext dataContext){
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup != null) {
-      lookup.refreshUi(); // to bring the list model up to date
-      presentation.setEnabled(lookup.isFocused() &&
-                              !ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR));
-    } else {
-      presentation.setEnabled(false);
+    @Override
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      if (lookup != null) {
+        if (ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR)) {
+          return false;
+        }
+
+        return lookup.isFocused();
+      }
+      return false;
     }
   }
+
 }

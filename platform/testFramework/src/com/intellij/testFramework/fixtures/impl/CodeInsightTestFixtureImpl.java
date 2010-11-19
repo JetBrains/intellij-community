@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -613,8 +614,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           return;
         }
         if (c == '\n') {
-          if (LookupManager.getActiveLookup(getEditor()) != null) {
-            performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
             return;
           }
 
@@ -622,8 +622,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           return;
         }
         if (c == '\t') {
-          if (LookupManager.getInstance(getProject()).getActiveLookup() != null) {
-            performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
+          if (_performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
             return;
           }
         }
@@ -643,9 +642,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void performEditorAction(final String actionId) {
     assertInitialized();
+    _performEditorAction(actionId);
+  }
+
+  private boolean _performEditorAction(String actionId) {
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
+    EditorActionHandler handler = actionManager.getActionHandler(actionId);
+    if (!handler.isEnabled(myEditor, dataContext)) {
+      return false;
+    }
+
+    handler.execute(getEditor(), dataContext);
+    return true;
   }
 
   @Override
@@ -872,10 +881,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void checkResult(String text, boolean stripTrailingSpaces) {
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
-    checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
+  public void checkResult(final String text, final boolean stripTrailingSpaces) {
+    new WriteCommandAction(getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
+        checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
+      }
+    }.execute();
   }
 
   @Override
