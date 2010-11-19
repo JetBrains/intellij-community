@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -96,7 +95,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private int myOldCaret;
   private int myOldStart;
   private int myOldEnd;
-  private boolean myBackgrounded = true;
+  private boolean myBackgrounded;
   private OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
@@ -373,6 +372,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (isOutdated()) return;
 
     if (!myShownLookup) {
+      if (hideAutopopupIfMeaningless()) {
+        return;
+      }
       myShownLookup = true;
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
@@ -388,6 +390,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.assertTrue(myLookup.isVisible());
     }
+    hideAutopopupIfMeaningless();
   }
 
   final boolean isInsideIdentifier() {
@@ -485,8 +488,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.cancelAllUpdates();
     myFreezeSemaphore.up();
 
-    invokeLaterIfNotDispatch(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
+          System.out.println("CompletionProgressIndicator.stop.later");
+        }
         if (isOutdated()) return;
         if (!isBackgrounded()) return;
         if (isCanceled() && !myRestartScheduled) return;
@@ -503,41 +509,39 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
           assert current == null : current + "!=" + CompletionProgressIndicator.this;
 
-          if (!isAutopopupCompletion() ) {
+          if (!isAutopopupCompletion()) {
             myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);
           }
-        } else {
+        }
+        else {
           if (myFocusLookupWhenDone) {
             myLookup.setFocused(true);
           }
           updateLookup();
         }
-
       }
-    });
-
+    }, myQueue.getModalityState());
   }
 
   public boolean hideAutopopupIfMeaningless() {
-    if (isAutopopupCompletion() && !myLookup.isCalculating()) {
+    if (isAutopopupCompletion() && !myLookup.isSelectionTouched()) {
       myLookup.refreshUi();
       final List<LookupElement> items = myLookup.getItems();
-      if (items.size() == 0 || items.size() == 1 && (items.get(0).getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(items.get(0).getLookupString())) {
+      if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
         assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
         return true;
       }
+
+      for (LookupElement item : items) {
+        if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
+          myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
+          assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
+          return true;
+        }
+      }
     }
     return false;
-  }
-
-  private void invokeLaterIfNotDispatch(final Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      runnable.run();
-    } else {
-      application.invokeLater(runnable, myQueue.getModalityState());
-    }
   }
 
   public void cancelByWriteAction() {

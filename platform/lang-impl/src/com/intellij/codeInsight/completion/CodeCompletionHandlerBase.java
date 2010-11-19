@@ -164,6 +164,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
 
+            assert editor.getDocument().getTextLength() == psiFile.getTextLength() : "unsuccessful commit";
+
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
               CompletionContributor dummyIdentifierChanger;
@@ -272,7 +274,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!invokedExplicitly && (!ApplicationManager.getApplication().isUnitTestMode() || CompletionAutoPopupHandler.ourTestingAutopopup)) {
       indicator.notifyBackgrounded();
       return;
     }
@@ -475,6 +477,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
         indicator.fillInCommonPrefix(false);

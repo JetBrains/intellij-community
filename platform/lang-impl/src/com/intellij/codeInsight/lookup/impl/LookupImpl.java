@@ -897,6 +897,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myPositionedAbove != null && myPositionedAbove.booleanValue();
   }
 
+  public boolean isSelectionTouched() {
+    return mySelectionTouched;
+  }
+
   public void hide(){
     hideLookup(true);
   }

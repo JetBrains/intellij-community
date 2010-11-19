@@ -57,9 +57,11 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   void type(String s) {
     for (i in 0..<s.size()) {
-      myFixture.type(s.charAt(i))
-      ApplicationManager.application.invokeAndWait({ println "wait1" } as Runnable, ModalityState.NON_MODAL) // for the autopopup's alarm
-      ApplicationManager.application.invokeAndWait({ println "wait2" } as Runnable, ModalityState.NON_MODAL) // for the restartCompletion's invokeLater
+      final c = s.charAt(i)
+      println "typing ${c}"
+      myFixture.type(c)
+      ApplicationManager.application.invokeAndWait({ println "wait1" } as Runnable, ModalityState.NON_MODAL) // for the autopopup handler's alarm, or the restartCompletion's invokeLater
+      ApplicationManager.application.invokeAndWait({ println "wait2" } as Runnable, ModalityState.NON_MODAL) // for invokeLater in CompletionProgressIndicator.stop()
     }
   }
 
