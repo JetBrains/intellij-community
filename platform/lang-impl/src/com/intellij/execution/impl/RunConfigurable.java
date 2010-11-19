@@ -289,6 +289,20 @@ class RunConfigurable extends BaseConfigurable {
     info.getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
       public void stateChanged(final SettingsEditor<RunnerAndConfigurationSettings> editor) {
         update();
+        final RunConfiguration configuration = info.getConfiguration();
+        if (configuration instanceof RuntimeConfiguration) {
+          final RuntimeConfiguration runtimeConfiguration = (RuntimeConfiguration)configuration;
+          if (runtimeConfiguration.isGeneratedName()) {
+            try {
+              final String generatedName = ((RuntimeConfiguration)editor.getSnapshot().getConfiguration()).getGeneratedName();
+              if (generatedName != null && generatedName.length() > 0) {
+                info.setNameText(generatedName);
+              }
+            }
+            catch (ConfigurationException ignore) {
+            }
+          }
+        }
         setupDialogBounds();
       }
     });
