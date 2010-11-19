@@ -265,9 +265,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return true;
     }
 
-    myContext.logicalLineData.update(foldRegion.getStartOffset(), myContext.spaceWidth);
+    myContext.logicalLineData.update(foldRegion.getStartOffset(), myContext.getSpaceWidth());
     SoftWrap softWrap = registerSoftWrap(
-      myContext.softWrapStartOffset, myContext.startOffset, myContext.startOffset, myContext.spaceWidth, myContext.logicalLineData
+      myContext.softWrapStartOffset, myContext.startOffset, myContext.startOffset, myContext.getSpaceWidth(), myContext.logicalLineData
     );
     assert softWrap != null; // We expect that it's always possible to wrap collapsed fold region placeholder text
     myContext.softWrapStartOffset = softWrap.getStart();
@@ -399,11 +399,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   
   private void createSoftWrapIfPossible() {
     final int offset = myContext.currentPosition.offset;
-    myContext.logicalLineData.update(offset, myContext.spaceWidth);
+    myContext.logicalLineData.update(offset, myContext.getSpaceWidth());
     int softWrapStartOffset = myContext.softWrapStartOffset;
     SoftWrap softWrap = registerSoftWrap(
       softWrapStartOffset, Math.max(softWrapStartOffset, offset - 1),
-      calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset), myContext.spaceWidth,
+      calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset), myContext.getSpaceWidth(),
       myContext.logicalLineData
     );
     if (softWrap == null) {
@@ -921,24 +921,25 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
   
   private class ProcessingContext {
-    
+
     public final PrimitiveIntMap fontType2spaceWidth = new PrimitiveIntMap();
-    public final LogicalLineData logicalLineData = new LogicalLineData();
-    
-    public CharSequence text;
+    public final LogicalLineData logicalLineData     = new LogicalLineData();
+
+    public CharSequence   text;
     public EditorPosition lineStartPosition;
     public EditorPosition currentPosition;
-    public SoftWrap delayedSoftWrap;
-    public JComponent contentComponent;
-    public int reservedWidthInPixels;
-    public int softWrapStartOffset;
-    public int rangeEndOffset;
-    public int startOffset;
-    public int endOffset;
-    public int fontType;
-    public int spaceWidth;
-    public boolean notifyListenersOnLineStartPosition;
-    public boolean skipToLineEnd;
+    public SoftWrap       delayedSoftWrap;
+    public JComponent     contentComponent;
+    public int            reservedWidthInPixels;
+    public int            softWrapStartOffset;
+    public int            rangeEndOffset;
+    public int            startOffset;
+    public int            endOffset;
+    public int            fontType;
+    public boolean        notifyListenersOnLineStartPosition;
+    public boolean        skipToLineEnd;
+
+    private int mySpaceWidth;
     
     public void reset() {
       text = null;
@@ -952,11 +953,21 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       startOffset = 0;
       endOffset = 0;
       fontType = 0;
-      spaceWidth = 0;
+      mySpaceWidth = 0;
       notifyListenersOnLineStartPosition = false;
       skipToLineEnd = false;
     }
 
+    public int getSpaceWidth() {
+      if (mySpaceWidth == 0) {
+        if (mySpaceWidth <= 0) {
+          mySpaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
+          fontType2spaceWidth.put(fontType, mySpaceWidth);
+        }
+      }
+      return mySpaceWidth;
+    }
+    
     /**
      * Asks current context to update its state assuming that it begins to point to the line next to its current position.
      */
@@ -964,8 +975,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       currentPosition.onNewLine();
       softWrapStartOffset = currentPosition.offset;
       lineStartPosition.from(currentPosition);
-      logicalLineData.update(currentPosition.logicalLine, spaceWidth, myEditor);
-      updateFontAndSpace();
+      logicalLineData.update(currentPosition.logicalLine, getSpaceWidth(), myEditor);
+      fontType = myOffset2fontType.get(currentPosition.offset);
 
       myOffset2fontType.clear();
       myOffset2widthInPixels.clear();
@@ -999,10 +1010,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       myOffset2widthInPixels.data[currentPosition.offset - myOffset2widthInPixels.anchor] = widthInPixels;
       myOffset2widthInPixels.end++;
       
-      if (myContext.spaceWidth == 0) {
-        updateFontAndSpace();
-      }
-      int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.spaceWidth);
+      int widthInColumns = calculateWidthInColumns(c, widthInPixels, myContext.getSpaceWidth());
       if (c == '\t') {
         notifyListenersOnVisualLineStart(myContext.lineStartPosition);
         notifyListenersOnTabulation(widthInColumns);
@@ -1012,7 +1020,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       currentPosition.visualColumn += widthInColumns;
       currentPosition.x = newX;
       currentPosition.offset++;
-      updateFontAndSpace();
+      fontType = myOffset2fontType.get(currentPosition.offset);
     }
 
     /**
@@ -1030,19 +1038,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         }
       }
       skipToLineEnd = true;
-    }
-
-    /**
-     * Asks current context to update {@link #fontType} and {@link #spaceWidth} in accordance with the {@link #currentPosition}
-     */
-    public void updateFontAndSpace() {
-      fontType = myOffset2fontType.get(currentPosition.offset);
-
-      spaceWidth = fontType2spaceWidth.get(fontType);
-      if (spaceWidth <= 0) {
-        spaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
-        fontType2spaceWidth.put(fontType, spaceWidth);
-      }
     }
 
     /**
