@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -225,19 +226,23 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   private void queueModelUpdate(DataContext context) {
-    _queueModelUpdate(context, null);
+    _queueModelUpdate(context, null, false);
   }
 
   private void queueModelUpdateFromFocus() {
-    _queueModelUpdate(null, myContextObject);
+    queueModelUpdateFromFocus(false);
+  }
+
+  private void queueModelUpdateFromFocus(boolean requeue) {
+    _queueModelUpdate(null, myContextObject, requeue);
   }
 
   private void queueModelUpdateForObject(Object object) {
-    _queueModelUpdate(null, object);
+    _queueModelUpdate(null, object, false);
   }
 
-  private void _queueModelUpdate(@Nullable final DataContext context, final @Nullable Object object) {
-    if (myModelUpdating.getAndSet(true)) return;
+  private void _queueModelUpdate(@Nullable final DataContext context, final @Nullable Object object, boolean requeue) {
+    if (myModelUpdating.getAndSet(true) && !requeue) return;
 
     myUpdateQueue.cancelAllUpdates();
 
@@ -267,17 +272,16 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   private void _updateModelFrom(DataContext dataContext, Object object) {
     if (dataContext != null) {
-      boolean a = LangDataKeys.IDE_VIEW.getData(dataContext) == myIdeView;
-      boolean b = PlatformDataKeys.PROJECT.getData(dataContext) != myProject;
-      if (b || isNodePopupShowing()) {
-        myModelUpdating.set(false);
-        queueModelUpdateFromFocus();
+      if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject || isNodePopupShowing()) {
+        queueModelUpdateFromFocus(true);
         return;
       }
       myModel.updateModel(dataContext);
     } else {
       myModel.updateModel(object);
     }
+
+    queueRebuildUi();
 
     myModelUpdating.set(false);
   }
@@ -433,7 +437,26 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     }
   }
 
+  private boolean isRebuildUiNeeded() {
+    if (myList.size() == myModel.size()) {
+      int index = 0;
+      for (MyItemLabel eachLabel : myList) {
+        Object eachElement = myModel.get(index);
+        if (eachLabel.getObject() == null || !eachLabel.getObject().equals(eachElement)) {
+          return true;
+        }
+        index++;
+      }
+
+      return false;
+    } else {
+      return true;
+    }
+  }
+
   private void rebuildUi() {
+    if (!isRebuildUiNeeded()) return;
+
     myList.clear();
     for (int index = 0; index < myModel.size(); index++) {
       final Object object = myModel.get(index);
@@ -1151,8 +1174,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
-          Window mywindow = SwingUtilities.windowForComponent(NavBarPanel.this);
-          if (mywindow != null && !mywindow.isActive()) return;
+          Window wnd = SwingUtilities.windowForComponent(NavBarPanel.this);
+          if (wnd == null || !wnd.isActive()) return;
 
           final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
           if (window instanceof Dialog) {
