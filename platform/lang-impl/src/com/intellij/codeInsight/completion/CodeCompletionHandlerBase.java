@@ -125,20 +125,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
-        if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
-          return;
-        }
-        else {
-          time = indicator.getParameters().getInvocationCount() + 1;
-          new WriteCommandAction(project) {
-            protected void run(Result result) throws Throwable {
-              indicator.restorePrefix();
-            }
-          }.execute();
-        }
+      boolean repeated = indicator.isRepeatedInvocation(myCompletionType, editor);
+      if (repeated && !indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
+        return;
       }
-      indicator.closeAndFinish(false);
+
+      if (repeated) {
+        time = indicator.getParameters().getInvocationCount() + 1;
+        indicator.restorePrefix();
+      } else {
+        indicator.closeAndFinish(false);
+      }
     }
 
     if (time > 1) {
@@ -492,7 +489,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService() == null) {
+      if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
       }
     }

@@ -935,12 +935,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void restorePrefix() {
     if (myInitialPrefix != null) {
-      performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          myEditor.getDocument().replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
-        }
-      });
+      myEditor.getDocument().replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
     }
   }
 

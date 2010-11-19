@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -91,10 +92,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean myModifiersReleased;
 
-  private String myOldDocumentText;
-  private int myOldCaret;
-  private int myOldStart;
-  private int myOldEnd;
+  private Runnable myRestorePrefix;
   private boolean myBackgrounded;
   private OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
@@ -295,7 +293,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
           myModifiersReleased = true;
-          if (myOldDocumentText != null) {
+          if (myRestorePrefix != null) {
             cleanup();
           }
           contentComponent.removeKeyListener(this);
@@ -305,7 +303,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void setMergeCommand() {
-    CommandProcessor.getInstance().setCurrentCommandGroupId("Completion" + hashCode());
+    CommandProcessor.getInstance().setCurrentCommandGroupId(getCompletionCommandName());
+  }
+
+  private String getCompletionCommandName() {
+    return "Completion" + hashCode();
   }
 
   public void showLookup() {
@@ -474,7 +476,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private void cleanup() {
     assert ApplicationManager.getApplication().isDispatchThread();
     myHint = null;
-    myOldDocumentText = null;
+    myRestorePrefix = null;
     unregisterItself();
   }
 
@@ -578,17 +580,22 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void restorePrefix() {
-    setMergeCommand();
+    closeAndFinish(false);
 
-    if (myOldDocumentText != null) {
-      myEditor.getDocument().setText(myOldDocumentText);
-      myEditor.getSelectionModel().setSelection(myOldStart, myOldEnd);
-      myEditor.getCaretModel().moveToOffset(myOldCaret);
-      myOldDocumentText = null;
-      return;
-    }
+    new WriteCommandAction(getProject(), getCompletionCommandName()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        setMergeCommand();
 
-    getLookup().restorePrefix();
+        if (myRestorePrefix != null) {
+          myRestorePrefix.run();
+          myRestorePrefix = null;
+        }
+
+        getLookup().restorePrefix();
+      }
+    }.execute();
+
   }
 
   public Editor getEditor() {
@@ -600,10 +607,27 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    myOldDocumentText = myEditor.getDocument().getText();
-    myOldCaret = myEditor.getCaretModel().getOffset();
-    myOldStart = myEditor.getSelectionModel().getSelectionStart();
-    myOldEnd = myEditor.getSelectionModel().getSelectionEnd();
+    final String documentText = myEditor.getDocument().getText();
+    final int caret = myEditor.getCaretModel().getOffset();
+    final int selStart = myEditor.getSelectionModel().getSelectionStart();
+    final int selEnd = myEditor.getSelectionModel().getSelectionEnd();
+
+    myRestorePrefix = new Runnable() {
+      @Override
+      public void run() {
+        DocumentEx document = (DocumentEx) myEditor.getDocument();
+
+        document.setInBulkUpdate(true);
+        try {
+          document.setText(documentText);
+          myEditor.getSelectionModel().setSelection(selStart, selEnd);
+          myEditor.getCaretModel().moveToOffset(caret);
+        }
+        finally {
+          document.setInBulkUpdate(false);
+        }
+      }
+    };
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
