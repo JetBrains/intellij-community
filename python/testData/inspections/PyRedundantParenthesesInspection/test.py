@@ -1,27 +1,27 @@
-if <warning descr="Remove redundant parentheses">((True or <warning descr="Remove redundant parentheses">(False)</warning>))</warning>:
+if <info descr="Remove redundant parentheses">((True or <info descr="Remove redundant parentheses">(False)</info>))</info>:
     pass
-elif <warning descr="Remove redundant parentheses">(True)</warning>:
+elif <info descr="Remove redundant parentheses">(True)</info>:
     pass
 
-while <warning descr="Remove redundant parentheses">(True)</warning>:
+while <info descr="Remove redundant parentheses">(True)</info>:
     pass
 
 try:
     foo()
-except (<warning descr="Remove redundant parentheses">(A)</warning>):
+except (<info descr="Remove redundant parentheses">(A)</info>):
     pass
-except <warning descr="Remove redundant parentheses">(A)</warning> :
+except <info descr="Remove redundant parentheses">(A)</info> :
     pass
 
 try:
     foo()
 except (A, B):
     pass
-    
+
 if (A and
     B and
     C):
     pass
 
-if <warning descr="Remove redundant parentheses">(A == "\n")</warning>:
+if <info descr="Remove redundant parentheses">("\n")</info>:
     pass
