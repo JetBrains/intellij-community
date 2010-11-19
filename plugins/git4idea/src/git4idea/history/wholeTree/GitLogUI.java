@@ -36,6 +36,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -419,6 +421,19 @@ public class GitLogUI implements Disposable {
         return custom == null ? super.getCellRenderer(row, column) : custom;
       }
     };
+    final TableLinkMouseListener tableLinkListener = new TableLinkMouseListener() {
+      @Override
+      protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
+        myDescriptionRenderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+        final Rectangle rc = table.getCellRect(row, column, false);
+        int index = myDescriptionRenderer.myInner.findFragmentAt(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
+        if (index >= 0) {
+          return myDescriptionRenderer.myInner.getFragmentTag(index);
+        }
+        return null;
+      }
+    };
+    tableLinkListener.install(myJBTable);
     myJBTable.getExpandableItemsHandler().setEnabled(false);
     //myJBTable.setTableHeader(null);
     myJBTable.setShowGrid(false);
@@ -612,7 +627,7 @@ public class GitLogUI implements Disposable {
   private class HighLightingRenderer extends ColoredTableCellRenderer {
     private final SimpleTextAttributes myHighlightAttributes;
     private final SimpleTextAttributes myUsualAttributes;
-    private final HighlightingRendererBase myWorker;
+    protected final HighlightingRendererBase myWorker;
 
     public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes) {
       myHighlightAttributes = highlightAttributes;
@@ -696,6 +711,7 @@ public class GitLogUI implements Disposable {
     private final Map<String, Icon> myBranchMap;
     private final JPanel myPanel;
     private final Inner myInner;
+    private int myCurrentWidth;
 
     private DescriptionRenderer() {
       myInner = new Inner();
@@ -704,6 +720,7 @@ public class GitLogUI implements Disposable {
       myPanel = new JPanel();
       final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
       myPanel.setLayout(layout);
+      myCurrentWidth = 0;
     }
 
     public void resetIcons() {
@@ -711,8 +728,13 @@ public class GitLogUI implements Disposable {
       myTagMap.clear();
     }
 
+    public int getCurrentWidth() {
+      return myCurrentWidth;
+    }
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      myCurrentWidth = 0;
       if (value instanceof GitCommit) {
         final GitCommit commit = (GitCommit)value;
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
@@ -729,6 +751,7 @@ public class GitLogUI implements Disposable {
                                    CaptionIcon.Form.SQUARE, plus, branch.equals(commit.getCurrentBranch()));
             myBranchMap.put(branch, icon);
           }
+          myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
           myPanel.add(new JLabel(icon));
@@ -744,6 +767,7 @@ public class GitLogUI implements Disposable {
                                    tag, table, CaptionIcon.Form.ROUNDED, tagsSize > 1, false);
             myTagMap.put(tag, icon);
           }
+          myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
           myPanel.add(new JLabel(icon));
@@ -757,13 +781,24 @@ public class GitLogUI implements Disposable {
     }
 
     private class Inner extends HighLightingRenderer {
+      private final IssueLinkRenderer myIssueLinkRenderer;
+      private final Consumer<String> myConsumer;
+
       private Inner() {
         super(HIGHLIGHT_TEXT_ATTRIBUTES, null);
+        myIssueLinkRenderer = new IssueLinkRenderer(myProject, this);
+        myConsumer = new Consumer<String>() {
+          @Override
+          public void consume(String s) {
+            myWorker.tryHighlight(s);
+          }
+        };
       }
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof GitCommit) {
-          super.customizeCellRenderer(table, ((GitCommit) value).getDescription(), selected, hasFocus, row, column);
+          myIssueLinkRenderer.appendTextWithLinks(((GitCommit) value).getDescription(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
+          //super.customizeCellRenderer(table, ((GitCommit) value).getDescription(), selected, hasFocus, row, column);
         } else {
           super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
         }
