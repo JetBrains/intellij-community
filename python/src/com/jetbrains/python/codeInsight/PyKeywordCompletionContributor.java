@@ -446,6 +446,17 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       ,
       new PyKeywordCompletionProvider("global", "return", "yield")
     );
+
+    extend(
+      CompletionType.BASIC, psiElement()
+      .withLanguage(PythonLanguage.getInstance())
+      .and(IN_DEF_BODY)
+      .and(IN_BEGIN_STMT)
+      .and(PY3K)
+      .andNot(AFTER_QUALIFIER)
+      ,
+      new PyKeywordCompletionProvider("nonlocal")
+    );
   }
 
   private void addWithinIf() {
