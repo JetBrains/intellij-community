@@ -44,8 +44,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
-        String eol = System.getProperty("line.separator");
-        if (!node.getText().contains(eol)) {
+        if (!node.getText().contains("\n")) {
           registerProblem(node, "Remove redundant parentheses", ProblemHighlightType.INFORMATION, null, new RedundantParenthesesQuickFix());
         }
       }
