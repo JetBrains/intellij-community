@@ -368,7 +368,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.disposeUI();
     }
     myPanels.clear();
-    Disposer.dispose(mySelectionAlarm);
+    if (mySelectionAlarm != null) {
+      Disposer.dispose(mySelectionAlarm);
+    }
   }
 
   public void selectProfile(String name) {
