@@ -97,6 +97,10 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyUnusedLocalVariableInspection3K() {
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON30);
+  }
+
   public void testPyUnusedVariableTupleUnpacking() {
     doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
   }
