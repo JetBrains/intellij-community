@@ -161,6 +161,26 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     );
   }
 
+  public void testRedundantParentheses() {  // PY-1470
+    doInspectionTest("RedundantParentheses.py", PyRedundantParenthesesInspection.class,
+                          PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
+  public void testAugmentAssignment() {  // PY-1415
+    doInspectionTest("AugmentAssignment.py", PyAugmentAssignmentInspection.class,
+                          PyBundle.message("QFIX.augment.assignment"), true, true);
+  }
+
+  public void testChainedComparisons() {  // PY-1020
+    doInspectionTest("ChainedComparisons.py", PyChainedComparisonsInspection.class,
+                          PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
+  public void testStatementEffect() {  // PY-1362
+    doInspectionTest("StatementEffect.py", PyStatementEffectInspection.class,
+                          PyBundle.message("QFIX.statement.effect"), true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
