@@ -53,13 +53,13 @@ public class GitContentRevision implements ContentRevision {
   /**
    * The charset for the file
    */
-  @NotNull private final Charset myCharset;
+  @NotNull private Charset myCharset;
 
   public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project, Charset charset) {
     myProject = project;
     myFile = file;
     myRevision = revision;
-    myCharset = charset != null ? charset : file.getCharset(project);
+    myCharset = charset;
   }
 
   public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
@@ -73,6 +73,9 @@ public class GitContentRevision implements ContentRevision {
     }
     VirtualFile root = GitUtil.getGitRoot(myFile);
     byte[] result = GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), GitUtil.relativePath(root, myFile));
+    if (myCharset == null) {
+      myCharset = myFile.getCharset(myProject);
+    }
     return result == null ? null : new String(result, myCharset);
   }
 
