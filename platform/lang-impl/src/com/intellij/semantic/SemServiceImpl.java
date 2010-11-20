@@ -214,11 +214,7 @@ public class SemServiceImpl extends SemService{
     if (psi instanceof PsiDirectory || psi instanceof PsiDirectoryContainer) {
       return psi;
     }
-    final PsiFile file = psi.getContainingFile();
-    if (file != null) {
-      return file;
-    }
-    throw new AssertionError("The element should be in a file: " + psi);
+    return psi.getContainingFile();
   }
 
   @NotNull 
