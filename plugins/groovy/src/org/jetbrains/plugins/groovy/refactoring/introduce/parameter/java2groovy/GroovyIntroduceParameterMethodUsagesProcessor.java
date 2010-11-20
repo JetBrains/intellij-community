@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -57,11 +56,10 @@ import java.util.Set;
  *         Date: Apr 18, 2009 3:16:24 PM
  */
 public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
-  private static final Language myLanguage = GroovyFileType.GROOVY_LANGUAGE;
 
   private static boolean isGroovyUsage(UsageInfo usage) {
     final PsiElement el = usage.getElement();
-    return el != null && el.getLanguage().is(myLanguage);
+    return el != null && GroovyFileType.GROOVY_LANGUAGE.equals(el.getLanguage());
   }
 
   public boolean isMethodUsage(UsageInfo usage) {
@@ -99,8 +97,8 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
   }
 
   public boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!isMethodUsage(usage)) return true;
     GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(usage.getElement());
+    if (callExpression == null) return true;
     GrArgumentList argList = callExpression.getArgumentList();
     GrExpression[] oldArgs = argList.getExpressionArguments();
 

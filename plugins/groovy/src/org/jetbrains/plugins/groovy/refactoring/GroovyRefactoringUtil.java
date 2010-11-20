@@ -416,7 +416,8 @@ public abstract class GroovyRefactoringUtil {
   }
 
   @Nullable
-  public static GrCall getCallExpressionByMethodReference(PsiElement ref) {
+  public static GrCall getCallExpressionByMethodReference(@Nullable PsiElement ref) {
+    if (ref == null) return null;
     if (ref instanceof GrEnumConstant) return (GrEnumConstant)ref;
     if (ref instanceof GrConstructorInvocation) return (GrCall)ref;
     PsiElement parent = ref.getParent();
