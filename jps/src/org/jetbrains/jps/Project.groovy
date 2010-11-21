@@ -126,6 +126,10 @@ class Project {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
   }
 
+  def makeSelected (Collection<Module> modules) {
+    builder.buildSelected (modules)
+  }
+
   def makeAll() {
     builder.buildAll()
   }

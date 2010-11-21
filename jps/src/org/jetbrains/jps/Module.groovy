@@ -116,9 +116,17 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
     return dependencies.findAll({it.scope.isIncludedIn(kind)})*.item;
   }
 
-  private static class ModuleDependency {
+  def List<ModuleDependency> getDependencies () {
+    return dependencies;
+  }
+
+  static class ModuleDependency {
     ClasspathItem item
     DependencyScope scope
+
+    def ClasspathItem getItem () {
+      return item;
+    }
 
     ModuleDependency(ClasspathItem item, DependencyScope scope) {
       this.item = item

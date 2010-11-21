@@ -70,6 +70,10 @@ class ProjectBuilder {
     buildAllModules(true)
   }
 
+  public def buildSelected (Collection<Module> modules) {
+    buildModules (modules, true)
+  }
+
   public def buildProduction() {
     buildAllModules(false)
   }
