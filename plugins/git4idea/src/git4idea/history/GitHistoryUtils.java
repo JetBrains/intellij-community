@@ -487,9 +487,7 @@ public class GitHistoryUtils {
 
     final GitCommit gitCommit;
     try {
-      final List<String> branches = new ArrayList<String>();
-      GitBranch.listAsStrings(project, root, true, true, branches, record.getHash());
-      gitCommit = createCommit(project, refs, root, record, branches);
+      gitCommit = createCommit(project, refs, root, record);
     }
     catch (VcsException e) {
       exc[0] = e;
@@ -499,7 +497,7 @@ public class GitHistoryUtils {
     gitCommitConsumer.consume(gitCommit);
   }
 
-  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record, List<String> branches) throws VcsException {
+  private static GitCommit createCommit(Project project, SymbolicRefs refs, VirtualFile root, GitLogRecord record) throws VcsException {
     GitCommit gitCommit;
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<String>();
@@ -512,10 +510,10 @@ public class GitHistoryUtils {
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
-                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000,
-                                      branches);
+                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000
+    );
     gitCommit.setCurrentBranch(s);
-    final String current = refs.getCurrent().getName();
+    /*final String current = refs.getCurrent().getName();
     gitCommit.setOnLocal((current != null) && (! current.startsWith(GitBranch.REFS_REMOTES_PREFIX)) &&
                          (! current.startsWith("remotes/")) && branches.contains(current));
     String remoteName = refs.getTrackedRemoteName();
@@ -524,7 +522,7 @@ public class GitHistoryUtils {
     } else {
       remoteName = remoteName.startsWith("refs/") ? remoteName.substring("refs/".length()) : remoteName;
       gitCommit.setOnTracked(remoteName != null && branches.contains(remoteName));
-    }
+    }*/
     return gitCommit;
   }
 
@@ -569,9 +567,7 @@ public class GitHistoryUtils {
 
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
-      final List<String> branches = new ArrayList<String>();
-      GitBranch.listAsStrings(project, root, true, true, branches, record.getHash());
-      final GitCommit gitCommit = createCommit(project, refs, root, record, branches);
+      final GitCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);
     }
     return rc;

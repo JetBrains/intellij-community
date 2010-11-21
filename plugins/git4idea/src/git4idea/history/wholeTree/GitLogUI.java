@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractFilterChildren;
 import com.intellij.openapi.vcs.ComparableComparator;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
@@ -98,6 +99,7 @@ public class GitLogUI implements Disposable {
   private MySpecificDetails myDetails;
   private final DescriptionRenderer myDescriptionRenderer;
   private FilterAction myFilterAction;
+  private final Speedometer mySelectionSpeedometer;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -107,6 +109,7 @@ public class GitLogUI implements Disposable {
     myPreviousFilter = "";
     myDetails = new MySpecificDetails(myProject);
     myDescriptionRenderer = new DescriptionRenderer();
+    mySelectionSpeedometer = new Speedometer(20, 400);
     createTableModel();
     mySearchContext = new ArrayList<String>();
 
@@ -327,8 +330,10 @@ public class GitLogUI implements Disposable {
   }
 
   private void selectionChanged() {
+    mySelectionSpeedometer.event();
+
     final int[] rows = myJBTable.getSelectedRows();
-    myDetails.refresh(null);
+    myDetails.refresh(null, null);
     if (rows.length == 0) {
       myRepoLayout.show(myRepoPanel, "empty");
       myRepoPanel.repaint();
@@ -355,8 +360,53 @@ public class GitLogUI implements Disposable {
   }
 
   public void updateSelection() {
+    updateBranchesFor();
     if (! myMissingSelectionData) return;
     updateDetailsFromSelection();
+  }
+
+  private void updateBranchesFor() {
+    final int[] rows = myJBTable.getSelectedRows();
+    if (rows.length == 1 && myDetails.isMissingBranchesInfo() && mySelectionSpeedometer.getSpeed() < 0.1) {
+      final CommitI commit = myTableModel.getCommitAt(rows[0]);
+      final VirtualFile root = commit.selectRepository(myRootsUnderVcs);
+      if (commit.holdsDecoration()) return;
+      final GitCommit gitCommit = myDetailsCache.convert(root, commit.getHash());
+      if (gitCommit == null) return;
+      final List<String> branches = myDetailsCache.getBranches(root, commit.getHash());
+      if (branches != null) {
+        myDetails.putBranches(gitCommit, branches);
+      }
+      final Application application = ApplicationManager.getApplication();
+      application.executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final CommitI commitI = myTableModel.getCommitAt(rows[0]);
+          if (!commit.equals(commitI)) return;
+          try {
+            final List<String> branches = new LowLevelAccessImpl(myProject, root).getBranchesWithCommit(gitCommit.getHash());
+            myDetailsCache.putBranches(root, commit.getHash(), branches);
+            application.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                final int[] afterRows = myJBTable.getSelectedRows();
+                if (myDetails.isMissingBranchesInfo() && afterRows.length == 1) {
+                  final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
+                  if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
+                  myDetails.putBranches(gitCommit, branches);
+                }
+              }
+            }, myProject.getDisposed());
+            if (!branches.isEmpty()) {
+
+            }
+          }
+          catch (VcsException e) {
+            LOG.info(e);
+          }
+        }
+      });
+    }
   }
 
   private void updateDetailsFromSelection() {
@@ -369,7 +419,7 @@ public class GitLogUI implements Disposable {
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final GitCommit convert = myDetailsCache.convert(root, commitI.getHash());
         if (convert != null) {
-          myDetails.refresh(convert);
+          myDetails.refresh(root, convert);
         }
       }
     }
@@ -712,16 +762,16 @@ public class GitLogUI implements Disposable {
   }
 
   private class DescriptionRenderer implements TableCellRenderer {
-    //private final Map<String, Icon> myTagMap;
-    //private final Map<String, Icon> myBranchMap;
+    private final Map<String, Icon> myTagMap;
+    private final Map<String, Icon> myBranchMap;
     private final JPanel myPanel;
     private final Inner myInner;
     private int myCurrentWidth;
 
     private DescriptionRenderer() {
       myInner = new Inner();
-      //myTagMap = new HashMap<String, Icon>();
-      //myBranchMap = new HashMap<String, Icon>();
+      myTagMap = new HashMap<String, Icon>();
+      myBranchMap = new HashMap<String, Icon>();
       myPanel = new JPanel();
       final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
       myPanel.setLayout(layout);
@@ -729,8 +779,8 @@ public class GitLogUI implements Disposable {
     }
 
     public void resetIcons() {
-      //myBranchMap.clear();
-      //myTagMap.clear();
+      myBranchMap.clear();
+      myTagMap.clear();
     }
 
     public int getCurrentWidth() {
@@ -749,14 +799,14 @@ public class GitLogUI implements Disposable {
         if (localSize + remoteSize > 0) {
           final String branch = localSize == 0 ? (commit.getRemoteBranches().get(0)) : commit.getLocalBranches().get(0);
 
-          //Icon icon = myBranchMap.get(branch);
-          //if (icon == null) {
+          Icon icon = myBranchMap.get(branch);
+          if (icon == null) {
             final boolean plus = localSize + remoteSize + tagsSize > 1;
             final Color color = localSize == 0 ? Colors.remote : Colors.local;
-            Icon icon = new CaptionIcon(color, table.getFont().deriveFont((float) table.getFont().getSize() - 1), branch, table,
+            icon = new CaptionIcon(color, table.getFont().deriveFont((float) table.getFont().getSize() - 1), branch, table,
                                    CaptionIcon.Form.SQUARE, plus, branch.equals(commit.getCurrentBranch()));
-            //myBranchMap.put(branch, icon);
-          //}
+            myBranchMap.put(branch, icon);
+          }
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(getLogicBackground(isSelected, row));
@@ -767,12 +817,12 @@ public class GitLogUI implements Disposable {
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
-          //Icon icon = myTagMap.get(tag);
-          //if (icon == null) {
-            Icon icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
+          Icon icon = myTagMap.get(tag);
+          if (icon == null) {
+            icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
                                    tag, table, CaptionIcon.Form.ROUNDED, tagsSize > 1, false);
-            //myTagMap.put(tag, icon);
-          //}
+            myTagMap.put(tag, icon);
+          }
           myCurrentWidth = icon.getIconWidth();
           myPanel.removeAll();
           myPanel.setBackground(getLogicBackground(isSelected, row));
@@ -1008,6 +1058,7 @@ public class GitLogUI implements Disposable {
     private JPanel myMarksPanel;
     private BoxLayout myBoxLayout;
     private final Project myProject;
+    private boolean myMissingBranchesInfo;
 
     private MySpecificDetails(final Project project) {
       myProject = project;
@@ -1033,11 +1084,25 @@ public class GitLogUI implements Disposable {
       return scrollPane;
     }
 
-    public void refresh(final GitCommit commit) {
+    public void putBranches(final GitCommit commit, final List<String> branches) {
+      myMissingBranchesInfo = false;
+      if (! branches.isEmpty()) {
+        myJEditorPane.setText(parseDetails(commit, branches));
+      }
+    }
+
+    public boolean isMissingBranchesInfo() {
+      return myMissingBranchesInfo;
+    }
+
+    public void refresh(VirtualFile root, final GitCommit commit) {
       if (commit == null) {
         myJEditorPane.setText("");
         myMarksPanel.removeAll();
+        myMissingBranchesInfo = false;
       } else {
+        final List<String> branches = myDetailsCache.getBranches(root, commit.getShortHash());
+        myMissingBranchesInfo = branches == null;
         final Font font = myJEditorPane.getFont().deriveFont((float) (myJEditorPane.getFont().getSize() - 1));
         final String currentBranch = commit.getCurrentBranch();
         myMarksPanel.removeAll();
@@ -1054,12 +1119,11 @@ public class GitLogUI implements Disposable {
                                            s.equals(currentBranch))));
         }
         myMarksPanel.repaint();
-        myJEditorPane.setText(parseDetails(commit));
+        myJEditorPane.setText(parseDetails(commit, branches));
       }
     }
 
-    private String parseDetails(final GitCommit c) {
-      final List<String> branches = c.getBranches();
+    private String parseDetails(final GitCommit c, final List<String> branches) {
       final String hash = new HtmlHighlighter(c.getHash().getValue()).getResult();
       final String author = new HtmlHighlighter(c.getAuthor()).getResult();
       final String committer = new HtmlHighlighter(c.getCommitter()).getResult();
@@ -1081,7 +1145,7 @@ public class GitLogUI implements Disposable {
         .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
           "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
         .append(comment).append("</b></td></tr>");
-      sb.append("<tr><td><i>Contained in branches:<i></td><td>");
+      sb.append("<tr valign=\"top\"><td><i>Contained in branches:<i></td><td>");
       if (branches != null && (! branches.isEmpty())) {
         for (int i = 0; i < branches.size(); i++) {
           String s = branches.get(i);
@@ -1091,7 +1155,7 @@ public class GitLogUI implements Disposable {
           }
         }
       } else {
-        sb.append("<font color=gray>no branches</font>");
+        sb.append("<font color=gray>Loading...</font>");
       }
       sb.append("</td></tr>");
       sb.append("</table></body></html>");

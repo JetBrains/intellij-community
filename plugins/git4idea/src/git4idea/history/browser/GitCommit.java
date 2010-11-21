@@ -48,8 +48,9 @@ public class GitCommit {
   private String myCurrentBranch;
 
   private final long myAuthorTime;
-  private final List<String> myBranches;
+  //private final List<String> myBranches;
   private boolean myOnLocal;
+  // very expensive to calculate it massively, seems it wouldnt be shown
   private boolean myOnTracked;
 
   public GitCommit(@NotNull final AbstractHash shortHash,
@@ -66,7 +67,7 @@ public class GitCommit {
                    final List<String> localBranches,
                    final List<String> remoteBranches,
                    List<Change> changes,
-                   long authorTime, List<String> branches) {
+                   long authorTime) {
     myShortHash = shortHash;
     myAuthor = author;
     myCommitter = committer;
@@ -82,7 +83,7 @@ public class GitCommit {
     myLocalBranches = localBranches;
     myRemoteBranches = remoteBranches;
     myAuthorTime = authorTime;
-    myBranches = branches;
+    //myBranches = branches;
     myParentsLinks = new HashSet<GitCommit>();
   }
 
@@ -194,11 +195,6 @@ public class GitCommit {
 
   public String getComitterEmail() {
     return myComitterEmail;
-  }
-
-  // branches that have this commit
-  public List<String> getBranches() {
-    return myBranches;
   }
 
   public boolean isOnLocal() {

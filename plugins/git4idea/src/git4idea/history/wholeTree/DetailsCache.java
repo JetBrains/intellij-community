@@ -31,6 +31,7 @@ public class DetailsCache {
   private final static int ourSize = 400;
   private boolean mySomethingIsMissing;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit> myCache;
+  private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
   private final DetailsLoaderImpl myDetailsLoader;
   private final ModalityState myModalityState;
   private AbstractCalledLater myRefresh;
@@ -48,6 +49,7 @@ public class DetailsCache {
     myLock = new Object();
     mySomethingIsMissing = false;
     myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 50);
+    myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(10, 10);
   }
 
   public GitCommit convert(final VirtualFile root, final AbstractHash hash) {
@@ -78,5 +80,13 @@ public class DetailsCache {
 
   public void rootsChanged(final Collection<VirtualFile> roots) {
     myDetailsLoader.setRoots(roots);
+  }
+
+  public void putBranches(final VirtualFile root, final AbstractHash hash, final List<String> s) {
+    myBranches.put(new Pair<VirtualFile, AbstractHash>(root, hash), s);
+  }
+
+  public List<String> getBranches(final VirtualFile root, final AbstractHash hash) {
+    return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
   }
 }
