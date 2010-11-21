@@ -160,7 +160,6 @@ public class ProjectWrapper {
         }
 
         final Set<Module> modules = new HashSet<Module> ();
-
         new Object () {
             public void run (final Module module) {
                 if (modules.contains(module))
