@@ -396,18 +396,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (anchorStatement == null) {
       return parentStatementNotFound(project, editor);
     }
-    if (anchorStatement instanceof PsiExpressionStatement) {
-      PsiExpression enclosingExpr = ((PsiExpressionStatement)anchorStatement).getExpression();
-      if (enclosingExpr instanceof PsiMethodCallExpression) {
-        PsiMethod method = ((PsiMethodCallExpression)enclosingExpr).resolveMethod();
-        if (method != null && method.isConstructor()) {
-          //This is either 'this' or 'super', both must be the first in the respective contructor
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
-          showErrorMessage(project, editor, message);
-          return false;
-        }
-      }
-    }
+    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE)) return false;
 
     final PsiElement tempContainer = anchorStatement.getParent();
 
@@ -906,6 +895,26 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   private static boolean createFinals(Project project) {
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     return createFinals == null ? CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS : createFinals.booleanValue();
+  }
+
+  public static boolean checkAnchorBeforeThisOrSuper(final Project project,
+                                                     final Editor editor,
+                                                     final PsiElement tempAnchorElement,
+                                                     final String refactoringName,
+                                                     final String helpID) {
+    if (tempAnchorElement instanceof PsiExpressionStatement) {
+      PsiExpression enclosingExpr = ((PsiExpressionStatement)tempAnchorElement).getExpression();
+      if (enclosingExpr instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)enclosingExpr).resolveMethod();
+        if (method != null && method.isConstructor()) {
+          //This is either 'this' or 'super', both must be the first in the respective contructor
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+          CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpID);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public interface Validator {
