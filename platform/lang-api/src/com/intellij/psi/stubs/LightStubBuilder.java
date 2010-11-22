@@ -23,11 +23,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
+import gnu.trove.TIntStack;
+
+import java.util.List;
+import java.util.Stack;
 
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.LightStubBuilder");
 
+  @Override
   public StubElement buildStubTree(final PsiFile file) {
     final FileASTNode node = file.getNode();
     assert node != null;
@@ -39,7 +44,9 @@ public class LightStubBuilder implements StubBuilder {
 
     final ILightStubFileElementType<?> type = (ILightStubFileElementType)node.getElementType();
     final LighterAST tree = new LighterAST(node.getCharTable(), type.parseContentsLight(node));
-    return buildStubTreeFor(tree, tree.getRoot(), createStubForFile(file, tree));
+    final StubElement rootStub = createStubForFile(file, tree);
+    buildStubTree(tree, tree.getRoot(), rootStub);
+    return rootStub;
   }
 
   protected StubElement createStubForFile(final PsiFile file, final LighterAST tree) {
@@ -47,15 +54,61 @@ public class LightStubBuilder implements StubBuilder {
     return new PsiFileStubImpl(file);
   }
 
-  protected StubElement buildStubTreeFor(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
-    StubElement stub = parentStub;
+  protected void buildStubTree(final LighterAST tree, final LighterASTNode root, final StubElement rootStub) {
+    final Stack<LighterASTNode> parents = new Stack<LighterASTNode>();
+    final TIntStack childNumbers = new TIntStack();
+    final Stack<StubElement> parentStubs = new Stack<StubElement>();
 
+    LighterASTNode parent = null;
+    LighterASTNode element = root;
+    List<LighterASTNode> children = null;
+    int childNumber = 0;
+    StubElement parentStub = rootStub;
+
+    nextElement:
+    while (element != null) {
+      final StubElement stub = createStub(tree, element, parentStub);
+
+      final List<LighterASTNode> kids = tree.getChildren(element);
+      if (kids.size() > 0) {
+        if (parent != null) {
+          parents.push(parent);
+          childNumbers.push(childNumber);
+          parentStubs.push(parentStub);
+        }
+        parent = element;
+        element = (children = kids).get(childNumber = 0);
+        parentStub = stub;
+        if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+      }
+
+      while (children != null && ++childNumber < children.size()) {
+        element = children.get(childNumber);
+        if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+      }
+
+      element = null;
+      while (parents.size() > 0) {
+        children = tree.getChildren((parent = parents.pop()));
+        childNumber = childNumbers.pop();
+        parentStub = parentStubs.pop();
+        while (++childNumber < children.size()) {
+          element = children.get(childNumber);
+          if (!skipChildProcessingWhenBuildingStubs(parent.getTokenType(), element.getTokenType())) continue nextElement;
+        }
+        element = null;
+      }
+    }
+  }
+
+  @SuppressWarnings({"MethodMayBeStatic"})
+  protected StubElement createStub(final LighterAST tree, final LighterASTNode element, final StubElement parentStub) {
     final IElementType elementType = element.getTokenType();
     if (elementType instanceof IStubElementType) {
       if (elementType instanceof ILightStubElementType) {
         final ILightStubElementType lightElementType = (ILightStubElementType)elementType;
         if (lightElementType.shouldCreateStub(tree, element, parentStub)) {
-          stub = lightElementType.createStub(tree, element, parentStub);
+          return lightElementType.createStub(tree, element, parentStub);
         }
       }
       else {
@@ -63,16 +116,11 @@ public class LightStubBuilder implements StubBuilder {
       }
     }
 
-    for (final LighterASTNode child : tree.getChildren(element)) {
-      if (!skipChildProcessingWhenBuildingStubs(elementType, child.getTokenType())) {
-        buildStubTreeFor(tree, child, stub);
-      }
-    }
-
-    return stub;
+    return parentStub;
   }
 
-  public boolean skipChildProcessingWhenBuildingStubs(IElementType nodeType, IElementType childType) {
+  @Override
+  public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
     return false;
   }
 }

@@ -33,8 +33,6 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
-  private static final int INITIALIZER_LENGTH_LIMIT = 1000;
-
   private final StringRef myName;
   private final TypeInfo myType;
   private final StringRef myInitializer;
@@ -51,15 +49,9 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   public PsiFieldStubImpl(final StubElement parent, final StringRef name, @NotNull TypeInfo type, final StringRef initializer, final byte flags) {
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
 
-    if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
-      myInitializer = StringRef.fromString(INITIALIZER_TOO_LONG);
-    }
-    else {
-      myInitializer = initializer;
-    }
-
     myName = name;
     myType = type;
+    myInitializer = initializer;
     myFlags = flags;
   }
 

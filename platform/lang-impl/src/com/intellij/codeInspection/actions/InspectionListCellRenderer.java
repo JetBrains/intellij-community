@@ -34,13 +34,16 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     panel.setOpaque(true);
 
     final Color bg = sel ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
+    final Color fg = sel ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
     panel.setBackground(bg);
+    panel.setForeground(fg);
 
     if (value instanceof InspectionProfileEntry) {
       final InspectionProfileEntry tool = (InspectionProfileEntry)value;
-      final Color fg = sel ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
 
       final JLabel label = new JLabel("  " + tool.getDisplayName());
+      label.setBackground(bg);
+      label.setForeground(fg);
       panel.add(label, BorderLayout.WEST);
 
       final JLabel groupLabel = new JLabel(tool.getGroupDisplayName() + "  ", EMPTY_ICON, LEFT);

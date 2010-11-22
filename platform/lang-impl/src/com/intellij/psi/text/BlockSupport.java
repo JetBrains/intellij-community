@@ -20,6 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -39,5 +41,15 @@ public abstract class BlockSupport {
     public synchronized Throwable fillInStackTrace() {
       return this;
     }
+  }
+
+  // maximal tree depth for which incremental reparse is allowed
+  // if tree is deeper then it will be replaced completely - to avoid SOEs
+  public static final int INCREMENTAL_REPARSE_DEPTH_LIMIT = Registry.intValue("psi.incremental.reparse.depth.limit");
+
+  public static final Key<Boolean> TREE_DEPTH_LIMIT_EXCEEDED = Key.create("TREE_IS_TOO_DEEP");
+
+  public static boolean isTooDeep(final UserDataHolder element) {
+    return element != null && Boolean.TRUE.equals(element.getUserData(TREE_DEPTH_LIMIT_EXCEEDED));
   }
 }

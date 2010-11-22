@@ -22,15 +22,24 @@ import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 
+import java.security.SecureRandom;
+
 
 public class JavaStubBuilderTest extends LightIdeaTestCase {
   private static final StubBuilder OLD_BUILDER = new JavaFileStubBuilder();
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
+  private static final int SOE_TEST_DEPTH = 10000;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     doTest("@interface A { int i() default 42; }\n class C { void m(int p) throws E { } }", null);  // warm up
+  }
+
+  public void testEmpty() {
+    doTest("/**/",
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n");
   }
 
   public void testFileHeader() {
@@ -256,6 +265,32 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
+  public void testSOEProof() throws Exception {
+    final StringBuilder sb = new StringBuilder();
+    final SecureRandom random = new SecureRandom();
+    sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
+    for (int i = 0; i < SOE_TEST_DEPTH; i++) {
+      sb.append("  \"").append(Math.abs(random.nextInt())).append("\" +\n");
+    }
+    sb.append("  \"\");\n}");
+
+    final PsiJavaFile file = (PsiJavaFile)createLightFile("SOE_test.java", sb.toString());
+    long t = System.currentTimeMillis();
+    final StubElement tree = NEW_BUILDER.buildStubTree(file);
+    t = System.currentTimeMillis() - t;
+    assertEquals("PsiJavaFileStub []\n" +
+                 "  IMPORT_LIST:PsiImportListStub\n" +
+                 "  CLASS:PsiClassStub[name=SOE_test fqn=SOE_test]\n" +
+                 "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+                 "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+                 "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+                 "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+                 "    FIELD:PsiFieldStub[BIG:BigInteger=;INITIALIZER_NOT_STORED;]\n" +
+                 "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n",
+                 DebugUtil.stubTreeToString(tree));
+    System.out.println("SOE depth=" + SOE_TEST_DEPTH + ", time=" + t + "ms");
+  }
+
   private static void doTest(final String source, final String tree) {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     final LazyParseableElement fileNode = (LazyParseableElement)file.getNode();
@@ -264,25 +299,28 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
     long t1 = System.nanoTime();
     final StubElement lighterTree = NEW_BUILDER.buildStubTree(file);
-    t1 = System.nanoTime() - t1;
+    t1 = (System.nanoTime() - t1)/1000;
     assertFalse(fileNode.isParsed());
 
     long t2 = System.nanoTime();
     final StubElement originalTree = OLD_BUILDER.buildStubTree(file);
-    t2 = System.nanoTime() - t2;
+    t2 = (System.nanoTime() - t2)/1000;
     assertTrue(fileNode.isParsed());
 
-    final String lightStr = DebugUtil.stubTreeToString(originalTree);
-    final String originalStr = DebugUtil.stubTreeToString(lighterTree);
+    final String lightStr = DebugUtil.stubTreeToString(lighterTree);
+    final String originalStr = DebugUtil.stubTreeToString(originalTree);
     if (tree != null) {
-      final String msg = "light=" + t1/1000 + "mks, heavy=" + t2/1000 + "mks";
+      final String msg = "light=" + t1 + "mks, heavy=" + t2 + "mks, gain=" + (100 * (t2 - t1) / t2) + "%";
       // todo: assertTrue("Expected to be at least 2x faster: " + msg, 2*t1 <= t2);
       System.out.println(msg);
 
-      assertEquals("wrong test data", tree, lightStr);
+      assertEquals("wrong test data", tree, originalStr);
       if (!"".equals(tree)) {
-        assertEquals("light tree differs", tree, originalStr);
+        assertEquals("light tree differs", tree, lightStr);
       }
+    }
+    else {
+      assertEquals(originalStr, lightStr);
     }
   }
 }
