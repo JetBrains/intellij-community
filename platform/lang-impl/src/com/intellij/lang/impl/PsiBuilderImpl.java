@@ -834,16 +834,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   public ASTNode getTreeBuilt() {
     try {
-      final StartMarker rootMarker = prepareLightTree();
-      if (myOriginalTree != null) {
-        merge(myOriginalTree, rootMarker);
-        throw new BlockSupport.ReparsedSuccessfullyException();
-      }
-      else {
-        final ASTNode rootNode = createRootAST(rootMarker);
-        bind(rootMarker, (CompositeElement)rootNode);
-        return rootNode;
-      }
+      return buildTree();
     }
     finally {
       for (ProductionMarker marker : myProduction) {
@@ -855,6 +846,26 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
     }
+  }
+
+  private ASTNode buildTree() {
+    final StartMarker rootMarker = prepareLightTree();
+    final boolean isTooDeep = myFile != null && BlockSupport.isTooDeep(myFile.getOriginalFile());
+
+    if (myOriginalTree != null && !isTooDeep) {
+      merge(myOriginalTree, rootMarker);
+      throw new BlockSupport.ReparsedSuccessfullyException();
+    }
+
+    final ASTNode rootNode = createRootAST(rootMarker);
+    bind(rootMarker, (CompositeElement)rootNode);
+
+    if (isTooDeep && !(rootNode instanceof FileElement)) {
+      final ASTNode childNode = rootNode.getFirstChildNode();
+      childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+    }
+
+    return rootNode;
   }
 
   public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
@@ -939,7 +950,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final Stack<StartMarker> nodes = new Stack<StartMarker>();
     nodes.push(rootMarker);
 
-    int lastErrorIndex = -1;
+    @SuppressWarnings({"MultipleVariablesInDeclaration"}) int lastErrorIndex = -1, maxDepth = 0, curDepth = 0;
     for (int i = 1; i < myProduction.size(); i++) {
       final ProductionMarker item = myProduction.get(i);
 
@@ -952,9 +963,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         curNode.addChild(marker);
         nodes.push(curNode);
         curNode = marker;
+        curDepth++;
+        if (curDepth > maxDepth) maxDepth = curDepth;
       }
       else if (item instanceof DoneMarker) {
         curNode = nodes.pop();
+        curDepth--;
       }
       else if (item instanceof ErrorItem) {
         int curToken = item.myLexemeIndex;
@@ -978,6 +992,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexTypes[myCurrentLexeme] = null;
 
     LOG.assertTrue(curNode == rootMarker, UNBALANCED_MESSAGE);
+
+    checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType);
+
     return rootMarker;
   }
 
@@ -1005,6 +1022,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       };
       item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, getter);
+    }
+  }
+
+  private void checkTreeDepth(final int maxDepth, final boolean isFileRoot) {
+    if (myFile == null) return;
+    final PsiFile file = myFile.getOriginalFile();
+    final Boolean flag = file.getUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED);
+    if (maxDepth > BlockSupport.INCREMENTAL_REPARSE_DEPTH_LIMIT) {
+      if (!Boolean.TRUE.equals(flag)) {
+        file.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+      }
+    }
+    else if (isFileRoot && flag != null) {
+      file.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, null);
     }
   }
 

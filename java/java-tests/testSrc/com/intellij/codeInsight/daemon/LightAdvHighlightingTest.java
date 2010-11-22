@@ -25,12 +25,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +44,7 @@ import static com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.filter;
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+
   private UnusedSymbolLocalInspection myUnusedSymbolLocalInspection;
 
   private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -176,15 +175,18 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodCannotBeApplied() throws Exception { doTest(false, false); }
 
   public void testUnusedParamsOfPublicMethod() throws Exception { doTest(true, false); }
+
   public void testUnusedParamsOfPublicMethodDisabled() throws Exception {
     myUnusedSymbolLocalInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
     doTest(true, false);
   }
+
   public void testUnusedNonPrivateMembers() throws Exception {
     UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
     enableInspectionTool(deadCodeInspection);
     doTest(true, false);
   }
+
   public void testUnusedNonPrivateMembers2() throws Exception {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {
@@ -228,7 +230,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     point.registerExtension(extension);
     
     try {
-
       UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
       enableInspectionTool(deadCodeInspection);
 
@@ -237,7 +238,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     finally {
       point.unregisterExtension(extension);
     }
-
   }
 
   public void testNamesHighlighting() throws Exception {
@@ -264,6 +264,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       });
     }
   }
+
   public void testInjectedAnnotator() throws Exception {
     Annotator annotator = new MyAnnotator();
     Language xml = StdFileTypes.XML.getLanguage();
@@ -281,39 +282,33 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
-  // todo does not work without nonrecursive reparse
-  public void _testSOEForTypeOfHugeBinaryExpression() throws IOException {
+  public void testSOEForTypeOfHugeBinaryExpression() throws IOException {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
     assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
-
-    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
-
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    // have to manipulate PSI, will get SOE in BlockSupportImpl otherwise
-    final PsiExpression literal = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText("\"xxx\"", field);
 
-    final PsiBinaryExpression binary = (PsiBinaryExpression)JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText("a+b", field);
-    for (int i=0; i<2000;i++) {
-      final PsiExpression expression = field.getInitializer();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          binary.getLOperand().replace(expression);
-          binary.getROperand().replace(literal);
+    final StringBuilder sb = new StringBuilder("\"-\"");
+    for (int i = 0; i < 10000; i++) sb.append("+\"b\"");
+    final String hugeExpr = sb.toString();
+    final int pos = getEditor().getDocument().getText().indexOf("\"\"");
 
-          expression.replace(binary);
-          PostprocessReformattingAspect.getInstance(getProject()).clear(); // OOM otherwise
-        }
-      });
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        getEditor().getDocument().replaceString(pos, pos + 2, hugeExpr);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      }
+    });
 
-      UIUtil.dispatchAllInvocationEvents();
-    }
-
-    field.getInitializer().getType(); // SOE
+    final PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    final PsiExpression expression = field.getInitializer();
+    assert expression != null;
+    final PsiType type = expression.getType();
+    assert type != null;
+    assertEquals("PsiType:String", type.toString());
   }
 
   public void testSOEForCyclicInheritance() throws IOException {
     configureFromFileText("a.java", "class A extends B { String s = \"\"; void f() {}} class B extends A { void f() {} } ");
-
     doHighlighting();
   }
 }
