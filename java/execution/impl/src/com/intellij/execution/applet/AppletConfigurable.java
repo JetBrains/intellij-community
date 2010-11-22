@@ -114,6 +114,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
     myTablePlace.setLayout(new BorderLayout());
     myTable = new TableView(myParameters);
+    myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
     myAppletRadioButtonGroup.add(myMainClass);
     myAppletRadioButtonGroup.add(myURL);
