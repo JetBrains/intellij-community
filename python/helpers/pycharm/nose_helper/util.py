@@ -171,7 +171,10 @@ def make_decorator(func):
         newfunc.__dict__ = func.__dict__
         newfunc.__doc__ = func.__doc__
         if not hasattr(newfunc, 'compat_co_firstlineno'):
-            newfunc.compat_co_firstlineno = func.func_code.co_firstlineno
+            if PYTHON_VERSION_MAJOR == 3:
+                newfunc.compat_co_firstlineno = func.__code__.co_firstlineno
+            else:
+                newfunc.compat_co_firstlineno = func.func_code.co_firstlineno
         try:
             newfunc.__name__ = name
         except TypeError:

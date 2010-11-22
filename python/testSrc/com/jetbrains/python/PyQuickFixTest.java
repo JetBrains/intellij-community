@@ -162,8 +162,15 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   }
 
   public void testRedundantParentheses() {  // PY-1470
-    doInspectionTest("RedundantParentheses.py", PyRedundantParenthesesInspection.class,
-                          PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    String[] testFiles = new String[]{"RedundantParentheses.py"};
+    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
+    myFixture.configureByFiles(testFiles);
+    myFixture.checkHighlighting(true, false, true);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("QFIX.redundant.parentheses"));
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
+
   }
 
   public void testAugmentAssignment() {  // PY-1415

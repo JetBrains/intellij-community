@@ -22,6 +22,9 @@ op_abspath = os.path.abspath
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 PYTHON_VERSION_MINOR = sys.version_info[1]
 
+if PYTHON_VERSION_MAJOR == 3:
+    ismethod = isfunction
+
 class TestLoader(unittest.TestLoader):
     """Test loader that extends unittest.TestLoader to support nosetests
     """
