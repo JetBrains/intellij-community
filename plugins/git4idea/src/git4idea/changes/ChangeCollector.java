@@ -165,10 +165,10 @@ class ChangeCollector {
     }
     for (Iterator<FilePath> i = paths.iterator(); i.hasNext();) {
       FilePath p = i.next();
-      if (isUnder(p, toAdd, true)) {
+      if (isAncestor(toAdd, p, true)) { // toAdd is an ancestor of p => adding toAdd instead of p.
         i.remove();
       }
-      if (isUnder(toAdd, p, false)) {
+      if (isAncestor(p, toAdd, false)) { // p is an ancestor of toAdd => no need to add toAdd.
         return;
       }
     }
@@ -188,7 +188,7 @@ class ChangeCollector {
    * @param strict          if false, the method also returns true if files are equal
    * @return true if childCandidate is a child of parentCandidate.
    */
-  private static boolean isUnder(FilePath parentCandidate, FilePath childCandidate, boolean strict) {
+  private static boolean isAncestor(FilePath parentCandidate, FilePath childCandidate, boolean strict) {
     try {
       return FileUtil.isAncestor(parentCandidate.getIOFile(), childCandidate.getIOFile(), strict);
     }
