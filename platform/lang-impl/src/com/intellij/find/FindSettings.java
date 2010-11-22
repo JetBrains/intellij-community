@@ -30,10 +30,6 @@ public abstract class FindSettings{
 
   public abstract void setSkipResultsWithOneUsage(boolean skip);
 
-  public abstract boolean isSearchForTextOccurences();
-
-  public abstract void setSearchForTextOccurences(boolean search);
-
   public abstract String getDefaultScopeName();
 
   public abstract void setDefaultScopeName(String scope);
