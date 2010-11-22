@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractFilterChildren;
 import com.intellij.openapi.vcs.ComparableComparator;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -45,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
@@ -465,6 +467,7 @@ public class GitLogUI implements Disposable {
     // first create filters...
     //group.add(myFilterAction);
     group.add(new MyCherryPick());
+    group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     group.add(new MyRefreshAction());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Git log", group, true);
 
@@ -526,7 +529,7 @@ public class GitLogUI implements Disposable {
     });
     scrollPane.getViewport().addChangeListener(myMyChangeListener);
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
+    final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     wrapper.add(scrollPane, BorderLayout.CENTER);
     final JComponent specificDetails = myDetails.create();
@@ -536,6 +539,37 @@ public class GitLogUI implements Disposable {
     splitter.setSecondComponent(specificDetails);
     splitter.setDividerWidth(4);
     return splitter;
+  }
+
+  private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
+    private DataProviderPanel(LayoutManager layout) {
+      super(layout);
+    }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (VcsDataKeys.CHANGES.equals(key)) {
+        final int[] rows = myJBTable.getSelectedRows();
+        if (rows.length != 1) return;
+        final List<Change> changes = new ArrayList<Change>();
+        for (int row : rows) {
+          final CommitI commitAt = myTableModel.getCommitAt(row);
+          if (commitAt == null) return;
+          final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+          if (gitCommit == null) return;
+          changes.addAll(gitCommit.getChanges());
+        }
+        sink.put(key, changes.toArray(new Change[changes.size()]));
+      } else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.equals(key)) {
+        final int[] rows = myJBTable.getSelectedRows();
+        if (rows.length != 1) return;
+        final CommitI commitAt = myTableModel.getCommitAt(rows[0]);
+        if (commitAt == null) return;
+        final GitCommit gitCommit = myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
+        if (gitCommit == null) return;
+        sink.put(key, gitCommit.getDescription());
+      }
+    }
   }
 
   private boolean adjustColumnSizes(JScrollPane scrollPane) {
