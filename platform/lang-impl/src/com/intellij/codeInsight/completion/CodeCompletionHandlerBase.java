@@ -310,13 +310,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            startSemaphore.up();
-            indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
-            indicator.duringCompletion(initContext);
-          }
-        });
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              startSemaphore.up();
+              indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
+              indicator.duringCompletion(initContext);
+            }
+          });
+        }
+        finally {
+          indicator.duringCompletionPassed();
+        }
       }
     });
 

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Stack;
 
 public class BraceMatchingUtil {
@@ -120,7 +121,24 @@ public class BraceMatchingUtil {
 
         if (isStructural && (forward ? isRBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType)
                                      : isLBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType))) {
-          if (!ourBraceStack.isEmpty() && myMatcher != null && !ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) continue;
+
+          if (!ourBraceStack.isEmpty() && myMatcher != null) {
+            boolean shouldContinue;
+            if (myMatcher instanceof NontrivialBraceMatcher) {
+              shouldContinue = true;
+              List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
+              for (int i = ourBraceStack.size() - 1; i >= 0; i--) {
+                if (oppositeElementTypes.contains(ourBraceStack.get(i))) {
+                  shouldContinue = false;
+                }
+              }
+            } else {
+              shouldContinue = !ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
+            }
+            if (shouldContinue) {
+              continue;
+            }
+          }
         }
 
         if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
@@ -143,8 +161,8 @@ public class BraceMatchingUtil {
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
-            || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
-          ){
+              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)
+            ){
             matched = false;
             break;
           }
@@ -159,10 +177,10 @@ public class BraceMatchingUtil {
     }
   }
 
-  public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator, 
-                                                boolean forward) {
-    return new MatchBraceContext(fileText, fileType, iterator, forward).doBraceMatch();
-  }
+    public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator,
+                                                  boolean forward) {
+      return new MatchBraceContext(fileText, fileType, iterator, forward).doBraceMatch();
+    }
 
 
   public static synchronized boolean matchBrace(CharSequence fileText, FileType fileType, HighlighterIterator iterator,
@@ -201,7 +219,7 @@ public class BraceMatchingUtil {
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
-            || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)) {
+              || isStrict && !Comparing.equal(topTagName, tagName, isCaseSensitive)) {
             return false;
           }
         }

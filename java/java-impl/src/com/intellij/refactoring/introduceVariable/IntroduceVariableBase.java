@@ -31,8 +31,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -44,19 +42,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.impl.PsiVariableEx;
-import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -69,13 +68,12 @@ import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
@@ -500,7 +498,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
                       final PsiTypeElement typeElement = elementToRename.getTypeElement();
                       builder.replaceElement(typeElement, "Variable_Type",
-                                             ReassignVariableUtil.createExpression(expression, typeElement.getText(), !cantChangeFinalModifier), false, true);
+                                             ReassignVariableUtil.createExpression(expression, typeElement.getText(), !cantChangeFinalModifier), true, true);
                       if (!cantChangeFinalModifier) {
                         builder.replaceElement(elementToRename.getModifierList(), "_FINAL_", new FinalExpression(project), false, true);
                       }
@@ -527,7 +525,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                             startOffset = document.getLineEndOffset(document.getLineNumber(startOffset));
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
-                          typeSelectorManager.typeSelected(ReassignVariableUtil.getVariableType(declarationStatement));
+                          final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
+                          typeSelectorManager.typeSelected(selectedType);
+                          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                            public void run() {
+                              appendTypeCasts(occurrenceMarkers, file, project, psiVariable);
+                            }
+                          });
                         }
                         editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
                         for (RangeMarker occurrenceMarker : occurrenceMarkers) {
@@ -551,6 +555,48 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       new OccurrencesChooser(editor).showChooser(callback, occurrencesMap);
     }
     return true;
+  }
+
+  private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
+                                      PsiFile file,
+                                      Project project,
+                                      PsiVariable psiVariable) {
+    for (RangeMarker occurrenceMarker : occurrenceMarkers) {
+      final PsiElement refVariableElement = file.findElementAt(occurrenceMarker.getStartOffset());
+      final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
+      if (referenceExpression != null) {
+        final PsiElement parent = referenceExpression.getParent();
+        if (parent instanceof PsiVariable) {
+          createCastInVariableDeclaration(project, (PsiVariable)parent);
+        } else if (parent instanceof PsiReferenceExpression && psiVariable != null) {
+          final PsiExpression initializer = psiVariable.getInitializer();
+          LOG.assertTrue(initializer != null);
+          final PsiType type = initializer.getType();
+          if (((PsiReferenceExpression)parent).resolve() == null) {
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+            final PsiExpression castedExpr =
+              elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);
+            JavaCodeStyleManager.getInstance(project).shortenClassReferences(referenceExpression.replace(castedExpr));
+          }
+        }
+      }
+    }
+    if (psiVariable != null && psiVariable.isValid()) {
+      createCastInVariableDeclaration(project, psiVariable);
+    }
+  }
+
+  private static void createCastInVariableDeclaration(Project project, PsiVariable psiVariable) {
+    final PsiExpression initializer = psiVariable.getInitializer();
+    LOG.assertTrue(initializer != null);
+    final PsiType type = psiVariable.getType();
+    final PsiType initializerType = initializer.getType();
+    if (initializerType != null && !TypeConversionUtil.isAssignable(type, initializerType)) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpression castExpr =
+        elementFactory.createExpressionFromText("(" +psiVariable.getType().getCanonicalText()+ ")" + initializer.getText(), psiVariable);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(initializer.replace(castExpr));
+    }
   }
 
   private static Runnable introduce(final Project project,

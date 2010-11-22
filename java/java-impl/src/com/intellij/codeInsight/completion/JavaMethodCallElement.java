@@ -42,14 +42,16 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private final PsiMethod myMethod;
   private final boolean myCanImportStatic;
   private boolean myShouldImportStatic;
+  private final boolean myMergedOverloads;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
-    this(method, false);
+    this(method, false, false);
   }
 
-  public JavaMethodCallElement(PsiMethod method, boolean canImportStatic) {
+  public JavaMethodCallElement(PsiMethod method, boolean canImportStatic, boolean mergedOverloads) {
     super(method, method.getName());
     myMethod = method;
+    myMergedOverloads = mergedOverloads;
     myContainingClass = method.getContainingClass();
     if (myContainingClass == null) {
       LOG.error(method.getName());
@@ -155,10 +157,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     PsiExpression expression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getOffset(refStart), PsiExpression.class, false);
     if (expression == null) return true;
 
-    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expression, true);
-    if (expectedTypes == null) return true;
-
-    for (final ExpectedTypeInfo type : expectedTypes) {
+    for (final ExpectedTypeInfo type : ExpectedTypesProvider.getExpectedTypes(expression, true)) {
       if (type.isInsertExplicitTypeParams()) {
         final String typeParams = getTypeParamsText(type.getType());
         if (typeParams == null) {
@@ -236,12 +235,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);
 
-
-    final String params = getUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE) == null
-                          ? PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
+    final String params = myMergedOverloads
+                          ? "(...)"
+                          : PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
                                                        PsiFormatUtil.SHOW_PARAMETERS,
-                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
-                          : "(...)";
+                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
     if (myShouldImportStatic && StringUtil.isNotEmpty(className)) {
       presentation.setTailText(params + " in " + className);
     } else {

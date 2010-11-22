@@ -296,23 +296,20 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
     highligtClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
-
-    checkReferenceList(myHolder, typeDefinition.getExtendsClause(), true, GroovyBundle.message("no.interface.expected.here"),
-                       ExtendsImplementsFix.MOVE_TO_IMPLEMENTS_LIST);
-    checkReferenceList(myHolder, typeDefinition.getImplementsClause(), false, GroovyBundle.message("no.class.expected.here"),
-                       ExtendsImplementsFix.MOVE_TO_EXTENDS_LIST);
   }
 
   private static void checkReferenceList(AnnotationHolder holder,
                                          GrReferenceList list,
-                                         boolean isInterface,
+                                         boolean interfaceExpected,
                                          String message,
                                          IntentionAction fix) {
     if (list == null) return;
     for (GrCodeReferenceElement refElement : list.getReferenceElements()) {
       final PsiElement psiClass = refElement.resolve();
-      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() == isInterface) {
-        holder.createErrorAnnotation(refElement, message).registerFix(fix);
+      if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() != interfaceExpected) {
+        if (fix != null) {
+          holder.createErrorAnnotation(refElement, message).registerFix(fix);
+        }
       }
     }
   }
@@ -1139,8 +1136,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     else if (typeDefinition.isAnonymous()) {
       if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
-        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(),
-                                     GroovyBundle.message("anonymous.classes.are.not.supported", configUtils.getSDKVersion(typeDefinition)));
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.are.not.supported",
+                                                                                                    configUtils
+                                                                                                      .getSDKVersion(typeDefinition)));
       }
     }
     else if (typeDefinition.getContainingClass() != null && !(typeDefinition instanceof GrEnumTypeDefinition)) {
@@ -1153,6 +1151,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
 
+
+    if (typeDefinition.isInterface()) {
+      checkReferenceList(holder, extendsClause, true, GroovyBundle.message("no.interface.expected.here"),null);
+      if (implementsClause != null) {
+        holder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"));
+      }
+    }
+    else {
+      checkReferenceList(holder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"),
+                         ExtendsImplementsFix.MOVE_TO_IMPLEMENTS_LIST);
+      checkReferenceList(holder, implementsClause, true, GroovyBundle.message("no.class.expected.here"),
+                         ExtendsImplementsFix.MOVE_TO_EXTENDS_LIST);
+    }
+
+    if (extendsClause != null) {
+      checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
+    }
+
+    /*
     if (implementsClause != null) {
       checkForImplementingClass(holder, extendsClause, implementsClause, ((GrTypeDefinition)implementsClause.getParent()));
     }
@@ -1160,6 +1177,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (extendsClause != null) {
       checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
     }
+    */
 
     checkForWildCards(holder, extendsClause);
     checkForWildCards(holder, implementsClause);

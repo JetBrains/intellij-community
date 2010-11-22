@@ -54,7 +54,7 @@ public class EditorFragmentComponent extends JPanel {
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
     int y1 = p1.y;
     int y2 = p2.y;
-    int height = y2 - y1;
+    int height = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
     LOG.assertTrue(height > 0, "Height: " + height + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
     int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
