@@ -20,7 +20,8 @@
 package com.intellij.util.io.zip;
 
 
-import java.io.ByteArrayOutputStream;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
@@ -367,7 +368,7 @@ class JBZipOutputStream {
    * @throws IOException on error
    * @since 1.14
    */
-  private final ByteArrayOutputStream myBuffer = new ByteArrayOutputStream();
+  private final BufferExposingByteArrayOutputStream myBuffer = new BufferExposingByteArrayOutputStream();
 
   private void writeOut(byte[] data, int offset, int length) throws IOException {
     myBuffer.write(data, offset, length);
@@ -378,7 +379,7 @@ class JBZipOutputStream {
   }
 
   private void flushBuffer() throws IOException {
-    raf.write(myBuffer.toByteArray());
+    raf.write(myBuffer.getInternalBuffer(), 0, myBuffer.size());
     myBuffer.reset();
   }
 
@@ -397,10 +398,9 @@ class JBZipOutputStream {
       entry.setTime(System.currentTimeMillis());
     }
 
-    final byte[] outputBytes;
     if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.setLevel(level);
-      final ByteArrayOutputStream compressedBytesStream = new ByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream compressedBytesStream = new BufferExposingByteArrayOutputStream();
       final DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def);
       try {
         stream.write(bytes);
@@ -409,16 +409,16 @@ class JBZipOutputStream {
         stream.close();
       }
 
-      final byte[] compressedBytes = compressedBytesStream.toByteArray();
-      entry.setCompressedSize(compressedBytes.length);
-      outputBytes = compressedBytes;
+      final int length = compressedBytesStream.size();
+      entry.setCompressedSize(length);
+      writeLocalFileHeader(entry);
+      writeOut(compressedBytesStream.getInternalBuffer(), 0, length);
     }
     else {
       entry.setCompressedSize(bytes.length);
-      outputBytes = bytes;
+      writeLocalFileHeader(entry);
+      writeOut(bytes);
     }
 
-    writeLocalFileHeader(entry);
-    writeOut(outputBytes);
   }
 }

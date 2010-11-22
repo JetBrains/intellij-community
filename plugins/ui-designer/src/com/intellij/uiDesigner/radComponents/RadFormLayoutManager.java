@@ -19,6 +19,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -46,7 +47,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -914,7 +918,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     // FormLayout may have been loaded with a different classloader, so we need to create a copy through serialization
     Object copy;
     try {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
       ObjectOutputStream os = new ObjectOutputStream(baos);
       try {
         os.writeObject(original);
@@ -923,7 +927,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
         os.close();
       }
 
-      InputStream bais = new ByteArrayInputStream(baos.toByteArray());
+      InputStream bais = new ByteArrayInputStream(baos.getInternalBuffer(), 0, baos.size());
       ObjectInputStream is = new ObjectInputStream(bais);
       try {
         copy = is.readObject();

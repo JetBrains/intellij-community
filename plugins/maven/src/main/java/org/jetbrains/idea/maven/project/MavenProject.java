@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -78,14 +79,13 @@ public class MavenProject {
   public void write(@NotNull DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
-    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+    BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
     ObjectOutputStream os = new ObjectOutputStream(bs);
     try {
       os.writeObject(myState);
 
-      byte[] bytes = bs.toByteArray();
-      out.writeInt(bytes.length);
-      out.write(bytes);
+      out.writeInt(bs.size());
+      out.write(bs.getInternalBuffer(), 0, bs.size());
     }
     finally {
       os.close();
