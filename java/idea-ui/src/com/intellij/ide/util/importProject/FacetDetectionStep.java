@@ -22,6 +22,7 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.facet.impl.autodetecting.FacetDetectorForWizardRegistry;
 import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
+import com.intellij.facet.impl.autodetecting.FileContentPattern;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeComponent;
 import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
@@ -36,7 +37,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -146,14 +146,9 @@ public abstract class FacetDetectionStep extends AbstractStepWithProgress<Map<Mo
         final Ref<Boolean> hasDetector = Ref.create(false);
         //noinspection unchecked
         facetType.registerDetectors(new FacetDetectorRegistryEx(new FacetDetectorForWizardRegistry() {
-          public void register(@NotNull FileType fileType,
-                               @NotNull VirtualFileFilter virtualFileFilter,
-                               @NotNull FacetDetector facetDetector) {
-            hasDetector.set(true);
-          }
 
           public void register(FileType fileType,
-                               @NotNull VirtualFileFilter virtualFileFilter,
+                               @NotNull FileContentPattern fileContentPattern,
                                FacetDetector facetDetector,
                                UnderlyingFacetSelector underlyingFacetSelector) {
             hasDetector.set(true);

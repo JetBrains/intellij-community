@@ -179,18 +179,35 @@ public class CompilerUtil {
 
   @NotNull
   public static LanguageLevel getApplicableLanguageLevel(String versionString, @NotNull LanguageLevel languageLevel) {
-    final boolean is5OrNewer = isOfVersion(versionString, "1.5")
-                                 || isOfVersion(versionString, "5.0")
-                                 || isOfVersion(versionString, "1.6.")
-                                 || isOfVersion(versionString, "1.7.");
+    final boolean is8OrNewer = isOfVersion(versionString, "1.8") || isOfVersion(versionString, "8.0");
+    final boolean is7OrNewer = is8OrNewer || isOfVersion(versionString, "1.7") || isOfVersion(versionString, "7.0");
+    final boolean is6OrNewer = is7OrNewer || isOfVersion(versionString, "1.6") || isOfVersion(versionString, "6.0");
+    final boolean is5OrNewer = is6OrNewer || isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0");
+    final boolean is4OrNewer = is5OrNewer || isOfVersion(versionString, "1.4");
+    final boolean is3OrNewer = is4OrNewer || isOfVersion(versionString, "1.3");
+    final boolean is2OrNewer = is3OrNewer || isOfVersion(versionString, "1.2");
+    final boolean is1OrNewer = is2OrNewer || isOfVersion(versionString, "1.0") || isOfVersion(versionString, "1.1");
+    
+    if (!is1OrNewer) {
+      // unknown jdk version, cannot say anything about the corresponding language level, so leave it unchanged
+      return languageLevel;
+    }
+    // now correct the language level to be not higher than jdk used to compile
+    if (LanguageLevel.JDK_1_8.equals(languageLevel) && !is8OrNewer) {
+      languageLevel = LanguageLevel.JDK_1_7;
+    }
+    if (LanguageLevel.JDK_1_7.equals(languageLevel) && !is7OrNewer) {
+      languageLevel = LanguageLevel.JDK_1_6;
+    }
+    if (LanguageLevel.JDK_1_6.equals(languageLevel) && !is6OrNewer) {
+      languageLevel = LanguageLevel.JDK_1_5;
+    }
     if (LanguageLevel.JDK_1_5.equals(languageLevel) && !is5OrNewer) {
       languageLevel = LanguageLevel.JDK_1_4;
     }
-
-    if (LanguageLevel.JDK_1_4.equals(languageLevel) && !isOfVersion(versionString, "1.4") && !is5OrNewer) {
+    if (LanguageLevel.JDK_1_4.equals(languageLevel) && !is4OrNewer) {
       languageLevel = LanguageLevel.JDK_1_3;
     }
-
     return languageLevel;
   }
 

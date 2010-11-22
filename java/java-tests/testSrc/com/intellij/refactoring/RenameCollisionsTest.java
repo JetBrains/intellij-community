@@ -169,6 +169,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     doTest("C");
   }
 
+  public void testRenameStaticMethodTypeParameter() throws Exception {
+    doTest("E");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

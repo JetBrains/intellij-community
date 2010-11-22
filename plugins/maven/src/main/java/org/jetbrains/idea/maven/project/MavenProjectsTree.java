@@ -64,9 +64,9 @@ public class MavenProjectsTree {
   private final List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
   private final Map<MavenProject, MavenProjectTimestamp> myTimestamps = new THashMap<MavenProject, MavenProjectTimestamp>();
-  private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
+  private final MavenWorkspaceMap myWorkspaceMap = new MavenWorkspaceMap();
   private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new THashMap<MavenId, MavenProject>();
-  private final Map<MavenId, File> myMavenIdToFileMapping = new THashMap<MavenId, File>();
+  private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new THashMap<VirtualFile, MavenProject>();
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new THashMap<MavenProject, List<MavenProject>>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new THashMap<MavenProject, MavenProject>();
 
@@ -139,8 +139,7 @@ public class MavenProjectsTree {
         result.add(project);
         tree.myTimestamps.put(project, timestamp);
         tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
-        tree.myMavenIdToProjectMapping.put(project.getMavenId(), project);
-        tree.myMavenIdToFileMapping.put(project.getMavenId(), new File(project.getFile().getPath()));
+        tree.fillIDMaps(project);
         tree.myAggregatorToModuleMapping.put(project, modules);
         for (MavenProject eachModule : modules) {
           tree.myModuleToAggregatorMapping.put(eachModule, project);
@@ -527,8 +526,7 @@ public class MavenProjectsTree {
       writeLock();
       try {
         if (!isNew) {
-          myMavenIdToProjectMapping.remove(mavenProject.getMavenId());
-          myMavenIdToFileMapping.remove(mavenProject.getMavenId());
+          clearIDMaps(mavenProject);
         }
       }
       finally {
@@ -540,8 +538,7 @@ public class MavenProjectsTree {
       writeLock();
       try {
         myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
-        myMavenIdToProjectMapping.put(mavenProject.getMavenId(), mavenProject);
-        myMavenIdToFileMapping.put(mavenProject.getMavenId(), new File(mavenProject.getFile().getPath()));
+        fillIDMaps(mavenProject);
       }
       finally {
         writeUnlock();
@@ -752,8 +749,7 @@ public class MavenProjectsTree {
       }
       myTimestamps.remove(project);
       myVirtualFileToProjectMapping.remove(project.getFile());
-      myMavenIdToProjectMapping.remove(project.getMavenId());
-      myMavenIdToFileMapping.remove(project.getMavenId());
+      clearIDMaps(project);
       myAggregatorToModuleMapping.remove(project);
       myModuleToAggregatorMapping.remove(project);
     }
@@ -762,6 +758,18 @@ public class MavenProjectsTree {
     }
 
     updateContext.deleted(project);
+  }
+
+  private void fillIDMaps(MavenProject mavenProject) {
+    MavenId id = mavenProject.getMavenId();
+    myWorkspaceMap.register(id, new File(mavenProject.getFile().getPath()));
+    myMavenIdToProjectMapping.put(id, mavenProject);
+  }
+
+  private void clearIDMaps(MavenProject mavenProject) {
+    MavenId id = mavenProject.getMavenId();
+    myWorkspaceMap.unregister(id);
+    myMavenIdToProjectMapping.remove(id);
   }
 
   private void connect(MavenProject newAggregator, MavenProject project) {
@@ -865,6 +873,7 @@ public class MavenProjectsTree {
     }
   }
 
+  @Nullable
   public MavenProject findProject(VirtualFile f) {
     readLock();
     try {
@@ -875,6 +884,7 @@ public class MavenProjectsTree {
     }
   }
 
+  @Nullable
   public MavenProject findProject(MavenId id) {
     readLock();
     try {
@@ -885,14 +895,15 @@ public class MavenProjectsTree {
     }
   }
 
+  @Nullable
   public MavenProject findProject(MavenArtifact artifact) {
     return findProject(artifact.getMavenId());
   }
 
-  private Map<MavenId, File> getProjectIdToFileMapping() {
+  private MavenWorkspaceMap getWorkspaceMap() {
     readLock();
     try {
-      return new THashMap<MavenId, File>(myMavenIdToFileMapping);
+      return myWorkspaceMap.copy();
     }
     finally {
       readUnlock();
@@ -984,7 +995,7 @@ public class MavenProjectsTree {
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(getProjectIdToFileMapping(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process);
 
     try {
       process.checkCanceled();
@@ -1106,7 +1117,7 @@ public class MavenProjectsTree {
                                   @NotNull MavenProgressIndicator process,
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
-    embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
+    embedder.customizeForStrictResolve(getWorkspaceMap(), console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);

@@ -89,6 +89,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return group;
   }
 
+  @Override
   @Nullable
   public String getGeneratedName() {
     if (MAIN_CLASS_NAME == null) {
@@ -119,6 +120,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   public String suggestedName() {
+    if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
+      return getName();
+    }
     return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
   }
 

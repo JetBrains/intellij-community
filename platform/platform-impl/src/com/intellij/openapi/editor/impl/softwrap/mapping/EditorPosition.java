@@ -22,12 +22,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Utility class that is assumed to be used for internal purposes only.
  * <p/>
- * Allows to hold complete information about particular document position and provides utility methods for working with it.
+ * Allows to hold complete information about particular position of document exposed via IJ editor and provides utility
+ * methods for working with it.
  *
  * @author Denis Zhdanov
  * @since Sep 1, 2010 12:16:38 PM
  */
-class ProcessingContext implements Cloneable {
+class EditorPosition implements Cloneable {
 
   public int logicalLine;
   public int logicalColumn;
@@ -47,22 +48,24 @@ class ProcessingContext implements Cloneable {
   private final Editor myEditor;
   private final EditorTextRepresentationHelper myRepresentationHelper;
 
-  ProcessingContext(@NotNull Editor editor, @NotNull EditorTextRepresentationHelper representationHelper) {
+  EditorPosition(@NotNull Editor editor, @NotNull EditorTextRepresentationHelper representationHelper) {
     myEditor = editor;
     myRepresentationHelper = representationHelper;
   }
 
-  ProcessingContext(@NotNull LogicalPosition logical, int offset, @NotNull Editor editor,
-                    @NotNull EditorTextRepresentationHelper representationHelper)
+  EditorPosition(@NotNull LogicalPosition logical,
+                 int offset,
+                 @NotNull Editor editor,
+                 @NotNull EditorTextRepresentationHelper representationHelper)
   {
     this(logical, logical.toVisualPosition(), offset, editor, representationHelper);
   }
 
-  ProcessingContext(@NotNull LogicalPosition logical,
-                    @NotNull VisualPosition visual,
-                    int offset,
-                    @NotNull Editor editor,
-                    @NotNull EditorTextRepresentationHelper representationHelper)
+  EditorPosition(@NotNull LogicalPosition logical,
+                 @NotNull VisualPosition visual,
+                 int offset,
+                 @NotNull Editor editor,
+                 @NotNull EditorTextRepresentationHelper representationHelper)
   {
     myEditor = editor;
     myRepresentationHelper = representationHelper;
@@ -102,13 +105,14 @@ class ProcessingContext implements Cloneable {
     logicalLine++;
     logicalColumn = 0;
     x = 0;
+    offset++;
   }
 
   /**
    * Calculates width in columns for the collapsed symbols of the given fold region and delegates further processing
    * to {@link #advance(FoldRegion, int)}.
    *
-   * @param foldRegion    fold region which end offset should be pointed by the current context
+   * @param foldRegion    fold region which end offset should be pointed by the current position
    */
   public void advance(@NotNull FoldRegion foldRegion) {
     Document document = myEditor.getDocument();
@@ -119,9 +123,9 @@ class ProcessingContext implements Cloneable {
   }
 
   /**
-   * Updates state of the current processing context in order to point it to the end offset of the given fold region.
+   * Updates state of the current processing position in order to point it to the end offset of the given fold region.
    *
-   * @param foldRegion                        fold region which end offset should be pointed by the current context
+   * @param foldRegion                        fold region which end offset should be pointed by the current position
    * @param collapsedSymbolsWidthInColumns    identifies collapsed text width in columns, i.e. width of the last collapsed logical line
    *                                          in columns
    */
@@ -149,26 +153,26 @@ class ProcessingContext implements Cloneable {
     }
   }
 
-  public void from(@NotNull ProcessingContext context) {
-    logicalLine = context.logicalLine;
-    logicalColumn = context.logicalColumn;
-    visualLine = context.visualLine;
-    visualColumn = context.visualColumn;
-    offset = context.offset;
-    softWrapLinesBefore = context.softWrapLinesBefore;
-    softWrapLinesCurrent = context.softWrapLinesCurrent;
-    softWrapColumnDiff = context.softWrapColumnDiff;
-    foldedLines = context.foldedLines;
-    foldingColumnDiff = context.foldingColumnDiff;
-    x = context.x;
-    symbol = context.symbol;
-    symbolWidthInColumns = context.symbolWidthInColumns;
-    symbolWidthInPixels = context.symbolWidthInPixels;
+  public void from(@NotNull EditorPosition position) {
+    logicalLine = position.logicalLine;
+    logicalColumn = position.logicalColumn;
+    visualLine = position.visualLine;
+    visualColumn = position.visualColumn;
+    offset = position.offset;
+    softWrapLinesBefore = position.softWrapLinesBefore;
+    softWrapLinesCurrent = position.softWrapLinesCurrent;
+    softWrapColumnDiff = position.softWrapColumnDiff;
+    foldedLines = position.foldedLines;
+    foldingColumnDiff = position.foldingColumnDiff;
+    x = position.x;
+    symbol = position.symbol;
+    symbolWidthInColumns = position.symbolWidthInColumns;
+    symbolWidthInPixels = position.symbolWidthInPixels;
   }
 
   @Override
-  protected ProcessingContext clone() {
-    ProcessingContext result = new ProcessingContext(myEditor, myRepresentationHelper);
+  protected EditorPosition clone() {
+    EditorPosition result = new EditorPosition(myEditor, myRepresentationHelper);
     result.logicalLine = logicalLine;
     result.logicalColumn = logicalColumn;
     result.visualLine = visualLine;
@@ -184,5 +188,13 @@ class ProcessingContext implements Cloneable {
     result.symbolWidthInColumns = symbolWidthInColumns;
     result.symbolWidthInPixels = symbolWidthInPixels;
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+      "visual position: (%d; %d); logical position: (%d; %d); offset: %d; soft wraps: before=%d, current=%d, column diff=%d; "
+      + "fold regions: lines=%d, column diff=%d", visualLine, visualColumn, logicalLine, logicalColumn, offset, softWrapLinesBefore,
+      softWrapLinesCurrent, softWrapColumnDiff, foldedLines, foldingColumnDiff);
   }
 }

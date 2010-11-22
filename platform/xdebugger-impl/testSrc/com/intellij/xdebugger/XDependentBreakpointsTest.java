@@ -58,9 +58,9 @@ public class XDependentBreakpointsTest extends XBreakpointsTestCase {
     load(element);
 
     XBreakpoint<?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
-    assertEquals(2, breakpoints.length);
-    XLineBreakpoint newMaster = (XLineBreakpoint)breakpoints[0];
-    XLineBreakpoint newSlave = (XLineBreakpoint)breakpoints[1];
+    assertEquals(3, breakpoints.length);
+    XLineBreakpoint newMaster = (XLineBreakpoint)breakpoints[1];
+    XLineBreakpoint newSlave = (XLineBreakpoint)breakpoints[2];
     assertEquals("file://master", newMaster.getFileUrl());
     assertEquals("file://slave", newSlave.getFileUrl());
     assertSame(newMaster, myDependentBreakpointManager.getMasterBreakpoint(newSlave));

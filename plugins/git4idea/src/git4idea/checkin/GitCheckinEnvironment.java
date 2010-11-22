@@ -58,81 +58,35 @@ import java.util.List;
  * Git environment for commit operations.
  */
 public class GitCheckinEnvironment implements CheckinEnvironment {
-  /**
-   * the logger
-   */
   private static final Logger log = Logger.getInstance(GitCheckinEnvironment.class.getName());
-  /**
-   * The project
-   */
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-"; // the file name prefix for commit message file
+  @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt"; // the file extension for commit message file
+
   private final Project myProject;
-  /**
-   * The project
-   */
-  private final GitVcsSettings mySettings;
-  /**
-   * The author for the next commit
-   */
-  private String myNextCommitAuthor = null;
-  /**
-   * If true, the next commit is amended
-   */
-  private boolean myNextCommitAmend;
-  /**
-   * The push option of the next commit
-   */
-  private Boolean myNextCommitIsPushed = null;
-  /**
-   * Dirty scope manager for the project
-   */
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  /**
-   * the file name prefix for commit message file
-   */
-  @NonNls private static final String GIT_COMMIT_MSG_FILE_PREFIX = "git-commit-msg-";
-  /**
-   * the file extension for commit message file
-   */
-  @NonNls private static final String GIT_COMMIT_MSG_FILE_EXT = ".txt";
+  private final GitVcsSettings mySettings;
+
+  private String myNextCommitAuthor = null; // The author for the next commit
+  private boolean myNextCommitAmend; // If true, the next commit is amended
+  private Boolean myNextCommitIsPushed = null; // The push option of the next commit
 
 
-  /**
-   * A constructor
-   *
-   * @param project           a project
-   * @param dirtyScopeManager a dirty scope manager
-   * @param settings          the vcs settings
-   */
-  public GitCheckinEnvironment(@NotNull Project project,
-                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
-                               final GitVcsSettings settings) {
+  public GitCheckinEnvironment(@NotNull Project project, @NotNull final VcsDirtyScopeManager dirtyScopeManager, final GitVcsSettings settings) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
     mySettings = settings;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean keepChangeListAfterCommit(ChangeList changeList) {
     return false;
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @param panel
-   * @param additionalDataConsumer
-   */
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
     return new GitCheckinOptions(myProject, panel.getRoots());
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     StringBuilder rc = new StringBuilder();
@@ -162,23 +116,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String getHelpId() {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public String getCheckinOperationName() {
     return GitBundle.getString("commit.action.name");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder) {

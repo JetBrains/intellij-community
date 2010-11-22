@@ -36,6 +36,7 @@ public class FileReferenceContextUtil {
 
   public static Map<String, PsiFileSystemItem> encodeFileReferences(PsiElement element) {
     final Map<String,PsiFileSystemItem> map = new HashMap<String, PsiFileSystemItem>();
+    if (isBinary(element)) return map;
     element.accept(new PsiRecursiveElementWalkingVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiReference[] refs = element.getReferences();
@@ -59,7 +60,14 @@ public class FileReferenceContextUtil {
     return map;
   }
 
+  private static boolean isBinary(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null || containingFile.getFileType().isBinary()) return true;
+    return false;
+  }
+
   public static void decodeFileReferences(PsiElement element) {
+    if (isBinary(element)) return;
     element.accept(new PsiRecursiveElementVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         final PsiFileSystemItem item = element.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
@@ -73,6 +81,7 @@ public class FileReferenceContextUtil {
   }
 
   public static void decodeFileReferences(PsiElement element, final Map<String, PsiFileSystemItem> map, final TextRange range) {
+    if (isBinary(element)) return;
     element.accept(new PsiRecursiveElementVisitor(true) {
       @Override public void visitElement(PsiElement element) {
         if (!range.intersects(element.getTextRange())) return;

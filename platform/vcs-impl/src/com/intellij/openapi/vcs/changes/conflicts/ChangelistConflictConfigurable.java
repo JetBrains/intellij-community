@@ -20,7 +20,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -50,7 +52,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   @BindControl("HIGHLIGHT_NON_ACTIVE_CHANGELIST")
   private JCheckBox myHighlightNonActiveCheckBox;
 
-  private JList myIgnoredFiles;
+  private JBList myIgnoredFiles;
   private JButton myClearButton;
   private boolean myIgnoredFilesCleared;
 
@@ -73,6 +75,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
         myClearButton.setEnabled(false);
       }
     });
+
+    myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
   }
 
   public JComponent createComponent() {

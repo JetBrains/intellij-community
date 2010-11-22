@@ -39,9 +39,15 @@ import java.util.Set;
 public class GitChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#git4idea.changes.GitChangeProvider");
   private final Project myProject;
+  private final ChangeListManager myChangeListManager;
+  private FileDocumentManager myFileDocumentManager;
+  private final ProjectLevelVcsManager myVcsManager;
 
-  public GitChangeProvider(@NotNull Project project) {
+  public GitChangeProvider(@NotNull Project project, ChangeListManager changeListManager, FileDocumentManager fileDocumentManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
+    myChangeListManager = changeListManager;
+    myFileDocumentManager = fileDocumentManager;
+    myVcsManager = vcsManager;
   }
 
   /**
@@ -64,9 +70,10 @@ public class GitChangeProvider implements ChangeProvider {
     Collection<VirtualFile> roots = GitUtil.gitRootsForPaths(affected);
 
     try {
-      final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate);
+      final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate,
+                                                               myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
-        ChangeCollector c = new ChangeCollector(myProject, dirtyScope, root);
+        ChangeCollector c = new ChangeCollector(myProject, myChangeListManager, dirtyScope, root);
         final Collection<Change> changes = c.changes();
         holder.changed(changes);
         for (Change file : changes) {
@@ -79,7 +86,10 @@ public class GitChangeProvider implements ChangeProvider {
         holder.feedBuilder(builder);
       }
     } catch (VcsException e) {// most probably the error happened because git is not configured
-      GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
+      final GitVcs vcs = GitVcs.getInstance(myProject);
+      if (vcs != null) {
+        vcs.getExecutableValidator().showNotificationOrThrow(e);
+      }
     }
   }
 
@@ -87,11 +97,18 @@ public class GitChangeProvider implements ChangeProvider {
     private final Project myProject;
     private final Set<FilePath> myDirty;
     private final ChangeListManagerGate myAddGate;
+    private FileDocumentManager myFileDocumentManager;
+    private ProjectLevelVcsManager myVcsManager;
 
-    private MyNonChangedHolder(final Project project, final Set<FilePath> dirty, final ChangeListManagerGate addGate) {
+    private MyNonChangedHolder(final Project project,
+                               final Set<FilePath> dirty,
+                               final ChangeListManagerGate addGate,
+                               FileDocumentManager fileDocumentManager, ProjectLevelVcsManager vcsManager) {
       myProject = project;
       myDirty = dirty;
       myAddGate = addGate;
+      myFileDocumentManager = fileDocumentManager;
+      myVcsManager = vcsManager;
     }
 
     public void changed(final Collection<Change> changes) {
@@ -113,14 +130,12 @@ public class GitChangeProvider implements ChangeProvider {
 
     public void feedBuilder(final ChangelistBuilder builder) throws VcsException {
       final VcsKey gitKey = GitVcs.getKey();
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
       for (FilePath filePath : myDirty) {
         final VirtualFile vf = filePath.getVirtualFile();
         if (vf != null) {
-          if ((! FileStatus.ADDED.equals(myAddGate.getStatus(vf))) && fileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
-            final VirtualFile root = vcsManager.getVcsRootFor(vf);
+          if ((! FileStatus.ADDED.equals(myAddGate.getStatus(vf))) && myFileDocumentManager.isFileModifiedAndDocumentUnsaved(vf)) {
+            final VirtualFile root = myVcsManager.getVcsRootFor(vf);
             if (root != null) {
               final GitRevisionNumber beforeRevisionNumber = GitChangeUtils.loadRevision(myProject, root, "HEAD");
               builder.processChange(new Change(GitContentRevision.createRevision(vf, beforeRevisionNumber, myProject),

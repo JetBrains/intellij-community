@@ -429,7 +429,7 @@ public class FocusTrackback {
 
       if (eachTrackback.getRequestor() instanceof AbstractPopup) {
         FocusTrackback newTrackback = ((AbstractPopup)eachTrackback.getRequestor()).getFocusTrackback();
-        if (eachTrackback == newTrackback) break;
+        if (newTrackback == null || eachTrackback == newTrackback) break;
         if (eachTrackback == null || eachTrackback.isConsumed()) break;
 
         eachTrackback  = newTrackback;

@@ -1,36 +1,14 @@
 package com.intellij.codeInspection;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.reference.EntryPoint;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInspection.reference.SmartRefElementPointer;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.containers.HashMap;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
 public class EntryPointsConverterTest extends TestCase {
-  private boolean myUnregisterExtensionPoint = false;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    try {
-      Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
-    }
-    catch (IllegalArgumentException e) {
-      myUnregisterExtensionPoint = true;
-      Extensions.getRootArea().registerExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL, EntryPoint.class.getName());
-    }
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    if (myUnregisterExtensionPoint) {
-      Extensions.getRootArea().unregisterExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    }
-    super.tearDown();
-  }
-
   public void testMethodConverter1() throws Exception {
     doTest("method", "String java.lang.String.replace(char oldChar, char newChar)", "java.lang.String String replace(char oldChar, char newChar)");
   }
@@ -50,11 +28,11 @@ public class EntryPointsConverterTest extends TestCase {
   private static void doTest(String type, String fqName, String expectedFQName) throws Exception {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
-    final EntryPointsManagerImpl manager = new EntryPointsManagerImpl(null);
-    manager.convert(entryPoints);
+    final HashMap<String, SmartRefElementPointer> persistentEntryPoints = new HashMap<String, SmartRefElementPointer>();
+    EntryPointsManagerImpl.convert(entryPoints, persistentEntryPoints);
 
     final Element testElement = new Element("comp");
-    manager.writeExternal(testElement);
+    EntryPointsManagerImpl.writeExternal(testElement, persistentEntryPoints, new JDOMExternalizableStringList());
 
     final Element expectedEntryPoints = setUpEntryPoint(type, expectedFQName);
     expectedEntryPoints.setAttribute("version", "2.0");

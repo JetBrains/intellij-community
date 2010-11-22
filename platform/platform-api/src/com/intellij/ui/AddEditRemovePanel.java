@@ -15,6 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +36,8 @@ import java.util.List;
 /**
  * @author mike
  */
-public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
-  private JTable myTable;
+public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
+  private JBTable myTable;
   private JButton myAddButton;
   private JButton myEditButton;
   private JButton myRemoveButton;
@@ -60,6 +63,11 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
 
   protected String getLabelText(){
     return null;
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
   }
 
   protected JComponent createMainComponent(){
@@ -216,7 +224,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     }
   }
 
-  public JTable getTable() {
+  public JBTable getTable() {
     return myTable;
   }
 

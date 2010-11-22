@@ -56,8 +56,9 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
-    myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), null,
+    myTreePanel = new XDebuggerTreePanel(session, session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP);
+
     ActionManager actionManager = ActionManager.getInstance();
 
     CustomShortcutSet insertShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0));
@@ -73,6 +74,9 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
     DnDManager.getInstance().registerTarget(this, tree);
     myRootNode = new WatchesRootNode(tree, sessionData.getWatchExpressions());
     tree.setRoot(myRootNode, false);
+
+    myTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
+
   }
 
   public void addWatchExpression(@NotNull String expression, int index) {

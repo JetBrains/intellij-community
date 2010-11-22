@@ -55,6 +55,13 @@ public class GitUIUtil {
   private GitUIUtil() { }
 
   /**
+   * Displays a "success"-notification.
+   */
+  public static void notifySuccess(Project project, String title, String description) {
+    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION), project);
+  }
+
+  /**
    * @return a list cell renderer for virtual files (it renders presentable URL)
    * @param listCellRenderer
    */

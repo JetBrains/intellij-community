@@ -39,7 +39,7 @@ import java.util.Collections;
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
- *
+ * <p><p>
  * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it  
  * from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()} method
  *
@@ -83,6 +83,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @NotNull
   public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
     return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
+  }
+
+  /**
+   * Default line breakpoints cannot be supported
+   */
+  @Override
+  public final P createDefaultBreakpointProperties() {
+    return null;
   }
 
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {

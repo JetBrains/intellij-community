@@ -97,7 +97,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final InternalDecoratorListener myInternalDecoratorListener;
 
   private boolean myEditorWasActive;
-  private Boolean myEditorActive;
 
   private final ActiveStack myActiveStack;
   private final SideStack mySideStack;
@@ -210,7 +209,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myFocusListener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        myEditorActive = null;
         if ("focusOwner".equals(evt.getPropertyName())) {
           myUpdateHeadersAlarm.cancelAllRequests();
           myUpdateHeadersAlarm.addRequest(myUpdateHeadersRunnable, 50);
@@ -1351,13 +1349,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public boolean isEditorComponentActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myEditorActive == null) {
-      Component owner = getFocusManager().getFocusOwner();
-      EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, owner);
-      myEditorActive = splitters != null;
-    }
-
-    return myEditorActive;
+    Component owner = getFocusManager().getFocusOwner();
+    EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, owner);
+    return splitters != null;
   }
 
   ToolWindowAnchor getToolWindowAnchor(final String id) {

@@ -339,9 +339,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized void close() throws IOException {
     synchronized (ourLock) {
-      myAppendCacheFlusher.stop();
-      myAppendCache.clear();
       try {
+        myAppendCacheFlusher.stop();
+        myAppendCache.clear();
         myValueStorage.dispose();
       }
       finally {

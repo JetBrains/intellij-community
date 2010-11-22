@@ -57,7 +57,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private IconButton myCancelButton;
   private MouseChecker myCancelOnMouseOutCallback;
   private boolean myCancelOnWindow;
-  private ActiveIcon myTitleIcon = new ActiveIcon(new EmptyIcon(0));
+  private ActiveIcon myTitleIcon = new ActiveIcon(EmptyIcon.ICON_0);
   private boolean myCancelKeyEnabled = true;
   private boolean myLocateByContent = false;
   private boolean myPlacewithinScreen = true;

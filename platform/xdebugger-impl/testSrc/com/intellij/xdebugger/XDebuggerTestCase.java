@@ -88,6 +88,11 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
+
+    @Override
+    public MyBreakpointProperties createDefaultBreakpointProperties() {
+      return new MyBreakpointProperties("default");
+    }
   }
 
   protected static class MyBreakpointProperties extends XBreakpointProperties<MyBreakpointProperties> {

@@ -23,6 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
@@ -175,10 +177,13 @@ public class SpellCheckerManager {
     return !spellChecker.isCorrect(word);
   }
 
-  public void acceptWordAsCorrect(@NotNull String word) {
+  public void acceptWordAsCorrect(@NotNull String word, Project project) {
     final String transformed = spellChecker.getTransformation().transform(word);
     if (transformed != null) {
       userDictionary.addToDictionary(transformed);
+      final PsiModificationTrackerImpl modificationTracker =
+        (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
+      modificationTracker.incCounter();
     }
   }
 

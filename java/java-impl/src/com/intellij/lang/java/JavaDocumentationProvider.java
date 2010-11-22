@@ -33,6 +33,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -581,7 +582,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
                                                       PsiFormatUtil.SHOW_TYPE);
-        createElementLink(sb, element, str);
+        createElementLink(sb, element, StringUtil.escapeXml(str));
       }
 
       return CodeInsightBundle.message("javadoc.candiates", text, sb);

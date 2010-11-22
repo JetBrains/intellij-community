@@ -30,6 +30,9 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
       myNegativePanel = new MyAddDeleteListPanel("Exceptions:", "Enter a substring of a console line you don't want to fold:");
       myMainComponent.add(myPositivePanel);
       myMainComponent.add(myNegativePanel);
+
+      myPositivePanel.getEmptyText().setText("Fold nothing");
+      myNegativePanel.getEmptyText().setText("No exceptions");
     }
     return myMainComponent;
   }

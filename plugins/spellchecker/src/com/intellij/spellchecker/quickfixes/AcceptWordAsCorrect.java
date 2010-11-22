@@ -52,7 +52,7 @@ public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
     final String w = ProblemDescriptionNode.extractHighlightedText(descriptor, descriptor.getPsiElement());
-    spellCheckerManager.acceptWordAsCorrect(w);
+    spellCheckerManager.acceptWordAsCorrect(w, project);
   }
 
   public Icon getIcon(int flags) {

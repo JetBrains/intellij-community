@@ -9,7 +9,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import java.util.Collection;
 import java.util.Set;
 
-public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter {
+public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter implements MavenSmartConverter<String> {
   @Override
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())) return false;
@@ -21,6 +21,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     return manager.getGroupIds();
   }
 
+  @Override
   public Collection<String> getSmartVariants(ConvertContext convertContext) {
     Set<String> groupIds = new HashSet<String>();
     String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();

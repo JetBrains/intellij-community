@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -78,8 +79,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JLabel myTargetClassLabel;
   private JCheckBox mySpecifyType;
   private Map<String, PsiType> myTypes = null;
-  private PsiClass myTargetClass;
-  private PsiClass myDefaultTargetClass;
+  @Nullable private PsiClass myTargetClass;
+  @Nullable private PsiClass myDefaultTargetClass;
 
   public GrIntroduceConstantDialog(GrIntroduceContext context,
                                    GrIntroduceHandlerBase.Validator validator,
@@ -356,7 +357,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     final String targetClassName = getTargetClassName();
     PsiClass newClass = myDefaultTargetClass;
 
-    if (!"".equals(targetClassName) && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
+    if (myDefaultTargetClass == null ||
+        !"".equals(targetClassName) && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
       final Module module = ModuleUtil.findModuleForPsiElement(myContext.expression);
       newClass = JavaPsiFacade.getInstance(myContext.project).findClass(targetClassName, module.getModuleScope());
       if (newClass == null) {
@@ -405,17 +407,28 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Nullable
   private String check() {
-    if (!GroovyFileType.GROOVY_LANGUAGE.equals(myTargetClass.getLanguage())) {
+    if (myTargetClass != null && !GroovyFileType.GROOVY_LANGUAGE.equals(myTargetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
 
     String fieldName = getName();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myContext.project);
+
     if ("".equals(fieldName)) {
       return RefactoringBundle.message("no.field.name.specified");
     }
 
-    else if (!JavaPsiFacade.getInstance(myContext.project).getNameHelper().isIdentifier(fieldName)) {
+    else if (!facade.getNameHelper().isIdentifier(fieldName)) {
       return RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
+    }
+
+    final String targetClassName = getTargetClassName();
+    if (myDefaultTargetClass == null && "".equals(targetClassName)) {
+      return GroovyRefactoringBundle.message("target.class.is.not.specified");
+    }
+
+    if (myTargetClass instanceof GroovyScriptClass) {
+      return GroovyRefactoringBundle.message("target.class.must.not.be.script");
     }
 
     return null;

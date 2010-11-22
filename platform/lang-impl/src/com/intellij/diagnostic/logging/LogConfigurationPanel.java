@@ -67,6 +67,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   public LogConfigurationPanel() {
     myModel = new ListTableModel<LogFileOptions>(IS_SHOW, FILE, IS_SKIP_CONTENT);
     myFilesTable = new TableView<LogFileOptions>(myModel);
+    myFilesTable.getEmptyText().setText(DiagnosticBundle.message("log.monitor.no.files"));
+
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
     final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
 

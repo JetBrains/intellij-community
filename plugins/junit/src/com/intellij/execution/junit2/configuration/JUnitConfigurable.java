@@ -51,10 +51,17 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 
 public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
+  private static final List<TIntArrayList> ourEnabledFields = Arrays.asList(
+    new TIntArrayList(new int[]{0}),
+    new TIntArrayList(new int[]{1}),
+    new TIntArrayList(new int[]{1, 2}),
+    new TIntArrayList(new int[]{3})
+  );
+
   // Garbage
   private JRadioButton myAllInPackageButton;
   private JRadioButton myClassButton;
@@ -75,12 +82,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myModuleWDScope;
   private TextFieldWithBrowseButton myPatternTextField;
 
-  private static final ArrayList<TIntArrayList> ourEnabledFields = new ArrayList<TIntArrayList>(Arrays.asList(new TIntArrayList[]{
-    new TIntArrayList(new int[]{0}),
-    new TIntArrayList(new int[]{1}),
-    new TIntArrayList(new int[]{1, 2}),
-    new TIntArrayList(new int[]{3})
-  }));
   private final ConfigurationModuleSelector myModuleSelector;
   private final JRadioButton[] myRadioButtons = new JRadioButton[4];
   private final LabeledComponent[] myTestLocations = new LabeledComponent[4];
@@ -217,8 +218,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     }
   }
 
+  public JComboBox getModulesComponent() {
+    return myModule.getComponent();
+  }
 
-  public JComboBox getModulesComponent() { return myModule.getComponent(); }
   public ConfigurationModuleSelector getModuleSelector() {
     return myModuleSelector;
   }

@@ -898,8 +898,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           x += charWidth;
           if (x >= px) {
             onSoftWrapDrawing = true;
-            break outer;
           }
+          break outer;
         }
         else {
           CharSequence softWrapText = softWrap.getText();

@@ -16,10 +16,15 @@
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.ActionCallback;
@@ -27,13 +32,14 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MutualMap;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -379,6 +385,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private String myId;
     private DockContainer myContainer;
 
+    private VerticalBox myNorthPanel = new VerticalBox();
+    private Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
+
     private DockWindow(String id, Project project, DockContainer container) {
       super(project);
       myId = id;
@@ -388,7 +397,13 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
 
       NonOpaquePanel comp = new NonOpaquePanel(new BorderLayout());
-      comp.add(myContainer.getComponent(), BorderLayout.CENTER);
+
+      NonOpaquePanel center = new NonOpaquePanel(new BorderLayout(0, 2));
+      center.add(myNorthPanel, BorderLayout.NORTH);
+      center.add(myContainer.getComponent(), BorderLayout.CENTER);
+
+      comp.add(center, BorderLayout.CENTER);
+
       comp.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
 
       setComponent(comp);
@@ -409,6 +424,63 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
           });
         }
       }, this);
+
+      Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).addExtensionPointListener(
+        new ExtensionPointListener<IdeRootPaneNorthExtension>() {
+          @Override
+          public void extensionAdded(@NotNull IdeRootPaneNorthExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+            updateNorthPanel();
+          }
+
+          @Override
+          public void extensionRemoved(@NotNull IdeRootPaneNorthExtension extension, @Nullable PluginDescriptor pluginDescriptor) {
+            updateNorthPanel();
+          }
+
+        });
+
+      UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+        @Override
+        public void uiSettingsChanged(UISettings source) {
+          updateNorthPanel();
+        }
+      }, this);
+
+      updateNorthPanel();
+    }
+
+
+    @Override
+    protected IdeRootPaneNorthExtension getNorthExtension(String key) {
+      return myNorthExtensions.get(key);
+    }
+
+    private void updateNorthPanel() {
+      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR);
+
+      IdeRootPaneNorthExtension[] extensions = Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
+      HashSet<String> processedKeys = new HashSet<String>();
+      for (IdeRootPaneNorthExtension each : extensions) {
+        processedKeys.add(each.getKey());
+        if (myNorthExtensions.containsKey(each.getKey())) continue;
+        IdeRootPaneNorthExtension toInstall = each.copy();
+        myNorthExtensions.put(toInstall.getKey(), toInstall);
+        myNorthPanel.add(toInstall.getComponent());
+      }
+
+      Iterator<String> existing = myNorthExtensions.keySet().iterator();
+      while (existing.hasNext()) {
+        String each = existing.next();
+        if (processedKeys.contains(each)) continue;
+
+        IdeRootPaneNorthExtension toRemove = myNorthExtensions.get(each);
+        myNorthPanel.remove(toRemove.getComponent());
+        existing.remove();
+        Disposer.dispose(toRemove);
+      }
+
+      myNorthPanel.revalidate();
+      myNorthPanel.repaint();
     }
 
     public void setTransparrent(boolean transparrent) {
@@ -425,6 +497,11 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     public void dispose() {
       super.dispose();
       myWindows.remove(myContainer);
+
+      for (IdeRootPaneNorthExtension each : myNorthExtensions.values()) {
+        Disposer.dispose(each);
+      }
+      myNorthExtensions.clear();
     }
 
     @Override
@@ -452,6 +529,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       return frame;
     }
   }
+
 
   @Override
   public Element getState() {

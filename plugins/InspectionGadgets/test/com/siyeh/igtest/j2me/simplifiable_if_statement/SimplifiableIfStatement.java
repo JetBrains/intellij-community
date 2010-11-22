@@ -82,4 +82,21 @@ public class SimplifiableIfStatement {
 
     return c || d;
   }
+
+  Boolean wrong1(int i) {
+    if (i == 3) {
+      return null;
+    }
+    return false;
+  }
+
+  void wrong2(int i) {
+    Boolean a;
+    if (i == 3) {
+      a = null;
+    } else {
+      a = false;
+    }
+  }
+
 }

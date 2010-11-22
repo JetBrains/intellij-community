@@ -86,13 +86,21 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
   }
 
   public synchronized void force() {
-    clearCache();
-    super.force();
+    try {
+      clearCache();
+    }
+    finally {
+      super.force();
+    }
   }
 
   public synchronized void close() throws IOException {
-    clearCache();
-    super.close();
+    try {
+      clearCache();
+    }
+    finally {
+      super.close();
+    }
   }
 
   public void clearCache() {

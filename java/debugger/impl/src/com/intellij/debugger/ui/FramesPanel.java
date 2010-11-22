@@ -80,7 +80,7 @@ public class FramesPanel extends UpdatableDebuggerView {
     setLayout(new BorderLayout());
 
     myThreadsCombo = new ComboBoxWithWidePopup();
-    myThreadsCombo.setRenderer(new DebuggerComboBoxRenderer());
+    myThreadsCombo.setRenderer(new DebuggerComboBoxRenderer(myThreadsCombo.getRenderer()));
     myThreadsListener = new ThreadsListener();
     myThreadsCombo.addItemListener(myThreadsListener);
 

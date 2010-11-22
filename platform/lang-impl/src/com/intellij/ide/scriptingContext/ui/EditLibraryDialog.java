@@ -159,8 +159,19 @@ public class EditLibraryDialog extends DialogWrapper {
       VirtualFile chosenDir  = files[0];
       if (chosenDir.isDirectory() && chosenDir.isValid()) {
         if (myLibName.getText().isEmpty()) myLibName.setText(chosenDir.getName());
-        for (VirtualFile file : chosenDir.getChildren()) {
-          if (file.isValid() && !file.isDirectory() && myProvider.acceptsExtension(file.getExtension())) {
+        addRecursively(chosenDir);
+      }
+    }
+  }
+
+  private void addRecursively(VirtualFile dir) {
+    for (VirtualFile file : dir.getChildren()) {
+      if (file.isValid()) {
+        if (file.isDirectory()) {
+          addRecursively(file);
+        }
+        else {
+          if (myProvider.acceptsExtension(file.getExtension())) {
             myFileTableModel.addFile(file);
           }
         }

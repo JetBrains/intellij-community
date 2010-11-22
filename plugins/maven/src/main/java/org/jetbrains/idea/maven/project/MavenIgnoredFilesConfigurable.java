@@ -48,6 +48,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable {
 
   private void createUIComponents() {
     myIgnoredFilesPathsChooser = new ElementsChooser<String>(true);
+    myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
   }
 
   public JComponent createComponent() {

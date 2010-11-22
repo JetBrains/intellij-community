@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
@@ -325,6 +326,151 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
 
     assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testInterModuleDependenciesWithLatestVersion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>LATEST</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+
+    MavenProject p = myProjectsTree.findProject(new MavenId("test", "m1", "1"));
+    assertEquals(new MavenId("test", "m2", "1"), p.getDependencies().get(0).getMavenId());
+  }
+
+  public void testInterModuleDependenciesWithLatestVersionAreBeingSetupForSnapshots() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>LATEST</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1-SNAPSHOT</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+
+    MavenProject p = myProjectsTree.findProject(new MavenId("test", "m1", "1"));
+    assertEquals(new MavenId("test", "m2", "1-SNAPSHOT"), p.getDependencies().get(0).getMavenId());
+  }
+
+  public void testInterModuleDependenciesWithReleaseVersion() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>RELEASE</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1");
+
+    MavenProject p = myProjectsTree.findProject(new MavenId("test", "m1", "1"));
+    assertEquals(new MavenId("test", "m2", "1"), p.getDependencies().get(0).getMavenId());
+  }
+
+  public void testInterModuleDependenciesWithReleaseVersionAreNotBeingSetupForSnapshotDependencies() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>RELEASE</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1-SNAPSHOT</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1");
+    assertModuleLibDeps("m1", "Maven: test:m2:RELEASE");
   }
 
   public void testInterSnapshotModuleDependenciesWithSnapshotVersionRanges() throws Exception {

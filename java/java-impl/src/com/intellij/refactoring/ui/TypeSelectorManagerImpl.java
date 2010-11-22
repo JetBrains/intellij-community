@@ -244,20 +244,29 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       visitor.visitType(psiType);
     }
 
+    final PsiType defaultType = getDefaultType();
     for (int index = 0; index < result.size(); index++) {
       PsiType psiType = result.get(index);
-      if (psiType.equals(getDefaultType())) {
+      if (psiType.equals(defaultType)) {
         result.remove(index);
         break;
       }
     }
 
-    final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(getDefaultType());
+    final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(defaultType);
     if (unboxedType != null) {
       result.remove(unboxedType);
       result.add(0, unboxedType);
     }
-    result.add(0, getDefaultType());
+
+    if (defaultType instanceof PsiPrimitiveType && myMainOccurence != null) {
+      final PsiClassType boxedType = ((PsiPrimitiveType)defaultType).getBoxedType(myMainOccurence);
+      if (boxedType != null) {
+        result.remove(boxedType);
+        result.add(0, boxedType);
+      }
+    }
+    result.add(0, defaultType);
     return result;
   }
 

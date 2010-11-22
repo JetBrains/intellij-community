@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
-public class ElementsChooser<T> extends JPanel {
+public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private JBTable myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
@@ -142,6 +142,17 @@ public class ElementsChooser<T> extends JPanel {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, 0), "selectFirstRow");
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.SHIFT_DOWN_MASK), "selectFirstRowExtendSelection");
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
+  }
+
+  @NotNull
+  @Override
+  public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
+    return myTable.getExpandableItemsHandler();
   }
 
   public void setSingleSelectionMode() {

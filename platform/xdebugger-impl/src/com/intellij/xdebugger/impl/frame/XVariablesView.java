@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -43,7 +44,8 @@ public class XVariablesView extends XDebugViewBase {
   public XVariablesView(@NotNull XDebugSession session, final Disposable parentDisposable) {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
-    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
   }
 

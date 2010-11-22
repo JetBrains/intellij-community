@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,7 +78,23 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
     TextRange range = getFileHeader(file);
     if (range != null && range.getLength() > 1 && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
-      result.add(new FoldingDescriptor(file, range));
+      PsiElement anchorElementToUse = file;
+      PsiElement candidate = file.getFirstChild();
+      
+      // There experienced the following problem situation:
+      //     1. There is a collapsed class-level javadoc;
+      //     2. User starts typing at class definition line (e.g. we had definition like 'public class Test' and user starts
+      //        typing 'abstract' between 'public' and 'class');
+      //     3. Collapsed class-level javadoc automatically expanded. That happened because PSI structure became invalid (because
+      //        class definition line at start looks like 'public aclass Test');
+      // So, our point is to preserve fold descriptor referencing javadoc PSI element.
+      if (candidate != null && candidate.getTextRange().equals(range)) {
+        ASTNode node = candidate.getNode();
+        if (node != null && node.getElementType() == JavaDocElementType.DOC_COMMENT) {
+          anchorElementToUse = candidate;
+        }
+      }
+      result.add(new FoldingDescriptor(anchorElementToUse, range));
     }
 
     return result.toArray(new FoldingDescriptor[result.size()]);

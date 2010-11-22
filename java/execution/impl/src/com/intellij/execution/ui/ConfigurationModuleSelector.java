@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -27,13 +28,14 @@ import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
+  private static final String NO_MODULE = "<no module>";
+
   private final Project myProject;
   private final JComboBox myModulesList;
   private final SortedComboBoxModel<Object> myModules = new SortedComboBoxModel<Object>(new Comparator<Object>() {
@@ -44,7 +46,6 @@ public class ConfigurationModuleSelector {
       return -1;
     }
   });
-  private static final String NO_MODULE = "<no module>";
 
   public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
     myProject = project;
@@ -60,17 +61,17 @@ public class ConfigurationModuleSelector {
       }
     };
     myModulesList.setModel(myModules);
-    myModulesList.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    myModulesList.setRenderer(new ListCellRendererWrapper(myModulesList.getRenderer()) {
+      @Override
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
         if (value instanceof Module) {
           final Module module = (Module)value;
           setIcon(module.getModuleType().getNodeIcon(true));
           setText(module.getName());
-        } else if (value == null) {
+        }
+        else if (value == null) {
           setText(NO_MODULE);
         }
-        return component;
       }
     });
   }

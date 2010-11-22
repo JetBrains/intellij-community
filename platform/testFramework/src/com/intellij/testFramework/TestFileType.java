@@ -13,13 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.facet.impl.autodetecting;
-
-import com.intellij.ide.caches.FileContent;
+package com.intellij.testFramework;
 
 /**
- * @author nik
+ * Encapsulates information about target test file type in order to reduce possibility of mis-typing.
+ * 
+ * @author Denis Zhdanov
+ * @since 11/19/10 11:31 AM
  */
-public interface FileContentFilter {
-  boolean accept(FileContent fileContent);
+public enum TestFileType {
+
+  JAVA("java"), SQL("sql"), TEXT("txt");
+
+  private final String myExtension;
+
+  TestFileType(String extension) {
+    myExtension = "." + extension;
+  }
+
+  public String getExtension() {
+    return myExtension;
+  }
 }

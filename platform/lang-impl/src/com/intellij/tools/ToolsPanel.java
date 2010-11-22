@@ -118,6 +118,7 @@ class ToolsPanel extends JPanel {
     };
 
     myTree.setRootVisible(false);
+    myTree.getEmptyText().setText(ToolsBundle.message("tools.not.configured"));
 
     JScrollPane tableScrollPane = ScrollPaneFactory.createScrollPane(myTree);
 

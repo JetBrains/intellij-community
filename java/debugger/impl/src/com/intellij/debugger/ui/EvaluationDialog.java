@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
+import com.intellij.xdebugger.XDebuggerBundle;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -195,6 +196,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
         }
       });
       setUpdateEnabled(true);
+      getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.results"));
     }
 
     protected ActionPopupMenu createPopupMenu() {

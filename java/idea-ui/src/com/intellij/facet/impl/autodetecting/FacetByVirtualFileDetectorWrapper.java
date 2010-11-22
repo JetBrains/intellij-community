@@ -34,10 +34,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FacetByVirtualFileDetectorWrapper<C extends FacetConfiguration, F extends Facet<C>, U extends FacetConfiguration> extends FacetDetectorWrapper<VirtualFile, C, F, U> {
   public FacetByVirtualFileDetectorWrapper(ProjectFacetInfoSet projectFacetSet, FacetType<F, C> facetType,
-                                           final AutodetectionFilter autodetectionFilter, final FileContentFilter fileContentFilter,
+                                           final AutodetectionFilter autodetectionFilter, final FileContentPattern fileContentPattern,
                                            final FacetDetector<VirtualFile, C> facetDetector,
                                            final UnderlyingFacetSelector<VirtualFile, U> selector) {
-    super(projectFacetSet, facetType, autodetectionFilter, fileContentFilter, facetDetector, selector);
+    super(projectFacetSet, facetType, autodetectionFilter, fileContentPattern, facetDetector, selector);
   }
 
   @Nullable

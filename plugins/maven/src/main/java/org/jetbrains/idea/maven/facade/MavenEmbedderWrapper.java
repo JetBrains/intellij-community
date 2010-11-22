@@ -31,7 +31,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFacadeEmbedder> {
   private Customization myCustomization;
@@ -59,8 +58,8 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     });
   }
 
-  public void customizeForResolve(final Map<MavenId, File> projectIdToFileMap, MavenConsole console, MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, projectIdToFileMap, false);
+  public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator) {
+    setCustomization(console, indicator, workspaceMap, false);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
@@ -70,10 +69,10 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     });
   }
 
-  public void customizeForStrictResolve(final Map<MavenId, File> projectIdToFileMap,
+  public void customizeForStrictResolve(MavenWorkspaceMap workspaceMap,
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, projectIdToFileMap, true);
+    setCustomization(console, indicator, workspaceMap, true);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
@@ -84,7 +83,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
   }
 
   private synchronized void doCustomize() throws RemoteException {
-    getOrCreateWrappee().customize(myCustomization.projectIdToFileMap,
+    getOrCreateWrappee().customize(myCustomization.workspaceMap,
                                    myCustomization.failOnUnresolvedDependency,
                                    myCustomization.console,
                                    myCustomization.indicator);
@@ -212,12 +211,12 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
 
   private synchronized void setCustomization(MavenConsole console,
                                              MavenProgressIndicator indicator,
-                                             Map<MavenId, File> projectIdToFileMap,
+                                             MavenWorkspaceMap workspaceMap,
                                              boolean failOnUnresolvedDependency) {
     resetCustomization();
     myCustomization = new Customization(MavenFacadeManager.wrapAndExport(console),
                                         MavenFacadeManager.wrapAndExport(indicator),
-                                        projectIdToFileMap,
+                                        workspaceMap,
                                         failOnUnresolvedDependency);
   }
 
@@ -244,16 +243,16 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenFaca
     private final MavenFacadeConsole console;
     private final MavenFacadeProgressIndicator indicator;
 
-    private final Map<MavenId, File> projectIdToFileMap;
+    private final MavenWorkspaceMap workspaceMap;
     private final boolean failOnUnresolvedDependency;
 
     private Customization(MavenFacadeConsole console,
                           MavenFacadeProgressIndicator indicator,
-                          Map<MavenId, File> projectIdToFileMap,
+                          MavenWorkspaceMap workspaceMap,
                           boolean failOnUnresolvedDependency) {
       this.console = console;
       this.indicator = indicator;
-      this.projectIdToFileMap = projectIdToFileMap;
+      this.workspaceMap = workspaceMap;
       this.failOnUnresolvedDependency = failOnUnresolvedDependency;
     }
   }

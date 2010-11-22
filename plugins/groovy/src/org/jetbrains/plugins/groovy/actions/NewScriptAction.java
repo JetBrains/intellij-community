@@ -70,8 +70,9 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
 
   @NotNull
   protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
-    PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, newName + "." + extractExtension(templateName), templateName);
-    assert file instanceof GroovyFile;
+    PsiFile file =
+      GroovyTemplatesFactory.createFromTemplate(directory, newName, newName + "." + extractExtension(templateName), templateName);
+    assert file instanceof GroovyFile : "template name: " + templateName;
     return (GroovyFile)file;
   }
 

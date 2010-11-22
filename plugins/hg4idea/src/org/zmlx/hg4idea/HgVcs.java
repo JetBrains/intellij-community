@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -40,8 +37,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.containers.ComparatorDelegate;
@@ -81,7 +76,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
 
   public static final String VCS_NAME = "hg4idea";
-  public static final String DIRSTATE_FILE_PATH = ".hg/dirstate";
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
   public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
 
@@ -107,7 +101,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   private boolean started = false;
   private HgVFSListener myVFSListener;
-  private VirtualFileListener myDirStateChangeListener;
+  private RepositoryChangeListener myDirStateChangeListener;
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
 
@@ -127,7 +121,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     updateEnvironment = new HgUpdateEnvironment(project);
     integrateEnvironment = new HgIntegrateEnvironment(project);
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
-    myDirStateChangeListener = new HgDirStateChangeListener(myProject);
+    myDirStateChangeListener = new RepositoryChangeListener(myProject, ".hg/dirstate");
     myMergeProvider = new HgMergeProvider(myProject);
   }
 
@@ -327,7 +321,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     );
 
     myVFSListener = new HgVFSListener(myProject, this);
-    VirtualFileManager.getInstance().addVirtualFileListener(myDirStateChangeListener);
+    myDirStateChangeListener.activate();
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
@@ -365,7 +359,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       myVFSListener = null;
     }
 
-    VirtualFileManager.getInstance().removeVirtualFileListener(myDirStateChangeListener);
+    myDirStateChangeListener.dispose();
   }
 
   @Nullable

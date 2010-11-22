@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +113,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
     final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
     LOG.assertTrue(project != null);
 
-    String name = ExecutionBundle.message("export.test.results.filename", myRunConfiguration.getName());
+    String name = ExecutionBundle.message("export.test.results.filename", PathUtil.suggestFileName(myRunConfiguration.getName()));
     String filename = name + "." + config.getExportFormat().getDefaultExtension();
     ExportTestResultsDialog d = new ExportTestResultsDialog(project, config, filename);
     d.show();

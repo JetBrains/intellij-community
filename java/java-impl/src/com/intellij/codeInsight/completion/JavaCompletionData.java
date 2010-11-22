@@ -551,6 +551,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   @Override
   public void fillCompletions(CompletionParameters parameters, CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
+    if (PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null) {
+      return;
+    }
+
     if (SUPER_OR_THIS_PATTERN.accepts(position)) {
       if (AFTER_DOT.accepts(position) && !isInsideQualifierClass(position)) return;
 

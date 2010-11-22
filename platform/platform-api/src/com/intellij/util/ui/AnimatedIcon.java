@@ -80,7 +80,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     if (icons.length > 0) {
       myEmptyPassiveIcon = new EmptyIcon(icons[0]);
     } else {
-      myEmptyPassiveIcon = new EmptyIcon(0);
+      myEmptyPassiveIcon = EmptyIcon.ICON_0;
     }
 
     setOpaque(false);

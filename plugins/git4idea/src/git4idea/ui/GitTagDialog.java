@@ -140,6 +140,11 @@ public class GitTagDialog extends DialogWrapper {
     validateFields();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTagNameTextField;
+  }
+
   /**
    * Perform tagging according to selected options
    *
@@ -189,6 +194,7 @@ public class GitTagDialog extends DialogWrapper {
       }
       try {
         GitHandlerUtil.doSynchronously(h, GitBundle.getString("tagging.title"), h.printableCommandLine());
+        GitUIUtil.notifySuccess(myProject, myTagNameTextField.getText(), "Created tag "  + myTagNameTextField.getText() + " successfully.");
       }
       finally {
         exceptions.addAll(h.errors());

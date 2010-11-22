@@ -17,21 +17,14 @@
 package com.intellij.codeInsight.lookup.impl.actions;
 
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 
 public class ChooseItemReplaceAction extends EditorAction {
   public ChooseItemReplaceAction(){
@@ -45,27 +38,22 @@ public class ChooseItemReplaceAction extends EditorAction {
       assert lookup != null;
       lookup.finishLookup(Lookup.REPLACE_SELECT_CHAR);
     }
-  }
 
-  static boolean hasTemplatePrefix(LookupImpl lookup, char shortcutChar) {
-    final PsiFile file = lookup.getPsiFile();
-    final Editor editor = lookup.getEditor();
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    @Override
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+      if (lookup != null) {
+        if (lookup.isFocused()) {
+          return true;
+        }
 
-    final int offset = editor.getCaretModel().getOffset();
-    final String prefix = CompletionUtil.findJavaIdentifierPrefix(file, offset);
-    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, offset, prefix);
-    return template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template);
-  }
-
-  public void update(Editor editor, Presentation presentation, DataContext dataContext){
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup != null) {
-      lookup.refreshUi(); // to bring the list model up to date
-      presentation.setEnabled((lookup.isFocused() || lookup.isCompletion() && !lookup.getItems().isEmpty()) &&
-                              !hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR));
-    } else {
-      presentation.setEnabled(false);
+        if (lookup.isCompletion()) {
+          lookup.refreshUi(); // to bring the list model up to date
+          return !lookup.getItems().isEmpty();
+        }
+      }
+      return false;
     }
   }
+
 }

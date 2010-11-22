@@ -133,7 +133,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           catch (AnalysisCanceledException e) {
             flow = ControlFlow.EMPTY;
           }
-          Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
+          Collection<PsiVariable> writtenVariables = new ArrayList<PsiVariable>();
+          ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false, writtenVariables);
           for (PsiVariable psiVariable : writtenVariables) {
             if (allFields.contains(psiVariable)) {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {

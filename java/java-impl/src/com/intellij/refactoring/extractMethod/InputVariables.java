@@ -262,7 +262,7 @@ public class InputVariables {
       buffer.append(myFolding.getGeneratedCallArgument(data));
     } else {
       if (!TypeConversionUtil.isAssignable(data.type, data.variable.getType())) {
-        buffer.append("(").append(data.variable.getType().getCanonicalText()).append(")");
+        buffer.append("(").append(data.type.getCanonicalText()).append(")");
       }
       buffer.append(data.variable.getName());
     }

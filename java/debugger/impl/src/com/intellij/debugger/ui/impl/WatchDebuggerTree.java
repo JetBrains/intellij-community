@@ -23,6 +23,7 @@ import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerBundle;
 
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
@@ -32,6 +33,7 @@ public class WatchDebuggerTree extends DebuggerTree {
 
   public WatchDebuggerTree(Project project) {
     super(project);
+    getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
   }
 
   public DebuggerTreeNodeImpl[] getWatches() {

@@ -32,7 +32,7 @@
 
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add Snapshot" icon="/actions/include.png">
+      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="/actions/include.png">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
       <action id="Git.Revert" class="git4idea.actions.GitRevert" text="Revert File" icon="/actions/rollback.png"/>

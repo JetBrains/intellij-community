@@ -26,10 +26,8 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -51,7 +49,7 @@ public class TestNGConfigurationType implements ConfigurationType
 
     public TestNGConfigurationType() {
 
-        myFactory = new ConfigurationFactory(this)
+        myFactory = new ConfigurationFactoryEx(this)
         {
             @Override
             public RunConfiguration createTemplateConfiguration(Project project) {
@@ -62,6 +60,11 @@ public class TestNGConfigurationType implements ConfigurationType
           @Override
           public Icon getIcon(@NotNull final RunConfiguration configuration) {
             return RunConfigurationExtension.getIcon((TestNGConfiguration)configuration, ICON);
+          }
+
+          @Override
+          public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
+            ((ModuleBasedConfiguration)configuration).onNewConfigurationCreated();
           }
         };
     }

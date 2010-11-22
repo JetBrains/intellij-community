@@ -19,7 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.DebuggerDataViewsConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.ui.impl.FrameDebuggerTree;
+import com.intellij.debugger.ui.impl.FrameVariablesTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -80,7 +80,7 @@ public class CustomizeContextViewAction extends DebuggerAction{
 
   public void update(AnActionEvent e) {
     DebuggerTree tree = getTree(e.getDataContext());
-    e.getPresentation().setVisible(tree instanceof FrameDebuggerTree);
+    e.getPresentation().setVisible(tree instanceof FrameVariablesTree);
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
   }
 }

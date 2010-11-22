@@ -40,7 +40,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
     setBorder(null);
 
 
-    final FrameDebuggerTree frameTree = getFrameTree();
+    final FrameVariablesTree frameTree = getFrameTree();
 
     add(ScrollPaneFactory.createScrollPane(frameTree), BorderLayout.CENTER);
     registerDisposable(DebuggerAction.installEditAction(frameTree, DebuggerActions.EDIT_NODE_SOURCE));
@@ -52,7 +52,7 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
   }
 
   protected DebuggerTree createTreeView() {
-    return new FrameDebuggerTree(getProject());
+    return new FrameVariablesTree(getProject());
   }
 
   protected void changeEvent(DebuggerContextImpl newContext, int event) {
@@ -74,8 +74,8 @@ public class VariablesPanel extends DebuggerTreePanel implements DataProvider{
   }
 
 
-  public FrameDebuggerTree getFrameTree() {
-    return (FrameDebuggerTree) getTree();
+  public FrameVariablesTree getFrameTree() {
+    return (FrameVariablesTree) getTree();
   }
 
 }

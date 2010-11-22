@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -390,10 +391,10 @@ public class PersistentEnumerator<Data> implements Forceable {
       byte[] buf = prepareEntryRecordBuf(hashCode, dataOff);
 
       if (myKeyStorage != null) {
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
         DataOutput out = new DataOutputStream(bos);
         myDataDescriptor.save(out, value);
-        myKeyStorage.put(dataOff, bos.toByteArray(), 0, bos.size());
+        myKeyStorage.put(dataOff, bos.getInternalBuffer(), 0, bos.size());
       }
 
       final ResizeableMappedFile storage = myStorage;

@@ -18,7 +18,7 @@
  * User: anna
  * Date: 12-Nov-2007
  */
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -34,4 +34,6 @@ public abstract class IdeRootPaneNorthExtension implements Disposable {
   public abstract JComponent getComponent();
 
   public abstract void uiSettingsChanged(UISettings settings);
+
+  public abstract IdeRootPaneNorthExtension copy();
 }

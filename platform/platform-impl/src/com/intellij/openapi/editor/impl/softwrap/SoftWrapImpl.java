@@ -77,6 +77,22 @@ public class SoftWrapImpl implements SoftWrap {
   }
 
   @Override
+  public int hashCode() {
+    int result = myChange.hashCode();
+    result = 31 * result + myIndentInColumns;
+    return 31 * result + myIndentInPixels;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    
+    SoftWrapImpl that = (SoftWrapImpl)o;
+    return myIndentInColumns == that.myIndentInColumns && myIndentInPixels == that.myIndentInPixels && myChange.equals(that.myChange);
+  }
+
+  @Override
   public String toString() {
     return myChange.toString();
   }

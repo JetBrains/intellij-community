@@ -53,7 +53,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected static final int ABSTRACT_COLUMN = 2;
   protected static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   protected static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
-  protected static final Icon EMPTY_OVERRIDE_ICON = new EmptyIcon(16, 16);
+  protected static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.ICON_16;
   protected final String myAbstractColumnHeader;
   protected static final String DISPLAY_NAME_COLUMN_HEADER = RefactoringBundle.message("member.column");
   protected List<M> myMemberInfos;

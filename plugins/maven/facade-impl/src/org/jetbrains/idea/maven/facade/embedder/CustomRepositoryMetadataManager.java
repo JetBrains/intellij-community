@@ -18,20 +18,19 @@ package org.jetbrains.idea.maven.facade.embedder;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.*;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 
-import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 public class CustomRepositoryMetadataManager extends DefaultRepositoryMetadataManager {
-  private Map<MavenId, File> myProjectIdToFileMap;
+  private MavenWorkspaceMap myWorkspaceMap;
 
-  public void customize(Map<MavenId, File> projectIdToFileMap) {
-    myProjectIdToFileMap = projectIdToFileMap;
+  public void customize(MavenWorkspaceMap workspaceMap) {
+    myWorkspaceMap = workspaceMap;
   }
 
   public void reset() {
-    myProjectIdToFileMap = null;
+    myWorkspaceMap = null;
   }
 
   @Override
@@ -39,7 +38,7 @@ public class CustomRepositoryMetadataManager extends DefaultRepositoryMetadataMa
     throws RepositoryMetadataResolutionException {
     super.resolve(metadata, remoteRepositories, localRepository);
 
-    Map<MavenId, File> map = myProjectIdToFileMap;
+    MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return;
 
     Metadata data = metadata.getMetadata();
@@ -48,7 +47,7 @@ public class CustomRepositoryMetadataManager extends DefaultRepositoryMetadataMa
       data.setVersioning(versioning = new Versioning());
     }
 
-    for (MavenId each : map.keySet()) {
+    for (MavenId each : map.getAvailableIds()) {
       if (each.equals(data.getGroupId(), data.getArtifactId())) {
         versioning.addVersion(each.getVersion());
       }

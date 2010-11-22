@@ -17,39 +17,33 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicComboBoxRenderer;
-import java.awt.*;
 
-public class DebuggerComboBoxRenderer extends BasicComboBoxRenderer {
+public class DebuggerComboBoxRenderer extends ListCellRendererWrapper {
+  public DebuggerComboBoxRenderer(final ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
+  }
 
-  public Component getListCellRendererComponent(
-    JList list,
-    Object value,
-    int index,
-    boolean isSelected,
-    boolean cellHasFocus) {
-
-    JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+  @Override
+  public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (list.getComponentCount() > 0) {
       Icon icon = getIcon(value);
       if (icon != null) {
-        component.setIcon(icon);
+        setIcon(icon);
       }
     }
     else {
-      component.setIcon(null);
+      setIcon(null);
     }
-    return component;
   }
 
   @Nullable
   private static Icon getIcon(Object item) {
     if (item instanceof ThreadDescriptorImpl) {
-      ThreadDescriptorImpl descriptor = (ThreadDescriptorImpl)item;
-      return descriptor.getIcon();
+      return ((ThreadDescriptorImpl)item).getIcon();
     }
     if (item instanceof StackFrameDescriptorImpl) {
       return ((StackFrameDescriptorImpl)item).getIcon();

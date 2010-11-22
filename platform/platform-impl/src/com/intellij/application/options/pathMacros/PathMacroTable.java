@@ -21,7 +21,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -32,7 +31,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  *  @author dsl
@@ -73,6 +71,8 @@ public class PathMacroTable extends Table {
     });
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     //obtainData();
+
+    getEmptyText().setText(ApplicationBundle.message("text.no.path.variables"));
   }
 
   public String getMacroValueAt(int row) {

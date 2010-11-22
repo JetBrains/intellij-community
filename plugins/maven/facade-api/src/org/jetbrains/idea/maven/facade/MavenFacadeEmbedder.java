@@ -24,10 +24,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface MavenFacadeEmbedder extends Remote {
-  void customize(@Nullable Map<MavenId, File> projectIdToFileMap,
+  void customize(@Nullable MavenWorkspaceMap workspaceMap,
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenFacadeConsole console,
                  @NotNull MavenFacadeProgressIndicator indicator) throws RemoteException;
@@ -44,8 +43,8 @@ public interface MavenFacadeEmbedder extends Remote {
 
   @NotNull
   List<MavenArtifact> resolveTransitively(@NotNull List<MavenArtifactInfo> artifacts,
-                                 @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException,
-                                                                                                 MavenFacadeProcessCanceledException;
+                                          @NotNull List<MavenRemoteRepository> remoteRepositories) throws RemoteException,
+                                                                                                          MavenFacadeProcessCanceledException;
 
   Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin,
                                           @NotNull List<MavenRemoteRepository> repositories,

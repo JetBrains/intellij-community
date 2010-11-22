@@ -187,7 +187,16 @@ public class ControlFlowUtil {
   }
 
   public static Collection<PsiVariable> getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
-    Set<PsiVariable> set = new HashSet<PsiVariable>();
+    final HashSet<PsiVariable> set = new HashSet<PsiVariable>();
+    getWrittenVariables(flow, start, end, ignoreNotReachingWrites, set);
+    return set;
+  }
+
+  public static void getWrittenVariables(ControlFlow flow,
+                                         int start,
+                                         int end,
+                                         final boolean ignoreNotReachingWrites,
+                                         final Collection<PsiVariable> set) {
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);
@@ -195,7 +204,6 @@ public class ControlFlowUtil {
         set.add(((WriteVariableInstruction)instruction).variable);
       }
     }
-    return set;
   }
 
   public static List<PsiVariable> getUsedVariables(ControlFlow flow, int start, int end) {

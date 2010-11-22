@@ -200,6 +200,15 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public List<MavenProject> getList() {
+    // npe trap: EA-13593
+    MavenLog.LOG.assertTrue(myParamaters != null, "parameters field is null");
+    if (myParamaters.myMavenProjectTree == null) {
+      MavenLog.LOG.assertTrue(false, "tree is null:" +
+                                     "\n\troot:" + myParamaters.myImportRoot +
+                                     "\n\nprofiles:" + myParamaters.myProfiles +
+                                     "\n\tproject:" + myParamaters.myProjectToUpdate);
+    }
+
     return getParameters().myMavenProjectTree.getRootProjects();
   }
 

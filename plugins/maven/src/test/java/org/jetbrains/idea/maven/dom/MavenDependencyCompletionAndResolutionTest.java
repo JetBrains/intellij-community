@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -257,8 +259,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testChangingExistingProjects() throws Exception {
-    if (ignore()) return;
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -303,58 +303,20 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     importProject();
 
     createModulePom("m1", "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
 
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId><caret></artifactId>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId><caret></artifactId>" +
+                          "  </dependency>" +
+                          "</dependencies>");
 
     assertCompletionVariants(m1, "project", "m1", "m2_new");
   }
 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() throws Exception {
-    if (ignore()) return;
-
-    createModulePom("m1",
-                    "<groupId>project-group</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom, "m1");
-
-    createModulePom("m1", "");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><caret></groupId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom);
-  }
-
-  public void testRemovingExistingProjects() throws Exception {
-    if (ignore()) return;
-
     VirtualFile m = createModulePom("m1",
                                     "<groupId>project-group</groupId>" +
                                     "<artifactId>m1</artifactId>" +
@@ -371,9 +333,56 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
+    importProjects(myProjectPom, m);
+
     assertCompletionVariants(myProjectPom, "m1");
 
-    m.delete(null);
+    createModulePom("m1", "");
+    importProjects(myProjectPom, m);
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom);
+  }
+
+  public void testRemovingExistingProjects() throws Exception {
+    final VirtualFile m = createModulePom("m1",
+                                    "<groupId>project-group</groupId>" +
+                                    "<artifactId>m1</artifactId>" +
+                                    "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>project-group</groupId>" +
+                     "    <artifactId><caret></artifactId>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    importProjects(myProjectPom, m);
+
+    assertCompletionVariants(myProjectPom, "m1");
+
+    myProjectsManager.listenForExternalChanges();
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        m.delete(null);
+      }
+    }.execute();
+
+    waitForReadingCompletion();
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -806,22 +815,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "    <groupId>jmock</groupId>" +
                      "    <artifactId>jmock</artifactId>" +
                      "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    checkHighlighting();
-  }
-
-  public void testDoNotHighlightVersionRanges() throws Throwable {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>jmock</groupId>" +
-                     "    <artifactId>jmock</artifactId>" +
-                     "    <version>[1,2]</version>" +
                      "  </dependency>" +
                      "</dependencies>");
 

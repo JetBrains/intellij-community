@@ -42,7 +42,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.Map;
 
-public class FrameWrapper implements Disposable {
+public class FrameWrapper implements Disposable, DataProvider {
   private String myDimensionKey = null;
   private JComponent myComponent = null;
   private JComponent myPreferedFocus = null;
@@ -178,7 +178,21 @@ public class FrameWrapper implements Disposable {
   }
 
   protected JFrame createJFrame(IdeFrame parent) {
-    return new MyJFrame(parent);
+    return new MyJFrame(parent) {
+      @Override
+      public IdeRootPaneNorthExtension getNorthExtension(String key) {
+        return FrameWrapper.this.getNorthExtension(key);
+      }
+    };
+  }
+
+  protected IdeRootPaneNorthExtension getNorthExtension(String key) {
+    return null;
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    return null;
   }
 
   public void setComponent(JComponent component) {
@@ -293,6 +307,12 @@ public class FrameWrapper implements Disposable {
       updateTitle();
     }
 
+    @Override
+    public IdeRootPaneNorthExtension getNorthExtension(String key) {
+      return null;
+    }
+
+
     private void updateTitle() {
       IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
     }
@@ -327,7 +347,12 @@ public class FrameWrapper implements Disposable {
     }
 
     public Object getData(String dataId) {
-      return myDatas.get(dataId);
+      if (IdeFrame.KEY.getName().equals(dataId)) {
+        return this;
+      }
+
+      Object data = FrameWrapper.this.getData(dataId);
+      return data != null ? data : myDatas.get(dataId);
     }
 
     @Override

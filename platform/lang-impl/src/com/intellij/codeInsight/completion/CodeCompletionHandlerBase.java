@@ -125,20 +125,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
-        if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
-          return;
-        }
-        else {
-          time = indicator.getParameters().getInvocationCount() + 1;
-          new WriteCommandAction(project) {
-            protected void run(Result result) throws Throwable {
-              indicator.restorePrefix();
-            }
-          }.execute();
-        }
+      boolean repeated = indicator.isRepeatedInvocation(myCompletionType, editor);
+      if (repeated && !indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
+        return;
       }
-      indicator.closeAndFinish(false);
+
+      if (repeated) {
+        time = indicator.getParameters().getInvocationCount() + 1;
+        indicator.restorePrefix();
+      } else {
+        indicator.closeAndFinish(false);
+      }
     }
 
     if (time > 1) {
@@ -163,6 +160,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
+
+            assert editor.getDocument().getTextLength() == psiFile.getTextLength() : "unsuccessful commit";
 
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
@@ -196,12 +195,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       int offset = editor.getCaretModel().getOffset();
 
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      assert offset > 0;
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset - 1);
       if (elementAt == null) {
-        elementAt = psiFile.findElementAt(offset);
-        if (elementAt == null && offset > 0) {
-          elementAt = psiFile.findElementAt(offset - 1);
-        }
+        elementAt = psiFile.findElementAt(offset - 1);
       }
 
       Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
@@ -234,7 +231,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   @NotNull
-  private LookupImpl obtainLookup(Editor editor, CompletionParameters parameters) {
+  private LookupImpl obtainLookup(Editor editor) {
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
       existing.markReused();
@@ -251,7 +248,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       lookup.setResizable(false);
       lookup.setForceLightweightPopup(false);
     }
-    lookup.setFocused(shouldFocusLookup(parameters));
+    lookup.setFocused(!autopopup);
     return lookup;
   }
 
@@ -263,7 +260,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
 
-    final LookupImpl lookup = obtainLookup(editor, parameters);
+    final LookupImpl lookup = obtainLookup(editor);
 
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
@@ -272,7 +269,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!invokedExplicitly && (!ApplicationManager.getApplication().isUnitTestMode() || CompletionAutoPopupHandler.ourTestingAutopopup)) {
       indicator.notifyBackgrounded();
       return;
     }
@@ -295,7 +292,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     indicator.showLookup();
   }
 
-  private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
+  private AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
                                                                         final CompletionProgressIndicator indicator,
                                                                         final CompletionInitializationContext initContext) {
 
@@ -313,12 +310,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            startSemaphore.up();
-            indicator.duringCompletion(initContext);
-          }
-        });
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              startSemaphore.up();
+              indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
+              indicator.duringCompletion(initContext);
+            }
+          });
+        }
+        finally {
+          indicator.duringCompletionPassed();
+        }
       }
     });
 
@@ -474,6 +477,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
         indicator.fillInCommonPrefix(false);
@@ -488,7 +492,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService() == null) {
+      if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
       }
     }

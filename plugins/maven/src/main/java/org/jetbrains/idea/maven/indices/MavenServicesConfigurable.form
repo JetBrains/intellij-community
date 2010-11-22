@@ -23,7 +23,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="d806c" class="com.intellij.ui.table.JBTable" binding="myTable" default-binding="true">
+              <component id="d806c" class="com.intellij.ui.table.JBTable" binding="myIndicesTable" default-binding="true">
                 <constraints/>
                 <properties/>
               </component>

@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryChangeListener;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -361,6 +362,13 @@ public abstract class GitHandler {
    */
   public synchronized void start() {
     checkNotStarted();
+
+    RepositoryChangeListener indexChangeListener = null;
+    if (myCommand.modifiesIndex()) {
+      indexChangeListener = myVcs.getIndexChangeListener();
+      indexChangeListener.internalOperationStarted();
+    }
+
     try {
       // setup environment
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
@@ -386,6 +394,10 @@ public abstract class GitHandler {
     catch (Throwable t) {
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
+    } finally {
+      if (indexChangeListener != null) {
+        indexChangeListener.internalOperationEnded();
+      }
     }
   }
 

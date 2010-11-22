@@ -164,6 +164,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
         Component focusOwner = async ? fm.getFocusOwner() : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
+        if (container == null && !async) {
+          focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+          container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
+        }
+
         if (container instanceof DockableEditorTabbedContainer) {
           result.setDone(((DockableEditorTabbedContainer)container).getSplitters());
         } else {
@@ -547,7 +552,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
-    return openFileImpl2(getSplitters().getOrCreateCurrentWindow(file), file, focusEditor);
+    EditorsSplitters splitters = getSplitters();
+
+    EditorWindow wndToOpenIn = splitters.getCurrentWindow();
+    if (wndToOpenIn == null) {
+      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+    }
+
+    return openFileImpl2(wndToOpenIn, file, focusEditor);
   }
 
   @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,

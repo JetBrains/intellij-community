@@ -146,8 +146,10 @@ public class CollectHighlightsUtil {
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
 
-    while (commonParent.getParent() != null && commonParent.getTextRange().equals(commonParent.getParent().getTextRange())) {
-      commonParent = commonParent.getParent();
+    PsiElement parent = commonParent.getParent();
+    while (parent != null && commonParent.getTextRange().equals(parent.getTextRange())) {
+      commonParent = parent;
+      parent = parent.getParent();
     }
     return commonParent;
   }

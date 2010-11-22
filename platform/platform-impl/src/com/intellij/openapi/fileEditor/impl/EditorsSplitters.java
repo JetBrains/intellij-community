@@ -425,12 +425,14 @@ public class EditorsSplitters extends JPanel {
     Project project = myManager.getProject();
 
     final IdeFrame frame = getFrame(project);
+    if (frame != null) {
+      VirtualFile file = getCurrentFile();
 
-    VirtualFile file = getCurrentFile();
+      File ioFile = file == null ? null : new File(file.getPresentableUrl());
+      String fileTitle = file == null ? null : FrameTitleBuilder.getInstance().getFileTitle(project, file);
 
-    File ioFile = file == null ? null : new File(file.getPresentableUrl());
-    String fileTitle = file == null ? null : FrameTitleBuilder.getInstance().getFileTitle(project, file);
-    frame.setFileTitle(fileTitle, ioFile);
+      frame.setFileTitle(fileTitle, ioFile);
+    }
   }
 
   protected IdeFrame getFrame(Project project) {

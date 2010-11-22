@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -62,6 +63,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ImplementationViewComponent extends JPanel {
+  @NonNls private static final String TEXT_PAGE_KEY = "Text";
+  @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+
   private final PsiElement[] myElements;
   private int myIndex;
 
@@ -76,10 +81,7 @@ public class ImplementationViewComponent extends JPanel {
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
   private String myTitle;
-  @NonNls private static final String TEXT_PAGE_KEY = "Text";
-  @NonNls private static final String BINARY_PAGE_KEY = "Binary";
   private final ActionToolbar myToolbar;
-  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
 
   public void setHint(final JBPopup hint, final String title) {
     myHint = hint;
@@ -170,15 +172,15 @@ public class ImplementationViewComponent extends JPanel {
 
     if (myElements.length > 1) {
       myFileChooser = new JComboBox(files.toArray(new FileDescriptor[files.size()]));
-      myFileChooser.setRenderer(new DefaultListCellRenderer() {
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
-          PsiFile file = ((FileDescriptor)value).myFile;
+      myFileChooser.setRenderer(new ListCellRendererWrapper<FileDescriptor>(myFileChooser.getRenderer()) {
+        @Override
+        public void customize(JList list, FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+          final PsiFile file = value.myFile;
           setIcon(getIconForFile(file));
           final VirtualFile vFile = file.getVirtualFile();
           setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
+          //noinspection ConstantConditions
           setText(vFile.getPresentableName());
-          return this;
         }
       });
 

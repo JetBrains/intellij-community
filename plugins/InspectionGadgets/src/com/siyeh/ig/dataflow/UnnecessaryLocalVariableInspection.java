@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,8 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     private class UnnecessaryLocalVariableVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(
+                @NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
 
             if (m_ignoreAnnotatedVariables) {
@@ -142,7 +143,8 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
             }
             if (!initialization.hasModifierProperty(PsiModifier.FINAL)
                     && variable.hasModifierProperty(PsiModifier.FINAL)) {
-                if (variableIsUsedInInnerClass(containingScope, variable)) {
+                if (VariableAccessUtils.variableIsUsedInInnerClass(variable,
+                        containingScope)) {
                     return false;
                 }
             }
@@ -168,18 +170,12 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                     nextStatement = statements[i + 1];
                 }
             }
-            if (nextStatement == null) {
-                return false;
-            }
             if (!(nextStatement instanceof PsiReturnStatement)) {
                 return false;
             }
             final PsiReturnStatement returnStatement =
                     (PsiReturnStatement) nextStatement;
             final PsiExpression returnValue = returnStatement.getReturnValue();
-            if (returnValue == null) {
-                return false;
-            }
             if (!(returnValue instanceof PsiReferenceExpression)) {
                 return false;
             }
@@ -206,18 +202,12 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                     nextStatement = statements[i + 1];
                 }
             }
-            if (nextStatement == null) {
-                return false;
-            }
             if (!(nextStatement instanceof PsiThrowStatement)) {
                 return false;
             }
             final PsiThrowStatement throwStatement =
                     (PsiThrowStatement) nextStatement;
             final PsiExpression returnValue = throwStatement.getException();
-            if (returnValue == null) {
-                return false;
-            }
             if (!(returnValue instanceof PsiReferenceExpression)) {
                 return false;
             }
@@ -246,9 +236,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                     followingStatementNumber = i + 2;
                 }
             }
-            if (nextStatement == null) {
-                return false;
-            }
             if (!(nextStatement instanceof PsiExpressionStatement)) {
                 return false;
             }
@@ -267,9 +254,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                 return false;
             }
             final PsiExpression rhs = assignmentExpression.getRExpression();
-            if (rhs == null) {
-                return false;
-            }
             if (!(rhs instanceof PsiReferenceExpression)) {
                 return false;
             }
@@ -317,9 +301,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                     followingStatementNumber = i + 2;
                 }
             }
-            if (nextStatement == null) {
-                return false;
-            }
             if (!(nextStatement instanceof PsiDeclarationStatement)) {
                 return false;
             }
@@ -334,9 +315,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
             }
             final PsiExpression rhs =
                     ((PsiVariable) declarations[0]).getInitializer();
-            if (rhs == null) {
-                return false;
-            }
             if (!(rhs instanceof PsiReferenceExpression)) {
                 return false;
             }
@@ -351,14 +329,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
                 }
             }
             return true;
-        }
-
-        private boolean variableIsUsedInInnerClass(PsiCodeBlock block,
-                                                   PsiVariable variable) {
-            final VariableUsedInInnerClassVisitor visitor =
-                    new VariableUsedInInnerClassVisitor(variable);
-            block.accept(visitor);
-            return visitor.isUsedInInnerClass();
         }
     }
 }

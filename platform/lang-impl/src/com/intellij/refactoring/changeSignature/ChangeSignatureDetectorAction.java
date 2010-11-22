@@ -20,12 +20,11 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,6 +37,7 @@ public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
   public static final String CHANGE_SIGNATURE = "Apply signature change";
   public static final String NEW_NAME = "Apply new name";
+  public static final Icon REFACTORING_BULB = IconLoader.getIcon("/actions/refactoringBulb.png");
 
   private String myAcceptText;
 
@@ -71,6 +71,6 @@ public class ChangeSignatureDetectorAction extends PsiElementBaseIntentionAction
 
   @Override
   public Icon getIcon(int flags) {
-    return Icons.ADVICE_ICON;
+    return REFACTORING_BULB;
   }
 }

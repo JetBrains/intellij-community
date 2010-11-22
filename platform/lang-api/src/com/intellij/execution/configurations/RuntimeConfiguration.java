@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class RuntimeConfiguration extends RunConfigurationBase implements LocatableConfiguration, Cloneable, ModuleRunConfiguration {
   public static final DataKey<RuntimeConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
@@ -59,5 +60,10 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
 
   @NonNls public String suggestedName() {
     return null;
+  }
+
+  @Nullable
+  public String getGeneratedName() {
+    return suggestedName();
   }
 }

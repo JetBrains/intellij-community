@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.WalkingState;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor{
+public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisitor {
   private final boolean myDoTransform;
 
   protected RecursiveTreeElementWalkingVisitor() {
@@ -54,7 +54,6 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
   private final WalkingState<ASTNode> myWalkingState = new WalkingState<ASTNode>(ASTTreeGuide.instance) {
     @Override
     public void elementFinished(@NotNull ASTNode element) {
-
     }
 
     @Override
@@ -73,9 +72,13 @@ public abstract class RecursiveTreeElementWalkingVisitor extends TreeElementVisi
     visitNode(composite);
   }
 
-  protected void visitNode(TreeElement element){
+  protected void visitNode(TreeElement element) {
     if (myDoTransform || !TreeUtil.isCollapsedChameleon(element)) {
       myWalkingState.elementStarted(element);
     }
+  }
+
+  public void stopWalking() {
+    myWalkingState.stopWalking();
   }
 }

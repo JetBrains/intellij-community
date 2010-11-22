@@ -21,17 +21,13 @@ import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.UnderlyingFacetSelector;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public interface FacetDetectorForWizardRegistry<C extends FacetConfiguration> {
-  void register(@NotNull final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, 
-                @NotNull final FacetDetector<VirtualFile, C> facetDetector);
-
-  <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final VirtualFileFilter virtualFileFilter, 
+  <U extends FacetConfiguration> void register(final FileType fileType, @NotNull final FileContentPattern fileContentPattern,
                                                final FacetDetector<VirtualFile, C> facetDetector,
                                                final UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector);
 }

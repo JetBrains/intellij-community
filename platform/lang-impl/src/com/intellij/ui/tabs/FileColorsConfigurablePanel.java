@@ -121,18 +121,21 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     add(mainPanel, BorderLayout.CENTER);
 
-    final JPanel warningPanel = new JPanel(new BorderLayout());
-    warningPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    warningPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
-                                MessageType.WARNING.getDefaultIcon(), SwingConstants.LEFT));
+    final JPanel infoPanel = new JPanel(new BorderLayout());
+    infoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    infoPanel.add(new JLabel("Scopes are processed from top to bottom with Local colors first.",
+                                MessageType.INFO.getDefaultIcon(), SwingConstants.LEFT));
     final JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         EditScopesDialog.editConfigurable(myManager.getProject(), null, true);
       }
     });
-    warningPanel.add(editScopes, BorderLayout.EAST);
-    add(warningPanel, BorderLayout.SOUTH);
+    infoPanel.add(editScopes, BorderLayout.EAST);
+    add(infoPanel, BorderLayout.SOUTH);
+
+    myLocalTable.getEmptyText().setText("No local colors");
+    mySharedTable.getEmptyText().setText("No shared colors");
   }
 
 
