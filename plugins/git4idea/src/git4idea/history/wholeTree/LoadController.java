@@ -56,7 +56,7 @@ public class LoadController implements Loader {
     if (myPreviousAlgorithm != null) {
       myPreviousAlgorithm.stop();
     }
-    final List<LoaderAndRefresher> list = new ArrayList<LoaderAndRefresher>();
+    final List<LoaderAndRefresher<CommitHashPlusParents>> list = new ArrayList<LoaderAndRefresher<CommitHashPlusParents>>();
     final List<VirtualFile> roots = rootsHolder.getRoots();
     int i = 0;
     for (VirtualFile root : roots) {

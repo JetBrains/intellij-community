@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -434,6 +435,7 @@ public class GitHistoryUtils {
     final VcsException[] exc = new VcsException[1];
     final Semaphore semaphore = new Semaphore();
     final StringBuilder sb = new StringBuilder();
+    final Ref<Boolean> skipFirst = new Ref<Boolean>(true);
     h.addLineListener(new GitLineHandlerAdapter() {
       @Override
       public void onLineAvailable(final String line, final Key outputType) {
@@ -444,8 +446,9 @@ public class GitHistoryUtils {
               return;
             }
             //if (line.charAt(line.length() - 1) != '\u0003') {
-            if (! line.startsWith("\u0001")) {
+            if ((! line.startsWith("\u0001")) || skipFirst.get()) {
               sb.append("\n").append(line);
+              skipFirst.set(false);
               return;
             }
             takeLine(project, line, sb, parser, refs, root, exc, h, gitCommitConsumer);

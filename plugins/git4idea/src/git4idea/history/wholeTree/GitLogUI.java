@@ -462,7 +462,8 @@ public class GitLogUI implements Disposable {
     myFilterAction = new FilterAction(myProject);
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
-    group.add(myFilterAction);
+    // first create filters...
+    //group.add(myFilterAction);
     group.add(new MyCherryPick());
     group.add(new MyRefreshAction());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Git log", group, true);
@@ -540,10 +541,10 @@ public class GitLogUI implements Disposable {
   private boolean adjustColumnSizes(JScrollPane scrollPane) {
     if (myJBTable.getWidth() <= 0) return false;
     //myJBTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
-    final int dateWidth = metrics.stringWidth("Yesterday 00:00:00 ");
-    final int nameWidth = metrics.stringWidth("Somelong W. UsernameToDisplay");
     final TableColumnModel columnModel = myJBTable.getColumnModel();
+    final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
+    final int dateWidth = metrics.stringWidth("Yesterday 00:00:00  " + scrollPane.getVerticalScrollBar().getWidth()) + columnModel.getColumnMargin();
+    final int nameWidth = metrics.stringWidth("Somelong W. UsernameToDisplay");
     int widthWas = 0;
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       widthWas += columnModel.getColumn(i).getWidth();
@@ -554,10 +555,8 @@ public class GitLogUI implements Disposable {
 
     columnModel.getColumn(2).setWidth(dateWidth);
     columnModel.getColumn(2).setPreferredWidth(dateWidth);
-    // todo if too small
 
-    final int nullWidth = widthWas - dateWidth - nameWidth - columnModel.getColumnMargin() * 3 -
-      scrollPane.getVerticalScrollBar().getWidth() - 10;
+    final int nullWidth = widthWas - dateWidth - nameWidth - columnModel.getColumnMargin() * 3;
     columnModel.getColumn(0).setWidth(nullWidth);
     columnModel.getColumn(0).setPreferredWidth(nullWidth);
 
@@ -959,7 +958,7 @@ public class GitLogUI implements Disposable {
     @Override
     public String valueOf(Object o) {
       if (o instanceof GitCommit) {
-        return ((GitCommit) o).getCommitter();
+        return ((GitCommit) o).getAuthor();
       }
       return "";
     }

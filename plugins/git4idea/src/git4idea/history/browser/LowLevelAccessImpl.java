@@ -51,7 +51,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   public void loadHashesWithParents(final @NotNull Collection<String> startingPoints,
                                     @NotNull final Collection<ChangesFilter.Filter> filters,
                                     final AsynchConsumer<CommitHashPlusParents> consumer,
-                                    Getter<Boolean> isCanceled) throws VcsException {
+                                    Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException {
     final List<String> parameters = new ArrayList<String>();
     for (ChangesFilter.Filter filter : filters) {
       filter.getCommandParametersFilter().applyToCommandLine(parameters);
@@ -63,6 +63,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       }
     } else {
       parameters.add("--all");
+    }
+    if (useMaxCnt > 0) {
+      parameters.add("--max-count=" + useMaxCnt);
     }
 
     GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
@@ -107,7 +110,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     final List<String> parameters = new ArrayList<String>();
     if (useMaxCnt > 0) {
-      parameters.add("--max-count=" + (useMaxCnt + 1));
+      parameters.add("--max-count=" + useMaxCnt);
     }
 
     for (ChangesFilter.Filter filter : filters) {

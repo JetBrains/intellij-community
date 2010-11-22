@@ -65,4 +65,21 @@ public class CommitHashPlusParents {
   public String getAuthorName() {
     return myAuthorName;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    CommitHashPlusParents that = (CommitHashPlusParents)o;
+
+    if (!myHash.equals(that.myHash)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myHash.hashCode();
+  }
 }

@@ -14,19 +14,13 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
-import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.LowLevelAccessImpl;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,11 +30,11 @@ public class LoadAlgorithm {
   private static final long ourTestTimeThreshold = 10000;
 
   private final Project myProject;
-  private final List<LoaderAndRefresher> myLoaders;
+  private final List<LoaderAndRefresher<CommitHashPlusParents>> myLoaders;
   private final List<String> myAbstractHashs;
   private Continuation myContinuation;
 
-  public LoadAlgorithm(final Project project, final List<LoaderAndRefresher> loaders, final List<String> abstractHashs) {
+  public LoadAlgorithm(final Project project, final List<LoaderAndRefresher<CommitHashPlusParents>> loaders, final List<String> abstractHashs) {
     myProject = project;
     myLoaders = loaders;
     myAbstractHashs = abstractHashs;
@@ -54,7 +48,7 @@ public class LoadAlgorithm {
     if (myAbstractHashs != null) {
       initContext.last(new TryHashes());
     }
-    for (LoaderAndRefresher loader : myLoaders) {
+    for (LoaderAndRefresher<CommitHashPlusParents> loader : myLoaders) {
       final LoaderFactory factory = new LoaderFactory(loader);
       final State state = new State(factory);
       state.scheduleSelf(initContext);
@@ -84,10 +78,10 @@ public class LoadAlgorithm {
 
   private static class LoadTaskDescriptor extends TaskDescriptor {
     protected final State myState;
-    private final LoaderAndRefresher myLoader;
+    private final LoaderAndRefresher<CommitHashPlusParents> myLoader;
     private final RefreshTaskDescriptor myRefreshTaskDescriptor;
 
-    protected LoadTaskDescriptor(final State state, final LoaderAndRefresher loader, final RefreshTaskDescriptor refreshTaskDescriptor) {
+    protected LoadTaskDescriptor(final State state, final LoaderAndRefresher<CommitHashPlusParents> loader, final RefreshTaskDescriptor refreshTaskDescriptor) {
       super("Load git tree skeleton", Where.POOLED);
       myState = state;
       myLoader = loader;
@@ -99,16 +93,19 @@ public class LoadAlgorithm {
 
     @Override
     public void run(final ContinuationContext context) {
-      final Result result = myLoader.load(myState.myValue);
+      final Result<CommitHashPlusParents> result = myLoader.load(myState.myValue, myState.getContinuationTs());
       processResult(result);
+      myState.setContinuationTs(result.getLast() == null ? -1 : result.getLast().getTime());
       if (! result.isIsComplete()) {
         // no next stage if it is completed
         myState.transition();
-        myState.scheduleSelf(context);
+        if (! myLoader.isInterrupted()) {
+          myState.scheduleSelf(context);
+        }
+        context.next(myRefreshTaskDescriptor);
+      } else {
+        context.next(myRefreshTaskDescriptor);
       }
-      // refresh UI first before next stage
-      // todo single instance?
-      context.next(myRefreshTaskDescriptor);
     }
   }
 
@@ -143,29 +140,39 @@ public class LoadAlgorithm {
   }
 
   public static enum LoadType {
-    TEST(true),
-    FULL(false),
-    FULL_PREVIEW(true),
-    SHORT(false);
+    TEST(true, false),
+    FULL_START(false, true),
+    FULL(false, true),
+    FULL_PREVIEW(true, true),
+    SHORT_START(false, true),
+    SHORT(false, true);
 
     private final boolean myStartEarly;
+    private final boolean myUsesContinuation;
 
-    private LoadType(final boolean startEarly) {
+    private LoadType(final boolean startEarly, boolean startsContinuation) {
       myStartEarly = startEarly;
+      myUsesContinuation = startsContinuation;
     }
 
     public boolean isStartEarly() {
       return myStartEarly;
     }
+
+    public boolean isUsesContinuation() {
+      return myUsesContinuation;
+    }
   }
 
-  public static class Result {
+  public static class Result<T> {
     private final long myTime;
     private final boolean myIsComplete;
+    private final T myLast;
 
-    public Result(boolean isComplete, long time) {
+    public Result(boolean isComplete, long time, final T t) {
       myIsComplete = isComplete;
       myTime = time;
+      myLast = t;
     }
 
     public boolean isIsComplete() {
@@ -175,13 +182,17 @@ public class LoadAlgorithm {
     public long getTime() {
       return myTime;
     }
+
+    public T getLast() {
+      return myLast;
+    }
   }
 
   private static class LoaderFactory implements Convertor<State, LoadTaskDescriptor> {
-    private final LoaderAndRefresher myLoader;
+    private final LoaderAndRefresher<CommitHashPlusParents> myLoader;
     private final RefreshTaskDescriptor myRefreshTaskDescriptor;
 
-    private LoaderFactory(final LoaderAndRefresher loader) {
+    private LoaderFactory(final LoaderAndRefresher<CommitHashPlusParents> loader) {
       myLoader = loader;
       myRefreshTaskDescriptor = new RefreshTaskDescriptor(loader);
     }
@@ -196,13 +207,15 @@ public class LoadAlgorithm {
   }
 
   // pseudo enum
-  private static class State {
+  private class State {
     private boolean myLoadFull;
+    private long myContinuationTs;
     @Nullable
     private LoadType myValue;
     private final Convertor<State, LoadTaskDescriptor> myLoaderFactory;
 
     private State(final Convertor<State, LoadTaskDescriptor> loaderFactory) {
+      myContinuationTs = -1;
       myLoaderFactory = loaderFactory;
       myValue = LoadType.TEST;
       myLoadFull = false;
@@ -217,15 +230,31 @@ public class LoadAlgorithm {
       }
     }
 
+    public long getContinuationTs() {
+      return myContinuationTs;
+    }
+
+    public void setContinuationTs(long continuationTs) {
+      myContinuationTs = continuationTs;
+    }
+
     public void takeDecision(final boolean loadFull) {
       myLoadFull = loadFull;
     }
 
     public void transition() {
       if (LoadType.TEST.equals(myValue)) {
-        myValue = myLoadFull ? LoadType.FULL : LoadType.FULL_PREVIEW;
+        myValue = myLoadFull ? LoadType.FULL_START : LoadType.FULL_PREVIEW;
       } else if (LoadType.FULL_PREVIEW.equals(myValue)) {
-          myValue = LoadType.SHORT;
+        myValue = LoadType.SHORT_START;
+      } else if (LoadType.FULL_START.equals(myValue)) {
+        myValue = LoadType.FULL;
+      } else if (LoadType.SHORT_START.equals(myValue)) {
+        myValue = LoadType.SHORT;
+      } else if (LoadType.SHORT.equals(myValue)) {
+        myValue = LoadType.SHORT;
+      } else if (LoadType.FULL.equals(myValue)) {
+        myValue = LoadType.FULL;
       } else {
         myValue = null;
       }

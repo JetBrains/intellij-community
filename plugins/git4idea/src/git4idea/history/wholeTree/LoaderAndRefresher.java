@@ -17,10 +17,11 @@ import java.util.List;
 /**
  * @author irengrig
  */
-public interface LoaderAndRefresher {
+public interface LoaderAndRefresher<T> {
   void loadByHashesAside(final List<String> hashes);
-  LoadAlgorithm.Result load(final LoadAlgorithm.LoadType loadType);
+  LoadAlgorithm.Result<T> load(final LoadAlgorithm.LoadType loadType, long continuation);
   // false -> canceled
   boolean flushIntoUI();
   void interrupt();
+  boolean isInterrupted();
 }

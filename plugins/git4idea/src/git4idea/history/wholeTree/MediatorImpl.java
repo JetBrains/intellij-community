@@ -44,7 +44,9 @@ public class MediatorImpl implements Mediator {
   @Override
   public boolean appendResult(final Ticket ticket, final List<CommitI> result,
                               final @Nullable List<List<AbstractHash>> parents) {
-    if (! myTicket.equals(ticket)) return false;
+    if (! myTicket.equals(ticket)) {
+      return false;
+    }
 
     new AbstractCalledLater(myProject, myState) {
       @Override

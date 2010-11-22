@@ -12,7 +12,6 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -25,7 +24,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitBranch;
 import git4idea.changes.GitChangeUtils;
-import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.*;
 
 import java.util.*;
@@ -33,9 +31,10 @@ import java.util.*;
 /**
  * @author irengrig
  */
-public class LoaderAndRefresherImpl implements LoaderAndRefresher {
+public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlusParents> {
   private final static int ourTestCount = 5;
-  private final static int ourSlowPreloadCount = 50;
+  private final static int ourPreload = 100;
+  private static final int ourPackSize = 3000;
 
   private final Collection<String> myStartingPoints;
   private final Mediator.Ticket myTicket;
@@ -106,6 +105,10 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
     myInterrupted = true;
   }
 
+  public boolean isInterrupted() {
+    return myInterrupted;
+  }
+
   @Override
   public boolean flushIntoUI() {
     myBufferConsumer.flush();
@@ -113,43 +116,71 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
   }
 
   @Override
-  public LoadAlgorithm.Result load(final LoadAlgorithm.LoadType loadType) {
-    if (myInterrupted) return new LoadAlgorithm.Result(true, 0);
+  public LoadAlgorithm.Result<CommitHashPlusParents> load(final LoadAlgorithm.LoadType loadType, long continuation) {
+    if (myInterrupted) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
     initSymbRefs();
-    myRepeatingLoadConsumer.reset();
     if (! myStartingPoints.isEmpty()) {
-      boolean foundSomething = false;
-      for (String point : myStartingPoints) {
-        if (point.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
-          if (mySymbolicRefs.getRemoteBranches().contains(point.substring(GitBranch.REFS_REMOTES_PREFIX.length()))) {
-            foundSomething = true;
-            break;
-          }
-        } else {
-          point = point.startsWith(GitBranch.REFS_HEADS_PREFIX) ? point.substring(GitBranch.REFS_HEADS_PREFIX.length()) : point;
-          if (mySymbolicRefs.getLocalBranches().contains(point) || mySymbolicRefs.getTags().contains(point)) {
-            foundSomething = true;
-            break;
-          }
-        }
-      }
-      if (! foundSomething) return new LoadAlgorithm.Result(true, 0);
+      if (! checkStartingPoints()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
     }
 
-    final long start = System.currentTimeMillis();
+    myRepeatingLoadConsumer.reset();
+    int count = ourPackSize;
+    boolean shouldFull = true;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
-      loadFull(ourTestCount);
-    } else if (LoadAlgorithm.LoadType.SHORT.equals(loadType)) {
-      loadShort();
+      count = ourTestCount;
+    } else if (LoadAlgorithm.LoadType.SHORT.equals(loadType) || LoadAlgorithm.LoadType.SHORT_START.equals(loadType)) {
+      shouldFull = false;
     } else if (LoadAlgorithm.LoadType.FULL_PREVIEW.equals(loadType)) {
-      loadFull(ourSlowPreloadCount);
-    } else {
-      loadFull(-1);
+      count = ourPreload;
+    }
+
+    long start;
+    boolean isOver = false;
+    while (true) {
+      start = System.currentTimeMillis();
+      step(count, shouldFull, continuation);
+      if (isInterrupted()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
+      final List<AbstractHash> lastParents = myRepeatingLoadConsumer.getLast() == null ? null : myRepeatingLoadConsumer.getLast().getParents();
+      // at least 1 record would be found, the latest
+      isOver = lastParents == null || lastParents.isEmpty() || (myRepeatingLoadConsumer.getTotalRecordsInPack() < count);
+
+      if (isOver) {
+        break;
+      }
+      if (myRepeatingLoadConsumer.sincePoint() == 0) {
+        count *= 2;
+        myRepeatingLoadConsumer.reset();
+      } else {
+        break;
+      }
     }
     final long end = System.currentTimeMillis();
-    //todo check
-    final List<AbstractHash> lastParents = myRepeatingLoadConsumer.myLastT == null ? null : myRepeatingLoadConsumer.myLastT.getParents();
-    return new LoadAlgorithm.Result(lastParents == null || lastParents.isEmpty(), end - start);
+
+    return new LoadAlgorithm.Result<CommitHashPlusParents>(isOver, end - start, myRepeatingLoadConsumer.getLast());
+  }
+
+  private void step(final int count, final boolean shouldFull, final long continuation) {
+    if (shouldFull) {
+      loadFull(count, continuation);
+    } else {
+      loadShort(continuation, count);
+    }
+  }
+
+  private boolean checkStartingPoints() {
+    for (String point : myStartingPoints) {
+      if (point.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
+        if (mySymbolicRefs.getRemoteBranches().contains(point.substring(GitBranch.REFS_REMOTES_PREFIX.length()))) {
+          return true;
+        }
+      } else {
+        point = point.startsWith(GitBranch.REFS_HEADS_PREFIX) ? point.substring(GitBranch.REFS_HEADS_PREFIX.length()) : point;
+        if (mySymbolicRefs.getLocalBranches().contains(point) || mySymbolicRefs.getTags().contains(point)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void initSymbRefs() {
@@ -165,9 +196,10 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
   }
 
   // true - load is complete //if (gitCommit.getParentsHashes().isEmpty())
-  private void loadFull(final int count) {
+  private void loadFull(final int count, final long continuation) {
     try {
-      myLowLevelAccess.loadCommits(myStartingPoints, Collections.<String>emptyList(), myFilters, new AsynchConsumer<GitCommit>() {
+      final Collection<ChangesFilter.Filter> filters = addContinuation(continuation);
+      myLowLevelAccess.loadCommits(myStartingPoints, Collections.<String>emptyList(), filters, new AsynchConsumer<GitCommit>() {
         @Override
         public void consume(GitCommit gitCommit) {
           myDetailsCache.acceptAnswer(Collections.singleton(gitCommit), myRootHolder.getRoot());
@@ -182,6 +214,17 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
     catch (VcsException e) {
       myMediator.acceptException(e);
     }
+  }
+
+  private Collection<ChangesFilter.Filter> addContinuation(long continuation) {
+    Collection<ChangesFilter.Filter> filters;
+    if (continuation > 0) {
+      filters = new ArrayList<ChangesFilter.Filter>(myFilters);
+      filters.add(new ChangesFilter.BeforeDate(new Date(continuation)));
+    } else {
+      filters = myFilters;
+    }
+    return filters;
   }
 
   public void loadByHashesAside(final List<String> hashes) {
@@ -221,9 +264,10 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
     }
   }
 
-  private void loadShort() {
+  private void loadShort(final long continuation, int maxCount) {
+    final Collection<ChangesFilter.Filter> filters = addContinuation(continuation);
     try {
-      myLowLevelAccess.loadHashesWithParents(myStartingPoints, myFilters, myRepeatingLoadConsumer, myProgressAnalog);
+      myLowLevelAccess.loadHashesWithParents(myStartingPoints, filters, myRepeatingLoadConsumer, myProgressAnalog, maxCount);
     }
     catch (VcsException e) {
       myMediator.acceptException(e);
@@ -276,32 +320,53 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher {
   private static class RepeatingLoadConsumer<T> implements AsynchConsumer<T> {
     private final Project myProject;
     private final Consumer<T> myConsumer;
-    private int myAlreadyLoaded;
     private int myCnt;
     private T myLastT;
+    private int mySavedPoint;
+    private int myTotalRecordsInPack;
+    private boolean myPointMeet;
 
     private RepeatingLoadConsumer(final Project project, Consumer<T> consumer) {
       myProject = project;
       myConsumer = consumer;
-      myAlreadyLoaded = 0;
+      mySavedPoint = 0;
       myCnt = 0;
       myLastT = null;
+      myPointMeet = false;
     }
 
-    public void reset() {
-      if (myCnt > myAlreadyLoaded) {
-        myAlreadyLoaded = myCnt;
-      }
-      myCnt = 0;
+    public int reset() {
+      mySavedPoint = myCnt;
+      myTotalRecordsInPack = 0;
+      myPointMeet = false;
+      return mySavedPoint;
+    }
+
+    public int getTotalRecordsInPack() {
+      return myTotalRecordsInPack;
+    }
+
+    public int sincePoint() {
+      return myCnt - mySavedPoint;
+    }
+
+    public T getLast() {
+      return myLastT;
     }
 
     @Override
     public void consume(T t) {
       if (! myProject.isOpen()) throw new ProcessCanceledException();
-      ++ myCnt;
-      myLastT = t;
-      if (myCnt > myAlreadyLoaded) {
+      ++ myTotalRecordsInPack;
+      if (myLastT == null) {
+        myPointMeet = true;
+      }
+      if (! myPointMeet) {
+        myPointMeet = t.equals(myLastT);
+      } else {
+        ++ myCnt;
         myConsumer.consume(t);
+        myLastT = t;
       }
     }
 
