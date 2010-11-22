@@ -1,9 +1,7 @@
 package org.jetbrains.plugins.groovy.grape;
 
 import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilationFailedException;
 
-import java.io.File;
 import java.net.URL;
 
 /**
@@ -16,25 +14,18 @@ public class GrapeRunner {
   }
 
   public static void main(String[] args) {
-    final File file = new File(args[0]);
-    if (!file.exists()) {
-      return;
-    }
-
     final GroovyShell shell = new GroovyShell();
     try {
-      shell.parse(file);
-    }
-    catch (CompilationFailedException ignored) {
-      //should fail, we're not compiling, we're just resolving Grab dependencies
+      shell.parse(args[0] + " import java.lang.*");
     }
     catch (Throwable e) {
       e.printStackTrace();
+      return;
     }
 
-    URL[] URLs = shell.getClassLoader().getURLs();
-    for (int i = 0, URLsLength = URLs.length; i < URLsLength; i++) {
-      System.out.println(URL_PREFIX + URLs[i]);
+    URL[] urls = shell.getClassLoader().getURLs();
+    for (int i = 0; i < urls.length; i++) {
+      System.out.println(URL_PREFIX + urls[i]);
     }
   }
 

@@ -64,7 +64,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, tests, "groovy.ui.GroovyMain");
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain");
 
     addClasspathFromRootModel(module, tests, params, true);
 
@@ -80,7 +80,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.scriptParams);
   }
 
-  public static void configureGenericGroovyRunner(JavaParameters params, Module module, boolean tests, String mainClass) throws CantRunException {
+  public static void configureGenericGroovyRunner(JavaParameters params, Module module, String mainClass) {
     assert module != null;
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
