@@ -20,30 +20,56 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 
+/**
+ * @author max
+ * @author Konstantin Bulenkov
+ *
+ * @see com.intellij.util.ui.ColorIcon
+ */
 public class EmptyIcon implements Icon {
-  private final int myWidth;
-  private final int myHeight;
+  private static final HashMap<Integer, Icon> cache = new HashMap<Integer, Icon>();
+  public static final Icon ICON_16 = create(16);
+  public static final Icon ICON_18 = create(18);
+  public static final Icon ICON_8 = create(8);
+  public static final Icon ICON_0 = create(0);
 
+  private final int width;
+  private final int height;
+
+  public static Icon create(int size) {
+    Icon icon = cache.get(size);
+    if (icon == null && size < 129) {
+      cache.put(size, icon = new EmptyIcon(size, size));
+    }
+    return icon == null ? new EmptyIcon(size, size) : icon;
+  }
+
+  /**
+   * @deprecated use EmptyIcon.create for caching
+   *
+   * @param size icon's size
+   */
   public EmptyIcon(int size) {
     this(size, size);
   }
 
   public EmptyIcon(int width, int height) {
-    myWidth = width;
-    myHeight = height;
+    this.width = width;
+    this.height = height;
   }
 
-  public EmptyIcon(@NotNull Icon template) {
-    this(template.getIconWidth(), template.getIconHeight());
+  public EmptyIcon(@NotNull Icon base) {
+    this(base.getIconWidth(), base.getIconHeight());
   }
 
   public int getIconWidth() {
-    return myWidth;
+    return width;
   }
 
   public int getIconHeight() {
-    return myHeight;
+    return height;
   }
 
   public void paintIcon(Component component, Graphics g, int i, int j) {
@@ -55,13 +81,14 @@ public class EmptyIcon implements Icon {
 
     final EmptyIcon icon = (EmptyIcon)o;
 
-    if (myHeight != icon.myHeight) return false;
-    if (myWidth != icon.myWidth) return false;
+    if (height != icon.height) return false;
+    if (width != icon.width) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myWidth + myHeight;
+    int sum = width + height;
+    return sum * (sum + 1)/2 + width;
   }
 }

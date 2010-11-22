@@ -32,6 +32,7 @@ import com.intellij.usages.impl.NullUsage;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -55,8 +56,10 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
     Color fileBgColor = getBackgroundColor(isSelected, usage);
-    panel.setBackground(isSelected ? UIUtil.getListSelectionBackground() : fileBgColor == null ? list.getBackground() : fileBgColor);
-    panel.setForeground(isSelected ? UIUtil.getListSelectionForeground() : list.getForeground());
+    final Color bg = UIUtil.getListSelectionBackground();
+    final Color fg = UIUtil.getListSelectionForeground();
+    panel.setBackground(isSelected ? bg : fileBgColor == null ? list.getBackground() : fileBgColor);
+    panel.setForeground(isSelected ? fg : list.getForeground());
 
     if (usage == null) {
       panel.setLayout(new BorderLayout());
@@ -85,9 +88,11 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       TextChunk[] text = presentation.getText();
 
       if (column == 1) {
-        textChunks.setIcon(presentation.getIcon());
+        final Icon icon = presentation.getIcon();
+        textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
         if (text.length != 0) {
-          SimpleTextAttributes attributes =
+          SimpleTextAttributes attributes = isSelected ?
+            new SimpleTextAttributes(bg, fg, fg, SimpleTextAttributes.STYLE_ITALIC) :
             deriveAttributesWithColor(SimpleTextAttributes.fromTextAttributes(text[0].getAttributes()), fileBgColor);
           textChunks.append(text[0].getText(), attributes);
         }
@@ -96,8 +101,6 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         for (int i = 1; i < text.length; i++) {
           TextChunk textChunk = text[i];
           final SimpleTextAttributes attrs = SimpleTextAttributes.fromTextAttributes(textChunk.getAttributes());
-          final Color bg = UIUtil.getListSelectionBackground();
-          final Color fg = UIUtil.getListSelectionForeground();
           SimpleTextAttributes attributes = isSelected ?
             new SimpleTextAttributes(bg, fg, fg, attrs.getStyle()) : deriveAttributesWithColor(attrs, fileBgColor);
           textChunks.append(textChunk.getText(), attributes);

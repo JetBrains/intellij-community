@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 
 public class ActionsTree {
-  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
   private static final Icon CLOSE_ICON = new DefaultTreeCellRenderer().getClosedIcon();
