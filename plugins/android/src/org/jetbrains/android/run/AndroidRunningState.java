@@ -84,7 +84,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   private final AndroidFacet myFacet;
   private final String myCommandLine;
   private final AndroidApplicationLauncher myApplicationLauncher;
-  private final Map<Module, String> myAdditionalModule2PackageName;
+  private final Map<AndroidFacet, String> myAdditionalFacet2PackageName;
 
   private final Object myDebugLock = new Object();
 
@@ -239,7 +239,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
                              @NotNull String commandLine,
                              @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
-                             Map<Module, String> additionalModule2PackageName) throws ExecutionException {
+                             Map<AndroidFacet, String> additionalFacet2PackageName) throws ExecutionException {
     myFacet = facet;
     myCommandLine = commandLine;
     myTargetDeviceSerialNumbers = targetDeviceSerialNumbers;
@@ -252,7 +252,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     }*/
     myPackageName = packageName;
     myTargetPackageName = packageName;
-    myAdditionalModule2PackageName = additionalModule2PackageName;
+    myAdditionalFacet2PackageName = additionalFacet2PackageName;
   }
 
   public void setDeploy(boolean deploy) {
@@ -537,7 +537,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     getProcessHandler().notifyTextAvailable(deviceMessageBuilder.toString(), STDOUT);
     try {
       if (myDeploy) {
-        if (!uploadAndInstall(device, myPackageName)) return false;
+        if (!uploadAndInstall(device, myPackageName, myFacet)) return false;
         if (!uploadAndInstallDependentModules(device)) return false;
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
@@ -568,18 +568,22 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private boolean uploadAndInstallDependentModules(@NotNull IDevice device) throws IOException {
-    for (Module module : myAdditionalModule2PackageName.keySet()) {
-      String packageName = myAdditionalModule2PackageName.get(module);
-      if (!uploadAndInstall(device, packageName)) {
+    for (AndroidFacet depFacet : myAdditionalFacet2PackageName.keySet()) {
+      String packageName = myAdditionalFacet2PackageName.get(depFacet);
+      if (!uploadAndInstall(device, packageName, depFacet)) {
         return false;
       }
     }
     return true;
   }
 
-  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName) throws IOException {
+  private boolean uploadAndInstall(@NotNull IDevice device, @NotNull String packageName, AndroidFacet facet) throws IOException {
     String remotePath = "/data/local/tmp/" + packageName;
-    String localPath = myFacet.getApkPath();
+    String localPath = facet.getApkPath();
+    if (localPath == null) {
+      getProcessHandler().notifyTextAvailable("ERROR: APK path is not specified for module \"" + facet.getModule().getName() + '"', STDERR);
+      return false;
+    }
     if (!uploadApp(device, remotePath, localPath)) return false;
     if (!installApp(device, remotePath, packageName)) return false;
     return true;
