@@ -34,15 +34,15 @@ import static com.jetbrains.python.psi.resolve.ResolveImportUtil.PointInImport.R
  * @author yole
  */
 public class PyModuleType implements PyType { // Modules don't descend from object
-  private final PsiFile myModule;
+  private final PyFile myModule;
 
   protected static ImmutableSet<String> ourPossibleFields = ImmutableSet.of("__name__", "__file__", "__path__", "__doc__", "__dict__");
 
-  public PyModuleType(PsiFile source) {
+  public PyModuleType(PyFile source) {
     myModule = source;
   }
 
-  public PsiFile getModule() {
+  public PyFile getModule() {
     return myModule;
   }
 
