@@ -270,7 +270,7 @@ public class GitHistoryUtils {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    final GitLogParser parser = new GitLogParser(HASH);
+    final GitLogParser parser = new GitLogParser(SHORT_HASH, COMMIT_TIME, SHORT_PARENTS);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
@@ -279,29 +279,12 @@ public class GitHistoryUtils {
     final String output = h.run();
     final List<GitLogRecord> records = parser.parse(output);
 
+    if (records.isEmpty()) return null;
     // we have information about all changed files of the commit. Extracting information about the file we need.
-    GitLogRecord fileRecord = null;
-    for (GitLogRecord record : records) {
-      final List<String> paths = record.getPaths();
-      if (!paths.isEmpty()) {
-        String path = paths.get(paths.size()-1); // if the file is renamed, it has 2 paths - we are looking for the new name.
-        if (path.equals(GitUtil.relativePath(root, filePath))) {
-          fileRecord = record;
-          break;
-        }
-      }
-    }
-
-    if (fileRecord != null) {
-      final List<Change> changes = fileRecord.coolChangesParser(project, root);
-      final Change change = changes.get(0);
-      if (change.isMoved() || change.isRenamed()) {
-        final List<FilePath> paths = fileRecord.getFilePaths(root);
-        final String message = "Rename commit should have 2 paths. Commit: " + commit;
-        if (!LOG.assertTrue(paths.size() == 2, message + " Output: [" + output + "]")) {
-          throw new VcsException(message);
-        }
-        return paths.get(0);
+    final List<Change> changes = records.get(0).coolChangesParser(project, root);
+    for (Change change : changes) {
+      if ((change.isMoved() || change.isRenamed()) && filePath.equals(change.getAfterRevision().getFile())) {
+        return change.getBeforeRevision().getFile();
       }
     }
     return null;

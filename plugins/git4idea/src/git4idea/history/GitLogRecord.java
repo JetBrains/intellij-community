@@ -222,9 +222,9 @@ class GitLogRecord {
         break;
       case 'R':
         status = FileStatus.MODIFIED;
-        final FilePath filePathBeforeRename = GitContentRevision.createPath(vcsRoot, parts.get(2), true, true);
-        before = GitContentRevision.createMultipleParentsRevision(project, filePathBeforeRename, parentRevisions);
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, parts.get(2), false, false);
+        after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename, parentRevisions);
+        before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true);
         break;
       default:
         throw new VcsException("Unknown file status: " + Arrays.asList(parts));
