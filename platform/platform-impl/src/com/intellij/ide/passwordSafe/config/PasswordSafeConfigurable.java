@@ -40,7 +40,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable {
    */
   @Nls
   public String getDisplayName() {
-    return "Password Safe";
+    return "Passwords";
   }
 
   /**

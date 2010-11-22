@@ -157,7 +157,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myRbExisting.isSelected() ? myExistingListsCombo : myNewListPanel.getPrefferedFocusedComponent();
+    return myRbExisting.isSelected() ? myExistingListsCombo : myNewListPanel.getPreferredFocusedComponent();
   }
 
   private void createUIComponents() {

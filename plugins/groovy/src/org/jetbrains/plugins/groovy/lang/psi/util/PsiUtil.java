@@ -318,7 +318,7 @@ public class PsiUtil {
         }
 
         if (!ref.isReferenceTo(resolved)) {
-          setQualifier(ref, qualifier);
+          setQualifier(ref, qualifier.copy());
           return false;
         } else {
           return true;

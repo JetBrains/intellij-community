@@ -346,11 +346,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-      mySelectionAlarm.addRequest(new Runnable() {
+      SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          panel.updateSelection();
+          mySelectionAlarm.addRequest(new Runnable() {
+            public void run() {
+              panel.updateSelection();
+            }
+          }, 200);
         }
-      }, 200);
+      });
 
       myShareProfileCheckBox.setSelected(panel.isProfileShared());
     }
@@ -368,7 +372,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.disposeUI();
     }
     myPanels.clear();
-    Disposer.dispose(mySelectionAlarm);
+    if (mySelectionAlarm != null) {
+      Disposer.dispose(mySelectionAlarm);
+    }
   }
 
   public void selectProfile(String name) {

@@ -320,9 +320,17 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
             if (thenReturn == null) {
                 return false;
             }
+            final PsiType thenType = thenReturn.getType();
+            if (!PsiType.BOOLEAN.equals(thenType)) {
+                return false;
+            }
             final PsiExpression elseReturn =
                     ((PsiReturnStatement)elseBranch).getReturnValue();
             if (elseReturn == null) {
+                return false;
+            }
+            final PsiType elseType = elseReturn.getType();
+            if (!PsiType.BOOLEAN.equals(elseType)) {
                 return false;
             }
             final boolean thenConstant = BoolUtils.isFalse(thenReturn) ||
@@ -368,8 +376,16 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
             if (thenRhs == null) {
                 return false;
             }
+            final PsiType thenRhsType = thenRhs.getType();
+            if (!PsiType.BOOLEAN.equals(thenRhsType)) {
+                return false;
+            }
             final PsiExpression elseRhs = elseExpression.getRExpression();
             if (elseRhs == null) {
+                return false;
+            }
+            final PsiType elseRhsType = elseRhs.getType();
+            if (!PsiType.BOOLEAN.equals(elseRhsType)) {
                 return false;
             }
             final boolean thenConstant = BoolUtils.isFalse(thenRhs) ||

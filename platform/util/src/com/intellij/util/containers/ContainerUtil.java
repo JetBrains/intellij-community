@@ -791,7 +791,7 @@ public class ContainerUtil {
 
   @NotNull
   public static <T, V> V[] map(@NotNull T[] arr, @NotNull Function<T, V> mapping, @NotNull V[] emptyArray) {
-    List<V> result = new ArrayList<V>();
+    List<V> result = new ArrayList<V>(arr.length);
     for (T t : arr) {
       result.add(mapping.fun(t));
     }

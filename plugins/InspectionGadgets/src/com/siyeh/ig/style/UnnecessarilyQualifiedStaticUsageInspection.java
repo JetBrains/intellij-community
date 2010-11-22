@@ -187,12 +187,19 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if (!(resolvedQualifier instanceof PsiClass)) {
                 return false;
             }
+            final PsiClass containingClass =
+                    PsiTreeUtil.getParentOfType(referenceElement,
+                            PsiClass.class);
             final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
+            if (containingClass == null ||
+                    !containingClass.equals(qualifyingClass)) {
+                return false;
+            }
             final Project project = referenceElement.getProject();
             final JavaPsiFacade manager = JavaPsiFacade.getInstance(project);
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiMember member = (PsiMember) target;
-            final PsiClass containingClass;
+            final PsiClass memberClass;
             if (target instanceof PsiField) {
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(referenceName,
@@ -201,7 +208,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                     return false;
                 }
                 final PsiMember memberVariable = (PsiMember)variable;
-                containingClass = memberVariable.getContainingClass();
+                memberClass = memberVariable.getContainingClass();
             } else if (target instanceof PsiClass) {
                 final PsiClass aClass =
                         resolveHelper.resolveReferencedClass(referenceName,
@@ -209,12 +216,12 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 if (aClass == null || !aClass.equals(member)) {
                     return false;
                 }
-                containingClass = aClass.getContainingClass();
+                memberClass = aClass.getContainingClass();
             } else {
                 return isMethodAccessibleWithoutQualifier(referenceElement,
                         qualifyingClass);
             }
-            return resolvedQualifier.equals(containingClass);
+            return resolvedQualifier.equals(memberClass);
         }
 
         private boolean isMethodAccessibleWithoutQualifier(

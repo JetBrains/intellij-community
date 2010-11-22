@@ -65,9 +65,6 @@ public class MappingUtil {
         continue;
       }
       if (cacheEntry.startOffset > offset) {
-        if (start == end) {
-          return start - 1;
-        }
         end = i - 1;
         continue;
       }

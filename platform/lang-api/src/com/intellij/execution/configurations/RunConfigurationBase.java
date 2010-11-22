@@ -182,4 +182,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     }
   }
 
+  public boolean excludeCompileBeforeLaunchOption() {
+    return false;
+  }
 }

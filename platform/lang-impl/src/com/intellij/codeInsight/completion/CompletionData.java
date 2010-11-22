@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
@@ -168,25 +169,29 @@ public class CompletionData {
 
   @Nullable
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
-    if(ref != null) {
-      final List<TextRange> ranges = ReferenceRange.getRanges(ref);
-      final PsiElement element = ref.getElement();
-      final int elementStart = element.getTextRange().getStartOffset();
-      for (TextRange refRange : ranges) {
-        if (refRange.contains(offsetInFile - elementStart)) {
-          final int endIndex = offsetInFile - elementStart;
-          final int beginIndex = refRange.getStartOffset();
-          if (beginIndex > endIndex) {
-            LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
+    try {
+      final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
+      if(ref != null) {
+        final List<TextRange> ranges = ReferenceRange.getRanges(ref);
+        final PsiElement element = ref.getElement();
+        final int elementStart = element.getTextRange().getStartOffset();
+        for (TextRange refRange : ranges) {
+          if (refRange.contains(offsetInFile - elementStart)) {
+            final int endIndex = offsetInFile - elementStart;
+            final int beginIndex = refRange.getStartOffset();
+            if (beginIndex > endIndex) {
+              LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
+            }
+            if (beginIndex < 0) {
+              LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
+            }
+            LOG.assertTrue(endIndex >= 0);
+            return element.getText().substring(beginIndex, endIndex);
           }
-          if (beginIndex < 0) {
-            LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
-          }
-          LOG.assertTrue(endIndex >= 0);
-          return element.getText().substring(beginIndex, endIndex);
         }
       }
+    }
+    catch (IndexNotReadyException ignored) {
     }
     return null;
   }

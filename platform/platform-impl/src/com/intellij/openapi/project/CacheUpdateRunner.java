@@ -137,7 +137,7 @@ class CacheUpdateRunner {
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
       if (threadsCount <= 0) {
-        threadsCount = Math.min(PROC_COUNT, ApplicationManager.getApplication().isUnitTestMode() ? 4 : 2);
+        threadsCount = Math.min(PROC_COUNT, 4);
       }
       if (threadsCount == 1) {
         Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
@@ -239,7 +239,8 @@ class CacheUpdateRunner {
   }
 
   private static Runnable getProcessWrapper(final Runnable process) {
-    return ApplicationManager.getApplication().isWriteAccessAllowed() ? new Runnable() {
+    // launching thread will hold read access for workers
+    return ApplicationManager.getApplication().isReadAccessAllowed() ? new Runnable() {
       @Override
       public void run() {
         boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);

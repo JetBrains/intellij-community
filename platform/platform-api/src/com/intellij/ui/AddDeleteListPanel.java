@@ -18,6 +18,8 @@ package com.intellij.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,12 +36,12 @@ import java.util.List;
  * @author anna
  * @since 5.1
  */
-public abstract class AddDeleteListPanel<T> extends PanelWithButtons {
+public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private final String myTitle;
   protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
   protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
   protected DefaultListModel myListModel = new DefaultListModel();
-  protected JList myList = new JBList(myListModel);
+  protected JBList myList = new JBList(myListModel);
 
   public AddDeleteListPanel(final String title,
                             final List<T> initialList) {
@@ -66,6 +68,11 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons {
       }
     });
     initPanel();
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myList.getEmptyText();
   }
 
   protected void addElement(@Nullable T itemToAdd) {

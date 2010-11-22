@@ -190,7 +190,7 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-      focusManager.requestFocus(new MyFocusCommand(), false).doWhenProcessed(new Runnable() {
+      focusManager.requestFocus(new MyFocusCommand(), true).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
         }

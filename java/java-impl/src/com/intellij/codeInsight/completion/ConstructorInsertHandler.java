@@ -99,41 +99,35 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams);
   }
 
-  private static Runnable generateAnonymousBody(final Editor editor, PsiFile file) {
+  private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    if (element.getParent() instanceof PsiAnonymousClass){
-      try{
-        CodeStyleManager.getInstance(project).reformat(element.getParent());
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
-      offset = element.getParent().getTextRange().getEndOffset() - 1;
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
+
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiAnonymousClass)) return null;
+
+    try{
+      CodeStyleManager.getInstance(project).reformat(parent);
     }
-    final SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+    }
+    offset = parent.getTextRange().getEndOffset() - 1;
+    editor.getCaretModel().moveToOffset(offset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getSelectionModel().removeSelection();
+
     return new Runnable() {
       public void run(){
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-            PsiElement element = pointer.getElement();
-            if (element == null) return;
-
-            while(true){
-              if (element instanceof PsiFile) return;
-              PsiElement parent = element.getParent();
-              if (parent instanceof PsiAnonymousClass) break;
-              element = parent;
-            }
-            final PsiAnonymousClass aClass = (PsiAnonymousClass)element.getParent();
+            final PsiAnonymousClass aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
+            if (aClass == null) return;
 
             final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
             boolean invokeOverride = candidatesToImplement.isEmpty();

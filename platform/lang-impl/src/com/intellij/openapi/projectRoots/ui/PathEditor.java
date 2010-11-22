@@ -16,12 +16,16 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -81,6 +85,7 @@ public class PathEditor {
     myDisplayName = displayName;
     myOrderRootType = orderRootType;
     myDescriptor = descriptor;
+    myDescriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myModel = createListModel();
   }
 
@@ -247,7 +252,8 @@ public class PathEditor {
   }
 
   private VirtualFile[] doAdd() {
-    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor);
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor, project != null ? project.getBaseDir() : null);
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile vFile : files) {

@@ -26,7 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TableUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import gnu.trove.TIntArrayList;
@@ -83,7 +85,9 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
     myTree = new BreakpointTree(project);
 
     myTablePlace.setLayout(new CardLayout());
-    myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), TABLE_VIEW);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myTable);
+    pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+    myTablePlace.add(pane, TABLE_VIEW);
 
     final ListSelectionListener listSelectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -192,7 +196,9 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
       }
     });
 
-    myTablePlace.add(ScrollPaneFactory.createScrollPane(myTree), TREE_VIEW);
+    pane = ScrollPaneFactory.createScrollPane(myTree);
+    pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+    myTablePlace.add(pane, TREE_VIEW);
 
     updateCurrentBreakpointPropertiesPanel();
 

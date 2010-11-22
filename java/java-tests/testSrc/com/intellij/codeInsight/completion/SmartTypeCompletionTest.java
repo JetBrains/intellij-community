@@ -702,6 +702,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testWrongAnonymous() throws Throwable {
+    configureByTestName();
+    select();
+    checkResultByTestName();
+  }
+
   private void doAntiTest() throws Exception {
     configureByTestName();
     assertEmpty(myItems);

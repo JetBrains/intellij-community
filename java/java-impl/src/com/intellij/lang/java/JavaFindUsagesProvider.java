@@ -158,7 +158,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       PsiMethod psiMethod = (PsiMethod)element;
       String formatted = PsiFormatUtil.formatMethod(psiMethod,
                                                     PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                                    PsiFormatUtil.SHOW_TYPE);
+                                                    PsiFormatUtil.SHOW_TYPE|PsiFormatUtil.SHOW_RAW_NON_TOP_TYPE);
       PsiClass psiClass = psiMethod.getContainingClass();
       if (psiClass != null) {
         return getContainingClassDescription(psiClass, formatted);

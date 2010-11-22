@@ -753,7 +753,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return;
     }
 
-    LOG.assertTrue(myTestModeFlag || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
+    LOG.assertTrue(!Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing readAction");
     try {
       myActionsLock.readLock().acquire();
     }

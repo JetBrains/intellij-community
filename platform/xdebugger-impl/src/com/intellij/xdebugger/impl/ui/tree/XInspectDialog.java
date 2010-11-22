@@ -38,7 +38,7 @@ public class XInspectDialog extends DialogWrapper {
     super(session.getProject(), false);
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", nodeName));
     setModal(false);
-    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
+    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
     XDebuggerTree tree = myTreePanel.getTree();
     tree.setRoot(new XValueNodeImpl(tree, null, value), true);
     init();
@@ -57,10 +57,5 @@ public class XInspectDialog extends DialogWrapper {
   @NonNls
   protected String getDimensionServiceKey() {
     return "#xdebugger.XInspectDialog";
-  }
-
-  protected void dispose() {
-    myTreePanel.dispose();
-    super.dispose();
   }
 }

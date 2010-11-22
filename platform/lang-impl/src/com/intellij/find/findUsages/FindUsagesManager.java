@@ -123,13 +123,23 @@ public class FindUsagesManager implements JDOMExternalizable {
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
     for (FindUsagesHandlerFactory factory : myHandlers) {
-      if (factory.canFindUsages(element)) {
-        return true;
+      try {
+        if (factory.canFindUsages(element)) {
+          return true;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
-      if (factory.canFindUsages(element)) {
-        return true;
+      try {
+        if (factory.canFindUsages(element)) {
+          return true;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return false;

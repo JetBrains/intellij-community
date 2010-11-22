@@ -23,6 +23,7 @@ import java.awt.*;
 
 public class SideBorder extends LineBorder {
 
+  public static final int NONE = 0;
   public static final int LEFT = 0x01;
   public static final int TOP = 0x02;
   public static final int RIGHT = 0x04;

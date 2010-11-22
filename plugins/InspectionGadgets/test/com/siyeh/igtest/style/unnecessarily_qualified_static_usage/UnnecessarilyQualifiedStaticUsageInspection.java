@@ -1,6 +1,6 @@
-package com.siyeh.igtest.style;
+package com.siyeh.igtest.style.unnecessarily_qualified_static_usage;
 
-import java.util.Vector;
+import static java.lang.Math.*;
 
 public class UnnecessarilyQualifiedStaticUsageInspection {
 
@@ -55,6 +55,6 @@ class TestUnnecessaryQualifiedNested
      *
      */
     public static void doit(Nested arg) {
-
+        double pi = Math.PI;
     }
 }

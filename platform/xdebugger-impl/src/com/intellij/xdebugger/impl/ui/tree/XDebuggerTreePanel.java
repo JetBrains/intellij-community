@@ -19,16 +19,15 @@ import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 /**
  * @author nik
@@ -44,33 +42,14 @@ import java.awt.event.KeyEvent;
 public class XDebuggerTreePanel implements DnDSource {
   private final XDebuggerTree myTree;
   private final JPanel myMainPanel;
-  private final PopupHandler myPopupHandler;
 
-  public XDebuggerTreePanel(final @NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, final @Nullable XSourcePosition sourcePosition,
+  public XDebuggerTreePanel(final @NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider,
+                            @NotNull Disposable parentDisposable, final @Nullable XSourcePosition sourcePosition,
                             @NotNull @NonNls final String popupActionGroupId) {
-    myTree = new XDebuggerTree(session, editorsProvider, sourcePosition);
+    myTree = new XDebuggerTree(session, editorsProvider, sourcePosition, popupActionGroupId);
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
-    final ActionManager actionManager = ActionManager.getInstance();
-    myPopupHandler = new PopupHandler() {
-      public void invokePopup(final Component comp, final int x, final int y) {
-        final ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(comp, x, y);
-      }
-    };
-    actionManager.getAction(XDebuggerActions.SET_VALUE).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), myTree);
-    actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), myTree);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
-
-    myTree.addMouseListener(myPopupHandler);
-  }
-
-  public void dispose() {
-    ActionManager actionManager = ActionManager.getInstance();
-    actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(myTree);
-    actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(myTree);
-    myTree.removeMouseListener(myPopupHandler);
+    Disposer.register(parentDisposable, myTree);
   }
 
   public XDebuggerTree getTree() {

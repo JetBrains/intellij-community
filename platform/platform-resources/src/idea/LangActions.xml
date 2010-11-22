@@ -698,6 +698,11 @@
       <reference ref="XDebugger.CopyValue"/>
     </group>
 
+    <group id="XDebugger.Value.Hint.Tree.Popup">
+      <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.AddToWatches"/>
+    </group>
+
     <group id="RunnerLayoutActions">
       <group id="Runner.Layout" icon="/debugger/restoreLayout.png" popup="true">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"/>

@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +28,7 @@ import java.util.List;
  * @author oleg
  * This component represents a list of checkboxes.
  */
-public abstract class OptionalChooserComponent<T> implements CheckBoxListListener {
+public abstract class OptionalChooserComponent<T> implements CheckBoxListListener, ComponentWithEmptyText {
   private JPanel myContentPane;
   private CheckBoxList myList;
   private DefaultListModel myListModel;
@@ -39,6 +41,11 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
 
     // fill list
     reset();
+  }
+
+  @Override
+  public StatusText getEmptyText() {
+    return myList.getEmptyText();
   }
 
   public JPanel getContentPane() {

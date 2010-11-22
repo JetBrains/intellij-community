@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -101,11 +102,11 @@ public abstract class EditChangelistPanel {
     }
     myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent event) {
+      public void beforeDocumentChange(DocumentEvent event) {
       }
 
       @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+      public void documentChanged(DocumentEvent event) {
         nameChangedImpl(project, initial);
       }
     });
@@ -169,7 +170,7 @@ public abstract class EditChangelistPanel {
     myNameTextField.requestFocus();
   }
 
-  public JComponent getPrefferedFocusedComponent() {
+  public JComponent getPreferredFocusedComponent() {
     return myNameTextField;
   }
 

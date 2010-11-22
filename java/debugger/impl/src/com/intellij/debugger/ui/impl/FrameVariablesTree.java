@@ -53,6 +53,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.Value;
@@ -62,13 +63,14 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class FrameDebuggerTree extends DebuggerTree {
+public class FrameVariablesTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.FrameDebuggerTree");
   private boolean myAnyNewLocals;
   private boolean myAutoWatchMode = false;
 
-  public FrameDebuggerTree(Project project) {
+  public FrameVariablesTree(Project project) {
     super(project);
+    getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
   }
 
   public boolean isAutoWatchMode() {

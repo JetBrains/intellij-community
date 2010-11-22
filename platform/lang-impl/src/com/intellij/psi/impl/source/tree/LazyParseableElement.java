@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
-  private static final RecursiveTreeElementWalkingVisitor CREATE_PSI = new RecursiveTreeElementWalkingVisitor(false) {
 
+  private static final RecursiveTreeElementWalkingVisitor CREATE_PSI = new RecursiveTreeElementWalkingVisitor(false) {
     @Override
     public void visitLeaf(LeafElement leaf) {
     }
@@ -40,7 +40,6 @@ public class LazyParseableElement extends CompositeElement {
       composite.createAndStorePsi();
       super.visitComposite(composite);
     }
-
   };
 
   private static class ChameleonLock {
@@ -141,7 +140,6 @@ public class LazyParseableElement extends CompositeElement {
     }
   }
 
-
   @Override
   public void setFirstChildNode(TreeElement child) {
     if (myText != null) {
@@ -178,8 +176,8 @@ public class LazyParseableElement extends CompositeElement {
       rawAddChildren((TreeElement)parsedNode);
 
       //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
-        ((TreeElement)parsedNode).acceptTree(CREATE_PSI);
-        parsedNode = parsedNode.getTreeNext();
+      ((TreeElement)parsedNode).acceptTree(CREATE_PSI);
+      parsedNode.getTreeNext();
     }
   }
 

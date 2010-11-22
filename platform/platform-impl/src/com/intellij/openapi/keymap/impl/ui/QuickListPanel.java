@@ -20,10 +20,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBDefaultTreeCellRenderer;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -51,7 +53,7 @@ public class QuickListPanel {
   private JButton myMoveActionUpButton;
   private JPanel myPanel;
   private JTree myActionsTree;
-  private JList myActionsList;
+  private JBList myActionsList;
   private JTextField myDisplayName;
   private JTextField myDescription;
   private JButton myAddSeparatorButton;
@@ -67,6 +69,7 @@ public class QuickListPanel {
 
     myActionsList.setModel(new DefaultListModel());
     myActionsList.setCellRenderer(new MyListCellRenderer());
+    myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
 
     myActionsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {

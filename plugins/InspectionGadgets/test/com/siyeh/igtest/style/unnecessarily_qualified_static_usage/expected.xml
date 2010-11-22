@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessarilyQualifiedStaticUsageInspection.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified static access</problem_class>
+    <description>Unnecessarily qualified static access &lt;code&gt;UnnecessarilyQualifiedStaticUsageInspection.q&lt;/code&gt; #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>UnnecessarilyQualifiedStaticUsageInspection.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified static access</problem_class>
+    <description>Unnecessarily qualified static method call &lt;code&gt;UnnecessarilyQualifiedStaticUsageInspection.r()&lt;/code&gt; #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>UnnecessarilyQualifiedStaticUsageInspection.java</file>
+    <line>35</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified static access</problem_class>
+    <description>Unnecessarily qualified static access &lt;code&gt;UnnecessarilyQualifiedStaticUsageInspection.q&lt;/code&gt; #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>UnnecessarilyQualifiedStaticUsageInspection.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified static access</problem_class>
+    <description>Unnecessarily qualified static method call &lt;code&gt;UnnecessarilyQualifiedStaticUsageInspection.r()&lt;/code&gt; #loc</description>
+  </problem>
+
+</problems>

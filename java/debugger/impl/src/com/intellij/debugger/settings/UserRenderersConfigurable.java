@@ -116,6 +116,8 @@ public class UserRenderersConfigurable implements SearchableConfigurable {
 
   private JComponent createRenderersList() {
     myRendererChooser = new ElementsChooser<NodeRenderer>(true);
+    myRendererChooser.getEmptyText().setText(DebuggerBundle.message("text.user.renderers.configurable.no.renderers"));
+
     myRendererChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<NodeRenderer>() {
       public void elementMarkChanged(final NodeRenderer element, final boolean isMarked) {
         element.setEnabled(isMarked);

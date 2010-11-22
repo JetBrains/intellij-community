@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class ValidatingTableEditor<Item> {
+public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyText {
 
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
   private static final Icon EMPTY_ICON = new EmptyIcon(WARNING_ICON);
@@ -148,6 +148,10 @@ public abstract class ValidatingTableEditor<Item> {
     }
   }
 
+  @Override
+  public StatusText getEmptyText() {
+    return myTable.getEmptyText();
+  }
 
   private void createUIComponents() {
     myTable = new ChangesTrackingTableView<Item>() {
