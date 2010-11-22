@@ -25,16 +25,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface PositionManager {
-  
   @Nullable
   SourcePosition getSourcePosition(Location location) throws NoDataException;
 
   @NotNull
   List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
-  
+
   @NotNull
-  List<Location> locationsOfLine (ReferenceType type, SourcePosition position) throws NoDataException;
+  List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException;
 
   @Nullable
-  ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position)throws NoDataException;
+  ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException;
 }
