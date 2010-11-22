@@ -85,6 +85,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (jdk != null) {
       String vendor = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
       if (vendor != null && vendor.contains("IBM")) {
+        LOG.info("Due to IBM JDK pecularities (IDEA-59070) we don't add groovy agent when running applications under it");
         return;
       }
     }
