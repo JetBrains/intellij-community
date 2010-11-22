@@ -36,6 +36,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -215,6 +216,72 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiVariable) {
       ((PsiVariable)element).normalizeDeclaration();
+    }
+  }
+
+  @Override
+  public boolean isToSearchInComments(PsiElement element) {
+    if (element instanceof PsiClass) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS;
+    }
+    else if (element instanceof PsiMethod) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD;
+    }
+    else if (element instanceof PsiVariable) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
+    }
+    else if (element instanceof PsiPackage) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
+    }
+    return false;
+  }
+
+  @Override
+  public void setToSearchInComments(PsiElement element, boolean enabled) {
+    if (element instanceof PsiClass) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = enabled;
+    }
+    else if (element instanceof PsiMethod) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = enabled;
+    }
+    else if (element instanceof PsiVariable) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
+    }
+    else if (element instanceof PsiPackage) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = enabled;
+    }
+  }
+
+  @Override
+  public boolean isToSearchForTextOccurrences(PsiElement element) {
+    if (element instanceof PsiClass) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS;
+    }
+    else if (element instanceof PsiMethod) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD;
+    }
+    else if (element instanceof PsiVariable) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE;
+    }
+    else if (element instanceof PsiPackage) {
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
+    }
+    return false;
+  }
+
+  @Override
+  public void setToSearchForTextOccurrences(PsiElement element, boolean enabled) {
+    if (element instanceof PsiClass) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled;
+    }
+    else if (element instanceof PsiMethod) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = enabled;
+    }
+    else if (element instanceof PsiVariable) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = enabled;
+    }
+    else if (element instanceof PsiPackage) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
     }
   }
 

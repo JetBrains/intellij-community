@@ -18,6 +18,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
@@ -63,5 +64,25 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
   }
 
   public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
+  }
+
+  @Override
+  public boolean isToSearchInComments(PsiElement element) {
+    return RefactoringSettings.getInstance().SAFE_DELETE_SEARCH_IN_COMMENTS;
+  }
+
+  @Override
+  public boolean isToSearchForTextOccurrences(PsiElement element) {
+    return RefactoringSettings.getInstance().SAFE_DELETE_SEARCH_IN_NON_JAVA;
+  }
+
+  @Override
+  public void setToSearchInComments(PsiElement element, boolean enabled) {
+    RefactoringSettings.getInstance().SAFE_DELETE_SEARCH_IN_COMMENTS = enabled;
+  }
+
+  @Override
+  public void setToSearchForTextOccurrences(PsiElement element, boolean enabled) {
+    RefactoringSettings.getInstance().SAFE_DELETE_SEARCH_IN_NON_JAVA = enabled;
   }
 }
