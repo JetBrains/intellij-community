@@ -47,8 +47,7 @@ public class GroovyKindSorter implements Sorter {
       if (value instanceof GroovyMethodStructureViewElement) {
         final GroovyMethodStructureViewElement methodTreeElement = (GroovyMethodStructureViewElement)value;
         final PsiMethod method = (PsiMethod)methodTreeElement.getValue();
-
-        return method.isConstructor() ? 30 : 35;
+        return method != null && method.isConstructor() ? 30 : 35;
       }
       if (value instanceof PropertyGroup) {
         return 40;
