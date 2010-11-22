@@ -189,9 +189,18 @@ public class UnsupportedFeatures extends PyAnnotator {
       if (text.length() > 1 && text.charAt(0) == '0') {
         final char c = Character.toLowerCase(text.charAt(1));
         if (c != 'o' && c != 'b' && c != 'x') {
-          getHolder().createWarningAnnotation(node,
+          boolean isNull = true;
+          for (char a : text.toCharArray()) {
+            if ( a != '0') {
+              isNull = false;
+              break;
+            }
+          }
+          if (!isNull) {
+            getHolder().createWarningAnnotation(node,
                                               "Python 3 requires '0o' prefix for octal literals")
-            .registerFix(new ReplaceOctalNumericLiteralIntention());
+              .registerFix(new ReplaceOctalNumericLiteralIntention());
+          }
         }
       }
     }
