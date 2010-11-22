@@ -10,6 +10,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -23,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
 
 
 /**
@@ -76,6 +79,14 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
 
     if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       return;
+    }
+
+    Sdk jdk = javaParameters.getJdk();
+    if (jdk != null) {
+      String vendor = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
+      if (vendor != null && vendor.contains("IBM")) {
+        return;
+      }
     }
 
     if (containsGroovyClasses(project)) {
