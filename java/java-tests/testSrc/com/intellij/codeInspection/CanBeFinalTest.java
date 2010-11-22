@@ -74,7 +74,7 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest();
   }
 
-  public void testFieldAssignmentsInInitializer() throws Exception {
+  public void testfieldAssignmentssInInitializer() throws Exception {
     doTest();
   }
 

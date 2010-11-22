@@ -155,24 +155,28 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     //                              + ", document: " + System.identityHashCode(myEditor.getDocument()));
     //long start;
     //start = System.currentTimeMillis();
-    notifyListenersOnCacheUpdate(event, true);
+    notifyListenersOnCacheUpdateStart(event);
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxxx Listeners notification on start is complete in " + (System.currentTimeMillis() - start) + " ms");
     
     myStorage.removeInRange(event.getOldStartOffset(), event.getOldEndOffset());
+    boolean normalCompletion = true;
     try {
       //start = System.currentTimeMillis();
-      doRecalculateSoftWraps(event);
+      normalCompletion = doRecalculateSoftWraps(event);
       //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxxxxx Processing is complete in " + (System.currentTimeMillis() - start) + " ms");
     }
     finally {
       //start = System.currentTimeMillis();
-      notifyListenersOnCacheUpdate(event, false);
-      //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxxxxxxx Listeners notification on end is complete in " + (System.currentTimeMillis() - start) + " ms");
+      notifyListenersOnCacheUpdateEnd(event, normalCompletion);
+      //CachingSoftWrapDataMapper.log(
+      //  "xxxxxxxxxxxxxxxxxxx Listeners notification on end is complete in " + (System.currentTimeMillis() - start) 
+      //  + " ms. Processing finished " + (normalCompletion ? "normally" : "non-normally")
+      //);
     }
   }
 
   @SuppressWarnings({"AssignmentToForLoopParameter"})
-  private void doRecalculateSoftWraps(IncrementalCacheUpdateEvent event) {
+  private boolean doRecalculateSoftWraps(IncrementalCacheUpdateEvent event) {
     // Preparation.
     myContext.reset();
     myOffset2fontType.clear();
@@ -216,7 +220,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       else {
         boolean continueProcessing = processCollapsedFoldRegion(currentFold, event);
         if (!continueProcessing) {
-          return;
+          return false;
         }
       }
       
@@ -227,6 +231,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       myOffset2fontType.fill(myContext.startOffset, iterationState.getEndOffset(), myContext.fontType);
     }
     notifyListenersOnVisualLineEnd();
+    return true;
   }
 
   /**
@@ -276,7 +281,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       for (int j = foldRegion.getStartOffset() - 1; j >= softWrap.getStart(); j--) {
         int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
         int tmpFontType = myOffset2fontType.get(j);
-        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.fontType2spaceWidth.get(tmpFontType));
+        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
         myContext.currentPosition.offset--;
         myContext.currentPosition.logicalColumn -= columnsDiff;
         myContext.currentPosition.visualColumn -= columnsDiff;
@@ -317,24 +322,28 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    *                      <code>false</code> otherwise;
    */
   private boolean processOutOfDateFoldRegion(FoldRegion foldRegion, IncrementalCacheUpdateEvent event) {
-    
+
+    Document document = myEditor.getDocument();
+    int line = document.getLineNumber(normalizedOffset(foldRegion.getStartOffset(), document));
+    int startLineOffset = document.getLineStartOffset(line);
+    IncrementalCacheUpdateEvent newEvent = new IncrementalCacheUpdateEvent(document, startLineOffset, myContext.rangeEndOffset);
+
     // We assume here that fold model is processed after soft wrap (as it needs to perform document dimensions mapping).
     // So, there is a possible case that user performed modifications at particular fold region but fold model is not updated yet
     // and IterationState returns valid fold region. Hence, we introduce a dedicated check here.
     if (event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() <= event.getOldExactEndOffset() 
         && foldRegion.getEndOffset() > event.getOldExactStartOffset()) 
     {
+      myCacheUpdateEvents.add(newEvent);
       return true;
     }
     
-    Document document = myEditor.getDocument();
+    
     if (foldRegion.getEndOffset() <= document.getTextLength()) {
       return false;
     }
     // There is a possible case that user just removed text that contained fold region and fold model is not updated yet
-    int line = document.getLineNumber(normalizedOffset(foldRegion.getStartOffset(), document));
-    int startLineOffset = document.getLineStartOffset(line);
-    myCacheUpdateEvents.add(new IncrementalCacheUpdateEvent(document, startLineOffset, myContext.rangeEndOffset));
+    myCacheUpdateEvents.add(newEvent);
     return true;
   }
 
@@ -434,7 +443,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       for (int j = offset - 1; j >= actualSoftWrapOffset; j--) {
         int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
         int tmpFontType = myOffset2fontType.get(j);
-        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.fontType2spaceWidth.get(tmpFontType));
+        int columnsDiff = calculateWidthInColumns(myContext.text.charAt(j), pixelsDiff, myContext.getSpaceWidth(tmpFontType));
         myContext.currentPosition.offset--;
         myContext.currentPosition.logicalColumn -= columnsDiff;
         myContext.currentPosition.visualColumn -= columnsDiff;
@@ -693,16 +702,20 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private void notifyListenersOnCacheUpdate(IncrementalCacheUpdateEvent event, boolean start) {
+  private void notifyListenersOnCacheUpdateStart(IncrementalCacheUpdateEvent event) {
     for (int i = 0; i < myListeners.size(); i++) {
       // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
       SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
-      if (start) {
-        listener.onCacheUpdateStart(event);
-      }
-      else {
-        listener.onRecalculationEnd(event);
-      }
+      listener.onCacheUpdateStart(event);
+    }
+  }
+  
+  @SuppressWarnings({"ForLoopReplaceableByForEach"})
+  private void notifyListenersOnCacheUpdateEnd(IncrementalCacheUpdateEvent event, boolean normal) {
+    for (int i = 0; i < myListeners.size(); i++) {
+      // Avoid unnecessary Iterator object construction as this method is expected to be called frequently.
+      SoftWrapAwareDocumentParsingListener listener = myListeners.get(i);
+      listener.onRecalculationEnd(event, normal);
     }
   }
 
@@ -724,6 +737,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void onFoldProcessingEnd() {
+    //CachingSoftWrapDataMapper.log("xxxxxxxxxxx On fold region processing end");
     recalculateSoftWraps();
   }
 
@@ -939,8 +953,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     public boolean        notifyListenersOnLineStartPosition;
     public boolean        skipToLineEnd;
 
-    private int mySpaceWidth;
-    
     public void reset() {
       text = null;
       lineStartPosition = null;
@@ -953,19 +965,21 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       startOffset = 0;
       endOffset = 0;
       fontType = 0;
-      mySpaceWidth = 0;
       notifyListenersOnLineStartPosition = false;
       skipToLineEnd = false;
     }
 
     public int getSpaceWidth() {
-      if (mySpaceWidth == 0) {
-        if (mySpaceWidth <= 0) {
-          mySpaceWidth = EditorUtil.getSpaceWidth(fontType, myEditor);
-          fontType2spaceWidth.put(fontType, mySpaceWidth);
-        }
+      return getSpaceWidth(fontType);
+    }
+    
+    public int getSpaceWidth(int fontType) {
+      int result = fontType2spaceWidth.get(fontType);
+      if (result <= 0) {
+        result = EditorUtil.getSpaceWidth(fontType, myEditor);
+        fontType2spaceWidth.put(fontType, result);
       }
-      return mySpaceWidth;
+      return result;
     }
     
     /**

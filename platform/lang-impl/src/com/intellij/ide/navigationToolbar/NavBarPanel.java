@@ -466,7 +466,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       if (closedIcon == null && openIcon != null) closedIcon = openIcon;
       if (openIcon == null && closedIcon != null) openIcon = closedIcon;
       if (openIcon == null) {
-        openIcon = closedIcon = new EmptyIcon(5, 5);
+        openIcon = closedIcon = EmptyIcon.create(5);
       }
 
       final MyItemLabel label =

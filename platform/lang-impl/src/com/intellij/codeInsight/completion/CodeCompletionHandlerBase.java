@@ -195,12 +195,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       int offset = editor.getCaretModel().getOffset();
 
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      assert offset > 0;
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset - 1);
       if (elementAt == null) {
-        elementAt = psiFile.findElementAt(offset);
-        if (elementAt == null && offset > 0) {
-          elementAt = psiFile.findElementAt(offset - 1);
-        }
+        elementAt = psiFile.findElementAt(offset - 1);
       }
 
       Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
@@ -312,13 +310,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            startSemaphore.up();
-            indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
-            indicator.duringCompletion(initContext);
-          }
-        });
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              startSemaphore.up();
+              indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
+              indicator.duringCompletion(initContext);
+            }
+          });
+        }
+        finally {
+          indicator.duringCompletionPassed();
+        }
       }
     });
 

@@ -91,8 +91,8 @@ public class BlockSupportImpl extends BlockSupport {
 
     final FileElement treeFileElement = fileImpl.getTreeElement();
 
-    if (treeFileElement.getElementType() instanceof ITemplateDataElementType) {
-      // Not able to perform incremental reparse for template data in JSP
+    if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
+      // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
       makeFullParse(treeFileElement, newFileText, textLength, fileImpl);
       return;
     }
@@ -157,8 +157,9 @@ public class BlockSupportImpl extends BlockSupport {
       final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
       if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 
-      if (data != null && data.booleanValue()) { // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
-        replaceFileElementWithEvents(fileImpl, oldFileElement, newFileElement);
+      if (Boolean.TRUE.equals(data) || isTooDeep(fileImpl)) {
+        // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
+        replaceElementWithEvents(fileImpl, oldFileElement, newFileElement);
       }
       else {
         assert oldFileElement != null && newFileElement != null;
@@ -168,14 +169,17 @@ public class BlockSupportImpl extends BlockSupport {
     }
   }
 
-  private static void replaceFileElementWithEvents(final PsiFileImpl fileImpl, final FileElement fileElement, final FileElement newFileElement) {
-    fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
-    fileElement.replaceAllChildrenToChildrenOf(newFileElement);
+  private static void replaceElementWithEvents(final PsiFileImpl file, final CompositeElement oldRoot, final CompositeElement newRoot) {
+    if (newRoot instanceof FileElement) {
+      file.getTreeElement().setCharTable(((FileElement)newRoot).getCharTable());
+    }
+    oldRoot.replaceAllChildrenToChildrenOf(newRoot);
   }
 
-  static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
-                                         final FileElement newFileElement,
-                                         final PsiManagerEx manager) {
+  static void replaceFileElement(final PsiFileImpl fileImpl,
+                                 final FileElement fileElement,
+                                 final FileElement newFileElement,
+                                 final PsiManagerEx manager) {
     final int oldLength = fileElement.getTextLength();
     sendPsiBeforeEvent(fileImpl);
     if (fileElement.getFirstChildNode() != null) fileElement.rawRemoveAllChildren();
@@ -193,19 +197,31 @@ public class BlockSupportImpl extends BlockSupport {
         ((FileElement)newRoot).setCharTable(file.getTreeElement().getCharTable());
       }
 
-      final PomModel model = PomManager.getModel(file.getProject());
       try {
         newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
 
+        final ASTNode childNode;
         try {
-          newRoot.getFirstChildNode(); // Ensure parsed
+          childNode = newRoot.getFirstChildNode(); // Ensure parsed
         }
         catch (ReparsedSuccessfullyException e) {
           return; // Successfully merged in PsiBuilderImpl
         }
 
+        final boolean childTooDeep = isTooDeep(childNode);
+        if (isTooDeep(file) || childTooDeep) {
+          replaceElementWithEvents(file, (CompositeElement)oldRoot, (CompositeElement)newRoot);
+
+          if (childTooDeep) {
+            childNode.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, null);
+            file.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+          }
+          return;
+        }
+
         TreeUtil.ensureParsedRecursively(oldRoot);
 
+        final PomModel model = PomManager.getModel(file.getProject());
         model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
           public PomModelEvent runInner() {
             final ASTDiffBuilder builder = new ASTDiffBuilder(file);
@@ -228,17 +244,6 @@ public class BlockSupportImpl extends BlockSupport {
     }
   }
 
-  private static void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
-    if (!scope.isPhysical()) return;
-    final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope);
-    event.setOffset(0);
-    event.setOldLength(oldLength);
-    manager.childrenChanged(event);
-  }
-
   private static void sendPsiBeforeEvent(final PsiFile scope) {
     if (!scope.isPhysical()) return;
     final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
@@ -248,5 +253,16 @@ public class BlockSupportImpl extends BlockSupport {
     event.setOffset(0);
     event.setOldLength(scope.getTextLength());
     manager.beforeChildrenChange(event);
+  }
+
+  private static void sendPsiAfterEvent(final PsiFileImpl scope, int oldLength) {
+    if (!scope.isPhysical()) return;
+    final PsiManagerImpl manager = (PsiManagerImpl)scope.getManager();
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
+    event.setParent(scope);
+    event.setFile(scope);
+    event.setOffset(0);
+    event.setOldLength(oldLength);
+    manager.childrenChanged(event);
   }
 }

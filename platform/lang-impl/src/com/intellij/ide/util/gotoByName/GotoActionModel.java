@@ -45,7 +45,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
 
   private final ActionManager myActionManager = ActionManager.getInstance();
 
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(18, 18);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private String myPattern;
 

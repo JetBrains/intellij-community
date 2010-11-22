@@ -913,7 +913,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     public MyTitleButton(AnAction action) {
       myAction = action;
-      myButton = new InplaceButton(null, new EmptyIcon(16), this) {
+      myButton = new InplaceButton(null, EmptyIcon.ICON_16, this) {
         @Override
         public boolean isActive() {
           return MyTitleButton.this.isActive();

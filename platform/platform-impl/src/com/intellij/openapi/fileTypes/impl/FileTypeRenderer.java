@@ -25,7 +25,7 @@ import java.awt.*;
 import java.util.*;
 
 public class FileTypeRenderer extends DefaultListCellRenderer {
-  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private final FileTypeListProvider myFileTypeListProvider;
 
