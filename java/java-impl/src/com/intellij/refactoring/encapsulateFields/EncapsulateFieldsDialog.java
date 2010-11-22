@@ -626,7 +626,7 @@ public String getAccessorsVisibility() {
 
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
-  private static final Icon EMPTY_OVERRIDE_ICON = new EmptyIcon(16, 16);
+  private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.ICON_16;
 
   private class MyTableRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, final Object value,

@@ -44,7 +44,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private volatile boolean myIsScheduled = false;
   private T myParam;
   private WeakReference<Component> myLastTarget = null;
-  private static final EmptyIcon EMPTY_ICON = new EmptyIcon(16, 16);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
   private boolean myNeedReadAction;
   private boolean myDone;
 

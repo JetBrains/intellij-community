@@ -38,7 +38,7 @@ public class ActiveIcon implements Icon {
   }
 
   protected void setIcons(@Nullable final Icon regular, @Nullable final Icon inactive) {
-    myRegular = regular != null ? regular : new EmptyIcon(0);
+    myRegular = regular != null ? regular : EmptyIcon.ICON_0;
     myInactive = inactive != null ? inactive : myRegular;
   }
 
