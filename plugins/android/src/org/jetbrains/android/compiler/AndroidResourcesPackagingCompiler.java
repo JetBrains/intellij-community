@@ -138,7 +138,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     @NotNull
     @Override
     public VirtualFile getFile() {
-      return myManifestFile;
+      VirtualFile moduleFile = myModule.getModuleFile();
+      return moduleFile != null ? moduleFile : myManifestFile;
     }
 
     @Override

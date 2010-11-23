@@ -305,7 +305,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                     VirtualFile[] sourceRoots,
                     VirtualFile[] externalLibs,
                     VirtualFile[] nativeLibFolders) {
-      myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
+      //myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(resPackagePath), new File(resPackagePath).lastModified());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(classesDexPath), new File(classesDexPath).lastModified());
       myApkPath = apkPath;

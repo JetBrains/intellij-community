@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidMavenExecutor;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -63,7 +62,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
 
   public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
     if (items != null && items.length > 0) {
-      context.getProgressIndicator().setText("Copying resources from Maven artifacts...");
+      context.getProgressIndicator().setText("Processing resources by Maven...");
       Computable<GenerationItem[]> computation = new Computable<GenerationItem[]>() {
         public GenerationItem[] compute() {
           if (context.getProject().isDisposed()) {
@@ -173,11 +172,6 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       for (int i = 0, filesSize = files.size(); i < filesSize; i++) {
         myMavenArtifactsTimespamps[i] = files.get(i).lastModified();
       }
-    }
-
-    @Override
-    protected VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
-      return AndroidRootUtil.getResourceDir(module);
     }
 
     public MyValidityState(DataInput is) throws IOException {
