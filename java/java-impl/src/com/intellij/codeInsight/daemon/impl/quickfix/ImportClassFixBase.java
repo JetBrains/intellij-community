@@ -16,45 +16,43 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.psi.*;
-import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyRule;
-import com.intellij.ui.HintHint;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
  * @author peter
  */
-public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> implements HintAction {
+public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> implements HintAction, HighPriorityAction {
   private final T myRef;
 
   protected ImportClassFixBase(T ref) {
