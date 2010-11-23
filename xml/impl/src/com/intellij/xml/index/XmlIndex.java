@@ -60,8 +60,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
       @Override
       public boolean contains(VirtualFile file) {
         final VirtualFile parent = file.getParent();
-        assert parent != null;
-        return parent.getName().equals("standardSchemas") || projectScope.contains(file);
+        return parent != null && (parent.getName().equals("standardSchemas") || projectScope.contains(file));
       }
 
       @Override

@@ -137,4 +137,17 @@ contributor([:]){category 'MyCategory'}""");
 
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
+
+  public void testPathRegexp() {
+    final PsiFile file = myFixture.addFileToProject("a.gdsl", "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }");
+    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+
+    myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
+    myFixture.completeBasic()
+    assertOrderedEquals myFixture.lookupElementStrings, 'fffooo'
+
+    myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("bbb/foo.groovy", "fff<caret>x").virtualFile
+    myFixture.completeBasic()
+    assertEmpty myFixture.lookupElementStrings
+  }
 }

@@ -1282,7 +1282,7 @@ public class XmlUtil {
       final char ch = unquotedValue.charAt(i);
       if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {
         final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class);
-        if (file != null) return !tagFromTemplateFramework(file.getDocument().getRootTag());
+        if (file != null) return !tagFromTemplateFramework(file.getRootTag());
         return false;
       }
     }
