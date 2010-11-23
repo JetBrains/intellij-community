@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -170,7 +171,7 @@ public class EditLibraryDialog extends DialogWrapper {
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
       super (true, true, false, true, false, false);
-      setTitle("Select library file or directory"); //TODO<rv> Move to resources
+      setTitle(IdeBundle.message("scripting.lib.select.root"));
     }
 
     @Override
@@ -192,9 +193,9 @@ public class EditLibraryDialog extends DialogWrapper {
     public String getColumnName(int column) {
       switch(column) {
         case FILE_LOCATION_COL:
-          return "Location"; //TODO<rv> Move to resources
-        case FILE_TYPE_COL: //TODO<rv> Move to resources
-          return "Type";
+          return IdeBundle.message("scripting.lib.file.location");
+        case FILE_TYPE_COL:
+          return IdeBundle.message("scripting.lib.file.type");
       }
       return "";
     }
@@ -314,7 +315,7 @@ public class EditLibraryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!isLibNameValid(myLibName.getText())) {
-      Messages.showErrorDialog(myProject, "Invalid library name", "Error"); //TODO<rv> Move to resources
+      Messages.showErrorDialog(myProject, IdeBundle.message("scripting.lib.invalid.name"), "Error");
       return;
     }
     super.doOKAction();
