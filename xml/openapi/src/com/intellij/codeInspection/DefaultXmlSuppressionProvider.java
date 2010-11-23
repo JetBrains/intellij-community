@@ -43,7 +43,7 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider {
   }
 
   public boolean isSuppressedFor(PsiElement element, String inspectionId) {
-    final XmlTag tag = PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
+    final XmlTag tag = element instanceof XmlFile ? ((XmlFile)element).getRootTag() : PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
     return tag != null && findSuppression(tag, inspectionId, element) != null;
   }
 
