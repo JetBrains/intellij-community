@@ -20,6 +20,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestCase;
 
@@ -50,7 +51,7 @@ public class StorageTest extends TestCase {
 
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
-    myStorage.writeBytes(record, "Hello".getBytes(), false);
+    myStorage.writeBytes(record, new ByteSequence("Hello".getBytes()), false);
     assertEquals("Hello", new String(myStorage.readBytes(record)));
   }
 
@@ -67,7 +68,7 @@ public class StorageTest extends TestCase {
 
     for (int i = 0; i < count; i++) {
       final int record = myStorage.createNewRecord();
-      myStorage.writeBytes(record, hello.getBytes(), true);  // fixed size optimization is mor than 50 percents here!
+      myStorage.writeBytes(record, new ByteSequence(hello.getBytes()), true);  // fixed size optimization is mor than 50 percents here!
       records[i] = record;
     }
 
