@@ -179,6 +179,8 @@
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor" id="groovyBasic"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GrMethodMergingContributor"
+                            id="grMethodMerger" order="before methodMerger"/>
 
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence" id="groovyAdvanced" order="after groovyNameIdentifier"/>
