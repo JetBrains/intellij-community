@@ -1,3 +1,4 @@
 return a i<caret> b
 -----
+in
 instanceof
