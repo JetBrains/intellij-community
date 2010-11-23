@@ -375,7 +375,7 @@ class JBZipOutputStream {
     if (myBuffer.size() > 8192) {
       flushBuffer();
     }
-    written += data.length;
+    written += length;
   }
 
   private void flushBuffer() throws IOException {
@@ -398,6 +398,8 @@ class JBZipOutputStream {
       entry.setTime(System.currentTimeMillis());
     }
 
+    final byte[] outputBytes;
+    final int outputBytesLength;
     if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.setLevel(level);
       final BufferExposingByteArrayOutputStream compressedBytesStream = new BufferExposingByteArrayOutputStream();
@@ -408,17 +410,16 @@ class JBZipOutputStream {
       finally {
         stream.close();
       }
-
-      final int length = compressedBytesStream.size();
-      entry.setCompressedSize(length);
-      writeLocalFileHeader(entry);
-      writeOut(compressedBytesStream.getInternalBuffer(), 0, length);
+      outputBytesLength = compressedBytesStream.size();
+      outputBytes = compressedBytesStream.getInternalBuffer();
     }
     else {
-      entry.setCompressedSize(bytes.length);
-      writeLocalFileHeader(entry);
-      writeOut(bytes);
+      outputBytesLength = bytes.length;
+      outputBytes = bytes;
     }
 
+    entry.setCompressedSize(outputBytesLength);
+    writeLocalFileHeader(entry);
+    writeOut(outputBytes, 0, outputBytesLength);
   }
 }

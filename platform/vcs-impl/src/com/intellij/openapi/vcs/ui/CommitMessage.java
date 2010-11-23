@@ -16,15 +16,18 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,6 +40,11 @@ public class CommitMessage extends JPanel implements Disposable {
   public CommitMessage(Project project) {
     super(new BorderLayout());
     myEditorField = createEditorField(project);
+    
+    // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
+    // IJ code editor uses monospaced font). Hence, we don't need any special actions here
+    // (myEditorField.setFontInheritedFromLAF(true) should be used instead).
+    
     add(myEditorField, BorderLayout.CENTER);
 
     JPanel labelPanel = new JPanel(new BorderLayout());

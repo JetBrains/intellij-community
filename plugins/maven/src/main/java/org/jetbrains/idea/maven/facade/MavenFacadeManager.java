@@ -122,7 +122,11 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
     }
 
     myLoggerExported = UnicastRemoteObject.exportObject(myLogger, 0) != null;
+    if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
+
     myDownloadListenerExported = UnicastRemoteObject.exportObject(myDownloadListener, 0) != null;
+    if (!myDownloadListenerExported) throw new RemoteException("Cannot export download listener object");
+
     result.set(myLogger, myDownloadListener);
 
     return result;

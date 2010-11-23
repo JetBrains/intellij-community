@@ -34,9 +34,18 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
+  private final boolean myGlobal;
 
-  public AbstractToggleUseSoftWrapsAction(@NotNull SoftWrapAppliancePlaces appliancePlace) {
+  /**
+   * Creates new <code>AbstractToggleUseSoftWrapsAction</code> object.
+   * 
+   * @param appliancePlace    defines type of the place where soft wraps are applied
+   * @param global            indicates if soft wraps should be changed for the current editor only or for the all editors
+   *                          used at the target appliance place
+   */
+  public AbstractToggleUseSoftWrapsAction(@NotNull SoftWrapAppliancePlaces appliancePlace, boolean global) {
     myAppliancePlace = appliancePlace;
+    myGlobal = global;
   }
 
   @Override
@@ -48,11 +57,19 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
-    if (editor != null) {
+    if (editor == null) {
+      return;
+    }
+    
+    if (myGlobal) {
       EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
-      if (editor instanceof EditorEx) {
-        ((EditorEx)editor).reinitSettings();
-      }
+    }
+    else {
+      editor.getSettings().setUseSoftWraps(state);
+    }
+    
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).reinitSettings();
     }
   }
 
