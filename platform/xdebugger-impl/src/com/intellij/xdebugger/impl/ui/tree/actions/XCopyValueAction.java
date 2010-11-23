@@ -15,13 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -31,30 +27,8 @@ import java.awt.datatransfer.StringSelection;
  */
 public class XCopyValueAction extends XDebuggerTreeActionBase {
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
-    XSuspendContext suspendContext =  node.getTree().getSession().getSuspendContext();
-    XDebuggerEvaluator evaluator = XDebuggerUtilImpl.getEvaluator(suspendContext);
-    if (evaluator != null && evaluator.isEvaluateOnCopy(node.getName(), node.getValue())) {
-      evaluator.evaluateFull(node.getName(), new XDebuggerEvaluator.XEvaluationCallback() {
-        @Override
-        public void evaluated(@NotNull XValue result) {
-          String value = result.getModifier().getInitialValueEditorText();
-          setCopyContents(value);
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          String value = node.getValue();
-          setCopyContents(value);
-        }
-      }, null);
-    } else {
-      String value = node.getValue();
-      setCopyContents(value);
-    }
-
-  }
-
-  private static void setCopyContents(String value) {
+    //todo[nik] is it correct? Perhaps we should use evaluator.evaluateMessage here
+    String value = node.getValue();
     CopyPasteManager.getInstance().setContents(new StringSelection(value));
   }
 

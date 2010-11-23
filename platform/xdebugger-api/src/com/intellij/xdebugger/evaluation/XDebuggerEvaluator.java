@@ -75,19 +75,6 @@ public abstract class XDebuggerEvaluator {
   public void evaluate(@NotNull String expression, XEvaluationCallback callback) {
   }
 
-
-  /**
-   * @return true if CopyValue action should execute evaluateCopy method
-   * @param node
-   */
-  public boolean isEvaluateOnCopy(String name, String value) {
-    return false;
-  }
-
-  public void evaluateFull(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
-    evaluate(expression, callback, expressionPosition);
-  }
-
   /**
    * Return text range of expression which can be evaluated.
    *
