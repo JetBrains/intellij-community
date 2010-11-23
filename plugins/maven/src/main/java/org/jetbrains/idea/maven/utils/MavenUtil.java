@@ -159,7 +159,7 @@ public class MavenUtil {
 
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
-           || ApplicationManager.getApplication().isHeadlessEnvironment());
+            || ApplicationManager.getApplication().isHeadlessEnvironment());
   }
 
   public static boolean isInModalContext() {
@@ -354,6 +354,8 @@ public class MavenUtil {
 
   public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
+    final RuntimeException[] runtimeEx = new RuntimeException[1];
+    final Error[] errorEx = new Error[1];
 
     ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
       public void run(@NotNull ProgressIndicator i) {
@@ -366,10 +368,19 @@ public class MavenUtil {
         catch (ProcessCanceledException e) {
           canceledEx[0] = e;
         }
+        catch (RuntimeException e) {
+          runtimeEx[0] = e;
+        }
+        catch (Error e) {
+          errorEx[0] = e;
+        }
       }
     });
     if (canceledEx[0] instanceof MavenProcessCanceledException) throw (MavenProcessCanceledException)canceledEx[0];
     if (canceledEx[0] instanceof ProcessCanceledException) throw new MavenProcessCanceledException();
+
+    if (runtimeEx[0] != null) throw runtimeEx[0];
+    if (errorEx[0] != null) throw errorEx[0];
   }
 
   public static MavenTaskHandler runInBackground(final Project project,

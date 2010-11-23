@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,6 @@ import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -71,7 +71,7 @@ public class ImageLoader implements Serializable {
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
     try {
 
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
       try {
         byte[] buffer = new byte[1024];
         while (true) {
@@ -84,7 +84,7 @@ public class ImageLoader implements Serializable {
         inputStream.close();
       }
 
-      Image image = Toolkit.getDefaultToolkit().createImage(outputStream.toByteArray());
+      Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
       waitForImage(image);
 
       return image;

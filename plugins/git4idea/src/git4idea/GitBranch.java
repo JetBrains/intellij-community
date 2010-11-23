@@ -110,13 +110,15 @@ public class GitBranch extends GitReference {
    * List branches for the git root as strings.
    * @see #list(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, boolean, boolean, java.util.Collection, String) 
    */
-  public static void listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
-                                   final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
+  @Nullable
+  public static GitBranch listAsStrings(final Project project, final VirtualFile root, final boolean remote, final boolean local,
+                                        final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
     final Collection<GitBranch> gitBranches = new ArrayList<GitBranch>();
-    list(project, root, local, remote, gitBranches, containingCommit);
+    final GitBranch result = list(project, root, local, remote, gitBranches, containingCommit);
     for (GitBranch b : gitBranches) {
       branches.add(b.getName());
     }
+    return result;
   }
 
   /**
@@ -176,7 +178,7 @@ public class GitBranch extends GitReference {
       b = b.substring(2).trim();
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
-      boolean isRemote = b.startsWith("remotes");
+      boolean isRemote = (! localWanted) || b.startsWith("remotes");
       final GitBranch branch = new GitBranch(b, current, isRemote);
       if (current) {
         currentBranch = branch;

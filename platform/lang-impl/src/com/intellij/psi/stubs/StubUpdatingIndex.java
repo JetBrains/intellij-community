@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -28,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
@@ -40,30 +37,31 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+/*
+ * @author max
+ */
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
+  public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
+
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
+
   private static final int VERSION = 20;
+
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
-      byte[] value = v.getBytes();
-      out.writeInt(value.length);
-      out.write(value);
+      v.write(out);
     }
 
     public SerializedStubTree read(final DataInput in) throws IOException {
-      int len = in.readInt();
-      byte[] result = new byte[len];
-      in.readFully(result);
-      return new SerializedStubTree(result);
+      return new SerializedStubTree(in);
     }
   };
 
@@ -114,11 +112,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             final StubElement rootStub = buildStubTree(inputData);
             if (rootStub == null) return;
 
-            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
             SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.toByteArray()));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size()));
           }
         });
 
@@ -127,13 +125,14 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     };
   }
 
-  private static Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
+  private static final Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
 
   @Nullable
   public static StubElement buildStubTree(final FileContent inputData) {
     StubElement data = inputData.getUserData(stubElementKey);
     if (data != null) return data;
 
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (inputData) {
       data = inputData.getUserData(stubElementKey);
       if (data != null) return data;
@@ -152,15 +151,22 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         PsiFile psi = inputData.getPsiFile();
+        CharSequence contentAsText = inputData.getContentAsText();
+        psi.putUserData(FILE_TEXT_CONTENT_KEY, contentAsText);
 
-        if (type instanceof IStubFileElementType) {
-          data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+        try {
+          if (type instanceof IStubFileElementType) {
+            data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
+          }
+          else if (filetype instanceof SubstitutedFileType) {
+            SubstitutedFileType substituted = (SubstitutedFileType) filetype;
+            LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
+            final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
+            data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
+          }
         }
-        else if (filetype instanceof SubstitutedFileType) {
-          SubstitutedFileType substituted = (SubstitutedFileType) filetype;
-          LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
-          final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
-          data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
+        finally {
+          psi.putUserData(FILE_TEXT_CONTENT_KEY, null);
         }
       }
 
@@ -227,7 +233,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         }
       });
     }
-    return new MyIndex(indexId, owner, storage, getIndexer());
+    return new MyIndex(indexId, storage, getIndexer());
   }
 
   private static void updateStubIndices(final Collection<StubIndexKey> indexKeys,
@@ -258,7 +264,6 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     private final StubIndexImpl myStubIndex;
 
     public MyIndex(final ID<Integer, SerializedStubTree> indexId,
-                   final FileBasedIndex owner,
                    final IndexStorage<Integer, SerializedStubTree> storage,
                    final DataIndexer<Integer, SerializedStubTree, FileContent> indexer) {
       super(indexId, indexer, storage);
@@ -268,7 +273,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       catch (StorageException e) {
         LOG.info(e);
-        owner.requestRebuild(INDEX_ID);
+        FileBasedIndex.requestRebuild(INDEX_ID);
       }
     }
 

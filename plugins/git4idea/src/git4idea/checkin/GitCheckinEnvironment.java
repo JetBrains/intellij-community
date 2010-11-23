@@ -41,7 +41,7 @@ import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
-import git4idea.history.GitUsersComponent;
+import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitConvertFilesDialog;
 import org.jetbrains.annotations.NonNls;
@@ -582,11 +582,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final Set<String> authors = getUsersList(project, roots);
+      final List<String> usersList = getUsersList(project, roots);
+      final List<String> authors = usersList == null ? new ArrayList<String>() : new ArrayList<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
-      final ArrayList<String> authorsList = new ArrayList<String>(authors);
-      Collections.sort(authorsList);
-      myAuthor = new JComboBox(authorsList.toArray(new Object[authorsList.size()]));
+      Collections.sort(authors);
+      myAuthor = new JComboBox(authors.toArray(new Object[authors.size()]));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
@@ -609,15 +609,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myAmend, c);
     }
 
-    private Set<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
-      final GitUsersComponent component = GitUsersComponent.getInstance(project);
-      final Set<String> result = new HashSet<String>();
-      for (VirtualFile root : roots) {
-        final List<String> list = component.getUsersList(root);
-        if (list == null) continue;
-        result.addAll(list);
-      }
-      return result;
+    private List<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
+      return NewGitUsersComponent.getInstance(project).get();
     }
 
     /**

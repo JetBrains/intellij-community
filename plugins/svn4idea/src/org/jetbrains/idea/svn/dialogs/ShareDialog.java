@@ -88,6 +88,9 @@ public class ShareDialog extends RepositoryBrowserDialog {
     myCreateStandard.setEnabled(enabled && myTrunk.isSelected());
   }
 
+  protected Action[] createActions() {
+    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+  }
   @Override
   protected void doOKAction() {
     mySelectedURL = getRepositoryBrowser().getSelectedURL();

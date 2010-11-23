@@ -143,19 +143,22 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     return result;
   }
 
-  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<Module, String> module2PackageName) {
+  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module, @NotNull Map<AndroidFacet, String> module2PackageName) {
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
         Module depModule = moduleOrderEntry.getModule();
-        if (depModule != null && !module2PackageName.containsKey(depModule)) {
+        if (depModule != null) {
           AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
-          if (depFacet != null && !depFacet.getConfiguration().LIBRARY_PROJECT && moduleOrderEntry.getScope() != DependencyScope.COMPILE) {
+          if (depFacet != null &&
+              !module2PackageName.containsKey(depFacet) &&
+              !depFacet.getConfiguration().LIBRARY_PROJECT &&
+              moduleOrderEntry.getScope() != DependencyScope.COMPILE) {
             String packageName = getPackageName(depFacet);
             if (packageName == null) {
               return false;
             }
-            module2PackageName.put(depModule, packageName);
+            module2PackageName.put(depFacet, packageName);
             if (!fillRuntimeAndTestDependencies(depModule, module2PackageName)) {
               return false;
             }
@@ -210,7 +213,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       String aPackage = getPackageName(facet);
       if (aPackage == null) return null;
 
-      Map<Module, String> depModule2PackageName = new HashMap<Module, String>();
+      Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
       if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
 
       if (platform.getSdk().getDebugBridge(project) == null) return null;

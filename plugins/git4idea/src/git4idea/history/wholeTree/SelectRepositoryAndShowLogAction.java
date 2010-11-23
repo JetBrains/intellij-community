@@ -21,7 +21,11 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * @author irengrig
@@ -36,6 +40,41 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, false));
     if (virtualFiles == null || virtualFiles.length == 0) return;
-    GitLogLongPanel.showDialog(project, virtualFiles[0]);
+
+    new MyDialog(project, virtualFiles).show();
+  }
+
+  private static class MyDialog extends DialogWrapper {
+    private GitLog myGitLog;
+
+    private MyDialog(Project project, final VirtualFile[] virtualFiles) {
+      super(project, true);
+      myGitLog = LogFactoryService.getInstance(project).createComponent();
+      myGitLog.rootsChanged(Arrays.asList(virtualFiles));
+      init();
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return myGitLog.getVisualComponent();
+    }
+
+    @Override
+    public void doCancelAction() {
+      // todo stop listener?
+      super.doCancelAction();
+    }
+
+    @Override
+    protected void doOKAction() {
+      // todo stop listener?
+      super.doOKAction();
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+     // myGitLogLongPanel.setModalityState(ModalityState.current());
+      return super.getPreferredFocusedComponent();
+    }
   }
 }

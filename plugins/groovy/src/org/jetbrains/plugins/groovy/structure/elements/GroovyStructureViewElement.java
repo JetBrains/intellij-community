@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.structure.elements;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -37,6 +38,7 @@ abstract public class GroovyStructureViewElement implements StructureViewTreeEle
     this(element, false);
   }
 
+  @Nullable
   public Object getValue() {
     return myElement.isValid() ? myElement : null;
   }

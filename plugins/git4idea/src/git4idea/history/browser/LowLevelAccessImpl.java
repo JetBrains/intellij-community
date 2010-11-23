@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2000-2010 JetBrains s.r.o.
  *
@@ -17,17 +18,18 @@ package git4idea.history.browser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.commands.GitFileUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -41,66 +43,42 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     myRoot = root;
   }
 
-  public GitCommit getCommitByHash(SHAHash hash) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  @Override
+  public VirtualFile getRoot() {
+    return myRoot;
   }
 
-  // todo command filters
-  public List<Pair<SHAHash,Date>> loadCommitHashes(final @NotNull Collection<String> startingPoints,
-                                                   @NotNull final Collection<String> endPoints,
-                                                   @NotNull final Collection<ChangesFilter.Filter> filters,
-                                                   int useMaxCnt) throws VcsException {
+  public void loadHashesWithParents(final @NotNull Collection<String> startingPoints,
+                                    @NotNull final Collection<ChangesFilter.Filter> filters,
+                                    final AsynchConsumer<CommitHashPlusParents> consumer,
+                                    Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException {
     final List<String> parameters = new ArrayList<String>();
+    for (ChangesFilter.Filter filter : filters) {
+      filter.getCommandParametersFilter().applyToCommandLine(parameters);
+    }
+
+    if (! startingPoints.isEmpty()) {
+      for (String startingPoint : startingPoints) {
+        parameters.add(startingPoint);
+      }
+    } else {
+      parameters.add("--all");
+    }
     if (useMaxCnt > 0) {
       parameters.add("--max-count=" + useMaxCnt);
     }
 
-    for (ChangesFilter.Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(parameters);
-    }
-
-    if (! startingPoints.isEmpty()) {
-      for (String startingPoint : startingPoints) {
-        parameters.add(startingPoint);
-      }
-    } else {
-      parameters.add("--all");
-    }
-
-    for (String endPoint : endPoints) {
-      parameters.add("^" + endPoint);
-    }
-
-    return GitHistoryUtils.onlyHashesHistory(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
-  }
-
-  public Runnable loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
-                                    final Consumer<CommitHashPlusParents> consumer) throws VcsException {
-    final List<String> parameters = new ArrayList<String>();
-    for (ChangesFilter.Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(parameters);
-    }
-
-    if (! startingPoints.isEmpty()) {
-      for (String startingPoint : startingPoints) {
-        parameters.add(startingPoint);
-      }
-    } else {
-      parameters.add("--all");
-    }
-
-    return GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, parameters.toArray(new String[parameters.size()]));
+    GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
   }
 
   @Override
-  public List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException {
-    // todo branches
-    return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), Collections.<String>emptySet(), commitIds);
+  public List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException {
+    return GitHistoryUtils.commitsDetails(myProject, new FilePathImpl(myRoot), refs, commitIds);
   }
 
   public void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                             final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
-                             int maxCnt, List<String> branches) throws VcsException {
+                             final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
+                             int maxCnt, SymbolicRefs refs) throws VcsException {
     final Collection<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>(filtersIn);
     if (beforePoint != null) {
       filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
@@ -109,36 +87,30 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       filters.add(new ChangesFilter.AfterDate(afterPoint));
     }
 
-    loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, branches, maxCnt);
+    loadCommits(startingPoints, Collections.<String>emptyList(), filters, consumer, maxCnt, null, refs);
   }
 
-  // todo starting points can be branches, any referencies
-  /*public List<CommitHashPlusParents> loadSkeleton(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters)
-    throws VcsException {
-    final List<String> parameters = new LinkedList<String>();
-    for (ChangesFilter.Filter filter : filters) {
-      filter.getCommandParametersFilter().applyToCommandLine(parameters);
-    }
-
-    if (! startingPoints.isEmpty()) {
-      for (String startingPoint : startingPoints) {
-        parameters.add(startingPoint);
-      }
-    } else {
-      parameters.add("--all");
-    }
-
-    return GitHistoryUtils.hashesWithParents(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
-  }*/
+  public SymbolicRefs getRefs() throws VcsException {
+    final SymbolicRefs refs = new SymbolicRefs();
+    loadAllTags(refs.getTags());
+    final GitBranch localBranch = loadLocalBranches(refs.getLocalBranches());
+    final GitBranch remoteBranch = loadRemoteBranches(refs.getRemoteBranches());
+    final GitBranch current = localBranch == null ? remoteBranch : localBranch;
+    refs.setCurrent(current);
+    refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
+    return refs;
+  }
 
   public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
-                          @NotNull final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt)
+                          @NotNull final AsynchConsumer<GitCommit> consumer,
+                          int useMaxCnt,
+                          Getter<Boolean> isCanceled, SymbolicRefs refs)
     throws VcsException {
 
     final List<String> parameters = new ArrayList<String>();
     if (useMaxCnt > 0) {
-      parameters.add("--max-count=" + (useMaxCnt + 1));
+      parameters.add("--max-count=" + useMaxCnt);
     }
 
     for (ChangesFilter.Filter filter : filters) {
@@ -157,18 +129,14 @@ public class LowLevelAccessImpl implements LowLevelAccess {
       parameters.add("^" + endPoint);
     }
 
-    // todo can easily be done step-by-step
-    final List<GitCommit> commits =
-      GitHistoryUtils.historyWithLinks(myProject, new FilePathImpl(myRoot), new HashSet<String>(branches), parameters.toArray(new String[parameters.size()]));
-    for (GitCommit commit : commits) {
-      consumer.consume(commit);
-    }
+    GitHistoryUtils.historyWithLinks(myProject, new FilePathImpl(myRoot),
+                                       refs, consumer, isCanceled, parameters.toArray(new String[parameters.size()]));
   }
 
-  public Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
+  public List<String> getBranchesWithCommit(final SHAHash hash) throws VcsException {
     final List<String> result = new ArrayList<String>();
-    GitBranch.listAsStrings(myProject, myRoot, false, true, result, hash.getValue());
-    GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
+    GitBranch.listAsStrings(myProject, myRoot, true, true, result, hash.getValue());
+    //GitBranch.listAsStrings(myProject, myRoot, true, false, result, hash.getValue());
     return result;
   }
 
@@ -178,12 +146,22 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return result;
   }
 
+  @Nullable
+  public GitBranch loadLocalBranches(Collection<String> sink) throws VcsException {
+    return GitBranch.listAsStrings(myProject, myRoot, false, true, sink, null);
+  }
+
+  @Nullable
+  public GitBranch loadRemoteBranches(Collection<String> sink) throws VcsException {
+    return GitBranch.listAsStrings(myProject, myRoot, true, false, sink, null);
+  }
+
   public void loadAllBranches(List<String> sink) throws VcsException {
     GitBranch.listAsStrings(myProject, myRoot, true, false, sink, null);
     GitBranch.listAsStrings(myProject, myRoot, false, true, sink, null);
   }
 
-  public void loadAllTags(List<String> sink) throws VcsException {
+  public void loadAllTags(Collection<String> sink) throws VcsException {
     GitTag.listAsStrings(myProject, myRoot, sink, null);
   }
 

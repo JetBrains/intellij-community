@@ -71,13 +71,13 @@ public class Portion implements AsynchConsumer<GitCommit> {
     myUsers.add(commit.getCommitter());
 
     myOrdered.add(commit);
-    myHolder.put(commit.getShortHash(), myOrdered.size() - 1);
-    final Collection<GitCommit> orphans = myOrphanMap.get(commit.getShortHash());
+    myHolder.put(commit.getShortHash().getString(), myOrdered.size() - 1);
+    final Collection<GitCommit> orphans = myOrphanMap.get(commit.getShortHash().getString());
     for (GitCommit orphan : orphans) {
       orphan.addParentLink(commit);
     }
 
-    final List<String> referencies = commit.getBranches();
+    final List<String> referencies = commit.getLocalBranches();
     if (! referencies.isEmpty()) {
       final SHAHash hash = commit.getHash();
       for (String reference : referencies) {

@@ -68,4 +68,12 @@ public interface SafeDeleteProcessorDelegate {
   UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages);
 
   void prepareForDeletion(PsiElement element) throws IncorrectOperationException;
+
+  boolean isToSearchInComments(final PsiElement element);
+
+  void setToSearchInComments(final PsiElement element, boolean enabled);
+
+  boolean isToSearchForTextOccurrences(final PsiElement element);
+
+  void setToSearchForTextOccurrences(final PsiElement element, boolean enabled);
 }

@@ -602,7 +602,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   public Icon getEmptyHandle() {
     if (myEmptyHandle == null) {
       final Icon expand = getExpandedHandle();
-      myEmptyHandle = expand != null ? new EmptyIcon(expand) : new EmptyIcon(0, 0);
+      myEmptyHandle = expand != null ? new EmptyIcon(expand) : EmptyIcon.create(0);
     }
 
     return myEmptyHandle;

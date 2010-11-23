@@ -50,26 +50,32 @@ public class BackgroundTaskQueue {
           synchronized(myQueue) {
             myHasActiveTask = true;
             task = myQueue.poll();
-            if (task == null) {
+          }
+
+          if (task != null) {
+            indicator.setText(task.getTitle());
+            try {
+              task.run(indicator);
+            } catch (ProcessCanceledException e) {
+              //ok
+            }
+
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (myProject == null || !myProject.isDisposed()) {
+                  task.onSuccess();
+                }
+              }
+            }, ModalityState.NON_MODAL);
+          }
+
+          synchronized(myQueue) {
+            myHasActiveTask = true;
+            if (myQueue.isEmpty()) {
               myHasActiveTask = false;
               return;
             }
           }
-
-          indicator.setText(task.getTitle());
-          try {
-            task.run(indicator);
-          } catch (ProcessCanceledException e) {
-            //ok
-          }
-
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myProject == null || !myProject.isDisposed()) {
-                task.onSuccess();
-              }
-            }
-          }, ModalityState.NON_MODAL);
         }
       }
     };
@@ -84,14 +90,13 @@ public class BackgroundTaskQueue {
       ProgressManager.getInstance().run(task);
     }
     else {
-      boolean hadActiveTask;
       synchronized (myQueue) {
-        hadActiveTask = myHasActiveTask;
+        final boolean hadActiveTask = myHasActiveTask;
         myQueue.offer(task);
         myHasActiveTask = true;
-      }
-      if (! hadActiveTask) {
-        runRunner();
+        if (! hadActiveTask) {
+          runRunner();
+        }
       }
     }
   }

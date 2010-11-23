@@ -15,39 +15,50 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.AsynchConsumer;
+import git4idea.GitBranch;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 public interface LowLevelAccess {
-  GitCommit getCommitByHash(final SHAHash hash);
-
-  List<Pair<SHAHash,Date>> loadCommitHashes(final @NotNull Collection<String> startingPoints,
-                                                   @NotNull final Collection<String> endPoints,
-                                                   @NotNull final Collection<ChangesFilter.Filter> filters,
-                                                   int useMaxCnt) throws VcsException;
+  VirtualFile getRoot();
 
   void loadCommits(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                             final Collection<ChangesFilter.Filter> filtersIn, final Consumer<GitCommit> consumer,
-                             int maxCnt, List<String> branches) throws VcsException;
+                             final Collection<ChangesFilter.Filter> filtersIn, final AsynchConsumer<GitCommit> consumer,
+                             int maxCnt, SymbolicRefs refs) throws VcsException;
 
-  void loadCommits(final Collection<String> startingPoints, final Collection<String> endPoints, final Collection<ChangesFilter.Filter> filters,
-                   final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt) throws VcsException;
+  SymbolicRefs getRefs() throws VcsException;
+  void loadCommits(final Collection<String> startingPoints,
+                   final Collection<String> endPoints,
+                   final Collection<ChangesFilter.Filter> filters,
+                   final AsynchConsumer<GitCommit> consumer,
+                   int useMaxCnt,
+                   Getter<Boolean> isCanceled, SymbolicRefs refs) throws VcsException;
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;
   Collection<String> getTagsWithCommit(final SHAHash hash) throws VcsException;
 
+  @Nullable
+  GitBranch loadLocalBranches(Collection<String> sink) throws VcsException;
+
+  @Nullable
+  GitBranch loadRemoteBranches(Collection<String> sink) throws VcsException;
+
   void loadAllBranches(final List<String> sink) throws VcsException;
-  void loadAllTags(final List<String> sink) throws VcsException;
+
+  void loadAllTags(final Collection<String> sink) throws VcsException;
 
   void cherryPick(SHAHash hash) throws VcsException;
-  Runnable loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
-                                    final Consumer<CommitHashPlusParents> consumer) throws VcsException;
-  List<GitCommit> getCommitDetails(final Collection<String> commitIds) throws VcsException;
+  void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
+                             final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException;
+  List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException;
 }

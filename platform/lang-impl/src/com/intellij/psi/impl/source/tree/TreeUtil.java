@@ -21,6 +21,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
@@ -45,8 +46,7 @@ public class TreeUtil {
   }
 
   public static void ensureParsedRecursively(@NotNull ASTNode node) {
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-    });
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() { });
   }
 
   public static boolean isCollapsedChameleon(ASTNode node) {
@@ -123,17 +123,23 @@ public class TreeUtil {
   }
 
   @Nullable
-  public static TreeElement findFirstLeafOrChameleon(TreeElement element) {
-    if (isLeafOrCollapsedChameleon(element)) {
-      return element;
-    }
-    else {
-      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        TreeElement leaf = findFirstLeafOrChameleon(child);
-        if (leaf != null) return leaf;
+  public static TreeElement findFirstLeafOrChameleon(final TreeElement element) {
+    if (element == null) return null;
+
+    final Ref<TreeElement> result = Ref.create(null);
+    element.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      protected void visitNode(final TreeElement element) {
+        if (isLeafOrCollapsedChameleon(element)) {
+          result.set(element);
+          stopWalking();
+          return;
+        }
+        super.visitNode(element);
       }
-      return null;
-    }
+    });
+
+    return result.get();
   }
 
   @Nullable
@@ -197,13 +203,14 @@ public class TreeUtil {
     return new Pair(one, two);
   }
 
-  public static void clearCaches(TreeElement tree) {
-    tree.clearCaches();
-    TreeElement child = tree.getFirstChildNode();
-    while (child != null) {
-      clearCaches(child);
-      child = child.getTreeNext();
-    }
+  public static void clearCaches(@NotNull final TreeElement tree) {
+    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(final TreeElement element) {
+        element.clearCaches();
+        super.visitNode(element);
+      }
+    });
   }
 
   @Nullable

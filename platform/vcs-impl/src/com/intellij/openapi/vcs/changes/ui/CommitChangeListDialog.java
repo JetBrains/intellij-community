@@ -57,6 +57,7 @@ import java.util.List;
  * @author max
  */
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
+  private final static String outCommitHelpId = "reference.dialogs.vcs.commit";
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
   private final JPanel myAdditionalOptionsPanel;
@@ -92,6 +93,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private CommitLegendPanel.ChangeInfoCalculator myChangesInfoCalculator;
 
   private final PseudoMap<Object, Object> myAdditionalData;
+  private String myHelpId;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -408,25 +410,33 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  @Override
+  protected String getHelpId() {
+    return myHelpId;
+  }
+
   protected Action[] createActions() {
-    Action[] result;
-    final int executorsSize = (myExecutors == null) ? 0 : myExecutors.size();
+    final List<Action> actions = new ArrayList<Action>();
 
     if (myShowVcsCommit) {
-      result = new Action[2 + executorsSize];
-      result[0] = getOKAction();
-      if (myExecutors != null) {
-        System.arraycopy(myExecutorActions, 0, result, 1, myExecutorActions.length);
+      actions.add(getOKAction());
+      myHelpId = outCommitHelpId;
+    }
+    if (myExecutors != null) {
+      actions.addAll(Arrays.asList(myExecutorActions));
+      for (CommitExecutor executor : myExecutors) {
+        if (myHelpId != null) break;
+        if (executor instanceof CommitExecutorWithHelp) {
+          myHelpId = ((CommitExecutorWithHelp) executor).getHelpId();
+        }
       }
     }
-    else {
-      result = new Action[1 + executorsSize];
-      if (myExecutors != null) {
-        System.arraycopy(myExecutorActions, 0, result, 0, myExecutorActions.length);
-      }
+    actions.add(getCancelAction());
+    if (myHelpId != null) {
+      actions.add(getHelpAction());
     }
-    result[result.length - 1] = getCancelAction();
-    return result;
+
+    return actions.toArray(new Action[actions.size()]);
   }
 
   private void execute(final CommitExecutor commitExecutor) {

@@ -43,14 +43,6 @@ public class JobUtil {
   private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
                                                       @NotNull final Processor<T> thingProcessor,
                                                       boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
-    if (things.isEmpty()) {
-      return true;
-    }
-    if (things.size() == 1) {
-      T t = things.get(0);
-      return thingProcessor.process(t);
-    }
-
     final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
 
     final int chunkSize = Math.max(1, things.size() / JobSchedulerImpl.CORES_COUNT / 100);
@@ -114,26 +106,19 @@ public class JobUtil {
       return thingProcessor.process(t);
     }
 
-    boolean result;
-    if (progress instanceof ProgressWrapper) {
-      // already wrapped
-      result = invokeConcurrentlyForAll(things, thingProcessor, failFastOnAcquireReadAction);
-    }
-    else {
-      final ProgressWrapper wrapper = ProgressWrapper.wrap(progress);
-      result = invokeConcurrentlyForAll(things, new Processor<T>() {
-        public boolean process(final T t) {
-          final boolean[] result = new boolean[1];
-          ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-            public void run() {
-              result[0] = thingProcessor.process(t);
-            }
-          }, wrapper);
-          return result[0];
-        }
-      }, failFastOnAcquireReadAction);
-    }
-    return result;
+    // can be already wrapped
+    final ProgressWrapper wrapper = progress instanceof ProgressWrapper ? (ProgressWrapper)progress : ProgressWrapper.wrap(progress);
+    return invokeConcurrentlyForAll(things, new Processor<T>() {
+      public boolean process(final T t) {
+        final boolean[] result = new boolean[1];
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+          public void run() {
+            result[0] = thingProcessor.process(t);
+          }
+        }, wrapper);
+        return result[0];
+      }
+    }, failFastOnAcquireReadAction);
   }
 
   public static Job<Void> submitToJobThread(@NotNull final Runnable action, int priority) {

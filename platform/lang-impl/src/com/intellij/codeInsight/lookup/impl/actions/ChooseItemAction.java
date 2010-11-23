@@ -19,7 +19,6 @@ package com.intellij.codeInsight.lookup.impl.actions;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -40,14 +39,7 @@ public class ChooseItemAction extends EditorAction {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup != null) {
-        if (ChooseItemReplaceAction.hasTemplatePrefix(lookup, TemplateSettings.ENTER_CHAR)) {
-          return false;
-        }
-
-        return lookup.isFocused();
-      }
-      return false;
+      return lookup != null && lookup.isFocused();
     }
   }
 

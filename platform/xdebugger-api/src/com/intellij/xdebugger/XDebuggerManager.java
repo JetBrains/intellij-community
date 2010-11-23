@@ -35,7 +35,7 @@ import java.util.Collection;
 public abstract class XDebuggerManager {
 
   public static XDebuggerManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, XDebuggerManager.class);
+    return project.getComponent(XDebuggerManager.class);
   }
 
   @NotNull

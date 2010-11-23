@@ -66,7 +66,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_OVERLOADED_METHODS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_IN_LIBRARIES = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean SEARCH_FOR_TEXT_OCCURENCES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean SKIP_RESULTS_WHEN_ONE_USAGE = false;
 
   @SuppressWarnings({"WeakerAccess"}) public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
@@ -131,14 +130,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   public void setSkipResultsWithOneUsage(boolean skip){
     SKIP_RESULTS_WHEN_ONE_USAGE = skip;
-  }
-
-  public boolean isSearchForTextOccurences(){
-    return SEARCH_FOR_TEXT_OCCURENCES;
-  }
-
-  public void setSearchForTextOccurences(boolean search){
-    SEARCH_FOR_TEXT_OCCURENCES = search;
   }
 
   public String getDefaultScopeName() {

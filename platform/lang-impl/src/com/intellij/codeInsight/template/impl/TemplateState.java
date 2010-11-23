@@ -858,6 +858,9 @@ public class TemplateState implements Disposable {
     if (expression == null) {
       return false;
     }
+    if (myCurrentVariableNumber == -1) {
+      if (myTemplate.skipOnStart(currentVariableNumber)) return false;
+    }
     String variableName = myTemplate.getVariableNameAt(currentVariableNumber);
     if (!(myPredefinedVariableValues != null && myPredefinedVariableValues.containsKey(variableName))) {
       if (myTemplate.isAlwaysStopAt(currentVariableNumber)) {
@@ -866,9 +869,6 @@ public class TemplateState implements Disposable {
     }
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0) return false;
-    if (myCurrentVariableNumber == -1) {
-      if (myTemplate.skipOnStart(currentVariableNumber)) return false;
-    }
     int start = mySegments.getSegmentStart(segmentNumber);
     ExpressionContext context = createExpressionContext(start);
     Result result = expression.calculateResult(context);
