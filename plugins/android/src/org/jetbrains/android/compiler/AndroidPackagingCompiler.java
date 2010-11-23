@@ -63,8 +63,13 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
   private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<VirtualFile> result) {
     visited.add(module);
+    VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    Collections.addAll(result, manager.getSourceRoots());
+    for (VirtualFile sourceRoot : manager.getSourceRoots()) {
+      if (resDir != sourceRoot) {
+        result.add(sourceRoot);
+      }
+    }
     for (OrderEntry entry : manager.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
