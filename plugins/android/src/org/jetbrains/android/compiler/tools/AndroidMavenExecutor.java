@@ -54,7 +54,7 @@ public class AndroidMavenExecutor {
 
     MavenRunnerParameters parameters =
       new MavenRunnerParameters(true, projectsManager.findProject(module).getDirectory(),
-                                Collections.singletonList("generate-resources"),
+                                Collections.singletonList("process-resources"),
                                 projectsManager.getExplicitProfiles());
 
     Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
