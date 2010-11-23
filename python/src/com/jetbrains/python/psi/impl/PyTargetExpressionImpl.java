@@ -160,6 +160,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (iterType != null) {
         return iterType;
       }
+      PyType excType = getTypeFromExcept();
+      if (excType != null) {
+        return excType;
+      }
       return null;
     }
     finally {
@@ -218,6 +222,22 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             return iterType;
           }
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType getTypeFromExcept() {
+    PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(this, PyExceptPart.class);
+    if (exceptPart == null || exceptPart.getTarget() != this) {
+      return null;
+    }
+    final PyExpression exceptClass = exceptPart.getExceptClass();
+    if (exceptClass instanceof PyReferenceExpression) {
+      final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
+      if (element instanceof PyClass) {
+        return new PyClassType((PyClass) element, false);
       }
     }
     return null;
