@@ -302,6 +302,7 @@ dictStr << (lbrace + Optional(delimitedList(dictEntry) + Optional(Literal(",")))
 T_SIMPLE = 'Simple'
 T_NESTED = 'Nested'
 T_OPTIONAL = 'Opt'
+T_RETURN = "Ret"
 
 TRIPLE_DOT = '...'
 
@@ -357,8 +358,14 @@ Group(
   | ellipsis
 )
 
+return_type = Group(
+  Empty().setParseAction(replaceWith(T_RETURN)) +
+  Suppress(SP + (Literal("->") | (Literal(":") + SP + Literal("return"))) + SP) +
+  ident
+)
+
 # this is our ideal target, with balancing paren and a multiline rest of doc.
-paramSeqAndRest = paramSeq + Suppress(')') + Suppress(Optional(Regex(".*(?s)")))
+paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Optional(Regex(".*(?s)")))
 
 def transformSeq(results, toplevel=True):
     "Transforms a tree of ParseResults into a param spec string."
@@ -385,6 +392,8 @@ def transformSeq(results, toplevel=True):
             ret.append(transformSeq(token[1:], False))
         elif token_type is T_OPTIONAL:
             ret.extend(transformOptionalSeq(token))
+        elif token_type is T_RETURN:
+            pass # this is handled elsewhere
         else:
             raise Exception("This cannot be a token type: " + repr(token_type))
     return ret
@@ -451,6 +460,94 @@ def hasItemStartingWith(p_seq, p_start):
         if isinstance(item, STR_TYPES) and item.startswith(p_start):
             return True
     return False
+
+# return type inference helper table
+INT_LIT =  '0'
+FLOAT_LIT ='0.0'
+DICT_LIT = '{}'
+LIST_LIT = '[]'
+TUPLE_LIT ='()'
+BOOL_LIT = 'False'
+RET_TYPE = { # {'type_name': 'value_string'} lookup table
+    # int
+    "int":      INT_LIT,
+    "Int":      INT_LIT,
+    "integer":  INT_LIT,
+    "Integer":  INT_LIT,
+    "short":    INT_LIT,
+    "long":     INT_LIT,
+    "number":   INT_LIT,
+    "Number":   INT_LIT,
+    # float
+    "float":    FLOAT_LIT,
+    "Float":    FLOAT_LIT,
+    "double":   FLOAT_LIT,
+    "Double":   FLOAT_LIT,
+    "floating": FLOAT_LIT,
+    # boolean
+    "bool":     BOOL_LIT,
+    "boolean":  BOOL_LIT,
+    "Bool":     BOOL_LIT,
+    "Boolean":  BOOL_LIT,
+    # list
+    'list': LIST_LIT,
+    'List': LIST_LIT,
+    '[]':   LIST_LIT,
+    # tuple
+    "tuple":    TUPLE_LIT,
+    "sequence": TUPLE_LIT,
+    "Sequence": TUPLE_LIT,
+    # dict
+    "dict":       DICT_LIT,
+    "Dict":       DICT_LIT,
+    "dictionary": DICT_LIT,
+    "Dictionary": DICT_LIT,
+    "map":        DICT_LIT,
+    "Map":        DICT_LIT,
+    "hashtable":  DICT_LIT,
+    "Hashtable":  DICT_LIT,
+    "{}":         DICT_LIT,
+    # "object"
+    "object":     "object()"
+}
+if version[1] < 3:
+    UNICODE_LIT = 'u""'
+    BYTES_LIT = '""'
+    RET_TYPE.update({
+        'string':   BYTES_LIT,
+        'String':   BYTES_LIT,
+        'str':      BYTES_LIT,
+        'Str':      BYTES_LIT,
+        'character':BYTES_LIT,
+        'char':     BYTES_LIT,
+        'unicode':  UNICODE_LIT,
+        'Unicode':  UNICODE_LIT,
+        'bytes':    BYTES_LIT,
+        'byte':     BYTES_LIT,
+        'Bytes':    BYTES_LIT,
+        'Byte':     BYTES_LIT,
+    })
+    DEFAULT_STR_LIT = BYTES_LIT
+else:
+    UNICODE_LIT = '""'
+    BYTES_LIT = 'b""'
+    RET_TYPE.update({
+        'string':   UNICODE_LIT,
+        'String':   UNICODE_LIT,
+        'str':      UNICODE_LIT,
+        'Str':      UNICODE_LIT,
+        'character':UNICODE_LIT,
+        'char':     UNICODE_LIT,
+        'unicode':  UNICODE_LIT,
+        'Unicode':  UNICODE_LIT,
+        'bytes':    BYTES_LIT,
+        'byte':     BYTES_LIT,
+        'Bytes':    BYTES_LIT,
+        'Byte':     BYTES_LIT,
+    })
+    DEFAULT_STR_LIT = UNICODE_LIT
+
+
 
 class ModuleRedeclarator(object):
     def __init__(self, module, outfile, indent_size=4, doing_builtins=False):
@@ -580,56 +677,57 @@ class ModuleRedeclarator(object):
 
     # NOTE: per-module signature data may be lazily imported
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
+    # value is ("signature", "return_literal")
     PREDEFINED_MOD_CLASS_SIGS = {
-        ("binascii", None, "hexlify"): "(data)",
-        ("binascii", None, "unhexlify"): "(hexstr)",
+        ("binascii", None, "hexlify"): ("(data)", BYTES_LIT),
+        ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
 
-        ("time", None, "ctime"): "(seconds=None)",
+        ("time", None, "ctime"): ("(seconds=None)", DEFAULT_STR_LIT),
 
-        ("datetime", "date", "__new__"): "(cls, year=None, month=None, day=None)",
-        ("datetime", "date", "fromordinal"): "(cls, ordinal)",
-        ("datetime", "date", "fromtimestamp"): "(cls, timestamp)",
-        ("datetime", "date", "isocalendar"): "(self)",
-        ("datetime", "date", "isoformat"): "(self)",
-        ("datetime", "date", "isoweekday"): "(self)",
-        ("datetime", "date", "replace"): "(self, year=None, month=None, day=None)",
-        ("datetime", "date", "strftime"): "(self, format)",
-        ("datetime", "date", "timetuple"): "(self)",
-        ("datetime", "date", "today"): "(self)",
-        ("datetime", "date", "toordinal"): "(self)",
-        ("datetime", "date", "weekday"): "(self)",
+        ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
+        ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
+        ("datetime", "date", "fromtimestamp"): ("(cls, timestamp)", "date(1,1,1)"),
+        ("datetime", "date", "isocalendar"): ("(self)", "(1, 1, 1)"),
+        ("datetime", "date", "isoformat"): ("(self)", DEFAULT_STR_LIT),
+        ("datetime", "date", "isoweekday"): ("(self)", INT_LIT),
+        ("datetime", "date", "replace"): ("(self, year=None, month=None, day=None)", "date(1,1,1)"),
+        ("datetime", "date", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
+        ("datetime", "date", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        ("datetime", "date", "today"): ("(self)", "date(1, 1, 1)"),
+        ("datetime", "date", "toordinal"): ("(self)", INT_LIT),
+        ("datetime", "date", "weekday"): ("(self)", INT_LIT),
         ("datetime", "timedelta", "__new__"
-        ): "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
+        ): ("(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)", None),
         ("datetime", "datetime", "__new__"
-        ): "(cls, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
-        ("datetime", "datetime", "astimezone"): "(self, tz)",
-        ("datetime", "datetime", "combine"): "(cls, date, time)",
-        ("datetime", "datetime", "date"): "(self)",
-        ("datetime", "datetime", "fromtimestamp"): "(cls, timestamp, tz=None)",
-        ("datetime", "datetime", "isoformat"): "(self, sep='T')",
-        ("datetime", "datetime", "now"): "(cls, tz=None)",
-        ("datetime", "datetime", "strptime"): "(cls, date_string, format)",
+        ): ("(cls, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", None),
+        ("datetime", "datetime", "astimezone"): ("(self, tz)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "combine"): ("(cls, date, time)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "date"): ("(self)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "fromtimestamp"): ("(cls, timestamp, tz=None)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "isoformat"): ("(self, sep='T')", DEFAULT_STR_LIT),
+        ("datetime", "datetime", "now"): ("(cls, tz=None)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "strptime"): ("(cls, date_string, format)", DEFAULT_STR_LIT),
         ("datetime", "datetime", "replace" ):
-          "(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
-        ("datetime", "datetime", "time"): "(self)",
-        ("datetime", "datetime", "timetuple"): "(self)",
-        ("datetime", "datetime", "timetz"): "(self)",
-        ("datetime", "datetime", "utcfromtimestamp"): "(self, timestamp)",
-        ("datetime", "datetime", "utcnow"): "(cls)",
-        ("datetime", "datetime", "utctimetuple"): "(self)",
-        ("datetime", "time", "__new__"): "(cls, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
-        ("datetime", "time", "isoformat"): "(self)",
-        ("datetime", "time", "replace"): "(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)",
-        ("datetime", "time", "strftime"): "(self, format)",
-        ("datetime", "tzinfo", "dst"): "(self, date_time)",
-        ("datetime", "tzinfo", "fromutc"): "(self, date_time)",
-        ("datetime", "tzinfo", "tzname"): "(self, date_time)",
-        ("datetime", "tzinfo", "utcoffset"): "(self, date_time)",
+          ("(self, year=None, month=None, day=None, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "time"): ("(self)", "time(0, 0)"),
+        ("datetime", "datetime", "timetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        ("datetime", "datetime", "timetz"): ("(self)", "time(0, 0)"),
+        ("datetime", "datetime", "utcfromtimestamp"): ("(self, timestamp)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "utcnow"): ("(cls)", "datetime(1, 1, 1)"),
+        ("datetime", "datetime", "utctimetuple"): ("(self)", "(0, 0, 0, 0, 0, 0, 0, 0, 0)"),
+        ("datetime", "time", "__new__"): ("(cls, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", None),
+        ("datetime", "time", "isoformat"): ("(self)", DEFAULT_STR_LIT),
+        ("datetime", "time", "replace"): ("(self, hour=None, minute=None, second=None, microsecond=None, tzinfo=None)", "time(0, 0)"),
+        ("datetime", "time", "strftime"): ("(self, format)", DEFAULT_STR_LIT),
+        ("datetime", "tzinfo", "dst"): ("(self, date_time)", INT_LIT),
+        ("datetime", "tzinfo", "fromutc"): ("(self, date_time)", "datetime(1, 1, 1)"),
+        ("datetime", "tzinfo", "tzname"): ("(self, date_time)", DEFAULT_STR_LIT),
+        ("datetime", "tzinfo", "utcoffset"): ("(self, date_time)", INT_LIT),
 
         # NOTE: here we stand on shaky ground providing sigs for 3rd-party modules, though well-known
-        ("numpy.core.multiarray", "ndarray", "__array__") : "(self, dtype=None)",
-        ("numpy.core.multiarray", None, "arange") : "(start=None, stop=None, step=None, dtype=None)", # same as range()
-        ("numpy.core.multiarray", None, "set_numeric_ops") : "(**ops)",
+        ("numpy.core.multiarray", "ndarray", "__array__") : ("(self, dtype=None)", None),
+        ("numpy.core.multiarray", None, "arange") : ("(start=None, stop=None, step=None, dtype=None)", None), # same as range()
+        ("numpy.core.multiarray", None, "set_numeric_ops") : ("(**ops)", None),
     }
 
     # known properties of modules
@@ -778,8 +876,8 @@ class ModuleRedeclarator(object):
         },
     }
 
-    # symbols that look re-exported but surely aren't
-    # (qualified_module_name",..
+    # modules that seem to re-export names but surely don't
+    # ("qualified_module_name",..)
     KNOWN_FAKE_REEXPORTERS = (
       "gtk._gtk",
       "gobject._gobject",
@@ -957,28 +1055,49 @@ class ModuleRedeclarator(object):
         """
         return reqargs and reqargs[0] == "self"
 
+    def getRetType(self, s):
+        """
+        Returns a return type string as given by T_RETURN in tokens, or None
+        """
+        if s:
+            v = RET_TYPE.get(s, None)
+            if v:
+                return v
+            thing = getattr(self.module, s, None)
+            if thing:
+                return s
+        # TODO: handle things like "[a, b,..] and (foo,..)"
+        return None
+
     SIG_DOC_NOTE = "restored from __doc__"
     SIG_DOC_UNRELIABLY = "NOTE: unreliably restored from __doc__ "
 
-    def restoreByDocString(self, signature_string, class_name, deco=None):
+    def restoreByDocString(self, signature_string, class_name, deco=None, ret_hint=None):
         """
         @param signature_string: parameter list extracted from the doc string.
-        @param func_name: name of the function.
         @param class_name: name of the containing class, or None
         @param deco: decorator to use
-        @return (reconstructed_spec, note) or (None, None) if failed.
+        @param ret_hint: return type hint, if available
+        @return (reconstructed_spec, return_type, note) or (None, _, _) if failed.
         """
         # parse
         parsing_failed = False
+        ret_type = None
         try:
-        # strict parsing
+            # strict parsing
             tokens = paramSeqAndRest.parseString(signature_string, True)
+            ret_name = None
+            if tokens:
+              ret_t = tokens[-1]
+              if ret_t[0] is T_RETURN:
+                ret_name = ret_t[1]
+            ret_type = self.getRetType(ret_name) or self.getRetType(ret_hint)
         except ParseException:
-        # it did not parse completely; scavenge what we can
+            # it did not parse completely; scavenge what we can
             parsing_failed = True
             tokens = []
             try:
-            # most unrestrictive parsing
+                # most unrestrictive parsing
                 tokens = paramSeq.parseString(signature_string, False)
             except ParseException:
                 pass
@@ -1009,7 +1128,7 @@ class ModuleRedeclarator(object):
             if first_param:
                 seq.insert(0, first_param)
         seq = makeNamesUnique(seq)
-        return (seq, note)
+        return (seq, ret_type, note)
 
     def parseFuncDoc(self, func_doc, func_id, func_name, class_name, deco=None, sip_generated=False):
         """
@@ -1018,7 +1137,7 @@ class ModuleRedeclarator(object):
         @param func_name: name of the function.
         @param class_name: name of the containing class, or None
         @param deco: decorator to use
-        @return (reconstructed_spec, note) or (None, None) if failed.
+        @return (reconstructed_spec, return_literal, note) or (None, _, _) if failed.
         """
         if sip_generated:
             overloads = []
@@ -1029,23 +1148,33 @@ class ModuleRedeclarator(object):
                     overloads.append(l[i+len(signature):])
             if len(overloads) > 1:
                 param_lists = [self.restoreByDocString(s, class_name, deco)[0] for s in overloads]
+                ret_types = []
+                for pl in param_lists:
+                    rt = pl[1]
+                    if rt and rt not in ret_types:
+                        ret_types.append(rt)
+                if ret_types:
+                    ret_literal = " or ".join(ret_types)
+                else:
+                    ret_literal = None
                 spec = self.buildSignature(func_name, self.restoreParametersForOverloads(param_lists))
-                return (spec, "restored from __doc__ with multiple overloads")
+                return (spec, ret_literal, "restored from __doc__ with multiple overloads")
 
         # find the first thing to look like a definition
-        prefix_re = re.compile(func_id + "\s*\(") # "foo(..."
+        prefix_re = re.compile("\s*(?:(\w+)[ \\t]+)?" + func_id + "\s*\(") # "foo(..." or "int foo(..."
         match = prefix_re.search(func_doc)
         # parse the part that looks right
         if match:
-            params, note = self.restoreByDocString(func_doc[match.end():], class_name, deco)
+            ret_hint = match.group(1)
+            params, ret_literal, note = self.restoreByDocString(func_doc[match.end():], class_name, deco, ret_hint)
             spec = func_name + flatten(params)
             # if "NOTE" in note:
             # print "------\n", func_name, "@", match.end()
             # print "------\n", func_doc
             # print
-            return (spec, note)
+            return (spec, ret_literal, note)
         else:
-            return (None, None)
+            return (None, None, None)
 
     def isPredefinedBuiltin(self, module_name, class_name, func_name):
         return self.doing_builtins and module_name == BUILTIN_MOD_NAME and (class_name, func_name) in self.PREDEFINED_BUILTIN_SIGS
@@ -1149,6 +1278,7 @@ class ModuleRedeclarator(object):
         deco = None
         deco_comment = ""
         mod_class_method_tuple = (p_modname, classname, p_name)
+        ret_literal = None
         # any decorators?
         if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
             deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
@@ -1185,7 +1315,7 @@ class ModuleRedeclarator(object):
             if not p_name in ['__gt__', '__ge__', '__lt__', '__le__', '__ne__', '__reduce_ex__', '__str__']:
                 self.outDocAttr(p_func, indent + 1, p_class)
         elif mod_class_method_tuple in self.PREDEFINED_MOD_CLASS_SIGS:
-            sig = self.PREDEFINED_MOD_CLASS_SIGS[mod_class_method_tuple]
+            sig, ret_literal = self.PREDEFINED_MOD_CLASS_SIGS[mod_class_method_tuple]
             if classname:
                 ofwhat = "%s.%s.%s" % mod_class_method_tuple
             else:
@@ -1207,9 +1337,9 @@ class ModuleRedeclarator(object):
                 funcdoc = p_func.__doc__
             sig_restored = False
             if isinstance(funcdoc, STR_TYPES):
-                (spec, more_notes) = self.parseFuncDoc(funcdoc, p_name, p_name, classname, deco, sip_generated)
+                (spec, ret_literal, more_notes) = self.parseFuncDoc(funcdoc, p_name, p_name, classname, deco, sip_generated)
                 if spec is None and p_name == '__init__' and classname:
-                    (spec, more_notes) = self.parseFuncDoc(funcdoc, classname, p_name, classname, deco, sip_generated)
+                    (spec, ret_literal, more_notes) = self.parseFuncDoc(funcdoc, classname, p_name, classname, deco, sip_generated)
                 sig_restored = spec is not None
                 if more_notes:
                     if sig_note:
@@ -1229,8 +1359,11 @@ class ModuleRedeclarator(object):
             # to reduce size of stubs, don't output same docstring twice for class and its __init__ method
             if not is_init or funcdoc != p_class.__doc__:
                 self.outDocstring(funcdoc, indent + 1)
-        # empty body
-        self.out("pass", indent + 1)
+        # body
+        if ret_literal:
+          self.out("return " + ret_literal, indent + 1)
+        else:
+          self.out("pass", indent + 1)
         if deco and not HAS_DECORATORS:
             self.out(p_name + " = " + deco + "(" + p_name + ")" + deco_comment, indent)
         self.out("", 0) # empty line after each item
