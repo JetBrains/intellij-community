@@ -430,7 +430,10 @@ public class GitHistoryUtils {
             }
             //if (line.charAt(line.length() - 1) != '\u0003') {
             if ((! line.startsWith("\u0001")) || skipFirst.get()) {
-              sb.append("\n").append(line);
+              if (sb.length() > 0) {
+                sb.append("\n");
+              }
+              sb.append(line);
               skipFirst.set(false);
               return;
             }
