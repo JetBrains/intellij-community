@@ -350,13 +350,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
       final int newEnd = start + tokenText.length();
       if (oldMapping.range.getStartOffset() != start ||
-          oldMapping.range.getEndOffset() != newEnd
-         ) {
+          oldMapping.range.getEndOffset() != newEnd) {
+        oldMapping.range.dispose();
         oldMapping.range = doc.createRangeMarker(start, newEnd);
       }
     }
 
-    public MappedRange insertMapping(int tokenIndex, IElementType outerToken) {
+    private MappedRange insertMapping(int tokenIndex, IElementType outerToken) {
       CharSequence tokenText = getTokenText(tokenIndex);
 
       final int length = tokenText.length();
@@ -367,7 +367,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       doc.insertString(insertOffset, new MergingCharSequence(mySeparator, tokenText));
       insertOffset += mySeparator.length();
 
-      return new MappedRange(this, doc.createRangeMarker(insertOffset, insertOffset + length), outerToken);
+      RangeMarker marker = doc.createRangeMarker(insertOffset, insertOffset + length);
+      return new MappedRange(this, marker, outerToken);
     }
 
     private CharSequence getTokenText(final int tokenIndex) {
@@ -386,12 +387,13 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return null;
     }
 
-    public void removeMapping(MappedRange mapping) {
+    private void removeMapping(MappedRange mapping) {
       RangeMarker rangeMarker = mapping.range;
       if (rangeMarker.isValid()) {
         final int start = rangeMarker.getStartOffset();
         final int end = rangeMarker.getEndOffset();
         doc.deleteString(start - mySeparator.length(), end);
+        rangeMarker.dispose();
       }
     }
   }

@@ -1043,7 +1043,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // optimization: do not do column calculations here since we are interested in line number only
   public int offsetToVisualLine(int offset) {
     int line = calcLogicalLineNumber(offset);
-    return logicalToVisualLine(line);
+    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int result = logicalToVisualLine(line);
+    
+    // There is a possible case that logical line that contains target offset is soft-wrapped (represented in more than one visual
+    // line). Hence, we need to perform necessary adjustments to the visual line that is used to show logical line start if necessary.
+    int i = getSoftWrapModel().getSoftWrapIndex(lineStartOffset);
+    if (i < 0) {
+      i = -i - 1;
+    }
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+    for (; i < softWraps.size(); i++) {
+      SoftWrap softWrap = softWraps.get(i);
+      if (softWrap.getStart() > offset) {
+        break;
+      }
+      result++; // Assuming that every soft wrap contains only one virtual line feed symbol
+    }
+    return result;
   }
   private int logicalToVisualLine(int line) {
     assertReadAccess();

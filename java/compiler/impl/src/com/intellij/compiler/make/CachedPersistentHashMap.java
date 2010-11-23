@@ -103,7 +103,7 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
     }
   }
 
-  public void clearCache() {
+  private void clearCache() {
     myCache.clear();
   }
 }

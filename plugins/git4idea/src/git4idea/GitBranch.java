@@ -178,7 +178,8 @@ public class GitBranch extends GitReference {
       b = b.substring(2).trim();
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
-      boolean isRemote = (! localWanted) || b.startsWith("remotes");
+      boolean isRemote = b.startsWith("remotes/") || b.startsWith(REFS_REMOTES_PREFIX);
+//      boolean isRemote = (! localWanted) || b.startsWith("remotes");
       final GitBranch branch = new GitBranch(b, current, isRemote);
       if (current) {
         currentBranch = branch;

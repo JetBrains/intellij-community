@@ -43,6 +43,10 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
       return null;
     }
 
+    @Override
+    public void dispose() {
+    }
+
     @Nullable
     public Document getDocumentToSynchronize() {
       return null;

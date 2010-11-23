@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -34,10 +35,15 @@ import java.util.Set;
 public class ParameterInfoUtils {
   public static final String DEFAULT_PARAMETER_CLOSE_CHARS = ",){}";
 
-  public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
+  public static @Nullable <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, parentClass);
+
+    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass);
+    if (element instanceof PsiWhiteSpace) {
+      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass);
+    }
+    return parentOfType;
   }
 
   public static int getCurrentParameterIndex(ASTNode argList, int offset, IElementType delimiterType) {

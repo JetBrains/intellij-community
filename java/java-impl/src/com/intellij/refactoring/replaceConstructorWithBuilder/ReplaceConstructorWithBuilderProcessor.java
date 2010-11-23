@@ -110,7 +110,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
     final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
     assert module != null;
-    final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, myPackageName, containingDirectory, true);
+    final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, myPackageName, containingDirectory, true, true);
 
     if (directory != null) {
 

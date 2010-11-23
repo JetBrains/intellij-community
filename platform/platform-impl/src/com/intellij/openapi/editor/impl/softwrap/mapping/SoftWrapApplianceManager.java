@@ -65,7 +65,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   private final List<SoftWrapAwareDocumentParsingListener> myListeners = new ArrayList<SoftWrapAwareDocumentParsingListener>();
   private final List<IncrementalCacheUpdateEvent> myCacheUpdateEvents = new ArrayList<IncrementalCacheUpdateEvent>();
-  private final List<SoftWrapApplianceStrategy> myApplianceStrategies = new ArrayList<SoftWrapApplianceStrategy>();
 
   private final ProcessingContext myContext              = new ProcessingContext();
   private final FontTypesStorage  myOffset2fontType      = new FontTypesStorage();
@@ -110,26 +109,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myLineWrapPositionStrategy = null;
   }
 
-  /**
-   * Registers given strategy to use within the current manager.
-   *
-   * @param strategy    strategy to use during deciding if soft wraps should be recalculated for particular document region.
-   */
-  public void addApplianceStrategy(@NotNull SoftWrapApplianceStrategy strategy) {
-    myApplianceStrategies.add(strategy);
-  }
-
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void recalculateSoftWraps() {
     if (myVisibleAreaWidth <= 0 || myCacheUpdateEvents.isEmpty()) {
       return;
-    }
-
-    // Counter-based loop is preferred to for-each in order to avoid unnecessary performance degradation.
-    for (int i = 0; i < myApplianceStrategies.size(); i++) {
-      if (!myApplianceStrategies.get(i).processSoftWraps()) {
-        return;
-      }
     }
 
     myLastDocumentStamp = myEditor.getDocument().getModificationStamp();

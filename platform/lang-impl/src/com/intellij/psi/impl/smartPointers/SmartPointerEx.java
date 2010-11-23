@@ -21,4 +21,5 @@ import com.intellij.psi.SmartPsiElementPointer;
 public interface SmartPointerEx<E extends PsiElement> extends SmartPsiElementPointer<E> {
   void fastenBelt();
   void documentAndPsiInSync();
+  void dispose();
 }

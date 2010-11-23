@@ -115,4 +115,11 @@ class AnchorElementInfo implements SmartPointerElementInfo {
       return null;
     }
   }
+
+  @Override
+  public void dispose() {
+    if (myMarker != null) {
+      myMarker.dispose();
+    }
+  }
 }

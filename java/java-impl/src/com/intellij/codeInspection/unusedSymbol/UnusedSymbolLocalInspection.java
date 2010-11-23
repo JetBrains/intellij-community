@@ -16,35 +16,20 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,8 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import java.util.List;
 
 /**
  * User: anna
@@ -170,13 +153,10 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
 
   public static IntentionAction createQuickFix(final String qualifiedName, String element, Project project) {
     final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
-    final ArrayList<String> targetList = new ArrayList<String>();
-    targetList.addAll(entryPointsManager.ADDITIONAL_ANNOTATIONS);
-    targetList.addAll(entryPointsManager.getAdditionalAnnotations());
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      targetList, qualifiedName);
+      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
 
   public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {

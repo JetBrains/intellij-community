@@ -73,8 +73,12 @@ class DataTable implements Disposable, Forceable {
   }
 
   public void writeBytes(long address, byte[] bytes) {
+    writeBytes(address, bytes, 0, bytes.length);
+  }
+
+  public void writeBytes(long address, byte[] bytes, int off, int len) {
     markDirty();
-    myFile.put(address, bytes, 0, bytes.length);
+    myFile.put(address, bytes, off, len);
   }
 
   public long allocateSpace(int len) {
