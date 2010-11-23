@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 11, 4, 13, 40, 45) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 11, 23, 19, 27, 45) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
