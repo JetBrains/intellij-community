@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.StandardPatterns
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
@@ -27,6 +28,11 @@ class Context {
     String scriptType = args.scriptType
     if (scriptType) {
       addFilter(new ScriptTypeFilter(scriptType))
+    }
+
+    String pathRegexp = args.pathRegexp
+    if (pathRegexp) {
+      addFilter new FileContextFilter(psiFile().withVirtualFile(virtualFile().withPath(StandardPatterns.string().matches(pathRegexp))))
     }
 
     // filter by scope first, then by ctype
