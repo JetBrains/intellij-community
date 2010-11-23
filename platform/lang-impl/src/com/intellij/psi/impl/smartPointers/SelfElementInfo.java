@@ -113,6 +113,13 @@ class SelfElementInfo implements SmartPointerElementInfo {
     return null;
   }
 
+  @Override
+  public void dispose() {
+    if (myMarker != null) {
+      myMarker.dispose();
+    }
+  }
+
   @Nullable
   public static PsiFile restoreFile(PsiFile file,@NotNull Project project) {
     if (file == null) return null;

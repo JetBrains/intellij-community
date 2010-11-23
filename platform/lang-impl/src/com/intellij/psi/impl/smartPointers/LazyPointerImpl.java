@@ -110,4 +110,8 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
     return null;
   }
 
+  @Override
+  public void dispose() {
+    if (myPointer != null) ((SmartPointerEx)myPointer).dispose();
+  }
 }
