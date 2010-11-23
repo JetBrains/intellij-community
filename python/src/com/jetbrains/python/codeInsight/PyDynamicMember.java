@@ -2,14 +2,11 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyElementImpl;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -100,7 +97,7 @@ public class PyDynamicMember {
     if (myTarget != null) {
       return myTarget;
     }
-    PyClass targetClass = PyClassNameIndex.findClass(myTypeName, context.getProject());
+    PyClass targetClass = myTypeName.indexOf('.') > 0 ? PyClassNameIndex.findClass(myTypeName, context.getProject()) : null;
     if (targetClass != null) {
       return new MyInstanceElement(targetClass, context, findResolveTarget(context));
     }
