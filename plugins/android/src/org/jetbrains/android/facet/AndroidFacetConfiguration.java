@@ -68,8 +68,6 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public boolean COPY_RESOURCES_FROM_ARTIFACTS = true;
 
-  public boolean ENABLE_AAPT_COMPILER = true;
-
   public boolean GENERATE_UNSIGNED_APK = false;
 
   private AndroidPlatform myAndroidPlatform;

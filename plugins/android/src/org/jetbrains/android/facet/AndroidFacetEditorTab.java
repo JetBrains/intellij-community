@@ -93,8 +93,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JCheckBox myGenerateRJavaWhenChanged;
   private JCheckBox myGenerateIdlWhenChanged;
   private JCheckBox myIsLibraryProjectCheckbox;
-  private JCheckBox myCopyResourcesFromArtifacts;
-  private JCheckBox myEnableAaptCompiler;
+  private JCheckBox myRunProcessResourcesCheckBox;
   private JPanel myAaptCompilerPanel;
   private JBList myResOverlayList;
   private JButton myAddResOverlayButton;
@@ -204,15 +203,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        UIUtil.setEnabled(myAaptCompilerPanel, myEnableAaptCompiler.isSelected(), true);
-        myEnableAaptCompiler.setEnabled(true);
-        if (myCopyResourcesFromArtifacts.isVisible() && myCopyResourcesFromArtifacts.isSelected()) {
-          UIUtil.setEnabled(myAaptCompilerPanel, false, true);
-        }
+        boolean enabled = !myRunProcessResourcesCheckBox.isVisible() || !myRunProcessResourcesCheckBox.isSelected();
+        UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
       }
     };
-    myEnableAaptCompiler.addActionListener(listener);
-    myCopyResourcesFromArtifacts.addActionListener(listener);
+    myRunProcessResourcesCheckBox.addActionListener(listener);
 
     myAddResOverlayButton.addActionListener(new ActionListener() {
       @Override
@@ -355,14 +350,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       return true;
     }
 
-    if (myCopyResourcesFromArtifacts.isSelected() != myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS) {
+    if (myRunProcessResourcesCheckBox.isSelected() != myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS) {
       return true;
     }
     if (myGenerateUnsignedApk.isSelected() != myConfiguration.GENERATE_UNSIGNED_APK) {
-      return true;
-    }
-
-    if (myEnableAaptCompiler.isSelected() != myConfiguration.ENABLE_AAPT_COMPILER) {
       return true;
     }
 
@@ -498,7 +489,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
 
-    myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS = myCopyResourcesFromArtifacts.isSelected();
+    myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS = myRunProcessResourcesCheckBox.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
 
@@ -527,11 +518,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       runApt = true;
     }
     myConfiguration.REGENERATE_R_JAVA = myGenerateRJavaWhenChanged.isSelected();
-
-    if (myConfiguration.ENABLE_AAPT_COMPILER != myEnableAaptCompiler.isSelected()) {
-      runApt = true;
-    }
-    myConfiguration.ENABLE_AAPT_COMPILER = myEnableAaptCompiler.isSelected();
 
     if (myConfiguration.REGENERATE_JAVA_BY_AIDL != myGenerateIdlWhenChanged.isSelected()) {
       runIdl = true;
@@ -717,8 +703,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myApkPathCombo.getComboBox().getEditor().setItem(apkAbsPath != null ? apkAbsPath : "");
 
     boolean mavenizedModule = AndroidMavenUtil.isMavenizedModule(myContext.getModule());
-    myCopyResourcesFromArtifacts.setVisible(mavenizedModule);
-    myCopyResourcesFromArtifacts.setSelected(myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS);
+    myRunProcessResourcesCheckBox.setVisible(mavenizedModule);
+    myRunProcessResourcesCheckBox.setSelected(myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
 
@@ -737,12 +723,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myResOverlayList.setModel(new CollectionListModel(items));
 
-    myEnableAaptCompiler.setSelected(myConfiguration.ENABLE_AAPT_COMPILER);
-    UIUtil.setEnabled(myAaptCompilerPanel, myEnableAaptCompiler.isSelected(), true);
-    myEnableAaptCompiler.setEnabled(true);
-    if (myCopyResourcesFromArtifacts.isSelected() && myCopyResourcesFromArtifacts.isVisible()) {
-      UIUtil.setEnabled(myAaptCompilerPanel, false, true);
-    }
+    boolean enabled = !myRunProcessResourcesCheckBox.isVisible() || !myRunProcessResourcesCheckBox.isSelected();
+    UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
   }
 
   @Nullable

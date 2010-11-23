@@ -56,8 +56,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
   public static boolean isToCompileModule(Module module, AndroidFacetConfiguration configuration) {
-    if (configuration.ENABLE_AAPT_COMPILER &&
-        !(configuration.COPY_RESOURCES_FROM_ARTIFACTS && AndroidMavenUtil.isMavenizedModule(module))) {
+    if (!(configuration.COPY_RESOURCES_FROM_ARTIFACTS && AndroidMavenUtil.isMavenizedModule(module))) {
       return true;
     }
     return false;

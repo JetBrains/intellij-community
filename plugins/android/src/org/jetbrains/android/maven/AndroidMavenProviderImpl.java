@@ -82,7 +82,6 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
     }
 
     configuration.COPY_RESOURCES_FROM_ARTIFACTS = hasApkSources;
-    configuration.ENABLE_AAPT_COMPILER = !hasApkSources;
   }
 
   static boolean processResources(@NotNull Module module,
