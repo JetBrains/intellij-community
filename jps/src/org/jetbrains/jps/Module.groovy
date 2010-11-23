@@ -15,6 +15,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
   List testRoots = []
   List excludes = []
 
+  String basePath
   String outputPath
   String testOutputPath
   Map<String, Facet> facets = [:]
@@ -51,6 +52,10 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
 
       meta.exclude = {Object[] arg ->
         arg.each { excludes << it }
+      }
+
+      meta.basePath = {String path ->
+        basePath = path;
       }
 
       initializer.delegate = meta
