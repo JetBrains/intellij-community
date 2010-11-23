@@ -2,17 +2,13 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-// todo: trim long values
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XValue {
@@ -115,7 +111,11 @@ public class PyDebugValue extends XValue {
 
   @Override
   public void computePresentation(@NotNull final XValueNode node) {
-    node.setPresentation(myName, getValueIcon(), myType, PyTypeHandler.format(this), myContainer);
+    String s = PyTypeHandler.format(this);
+    node.setPresentation(myName, getValueIcon(), myType, s, myContainer);
+    if (s.length() >= 1000) {
+      node.setFullValueEvaluator(new PyFullValueEvaluator("Show full value", myDebugProcess, myName));
+    }
   }
 
   @Override

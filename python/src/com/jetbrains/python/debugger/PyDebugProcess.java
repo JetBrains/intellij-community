@@ -186,10 +186,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     }
   }
 
-  public PyDebugValue evaluate(final String expression, final boolean execute, boolean trimResult) throws PyDebuggerException {
+  public PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException {
     dropFrameCaches();
     final PyStackFrame frame = currentFrame();
-    return evaluate(expression, execute, frame, trimResult);
+    return evaluate(expression, execute, frame, doTrunc);
   }
 
   private PyDebugValue evaluate(String expression, boolean execute, PyStackFrame frame, boolean trimResult) throws PyDebuggerException {
