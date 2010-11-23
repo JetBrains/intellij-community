@@ -99,7 +99,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
     final Font font = pathLabel.getFont();
     pathLabel.setFont(font.deriveFont((float)10));
 
-    final JList list = new JBList(model);
+    final JBList list = new JBList(model);
+    list.getEmptyText().setText("No Bookmarks");
 
     final PreviewPanel previewPanel = new PreviewPanel(project);
 
