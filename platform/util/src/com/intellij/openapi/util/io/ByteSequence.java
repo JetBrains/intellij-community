@@ -13,29 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.compiler.generic;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.openapi.util.io;
 
 /**
- * @author nik
+ * @author Eugene Zhuravlev
+ *         Date: 11/23/10
  */
-public abstract class CompileItem<Key, SourceState, OutputState> {
-  @NotNull
-  public abstract Key getKey();
+public class ByteSequence {
+  private final byte[] myBytes;
+  private final int myOffset;
+  private final int myLen;
 
-  public abstract boolean isSourceUpToDate(@NotNull SourceState state);
+  public ByteSequence(byte[] bytes) {
+    this(bytes, 0, bytes.length);
+  }
+  
+  public ByteSequence(byte[] bytes, int offset, int len) {
+    myBytes = bytes;
+    myOffset = offset;
+    myLen = len;
+  }
 
-  @NotNull
-  public abstract SourceState computeSourceState();
+  public byte[] getBytes() {
+    return myBytes;
+  }
 
+  public int getOffset() {
+    return myOffset;
+  }
 
-  public abstract boolean isOutputUpToDate(@NotNull OutputState state);
-
-  @NotNull
-  public abstract OutputState computeOutputState();
-
-  public boolean isExcluded() {
-    return false;
+  public int getLength() {
+    return myLen;
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
@@ -82,8 +83,14 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
         try {
           patches.addAll(IdeaTextPatchBuilder.buildPatch(project, changesList, baseDir.getPresentableUrl(), true));
         }
-        catch (VcsException ex) {
-          Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
+        catch (final VcsException ex) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
+            }
+          });
+          indicator.cancel();
         }
       }
 

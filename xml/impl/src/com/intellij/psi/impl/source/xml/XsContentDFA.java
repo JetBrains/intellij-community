@@ -63,7 +63,7 @@ class XsContentDFA extends XmlContentDFA {
   private final XmlElementDescriptor[] myElementDescriptors;
 
   @Nullable
-  public static XmlContentDFA createContentDFA(XmlTag parentTag) {
+  public static XmlContentDFA createContentDFA(@NotNull XmlTag parentTag) {
     final PsiFile file = parentTag.getContainingFile().getOriginalFile();
     if (!(file instanceof XmlFile)) return null;
     XSModel xsModel = ApplicationManager.getApplication().runReadAction(new NullableComputable<XSModel>() {

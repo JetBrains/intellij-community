@@ -174,8 +174,7 @@ public class ProblemsHolder {
 
   @Nullable
   public ProblemDescriptor[] getResultsArray() {
-    final List<ProblemDescriptor> problems = myProblems;
-    myProblems = null;
+    final List<ProblemDescriptor> problems = getResults();
     return problems == null ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 

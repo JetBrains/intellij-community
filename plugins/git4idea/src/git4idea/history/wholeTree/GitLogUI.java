@@ -392,7 +392,7 @@ public class GitLogUI implements Disposable {
               @Override
               public void run() {
                 final int[] afterRows = myJBTable.getSelectedRows();
-                if (myDetails.isMissingBranchesInfo() && afterRows.length == 1) {
+                if (myDetails.isMissingBranchesInfo() && afterRows.length == 1 && afterRows[0] == rows[0]) {
                   final CommitI afterCommit = myTableModel.getCommitAt(rows[0]);
                   if (afterCommit.holdsDecoration() || (! afterCommit.equals(commit))) return;
                   myDetails.putBranches(gitCommit, branches);

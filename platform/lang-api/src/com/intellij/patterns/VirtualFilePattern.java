@@ -74,6 +74,14 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
+  public VirtualFilePattern withPath(final ElementPattern<String> pathPattern) {
+    return with(new PatternCondition<VirtualFile>("withName") {
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
+        return pathPattern.accepts(virtualFile.getPath(), context);
+      }
+    });
+  }
+
   public VirtualFilePattern xmlWithRootTag(final ElementPattern<String> tagNamePattern) {
     return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {

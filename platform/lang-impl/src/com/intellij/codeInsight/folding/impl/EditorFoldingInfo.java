@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.smartPointers.SmartPointerEx;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ public class EditorFoldingInfo {
   private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap
     = new THashMap<FoldRegion, SmartPsiElementPointer<?>>();
 
+  @NotNull
   public static EditorFoldingInfo get(@NotNull Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info == null){
@@ -82,15 +84,18 @@ public class EditorFoldingInfo {
   }
 
   public void dispose() {
+    for(FoldRegion region:myFoldRegionToSmartPointerMap.keySet()) {
+      SmartPsiElementPointer<?> pointer = myFoldRegionToSmartPointerMap.get(region);
+      ((SmartPointerEx)pointer).dispose();
+      region.dispose();
+    }
     myFoldRegionToSmartPointerMap.clear();
   }
 
   public static void resetInfo(final Editor editor) {
     EditorFoldingInfo info = editor.getUserData(KEY);
     if (info != null) {
-      for(FoldRegion region:info.myFoldRegionToSmartPointerMap.keySet()) {
-        region.dispose();
-      }
+      info.dispose();
     }
     editor.putUserData(KEY, null);
   }

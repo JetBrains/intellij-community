@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.scriptingContext.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.scriptingContext.ScriptingLibraryMappings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
@@ -34,8 +35,10 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
 
   public ScriptingContextsConfigurable(final Project project, final ScriptingLibraryMappings mappings) {
     super(project, ScriptingLibraryTable.LibraryModel.class, mappings,
-          "Specify which libraries are used in specific files and/or directories.", "Library",
-          "Override library settings for child directories and files?", "Override Library Settings");
+          IdeBundle.message("scripting.lib.usageScope.caption"),
+          IdeBundle.message("scripting.lib.usageScope.tableTitle"),
+          IdeBundle.message("scripting.lib.usageScope.override.question"),
+          IdeBundle.message("scripting.lib.usageScope.override.title"));
     myScriptingLibraryMappings = mappings;
   }
 
@@ -57,7 +60,7 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   @Nls
   @Override
   public String getDisplayName() {
-    return "Usage Scope";
+    return IdeBundle.message("scripting.lib.usageScope");
   }
 
   @Override

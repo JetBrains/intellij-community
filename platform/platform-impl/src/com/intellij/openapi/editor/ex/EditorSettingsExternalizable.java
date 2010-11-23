@@ -151,6 +151,10 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     for (String placeName : placeNames) {
       try {
         SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
+        if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
+          // Don't keep separate setting for vcs diff window for now and let it share the value for main editor.
+          continue;
+        }
         myPlacesToUseSoftWraps.add(place);
       }
       catch (IllegalArgumentException e) {
@@ -258,7 +262,15 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
-    return myPlacesToUseSoftWraps.contains(place);
+    if (myPlacesToUseSoftWraps.contains(place)) {
+      return true;
+    }
+    
+    // For now use soft wraps at vcs diff if they are enabled for the main editors.
+    if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
+      return myPlacesToUseSoftWraps.contains(SoftWrapAppliancePlaces.MAIN_EDITOR);
+    }
+    return false;
   }
 
   public void setUseSoftWraps(boolean use) {

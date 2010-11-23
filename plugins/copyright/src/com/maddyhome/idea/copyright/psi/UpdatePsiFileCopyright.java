@@ -306,6 +306,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     app.runWriteAction(new Runnable() {
       public void run() {
         Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
+        PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
         for (CommentAction action : actions) {
           int start = action.getStart();
           int end = action.getEnd();

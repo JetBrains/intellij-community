@@ -17,6 +17,8 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -55,7 +57,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
-      super(new ByteArrayOutputStream());
+      super(new BufferExposingByteArrayOutputStream());
     }
 
     public int getBufferSize() {
@@ -72,6 +74,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
     public byte[] toByteArray() {
       return ((ByteArrayOutputStream)out).toByteArray();
+    }
+    
+    public ByteSequence getInternalBuffer() {
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      return new ByteSequence(_out.getInternalBuffer(), 0, _out.size());
     }
   }
 
@@ -96,9 +103,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         final int id = enumerate(key);
         HeaderRecord headerRecord = readValueId(id);
 
-        final byte[] bytes = value.toByteArray();
+        final ByteSequence bytes = value.getInternalBuffer();
 
-        headerRecord.size += bytes.length;
+        headerRecord.size += bytes.getLength();
         headerRecord.address = myValueStorage.appendBytes(bytes, headerRecord.address);
 
         updateValueId(id, headerRecord);
@@ -187,9 +194,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       myAppendCache.remove(key);
 
       final int id = enumerate(key);
-      AppendStream record = new AppendStream();
+      final AppendStream record = new AppendStream();
       myValueExternalizer.save(record, value);
-      byte[] bytes = record.toByteArray();
+      final ByteSequence bytes = record.getInternalBuffer();
 
       HeaderRecord header = readValueId(id);
       if (header != null) {
@@ -199,7 +206,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         header = new HeaderRecord();
       }
 
-      header.size = bytes.length;
+      header.size = bytes.getLength();
       header.address = myValueStorage.appendBytes(bytes, 0);
 
       updateValueId(id, header);
@@ -362,9 +369,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
         public boolean process(final int keyId) throws IOException {
           final HeaderRecord record = readValueId(keyId);
           if (record.address != NULL_ADDR) {
-            byte[] bytes = new byte[record.size];
+            final byte[] bytes = new byte[record.size];
             myValueStorage.readBytes(record.address, bytes);
-            record.address = newStorage.appendBytes(bytes, 0);
+            record.address = newStorage.appendBytes(new ByteSequence(bytes), 0);
             updateValueId(keyId, record);
           }
           return true;

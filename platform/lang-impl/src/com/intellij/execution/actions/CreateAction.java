@@ -129,7 +129,8 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class CreateAndEditPolicy extends CreatePolicy {
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText(ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "...", false);
+      presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "..."
+                                                   : ExecutionBundle.message("create.run.configuration.action.name"), false);
     }
 
     public void perform(final ConfigurationContext context) {

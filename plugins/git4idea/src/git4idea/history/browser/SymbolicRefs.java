@@ -34,6 +34,14 @@ public class SymbolicRefs {
     myRemoteBranches = new TreeSet<String>();
   }
 
+  public void addRemote(final String branch) {
+    myRemoteBranches.add(branch);
+  }
+
+  public void addLocal(final String branch) {
+    myLocalBranches.add(branch);
+  }
+
   public void addTags(final Collection<String> value) {
     myTags.addAll(value);
   }

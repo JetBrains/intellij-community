@@ -19,12 +19,13 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.PagePool;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.zip.DeflaterOutputStream;
@@ -57,12 +58,12 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   @Override
-  protected void appendBytes(int record, byte[] bytes) throws IOException {
+  protected void appendBytes(int record, ByteSequence bytes) throws IOException {
     throw new IncorrectOperationException("Appending is not supported");
   }
 
   @Override
-  public void writeBytes(int record, byte[] bytes, boolean fixedSize) throws IOException {
+  public void writeBytes(int record, ByteSequence bytes, boolean fixedSize) throws IOException {
 
     if (myDoNotZipCaches) {
       super.writeBytes(record, bytes, fixedSize);
@@ -70,15 +71,15 @@ public class RefCountingStorage extends AbstractStorage {
     }
 
     synchronized (myLock) {
-      ByteArrayOutputStream s = new ByteArrayOutputStream();
+      BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
       DeflaterOutputStream out = new DeflaterOutputStream(s);
       try {
-        out.write(bytes);
+        out.write(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
       }
       finally {
         out.close();
       }
-      super.writeBytes(record, s.toByteArray(), fixedSize);
+      super.writeBytes(record, new ByteSequence(s.getInternalBuffer(), 0, s.size()), fixedSize);
     }
   }
 

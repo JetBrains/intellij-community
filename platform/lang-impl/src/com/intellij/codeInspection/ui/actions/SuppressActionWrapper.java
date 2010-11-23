@@ -152,6 +152,7 @@ public class SuppressActionWrapper extends ActionGroup {
               for (GlobalInspectionContextImpl context : globalInspectionContexts) {
                 context.refreshViews();
               }
+              CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
             }
           }, getTemplatePresentation().getText(), null);
         }
