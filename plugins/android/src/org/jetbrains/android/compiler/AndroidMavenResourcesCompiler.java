@@ -227,7 +227,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
         MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myContext.getProject());
         if (mavenProjectsManager != null && mavenProjectsManager.isMavenizedModule(module)) {
           AndroidFacet facet = AndroidFacet.getInstance(module);
-          if (facet != null && facet.getConfiguration().COPY_RESOURCES_FROM_ARTIFACTS) {
+          if (facet != null && facet.getConfiguration().RUN_PROCESS_RESOURCES_MAVEN_TASK) {
             Manifest manifest = facet.getManifest();
             String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
             if (aPackage != null) {

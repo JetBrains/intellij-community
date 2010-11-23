@@ -93,7 +93,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JCheckBox myGenerateRJavaWhenChanged;
   private JCheckBox myGenerateIdlWhenChanged;
   private JCheckBox myIsLibraryProjectCheckbox;
-  private JCheckBox myRunProcessResourcesCheckBox;
   private JPanel myAaptCompilerPanel;
   private JBList myResOverlayList;
   private JButton myAddResOverlayButton;
@@ -105,6 +104,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JRadioButton myUseCompilerManifestFromStructureRadio;
   private JRadioButton myUseCustomCompilerManifestRadio;
   private TextFieldWithBrowseButton myCustomCompilerManifestPathField;
+  private JRadioButton myRunProcessResourcesRadio;
+  private JRadioButton myCompileResourcesByIdeRadio;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -203,11 +204,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        boolean enabled = !myRunProcessResourcesCheckBox.isVisible() || !myRunProcessResourcesCheckBox.isSelected();
-        UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
+        updateAptPanel();
       }
     };
-    myRunProcessResourcesCheckBox.addActionListener(listener);
+    myRunProcessResourcesRadio.addActionListener(listener);
+    myCompileResourcesByIdeRadio.addActionListener(listener);
 
     myAddResOverlayButton.addActionListener(new ActionListener() {
       @Override
@@ -256,6 +257,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         return file.isDirectory() || "apk".equals(file.getExtension());
       }
     });
+  }
+
+  private void updateAptPanel() {
+    boolean enabled = !myRunProcessResourcesRadio.isVisible() || !myRunProcessResourcesRadio.isSelected();
+    UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
   }
 
   private static String[] getDefaultApks(@NotNull Module module) {
@@ -350,7 +356,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       return true;
     }
 
-    if (myRunProcessResourcesCheckBox.isSelected() != myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS) {
+    if (myRunProcessResourcesRadio.isSelected() != myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK) {
       return true;
     }
     if (myGenerateUnsignedApk.isSelected() != myConfiguration.GENERATE_UNSIGNED_APK) {
@@ -489,7 +495,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
 
-    myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS = myRunProcessResourcesCheckBox.isSelected();
+    myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
 
@@ -703,8 +709,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myApkPathCombo.getComboBox().getEditor().setItem(apkAbsPath != null ? apkAbsPath : "");
 
     boolean mavenizedModule = AndroidMavenUtil.isMavenizedModule(myContext.getModule());
-    myRunProcessResourcesCheckBox.setVisible(mavenizedModule);
-    myRunProcessResourcesCheckBox.setSelected(myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS);
+    myRunProcessResourcesRadio.setVisible(mavenizedModule);
+    myRunProcessResourcesRadio.setSelected(myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
+    myCompileResourcesByIdeRadio.setVisible(mavenizedModule);
+    myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
 
@@ -723,8 +731,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myResOverlayList.setModel(new CollectionListModel(items));
 
-    boolean enabled = !myRunProcessResourcesCheckBox.isVisible() || !myRunProcessResourcesCheckBox.isSelected();
-    UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
+    updateAptPanel();
   }
 
   @Nullable
