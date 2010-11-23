@@ -255,6 +255,13 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+  public void testNameInExcept() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    final PsiElement element = file.findExportedName("md5");
+    assertTrue(element != null ? element.toString() : "null", element instanceof PyTargetExpression);
+    assertNotParsed(file);
+  }
+
   private PyFile getTestFile() {
     return getTestFile(getTestName(false) + ".py");
   }

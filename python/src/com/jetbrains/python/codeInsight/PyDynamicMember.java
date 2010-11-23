@@ -41,6 +41,7 @@ public class PyDynamicMember {
                          @NotNull final String type,
                          final Function<PsiElement, PyType> typeCallback) {
     myName = name;
+
     myResolveToInstance = false;
     myTypeName = type;
 
