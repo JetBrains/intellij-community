@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -219,7 +221,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 // history actions
     final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {
       public boolean process(final AnActionEvent e, final String s) {
-        new WriteCommandAction(myProject, getLanguageConsole().getFile()) {
+       new WriteCommandAction(myProject, getLanguageConsole().getFile()) {
           protected void run(final Result result) throws Throwable {
             getLanguageConsole().getEditorDocument().setText(s == null? "" : s);
           }
@@ -227,14 +229,39 @@ public abstract class AbstractConsoleRunnerWithHistory {
         return true;
       }
     };
-    final AnAction historyNextAction = ConsoleHistoryModel.createHistoryAction(myHistory, true, historyProcessor);
-    final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
-    historyNextAction.getTemplatePresentation().setVisible(false);
-    historyPrevAction.getTemplatePresentation().setVisible(false);
-    toolbarActions.add(historyNextAction);
-    toolbarActions.add(historyPrevAction);
 
-    return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
+    final EditorEx consoleEditor = myConsoleView.getConsole().getConsoleEditor();
+    final Document document = consoleEditor.getDocument();
+    final CaretModel caretModel = consoleEditor.getCaretModel();
+    final AnAction upAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final int lineNumber = consoleEditor.getDocument().getLineNumber(caretModel.getOffset());
+        if (lineNumber > 0){
+          caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
+        } else {
+          historyProcessor.process(e, myHistory.getHistoryPrev());
+        }
+      }
+    };
+    final AnAction downAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final int lineNumber = document.getLineNumber(caretModel.getOffset());
+        if (lineNumber < document.getLineCount() - 1){
+          caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
+        } else {
+          historyProcessor.process(e, myHistory.getHistoryNext());
+        }
+      }
+    };
+
+    upAction.getTemplatePresentation().setVisible(false);
+    downAction.getTemplatePresentation().setVisible(false);
+    upAction.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
+    downAction.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+
+    return new AnAction[]{stopAction, closeAction, myRunAction, upAction, downAction};
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
