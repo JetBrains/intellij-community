@@ -206,11 +206,16 @@ def isProperty(x):
 
 FAKE_CLASSOBJ_NAME = "___Classobj"
 
-def sanitizeIdent(x):
+def sanitizeIdent(x, is_clr=False):
     "Takes an identifier and returns it sanitized"
     if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
         return "p_" + x
     else:
+        if is_clr:
+            # it tends to have names like "int x", turn it to just x
+            xs = x.split(" ")
+            if len(xs) == 2:
+              return sanitizeIdent(xs[1])
         return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"
 
 def reliable_repr(value):
@@ -369,6 +374,7 @@ paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Op
 
 def transformSeq(results, toplevel=True):
     "Transforms a tree of ParseResults into a param spec string."
+    is_clr = sys.platform == "cli"
     ret = [] # add here token to join
     for token in results:
         token_type = token[0]
@@ -376,7 +382,7 @@ def transformSeq(results, toplevel=True):
             token_name = token[1]
             if len(token) == 3: # name with value
                 if toplevel:
-                    ret.append(sanitizeIdent(token_name) + "=" + sanitizeValue(token[2]))
+                    ret.append(sanitizeIdent(token_name, is_clr) + "=" + sanitizeValue(token[2]))
                 else:
                 # smth like "a, (b1=1, b2=2)", make it "a, p_b"
                     return ["p_" + results[0][1]] # NOTE: fishy. investigate.
@@ -387,7 +393,7 @@ def transformSeq(results, toplevel=True):
                 # we're in a "foo, (bar1, bar2, ...)"; make it "foo, bar_tuple"
                     return extractAlphaPrefix(results[0][1]) + "_tuple"
             else: # just name
-                ret.append(sanitizeIdent(token_name))
+                ret.append(sanitizeIdent(token_name, is_clr))
         elif token_type is T_NESTED:
             ret.append(transformSeq(token[1:], False))
         elif token_type is T_OPTIONAL:
@@ -404,18 +410,19 @@ def transformOptionalSeq(results):
     @param results must start from T_OPTIONAL.
     """
     assert results[0] is T_OPTIONAL, "transformOptionalSeq expects a T_OPTIONAL node, sees " + repr(results[0])
+    is_clr = sys.platform == "cli"
     ret = []
     for token in results[1:]:
         token_type = token[0]
         if token_type is T_SIMPLE:
             token_name = token[1]
             if len(token) == 3: # name with value; little sense, but can happen in a deeply nested optional
-                ret.append(sanitizeIdent(token_name) + "=" + sanitizeValue(token[2]))
+                ret.append(sanitizeIdent(token_name, is_clr) + "=" + sanitizeValue(token[2]))
             elif token_name == '...':
             # we're in a "foo, [bar, ...]"; make it "foo, *bar"
                 return ["*" + extractAlphaPrefix(results[1][1])] # we must return a seq; [1] is first simple, [1][1] is its name
             else: # just name
-                ret.append(sanitizeIdent(token_name) + "=None")
+                ret.append(sanitizeIdent(token_name, is_clr) + "=None")
         elif token_type is T_OPTIONAL:
             ret.extend(transformOptionalSeq(token))
         # maybe handle T_NESTED if such cases ever occur in real life
@@ -489,10 +496,14 @@ RET_TYPE = { # {'type_name': 'value_string'} lookup table
     "boolean":  BOOL_LIT,
     "Bool":     BOOL_LIT,
     "Boolean":  BOOL_LIT,
+    "True":     BOOL_LIT,
+    "true":     BOOL_LIT,
+    "False":    BOOL_LIT,
+    "false":    BOOL_LIT,
     # list
-    'list': LIST_LIT,
-    'List': LIST_LIT,
-    '[]':   LIST_LIT,
+    'list':     LIST_LIT,
+    'List':     LIST_LIT,
+    '[]':       LIST_LIT,
     # tuple
     "tuple":    TUPLE_LIT,
     "sequence": TUPLE_LIT,
@@ -507,10 +518,10 @@ RET_TYPE = { # {'type_name': 'value_string'} lookup table
     "hashtable":  DICT_LIT,
     "Hashtable":  DICT_LIT,
     "{}":         DICT_LIT,
-    # "object"
-    "object":     "object()"
+    # "objects"
+    "object":     "object()",
 }
-if version[1] < 3:
+if version[0] < 3:
     UNICODE_LIT = 'u""'
     BYTES_LIT = '""'
     RET_TYPE.update({
@@ -528,6 +539,10 @@ if version[1] < 3:
         'Byte':     BYTES_LIT,
     })
     DEFAULT_STR_LIT = BYTES_LIT
+    # also, files:
+    RET_TYPE.update({
+        'file': "file('/dev/null')",
+    })
 else:
     UNICODE_LIT = '""'
     BYTES_LIT = 'b""'
@@ -546,6 +561,10 @@ else:
         'Byte':     BYTES_LIT,
     })
     DEFAULT_STR_LIT = UNICODE_LIT
+    # also, files: we can't provide an easy expression on py3k
+    RET_TYPE.update({
+        'file': None,
+    })
 
 
 
@@ -1647,6 +1666,7 @@ class ModuleRedeclarator(object):
 
 
 def build_output_name(subdir, name):
+    global action
     quals = name.split(".")
     dirname = subdir
     if dirname:
