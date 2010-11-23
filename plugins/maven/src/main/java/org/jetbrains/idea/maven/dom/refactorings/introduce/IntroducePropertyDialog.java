@@ -19,27 +19,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.util.Function;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.StringLenComparator;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class IntroducePropertyDialog extends DialogWrapper {
 
@@ -98,33 +104,67 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private String[] getSuggestions() {
-    return getSuggestions(2);
+    return getSuggestions(1);
   }
 
   private String[] getSuggestions(int level) {
-    Set<String> suggestions = new OrderedSet<String>();
+    Collection<String> result = new THashSet<String>();
 
-    if (mySelectedString.contains(".")) {
-      suggestions.add(mySelectedString.replaceAll(" ", ""));
-      suggestions.add(joinWords(mySelectedString, "."));
-    }
-    else {
-      suggestions.add(joinWords(StringUtil.split(mySelectedString, " ")));
-    }
+    String value = mySelectedString.trim();
+    boolean addUnqualifiedForm = true;
 
     XmlTag parent = PsiTreeUtil.getParentOfType(myContext, XmlTag.class, false);
-    String sb = "";
-    while (parent != null && level != 0) {
-      sb = parent.getName() + sb;
-      suggestions.add(sb);
-      suggestions.add(joinWords(sb, "."));
-      sb = "." + sb;
 
+    DomElement domParent = DomUtil.getDomElement(parent);
+    if (domParent != null) {
+      DomElement domSuperParent = domParent.getParent();
+      DomFileElement<DomElement> domFile = DomUtil.getFileElement(domParent);
+      if (domSuperParent != null && domFile != null && domFile.getRootElement() == domSuperParent) {
+        value = domSuperParent.getXmlElementName();
+        addUnqualifiedForm = false;
+      }
+      else {
+        MavenDomShortArtifactCoordinates coordinates = DomUtil.getParentOfType(domParent, MavenDomShortArtifactCoordinates.class, false);
+        if (coordinates != null && !(coordinates instanceof MavenDomProjectModel) && domParent != coordinates.getArtifactId()) {
+          String artifactId = coordinates.getArtifactId().getStringValue();
+          if (!StringUtil.isEmptyOrSpaces(artifactId)) {
+            value = artifactId;
+            addUnqualifiedForm = false;
+          }
+        }
+      }
+    }
+
+    while (true) {
+      String newValue = value.replaceAll("  ", " ");
+      if (newValue.equals(value)) break;
+      value = newValue;
+    }
+
+    value = value.replaceAll(" ", ".");
+    List<String> parts = StringUtil.split(value, ".");
+    String shortValue = parts.get(parts.size() - 1);
+
+    if (addUnqualifiedForm) {
+      result.add(value);
+      result.add(shortValue);
+    }
+
+    String suffix = "";
+    while (parent != null && level != 0) {
+      suffix = parent.getName() + suffix;
+      result.add(suffix);
+      result.add(value + "." + suffix);
+      result.add(shortValue + "." + suffix);
+      suffix = "." + suffix;
       parent = parent.getParentTag();
       level--;
     }
 
-    return suggestions.toArray(new String[suggestions.size()]);
+    result = new ArrayList<String>(result);
+    Collections.sort((List)result, CodeStyleSettingsManager.getSettings(myProject).PREFER_LONGER_NAMES ?
+                                   StringLenComparator.getDescendingInstance() : StringLenComparator.getInstance());
+    return result.toArray(new String[result.size()]);
   }
 
   private static String joinWords(@NotNull String s, @NotNull String delimiter) {
@@ -195,7 +235,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static boolean isContainWrongSymbols(@NotNull String text) {
-    return text.length() == 0 || Character.isDigit(text.charAt(0)) || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]") ;
+    return text.length() == 0 || Character.isDigit(text.charAt(0)) || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]");
   }
 
   private boolean isPropertyExist(@NotNull String text) {
@@ -210,7 +250,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     for (MavenDomProjectModel parent : MavenDomProjectProcessorUtils.collectParentProjects(project)) {
       if (isPropertyExist(text, parent)) return true;
     }
-    return false;  
+    return false;
   }
 
   private static boolean isPropertyExist(String propertyName, MavenDomProjectModel project) {
@@ -219,7 +259,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     XmlTag propsTag = props.getXmlTag();
     if (propsTag != null) {
       for (XmlTag each : propsTag.getSubTags()) {
-         if (propertyName.equals(each.getName())) return true;
+        if (propertyName.equals(each.getName())) return true;
       }
     }
     return false;
