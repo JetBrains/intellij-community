@@ -21,6 +21,10 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
   @Override
   public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    doEvaluate(expression, callback, true);
+  }
+
+  private void doEvaluate(String expression, XEvaluationCallback callback, boolean doTrim) {
     expression = expression.trim();
     if ("".equals(expression)) {
       callback.evaluated(NONE);
@@ -31,12 +35,26 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
     final boolean isExpression = PyDebugSupportUtils.isExpression(project, expression);
     try {
       // todo: think on getting results from EXEC
-      final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression);
+      final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrim);
       callback.evaluated(value);
     }
     catch (PyDebuggerException e) {
       callback.errorOccurred(e.getTracebackError());
     }
+  }
+
+  @Override
+  public boolean isEvaluateOnCopy(String name, String value) {
+    if (value != null && value.length() >1000) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @Override
+  public void evaluateFull(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
+    doEvaluate(expression, callback, false);
   }
 
   @Override

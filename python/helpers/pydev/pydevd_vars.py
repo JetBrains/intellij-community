@@ -141,7 +141,7 @@ except:
         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
-def varToXML(v, name):
+def varToXML(v, name, doTrim=True):
     """ single variable or dictionary to xml representation """
     type, typeName, resolver = getType(v)
 
@@ -172,7 +172,7 @@ def varToXML(v, name):
 
     if value:
         #cannot be too big... communication may not handle it.
-        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE:
+        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
             value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
             value += '...'
 
