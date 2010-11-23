@@ -32,7 +32,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      CodeInsightUtilBase.preparePsiElementForWrite(myElement);
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
       PyReferenceExpression ref = myElement;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PyExpression expression = elementGenerator.createExpressionFromText("self." + ref.getText());
