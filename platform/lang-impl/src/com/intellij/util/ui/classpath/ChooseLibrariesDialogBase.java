@@ -151,14 +151,12 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     myBuilder.initRootNode();
 
     myTree.setDragEnabled(false);
-    myTree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTree.setRowHeight(Icons.CLASS_ICON.getIconHeight());
 
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
 
     myTree.setRootVisible(false);
-    myTree.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
         updateOKAction();
