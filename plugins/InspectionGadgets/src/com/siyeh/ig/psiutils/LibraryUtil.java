@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class LibraryUtil {
 
@@ -24,44 +25,41 @@ public class LibraryUtil {
         super();
     }
 
-    public static boolean classIsInLibrary(@NotNull PsiClass aClass) {
+    public static boolean classIsInLibrary(@Nullable PsiClass aClass) {
         return aClass instanceof PsiCompiledElement;
     }
 
     public static boolean callOnLibraryMethod(
             @NotNull PsiMethodCallExpression expression) {
         final PsiMethod method = expression.resolveMethod();
-        return method != null && method instanceof PsiCompiledElement;
+        return method instanceof PsiCompiledElement;
     }
 
-    public static boolean isOverrideOfLibraryMethod(PsiMethod method){
-		final PsiMethod[] superMethods = method.findSuperMethods();
-		for(PsiMethod superMethod : superMethods){
-			final PsiClass containingClass =
-					superMethod.getContainingClass();
-			if(containingClass != null &&
-					classIsInLibrary(containingClass)){
-				return true;
-			}
+    public static boolean isOverrideOfLibraryMethod(@NotNull PsiMethod method){
+        final PsiMethod[] superMethods = method.findSuperMethods();
+        for(PsiMethod superMethod : superMethods){
+            final PsiClass containingClass = superMethod.getContainingClass();
+            if(classIsInLibrary(containingClass)){
+                return true;
+            }
             if(isOverrideOfLibraryMethod(superMethod)){
                 return true;
             }
         }
-		return false;
-	}
+        return false;
+    }
 
     public static boolean isOverrideOfLibraryMethodParameter(
-            PsiVariable variable) {
-        if (variable instanceof PsiParameter) {
-            final PsiParameter parameter = (PsiParameter)variable;
-            final PsiElement scope = parameter.getDeclarationScope();
-            if (scope instanceof PsiMethod) {
-                final PsiMethod method = (PsiMethod)scope;
-                if (isOverrideOfLibraryMethod(method)) {
-                    return true;
-                }
-            }
+            @Nullable PsiVariable variable) {
+        if (!(variable instanceof PsiParameter)) {
+            return false;
         }
-        return false;
+        final PsiParameter parameter = (PsiParameter)variable;
+        final PsiElement scope = parameter.getDeclarationScope();
+        if (!(scope instanceof PsiMethod)) {
+            return false;
+        }
+        final PsiMethod method = (PsiMethod)scope;
+        return isOverrideOfLibraryMethod(method);
     }
 }

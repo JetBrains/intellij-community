@@ -20,13 +20,28 @@
 package com.intellij.psi.stubs;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class SerializedStubTree {
   private final byte[] myBytes;
+  private final int myLength;
 
-  public SerializedStubTree(final byte[] bytes) {
+  public SerializedStubTree(final byte[] bytes, int length) {
     myBytes = bytes;
+    myLength = length;
+  }
+  
+  public SerializedStubTree(DataInput in) throws IOException {
+    myLength = in.readInt();
+    myBytes = new byte[myLength];
+    in.readFully(myBytes);
+  }
+
+  public void write(DataOutput out) throws IOException{
+    out.writeInt(myLength);
+    out.write(myBytes, 0, myLength);
   }
 
   public StubElement getStub() {
@@ -34,15 +49,39 @@ public class SerializedStubTree {
   }
 
   public boolean equals(final Object that) {
-    return this == that ||
-           that instanceof SerializedStubTree && Arrays.equals(myBytes, ((SerializedStubTree)that).myBytes);
+    if (this == that) {
+      return true;
+    }
+    if (!(that instanceof SerializedStubTree)) {
+      return false;
+    }
+    final SerializedStubTree thatTree = (SerializedStubTree)that;
+    final int length = myLength;
+    if (length != thatTree.myLength) {
+      return false;
+    }
+
+    final byte[] thisBytes = myBytes;
+    final byte[] thatBytes = thatTree.myBytes;
+    for (int i=0; i< length; i++) {
+      if (thisBytes[i] != thatBytes[i]) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   public int hashCode() {
-    return Arrays.hashCode(myBytes);
+    if (myBytes == null)
+        return 0;
+
+    int result = 1;
+    for (int i = 0; i < myLength; i++) {
+      result = 31 * result + myBytes[i];
+    }
+
+    return result;
   }
 
-  public byte[] getBytes() {
-    return myBytes;
-  }
 }

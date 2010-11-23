@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsAction {
 
   public ToggleUseSoftWrapsToolbarAction(@NotNull SoftWrapAppliancePlaces place) {
-    super(place);
+    super(place, true);
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
   }
 }

@@ -15,10 +15,51 @@
  */
 package com.intellij.util.containers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author irengrig
  */
 public interface ReadonlyList<T> {
   T get(final int idx);
   int getSize();
+
+  ReadonlyList EMPTY = new ReadonlyList() {
+    @Override
+    public Object get(int idx) {
+      return null;
+    }
+
+    @Override
+    public int getSize() {
+      return 0;
+    }
+  };
+
+  public static class ArrayListWrapper<T> implements ReadonlyList<T> {
+    private final List<T> myDelegate;
+
+    public ArrayListWrapper(List<T> delegate) {
+      myDelegate = delegate;
+    }
+
+    public ArrayListWrapper() {
+      myDelegate = new ArrayList<T>();
+    }
+
+    @Override
+    public T get(int idx) {
+      return myDelegate.get(idx);
+    }
+
+    @Override
+    public int getSize() {
+      return myDelegate.size();
+    }
+
+    public List<T> getDelegate() {
+      return myDelegate;
+    }
+  }
 }

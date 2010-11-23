@@ -21,6 +21,8 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.Convertor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,25 +52,37 @@ public class IssueLinkRenderer {
   }
 
   public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle) {
+    return appendTextWithLinks(text, baseStyle, new Consumer<String>() {
+      @Override
+      public void consume(String s) {
+        append(s, baseStyle);
+      }
+    });
+  }
+
+  public List<String> appendTextWithLinks(final String text, final SimpleTextAttributes baseStyle, final Consumer<String> consumer) {
     final List<String> pieces = new ArrayList<String>();
     final List<IssueNavigationConfiguration.LinkMatch> list = myIssueNavigationConfiguration.findIssueLinks(text);
     int pos = 0;
+    final SimpleTextAttributes linkAttributes = getLinkAttributes(baseStyle);
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       final TextRange textRange = match.getRange();
       if (textRange.getStartOffset() > pos) {
         final String piece = text.substring(pos, textRange.getStartOffset());
         pieces.add(piece);
-        append(piece, baseStyle);
+        consumer.consume(piece);
+        //append(piece, baseStyle);
       }
       final String piece = textRange.substring(text);
       pieces.add(piece);
-      append(piece, getLinkAttributes(baseStyle), match);
+      append(piece, linkAttributes, match);
       pos = textRange.getEndOffset();
     }
     if (pos < text.length()) {
       final String piece = text.substring(pos);
       pieces.add(piece);
-      append(piece, baseStyle);
+      consumer.consume(piece);
+      //append(piece, baseStyle);
     }
     return pieces;
   }

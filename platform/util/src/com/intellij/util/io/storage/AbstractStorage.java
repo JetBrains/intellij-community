@@ -22,6 +22,8 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PagePool;
@@ -240,8 +242,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     }
   }
 
-  protected void appendBytes(int record, byte[] bytes) throws IOException {
-    int delta = bytes.length;
+  protected void appendBytes(int record, ByteSequence bytes) throws IOException {
+    final int delta = bytes.getLength();
     if (delta == 0) return;
 
     synchronized (myLock) {
@@ -250,10 +252,10 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       int newSize = oldSize + delta;
       if (newSize > capacity) {
         if (oldSize > 0) {
-          byte[] newbytes = new byte[newSize];
+          final byte[] newbytes = new byte[newSize];
           System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
-          System.arraycopy(bytes, 0, newbytes, oldSize, delta);
-          writeBytes(record, newbytes, false);
+          System.arraycopy(bytes.getBytes(), bytes.getOffset(), newbytes, oldSize, delta);
+          writeBytes(record, new ByteSequence(newbytes), false);
         }
         else {
           writeBytes(record, bytes, false);
@@ -261,15 +263,15 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       }
       else {
         long address = myRecordsTable.getAddress(record) + oldSize;
-        myDataTable.writeBytes(address, bytes);
+        myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
         myRecordsTable.setSize(record, newSize);
       }
     }
   }
 
-  public void writeBytes(int record, byte[] bytes, boolean fixedSize) throws IOException {
+  public void writeBytes(int record, ByteSequence bytes, boolean fixedSize) throws IOException {
     synchronized (myLock) {
-      final int requiredLength = bytes.length;
+      final int requiredLength = bytes.getLength();
       final int currentCapacity = myRecordsTable.getCapacity(record);
 
       final int currentSize = myRecordsTable.getSize(record);
@@ -292,7 +294,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         myRecordsTable.setCapacity(record, newCapacity);
       }
 
-      myDataTable.writeBytes(address, bytes);
+      myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
       myRecordsTable.setSize(record, requiredLength);
     }
   }
@@ -324,7 +326,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     private final int myRecordId;
 
     public StorageDataOutput(AbstractStorage storage, int recordId) {
-      this(storage, recordId, new ByteArrayOutputStream());
+      this(storage, recordId, new BufferExposingByteArrayOutputStream());
     }
 
     protected StorageDataOutput(AbstractStorage storage, int recordId, OutputStream stream) {
@@ -335,11 +337,12 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
     public void close() throws IOException {
       super.close();
-      myStorage.writeBytes(myRecordId, getByteStream().toByteArray(), false);
+      final BufferExposingByteArrayOutputStream byteStream = getByteStream();
+      myStorage.writeBytes(myRecordId, new ByteSequence(byteStream.getInternalBuffer(), 0, byteStream.size()), false);
     }
 
-    protected ByteArrayOutputStream getByteStream() {
-      return ((ByteArrayOutputStream)out);
+    protected BufferExposingByteArrayOutputStream getByteStream() {
+      return ((BufferExposingByteArrayOutputStream)out);
     }
 
     public int getRecordId() {
@@ -351,13 +354,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     private final int myRecordId;
 
     public AppenderStream(int recordId) {
-      super(new ByteArrayOutputStream());
+      super(new BufferExposingByteArrayOutputStream());
       myRecordId = recordId;
     }
 
     public void close() throws IOException {
       super.close();
-      appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      appendBytes(myRecordId, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
     }
   }
 }

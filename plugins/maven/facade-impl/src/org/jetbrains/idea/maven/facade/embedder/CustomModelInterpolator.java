@@ -37,6 +37,17 @@ public class CustomModelInterpolator extends StringSearchModelInterpolator {
                                                 File projectDir,
                                                 ProjectBuilderConfiguration config,
                                                 boolean debugEnabled) throws ModelInterpolationException {
-    super.interpolateObject(obj, model, projectDir, config, debugEnabled);
+    try {
+      super.interpolateObject(obj, model, projectDir, config, debugEnabled);
+    }
+    catch (NullPointerException e) {
+      // npe may be thrown from here:
+      //at org.apache.maven.project.interpolation.StringSearchModelInterpolator$InterpolateObjectAction.isQualifiedForInterpolation(StringSearchModelInterpolator.java:344)
+      //at org.apache.maven.project.interpolation.StringSearchModelInterpolator$InterpolateObjectAction.traverseObjectWithParents(StringSearchModelInterpolator.java:172)
+      //at org.apache.maven.project.interpolation.StringSearchModelInterpolator$InterpolateObjectAction.traverseObjectWithParents(StringSearchModelInterpolator.java:328)
+      //at org.apache.maven.project.interpolation.StringSearchModelInterpolator$InterpolateObjectAction.run(StringSearchModelInterpolator.java:135)
+      //at org.apache.maven.project.interpolation.StringSearchModelInterpolator$InterpolateObjectAction.run(StringSearchModelInterpolator.java:102)
+      throw new ModelInterpolationException("Cannot interpolate", e);
+    }
   }
 }

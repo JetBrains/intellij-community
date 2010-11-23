@@ -34,4 +34,8 @@ public abstract class CompileItem<Key, SourceState, OutputState> {
 
   @NotNull
   public abstract OutputState computeOutputState();
+
+  public boolean isExcluded() {
+    return false;
+  }
 }

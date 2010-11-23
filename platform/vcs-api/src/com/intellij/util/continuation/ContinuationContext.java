@@ -17,6 +17,8 @@ package com.intellij.util.continuation;
 
 import com.intellij.openapi.vcs.CalledInAny;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public interface ContinuationContext {
@@ -25,8 +27,56 @@ public interface ContinuationContext {
   @CalledInAny
   void next(List<TaskDescriptor> next);
   @CalledInAny
+  void last(TaskDescriptor... next);
+  @CalledInAny
+  void last(List<TaskDescriptor> next);
+  @CalledInAny
   void cancelEverything();
 
   void suspend();
   void ping();
+
+  class GatheringContinuationContext implements ContinuationContext {
+    private final List<TaskDescriptor> myList;
+
+    public GatheringContinuationContext() {
+      myList = new ArrayList<TaskDescriptor>();
+    }
+
+    public List<TaskDescriptor> getList() {
+      return myList;
+    }
+
+    @Override
+    public void cancelEverything() {
+    }
+
+    @Override
+    public void next(TaskDescriptor... next) {
+      myList.addAll(0, Arrays.asList(next));
+    }
+
+    @Override
+    public void next(List<TaskDescriptor> next) {
+      myList.addAll(0, next);
+    }
+
+    @Override
+    public void last(TaskDescriptor... next) {
+      myList.addAll(Arrays.asList(next));
+    }
+
+    @Override
+    public void last(List<TaskDescriptor> next) {
+      myList.addAll(next);
+    }
+
+    @Override
+    public void suspend() {
+    }
+
+    @Override
+    public void ping() {
+    }
+  }
 }

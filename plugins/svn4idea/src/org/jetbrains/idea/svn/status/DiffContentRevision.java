@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.status;
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -24,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
-
-import java.io.ByteArrayOutputStream;
 
 public class DiffContentRevision implements ContentRevision {
   private String myPath;
@@ -48,14 +47,14 @@ public class DiffContentRevision implements ContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     if (myContents == null) {
-      ByteArrayOutputStream bos = new ByteArrayOutputStream(2048);
+      BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream(2048);
       try {
         myRepository.getFile(myPath, -1, null, bos);
         myRepository.closeSession();
       } catch (SVNException e) {
         throw new VcsException(e);
       }
-      myContents = new String(bos.toByteArray());
+      myContents = new String(bos.getInternalBuffer(), 0, bos.size());
     }
     return myContents;
   }

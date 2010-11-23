@@ -15,22 +15,53 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.BigArray;
+import com.intellij.openapi.vcs.GroupingMerger;
+import com.intellij.openapi.vcs.ReadonlyListsMerger;
+import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.ReadonlyList;
+import com.intellij.util.containers.StepList;
 import com.intellij.util.ui.ColumnInfo;
+import git4idea.history.browser.GitCommit;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 /**
  * @author irengrig
  */
-public class BigTableTableModel<T> extends AbstractTableModel {
+public class BigTableTableModel extends AbstractTableModel {
+  public final static Object LOADING = new Object();
+  @Nullable
+  private TreeNavigation myNavigation;
+  @NotNull
   private final List<ColumnInfo> myColumns;
-  private final ReadonlyList<T> myLines;
+  private RootsHolder myRootsHolder;
+  @Nullable
+  private StepList<CommitI> myLines;
+  private DetailsCache myCache;
+  private Runnable myInit;
+  private final DateChangeListGroupingStrategy myStrategy;
 
-  public BigTableTableModel(final List<ColumnInfo> columns, final ReadonlyList<T> lines) {
+  public BigTableTableModel(@NotNull final List<ColumnInfo> columns, Runnable init) {
     myColumns = columns;
-    myLines = lines;
+    myInit = init;
+    myStrategy = new DateChangeListGroupingStrategy();
+    myLines = new BigArray<CommitI>(10);
+  }
+
+  public ColumnInfo getColumnInfo(final int column) {
+    return myColumns.get(column);
   }
 
   @Override
@@ -45,14 +76,95 @@ public class BigTableTableModel<T> extends AbstractTableModel {
 
   @Override
   public int getRowCount() {
-    return myLines.getSize();
+    if (myInit != null) {
+      final Runnable init = myInit;
+      myInit = null;
+      init.run();
+    }
+    return myLines == null ? 0 : myLines.getSize();
   }
 
-  // todo 7-8 - what about decoration?
+  public CommitI getCommitAt(final int row) {
+    if (myLines == null) return null;
+    if (row >= myLines.getSize()) return null;
+    return myLines.get(row);
+  }
+
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final T item = myLines.get(rowIndex);
     final ColumnInfo column = myColumns.get(columnIndex);
-    return item == null ? column.getPreferredStringValue() : column.valueOf(item);
+    if (myLines == null) return column.getPreferredStringValue();
+    final CommitI commitI = myLines.get(rowIndex);
+    if (commitI == null) return column.getPreferredStringValue();
+    if (commitI.holdsDecoration()) return columnIndex == 0 ? commitI.getDecorationString() : "";
+
+    final GitCommit details = myCache.convert(commitI.selectRepository(myRootsHolder.getRoots()), commitI.getHash());
+    if (details == null) return LOADING;
+    return column.valueOf(details);
+  }
+
+  public MultiMap<VirtualFile, AbstractHash> getMissing(final int startRow, final int endRow) {
+    if (myLines == null || myRootsHolder == null) return MultiMap.emptyInstance();
+    final MultiMap<VirtualFile, AbstractHash> result = new MultiMap<VirtualFile, AbstractHash>();
+    for (int i = startRow; i <= endRow; i++) {
+      final CommitI commitI = myLines.get(i);
+      if (commitI.holdsDecoration()) continue;
+
+      final AbstractHash hash = commitI.getHash();
+      final VirtualFile root = commitI.selectRepository(myRootsHolder.getRoots());
+      if (myCache.convert(root, commitI.getHash()) == null) {
+        result.putValue(root, hash);
+      }
+    }
+    return result;
+  }
+
+  public void clear() {
+    myNavigation = null;
+    myLines = new BigArray<CommitI>(10);
+  }
+
+  public void appendData(final List<CommitI> lines, final List<List<AbstractHash>> treeNavigation) {
+    //hardcodedDatesGrouping(lines);
+    // todo mind decoration! and sorting
+    myStrategy.beforeStart();
+    new GroupingMerger<CommitI, String>() {
+      @Override
+      protected boolean filter(CommitI commitI) {
+        return ! commitI.holdsDecoration();
+      }
+      @Override
+      protected String getGroup(CommitI commitI) {
+        return myStrategy.getGroupName(new Date(commitI.getTime()));
+      }
+
+      @Override
+      protected CommitI wrapGroup(String s, CommitI item) {
+        return new GroupHeaderDatePseudoCommit(s, item.getTime() - 1);
+      }
+    }.firstPlusSecond(myLines, new ReadonlyList.ArrayListWrapper<CommitI>(lines), CommitIComparator.getInstance());
+  }
+
+  private static class CommitIComparator implements Comparator<CommitI> {
+    private final static CommitIComparator ourInstance = new CommitIComparator();
+
+    public static CommitIComparator getInstance() {
+      return ourInstance;
+    }
+
+    @Override
+    public int compare(CommitI o1, CommitI o2) {
+      final long result = o1.getTime() - o2.getTime();
+      // descending
+      return result == 0 ? 0 : (result < 0 ? 1 : -1);
+    }
+  }
+
+  public void setCache(DetailsCache cache) {
+    myCache = cache;
+  }
+
+  public void setRootsHolder(RootsHolder rootsHolder) {
+    myRootsHolder = rootsHolder;
   }
 }

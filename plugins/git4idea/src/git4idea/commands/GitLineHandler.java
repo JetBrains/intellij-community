@@ -72,7 +72,7 @@ public class GitLineHandler extends GitTextHandler {
    */
   protected void processTerminated(final int exitCode) {
     // force newline
-    if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
+    if (myStdoutLine.length() != 0) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
     }
     else if (!isStderrSuppressed() && myStderrLine.length() != 0) {
@@ -220,7 +220,12 @@ public class GitLineHandler extends GitTextHandler {
           i++;
       }
     }
-    rc.add(text.substring(startLine, i));
+    if (startLine == text.length()) {
+      // still add empty line or previous line wouldn't be treated as completed
+      rc.add("");
+    } else {
+      rc.add(text.substring(startLine, i));
+    }
     return rc;
   }
 }

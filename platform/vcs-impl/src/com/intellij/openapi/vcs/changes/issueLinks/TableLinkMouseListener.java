@@ -18,9 +18,11 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.TreeTableView;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -46,13 +48,24 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
     }
     if (cellRenderer instanceof ColoredTableCellRenderer) {
       final ColoredTableCellRenderer renderer = (ColoredTableCellRenderer)cellRenderer;
-      renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
-      final Rectangle rc = table.getCellRect(row, column, false);
-      int index = renderer.findFragmentAt(e.getPoint().x - rc.x);
-      if (index >= 0) {
-        tag = renderer.getFragmentTag(index);
-      }
+      tag = forColoredRenderer(e, table, row, column, renderer);
+    } else {
+      tag = tryGetTag(e, table, row, column);
     }
     return tag;
+  }
+
+  protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
+    return null;
+  }
+
+  private Object forColoredRenderer(MouseEvent e, JTable table, int row, int column, ColoredTableCellRenderer renderer) {
+    renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+    final Rectangle rc = table.getCellRect(row, column, false);
+    int index = renderer.findFragmentAt(e.getPoint().x - rc.x);
+    if (index >= 0) {
+      return renderer.getFragmentTag(index);
+    }
+    return null;
   }
 }

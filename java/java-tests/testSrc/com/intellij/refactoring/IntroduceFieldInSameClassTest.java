@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
@@ -90,5 +91,17 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
       }
     }.invoke(getProject(), myEditor, myFile, null);
     checkResultByFile("/refactoring/introduceField/afterForcedFieldType.java");
+  }
+
+  public void testRejectIntroduceFieldFromExprInThisCall() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeRejectIntroduceFieldFromExprInThisCall.java");
+    try {
+      performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+      fail("Should not proceed");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Invalid expression context.", e.getMessage());
+    }
   }
 }

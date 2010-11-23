@@ -16,6 +16,8 @@
 package com.intellij.util.containers;
 
 public interface Convertor<Src, Dst> {
+  IntoSelf SELF = new IntoSelf();
+
   class IntoSelf<Src> implements Convertor<Src, Src> {
     public Src convert(Src o) {
       return o;

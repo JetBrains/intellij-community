@@ -13,33 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
-
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.ReadonlyList;
+package com.intellij.openapi.util.io;
 
 /**
- * @author irengrig
+ * @author Eugene Zhuravlev
+ *         Date: 11/23/10
  */
-public class StaticReadonlyList<T> implements ReadonlyList<T>, Consumer<T> {
-  private final BigArray<T> myList;
+public class ByteSequence {
+  private final byte[] myBytes;
+  private final int myOffset;
+  private final int myLen;
 
-  public StaticReadonlyList(final int size2power) {
-    myList = new BigArray<T>(size2power);
+  public ByteSequence(byte[] bytes) {
+    this(bytes, 0, bytes.length);
+  }
+  
+  public ByteSequence(byte[] bytes, int offset, int len) {
+    myBytes = bytes;
+    myOffset = offset;
+    myLen = len;
   }
 
-  @Override
-  public T get(int idx) {
-    return myList.get(idx);
+  public byte[] getBytes() {
+    return myBytes;
   }
 
-  @Override
-  public int getSize() {
-    return myList.getSize();
+  public int getOffset() {
+    return myOffset;
   }
 
-  @Override
-  public void consume(T t) {
-    myList.add(t);
+  public int getLength() {
+    return myLen;
   }
 }
