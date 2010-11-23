@@ -39,7 +39,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     if (expression == null) {
       return false;
     }
-    
+
     PsiElement parent = expression.getParent();
     if (parent instanceof PyAssignmentStatement || parent instanceof PyPrintStatement) {
       return true;
@@ -74,7 +74,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     else if (parent instanceof PyPrintStatement) {
       PyStatement result = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyStatement.class,
                                                           "print " + "(" + getResult(expression).getText() +")");
-      PyForStatement forStatement = createForLoop (expression, elementGenerator, result);
+      PyForStatement forStatement = createForLoop(expression, elementGenerator, result);
       parent.replace(forStatement);
     }
   }
@@ -93,17 +93,8 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
         addIfComponents(forStatement, ifComps, elementGenerator);
       }
 
+      addForComponents(forStatement, expression.getResultExpression(), elementGenerator, result);
 
-      if (expression.getResultExpression() instanceof PyListCompExpression) {
-        addForComponents(forStatement, (PyListCompExpression)expression.getResultExpression(), elementGenerator, result);
-      }
-      else {
-        PyStatement stat = forStatement.getForPart().getStatementList().getStatements()[0];
-        while (stat instanceof PyIfStatement) {
-          stat = ((PyIfStatement)stat).getIfPart().getStatementList().getStatements()[0];
-        }
-        stat.replace(result);
-      }
       return forStatement;
     }
     return null;
@@ -130,36 +121,40 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
   }
 
 
-  private static void addForComponents(PyElement statement, PyListCompExpression expression, PyElementGenerator elementGenerator, PsiElement result) {
-    PyStatement pyStatement = ((PyForStatement)statement).getForPart().getStatementList().getStatements()[0];
-    while (pyStatement instanceof PyIfStatement) {
-      pyStatement = ((PyIfStatement)pyStatement).getIfPart().getStatementList().getStatements()[0];
-    }
+  private static void addForComponents(PyElement statement, PyExpression expression, PyElementGenerator elementGenerator, PsiElement result) {
+    PyListCompExpression listCompExpression = null;
+    if (expression instanceof PyListCompExpression)
+      listCompExpression = (PyListCompExpression)expression;
 
-    List <ComprhForComponent> forComps = expression.getForComponents();
-    if ( forComps.size() != 0) {
-      ComprhForComponent comp = forComps.get(0);
-
-      PyForStatement pyForStatement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyForStatement.class,
-                             "for " + comp.getIteratorVariable().getText()  + " in "+ comp.getIteratedList().getText() + ":\n  a+1");
-
-      List<ComprhIfComponent> ifComps = expression.getIfComponents();
-      if (ifComps.size() != 0) {
-        addIfComponents(pyForStatement, ifComps, elementGenerator);
+    if (listCompExpression != null) {
+      PyStatement pyStatement = ((PyForStatement)statement).getForPart().getStatementList().getStatements()[0];
+      while (pyStatement instanceof PyIfStatement) {
+        pyStatement = ((PyIfStatement)pyStatement).getIfPart().getStatementList().getStatements()[0];
       }
 
-      if (expression.getResultExpression() instanceof PyListCompExpression) {
-        addForComponents(pyForStatement, (PyListCompExpression)expression.getResultExpression(), elementGenerator, result);
+      List <ComprhForComponent> forComps = listCompExpression.getForComponents();
+      if ( forComps.size() != 0) {
+        ComprhForComponent comp = forComps.get(0);
+
+        PyForStatement pyForStatement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyForStatement.class,
+                               "for " + comp.getIteratorVariable().getText()  + " in "+ comp.getIteratedList().getText() + ":\n  a+1");
+
+        List<ComprhIfComponent> ifComps = listCompExpression.getIfComponents();
+        if (ifComps.size() != 0) {
+          addIfComponents(pyForStatement, ifComps, elementGenerator);
+        }
+
+        addForComponents(pyForStatement, listCompExpression.getResultExpression(), elementGenerator, result);
+        pyStatement.replace(pyForStatement);
         pyStatement.replace(pyForStatement);
       }
-      else {
-        PyStatement stat = pyForStatement.getForPart().getStatementList().getStatements()[0];
-        while (stat instanceof PyIfStatement) {
-          stat = ((PyIfStatement)stat).getIfPart().getStatementList().getStatements()[0];
-        }
-        stat.replace(result);
+    }
+    else {
+      PyStatement stat = ((PyForStatement)statement).getForPart().getStatementList().getStatements()[0];
+      while (stat instanceof PyIfStatement) {
+        stat = ((PyIfStatement)stat).getIfPart().getStatementList().getStatements()[0];
       }
-      pyStatement.replace(pyForStatement);
+      stat.replace(result);
     }
   }
 
