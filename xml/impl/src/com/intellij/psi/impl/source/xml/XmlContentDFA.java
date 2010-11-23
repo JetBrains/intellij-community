@@ -32,7 +32,7 @@ public abstract class XmlContentDFA {
   public abstract void transition(XmlTag xmlTag);
 
   @Nullable
-  public static XmlContentDFA getContentDFA(XmlTag parentTag) {
+  public static XmlContentDFA getContentDFA(@NotNull XmlTag parentTag) {
     XmlContentDFA contentDFA = XsContentDFA.createContentDFA(parentTag);
     if (contentDFA != null) return contentDFA;
     return XmlContentDFAImpl.createContentDFA(parentTag);
