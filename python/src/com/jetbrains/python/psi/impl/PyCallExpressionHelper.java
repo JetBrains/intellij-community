@@ -152,8 +152,9 @@ public class PyCallExpressionHelper {
       final Callable callable = (Callable)resolved;
       int implicitOffset = getImplicitArgumentCount(callable, wrappedFlag, flags, is_by_instance);
       if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
-        implicitOffset = Math.max(implicitOffset - 1, 0); // case of Class.__new__
+        implicitOffset = Math.min(implicitOffset - 1, 0); // case of Class.__new__
       }
+      implicitOffset = implicitOffset < 0? 0: implicitOffset; // wrong source can trigger strange behaviour
       return new PyCallExpression.PyMarkedCallee(callable, flags, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
     }

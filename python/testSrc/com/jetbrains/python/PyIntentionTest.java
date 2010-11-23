@@ -105,4 +105,8 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.flip.$0.to.$1", ">", "<"));
   }
 
+  public void testReplaceListComprehensionWithFor() {
+    doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
+  }
+
 }

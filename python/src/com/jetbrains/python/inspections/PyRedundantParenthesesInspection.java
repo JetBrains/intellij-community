@@ -54,6 +54,9 @@ public class PyRedundantParenthesesInspection extends PyInspection {
             if (((PyBinaryExpression)parent).getOperator() == PyTokenTypes.PERC) return;
           }
         }
+        
+        if (node.getParent() instanceof PyPrintStatement && ((PyFile)node.getContainingFile()).getLanguageLevel().isPy3K())
+          return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
