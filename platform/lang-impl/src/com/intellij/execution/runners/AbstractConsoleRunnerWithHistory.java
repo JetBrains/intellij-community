@@ -240,7 +240,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
         if (lineNumber > 0){
           caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
         } else {
-          historyProcessor.process(e, myHistory.getHistoryPrev());
+          if (myHistory.hasHistory(false)) {
+            historyProcessor.process(e, myHistory.getHistoryPrev());
+          }
         }
       }
     };
@@ -251,7 +253,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
         if (lineNumber < document.getLineCount() - 1){
           caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
         } else {
-          historyProcessor.process(e, myHistory.getHistoryNext());
+          if (myHistory.hasHistory(true)) {
+            historyProcessor.process(e, myHistory.getHistoryNext());
+          }
         }
       }
     };
