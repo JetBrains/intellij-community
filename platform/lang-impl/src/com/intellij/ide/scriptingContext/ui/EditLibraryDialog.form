@@ -77,18 +77,10 @@
           </vspacer>
           <component id="1dade" class="javax.swing.JButton" binding="myRemoveFileButton">
             <constraints>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Detach"/>
-            </properties>
-          </component>
-          <component id="ec28f" class="javax.swing.JButton" binding="myAttachFromButton">
-            <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Attach From..."/>
+              <text value="Detach"/>
             </properties>
           </component>
         </children>

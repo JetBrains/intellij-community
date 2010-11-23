@@ -51,7 +51,6 @@ public class EditLibraryDialog extends DialogWrapper {
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
-  private JButton myAttachFromButton;
   private Project myProject;
   private FileTableModel myFileTableModel;
   private VirtualFile mySelectedFile;
@@ -67,13 +66,6 @@ public class EditLibraryDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         addFiles();
-      }
-    });
-
-    myAttachFromButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        attachFromDirectory();
       }
     });
 
@@ -147,19 +139,15 @@ public class EditLibraryDialog extends DialogWrapper {
     FileChooserDescriptor chooserDescriptor = new LibFileChooserDescriptor();
     VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
     if (files.length == 1 && files[0] != null) {
-      myFileTableModel.addFile(files[0]);
-    }
-  }
-
-  private void attachFromDirectory() {
-    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-    chooserDescriptor.setTitle("Select a directory to attach files from");  //TODO<rv> Move to resources
-    VirtualFile[] files = FileChooser.chooseFiles(myProject, chooserDescriptor);
-    if (files.length == 1 && files[0] != null) {
-      VirtualFile chosenDir  = files[0];
-      if (chosenDir.isDirectory() && chosenDir.isValid()) {
-        if (myLibName.getText().isEmpty()) myLibName.setText(chosenDir.getName());
-        addRecursively(chosenDir);
+      VirtualFile selectedFile = files[0];
+      if (selectedFile.isValid()) {
+        if (selectedFile.isDirectory()) {
+          if (myLibName.getText().isEmpty()) myLibName.setText(selectedFile.getName());
+          addRecursively(selectedFile);
+        }
+        else {
+          myFileTableModel.addFile(selectedFile);
+        }
       }
     }
   }
@@ -181,13 +169,13 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private class LibFileChooserDescriptor extends FileChooserDescriptor {
     public LibFileChooserDescriptor() {
-      super (true, false, false, true, false, false);
-      setTitle("Select library file"); //TODO<rv> Move to resources
+      super (true, true, false, true, false, false);
+      setTitle("Select library file or directory"); //TODO<rv> Move to resources
     }
 
     @Override
     public boolean isFileSelectable(VirtualFile file) {
-      if (!myProvider.acceptsExtension(file.getExtension())) return false;
+      if (!file.isDirectory() && !myProvider.acceptsExtension(file.getExtension())) return false;
       return super.isFileSelectable(file);
     }
 
