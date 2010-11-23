@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -205,6 +206,18 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PyType sourceType = source.getType(context);
       if (sourceType instanceof PyCollectionType) {
         return ((PyCollectionType) sourceType).getElementType(context);
+      }
+      if (sourceType instanceof PyClassType) {
+        final PyClass pyClass = ((PyClassType)sourceType).getPyClass();
+        if (pyClass == null) {
+          return null;
+        }
+        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType iterType = provider.getIterationType(pyClass);
+          if (iterType != null) {
+            return iterType;
+          }
+        }
       }
     }
     return null;

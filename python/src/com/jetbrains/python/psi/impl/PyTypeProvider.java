@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -27,4 +28,7 @@ public interface PyTypeProvider {
 
   @Nullable
   PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context);
+
+  @Nullable
+  PyType getIterationType(PyClass iterable);
 }
