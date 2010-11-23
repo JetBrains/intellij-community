@@ -345,6 +345,8 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
 
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibClassMembersProvider"/>
+
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>

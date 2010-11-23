@@ -409,7 +409,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       if (PyNames.ALL.equals(node.getName())) {
-        myResult = getStringListFromTargetExpression(node);
+        myResult = PyUtil.getStringListFromTargetExpression(node);
       }
     }
 
@@ -435,25 +435,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
-        return getStringListFromTargetExpression(attr);
+        return PyUtil.getStringListFromTargetExpression(attr);
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
-    final PyExpression value = attr.findAssignedValue();
-    if (value instanceof PySequenceExpression) {
-      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-      List<String> result = new ArrayList<String>(elements.length);
-      for (PyExpression element : elements) {
-        if (!(element instanceof PyStringLiteralExpression)) {
-          return null;
-        }
-        result.add(((PyStringLiteralExpression) element).getStringValue());
-      }
-      return result;
     }
     return null;
   }

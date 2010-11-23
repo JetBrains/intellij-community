@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -15,7 +14,7 @@ import java.util.List;
  */
 public abstract class PyPsiPath {
   @Nullable
-  public abstract PsiElement resolve(Module module);
+  public abstract PsiElement resolve(PsiElement module);
 
   public static class ToFile extends PyPsiPath {
     private final PyQualifiedName myQualifiedName;
@@ -26,8 +25,8 @@ public abstract class PyPsiPath {
 
     @Nullable
     @Override
-    public PsiElement resolve(Module module) {
-      final List<PsiElement> elements = ResolveImportUtil.resolveModulesInRoots(module, myQualifiedName);
+    public PsiElement resolve(PsiElement context) {
+      final List<PsiElement> elements = ResolveImportUtil.resolveModulesInRoots(myQualifiedName, context);
       return elements.size() > 0 ? elements.get(0) : null;
     }
   }
@@ -41,8 +40,8 @@ public abstract class PyPsiPath {
 
     @Nullable
     @Override
-    public PsiElement resolve(Module module) {
-      return PyClassNameIndex.findClass(myQualifiedName.toString(), module.getProject());
+    public PsiElement resolve(PsiElement context) {
+      return PyClassNameIndex.findClass(myQualifiedName.toString(), context.getProject());
     }
   }
 
@@ -56,8 +55,8 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(Module module) {
-      PsiElement parent = myParent.resolve(module);
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
       if (parent == null) {
         return null;
       }
@@ -83,8 +82,8 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(Module module) {
-      PsiElement parent = myParent.resolve(module);
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
       if (parent == null) {
         return null;
       }
@@ -115,8 +114,8 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(Module module) {
-      PsiElement parent = myParent.resolve(module);
+    public PsiElement resolve(PsiElement context) {
+      PsiElement parent = myParent.resolve(context);
       if (parent == null) {
         return null;
       }

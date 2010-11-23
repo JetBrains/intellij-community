@@ -658,6 +658,26 @@ public class PyUtil {
     return null;
   }
 
+  @Nullable
+  public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
+    PyExpression value = attr.findAssignedValue();
+    while (value instanceof PyParenthesizedExpression) {
+      value = ((PyParenthesizedExpression) value).getContainedExpression();
+    }
+    if (value instanceof PySequenceExpression) {
+      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
+      List<String> result = new ArrayList<String>(elements.length);
+      for (PyExpression element : elements) {
+        if (!(element instanceof PyStringLiteralExpression)) {
+          return null;
+        }
+        result.add(((PyStringLiteralExpression) element).getStringValue());
+      }
+      return result;
+    }
+    return null;
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 
