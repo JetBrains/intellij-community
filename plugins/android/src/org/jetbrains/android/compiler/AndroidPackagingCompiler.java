@@ -102,7 +102,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
-          VirtualFile outputDir = context.getModuleOutputDirectory(module);
+          VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           if (outputDir != null) {
             VirtualFile[] externalJars = getExternalJars(module, configuration);
             String resPackage = AndroidResourcesPackagingCompiler.getOutputPath(module, outputDir);

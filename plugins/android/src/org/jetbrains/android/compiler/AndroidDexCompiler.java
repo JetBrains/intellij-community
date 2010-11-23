@@ -36,6 +36,8 @@ import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.maven.AndroidMavenProvider;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +110,22 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     return new MyValidityState(map);
   }
 
+  public static VirtualFile getOutputDirectoryForDex(@NotNull Module module) {
+    if (AndroidMavenUtil.isMavenizedModule(module)) {
+      AndroidMavenProvider mavenProvider = AndroidMavenUtil.getMavenProvider();
+      if (mavenProvider != null) {
+        String buildDirPath = mavenProvider.getBuildDirectory(module);
+        if (buildDirPath != null) {
+          VirtualFile buildDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(buildDirPath));
+          if (buildDir != null) {
+            return buildDir;
+          }
+        }
+      }
+    }
+    return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
+  }
+
   private static final class PrepareAction implements Computable<ProcessingItem[]> {
     private final CompileContext myContext;
 
@@ -142,6 +160,9 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
               if (target != null) {
                 Set<String> excludedFiles = new HashSet<String>();
                 collectClassFilesInLibraryModules(facet, excludedFiles);
+
+                outputDir = getOutputDirectoryForDex(module);
+
                 items.add(new DexItem(module, outputDir, target, files, excludedFiles));
               }
             }

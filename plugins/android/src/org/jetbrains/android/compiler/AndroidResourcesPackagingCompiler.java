@@ -49,7 +49,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
-          VirtualFile outputDir = context.getModuleOutputDirectory(module);
+          VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           if (outputDir != null) {
             String outputPath = getOutputPath(module, outputDir);
             IAndroidTarget target = configuration.getAndroidTarget();
