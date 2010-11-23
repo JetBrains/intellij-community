@@ -16,6 +16,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -467,19 +468,19 @@ public class ResolveImportUtil {
   /**
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    *
-   * @param elt     PSI element that defines the module and/or the project.
+   * @param context     PSI element that defines the module and/or the project.
    * @param refName module name to be found among roots.
    * @return a PsiFile, a child of a root.
    */
   @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement elt, final String refName) {
+  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String refName) {
     // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    PsiElement res = resolveInCurrentDir(elt, refName);
+    PsiElement res = resolveInCurrentDir(context, refName);
     if (res != null) {
       return res;
     }
     else {
-      return resolveModuleInRoots(PyQualifiedName.fromDottedString(refName), elt);
+      return resolveModuleInRoots(PyQualifiedName.fromDottedString(refName), context);
     }
   }
 
@@ -571,20 +572,22 @@ public class ResolveImportUtil {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PsiElement possible_ret = null;
-    if (parent instanceof PyFile) {
+    if (parent instanceof PyFileImpl) {
       if (PyNames.INIT_DOT_PY.equals(((PyFile)parent).getName())) {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
         possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, fileOnly);
       }
+
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
       // by a module one level higher (e.g. curses.set_key). Prefer it to submodule if possible.
-      ret = ((PyFile)parent).getElementNamed(referencedName);
+      ret = ((PyFileImpl)parent).getElementNamed(referencedName, false);
       if (ret != null && !PyUtil.instanceOf(ret, PsiFile.class, PsiDirectory.class) &&
           PsiTreeUtil.getStubOrPsiParentOfType(ret, PyExceptPart.class) == null) {
         return ret;
       }
+
       if (possible_ret != null) return possible_ret;
     }
     else if (parent instanceof PsiDirectory) {

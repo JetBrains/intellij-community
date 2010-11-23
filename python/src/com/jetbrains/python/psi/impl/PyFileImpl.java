@@ -276,6 +276,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement getElementNamed(String name) {
+    return getElementNamed(name, true);
+  }
+
+  public PsiElement getElementNamed(String name, boolean withBuiltins) {
     final List<String> stack = myGetElementNamedStack.get();
     if (stack.contains(name)) {
       return null;
@@ -283,7 +287,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     stack.add(name);
     try {
       PsiElement exportedName = findExportedName(name);
-      if (exportedName == null) {
+      if (exportedName == null && withBuiltins) {
         final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
         if (builtins != null && builtins != this) {
           exportedName = builtins.findExportedName(name);

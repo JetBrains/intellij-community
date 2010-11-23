@@ -123,6 +123,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ReplaceListComprehensionWithForIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
@@ -324,6 +329,7 @@
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider" interface="com.jetbrains.python.psi.types.PyClassMembersProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyModuleMembersProvider" interface="com.jetbrains.python.psi.types.PyModuleMembersProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter"/>
     <extensionPoint qualifiedName="Pythonid.runnableUnitTestFilter" interface="com.jetbrains.python.testing.RunnableUnitTestFilter"/>
@@ -354,6 +360,7 @@
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.appengine.model.AppEngineModuleMembersProvider"/>
   </extensions>
 
   <project-components>

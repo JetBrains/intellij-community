@@ -20,8 +20,8 @@ import java.io.File;
  * @author yole
  */
 public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
-  private String myTestToRun;
-  private String myKeywords;
+  private String myTestToRun = "";
+  private String myKeywords = "";
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
   private static final String KEYWORDS_FIELD = "keywords";
@@ -35,7 +35,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PyTestConfigurationEditor(this);
+    return new PyTestConfigurationEditor(getProject(), this);
   }
 
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {

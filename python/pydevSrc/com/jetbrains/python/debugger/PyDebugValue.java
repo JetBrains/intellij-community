@@ -73,27 +73,45 @@ public class PyDebugValue extends XValue {
     return myParent == null ? this : myParent.getTopParent();
   }
 
-  // todo: pass StringBuilder to recursive calls
   public String getEvaluationExpression() {
+    StringBuilder stringBuilder = new StringBuilder();
+    buildExpression(stringBuilder);
+    return stringBuilder.toString();
+  }
+
+  void buildExpression(StringBuilder result) {
     if (myParent == null) {
-      return getTempName();
-    }
-    else if ("list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) {
-      return new StringBuilder().append(myParent.getEvaluationExpression()).append('[').append(myName).append(']').toString();
-    }
-    else if ("dict".equals(myParent.getType())) {
-      return new StringBuilder().append(myParent.getEvaluationExpression()).append("['").append(myName).append("']").toString();
+      result.append(getTempName());
     }
     else {
-      return new StringBuilder().append(myParent.getEvaluationExpression()).append('.').append(myName).toString();
+      myParent.buildExpression(result);
+      if (("dict".equals(myParent.getType()) || "list".equals(myParent.getType()) || "tuple".equals(myParent.getType())) &&
+          !isLen(myName)) {
+        result.append('[').append(removeId(myName)).append(']');
+      }
+      else if (("set".equals(myParent.getType())) && !isLen(myName)) {
+        result.append("[").append(myName).append("]");
+      }
+      else if (isLen(myName)) {
+        result.append('.').append(myName).append("()");
+      }
+      else {
+        result.append('.').append(myName);
+      }
     }
   }
 
-  /*
-  private void buildQualifiedExpression(final StringBuilder sb, final PyDebugValue child) {
-    if ()
+  private static String removeId(@NotNull String name) {
+    if (name.indexOf('(') != -1) {
+      name = name.substring(0, name.indexOf('(')).trim();
+    }
+
+    return name;
   }
-  */
+
+  private static boolean isLen(String name) {
+    return "__len__".equals(name);
+  }
 
   @Override
   public void computePresentation(@NotNull final XValueNode node) {
@@ -139,5 +157,4 @@ public class PyDebugValue extends XValue {
       return DebuggerIcons.VALUE_ICON;
     }
   }
-
 }

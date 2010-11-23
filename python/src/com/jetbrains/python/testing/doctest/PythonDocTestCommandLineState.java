@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author Leonid Shalupov
+ * User: catherine
  */
 public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PythonDocTestRunConfiguration myConfig;

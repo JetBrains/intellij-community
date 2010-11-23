@@ -24,4 +24,7 @@ public interface PyTypeProvider {
 
   @Nullable
   PyType getParameterType(PyNamedParameter param, final PyFunction func, TypeEvalContext context);
+
+  @Nullable
+  PyType getReturnType(PyFunction function, @Nullable PyReferenceExpression callSite, TypeEvalContext context);
 }

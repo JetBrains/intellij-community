@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.jetbrains.python.debugger.pydev.AbstractCommand;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -7,7 +8,6 @@ import java.util.List;
 
 
 public class PyThreadInfo {
-
   public enum State {
     RUNNING, SUSPENDED, KILLED
   }
@@ -16,13 +16,19 @@ public class PyThreadInfo {
   private final String myName;
   private List<PyStackFrameInfo> myFrames;
   private State myState;
-  private final boolean myStopOnBreakpoint;  // todo: remove
+  private int myStopReason;
+  private String myMessage;
 
-  public PyThreadInfo(final String id, final String name, final List<PyStackFrameInfo> frames, final boolean stopOnBreakpoint) {
+  public PyThreadInfo(final String id,
+                      final String name,
+                      final List<PyStackFrameInfo> frames,
+                      final int stopReason,
+                      String message) {
     myId = id;
     myName = name;
     myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
-    myStopOnBreakpoint = stopOnBreakpoint;
+    myStopReason = stopReason;
+    myMessage = message;
   }
 
   public String getId() {
@@ -35,6 +41,14 @@ public class PyThreadInfo {
 
   public String getName() {
     return myName;
+  }
+
+  public String getMessage() {
+    return myMessage;
+  }
+
+  public void setMessage(String message) {
+    this.myMessage = message;
   }
 
   @Nullable
@@ -51,8 +65,21 @@ public class PyThreadInfo {
     myFrames = (frames != null && frames.size() > 0 ? Collections.unmodifiableList(frames) : null);
   }
 
+
+  public void setStopReason(int stopReason) {
+    myStopReason = stopReason;
+  }
+
+  public int getStopReason() {
+    return myStopReason;
+  }
+
   public boolean isStopOnBreakpoint() {
-    return myStopOnBreakpoint;
+    return myStopReason == AbstractCommand.SET_BREAKPOINT;
+  }
+
+  public boolean isExceptionBreak() {
+    return myStopReason == AbstractCommand.ADD_EXCEPTION_BREAKPOINT;
   }
 
   @Override

@@ -6,25 +6,34 @@ import org.jetbrains.annotations.Nullable;
 
 public class SetBreakpointCommand extends LineBreakpointCommand {
   private @Nullable final String myCondition;
+  private @Nullable final String myLogExpression;
+
+  public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
+                              @NotNull final String file,
+                              @NotNull final int line) {
+    this(debugger, file, line, null, null);
+  }
 
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
                               @NotNull final String file,
                               @NotNull final int line,
-                              @Nullable final String condition) {
+                              @Nullable final String condition,
+                              @Nullable final String logExpression) {
     super(debugger, SET_BREAKPOINT, file, line);
     myCondition = condition;
+    myLogExpression = logExpression;
   }
 
   public String getPayload() {
-    return new StringBuilder().append(myFile).append('\t').append(Integer.toString(myLine)).append("\t").append(buildCondition()).toString();
+    return new StringBuilder().append(myFile).append('\t').append(Integer.toString(myLine)).append("\t").append(buildCondition(myCondition)).append("\t").append(buildCondition(myLogExpression)).toString();
   }
 
   @NotNull
-  private String buildCondition() {
+  private static String buildCondition(String expression) {
     String condition;
 
-    if (myCondition != null) {
-      condition = myCondition.replaceAll("\n", NEW_LINE_CHAR);
+    if (expression != null) {
+      condition = expression.replaceAll("\n", NEW_LINE_CHAR);
       condition = condition.replaceAll("\t", TAB_CHAR);
     }
     else {

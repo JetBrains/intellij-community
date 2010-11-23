@@ -97,6 +97,10 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(false), inspection);
   }
 
+  public void testPyUnusedLocalVariableInspection3K() {
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON30);
+  }
+
   public void testPyUnusedVariableTupleUnpacking() {
     doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
   }
@@ -227,7 +231,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doHighlightingTest(final Class<? extends PyInspection> inspectionClass) {
-    myFixture.configureByFile("inspections/" + getTestName(true) + "/test.py");
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, false);
   }
@@ -256,5 +260,31 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testInconsistentIndentation() {
     doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
+  }
+  
+  public void testPyChainedComparisonsInspection() {
+    doHighlightingTest(PyChainedComparisonsInspection.class);
+  }
+
+  public void testPyRedundantParenthesesInspection() {
+    myFixture.configureByFile("inspections/PyRedundantParenthesesInspection/test.py");
+    myFixture.enableInspections(PyRedundantParenthesesInspection.class);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testPyBroadExceptionInspection() {
+    doHighlightingTest(PyBroadExceptionInspection.class);
+  }
+
+  public void testPyAugmentAssignmentInspection() {
+    doHighlightingTest(PyAugmentAssignmentInspection.class);
+  }
+
+  public void testPyDictDuplicateKeysInspection() {
+    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+  }
+
+  public void testPyOldStyleClassesInspection() {
+    doHighlightingTest(PyOldStyleClassesInspection.class);
   }
 }

@@ -1,6 +1,5 @@
 /*
- * User: anna
- * Date: 13-May-2010
+ * User: catherine
  */
 package com.jetbrains.python.testing.doctest;
 
@@ -18,6 +17,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -45,13 +45,14 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
     RunnerAndConfigurationSettings settings;
 
     Module module = location.getModule();
+
     if (module != null) {
       for (RunnableUnitTestFilter f : Extensions.getExtensions(RunnableUnitTestFilter.EP_NAME)) {
         if (f.isRunnableUnitTest(location.getPsiElement().getContainingFile(), module)) {
           return null;
         }
       }
-    }
+    } 
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) {
       return null;
     }
@@ -62,7 +63,6 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
     if (pyElement != null) {
       settings = createConfigurationFromFunction(location, pyElement);
       if (settings != null) return settings;
-
       settings = createConfigurationFromClass(location, pyElement);
       if (settings != null) return settings;
     }
@@ -75,9 +75,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
-    if (pyFunction == null || pyFunction.getDocStringExpression() == null) return null;
-    PythonDocStringParser parser = new PythonDocStringParser(pyFunction.getDocStringExpression().getStringValue());
-    if (!parser.hasExample()) return null;
+    if (pyFunction == null || !PythonDocTestUtil.isDocTestFunction(pyFunction)) return null;
     final PyClass containingClass = pyFunction.getContainingClass();
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from function");
 
@@ -99,8 +97,7 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromClass(Location location, PyElement element) {
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    if (pyClass == null) return null;
-
+    if (pyClass == null || !PythonDocTestUtil.isDocTestClass(pyClass)) return null;
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from class");
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();
 
@@ -159,19 +156,21 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PsiElement element) {
     PsiElement file = element.getContainingFile();
-    if (file == null || !(file instanceof PyFile)) return null;
+    if (file == null) return null;
 
-    final PyFile pyFile = (PyFile)file;
-    final List<PyStatement> testCases = PythonUnitTestUtil.getTestCaseClassesFromFile(pyFile);
-    if (testCases.isEmpty()) return null;
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      final List<PyElement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
+      if (testCases.isEmpty()) return null;
+    }
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from file");
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();
 
     configuration.setTestType(PythonDocTestRunConfiguration.TestType.TEST_SCRIPT);
-    if (!setupConfigurationScript(configuration, pyFile)) return null;
+    if (!setupConfigurationScript(configuration, file)) return null;
     configuration.setName(configuration.suggestedName());
-    myPsiElement = pyFile;
+    myPsiElement = file;
     return settings;
   }
 
@@ -184,8 +183,10 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
     return result;
   }
 
-  private static boolean setupConfigurationScript(PythonDocTestRunConfiguration cfg, PyElement element) {
-    final PyFile containingFile = PyUtil.getContainingPyFile(element);
+  private static boolean setupConfigurationScript(PythonDocTestRunConfiguration cfg, PsiElement element) {
+    PsiFile containingFile;
+    if (element instanceof PyElement) containingFile = PyUtil.getContainingPyFile((PyElement)element);
+    else containingFile = element.getContainingFile();
     if (containingFile == null) return false;
     final VirtualFile vFile = containingFile.getVirtualFile();
     if (vFile == null) return false;
@@ -213,7 +214,6 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
     }
     return null;
   }
-
 
   public int compareTo(Object o) {
     return PREFERED;

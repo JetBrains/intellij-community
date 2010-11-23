@@ -24,7 +24,11 @@ setProperty("pluginFilter", [
         "JSIntentionPowerPack",
         "SpellChecker", "spellchecker",
         "sass", "less",
-        "hg4idea"
+        "hg4idea",
+        "tasks", "tasks-core", "tasks-api", "jira-connector",
+        "github",
+        "python-spellchecker-common", "pycharm-spellchecker",
+        "webDeployment"
 ])
 
 private List platformImplementationModules() {
@@ -442,6 +446,17 @@ def layoutFull(String target, Set usedJars) {
     dir("license") {
       fileset(dir: "$home/python/license")
       fileset(dir: "$home/community/license")
+    }
+
+    dir("plugins") {
+      dir("pycharm-spellchecker") {
+        dir("lib") {
+          jar("pycharm-spellchecker.jar") {
+            module("python-spellchecker-common")
+            module("pycharm-spellchecker")
+          }
+        }
+      }
     }
 
     def layouts = includeFile("$home/build/scripts/layouts.gant")

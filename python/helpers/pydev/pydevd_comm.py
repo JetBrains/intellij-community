@@ -462,7 +462,7 @@ class NetCommandFactory:
         except:
             return self.makeErrorMessage(0, GetExceptionTracebackStr())
     
-    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason):
+    def makeThreadSuspendMessage(self, thread_id, frame, stop_reason, message):
         
         """ <xml>
             <thread id="id" stop_reason="reason">
@@ -473,7 +473,7 @@ class NetCommandFactory:
            """
         try:
             cmdTextList = ["<xml>"]
-            cmdTextList.append('<thread id="%s" stop_reason="%s">' % (thread_id, stop_reason))
+            cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
             
             curFrame = frame
             while curFrame:

@@ -154,7 +154,8 @@ def excepthook(exctype, value, tb):
     frames_byid = dict([(id(frame),frame) for frame in frames])
     frame = frames[-1]
     thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
-    sys.exc_info = lambda : (exctype, value, traceback)
+    thread.additionalInfo.message = exctype.__name__
+    #sys.exc_info = lambda : (exctype, value, traceback)
     debugger = GetGlobalDebugger()
     debugger.force_post_mortem_stop += 1
         
@@ -587,7 +588,7 @@ class PyDB:
                     
                     #command to add some breakpoint.
                     # text is file\tline. Add to breakpoints dictionary
-                    file, line, condition = text.split('\t', 2)
+                    file, line, condition, expression = text.split('\t', 3)
                     if condition.startswith('**FUNC**'):
                         func_name, condition = condition.split('\t', 1)
                         
@@ -617,10 +618,13 @@ class PyDB:
                     else:
                         breakDict = {}
     
-                    if len(condition) <= 0 or condition == None or condition == "None":
-                        breakDict[line] = (True, None, func_name)
-                    else:
-                        breakDict[line] = (True, condition, func_name)
+                    if len(condition) <= 0 or condition is None or condition == "None":
+                        condition = None
+
+                    if len(expression) <= 0 or expression is None or expression == "None":
+                        expression = None
+
+                    breakDict[line] = (True, condition, func_name, expression)
                     
                         
                     self.breakpoints[file] = breakDict
@@ -735,7 +739,10 @@ class PyDB:
         Upon running, processes any outstanding Stepping commands.
         """
         self.processInternalCommands()
-        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason)
+
+        message = getattr(thread.additionalInfo, "message", None)
+
+        cmd = self.cmdFactory.makeThreadSuspendMessage(GetThreadId(thread), frame, thread.stop_reason, message)
         self.writer.addCommand(cmd)
         
         info = thread.additionalInfo
@@ -856,7 +863,7 @@ class PyDB:
                     thread_id = GetThreadId(t)
                     used_id = pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
                     try:
-                        self.setSuspend(t, CMD_STEP_INTO)
+                        self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
                         additionalInfo.pydev_force_stop_at_exception = None
@@ -1023,7 +1030,7 @@ def processCommandLine(argv):
             retVal['server'] = True
         elif (argv[i] == '--file'):
             del argv[i]            
-            retVal['file'] = argv[i];
+            retVal['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
         elif (argv[i] == '--DEBUG_RECORD_SOCKET_READS'):
             del argv[i]            
@@ -1037,8 +1044,6 @@ def usage(doExit=0):
     sys.stdout.write('pydevd.py --port=N [(--client hostname) | --server] --file executable [file_options]\n')
     if doExit:
         sys.exit(0)
-
-
 
 def SetTraceForParents(frame, dispatch_func):
     frame = frame.f_back

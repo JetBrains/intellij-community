@@ -6,6 +6,8 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 import java.util.Arrays;
 import java.util.List;
@@ -222,5 +224,15 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testNoParensForDecorator() {  // PY-2210
     doTest();
+  }
+
+  public void testNonlocal() {  // PY-2289
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
   }
 }

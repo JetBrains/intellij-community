@@ -16,11 +16,11 @@ class TeamcityTestResult(TestResult):
         self.output = stream
         self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
         self.current_suite = None
-    
+
     def formatErr(self, err):
         exctype, value, tb = err
         return ''.join(traceback.format_exception(exctype, value, tb))
-    
+
     def getTestName(self, test):
         if hasattr(test, '_testMethodName'):
             if test._testMethodName == "runTest":
@@ -34,39 +34,51 @@ class TeamcityTestResult(TestResult):
 
     def addSuccess(self, test):
         TestResult.addSuccess(self, test)
-        
+
     def addError(self, test, err):
         TestResult.addError(self, test, err)
-        
+
         err = self.formatErr(err)
-        
+
         self.messages.testFailed(self.getTestName(test),
             message='Error', details=err)
-            
+
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
         err = self.formatErr(err)
-        
+
         self.messages.testFailed(self.getTestName(test),
             message='Failure', details=err)
 
     def addSkip(self, test, reason):
         self.messages.testIgnored(self.getTestName(test), message=reason)
 
+    def __getSuite(self, test):
+      if hasattr(test, "suite"):
+        suite = strclass(test.suite)
+        suite_location = test.suite.location
+        location = test.suite.abs_location
+        if hasattr(test, "lineno"):
+          location = location + ":" + str(test.lineno)
+        else:
+          location = location + ":" + str(test.test.lineno)
+      else:
+        suite = strclass(test.__class__)
+        suite_location = "python_uttestid://" + suite
+        location = "python_uttestid://" + str(test.id())
+
+      return (suite, location, suite_location)
+
     def startTest(self, test):
-        suite = test.__class__
+        suite, location, suite_location = self.__getSuite(test)
         if suite != self.current_suite:
             if self.current_suite:
-                self.messages.testSuiteFinished(strclass(self.current_suite))
+                self.messages.testSuiteFinished(self.current_suite)
             self.current_suite = suite
-            self.messages.testSuiteStarted(strclass(self.current_suite), location="python_uttestid://" + strclass(self.current_suite))
+            self.messages.testSuiteStarted(self.current_suite, location=suite_location)
         setattr(test, "startTime", datetime.datetime.now())
-        if hasattr(test, "test"):
-            id = test.id()[:test.id().find("..") + 1] + test.test.__name__
-        else:
-            id = test.id()
-        self.messages.testStarted(self.getTestName(test), location="python_uttestid://" + str(id))
+        self.messages.testStarted(self.getTestName(test), location=location)
 
     def stopTest(self, test):
         start = getattr(test, "startTime", datetime.datetime.now())
@@ -76,7 +88,7 @@ class TeamcityTestResult(TestResult):
 
     def endLastSuite(self):
         if self.current_suite:
-            self.messages.testSuiteFinished(strclass(self.current_suite))
+            self.messages.testSuiteFinished(self.current_suite)
             self.current_suite = None
 
 class TeamcityTestRunner:

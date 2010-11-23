@@ -92,6 +92,7 @@ class ContextSuite(LazySuite):
 
     def __init__(self, tests=(), context=None, factory=None,
                  config=None):
+        
         self.context = context
         self.factory = factory
         if config is None:
@@ -279,6 +280,7 @@ class ContextSuiteFactory(object):
             for ancestor in self.ancestry(context):
                 self.suites.setdefault(ancestor, []).append(suite)
                 self.context[suite].append(ancestor)
+
         return suite
 
     def wrapTests(self, tests):
@@ -300,8 +302,8 @@ class ContextList(object):
     """a group of tests in a context.
     """
     def __init__(self, tests, context=None):
-        self.tests = tests
-        self.context = context
+      self.tests = tests
+      self.context = context
 
     def __iter__(self):
         return iter(self.tests)

@@ -24,6 +24,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnusedLocalInspection.class,
       PyDeprecatedModulesInspection.class,
       PyDictCreationInspection.class,
+      PyDictDuplicateKeysInspection.class,
       PyExceptClausesOrderInspection.class,
       PyTupleAssignmentBalanceInspection.class,
       PyClassicStyleClassInspection.class,
@@ -46,6 +47,11 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyInconsistentIndentationInspection.class,
       PyNestedDecoratorsInspection.class,
       PyCallByClassInspection.class,
+      PyBroadExceptionInspection.class,
+      PyRedundantParenthesesInspection.class,
+      PyAugmentAssignmentInspection.class,
+      PyChainedComparisonsInspection.class,
+      PyOldStyleClassesInspection.class,
     };
   }
 }

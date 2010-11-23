@@ -281,7 +281,6 @@ public class RemoteDebugger {
   }
 
 
-
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;
 
@@ -341,6 +340,8 @@ public class RemoteDebugger {
           final PyThreadInfo thread = myThreads.get(event.getId());
           if (thread != null) {
             thread.updateState(PyThreadInfo.State.SUSPENDED, event.getFrames());
+            thread.setStopReason(event.getStopReason());
+            thread.setMessage(event.getMessage());
             myDebugProcess.threadSuspended(thread);
           }
           break;

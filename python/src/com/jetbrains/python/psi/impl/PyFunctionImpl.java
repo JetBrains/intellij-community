@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -116,12 +117,24 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  public PyType getReturnType() {
+  public PyType getReturnType(TypeEvalContext typeEvalContext, @Nullable PyReferenceExpression callSite) {
+    for(PyTypeProvider typeProvider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      final PyType returnType = typeProvider.getReturnType(this, callSite, typeEvalContext);
+      if (returnType != null) {
+        return returnType;
+      }
+    }
+
     final PyType docStringType = getReturnTypeFromDocString();
     if (docStringType != null) {
       return docStringType;
     }
-    ReturnVisitor visitor = new ReturnVisitor();
+    return getReturnStatementType(typeEvalContext);
+  }
+
+  @Nullable
+  public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
+    ReturnVisitor visitor = new ReturnVisitor(typeEvalContext);
     final PyStatementList statements = getStatementList();
     if (statements != null) {
       statements.accept(visitor);
@@ -225,9 +238,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
-    private final TypeEvalContext myContext = TypeEvalContext.slow();
+    private final TypeEvalContext myContext;
     private PyType myResult = null;
     private boolean myHasReturns = false;
+
+    public ReturnVisitor(final TypeEvalContext context) {
+      myContext = context;
+    }
 
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {

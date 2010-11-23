@@ -16,7 +16,7 @@ public class PythonCompletionWeigher extends CompletionWeigher {
   @NonNls private static final String DOUBLE_UNDER = "__";
 
   @Override
-  public Comparable weigh(@NotNull LookupElement element, CompletionLocation location) {
+  public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     final String name = element.getLookupString();
     if (name.startsWith(DOUBLE_UNDER)) {
       if (name.endsWith(DOUBLE_UNDER)) return -10; // __foo__ is lowest

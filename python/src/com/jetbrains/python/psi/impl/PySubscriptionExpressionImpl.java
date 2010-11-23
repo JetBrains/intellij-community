@@ -5,6 +5,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.types.PyCollectionType;
 import com.jetbrains.python.psi.types.PySubscriptableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -39,6 +40,9 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       final PyType type = context.getType(getOperand());
       if (type instanceof PySubscriptableType) {
         return ((PySubscriptableType)type).getElementType(indexExpression, context);
+      }
+      if (type instanceof PyCollectionType) {
+        return ((PyCollectionType) type).getElementType(context);
       }
     }
     return null;

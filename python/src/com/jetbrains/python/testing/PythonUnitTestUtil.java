@@ -2,13 +2,9 @@ package com.jetbrains.python.testing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,7 +52,27 @@ public class PythonUnitTestUtil {
     if (name == null || !TEST_MATCH_PATTERN.matcher(name).find()) {
       return false;
     }
+    if (function.getContainingClass() != null) {
+      if (isTestCaseClass(function.getContainingClass())) return true;
+    }
+    boolean hasAssert = hasAssertOrYield(function.getStatementList());
+    if (!hasAssert) return false;
     return true;
+  }
+
+  private static boolean hasAssertOrYield(PyStatementList list) {
+    for (PyStatement st : list.getStatements()) {
+      if (st instanceof PyAssertStatement) return true;
+      else if (st instanceof PyForStatement)
+        return hasAssertOrYield(((PyForStatement)st).getForPart().getStatementList());
+      else if (st instanceof PyWhileStatement)
+        return hasAssertOrYield(((PyWhileStatement)st).getWhilePart().getStatementList());
+      else if (st instanceof PyExpressionStatement) {
+        if (((PyExpressionStatement)st).getExpression() instanceof PyYieldExpression)
+          return true;
+      }
+    }
+   return false; 
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls) {
