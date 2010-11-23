@@ -33,6 +33,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -222,12 +225,38 @@ public abstract class AbstractConsoleRunnerWithHistory {
       }
     };
 
-    final AnAction historyNextAction = ConsoleHistoryModel.createHistoryAction(myHistory, true, historyProcessor);
-    final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
-    historyNextAction.getTemplatePresentation().setVisible(false);
-    historyPrevAction.getTemplatePresentation().setVisible(false);
+    final EditorEx consoleEditor = languageConsole.getConsoleEditor();
+    final Document document = consoleEditor.getDocument();
+    final CaretModel caretModel = consoleEditor.getCaretModel();
+    final AnAction upAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final int lineNumber = consoleEditor.getDocument().getLineNumber(caretModel.getOffset());
+        if (lineNumber > 0){
+          caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
+        } else {
+          historyProcessor.process(e, myHistory.getHistoryPrev());
+        }
+      }
+    };
+    final AnAction downAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        final int lineNumber = document.getLineNumber(caretModel.getOffset());
+        if (lineNumber < document.getLineCount() - 1){
+          caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
+        } else {
+          historyProcessor.process(e, myHistory.getHistoryNext());
+        }
+      }
+    };
 
-    return new ConsoleExecutionActions(runAction, historyNextAction, historyPrevAction);
+    upAction.getTemplatePresentation().setVisible(false);
+    downAction.getTemplatePresentation().setVisible(false);
+    upAction.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
+    downAction.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+
+    return new ConsoleExecutionActions(runAction, downAction, upAction);
   }
 
   @NotNull
