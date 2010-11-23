@@ -526,7 +526,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     if (savedVersion < VERSION) {
       addIgnore("*.lib");
-      addIgnore("*.pyd");
       addIgnore("*~");
     }
   }
