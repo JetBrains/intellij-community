@@ -120,6 +120,7 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final XmlTag tag = (XmlTag)parent;
     final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
     final String tagNamespace = tag.getNamespace();
+    assert myNamespace != null;
     return tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && myNamespace.equals(tagNamespace);
   }
 
