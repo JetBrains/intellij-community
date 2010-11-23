@@ -38,7 +38,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
@@ -65,19 +64,17 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final Map<ProcessHandler, XDebugSessionData> mySessionData;
-  private final Map<ProcessHandler, XDebugSessionTab> mySessionTabs;
-  private final List<XDebugSessionImpl> mySessions;
+  private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private XDebugSessionImpl myLastActiveSession;
+  private XDebugSessionImpl myActiveSession;
 
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     mySessionData = new LinkedHashMap<ProcessHandler, XDebugSessionData>();
-    mySessions = new ArrayList<XDebugSessionImpl>();
+    mySessions = new LinkedHashMap<ProcessHandler, XDebugSessionImpl>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
-    mySessionTabs = new HashMap<ProcessHandler, XDebugSessionTab>();
     messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(final FileEditorManager source, final VirtualFile file) {
@@ -90,14 +87,23 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     messageBus.connect().subscribe(RunContentManagerImpl.RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
       @Override
       public void contentSelected(RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
+          final XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
+          if (session != null) {
+            session.activateSession();
+          }
+          else {
+            setActiveSession(null, null, false);
+          }
+        }
       }
 
       @Override
       public void contentRemoved(RunContentDescriptor descriptor, @NotNull Executor executor) {
         if (executor.equals(DefaultDebugExecutor.getDebugExecutorInstance())) {
-          XDebugSessionTab sessionTab = mySessionTabs.remove(descriptor.getProcessHandler());
-          if (sessionTab != null) {
-            Disposer.dispose(sessionTab);
+          XDebugSessionImpl session = mySessions.remove(descriptor.getProcessHandler());
+          if (session != null) {
+            Disposer.dispose(session.getSessionTab());
           }
         }
       }
@@ -164,9 +170,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     if (oldSessionData == null) {
       oldSessionData = new XDebugSessionData();
     }
-    final XDebugSessionTab sessionTab = session.init(process, oldSessionData);
-    mySessions.add(session);
-    mySessionTabs.put(session.getDebugProcess().getProcessHandler(), sessionTab);
+    session.init(process, oldSessionData);
+    mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
     return session;
   }
@@ -176,15 +181,15 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     XDebugSessionData data = sessionTab.saveData();
     mySessions.remove(session);
     mySessionData.put(session.getDebugProcess().getProcessHandler(), data);
-    if (myLastActiveSession == session) {
-      myLastActiveSession = null;
+    if (myActiveSession == session) {
+      myActiveSession = null;
       onActiveSessionChanged();
     }
   }
 
-  public void updateExecutionPosition(@NotNull XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection) {
-    boolean sessionChanged = myLastActiveSession != session;
-    myLastActiveSession = session;
+  public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection) {
+    boolean sessionChanged = myActiveSession != session;
+    myActiveSession = session;
     if (position != null) {
       myExecutionPointHighlighter.show(position, useSelection);
     }
@@ -202,7 +207,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   @NotNull
   public XDebugSession[] getDebugSessions() {
-    return mySessions.toArray(new XDebugSession[mySessions.size()]);
+    final Collection<XDebugSessionImpl> sessions = mySessions.values();
+    return sessions.toArray(new XDebugSessionImpl[sessions.size()]);
   }
 
   @Override
@@ -220,7 +226,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   @Override
   public <T extends XDebugProcess> Collection<? extends T> getDebugProcesses(Class<T> processClass) {
     final List<T> list = new ArrayList<T>();
-    for (XDebugSessionImpl session : mySessions) {
+    for (XDebugSessionImpl session : mySessions.values()) {
       final XDebugProcess process = session.getDebugProcess();
       if (processClass.isInstance(process)) {
         list.add(processClass.cast(process));
@@ -231,10 +237,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   @Nullable
   public XDebugSessionImpl getCurrentSession() {
-    if (myLastActiveSession != null) {
-      return myLastActiveSession;
-    }
-    return !mySessions.isEmpty() ? mySessions.get(0) : null;
+    return myActiveSession;
   }
 
   public XDebuggerState getState() {
