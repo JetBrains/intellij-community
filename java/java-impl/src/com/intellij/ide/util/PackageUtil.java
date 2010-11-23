@@ -26,6 +26,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
@@ -162,6 +164,14 @@ public class PackageUtil {
                                                              String packageName,
                                                              PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {
+    return findOrCreateDirectoryForPackage(module, packageName, baseDir, askUserToCreate, false);
+  }
+
+  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
+                                                             String packageName,
+                                                             PsiDirectory baseDir,
+                                                             boolean askUserToCreate,
+                                                             boolean filterSourceDirsForBaseTestDirectory) throws IncorrectOperationException {
     final Project project = module.getProject();
     PsiDirectory psiDirectory = null;
     if (!"".equals(packageName)) {
@@ -174,6 +184,9 @@ public class PackageUtil {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         PsiDirectory[] moduleDirectories = getPackageDirectoriesInModule(rootPackage, module);
+        if (filterSourceDirsForBaseTestDirectory) {
+          moduleDirectories = filterSourceDirectories(baseDir, project, moduleDirectories);
+        }
         psiDirectory = DirectoryChooserUtil.selectDirectory(project, moduleDirectories, baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
@@ -238,6 +251,20 @@ public class PackageUtil {
       restOfName = cutLeftPart(restOfName);
     }
     return psiDirectory;
+  }
+
+  private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory[] moduleDirectories) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
+      List<PsiDirectory> result = new ArrayList<PsiDirectory>();
+      for (PsiDirectory moduleDirectory : moduleDirectories) {
+        if (fileIndex.isInTestSourceContent(moduleDirectory.getVirtualFile())) {
+          result.add(moduleDirectory);
+        }
+      }
+      moduleDirectories = result.toArray(new PsiDirectory[result.size()]);
+    }
+    return moduleDirectories;
   }
 
   private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {

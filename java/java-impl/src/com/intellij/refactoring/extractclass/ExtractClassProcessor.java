@@ -689,7 +689,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
       assert module != null;
-      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false);
+      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
       if (directory != null) {
         final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(newClassName + ".java", classString);
         final PsiElement addedFile = directory.add(newFile);
