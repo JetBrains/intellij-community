@@ -582,7 +582,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> authors = new ArrayList<String>(getUsersList(project, roots));
+      final List<String> usersList = getUsersList(project, roots);
+      final List<String> authors = usersList == null ? new ArrayList<String>() : new ArrayList<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       Collections.sort(authors);
       myAuthor = new JComboBox(authors.toArray(new Object[authors.size()]));
