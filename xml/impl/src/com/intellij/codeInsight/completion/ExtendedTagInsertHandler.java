@@ -115,7 +115,9 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
   }
 
   protected boolean isNamespaceBound(PsiElement psiElement) {
-    final XmlTag tag = (XmlTag)psiElement.getParent();
+    PsiElement parent = psiElement.getParent();
+    if (!(parent instanceof XmlTag)) return false;
+    final XmlTag tag = (XmlTag)parent;
     final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
     final String tagNamespace = tag.getNamespace();
     return tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && myNamespace.equals(tagNamespace);
