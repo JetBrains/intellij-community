@@ -58,7 +58,7 @@ public class GitExecutableValidator extends ExecutableValidator {
       commandLine.setExePath(executable);
       commandLine.addParameter("--version");
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(2000);
+      ProcessOutput result = handler.runProcess(30 * 1000);
       return !result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty();
     } catch (Throwable e) {
       return false;
