@@ -93,11 +93,21 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   public SymbolicRefs getRefs() throws VcsException {
     final SymbolicRefs refs = new SymbolicRefs();
     loadAllTags(refs.getTags());
-    final GitBranch localBranch = loadLocalBranches(refs.getLocalBranches());
-    final GitBranch remoteBranch = loadRemoteBranches(refs.getRemoteBranches());
-    final GitBranch current = localBranch == null ? remoteBranch : localBranch;
+    final List<GitBranch> allBranches = new ArrayList<GitBranch>();
+    final GitBranch current = GitBranch.list(myProject, myRoot, true, true, allBranches, null);
+    for (GitBranch branch : allBranches) {
+      if (branch.isRemote()) {
+        String name = branch.getName();
+        name = name.startsWith("remotes/") ? name.substring("remotes/".length()) : name;
+        refs.addRemote(name);
+      } else {
+        refs.addLocal(branch.getName());
+      }
+    }
     refs.setCurrent(current);
-    refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
+    if (current != null) {
+      refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
+    }
     return refs;
   }
 
