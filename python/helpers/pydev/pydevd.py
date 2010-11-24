@@ -672,9 +672,9 @@ class PyDB:
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
                     #command to evaluate the given expression
                     #text is: thread\tstackframe\tLOCAL\texpression
-                    thread_id, frame_id, scope, expression = text.split('\t', 3)
+                    thread_id, frame_id, scope, expression, trim = text.split('\t', 4)
                     int_cmd = InternalEvaluateExpression(seq, thread_id, frame_id, expression,
-                        cmd_id == CMD_EXEC_EXPRESSION)
+                        cmd_id == CMD_EXEC_EXPRESSION, int(trim) == 1)
                     self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_CONSOLE_EXEC:
