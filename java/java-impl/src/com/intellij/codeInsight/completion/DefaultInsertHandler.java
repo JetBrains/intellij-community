@@ -65,6 +65,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     final boolean needLeftParenth = isToInsertParenth(context, item);
     final boolean hasParams = needLeftParenth && hasParams(context, item);
+    final boolean annotation = insertingAnnotation(context, item);
 
     if (CompletionUtil.isOverwrite(item, completionChar)) {
       removeEndOfIdentifier(needLeftParenth && hasParams, context);
@@ -114,7 +115,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       });
     }
 
-    if (insertingAnnotation(context, item)) {
+    if (annotation) {
       // Check if someone inserts annotation class that require @
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;

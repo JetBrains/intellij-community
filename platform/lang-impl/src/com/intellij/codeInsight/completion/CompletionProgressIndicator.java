@@ -273,7 +273,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean isOutdated() {
     if (!myDisposed) {
-      LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+      CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      LOG.assertTrue(this == current, current);
     }
     return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
@@ -391,10 +392,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       myLookup.show();
+      //todo remove these assertions before X release
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.assertTrue(myLookup.isVisible());
+      }
     }
     myLookup.refreshUi();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(myLookup.isVisible());
+      LOG.assertTrue(myLookup.isVisible(), "really?");
     }
     hideAutopopupIfMeaningless();
   }

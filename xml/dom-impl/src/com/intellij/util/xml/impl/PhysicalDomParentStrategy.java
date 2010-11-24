@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
@@ -82,10 +83,28 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
     if (xmlElementsEqual(myElement, thatElement)) {
       if (myElement != thatElement) {
+        //todo remove this assertion before X release
+        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+          PsiElement cur = myElement;
+          while (cur != null && !cur.isPhysical()) {
+            cur = cur.getParent();
+          }
+          throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()));
+        }
+
         final PsiElement nav1 = myElement.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
-        assert nav1 == nav2 : nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset() +
-                              "; " + (nav1==myElement) + ";" + (nav2==thatElement);
+        assert nav1 == nav2 : nav1.getContainingFile() +
+                              ":" +
+                              nav1.getTextRange().getStartOffset() +
+                              "!=" +
+                              nav2.getContainingFile() +
+                              ":" +
+                              nav2.getTextRange().getStartOffset() +
+                              "; " +
+                              (nav1 == myElement) +
+                              ";" +
+                              (nav2 == thatElement);
       }
       return true;
     }
@@ -95,7 +114,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
   private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
     if (fst.equals(snd)) return true;
 
-    if (fst.isPhysical() || snd.isPhysical()) return false;
+    if (fst.isValid() && fst.isPhysical() || snd.isValid() && snd.isPhysical()) return false;
     if (fst.getTextLength() != snd.getTextLength()) return false;
     if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
 
