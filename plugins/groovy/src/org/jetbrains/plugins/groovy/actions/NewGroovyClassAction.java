@@ -24,9 +24,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -92,8 +92,12 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
   protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
-    final GroovyFile file = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName);
-    return file.getTypeDefinitions()[0];
+    final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName);
+    if (fromTemplate instanceof GroovyFile) {
+      return ((GroovyFile)fromTemplate).getTypeDefinitions()[0];
+    }
+    final String description = fromTemplate.getFileType().getDescription();
+    throw new IncorrectOperationException(GroovyBundle.message("groovy.file.extension.is.not.mapped.to.groovy.file.type", description));
   }
 
 }

@@ -1067,7 +1067,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(declaredClass == null){
             return false;
         }
-        if(!ClassUtils.isSubclass(declaredClass, "java.util.Iterator")){
+        if(!ClassUtils.isSubclass(declaredClass, CommonClassNames.JAVA_UTIL_ITERATOR)){
             return false;
         }
         final PsiExpression initialValue = variable.getInitializer();

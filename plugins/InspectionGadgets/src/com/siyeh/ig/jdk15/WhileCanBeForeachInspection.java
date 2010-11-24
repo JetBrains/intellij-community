@@ -430,7 +430,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             final PsiVariable variable = (PsiVariable)declaredElement;
             final PsiType variableType = variable.getType();
             final PsiType iteratorType =
-                    TypeUtils.getType("java.util.Iterator", whileStatement);
+                    TypeUtils.getType(CommonClassNames.JAVA_UTIL_ITERATOR, whileStatement);
             if (iteratorType == null) {
                 return false;
             }

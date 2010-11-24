@@ -366,6 +366,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
     result.restartCompletionOnPrefixChange(SET_PREFIX);
     result.restartCompletionOnPrefixChange(IS_PREFIX);
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
+    final PsiElement qualifier = reference.getQualifier();
+    final PsiType qualifierType;
+    if (qualifier instanceof GrExpression) {
+      qualifierType = ((GrExpression)qualifier).getType();
+    }
+    else {
+      qualifierType = null;
+    }
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
@@ -388,7 +396,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         //skip default groovy methods
         if (!secondCompletionInvoked &&
             object instanceof GrGdkMethod &&
-            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor)) {
+            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
           showInfo();
           return;
         }
@@ -397,8 +405,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (!secondCompletionInvoked &&
             object instanceof PsiMethod &&
             GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
-          showInfo();
-          return;
+          if (!checkForIterator((PsiMethod)object)) {
+            showInfo();
+            return;
+          }
         }
 
         //skip accessors if there is no get, set, is prefix
@@ -418,7 +428,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    if (reference.getQualifier() == null) {
+    if (qualifier == null) {
       completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
@@ -441,6 +451,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     }
     result.addAllElements(staticMembers.values());
+  }
+
+  private static boolean checkForIterator(PsiMethod method) {
+    if (!"next".equals(method.getName())) return false;
+
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+    final PsiClass iterator = JavaPsiFacade.getInstance(method.getProject()).findClass(CommonClassNames.JAVA_UTIL_ITERATOR,
+                                                                                       method.getResolveScope());
+    return InheritanceUtil.isInheritorOrSelf(containingClass, iterator, true);
   }
 
   private static void showInfo() {

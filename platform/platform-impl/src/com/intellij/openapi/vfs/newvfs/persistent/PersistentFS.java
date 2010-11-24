@@ -63,7 +63,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final MessageBus myEventsBus;
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
-  private final Map<String, NewVirtualFile> myFakeRoots = new HashMap<String, NewVirtualFile>();
+  private NewVirtualFile myFakeRoot;
   private final Object INPUT_LOCK = new Object();
   /**
    * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
@@ -636,8 +636,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     synchronized (LOCK) {
       final String rootUrl = fs.getProtocol() + "://" + basePath;
       NewVirtualFile root = myRoots.get(rootUrl);
-      if (root == null) {
-        root = myFakeRoots.get(rootUrl);
+      if (root == null && basePath.length() == 0) {
+        root = myFakeRoot;
       }
       if (root == null) {
         try {
@@ -666,7 +666,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
           myRoots.put(rootUrl, root);
         }
         else {
-          myFakeRoots.put(rootUrl, root);
+          myFakeRoot = root;
         }
       }
 
