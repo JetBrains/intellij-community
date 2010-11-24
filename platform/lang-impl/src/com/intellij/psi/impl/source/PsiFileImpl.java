@@ -242,6 +242,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return findTreeForStub(ast, stubs, stub);
   }
 
+  @Nullable
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
     final IElementType type = tree.getElementType();
 
@@ -258,47 +259,41 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-
-  private void switchFromStubToAST(ASTNode root, final Iterator<StubElement<?>> stubs) {
+  private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       throw new AssertionError("Invalid content element type: " + contentElementType + " of " + contentElementType.getLanguage() +
-                               "; elementType=" + myElementType + " of " + myElementType.getLanguage() + "; file=" + getClass() + "; viewProvider=" + getViewProvider());
+                               "; elementType=" + myElementType + " of " + myElementType.getLanguage() + "; file=" + getClass() +
+                               "; viewProvider=" + getViewProvider());
     }
-    ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
+    final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
 
+    ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected void visitNode(TreeElement tree) {
         final IElementType type = tree.getElementType();
-        CompositeElement treeParent = tree.getTreeParent();
-        if(treeParent != null &&
-           builder.skipChildProcessingWhenBuildingStubs(treeParent.getElementType(), type)) {
+        final CompositeElement treeParent = tree.getTreeParent();
+        if (treeParent != null && builder.skipChildProcessingWhenBuildingStubs(treeParent.getElementType(), type)) {
           return;
         }
         if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(tree)) {
           if (!stubs.hasNext()) {
-            LOG.error("Stub list in" +
-                      this +
-                      " " +
-                      getName() +
-                      " has fewer elements than PSI. Last AST element: " +
-                      tree.getElementType() +
-                      " " +
-                      tree);
+            rebuildStub();
+            LOG.error("Stub list in " + getName() + " has fewer elements than PSI. Last AST element: " +
+                      tree.getElementType() + " " + tree);
+            stopWalking();
+            return;
           }
+
           final StubElement stub = stubs.next();
           if (stub.getStubType() != tree.getElementType()) {
             rebuildStub();
-            LOG.error("Stub and PSI element type mismatch in " +
-                           getName() +
-                           ": stub " +
-                           stub +
-                           ", AST " +
-                           tree.getElementType() +
-                           "; " +
-                           tree);
+            LOG.error("Stub and PSI element type mismatch in " + getName() + ": stub " + stub + ", AST " +
+                      tree.getElementType() + "; " + tree);
+            stopWalking();
+            return;
           }
+
           final PsiElement psi = stub.getPsi();
           ((CompositeElement)tree).setPsi(psi);
           final StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
