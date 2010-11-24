@@ -61,7 +61,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     myProject = project;
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       public void updateStarted(final Document doc) {
-        resetFoldingInfo(doc); //TODO RangeMarkers tree convert
+        resetFoldingInfo(doc);
       }
     });
   }

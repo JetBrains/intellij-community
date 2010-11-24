@@ -17,6 +17,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
@@ -51,6 +52,9 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {//implements C
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     for (ScopeToolState state : rootProfile.getAllTools()) {
       final InspectionProfileEntry tool = state.getTool();
+      if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
+        continue;
+      }
       myToolNames.put(tool.getDisplayName(), tool);
       final String groupName = tool.getGroupDisplayName();
       Set<InspectionProfileEntry> toolsInGroup = myGroupNames.get(groupName);

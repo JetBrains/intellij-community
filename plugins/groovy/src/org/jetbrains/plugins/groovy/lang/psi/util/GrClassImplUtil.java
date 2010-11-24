@@ -59,7 +59,7 @@ public class GrClassImplUtil {
     }
   };
 
-  private static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
+  public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
   public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
 
   private GrClassImplUtil() {
@@ -98,7 +98,6 @@ public class GrClassImplUtil {
     PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
     if (grObSupport != null) {
       return ArrayUtil.append(extendsTypes, JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport));
-      //return new PsiClassType[]{JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport)};
     }
     return extendsTypes;
   }

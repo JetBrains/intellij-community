@@ -36,8 +36,7 @@ public class InstanceOfFilter implements ElementFilter {
         context.getParent().getParent() instanceof GrCommandArgumentList) {
       return true;
     }
-    if (context != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
+    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
         GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
       return true;
     }

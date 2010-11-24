@@ -269,7 +269,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
         final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
+        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
 
         if (directory != null) {
           final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiFile);

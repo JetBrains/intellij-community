@@ -61,7 +61,11 @@ public class MethodEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     if(!context.getDebugProcess().isAttached()) return null;
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    final boolean requiresSuperObject = myObjectEvaluator instanceof SuperEvaluator;
+    
+    final boolean requiresSuperObject = 
+      myObjectEvaluator instanceof SuperEvaluator || 
+      (myObjectEvaluator instanceof DisableGC && ((DisableGC)myObjectEvaluator).getDelegate() instanceof SuperEvaluator);
+    
     final Object object = myObjectEvaluator.evaluate(context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("MethodEvaluator: object = " + object);

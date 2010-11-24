@@ -25,6 +25,8 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
@@ -40,14 +42,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -113,13 +118,29 @@ public class ApplyPatchAction extends DumbAwareAction {
     return sb.toString();
   }
 
-  public static<T extends FilePatch> ApplyPatchStatus applyOnly(final Project project, final ApplyFilePatchBase<T> patch, final ApplyPatchContext context, final VirtualFile file) {
+  public static<T extends FilePatch> ApplyPatchStatus applyOnly(final Project project, final ApplyFilePatchBase<T> patch,
+                                                                final ApplyPatchContext context, final VirtualFile file) {
     final T patchBase = patch.getPatch();
-    try {
-      return patch.apply(file, context, project);
-    }
-    catch(ApplyPatchException ex) {
-      if (!patchBase.isNewFile() && !patchBase.isDeletedFile() && patchBase instanceof TextFilePatch) {
+    final Application application = ApplicationManager.getApplication();
+    final ApplyPatchException[] exc = new ApplyPatchException[1];
+    final ApplyPatchStatus applyPatchStatus = application.runWriteAction(new Computable<ApplyPatchStatus>() {
+      @Override
+      public ApplyPatchStatus compute() {
+        try {
+          return patch.apply(file, context, project);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return ApplyPatchStatus.FAILURE;
+        }
+        catch (ApplyPatchException e) {
+          exc[0] = e;
+        }
+        return ApplyPatchStatus.FAILURE;
+      }
+    });
+    if (exc[0] != null) {
+      if (! patchBase.isNewFile() && ! patchBase.isDeletedFile() && patchBase instanceof TextFilePatch) {
         //final VirtualFile beforeRename = (pathBeforeRename == null) ? file : pathBeforeRename;
         ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, new FilePathImpl(file), (TextFilePatch) patchBase,
                                                                ApplyPatchMergeRequestFactory.INSTANCE);
@@ -127,21 +148,11 @@ public class ApplyPatchAction extends DumbAwareAction {
           return mergeStatus;
         }
       }
-      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patchBase.getBeforeName(), ex.getMessage()),
+      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patchBase.getBeforeName(), exc[0].getMessage()),
                                VcsBundle.message("patch.apply.dialog.title"));
+      return ApplyPatchStatus.FAILURE;
     }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    return ApplyPatchStatus.FAILURE;
-  }
-
-  @Nullable
-  public static ApplyPatchStatus mergeAgainstBaseVersion(Project project, VirtualFile file, ApplyPatchContext context,
-                                                         final TextFilePatch patch,
-                                                         final PatchMergeRequestFactory mergeRequestFactory) {
-    final FilePath pathBeforeRename = context.getPathBeforeRename(file);
-    return mergeAgainstBaseVersion(project, file, pathBeforeRename, patch, mergeRequestFactory);
+    return applyPatchStatus;
   }
 
   @Nullable
@@ -159,7 +170,12 @@ public class ApplyPatchAction extends DumbAwareAction {
       return status;
     }
     if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-      return showMergeDialog(project, file, threeTexts.getBase(), threeTexts.getPatched(), mergeRequestFactory);
+      return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+        @Override
+        public ApplyPatchStatus compute() {
+          return showMergeDialog(project, file, threeTexts.getBase(), threeTexts.getPatched(), mergeRequestFactory);
+        }
+      });
     }
     else {
       return status;
@@ -173,7 +189,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       return ApplyPatchStatus.FAILURE;
     }
     final MergeRequest request = mergeRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
-                                                      project);
+                                                                        project);
     DiffManager.getInstance().getDiffTool().show(request);
     if (request.getResult() == DialogWrapper.OK_EXIT_CODE) {
       return ApplyPatchStatus.SUCCESS;

@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final ArrayList<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -520,8 +520,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore("_svn");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 7) {
       addIgnore(".hg");
+    }
+
+    if (savedVersion < VERSION) {
+      addIgnore("*.lib");
+      addIgnore("*~");
     }
   }
 

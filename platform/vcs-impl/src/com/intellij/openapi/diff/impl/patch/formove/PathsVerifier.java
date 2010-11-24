@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -463,7 +464,21 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
       myBeforePaths.add(new FilePathImpl(file.getParent(), file.getName(), file.isDirectory()));
-      final VirtualFile moveResult = movedFile.doMove();
+      final IOException[] exc = new IOException[1];
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            final VirtualFile moveResult = movedFile.doMove();
+          }
+          catch (IOException e) {
+            exc[0] = e;
+          }
+        }
+      });
+      if (exc[0] != null) {
+        throw exc[0];
+      }
     }
   }
 
