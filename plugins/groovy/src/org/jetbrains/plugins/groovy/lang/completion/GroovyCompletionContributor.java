@@ -397,8 +397,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
         if (!secondCompletionInvoked &&
             object instanceof PsiMethod &&
             GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
-          showInfo();
-          return;
+          if (!checkForIterator((PsiMethod)object)) {
+            showInfo();
+            return;
+          }
         }
 
         //skip accessors if there is no get, set, is prefix
@@ -441,6 +443,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     }
     result.addAllElements(staticMembers.values());
+  }
+
+  private static boolean checkForIterator(PsiMethod method) {
+    if (!"next".equals(method.getName())) return false;
+
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+    final PsiClass iterator = JavaPsiFacade.getInstance(method.getProject()).findClass(CommonClassNames.JAVA_UTIL_ITERATOR,
+                                                                                       method.getResolveScope());
+    return InheritanceUtil.isInheritorOrSelf(containingClass, iterator, true);
   }
 
   private static void showInfo() {
