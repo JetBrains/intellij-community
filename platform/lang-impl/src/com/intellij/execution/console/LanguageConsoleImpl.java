@@ -369,19 +369,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
      //offset can be changed after text trimming after insert due to buffer constraints
     appendToHistoryDocument(history, text);
     int offset = history.getTextLength() - text.length();
-    final int localOffset = textRange.getStartOffset();
-    final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(localOffset);
+    final int localStartOffset = textRange.getStartOffset();
+    final HighlighterIterator iterator = consoleEditor.getHighlighter().createIterator(localStartOffset);
     final int localEndOffset = textRange.getEndOffset();
     while (!iterator.atEnd()) {
       final int itStart = iterator.getStart();
       if (itStart > localEndOffset) break;
       final int itEnd = iterator.getEnd();
-      if (itEnd < localOffset) continue;
-      final int start = Math.max(itStart, localOffset) - localOffset + offset;
-      final int end = Math.min(itEnd, localEndOffset) - localOffset + offset;
-      markupModel.addRangeHighlighter(start, end, HighlighterLayer.SYNTAX, iterator.getTextAttributes(),
-                                      HighlighterTargetArea.EXACT_RANGE);
-
+      if (itEnd >= localStartOffset) {
+        final int start = Math.max(itStart, localStartOffset) - localStartOffset + offset;
+        final int end = Math.min(itEnd, localEndOffset) - localStartOffset + offset;
+        markupModel.addRangeHighlighter(start, end, HighlighterLayer.SYNTAX, iterator.getTextAttributes(),
+                                        HighlighterTargetArea.EXACT_RANGE);
+      }
       iterator.advance();
     }
     if (myDoSaveErrorsToHistory) {
