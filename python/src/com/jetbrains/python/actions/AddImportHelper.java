@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -133,7 +134,7 @@ public class AddImportHelper {
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
     final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
-      LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n");
+      LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + from + " import " + name + as_clause);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file, from, priority));
     }
@@ -157,8 +158,9 @@ public class AddImportHelper {
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final ImportPriority priority = getImportPriority(file, target.getContainingFile());
-    final String path = ResolveImportUtil.findShortestImportableName(element, target.getContainingFile().getVirtualFile());
+    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? (PsiFileSystemItem) target : target.getContainingFile();
+    final ImportPriority priority = getImportPriority(file, toImport);
+    final String path = ResolveImportUtil.findShortestImportableName(element, toImport.getVirtualFile());
     if (target instanceof PsiFileSystemItem) {
       addImportStatement(file, path, null, priority);
     } else if (useQualified) {
@@ -171,12 +173,12 @@ public class AddImportHelper {
     }
   }
 
-  public static ImportPriority getImportPriority(PsiElement importLocation, PsiFile fileToImport) {
-    final VirtualFile vFile = fileToImport.getVirtualFile();
+  public static ImportPriority getImportPriority(PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+    final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
       return ImportPriority.PROJECT;
     }
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(fileToImport.getProject());
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
     if (projectRootManager.getFileIndex().isInContent(vFile)) {
       return ImportPriority.PROJECT;
     }

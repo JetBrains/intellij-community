@@ -16,10 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -158,7 +155,8 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
         String name = getRefName();
         final PsiElement element = ResolveImportUtil.resolveInRoots(file, name);
         if (element != null) { // TODO: think about multiple possible resole results
-          final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(file, element.getContainingFile());
+          final PsiFileSystemItem toImport = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+          final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(file, toImport);
           AddImportHelper.addImportStatement(file, name, null, priority);
         }
       }
