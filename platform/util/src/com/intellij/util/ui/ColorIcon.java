@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.util.ui;
 
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.ReadonlyList;
+import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
- * @author irengrig
+ * @author Konstantin Bulenkov
  */
-public class StaticReadonlyList<T> implements ReadonlyList<T>, Consumer<T> {
-  private final BigArray<T> myList;
+public class ColorIcon extends EmptyIcon {
+  private final Color myColor;
 
-  public StaticReadonlyList(final int size2power) {
-    myList = new BigArray<T>(size2power);
+  public ColorIcon(int size, @NotNull Color color) {
+    super(size, size);
+    myColor = color;
+  }
+
+  public Color getIconColor() {
+    return myColor;
   }
 
   @Override
-  public T get(int idx) {
-    return myList.get(idx);
-  }
-
-  @Override
-  public int getSize() {
-    return myList.getSize();
-  }
-
-  @Override
-  public void consume(T t) {
-    myList.add(t);
+  public void paintIcon(final Component component, final Graphics g, final int i, final int j) {
+    final int iconWidth = getIconWidth();
+    final int iconHeight = getIconHeight();
+    g.setColor(getIconColor());
+    g.fillRect(i, j, iconWidth, iconHeight);
   }
 }

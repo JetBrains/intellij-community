@@ -93,8 +93,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JCheckBox myGenerateRJavaWhenChanged;
   private JCheckBox myGenerateIdlWhenChanged;
   private JCheckBox myIsLibraryProjectCheckbox;
-  private JCheckBox myCopyResourcesFromArtifacts;
-  private JCheckBox myEnableAaptCompiler;
   private JPanel myAaptCompilerPanel;
   private JBList myResOverlayList;
   private JButton myAddResOverlayButton;
@@ -103,9 +101,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JCheckBox myGenerateUnsignedApk;
   private ComboboxWithBrowseButton myApkPathCombo;
   private JLabel myApkPathLabel;
-  private JRadioButton myUseCompilerManifestFromStructureRadio;
-  private JRadioButton myUseCustomCompilerManifestRadio;
-  private TextFieldWithBrowseButton myCustomCompilerManifestPathField;
+  private JRadioButton myRunProcessResourcesRadio;
+  private JRadioButton myCompileResourcesByIdeRadio;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -133,9 +130,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCustomAptSourceDirField.getButton().addActionListener(new MyFolderFieldListener(myCustomAptSourceDirField,
                                                                                       AndroidAptCompiler.getCustomResourceDirForApt(facet),
                                                                                       false));
-    myCustomCompilerManifestPathField.getButton().addActionListener(new MyFolderFieldListener(myCustomCompilerManifestPathField,
-                                                                                              AndroidRootUtil.getManifestFileForCompiler(facet),
-                                                                                              true));
 
     myPlatformChooser.addListener(new AndroidPlatformChooserListener() {
       @Override
@@ -182,15 +176,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myUseCustomSourceDirectoryRadio.addActionListener(listener);
     myUseAptResDirectoryFromPathRadio.addActionListener(listener);
 
-    listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myCustomCompilerManifestPathField.setEnabled(myUseCustomCompilerManifestRadio.isSelected());
-      }
-    };
-    myUseCustomCompilerManifestRadio.addActionListener(listener);
-    myUseCompilerManifestFromStructureRadio.addActionListener(listener);
-
     myIsLibraryProjectCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -204,15 +189,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        UIUtil.setEnabled(myAaptCompilerPanel, myEnableAaptCompiler.isSelected(), true);
-        myEnableAaptCompiler.setEnabled(true);
-        if (myCopyResourcesFromArtifacts.isVisible() && myCopyResourcesFromArtifacts.isSelected()) {
-          UIUtil.setEnabled(myAaptCompilerPanel, false, true);
-        }
+        updateAptPanel();
       }
     };
-    myEnableAaptCompiler.addActionListener(listener);
-    myCopyResourcesFromArtifacts.addActionListener(listener);
+    myRunProcessResourcesRadio.addActionListener(listener);
+    myCompileResourcesByIdeRadio.addActionListener(listener);
 
     myAddResOverlayButton.addActionListener(new ActionListener() {
       @Override
@@ -261,6 +242,11 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         return file.isDirectory() || "apk".equals(file.getExtension());
       }
     });
+  }
+
+  private void updateAptPanel() {
+    boolean enabled = !myRunProcessResourcesRadio.isVisible() || !myRunProcessResourcesRadio.isSelected();
+    UIUtil.setEnabled(myAaptCompilerPanel, enabled, true);
   }
 
   private static String[] getDefaultApks(@NotNull Module module) {
@@ -348,21 +334,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       return true;
     }
 
-    if (myUseCustomCompilerManifestRadio.isSelected() != myConfiguration.USE_CUSTOM_COMPILER_MANIFEST) {
-      return true;
-    }
-    if (checkRelativePath(myConfiguration.CUSTOM_COMPILER_MANIFEST, myCustomCompilerManifestPathField.getText())) {
-      return true;
-    }
-
-    if (myCopyResourcesFromArtifacts.isSelected() != myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS) {
+    if (myRunProcessResourcesRadio.isSelected() != myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK) {
       return true;
     }
     if (myGenerateUnsignedApk.isSelected() != myConfiguration.GENERATE_UNSIGNED_APK) {
-      return true;
-    }
-
-    if (myEnableAaptCompiler.isSelected() != myConfiguration.ENABLE_AAPT_COMPILER) {
       return true;
     }
 
@@ -498,7 +473,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
 
-    myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS = myCopyResourcesFromArtifacts.isSelected();
+    myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
     myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
 
@@ -517,21 +492,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER = useCustomAptSrc;
 
-    boolean useCustomCompilerManifest = myUseCustomCompilerManifestRadio.isSelected();
-    if (myConfiguration.USE_CUSTOM_COMPILER_MANIFEST != useCustomCompilerManifest) {
-      runApt = true;
-    }
-    myConfiguration.USE_CUSTOM_COMPILER_MANIFEST = useCustomCompilerManifest;
-
     if (myConfiguration.REGENERATE_R_JAVA != myGenerateRJavaWhenChanged.isSelected()) {
       runApt = true;
     }
     myConfiguration.REGENERATE_R_JAVA = myGenerateRJavaWhenChanged.isSelected();
-
-    if (myConfiguration.ENABLE_AAPT_COMPILER != myEnableAaptCompiler.isSelected()) {
-      runApt = true;
-    }
-    myConfiguration.ENABLE_AAPT_COMPILER = myEnableAaptCompiler.isSelected();
 
     if (myConfiguration.REGENERATE_JAVA_BY_AIDL != myGenerateIdlWhenChanged.isSelected()) {
       runIdl = true;
@@ -552,25 +516,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     else {
       String relPath = toRelativePath(absAptSourcePath);
       myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
-    }
-
-    String absCompilerManifestPath = myCustomCompilerManifestPathField.getText().trim();
-    if (useCustomCompilerManifest) {
-      if (absCompilerManifestPath.length() == 0) {
-        throw new ConfigurationException("AndroidManifest.xml path not specified in \"Compiler\" section");
-      }
-      String newCustomCompilerManifestPath = '/' + getAndCheckRelativePath(absCompilerManifestPath, false);
-      if (!SdkConstants.FN_ANDROID_MANIFEST_XML.equals(AndroidUtils.getSimpleNameByRelativePath(newCustomCompilerManifestPath))) {
-        throw new ConfigurationException("Manifest file must have name AndroidManifest.xml");
-      }
-      if (!newCustomCompilerManifestPath.equals(myConfiguration.CUSTOM_COMPILER_MANIFEST)) {
-        runApt = true;
-      }
-      myConfiguration.CUSTOM_COMPILER_MANIFEST = newCustomCompilerManifestPath;
-    }
-    else {
-      String relPath = toRelativePath(absCompilerManifestPath);
-      myConfiguration.CUSTOM_COMPILER_MANIFEST = relPath != null ? '/' + relPath : "";
     }
 
     final AndroidPlatform platform = myPlatformChooser.getSelectedPlatform();
@@ -704,21 +649,15 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myCustomAptSourceDirField.setText(aptSourceAbsPath != null ? aptSourceAbsPath : "");
     myCustomAptSourceDirField.setEnabled(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
 
-    myUseCustomCompilerManifestRadio.setSelected(configuration.USE_CUSTOM_COMPILER_MANIFEST);
-    myUseCompilerManifestFromStructureRadio.setSelected(!configuration.USE_CUSTOM_COMPILER_MANIFEST);
-
-    String compilerManifestPath = configuration.CUSTOM_COMPILER_MANIFEST;
-    String compilerManifestAbsPath = compilerManifestPath.length() > 0 ? toAbsolutePath(compilerManifestPath) : "";
-    myCustomCompilerManifestPathField.setText(compilerManifestAbsPath != null ? compilerManifestAbsPath : "");
-    myCustomCompilerManifestPathField.setEnabled(configuration.USE_CUSTOM_COMPILER_MANIFEST);
-
     String apkPath = configuration.APK_PATH;
     String apkAbsPath = apkPath.length() > 0 ? toAbsolutePath(apkPath) : "";
     myApkPathCombo.getComboBox().getEditor().setItem(apkAbsPath != null ? apkAbsPath : "");
 
     boolean mavenizedModule = AndroidMavenUtil.isMavenizedModule(myContext.getModule());
-    myCopyResourcesFromArtifacts.setVisible(mavenizedModule);
-    myCopyResourcesFromArtifacts.setSelected(myConfiguration.COPY_RESOURCES_FROM_ARTIFACTS);
+    myRunProcessResourcesRadio.setVisible(mavenizedModule);
+    myRunProcessResourcesRadio.setSelected(myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
+    myCompileResourcesByIdeRadio.setVisible(mavenizedModule);
+    myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
     myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
 
@@ -737,12 +676,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
     myResOverlayList.setModel(new CollectionListModel(items));
 
-    myEnableAaptCompiler.setSelected(myConfiguration.ENABLE_AAPT_COMPILER);
-    UIUtil.setEnabled(myAaptCompilerPanel, myEnableAaptCompiler.isSelected(), true);
-    myEnableAaptCompiler.setEnabled(true);
-    if (myCopyResourcesFromArtifacts.isSelected() && myCopyResourcesFromArtifacts.isVisible()) {
-      UIUtil.setEnabled(myAaptCompilerPanel, false, true);
-    }
+    updateAptPanel();
   }
 
   @Nullable

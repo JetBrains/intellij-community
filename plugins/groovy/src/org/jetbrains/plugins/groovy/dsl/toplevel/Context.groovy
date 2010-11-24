@@ -2,15 +2,12 @@ package org.jetbrains.plugins.groovy.dsl.toplevel
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.StandardPatterns
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.Scope
 import static com.intellij.patterns.PlatformPatterns.psiFile
 import static com.intellij.patterns.PlatformPatterns.virtualFile
-import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor
-import com.intellij.util.ProcessingContext
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector
 
-/**
+ /**
  * @author ilyas
  */
 class Context {
@@ -28,19 +25,14 @@ class Context {
       addFilter new FileContextFilter(psiFile().withVirtualFile(vfilePattern))
     }
 
-    List<String> scripttype = args.scripttype
-    if (scripttype) {
-      addFilter(new ContextFilter() {
-                @Override
-                boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-                  def file = descriptor.placeFile
-                  if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
-                    def scripTypeId = GroovyScriptTypeDetector.getScriptType((GroovyFile)file).getId()
-                    return scripttype.contains(scripTypeId)
-                  }
-                  return false
-                }
-                })
+    String scriptType = args.scriptType
+    if (scriptType) {
+      addFilter(new ScriptTypeFilter(scriptType))
+    }
+
+    String pathRegexp = args.pathRegexp
+    if (pathRegexp) {
+      addFilter new FileContextFilter(psiFile().withVirtualFile(virtualFile().withPath(StandardPatterns.string().matches(pathRegexp))))
     }
 
     // filter by scope first, then by ctype

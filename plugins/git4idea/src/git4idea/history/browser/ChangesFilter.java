@@ -417,6 +417,7 @@ public class ChangesFilter {
       myCommandParametersFilter = new CommandParametersFilter() {
         public void applyToCommandLine(List<String> sink) {
           sink.add("--grep=" + myRegexp);
+          sink.add("--regexp-ignore-case");
         }
       };
       myMemoryFilter = new MemoryFilter() {

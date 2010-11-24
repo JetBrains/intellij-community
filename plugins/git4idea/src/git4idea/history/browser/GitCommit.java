@@ -16,13 +16,15 @@
 package git4idea.history.browser;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
+import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class GitCommit {
   @NotNull
-  private final String myShortHash;
+  private final AbstractHash myShortHash;
   @NotNull
   private final SHAHash myHash;
   private final String myAuthor;
@@ -34,14 +36,24 @@ public class GitCommit {
   private final String myComitterEmail;
 
   private final List<String> myTags;
-  private final List<String> myBranches;
+  private final List<String> myLocalBranches;
+  private final List<String> myRemoteBranches;
 
   private final Set<String> myParentsHashes;
   private final Set<GitCommit> myParentsLinks;
 
+  // todo concern having
   private final List<FilePath> myPathsList;
+  private final List<Change> myChanges;
+  private String myCurrentBranch;
 
-  public GitCommit(@NotNull final String shortHash,
+  private final long myAuthorTime;
+  //private final List<String> myBranches;
+  private boolean myOnLocal;
+  // very expensive to calculate it massively, seems it wouldnt be shown
+  private boolean myOnTracked;
+
+  public GitCommit(@NotNull final AbstractHash shortHash,
                    @NotNull final SHAHash hash,
                    final String author,
                    final String committer,
@@ -52,7 +64,10 @@ public class GitCommit {
                    final String authorEmail,
                    final String comitterEmail,
                    List<String> tags,
-                   List<String> branches) {
+                   final List<String> localBranches,
+                   final List<String> remoteBranches,
+                   List<Change> changes,
+                   long authorTime) {
     myShortHash = shortHash;
     myAuthor = author;
     myCommitter = committer;
@@ -64,7 +79,11 @@ public class GitCommit {
     myAuthorEmail = authorEmail;
     myComitterEmail = comitterEmail;
     myTags = tags;
-    myBranches = branches;
+    myChanges = changes;
+    myLocalBranches = localBranches;
+    myRemoteBranches = remoteBranches;
+    myAuthorTime = authorTime;
+    //myBranches = branches;
     myParentsLinks = new HashSet<GitCommit>();
   }
 
@@ -120,10 +139,6 @@ public class GitCommit {
     return myHash.hashCode();
   }
 
-  public List<String> getBranches() {
-    return myBranches;
-  }
-
   public List<String> getTags() {
     return myTags;
   }
@@ -132,8 +147,12 @@ public class GitCommit {
     Collections.sort(myTags, comparator);
   }
 
-  public void orderBranches(final Comparator<String> comparator) {
-    Collections.sort(myBranches, comparator);
+  public List<String> getLocalBranches() {
+    return myLocalBranches;
+  }
+
+  public List<String> getRemoteBranches() {
+    return myRemoteBranches;
   }
 
   public String getAuthorEmail() {
@@ -154,7 +173,43 @@ public class GitCommit {
   }
 
   @NotNull
-  public String getShortHash() {
+  public AbstractHash getShortHash() {
     return myShortHash;
+  }
+
+  public List<Change> getChanges() {
+    return myChanges;
+  }
+
+  public void setCurrentBranch(String s) {
+    myCurrentBranch = s;
+  }
+
+  public String getCurrentBranch() {
+    return myCurrentBranch;
+  }
+
+  public long getAuthorTime() {
+    return myAuthorTime;
+  }
+
+  public String getComitterEmail() {
+    return myComitterEmail;
+  }
+
+  public boolean isOnLocal() {
+    return myOnLocal;
+  }
+
+  public void setOnLocal(boolean onLocal) {
+    myOnLocal = onLocal;
+  }
+
+  public boolean isOnTracked() {
+    return myOnTracked;
+  }
+
+  public void setOnTracked(boolean onTracked) {
+    myOnTracked = onTracked;
   }
 }

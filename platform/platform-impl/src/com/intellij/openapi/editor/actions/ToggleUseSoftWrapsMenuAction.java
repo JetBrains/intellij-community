@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsAction {
 
   public ToggleUseSoftWrapsMenuAction() {
-    super(SoftWrapAppliancePlaces.MAIN_EDITOR);
+    super(SoftWrapAppliancePlaces.MAIN_EDITOR, false);
   }
 
   @Override

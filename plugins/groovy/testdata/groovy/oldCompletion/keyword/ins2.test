@@ -1,3 +1,4 @@
 boolean a = b in<caret> D
 -----
+in
 instanceof

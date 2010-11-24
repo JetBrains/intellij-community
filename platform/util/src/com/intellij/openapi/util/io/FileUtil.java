@@ -932,18 +932,24 @@ public class FileUtil {
     writeToFile(file, text, false);
   }
 
+  public static void writeToFile(final File file, final byte[] text, int off, int len) throws IOException {
+    writeToFile(file, text, off, len, false);
+  }
+
   public static void writeToFile(final File file, final byte[] text, boolean append) throws IOException {
+    writeToFile(file, text, 0, text.length, append);
+  }
+
+  private static void writeToFile(File file, byte[] text, final int off, final int len, boolean append) throws IOException {
     createParentDirs(file);
     OutputStream stream = new BufferedOutputStream(new FileOutputStream(file, append));
     try {
-      stream.write(text);
+      stream.write(text, off, len);
     }
     finally {
       stream.close();
     }
   }
-
-  
 
   public static boolean processFilesRecursively(final File root, final Processor<File> processor) {
     final LinkedList<File> queue = new LinkedList<File>();

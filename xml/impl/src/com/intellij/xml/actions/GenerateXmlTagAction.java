@@ -141,7 +141,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   }
 
   @Nullable
-  private static XmlTag getAnchor(XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
+  private static XmlTag getAnchor(@NotNull XmlTag contextTag, Editor editor, XmlElementDescriptor selected) {
     XmlContentDFA contentDFA = XmlContentDFA.getContentDFA(contextTag);
     int offset = editor.getCaretModel().getOffset();
     if (contentDFA == null) {

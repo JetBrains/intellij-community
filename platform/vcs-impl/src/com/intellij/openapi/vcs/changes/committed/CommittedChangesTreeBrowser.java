@@ -64,7 +64,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final RepositoryChangesBrowser myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
-  private ChangeListGroupingStrategy myGroupingStrategy = new ChangeListGroupingStrategy.DateChangeListGroupingStrategy();
+  private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
   private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final JPanel myLeftPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
@@ -267,6 +267,15 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       for(Change c: changes) {
         addOrReplaceChange(result, c);
       }
+    }
+    return result;
+  }
+
+  // changes are assumed to be sorted ascending
+  public static List<Change> zipChanges(final List<Change> changes) {
+    final List<Change> result = new ArrayList<Change>();
+    for (Change change : changes) {
+      addOrReplaceChange(result, change);
     }
     return result;
   }

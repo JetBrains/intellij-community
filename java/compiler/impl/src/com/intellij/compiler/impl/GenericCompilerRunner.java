@@ -192,6 +192,8 @@ public class GenericCompilerRunner {
           for (Item item : items) {
             final Key key = item.getKey();
             keySet.add(key);
+            if (item.isExcluded()) continue;
+
             final GenericCompilerCache.PersistentStateData<SourceState, OutputState> data = cache.getState(targetId, key);
             SourceState sourceState = data != null ? data.mySourceState : null;
             final OutputState outputState = data != null ? data.myOutputState : null;

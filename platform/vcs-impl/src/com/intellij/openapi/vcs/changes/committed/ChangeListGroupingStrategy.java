@@ -34,57 +34,7 @@ public interface ChangeListGroupingStrategy {
   String getGroupName(CommittedChangeList changeList);
   Comparator<CommittedChangeList> getComparator();
 
-  class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
-    @NonNls private final SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-    @NonNls private final SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
-    @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
-    private long myTimeToRecalculateAfter;
-    private Calendar myCurrentCalendar;
-
-    public String toString() {
-      return VcsBundle.message("date.group.title");
-    }
-
-    public boolean changedSinceApply() {
-      return System.currentTimeMillis() > myTimeToRecalculateAfter;
-    }
-
-    public void beforeStart() {
-      myCurrentCalendar = Calendar.getInstance();
-      // +- seconds etc
-      myCurrentCalendar.set(Calendar.HOUR, 0);
-      myCurrentCalendar.set(Calendar.MINUTE, 0);
-
-      myTimeToRecalculateAfter = myCurrentCalendar.getTimeInMillis() + 24 * 60 * 60 * 1000;
-      myCurrentCalendar.setTime(new Date());
-    }
-
-    public String getGroupName(final CommittedChangeList list) {
-      Calendar clCal = Calendar.getInstance();
-      clCal.setTime(list.getCommitDate());
-      if (myCurrentCalendar.get(Calendar.YEAR) == clCal.get(Calendar.YEAR)) {
-        if (myCurrentCalendar.get(Calendar.DAY_OF_YEAR) == clCal.get(Calendar.DAY_OF_YEAR)) {
-          return VcsBundle.message("date.group.today");
-        }
-        if (myCurrentCalendar.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)) {
-          return myWeekdayFormat.format(list.getCommitDate());
-        }
-        if (myCurrentCalendar.get(Calendar.WEEK_OF_YEAR) == clCal.get(Calendar.WEEK_OF_YEAR)+1) {
-          return VcsBundle.message("date.group.last.week");
-        }
-        return myMonthFormat.format(list.getCommitDate());
-      }
-      return myMonthYearFormat.format(list.getCommitDate());
-    }
-
-    public Comparator<CommittedChangeList> getComparator() {
-      return new Comparator<CommittedChangeList>() {
-        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          return -o1.getCommitDate().compareTo(o2.getCommitDate());
-        }
-      };
-    }
-  };
+  ;
 
   ChangeListGroupingStrategy USER = new ChangeListGroupingStrategy() {
     public String toString() {

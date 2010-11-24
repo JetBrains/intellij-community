@@ -117,10 +117,13 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       @Override
       public void dispose() {
         synchronized (myLock) {
-          final Collection<LineStatusTracker> trackers = myLineStatusTrackers.values();
-          final LineStatusTracker[] lineStatusTrackers = trackers.toArray(new LineStatusTracker[trackers.size()]);
-          for (final LineStatusTracker tracker : lineStatusTrackers) {
-            releaseTracker(tracker.getDocument());
+          for (final LineStatusTracker tracker : myLineStatusTrackers.values()) {
+            final Document document = tracker.getDocument();
+            final Alarm alarm = myLineStatusUpdateAlarms.remove(document);
+            if (alarm != null) {
+              alarm.cancelAllRequests();
+            }
+            tracker.release();
           }
 
           myLineStatusTrackers.clear();

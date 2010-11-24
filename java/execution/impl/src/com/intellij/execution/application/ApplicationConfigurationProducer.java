@@ -45,8 +45,9 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) return null;
     final PsiElement element = location.getPsiElement();
-
+    if (!element.isPhysical()) return null;
     PsiElement currentElement = element;
     PsiMethod method;
     while ((method = findMain(currentElement)) != null) {

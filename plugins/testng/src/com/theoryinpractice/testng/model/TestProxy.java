@@ -43,11 +43,11 @@ import java.util.regex.Pattern;
  */
 public class TestProxy extends AbstractTestProxy {
   @NonNls public static final Pattern COMPARISION_PATTERN =
-    Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
+    Pattern.compile("(.*)expected same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   @NonNls public static final Pattern EXPECTED_BUT_WAS_PATTERN =
     Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
   @NonNls public static final Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN =
-    Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+    Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>.*", Pattern.DOTALL);
   private final List<TestProxy> results = new ArrayList<TestProxy>();
   private TestResultMessage resultMessage;
   private String name;

@@ -39,6 +39,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -175,9 +176,8 @@ public class CreateClassDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          final PsiDirectory baseDir = myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
-          myTargetDirectory = myModule == null? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, baseDir, true)
-            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, baseDir, true);
+          myTargetDirectory = myModule == null? PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, getBaseDir(packageName), true)
+            : PackageUtil.findOrCreateDirectoryForPackage(myModule, packageName, getBaseDir(packageName), true, true);
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;
@@ -197,6 +197,11 @@ public class CreateClassDialog extends DialogWrapper {
       return;
     }
     super.doOKAction();
+  }
+
+  @Nullable
+  protected PsiDirectory getBaseDir(String packageName) {
+    return myModule == null? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);
   }
 
   public String getClassName() {

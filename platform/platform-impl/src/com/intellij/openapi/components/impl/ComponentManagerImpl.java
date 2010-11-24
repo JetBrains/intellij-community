@@ -652,7 +652,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                 componentInstance = super.getComponentInstance(picoContainer);
 
                 if (!myInitialized) {
-                  if (myInitializing) LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                  if (myInitializing) {
+                    if (myConfig.pluginDescriptor != null) {
+                      LOG.error(new PluginException("Cyclic component initialization: " + componentKey, myConfig.pluginDescriptor.getPluginId()));
+                    }
+                    else {
+                      LOG.error(new Throwable("Cyclic component initialization: " + componentKey));
+                    }
+                  }
                   myInitializing = true;
                   myComponentsRegistry.registerComponentInstance(componentInstance);
                   initComponent(componentInstance);

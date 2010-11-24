@@ -836,6 +836,72 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     //assertFalse(getCompilerExtension("project").isExcludeOutput());
   }
 
+  public void testAnnotationProcessorSources() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("target/generated-sources/foo",
+                         "target/generated-sources/annotations",
+                         "target/generated-sources/test-annotations",
+                         "target/generated-test-sources/foo");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/foo",
+                  "target/generated-sources/annotations");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "target/generated-test-sources/foo",
+                      "target/generated-sources/test-annotations");
+  }
+
+  public void testCustomAnnotationProcessorSources() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("anno",
+                         "test-anno",
+                         "target/generated-sources/foo",
+                         "target/generated-sources/annotations",
+                         "target/generated-sources/test-annotations",
+                         "target/generated-test-sources/foo");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "  <plugin>" +
+                  "   <groupId>org.apache.maven.plugins</groupId>" +
+                  "   <artifactId>maven-compiler-plugin</artifactId>" +
+                  "   <version>2.3.2</version>" +
+                  "   <configuration>" +
+                  "     <generatedSourcesDirectory>${basedir}/anno</generatedSourcesDirectory>" +
+                  "     <generatedTestSourcesDirectory>${basedir}/test-anno</generatedTestSourcesDirectory>" +
+                  "   </configuration>" +
+                  "  </plugin>" +
+                  " </plugins>" +
+                  "</build>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "anno",
+                  "target/generated-sources/foo",
+                  "target/generated-sources/annotations",
+                  "target/generated-sources/test-annotations");
+
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/resources",
+                      "test-anno",
+                      "target/generated-test-sources/foo");
+  }
+
   private CompilerModuleExtension getCompilerExtension(String moduleName) {
     return ModuleRootManager.getInstance(getModule(moduleName)).getModuleExtension(CompilerModuleExtension.class);
   }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -78,14 +79,13 @@ public class MavenProject {
   public void write(@NotNull DataOutputStream out) throws IOException {
     out.writeUTF(getPath());
 
-    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+    BufferExposingByteArrayOutputStream bs = new BufferExposingByteArrayOutputStream();
     ObjectOutputStream os = new ObjectOutputStream(bs);
     try {
       os.writeObject(myState);
 
-      byte[] bytes = bs.toByteArray();
-      out.writeInt(bytes.length);
-      out.write(bytes);
+      out.writeInt(bs.size());
+      out.write(bs.getInternalBuffer(), 0, bs.size());
     }
     finally {
       os.close();
@@ -335,6 +335,14 @@ public class MavenProject {
   @NotNull
   public String getGeneratedSourcesDirectory(boolean testSources) {
     return getBuildDirectory() + (testSources ? "/generated-test-sources" : "/generated-sources");
+  }
+
+  @NotNull
+  public String getAnnotationProcessorDirectory(boolean testSources) {
+    String def = getGeneratedSourcesDirectory(false) + (testSources ? "/test-annotations" : "/annotations");
+    return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(),
+                                              testSources ? "generatedTestSourcesDirectory" : "generatedSourcesDirectory",
+                                              def);
   }
 
   @NotNull
@@ -716,7 +724,7 @@ public class MavenProject {
   }
 
   @Nullable
-  public MavenPlugin findPlugin(@Nullable String groupId,  @Nullable String artifactId) {
+  public MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId) {
     for (MavenPlugin each : getPlugins()) {
       if (each.getMavenId().equals(groupId, artifactId)) return each;
     }
@@ -735,8 +743,13 @@ public class MavenProject {
 
   @Nullable
   private String getCompilerLevel(String level) {
-    String result = MavenJDOMUtil.findChildValueByPath(getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin"), level);
+    String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
     return normalizeCompilerLevel(result);
+  }
+
+  @Nullable
+  private Element getCompilerConfig() {
+    return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
   private static class CompilerLevelTable {

@@ -42,6 +42,10 @@ public class ImportListElementInfoFactory implements SmartPointerElementInfoFact
       return myFile.getImportList();
     }
 
+    @Override
+    public void dispose() {
+    }
+
     public Document getDocumentToSynchronize() {
       return null;
     }

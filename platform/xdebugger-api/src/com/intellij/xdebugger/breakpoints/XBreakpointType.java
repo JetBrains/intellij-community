@@ -148,17 +148,22 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   /**
    * Returns properties of the default breakpoint. The default breakpoints cannot be deleted and is always shown on top of the breakpoints
-   * list in the dialog. It is disabled by default.
+   * list in the dialog.
    *
-   * @return a default breakpoint properties or {@code null} if default breakpoint isn't supported
+   * @return a default breakpoint or {@code null} if default breakpoint isn't supported
    */
   @Nullable
-  public P createDefaultBreakpointProperties() {
+  public XBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
     return null;
   }
 
   @Nullable @NonNls
   public String getBreakpointsDialogHelpTopic() {
     return null;
+  }
+
+  public interface XBreakpointCreator<P extends XBreakpointProperties> {
+    @NotNull
+    XBreakpoint<P> createBreakpoint(@Nullable P properties);
   }
 }

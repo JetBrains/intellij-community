@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent, JDOMExternalizable {
+public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
   
   private final Project myProject;
@@ -72,6 +72,11 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
   @Nls
   public String getActionText() {
     return VcsBundle.message("create.patch.commit.action.text");
+  }
+
+  @Override
+  public String getHelpId() {
+    return "reference.dialogs.vcs.patch.create";
   }
 
   @NotNull

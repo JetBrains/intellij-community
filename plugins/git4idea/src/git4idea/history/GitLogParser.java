@@ -15,13 +15,23 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.containers.Convertor;
+import git4idea.GitContentRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.history.wholeTree.AbstractHash;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
@@ -43,7 +53,7 @@ import java.util.Map;
  * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' - otherwise the parser won't be able
  * to parse output of 'git log' (because special separator characters are used for that).</p>
  *
- * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #setNameInOutput(boolean)} with
+ * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #parseStatusBeforeName(boolean)} with
  * true or false respectively, because it also affects the output.</p>
  *  
  * @see git4idea.history.GitLogRecord
@@ -70,7 +80,7 @@ class GitLogParser {
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
   enum GitLogOption {
-    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
+    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"), COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"),
     SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d");
 
     private String myPlaceholder;
@@ -102,7 +112,7 @@ class GitLogParser {
    * The GitLogParser will parse the output concerning that output contains path or status and path.
    * @param nameStatus true if --name-status is passed, false if --name-only is passed.
    */
-  void setNameInOutput(boolean nameStatus) {
+  void parseStatusBeforeName(boolean nameStatus) {
     myNameStatusOutputted = nameStatus ? NameStatus.STATUS : NameStatus.NAME;
   }
 
@@ -158,27 +168,39 @@ class GitLogParser {
     // parsing status and path (if given)
     char nameStatus = 0;
     final List<String> paths = new ArrayList<String>(1);
+    final boolean includeStatus = myNameStatusOutputted == NameStatus.STATUS;
+    final List<List<String>> parts = includeStatus ? new ArrayList<List<String>>() : null;
 
     if (myNameStatusOutputted != NameStatus.NONE) {
       final String[] infoAndPath = line.split(RECORD_END);
-      line = infoAndPath[0]; // commit information
-      if (infoAndPath.length > 1) { // safety check
-        final String statusAndPaths = infoAndPath[1].replaceAll("[\\r\\n]", "");
-        final String[] statusAndPathsSplit = statusAndPaths.split("\\t"); // file status and path(s) are separated by tabs
+      line = infoAndPath[0];
+      if (infoAndPath.length > 1) {
+        // separator is \n for paths, space for paths and status
+        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("\n")));
+        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext();) {
+          if (it.next().trim().isEmpty()) {
+            it.remove();
+          }
+        }
 
-        if (statusAndPathsSplit.length > 0) { // safety check
-          int index = 0;
-          if (myNameStatusOutputted == NameStatus.STATUS) {
-            nameStatus = statusAndPathsSplit[0].charAt(0); // for R100 we save R, it's enough for us.
-            index = 1;
-          }
-          // extracting path or 2 paths in case of move/rename
-          for (; index < statusAndPathsSplit.length; index++) {
-            String path = statusAndPathsSplit[index];
-            if (!path.isEmpty()) {
-              paths.add(path);
+        for (String pathLine : nameAndPathSplit) {
+          String[] partsArr;
+          if (includeStatus) {
+            final int idx = pathLine.indexOf("\t");
+            if (idx != -1) {
+              final String whatLeft = pathLine.substring(idx).trim();
+              partsArr = whatLeft.split("\\t");
+              final List<String> strings = new ArrayList<String>(partsArr.length + 1);
+              strings.add(pathLine.substring(0, 1));
+              strings.addAll(Arrays.asList(partsArr));
+              parts.add(strings);
+            } else {
+              partsArr = pathLine.split("\\t"); // should not
             }
+          } else {
+            partsArr = pathLine.split("\\t");
           }
+          paths.addAll(Arrays.asList(partsArr));
         }
       }
     } else {
@@ -196,7 +218,6 @@ class GitLogParser {
     for (; i < myOptions.length; i++) {  // options which were not returned are set to blank string, extra options are ignored.
       res.put(myOptions[i], "");
     }
-    return new GitLogRecord(res, paths, nameStatus);
+    return new GitLogRecord(res, paths, parts);
   }
-
 }

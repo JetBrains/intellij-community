@@ -65,10 +65,9 @@ public class RunInspectionIntention implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final InspectionProfileEntry inspectionTool =
+    final InspectionProfileEntry tool =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
-    if (inspectionTool instanceof LocalInspectionToolWrapper &&
-        ((LocalInspectionToolWrapper)inspectionTool).getTool() instanceof UnfairLocalInspectionTool) {
+    if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
       return false;
     }
     return true;
@@ -97,10 +96,7 @@ public class RunInspectionIntention implements IntentionAction {
                               PsiElement psiElement) {
     final InspectionProfileImpl profile = new InspectionProfileImpl(baseTool.getDisplayName());
     final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
-    for (InspectionProfileEntry entry : profileEntries) {
-      model.disableTool(entry.getShortName());
-    }
+    model.disableAllTools();
     model.enableTool(baseTool.getShortName());
     try {
       Element element = new Element("toCopy");

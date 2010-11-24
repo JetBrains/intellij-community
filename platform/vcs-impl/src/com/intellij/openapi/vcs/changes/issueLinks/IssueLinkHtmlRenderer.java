@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.util.containers.Convertor;
 import com.intellij.xml.util.XmlTagUtilBase;
 import com.intellij.util.ui.UIUtil;
 
@@ -36,7 +37,7 @@ public class IssueLinkHtmlRenderer {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(final Project project, final String c) {
+  public static String formatTextWithLinks(final Project project, final String c, final Convertor<String, String> convertor) {
     if (c == null) return "";
     String comment = XmlTagUtilBase.escapeString(c, false);
 
@@ -46,13 +47,18 @@ public class IssueLinkHtmlRenderer {
     int pos = 0;
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       TextRange range = match.getRange();
-      commentBuilder.append(comment.substring(pos, range.getStartOffset())).append("<a href=\"").append(match.getTargetUrl()).append("\">");
+      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"").append(match.getTargetUrl()).append("\">");
       commentBuilder.append(range.substring(comment)).append("</a>");
       pos = range.getEndOffset();
     }
-    commentBuilder.append(comment.substring(pos));
+    commentBuilder.append(convertor.convert(comment.substring(pos)));
     comment = commentBuilder.toString();
 
     return comment.replace("\n", "<br>");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static String formatTextWithLinks(final Project project, final String c) {
+    return formatTextWithLinks(project, c, Convertor.SELF);
   }
 }

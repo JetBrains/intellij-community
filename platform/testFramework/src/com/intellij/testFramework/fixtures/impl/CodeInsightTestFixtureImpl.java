@@ -1303,7 +1303,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument);
+    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument,null);
   }
 
   public static void ensureIndexesUpToDate(Project project) {

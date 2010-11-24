@@ -29,7 +29,6 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with branch" />
       <!-- <reference id="ChangesView.Browse"/> -->
       <separator/>
-      <!-- <action id="Test" class="git4idea.history.wholeTree.FictiveAction" text="Test git log"/> -->
 
       <action id="Git.CurrentBranch" class="git4idea.actions.GitCurrentBranch" text="Current Branch..."/>
       <action id="Git.Checkout" class="git4idea.actions.GitCheckout" text="Checkout Branch..."/>
@@ -73,6 +72,9 @@
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
 
     <projectService
+      serviceInterface="git4idea.history.wholeTree.LogFactoryService"
+      serviceImplementation="git4idea.history.wholeTree.LogFactoryService"/>
+    <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
     <projectService
@@ -94,14 +96,17 @@
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <projectService
-        serviceInterface="git4idea.history.GitUsersComponent"
-        serviceImplementation="git4idea.history.GitUsersComponent"/>
+        serviceInterface="git4idea.history.NewGitUsersComponent"
+        serviceImplementation="git4idea.history.NewGitUsersComponent"/>
     <projectService
         serviceInterface="git4idea.history.browser.GitProjectLogManager"
         serviceImplementation="git4idea.history.browser.GitProjectLogManager"/>
     <projectService
         serviceInterface="git4idea.checkout.branches.GitBranchConfigurations"
         serviceImplementation="git4idea.checkout.branches.GitBranchConfigurations"/>
+    <projectService
+        serviceInterface="git4idea.config.GitExecutableValidator"
+        serviceImplementation="git4idea.config.GitExecutableValidator"/>
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

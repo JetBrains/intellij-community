@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -52,14 +51,12 @@ public class InlineVariableFix extends InspectionGadgetsFix {
         final Query<PsiReference> search =
                 ReferencesSearch.search(variable, new LocalSearchScope(member));
         final Collection<PsiElement> replacedElements = new ArrayList();
-        search.forEach(new Processor<PsiReference>() {
-            public boolean process(PsiReference reference) {
-                final PsiElement replacedElement =
-                        reference.getElement().replace(initializer);
-                replacedElements.add(replacedElement);
-                return true;
-            }
-        });
+        final Collection<PsiReference> references = search.findAll();
+        for (PsiReference reference : references) {
+            final PsiElement replacedElement =
+                    reference.getElement().replace(initializer);
+            replacedElements.add(replacedElement);
+        }
         HighlightUtils.highlightElements(replacedElements);
         variable.delete();
     }

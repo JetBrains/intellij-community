@@ -189,6 +189,14 @@ public abstract class IntentionSettingsTree {
     treeModel.nodeChanged(root);
   }
 
+  public void selectIntention(String familyName) {
+    final CheckedTreeNode child = findChildRecursively(getRoot(), familyName);
+    if (child != null) {
+      final TreePath path = new TreePath(child.getPath());
+      TreeUtil.selectPath(myTree, path);
+    }
+  }
+
   private static List<IntentionActionMetaData> sort(final List<IntentionActionMetaData> intentionsToShow) {
     List<IntentionActionMetaData> copy = new ArrayList<IntentionActionMetaData>(intentionsToShow);
     Collections.sort(copy, new Comparator<IntentionActionMetaData>() {
@@ -238,6 +246,28 @@ public abstract class IntentionSettingsTree {
         String text = getNodeText(node);
         if (name.equals(text)) {
           found.set(node);
+        }
+      }
+    });
+    return found.get();
+  }
+
+  private static CheckedTreeNode findChildRecursively(CheckedTreeNode node, final String name) {
+    final Ref<CheckedTreeNode> found = new Ref<CheckedTreeNode>();
+    visitChildren(node, new CheckedNodeVisitor() {
+      public void visit(CheckedTreeNode node) {
+        if (found.get() != null) return;
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof IntentionActionMetaData) {
+          String text = getNodeText(node);
+          if (name.equals(text)) {
+            found.set(node);
+          }
+        } else {
+          final CheckedTreeNode child = findChildRecursively(node, name);
+          if (child != null) {
+            found.set(child);
+          }
         }
       }
     });

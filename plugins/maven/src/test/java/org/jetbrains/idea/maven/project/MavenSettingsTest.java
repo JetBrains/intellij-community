@@ -73,6 +73,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
   public void testNotModifiedAfterCreation() throws Exception {
     MavenSettings s = new MavenSettings(myProject);
+    s.createComponent();
     s.reset();
     try {
       assertFalse(s.isModified());
@@ -82,6 +83,7 @@ public class MavenSettingsTest extends MavenTestCase {
     }
 
     for (Configurable each : s.getConfigurables()) {
+      each.createComponent();
       each.reset();
       try {
         assertFalse(each.isModified());

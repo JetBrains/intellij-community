@@ -36,7 +36,7 @@ import java.beans.PropertyChangeListener;
 public class ActionButton extends JComponent implements ActionButtonComponent {
   private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
 
-  private static final Icon ourEmptyIcon = new EmptyIcon(18, 18);
+  private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
   private Dimension myMinimumButtonSize;
   private PropertyChangeListener myActionButtonSynchronizer;

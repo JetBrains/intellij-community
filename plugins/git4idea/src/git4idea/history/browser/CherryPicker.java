@@ -35,9 +35,8 @@ import java.util.*;
 
 public class CherryPicker {
   private final GitVcs myVcs;
+  private final List<GitCommit> myCommits;
   private final LowLevelAccess myAccess;
-  private final SLRUCache<SHAHash, CommittedChangeList> myListsCache;
-  private final Collection<SHAHash> myHashes;
 
   private final List<VcsException> myExceptions;
   private final List<VcsException> myWarnings;
@@ -45,25 +44,24 @@ public class CherryPicker {
   private final List<String> myMessagesInOrder;
   private final Map<String, Collection<FilePath>> myFilesToMove;
 
-  public CherryPicker(GitVcs vcs, Collection<SHAHash> hashes, SLRUCache<SHAHash, CommittedChangeList> listsCache, LowLevelAccess access) {
+  public CherryPicker(GitVcs vcs, final List<GitCommit> commits, LowLevelAccess access) {
     myVcs = vcs;
-    myHashes = hashes;
-    myListsCache = listsCache;
+    myCommits = commits;
     myAccess = access;
 
     myExceptions = new ArrayList<VcsException>();
     myWarnings = new ArrayList<VcsException>();
 
     myDirtyFiles = new ArrayList<FilePath>();
-    myMessagesInOrder = new ArrayList<String>(hashes.size());
+    myMessagesInOrder = new ArrayList<String>(commits.size());
     myFilesToMove = new HashMap<String, Collection<FilePath>>();
   }
 
   public void execute() {
     final CheckinEnvironment ce = myVcs.getCheckinEnvironment();
 
-    for (SHAHash hash : myHashes) {
-      cherryPickStep(ce, hash);
+    for (int i = 0; i < myCommits.size(); i++) {
+      cherryPickStep(ce, i);
     }
 
     // remove those that are in newer lists
@@ -131,18 +129,20 @@ public class CherryPicker {
     markFilesMovesToNewerLists(myWarnings, lostSet, myFilesToMove);
   }
 
-  private void cherryPickStep(CheckinEnvironment ce, SHAHash hash) {
+  private void cherryPickStep(CheckinEnvironment ce, int i) {
+    final GitCommit commit = myCommits.get(i);
+    final SHAHash hash = commit.getHash();
     try {
       myAccess.cherryPick(hash);
     }
     catch (VcsException e) {
       myExceptions.add(e);
     }
-    final CommittedChangeList cl = myListsCache.get(hash);
+    final List<Change> changes = commit.getChanges();
 
-    final Collection<FilePath> paths = ChangesUtil.getPaths(new ArrayList<Change>(cl.getChanges()));
+    final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
-    message = (message == null) ? new StringBuilder().append(cl.getComment()).append("(cherry picked from commit ")
+    message = (message == null) ? new StringBuilder().append(commit.getDescription()).append("(cherry picked from commit ")
       .append(hash.getValue()).append(")").toString() : message;
 
     myMessagesInOrder.add(message);

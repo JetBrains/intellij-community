@@ -63,8 +63,13 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
   private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<VirtualFile> result) {
     visited.add(module);
+    VirtualFile resDir = AndroidRootUtil.getResourceDir(module);
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    Collections.addAll(result, manager.getSourceRoots());
+    for (VirtualFile sourceRoot : manager.getSourceRoots()) {
+      if (resDir != sourceRoot) {
+        result.add(sourceRoot);
+      }
+    }
     for (OrderEntry entry : manager.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
@@ -97,17 +102,32 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
-          VirtualFile outputDir = context.getModuleOutputDirectory(module);
+          VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           if (outputDir != null) {
             VirtualFile[] externalJars = getExternalJars(module, configuration);
-            String resPackage = AndroidResourcesPackagingCompiler.getOutputPath(module, outputDir);
-            String outputPath = facet.getApkPath();
-            String classesDexPath = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME).getPath();
+
+            File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
+            String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
+            if (!resPackage.exists()) {
+              context.addMessage(CompilerMessageCategory.ERROR, "File " + resPackagePath + " not found. Try to rebuild project",
+                                 null, -1, -1);
+              continue;
+            }
+
+            File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
+            String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
+            if (!classesDexFile.exists()) {
+              context.addMessage(CompilerMessageCategory.ERROR, "File " + classesDexPath + " not found. Try to rebuild project",
+                                 null, -1, -1);
+              continue;
+            }
+
             IAndroidTarget target = configuration.getAndroidTarget();
             String sdkPath = configuration.getSdkPath();
+            String outputPath = facet.getApkPath();
             if (target != null && sdkPath != null && outputPath != null) {
               AptPackagingItem item =
-                new AptPackagingItem(sdkPath, manifestFile, resPackage, outputPath, configuration.GENERATE_UNSIGNED_APK);
+                new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
               item.setNativeLibsFolders(collectNativeLibsFolders(facet));
               item.setClassesDexPath(classesDexPath);
               item.setSourceRoots(sourceRoots);
@@ -305,7 +325,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                     VirtualFile[] sourceRoots,
                     VirtualFile[] externalLibs,
                     VirtualFile[] nativeLibFolders) {
-      myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
+      //myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(resPackagePath), new File(resPackagePath).lastModified());
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(classesDexPath), new File(classesDexPath).lastModified());
       myApkPath = apkPath;

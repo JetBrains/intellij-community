@@ -116,7 +116,10 @@ public abstract class TokenSets implements GroovyTokenTypes {
   public static TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
       mREGEX_LITERAL,
-      mGSTRING_LITERAL
+      mGSTRING_LITERAL,
+      mGSTRING_CONTENT,
+      mGSTRING_BEGIN,
+      mGSTRING_END
   );
 
   public static TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);

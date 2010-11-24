@@ -21,6 +21,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
@@ -49,8 +50,10 @@ class GroovyWordsScanner implements WordsScanner
       else if (COMMENT_SET.contains(type)) {
         if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS, occurrence)) return;
       }
-      else if (STRING_LITERAL_SET.contains(type)) {
-        if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS, occurrence)) return;
+      else if (TokenSets.STRING_LITERALS.contains(type)) {
+        if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.LITERALS, occurrence)) {
+          return;
+        }
 
         if (type == mSTRING_LITERAL) {
           if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.CODE, occurrence)) return;

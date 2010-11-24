@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.persistent;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -76,14 +77,14 @@ public class SmallMapSerializer<K,V> implements Forceable {
   public void force() {
     if (! myDirty) return;
     try{
-      final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
       final DataOutput out = new DataOutputStream(bos);
       out.writeInt(myMap.size());
       for (Map.Entry<KeyWrapper<K>, V> entry : myMap.entrySet()) {
         myKeyDescriptor.save(out, entry.getKey().myKey);
         myValueExternalizer.save(out, entry.getValue());
       }
-      FileUtil.writeToFile(myFile, bos.toByteArray());
+      FileUtil.writeToFile(myFile, bos.getInternalBuffer(), 0, bos.size());
     } catch (IOException e) {
       LOG.error(e);
     } finally {

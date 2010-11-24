@@ -84,9 +84,11 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
         if (versionString != null) {
           final LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
           if (level == LanguageLevel.JDK_1_5) {
-            return "http://java.sun.com/j2se/1.5.0/docs/api/";
+            return "http://download.oracle.com/javase/1.5.0/docs/api/";
           } else if (level == LanguageLevel.JDK_1_6) {
-            return "http://java.sun.com/j2se/6/docs/api/";
+            return "http://download.oracle.com/javase/6/docs/api/";
+          } else if (level == LanguageLevel.JDK_1_7) {
+            return "http://download.oracle.com/javase/7/docs/api/";
           }
         }
       }
