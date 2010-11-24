@@ -221,6 +221,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     g.drawRoundRect(hgap, vgap, w, h, 3, 3);
   }
 
+  @Override
+  public boolean getSupportsAbsolutePositioning() {
+    return true;
+  }
+
   protected int adjustThumbWidth(int width) {
     return width;
   }
