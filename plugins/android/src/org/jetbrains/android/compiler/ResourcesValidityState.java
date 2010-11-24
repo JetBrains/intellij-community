@@ -49,7 +49,7 @@ public class ResourcesValidityState implements ValidityState {
     IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetName = target != null ? target.getFullName() : "";
 
-    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
+    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }
@@ -58,7 +58,7 @@ public class ResourcesValidityState implements ValidityState {
       collectFiles(resourcesDir);
     }
     for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
-      VirtualFile depManifest = AndroidRootUtil.getManifestFileForCompiler(depFacet);
+      VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet.getModule());
       if (depManifest != null) {
         myResourceTimestamps.put(depManifest.getPath(), depManifest.getTimeStamp());
       }
@@ -74,8 +74,15 @@ public class ResourcesValidityState implements ValidityState {
   }
 
   @Nullable
-  protected VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
-    return AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+  private static VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
+    VirtualFile dir = AndroidAptCompiler.getResourceDirForApkCompiler(module, facet);
+    if (dir != null) {
+      VirtualFile parent = dir.getParent();
+      if ("combined-resources".equals(parent.getName())) {
+        return dir;
+      }
+    }
+    return AndroidRootUtil.getResourceDir(module);
   }
 
   private void collectFiles(VirtualFile resourcesDir) {

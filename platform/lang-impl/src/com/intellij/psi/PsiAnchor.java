@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -248,7 +249,9 @@ public abstract class PsiAnchor {
             }
           }
 
-          StubElement stub = tree.getPlainList().get(myIndex);
+          List<StubElement<?>> list = tree.getPlainList();
+          if (myIndex >= list.size()) return null;
+          StubElement stub = list.get(myIndex);
 
           if (foreign) {
             final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();

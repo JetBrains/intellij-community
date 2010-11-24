@@ -338,6 +338,14 @@ public class MavenProject {
   }
 
   @NotNull
+  public String getAnnotationProcessorDirectory(boolean testSources) {
+    String def = getGeneratedSourcesDirectory(false) + (testSources ? "/test-annotations" : "/annotations");
+    return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(),
+                                              testSources ? "generatedTestSourcesDirectory" : "generatedSourcesDirectory",
+                                              def);
+  }
+
+  @NotNull
   public String getOutputDirectory() {
     return myState.myOutputDirectory;
   }
@@ -716,7 +724,7 @@ public class MavenProject {
   }
 
   @Nullable
-  public MavenPlugin findPlugin(@Nullable String groupId,  @Nullable String artifactId) {
+  public MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId) {
     for (MavenPlugin each : getPlugins()) {
       if (each.getMavenId().equals(groupId, artifactId)) return each;
     }
@@ -735,8 +743,13 @@ public class MavenProject {
 
   @Nullable
   private String getCompilerLevel(String level) {
-    String result = MavenJDOMUtil.findChildValueByPath(getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin"), level);
+    String result = MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), level);
     return normalizeCompilerLevel(result);
+  }
+
+  @Nullable
+  private Element getCompilerConfig() {
+    return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
   }
 
   private static class CompilerLevelTable {

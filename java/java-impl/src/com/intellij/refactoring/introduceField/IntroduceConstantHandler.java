@@ -102,6 +102,8 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       if (ref instanceof PsiLocalVariable) {
         localVariable = (PsiLocalVariable)ref;
       }
+    } else if (anchorElement instanceof PsiLocalVariable) {
+      localVariable = (PsiLocalVariable)anchorElement;
     }
 
     if (localVariable == null) {

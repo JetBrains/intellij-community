@@ -145,9 +145,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   void addRangeHighlighter(RangeHighlighterEx marker) {
-    marker.setValid(true);
-    ((RangeMarkerImpl)marker).myNode = (IntervalTreeImpl.MyNode)myHighlighterTree.add(marker);
-    myHighlighterTree.checkMax(true);
+    myHighlighterTree.add(marker);
   }
 
   @NotNull

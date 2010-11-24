@@ -174,13 +174,14 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
       }
     }
 
-    if (!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
-      // it may be already configured in setupFacet()
-      String resFolderForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", false, true);
-      if (resFolderForCompilerRelPath != null && !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
+    String resFolderForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", false, true);
+    if (resFolderForCompilerRelPath != null && !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
+      if (!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
+        // it may be already configured in setupFacet()
         configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
         configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + resFolderForCompilerRelPath;
       }
+      configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
     }
 
     String assetsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "assetsDirectory", false, true);
@@ -197,6 +198,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     if (manifestFileForCompilerRelPath != null && !manifestFileForCompilerRelPath.equals(manifestFileRelPath)) {
       configuration.USE_CUSTOM_COMPILER_MANIFEST = true;
       configuration.CUSTOM_COMPILER_MANIFEST = '/' + manifestFileForCompilerRelPath;
+      configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
     }
 
     String nativeLibsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "nativeLibrariesDirectory", false, true);

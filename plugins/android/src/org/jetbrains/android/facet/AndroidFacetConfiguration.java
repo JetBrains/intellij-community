@@ -66,9 +66,7 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public boolean LIBRARY_PROJECT = false;
 
-  public boolean COPY_RESOURCES_FROM_ARTIFACTS = true;
-
-  public boolean ENABLE_AAPT_COMPILER = true;
+  public boolean RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
 
   public boolean GENERATE_UNSIGNED_APK = false;
 
