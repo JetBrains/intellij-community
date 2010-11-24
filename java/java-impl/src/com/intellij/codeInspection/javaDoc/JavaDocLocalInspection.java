@@ -97,6 +97,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   public boolean IGNORE_DEPRECATED = false;
   public boolean IGNORE_JAVADOC_PERIOD = true;
   public boolean IGNORE_DUPLICATED_THROWS = false;
+  public boolean IGNORE_POINT_TO_ITSELF = false;
   public String myAdditionalJavadocTags = "";
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
@@ -252,6 +253,14 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       });
       add(ignoreDuplicateThrowsCheckBox, gc);
+
+      final JCheckBox ignorePointToItselfCheckBox = new JCheckBox("Ignore javadoc pointing to itself", IGNORE_POINT_TO_ITSELF);
+      ignorePointToItselfCheckBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          IGNORE_POINT_TO_ITSELF = ignorePointToItselfCheckBox.isSelected();
+        }
+      });
+      add(ignorePointToItselfCheckBox, gc);
     }
 
     public FieldPanel createAdditionalJavadocTagsPanel(){
@@ -951,16 +960,18 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if (manager.getTagInfo(inlineDocTag.getName()) == null) {
           checkTagInfo(inspectionManager, null, inlineDocTag, isOnTheFly, problems);
         }
-        final PsiDocTagValue value = inlineDocTag.getValueElement();
-        if (value != null) {
-          final PsiReference reference = value.getReference();
-          if (reference != null) {
-            final PsiElement ref = reference.resolve();
-            if (ref != null){
-              if (PsiTreeUtil.getParentOfType(inlineDocTag, PsiDocCommentOwner.class) == PsiTreeUtil.getParentOfType(ref, PsiDocCommentOwner.class, false)) {
-                if (nameElement != null) {
-                  problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.pointing.to.itself"), inspectionManager,
-                                                isOnTheFly));
+        if (!IGNORE_POINT_TO_ITSELF) {
+          final PsiDocTagValue value = inlineDocTag.getValueElement();
+          if (value != null) {
+            final PsiReference reference = value.getReference();
+            if (reference != null) {
+              final PsiElement ref = reference.resolve();
+              if (ref != null){
+                if (PsiTreeUtil.getParentOfType(inlineDocTag, PsiDocCommentOwner.class) == PsiTreeUtil.getParentOfType(ref, PsiDocCommentOwner.class, false)) {
+                  if (nameElement != null) {
+                    problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.pointing.to.itself"), inspectionManager,
+                                                  isOnTheFly));
+                  }
                 }
               }
             }
