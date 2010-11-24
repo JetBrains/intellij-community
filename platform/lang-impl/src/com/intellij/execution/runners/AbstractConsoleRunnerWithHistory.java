@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -53,8 +54,8 @@ import java.util.List;
 
 /**
  * @author oleg
- *         This class provides basic functionality for running consoles.
- *         It launches extrnal process and handles line input with history
+ * This class provides basic functionality for running consoles.
+ * It launches external process and handles line input with history
  */
 public abstract class AbstractConsoleRunnerWithHistory {
   private final Project myProject;
@@ -235,8 +236,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
         if (lineNumber > 0){
           caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
         } else {
-          if (myHistory.hasHistory(false)) {
-            historyProcessor.process(e, myHistory.getHistoryPrev());
+          if (myHistory.hasHistory(true)) {
+            historyProcessor.process(e, myHistory.getHistoryNext());
           }
         }
       }
@@ -245,11 +246,11 @@ public abstract class AbstractConsoleRunnerWithHistory {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        if (lineNumber < document.getLineCount() - 1){
+        if (lineNumber < document.getLineCount() - 1 && !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()))){
           caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
         } else {
-          if (myHistory.hasHistory(true)) {
-            historyProcessor.process(e, myHistory.getHistoryNext());
+          if (myHistory.hasHistory(false)) {
+            historyProcessor.process(e, myHistory.getHistoryPrev());
           }
         }
       }
