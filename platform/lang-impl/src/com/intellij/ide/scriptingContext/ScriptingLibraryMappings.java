@@ -158,6 +158,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       myLibraries.put(libName, library);
     }
 
+    public boolean containsLibrary(String libName) {
+      return myLibraries.containsKey(libName);
+    }
+
     @Override
     public String getName() {
       StringBuffer allNames = new StringBuffer();

@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util.io;
 
 /**
- * @author nik
+ * @author Eugene Zhuravlev
+ *         Date: 11/24/10
  */
-public interface ParametrizedRunnable<T> {
-  void run(T t);
+public class MappingFailedException extends RuntimeException{
+  public MappingFailedException(String message) {
+    super(message);
+  }
+
+  public MappingFailedException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

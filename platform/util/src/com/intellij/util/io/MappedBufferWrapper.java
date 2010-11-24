@@ -31,7 +31,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 public abstract class MappedBufferWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
 
   @NonNls private static final String CLEANER_METHOD_NAME = "cleaner";
   @NonNls private static final String CLEAN_METHOD_NAME = "clean";

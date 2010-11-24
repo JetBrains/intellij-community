@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 
@@ -69,6 +69,7 @@ public abstract class GitTestCase extends AbstractVcsTestCase {
         public void run() {
           try {
             initProject(myProjectDir);
+            activateVCS(GitVcs.NAME);
           }
           catch (Exception e) {
             e.printStackTrace();
@@ -76,7 +77,6 @@ public abstract class GitTestCase extends AbstractVcsTestCase {
         }
       });
     }
-    activateVCS(GitVcs.NAME);
 
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);

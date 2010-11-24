@@ -34,6 +34,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.Language;
@@ -267,6 +268,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return processField((PsiField)parent, identifier, progress);
     }
     if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
+      if (InspectionManagerEx.isSuppressed(identifier, UnusedParametersInspection.SHORT_NAME)) return null;
       return processParameter((PsiParameter)parent, progress);
     }
     if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {

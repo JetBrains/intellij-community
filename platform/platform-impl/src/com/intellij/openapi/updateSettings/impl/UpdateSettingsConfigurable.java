@@ -84,6 +84,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public boolean isModified() {
+    if (myUpdatesSettingsPanel == null) return false;
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();

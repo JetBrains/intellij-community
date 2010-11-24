@@ -31,7 +31,12 @@ import git4idea.GitUtil;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -171,7 +176,7 @@ class GitLogRecord {
 
   public List<Change> coolChangesParser(Project project, VirtualFile vcsRoot) throws VcsException {
     final List<Change> result = new ArrayList<Change>();
-    final GitRevisionNumber thisRevision = new GitRevisionNumber(getShortHash(), getDate());
+    final GitRevisionNumber thisRevision = new GitRevisionNumber(getHash(), getDate());
     final String[] parentsShortHashes = getParentsShortHashes();
     final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
     for (String parentsShortHash : parentsShortHashes) {

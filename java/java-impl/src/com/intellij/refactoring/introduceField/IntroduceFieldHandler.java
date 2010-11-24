@@ -88,11 +88,13 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
       if (ref instanceof PsiLocalVariable) {
         localVariable = (PsiLocalVariable)ref;
       }
+    } else if (anchorElement instanceof PsiLocalVariable) {
+      localVariable = (PsiLocalVariable)anchorElement;
     }
 
     int occurencesNumber = occurences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
-    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && anchorElement instanceof PsiStatement;
+    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && anchorElement instanceof PsiLocalVariable;
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
@@ -139,7 +141,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
                                                PsiExpression[] occurences,
                                                boolean isStatic) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, statement, statement);
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, local, statement);
       }
     };
     return localToFieldHandler.convertLocalToField(localVariable, editor);

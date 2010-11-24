@@ -231,7 +231,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return processOverlapping(root.getRight(), offset, processor, modCountBefore, delta);
   }
 
-  private void insert(MyNode newNode) {
+  protected void insert(MyNode newNode) {
     T key = newNode.key;
     if (root == null) {
       root = newNode;

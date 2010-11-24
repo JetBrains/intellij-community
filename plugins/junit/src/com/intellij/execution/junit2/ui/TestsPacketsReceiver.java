@@ -255,6 +255,7 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
         if (parentState instanceof SuiteState) {
           if (!child.isInProgress() && child.equals(children.get(children.size() - 1))) {
             ((SuiteState)parentState).setRunning(false);
+            parent.fireStateChanged();
             parent.flush();
           }
           ((SuiteState)parentState).updateMagnitude(magnitude);

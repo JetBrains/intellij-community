@@ -16,7 +16,12 @@
 package git4idea.checkout.branches;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -50,8 +55,15 @@ import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -222,7 +234,6 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   @Override
   public void dispose() {
     myConfigurations.removeConfigurationListener(myConfigurationsListener);
-    myStatusBar.removeWidget(ID());
   }
 
   /**

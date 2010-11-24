@@ -32,7 +32,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -545,6 +548,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private VerticalInfo createVerticalInfo(LogicalPosition position) {
     Document document = myEditor.getDocument();
     int logicalLine = position.line;
+    if (logicalLine >= document.getLineCount()) {
+      logicalLine = Math.max(0, document.getLineCount() - 1);
+    }
     int startOffset = document.getLineStartOffset(logicalLine);
     int endOffset = document.getLineEndOffset(logicalLine);
 
