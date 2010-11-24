@@ -27,7 +27,7 @@ public class CommitIdsHolder<Item> {
   private final Object myLock;
 
   public CommitIdsHolder() {
-    myRequests = new MyLruCache<Item, Item>(100, 50);
+    myRequests = new MyLruCache<Item, Item>(50, 30);
     myLock = new Object();
   }
 
@@ -71,8 +71,8 @@ public class CommitIdsHolder<Item> {
 
     public Iterator<Key> iterator() {
       final List<Iterator<Key>> iterators = new ArrayList<Iterator<Key>>(2);
-      iterators.add(myProtectedQueue.keySet().iterator());
       iterators.add(myProbationalQueue.keySet().iterator());
+      iterators.add(myProtectedQueue.keySet().iterator());
       return new CompositeIterator<Key>(iterators);
     }
 

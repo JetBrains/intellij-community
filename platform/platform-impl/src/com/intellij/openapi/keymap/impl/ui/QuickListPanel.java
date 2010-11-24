@@ -44,7 +44,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public class QuickListPanel {
-  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private JButton myRemoveActionButton;

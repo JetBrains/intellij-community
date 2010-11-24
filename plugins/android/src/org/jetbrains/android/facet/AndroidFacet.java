@@ -97,6 +97,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   private final Map<String, Map<String, PsiClass>> myClassMaps = new HashMap<String, Map<String, PsiClass>>();
 
+  private final Object myClassMapLock = new Object();
+
   public AndroidFacet(@NotNull Module module, String name, @NotNull AndroidFacetConfiguration configuration) {
     super(getFacetType(), module, name, configuration, null);
     configuration.setFacet(this);
@@ -468,26 +470,28 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
   @NotNull
   public Map<String, PsiClass> getClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
-    Map<String, PsiClass> classMap = getInitialClassMap(className, constructor);
-    Map<String, PsiClass> result = new HashMap<String, PsiClass>();
-    for (Iterator<String> it = classMap.keySet().iterator(); it.hasNext();) {
-      String key = it.next();
-      PsiClass value = classMap.get(key);
-      String[] tagNames = constructor.getTagNamesByClass(value);
-      if (ArrayUtil.find(tagNames, key) < 0) {
-        it.remove();
+    synchronized (myClassMapLock) {
+      Map<String, PsiClass> classMap = getInitialClassMap(className, constructor);
+      Map<String, PsiClass> result = new HashMap<String, PsiClass>();
+      for (Iterator<String> it = classMap.keySet().iterator(); it.hasNext();) {
+        String key = it.next();
+        PsiClass value = classMap.get(key);
+        String[] tagNames = constructor.getTagNamesByClass(value);
+        if (ArrayUtil.find(tagNames, key) < 0) {
+          it.remove();
+        }
+        else {
+          result.put(key, value);
+        }
       }
-      else {
-        result.put(key, value);
-      }
+      Project project = getModule().getProject();
+      fillMap(className, constructor, ProjectScope.getProjectScope(project), result);
+      return result;
     }
-    Project project = getModule().getProject();
-    fillMap(className, constructor, ProjectScope.getProjectScope(project), result);
-    return result;
   }
 
   @NotNull
-  public synchronized Map<String, PsiClass> getInitialClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
+  private Map<String, PsiClass> getInitialClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
     Map<String, PsiClass> viewClassMap = myClassMaps.get(className);
     if (viewClassMap != null) return viewClassMap;
     viewClassMap = new HashMap<String, PsiClass>();

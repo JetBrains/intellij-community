@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorChooser;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -103,16 +104,8 @@ public class AndroidColorAnnotator implements Annotator {
     @NotNull
     @Override
     public Icon getIcon() {
-      return new EmptyIcon(ICON_SIZE) {
-        @Override
-        public void paintIcon(Component component, Graphics g, int i, int j) {
-          Color color = getCurrentColor();
-          if (color != null) {
-            g.setColor(color);
-            g.fillRect(i, j, getIconWidth(), getIconHeight());
-          }
-        }
-      };
+      final Color color = getCurrentColor();
+      return color == null ? EmptyIcon.create(ICON_SIZE) : new ColorIcon(ICON_SIZE, color);
     }
 
     // see android.graphics.Color#parseColor in android.jar library

@@ -196,4 +196,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     }
     return super.getSuppressActions();
   }
+
+  public boolean isUnfair() {
+    return myTool instanceof UnfairLocalInspectionTool;
+  }
 }

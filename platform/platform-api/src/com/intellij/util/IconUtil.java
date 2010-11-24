@@ -158,7 +158,7 @@ public class IconUtil {
   private static Icon createEmptyIconLike(final String baseIconPath) {
     Icon baseIcon = IconLoader.findIcon(baseIconPath);
     if (baseIcon == null) {
-      return new EmptyIcon(16, 16);
+      return EmptyIcon.ICON_16;
     }
     return new EmptyIcon(baseIcon.getIconWidth(), baseIcon.getIconHeight());
   }

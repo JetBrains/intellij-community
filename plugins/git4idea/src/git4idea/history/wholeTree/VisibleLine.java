@@ -19,6 +19,6 @@ package git4idea.history.wholeTree;
  * @author irengrig
  */
 public interface VisibleLine {
-  boolean isDecoration();
-  Object getData();
+  boolean holdsDecoration();
+  String getDecorationString();
 }

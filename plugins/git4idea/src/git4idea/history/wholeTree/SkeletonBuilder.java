@@ -15,40 +15,36 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.vcs.Ring;
-import com.intellij.util.AsynchConsumer;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.ReadonlyList;
 
 import java.util.*;
 
 /**
  * @author irengrig
  */
-public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
-  private final TreeSkeletonImpl mySkeleton;
-  private final MultiMap<String, WaitingCommit> myAwaitingParents;
+public class SkeletonBuilder {
+  private final WireEventsListener mySkeleton;
+  private final MultiMap<AbstractHash, WaitingCommit> myAwaitingParents;
   // next available idx
   private int myWireCount;
   private int rowCount;
-  private final int myEventsIndexSize;
   private final Map<Integer, Integer> mySeizedWires;
 
-  public SkeletonBuilder(final int commitArraySize, final int eventsIndexSize) {
-    myEventsIndexSize = eventsIndexSize;
-    mySkeleton = new TreeSkeletonImpl(commitArraySize, eventsIndexSize);
+  public SkeletonBuilder(WireEventsListener treeNavigation) {
+    mySkeleton = treeNavigation;
 
     myWireCount = 0;
-    myAwaitingParents = new MultiMap<String, WaitingCommit>();
+    myAwaitingParents = new MultiMap<AbstractHash, WaitingCommit>();
     rowCount = 0;
     // wire number -> last commit on that wire
     mySeizedWires = new HashMap<Integer, Integer>();
   }
 
-  @Override
-  public void consume(final CommitHashPlusParents obj) {
+  public void consume(final CommitI commitI, final List<AbstractHash> parents, final ReadonlyList<CommitI> commits) {
     int wireNumber = -1;
 
-    final Collection<WaitingCommit> awaiting = myAwaitingParents.remove(obj.getHash());
+    final Collection<WaitingCommit> awaiting = myAwaitingParents.remove(commitI.getHash());
 
     if (awaiting != null) {
       // we have some children, we are a parent
@@ -70,7 +66,7 @@ public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
       }
 
       for (final WaitingCommit commit : awaitingList) {
-        final TreeSkeletonImpl.Commit correspCommit = mySkeleton.get(commit.myIdx);
+        final CommitI correspCommitI = commits.get(commit.myIdx);
         commit.parentFound();
 
         if (commit.isMerge()) {
@@ -78,16 +74,16 @@ public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
           mySkeleton.addStartToEvent(commit.myIdx, rowCount);
         }
 
-        final Integer seized = mySeizedWires.get(correspCommit.getWireNumber());
+        final Integer seized = mySeizedWires.get(correspCommitI.getWireNumber());
         if (seized != null && seized == commit.myIdx) {
           if (wireNumber == -1) {
             // there is no other commits on the wire after parent -> use it
-            wireNumber = correspCommit.getWireNumber();
+            wireNumber = correspCommitI.getWireNumber();
           }
           else {
             // if there are no other children of that commit. wire dies
             if (commit.allParentsFound()) {
-              mySeizedWires.remove(correspCommit.getWireNumber());
+              mySeizedWires.remove(correspCommitI.getWireNumber());
               mySkeleton.parentWireEnds(rowCount, commit.myIdx);
             }
           }
@@ -106,116 +102,20 @@ public class SkeletonBuilder implements AsynchConsumer<CommitHashPlusParents> {
 
     // register what we choose
     mySeizedWires.put(wireNumber, rowCount);
-    mySkeleton.addCommit(rowCount, obj.getHash(), wireNumber, obj.getTime());
+    commitI.setWireNumber(wireNumber);
 
-    if (obj.getParents().length == 0) {
+    if (parents.isEmpty()) {
       // end event
       mySkeleton.wireEnds(rowCount);
       // free
       mySeizedWires.remove(wireNumber);
     } else {
-      final WaitingCommit me = new WaitingCommit(rowCount, obj.getParents().length);
-      for (String parent : obj.getParents()) {
+      final WaitingCommit me = new WaitingCommit(rowCount, parents.size());
+      for (AbstractHash parent : parents) {
         myAwaitingParents.putValue(parent, me);
       }
     }
     ++ rowCount;
-  }
-
-  public void finished() {
-    mySkeleton.refreshIndex();
-    // recount of wires
-    recountWires();
-  }
-
-  private void recountWires() {
-    // todo with reset
-    final Ring.IntegerRing ring = new Ring.IntegerRing();
-    
-    final Map<Integer, Integer> recalculateMap = new HashMap<Integer, Integer>();
-    int runningCommitNumber = 0;  // next after previous event
-
-    final Iterator<TreeSkeletonImpl.WireEvent> iterator = mySkeleton.createWireEventsIterator(0);
-    for (; iterator.hasNext(); ) {
-      final TreeSkeletonImpl.WireEvent we = iterator.next();
-      for (int i = runningCommitNumber; i <= we.getCommitIdx(); i++) {
-        final TreeSkeletonImpl.Commit commit = mySkeleton.get(i);
-        final Integer newWire = recalculateMap.get(commit.getWireNumber());
-        if (newWire != null) {
-          commit.setWireNumber(newWire);
-        }
-      }
-      runningCommitNumber = we.getCommitIdx() + 1;
-
-      final int[] wireEnds = we.getWireEnds();
-      if (wireEnds != null) {
-        for (int wireEnd : wireEnds) {
-          ring.back(wireEnd);
-        }
-      }
-      if (we.isStart()) {
-        final TreeSkeletonImpl.Commit thisCommit = mySkeleton.get(we.getCommitIdx());
-        final int thisWireNum = thisCommit.getWireNumber();
-        final Integer newNum = ring.getFree();
-        if (newNum != thisWireNum) {
-          recalculateMap.put(thisWireNum, newNum);
-          // if self is start, recalculate self here
-          thisCommit.setWireNumber(newNum);
-        }
-      }
-      if (we.isEnd()) {
-        ring.back(mySkeleton.get(we.getCommitIdx()).getWireNumber());
-      }
-      final int[] commitsStarts = we.getCommitsStarts();
-      if (commitsStarts.length > 0 && (! we.isEnd())) {
-        for (int commitStart : commitsStarts) {
-          Integer corrected = recalculateMap.get(commitStart);
-          corrected = (corrected == null) ? commitStart : corrected;
-          if (! ring.isNumUsed(corrected)) {
-            final Integer newNum = ring.getFree();
-            recalculateMap.put(commitStart, newNum);
-          }
-        }
-      }
-    }
-
-    /*final Ring.IntegerRing ring = new Ring.IntegerRing();
-    //todo put size into wire events, test how binary search for them helps, or index
-    int runningCommitNumber = 0;  // next after previous event
-    final Map<Integer, Integer> recalculateMap = new HashMap<Integer, Integer>();
-    final Iterator<TreeSkeletonImpl.WireEvent> iterator = mySkeleton.createWireEventsIterator(0);
-    for (; iterator.hasNext(); ) {
-      final TreeSkeletonImpl.WireEvent we = iterator.next();
-      // recalculate commit numbers (]
-      for (int i = runningCommitNumber; i <= we.getCommitIdx(); i++) {
-        // todo stopped here
-        // todo stopped here
-        // todo stopped here
-        // todo stopped here
-        // starts
-      }
-      //todo exclusion-inclusion etc
-      // work with event
-      we.setNumWiresBefore(ring.size());
-      // what to return
-      final int[] commitsEnds = we.getCommitsEnds();
-      if (commitsEnds != null) {
-        for (int end : commitsEnds) {
-          final Integer replaced = recalculateMap.remove(end);
-          ring.back(replaced);
-        }
-      }
-      // recalculate
-      final int[] commitsStarts = we.getCommitsStarts();
-      for (int commitsStart : commitsStarts) {
-        final int wire = mySkeleton.getCommitAt(commitsStart).getWireNumber();
-        recalculateMap.put(wire, ring.getFree());
-      }
-    }  */
-  }
-
-  public TreeSkeleton getResult() {
-    return mySkeleton;
   }
 
   // just some order

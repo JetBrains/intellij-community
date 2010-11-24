@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -94,7 +95,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         }
         try {
           if (!valueContainer.needsCompacting()) {
-            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
             //noinspection IOResourceOpenedButNotSafelyClosed
             final DataOutputStream _out = new DataOutputStream(bytes);
             final TIntHashSet set = valueContainer.getInvalidated();
@@ -115,8 +116,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
             map.appendData(key, new PersistentHashMap.ValueDataAppender() {
               public void append(final DataOutput out) throws IOException {
-                final byte[] barr = bytes.toByteArray();
-                out.write(barr);
+                out.write(bytes.getInternalBuffer(), 0, bytes.size());
               }
             });
           }
@@ -317,11 +317,11 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     public ValueContainerImpl<T> read(final DataInput in) throws IOException {
       DataInputStream stream = (DataInputStream)in;
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
-      
+
       while (stream.available() > 0) {
         final int valueCount = DataInputOutputUtil.readSINT(in);
         if (valueCount < 0) {
-          valueContainer.removeAllValues(-valueCount); 
+          valueContainer.removeAllValues(-valueCount);
           valueContainer.setNeedsCompacting(true);
         }
         else {

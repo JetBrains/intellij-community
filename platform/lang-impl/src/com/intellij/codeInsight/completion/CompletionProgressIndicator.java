@@ -191,8 +191,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     } catch (ProcessCanceledException ignored) {
     } finally {
-      myDuringCompletionSemaphore.up();
+      duringCompletionPassed();
     }
+  }
+
+  void duringCompletionPassed() {
+    myDuringCompletionSemaphore.up();
   }
 
   void ensureDuringCompletionPassed() {

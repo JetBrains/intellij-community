@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
@@ -36,7 +37,6 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -57,16 +57,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     public void save(final DataOutput out, final SerializedStubTree v) throws IOException {
-      byte[] value = v.getBytes();
-      out.writeInt(value.length);
-      out.write(value);
+      v.write(out);
     }
 
     public SerializedStubTree read(final DataInput in) throws IOException {
-      int len = in.readInt();
-      byte[] result = new byte[len];
-      in.readFully(result);
-      return new SerializedStubTree(result);
+      return new SerializedStubTree(in);
     }
   };
 
@@ -117,11 +112,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             final StubElement rootStub = buildStubTree(inputData);
             if (rootStub == null) return;
 
-            final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
             SerializationManager.getInstance().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
-            result.put(key, new SerializedStubTree(bytes.toByteArray()));
+            result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size()));
           }
         });
 

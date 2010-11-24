@@ -336,7 +336,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private void doResume() {
     myDispatcher.getMulticaster().beforeSessionResume();
-    myDebuggerManager.updateExecutionPosition(this, null, false);
+    myDebuggerManager.setActiveSession(this, null, false);
     mySuspendContext = null;
     myCurrentStackFrame = null;
     myCurrentPosition = null;
@@ -362,15 +362,22 @@ public class XDebugSessionImpl implements XDebugSession {
 
     boolean frameChanged = myCurrentStackFrame != frame;
     myCurrentStackFrame = frame;
-    XSourcePosition position = frame.getSourcePosition();
-    if (position != null) {
-      XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
-      boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == frame;
-      myDebuggerManager.updateExecutionPosition(this, position, !isTopFrame);
-    }
+    activateSession();
 
     if (frameChanged) {
       myDispatcher.getMulticaster().stackFrameChanged();
+    }
+  }
+
+  public void activateSession() {
+    XSourcePosition position = myCurrentStackFrame != null ? myCurrentStackFrame.getSourcePosition() : null;
+    if (position != null) {
+      XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
+      boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == myCurrentStackFrame;
+      myDebuggerManager.setActiveSession(this, position, !isTopFrame);
+    }
+    else {
+      myDebuggerManager.setActiveSession(this, null, false);
     }
   }
 
@@ -484,7 +491,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
     myPaused = true;
     if (myCurrentPosition != null) {
-      myDebuggerManager.updateExecutionPosition(this, myCurrentPosition, false);
+      myDebuggerManager.setActiveSession(this, myCurrentPosition, false);
     }
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
@@ -516,7 +523,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentPosition = null;
     myCurrentStackFrame = null;
     mySuspendContext = null;
-    myDebuggerManager.updateExecutionPosition(this, null, false);
+    myDebuggerManager.setActiveSession(this, null, false);
     XBreakpointManagerImpl breakpointManager = myDebuggerManager.getBreakpointManager();
     breakpointManager.removeBreakpointListener(myBreakpointListener);
     breakpointManager.getDependentBreakpointManager().removeListener(myDependentBreakpointListener);

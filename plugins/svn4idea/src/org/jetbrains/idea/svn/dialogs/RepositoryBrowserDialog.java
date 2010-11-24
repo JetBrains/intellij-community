@@ -223,11 +223,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   public JComponent createCenterPanel() {
     JPanel parentPanel = new JPanel(new BorderLayout());
-    JPanel top = new JPanel(new BorderLayout());
+    JPanel top = new JPanel();
+    final BoxLayout layout = new BoxLayout(top, BoxLayout.X_AXIS);
+    top.setLayout(layout);
 
     myRepositoriesLabel = new JLabel(myRepositoriesLabelText);
-    top.add(myRepositoriesLabel, BorderLayout.WEST);
-    top.add(createToolbar(true, null), BorderLayout.EAST);
+    top.add(myRepositoriesLabel);
+    top.add(createToolbar(true, null));
     parentPanel.add(top, BorderLayout.NORTH);
 
     JComponent panel =  createBrowserComponent(false);
@@ -305,6 +307,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected RepositoryBrowserComponent getRepositoryBrowser() {
     if (myRepositoryBrowser == null) {
       myRepositoryBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
+      myRepositoryBrowser.setPreferredSize(new Dimension(300, 300));
     }
     return myRepositoryBrowser;
   }

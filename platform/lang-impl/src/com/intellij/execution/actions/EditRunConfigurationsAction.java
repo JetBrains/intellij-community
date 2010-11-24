@@ -28,7 +28,7 @@ public class EditRunConfigurationsAction extends AnAction{
   public EditRunConfigurationsAction() {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(IconLoader.getIcon("/actions/editSource.png"),0,2,2);
-    icon.setIcon(new EmptyIcon(18), 1);
+    icon.setIcon(EmptyIcon.ICON_18, 1);
     getTemplatePresentation().setIcon(icon);
   }
 

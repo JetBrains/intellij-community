@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
 import org.jetbrains.idea.svn.SvnBundle;
 
+import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 
@@ -41,6 +42,9 @@ public class ImportDialog extends RepositoryBrowserDialog {
     updateOKAction();
   }
 
+  protected Action[] createActions() {
+    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+  }
   @Override
   protected String getHelpId() {
     return "vcs.subversion.import";

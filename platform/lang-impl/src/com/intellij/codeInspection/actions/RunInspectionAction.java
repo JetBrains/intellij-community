@@ -44,7 +44,6 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.Arrays;
 
 /**
@@ -58,7 +57,6 @@ public class RunInspectionAction extends GotoActionBase {
   @Override
   protected void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     final VirtualFile virtualFile = LangDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
@@ -85,7 +83,6 @@ public class RunInspectionAction extends GotoActionBase {
                                     @NotNull InspectionProfileEntry profileEntry,
                                     @NotNull VirtualFile virtualFile,
                                     PsiElement psiElement, PsiFile psiFile) {
-    final String shortName = profileEntry.getShortName();
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
     final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
 
@@ -120,15 +117,12 @@ public class RunInspectionAction extends GotoActionBase {
 
     final InspectionProfileImpl profile = new InspectionProfileImpl(profileEntry.getDisplayName());
     final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    final InspectionProfileEntry[] profileEntries = model.getInspectionTools(null);
-    for (InspectionProfileEntry entry : profileEntries) {
-      model.disableTool(entry.getShortName());
-    }
-    model.enableTool(shortName);
+    model.disableAllTools();
+    model.enableTool(profileEntry.getShortName());
     try {
       Element element = new Element("toCopy");
       profileEntry.writeSettings(element);
-      model.getInspectionTool(shortName).readSettings(element);
+      model.getInspectionTool(profileEntry.getShortName()).readSettings(element);
     }
     catch (Exception e) {
       //skip

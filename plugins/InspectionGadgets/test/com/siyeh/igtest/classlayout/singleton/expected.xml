@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>Singleton.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Singleton</problem_class>
+    <description>Class &lt;code&gt;Singleton&lt;/code&gt; is a singleton #loc</description>
+  </problem>
+
+</problems>

@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,23 +63,23 @@ public class PersistentHashMapValueStorage {
     mySize = myFile.length();
 
     if (mySize == 0) {
-      appendBytes("Header Record For PersistentHashMapValuStorage".getBytes(), 0);
+      appendBytes(new ByteSequence("Header Record For PersistentHashMapValuStorage".getBytes()), 0);
     }
   }
 
-  public long appendBytes(byte[] data, long prevChunkAddress) throws IOException {
+  public long appendBytes(ByteSequence data, long prevChunkAddress) throws IOException {
     assert !myCompactionMode;
     long result = mySize;
     final CacheValue<DataOutputStream> appender = ourAppendersCache.get(myPath);
     try {
       appender.get().writeLong(prevChunkAddress);
-      appender.get().writeInt(data.length);
-      appender.get().write(data);
+      appender.get().writeInt(data.getLength());
+      appender.get().write(data.getBytes(), data.getOffset(), data.getLength());
     }
     finally {
       appender.release();
     }
-    mySize += data.length + 8 + 4;
+    mySize += data.getLength() + 8 + 4;
 
     return result;
   }
@@ -131,7 +132,7 @@ public class PersistentHashMapValueStorage {
     }
     
     if (chunkCount > 1 && !myCompactionMode) {
-      return appendBytes(result, 0);
+      return appendBytes(new ByteSequence(result), 0);
     }
 
     return tailChunkAddress;

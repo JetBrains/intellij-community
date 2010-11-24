@@ -63,7 +63,7 @@ final class LanguageReference extends StringLiteralReference {
 //                    // IDEA-10012
 //                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
         }
-        return LookupElementBuilder.create(s).setIcon(new EmptyIcon(16));
+        return LookupElementBuilder.create(s).setIcon(EmptyIcon.ICON_16);
       }
     });
   }

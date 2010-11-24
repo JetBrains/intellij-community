@@ -80,6 +80,13 @@ public class SearchTextField extends JPanel {
       }
     };
     myTextField.setColumns(15);
+    myTextField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        onFocusLost();
+        super.focusLost(e);
+      }
+    });
     add(myTextField, BorderLayout.CENTER);
 
     if (hasNativeLeopardSearchControl()) {
@@ -137,6 +144,9 @@ public class SearchTextField extends JPanel {
         clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
       }
     }
+  }
+
+  protected void onFocusLost() {
   }
 
   private void updateMenu() {
@@ -304,7 +314,7 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private void showPopup() {
+  protected void showPopup() {
     if (myPopup == null) {
       final JList list = new JBList(myModel);
       if (myListener != null) {

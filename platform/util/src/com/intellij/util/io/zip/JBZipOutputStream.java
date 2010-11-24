@@ -20,7 +20,8 @@
 package com.intellij.util.io.zip;
 
 
-import java.io.ByteArrayOutputStream;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
@@ -367,18 +368,18 @@ class JBZipOutputStream {
    * @throws IOException on error
    * @since 1.14
    */
-  private final ByteArrayOutputStream myBuffer = new ByteArrayOutputStream();
+  private final BufferExposingByteArrayOutputStream myBuffer = new BufferExposingByteArrayOutputStream();
 
   private void writeOut(byte[] data, int offset, int length) throws IOException {
     myBuffer.write(data, offset, length);
     if (myBuffer.size() > 8192) {
       flushBuffer();
     }
-    written += data.length;
+    written += length;
   }
 
   private void flushBuffer() throws IOException {
-    raf.write(myBuffer.toByteArray());
+    raf.write(myBuffer.getInternalBuffer(), 0, myBuffer.size());
     myBuffer.reset();
   }
 
@@ -398,9 +399,10 @@ class JBZipOutputStream {
     }
 
     final byte[] outputBytes;
+    final int outputBytesLength;
     if (entry.getMethod() == ZipEntry.DEFLATED) {
       def.setLevel(level);
-      final ByteArrayOutputStream compressedBytesStream = new ByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream compressedBytesStream = new BufferExposingByteArrayOutputStream();
       final DeflaterOutputStream stream = new DeflaterOutputStream(compressedBytesStream, def);
       try {
         stream.write(bytes);
@@ -408,17 +410,16 @@ class JBZipOutputStream {
       finally {
         stream.close();
       }
-
-      final byte[] compressedBytes = compressedBytesStream.toByteArray();
-      entry.setCompressedSize(compressedBytes.length);
-      outputBytes = compressedBytes;
+      outputBytesLength = compressedBytesStream.size();
+      outputBytes = compressedBytesStream.getInternalBuffer();
     }
     else {
-      entry.setCompressedSize(bytes.length);
+      outputBytesLength = bytes.length;
       outputBytes = bytes;
     }
 
+    entry.setCompressedSize(outputBytesLength);
     writeLocalFileHeader(entry);
-    writeOut(outputBytes);
+    writeOut(outputBytes, 0, outputBytesLength);
   }
 }

@@ -101,15 +101,17 @@ public class CompilerCacheManager implements ProjectComponent {
   }
 
   public synchronized <Key, SourceState, OutputState> GenericCompilerCache<Key, SourceState, OutputState>
-                                 getGenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
+                                 getGenericCompilerCache(final GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
     GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
     if (cache == null) {
       final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<Key, SourceState, OutputState>(compiler, GenericCompilerRunner
         .getGenericCompilerCacheDir(myProject, compiler));
       myGenericCachesMap.put(compiler, genericCache);
       myCacheDisposables.add(new Disposable() {
-        @Override
         public void dispose() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing cache for feneric compiler " + compiler.getId());
+          }
           genericCache.close();
         }
       });
@@ -119,15 +121,17 @@ public class CompilerCacheManager implements ProjectComponent {
     return (GenericCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
-  public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
+  public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(final FileProcessingCompiler compiler) throws IOException {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      final FileProcessingCompilerStateCache stateCache = new FileProcessingCompilerStateCache(getCompilerRootDir(compiler),
-          compiler
-      );
+      final File compilerRootDir = getCompilerRootDir(compiler);
+      final FileProcessingCompilerStateCache stateCache = new FileProcessingCompilerStateCache(compilerRootDir, compiler);
       myCompilerToCacheMap.put(compiler, stateCache);
       myCacheDisposables.add(new Disposable() {
         public void dispose() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing cache for compiler " + compiler.getDescription() + "; cache root dir: " + compilerRootDir);
+          }
           stateCache.close();
         }
       });

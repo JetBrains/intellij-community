@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +53,7 @@ import java.util.Set;
  */
 public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   private final GroovyFile myFile;
+  private final Editor myEditor;
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPass");
   private volatile Set<GrImportStatement> myUnusedImports = Collections.emptySet();
   private volatile Runnable myOptimizeRunnable;
@@ -61,6 +61,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   public GroovyUnusedImportPass(GroovyFile file, Editor editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
+    myEditor = editor;
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
@@ -124,10 +125,9 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
       PostHighlightingPass.invokeOnTheFlyImportOptimizer(new Runnable() {
         @Override
         public void run() {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           optimize.run();
         }
-      });
+      },myFile,myEditor);
     }
   }
 

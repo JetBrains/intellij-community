@@ -44,12 +44,10 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
    * This is performance-related optimization because profiling shows that it's rather expensive to call
    * {@link Editor#getColorsScheme()} often due to contention in 'assert read access'.
    */
-  private final EditorColorsScheme myColorsScheme;
   private final Editor             myEditor;
 
   public DefaultEditorTextRepresentationHelper(Editor editor) {
     myEditor = editor;
-    myColorsScheme = myEditor.getColorsScheme();
   }
 
   @Override
@@ -61,8 +59,9 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
   public int charWidth(char c, int fontType) {
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
     // helper is editor-bound and cache size is not too big.
-    mySharedKey.fontName = myColorsScheme.getEditorFontName();
-    mySharedKey.fontSize = myColorsScheme.getEditorFontSize();
+    EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+    mySharedKey.fontName = colorsScheme.getEditorFontName();
+    mySharedKey.fontSize = colorsScheme.getEditorFontSize();
     mySharedKey.fontType = fontType;
     
     mySharedKey.c = c;
@@ -83,8 +82,9 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
 
     // Symbol width retrieval is detected to be a bottleneck, hence, we perform a caching here in assumption that every representation
     // helper is editor-bound and cache size is not too big.
-    mySharedKey.fontName = myColorsScheme.getEditorFontName();
-    mySharedKey.fontSize = myColorsScheme.getEditorFontSize();
+    EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
+    mySharedKey.fontName = colorsScheme.getEditorFontName();
+    mySharedKey.fontSize = colorsScheme.getEditorFontSize();
     mySharedKey.fontType = fontType;
     
     for (int i = startToUse; i < end; i++) {

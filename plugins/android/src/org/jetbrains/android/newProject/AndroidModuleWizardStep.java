@@ -164,10 +164,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       assert myTestPropertiesEditor != null;
       myModuleBuilder.setTestedModule(myTestPropertiesEditor.getModule());
     }
-  }
 
-  @Override
-  public void onStepLeaving() {
     myPlatformChooser.apply();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

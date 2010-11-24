@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -43,7 +44,6 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 
@@ -158,9 +158,9 @@ public class ShowAllSubmittedFilesAction extends AnAction implements DumbAware {
       if (ex[0] != null) throw ex[0];
     }
     catch (Exception e1) {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      final BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
       e1.printStackTrace(new PrintStream(baos));
-      LOG.info("For url: " + svnRevision.getURL() + "Exception: " + new String(baos.toByteArray()));
+      LOG.info("For url: " + svnRevision.getURL() + "Exception: " + new String(baos.getInternalBuffer(), 0, baos.size()));
 
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.version", number, e1.getLocalizedMessage()),
                                SvnBundle.message("message.title.error.fetching.affected.paths"));

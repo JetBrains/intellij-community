@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -153,28 +152,30 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
     Document document = myEditor.getDocument();
     int endOffsetLogicalLine = document.getLineNumber(foldRegion.getEndOffset());
-    int collapsedSymbolsWidthInColumns;
+    int collapsedSymbolsWidthInColumns = -1;
     if (position.logicalLine == endOffsetLogicalLine) {
       // Single-line fold region.
       FoldingData foldingData = getFoldRegionData(foldRegion);
-      if (foldingData == null) {
-        assert false;
-        collapsedSymbolsWidthInColumns = position.visualColumn * myRepresentationHelper.textWidth(" ", 0, 1, Font.PLAIN, 0);
+      if (foldingData != null) {
+        collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
       }
       else {
-        collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
+        assert false;
       }
     }
     else {
       // Multi-line fold region.
-      collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
-        document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
-      );
       position.softWrapColumnDiff = 0;
       position.softWrapLinesBefore += position.softWrapLinesCurrent;
       position.softWrapLinesCurrent = 0;
     }
-
+    
+    if (collapsedSymbolsWidthInColumns < 0) {
+      collapsedSymbolsWidthInColumns = myRepresentationHelper.toVisualColumnSymbolsNumber(
+        document.getCharsSequence(), foldRegion.getStartOffset(), foldRegion.getEndOffset(), 0
+      );
+    }
+    
     position.advance(foldRegion, collapsedSymbolsWidthInColumns);
     return null;
   }

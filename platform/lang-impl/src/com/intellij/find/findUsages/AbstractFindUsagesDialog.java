@@ -171,7 +171,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
       settings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     }
     if (mySearchForTextOccurencesAvailable && myCbToSearchForTextOccurences != null && myCbToSearchForTextOccurences.isEnabled()) {
-      settings.setSearchForTextOccurences(myCbToSearchForTextOccurences.isSelected());
+      myFindUsagesOptions.isSearchForTextOccurrences = myCbToSearchForTextOccurences.isSelected();
     }
 
     if (myCbToSkipResultsWhenOneUsage != null) {
@@ -242,7 +242,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected void addUsagesOptions(JPanel optionsPanel) {
     if (mySearchForTextOccurencesAvailable) {
       myCbToSearchForTextOccurences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurences.checkbox"),
-                                                         FindSettings.getInstance().isSearchForTextOccurences(), optionsPanel, false);
+                                                         myFindUsagesOptions.isSearchForTextOccurrences, optionsPanel, false);
 
     }
 

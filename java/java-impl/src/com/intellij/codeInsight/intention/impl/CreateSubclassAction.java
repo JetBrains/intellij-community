@@ -26,14 +26,12 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -118,14 +116,19 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
 
   @Nullable
   public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
-    PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
+    final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
 
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceDir);
     final CreateClassDialog dialog = new CreateClassDialog(
       psiClass.getProject(), getTitle(psiClass),
       psiClass.getName() + IMPL_SUFFIX,
       aPackage != null ? aPackage.getQualifiedName() : "",
-      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(psiClass));
+      CreateClassKind.CLASS, true, ModuleUtil.findModuleForPsiElement(psiClass)){
+      @Override
+      protected PsiDirectory getBaseDir(String packageName) {
+        return sourceDir;
+      }
+    };
     dialog.show();
     if (!dialog.isOK()) return null;
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();

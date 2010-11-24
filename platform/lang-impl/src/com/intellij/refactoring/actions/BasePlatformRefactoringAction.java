@@ -61,8 +61,8 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected final RefactoringActionHandler getHandler(DataContext dataContext) {
-    PsiElement element;
 
+    PsiElement element = null;
     Editor editor = LangDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (editor != null && file != null) {
@@ -75,12 +75,16 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
 
-    element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element != null) {
-      RefactoringActionHandler handler = getHandler(element.getLanguage(), element);
+    PsiElement referenced = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (referenced != null) {
+      RefactoringActionHandler handler = getHandler(referenced.getLanguage(), referenced);
       if (handler != null) {
         return handler;
       }
+    }
+
+    if (element == null) {
+      element = referenced;
     }
 
     final Language[] languages = LangDataKeys.CONTEXT_LANGUAGES.getData(dataContext);

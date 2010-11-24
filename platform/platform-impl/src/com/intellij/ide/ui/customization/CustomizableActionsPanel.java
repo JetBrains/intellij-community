@@ -71,7 +71,7 @@ import java.util.Set;
 public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
 
-  private static final Icon EMPTY_ICON = new EmptyIcon(18, 18);
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
 

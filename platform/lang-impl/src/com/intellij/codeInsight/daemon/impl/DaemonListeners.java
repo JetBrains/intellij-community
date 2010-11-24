@@ -328,29 +328,18 @@ class DaemonListeners implements Disposable {
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
+    private boolean myDaemonWasRunning;
+
     public void beforeWriteActionStart(Object action) {
-      if (!myDaemonCodeAnalyzer.isRunning()) return; // we'll restart in writeActionFinished()
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("cancelling code highlighting by write action:" + action);
-      }
-      if (containsDocumentWorthBothering(action)) {
-        stopDaemon(true);
-      }
+      myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
+      if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
+      stopDaemon(true);
     }
 
     public void writeActionFinished(Object action) {
-      if (containsDocumentWorthBothering(action)) {
+      if (myDaemonWasRunning) {
         stopDaemon(true);
       }
-    }
-
-    private boolean containsDocumentWorthBothering(Object action) {
-      if (isUnderIgnoredAction(action)) return false;
-      DocumentRunnable currentWriteAction = action instanceof DocumentRunnable ? (DocumentRunnable)action
-                                                                               : ApplicationManager.getApplication().getCurrentWriteAction(DocumentRunnable.class);
-      if (currentWriteAction == null) return true;
-      Document document = currentWriteAction.getDocument();
-      return worthBothering(document, currentWriteAction.getProject());
     }
   }
 

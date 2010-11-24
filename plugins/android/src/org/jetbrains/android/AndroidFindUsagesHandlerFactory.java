@@ -60,10 +60,10 @@ public class AndroidFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
       return AndroidResourceUtil.isResourceField((PsiField)element);
     }
     else if (element instanceof PsiFile) {
-      return AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element, false).length > 0;
+      return AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element, true).length > 0;
     }
     else if (element instanceof XmlTag) {
-      return AndroidResourceUtil.findResourceFieldsForValueResource((XmlTag)element, false).length > 0;
+      return AndroidResourceUtil.findResourceFieldsForValueResource((XmlTag)element, true).length > 0;
     }
     return false;
   }

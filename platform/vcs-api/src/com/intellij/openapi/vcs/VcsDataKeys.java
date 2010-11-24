@@ -53,4 +53,5 @@ public interface VcsDataKeys {
   DataKey<Iterable<VirtualFilePointer>> UPDATE_VIEW_FILES_ITERABLE = DataKey.create("AbstractCommonUpdateAction.UpdatedFilesIterable");
   DataKey<Object> LABEL_BEFORE = DataKey.create("LABEL_BEFORE");
   DataKey<Object> LABEL_AFTER = DataKey.create("LABEL_AFTER");
+  DataKey<String> PRESET_COMMIT_MESSAGE = DataKey.create("PRESET_COMMIT_MESSAGE");
 }

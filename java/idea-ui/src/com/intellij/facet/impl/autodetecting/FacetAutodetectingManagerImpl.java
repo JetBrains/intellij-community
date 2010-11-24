@@ -76,6 +76,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private boolean myDetectionInProgress;
   private final Set<FacetType<?,?>> myFacetTypesWithDetectors = new THashSet<FacetType<?,?>>();
   private final EnableAutodetectionWorker myEnableAutodetectionWorker;
+  private final Object myLock = new Object();
 
   public FacetAutodetectingManagerImpl(final Project project, PsiManager psiManager, FacetPointersManager facetPointersManager) {
     myProject = project;
@@ -162,22 +163,24 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     Collection<FacetDetectorWrapper> detectors = myDetectors.get(fileType);
     if (detectors == null) return;
 
-    List<FacetInfo2<Module>> facets = null;
-    for (FacetDetectorWrapper<?,?,?,?> detector : detectors) {
-      facets = process(file, fileContent, detector, facets);
-    }
+    synchronized (myLock) {
+      List<FacetInfo2<Module>> facets = null;
+      for (FacetDetectorWrapper<?,?,?,?> detector : detectors) {
+        facets = process(file, fileContent, detector, facets);
+      }
 
-    String url = file.getUrl();
-    FacetDetectionIndexEntry indexEntry = myFileIndex.getIndexEntry(url);
-    if (indexEntry == null) {
-      indexEntry = new FacetDetectionIndexEntry(file.getTimeStamp());
-    }
+      String url = file.getUrl();
+      FacetDetectionIndexEntry indexEntry = myFileIndex.getIndexEntry(url);
+      if (indexEntry == null) {
+        indexEntry = new FacetDetectionIndexEntry(file.getTimeStamp());
+      }
 
-    Collection<Integer> removed = indexEntry.update(myFacetPointersManager, facets);
-    myFileIndex.putIndexEntry(url, indexEntry);
+      Collection<Integer> removed = indexEntry.update(myFacetPointersManager, facets);
+      myFileIndex.putIndexEntry(url, indexEntry);
 
-    if (removed != null) {
-      removeObsoleteFacets(removed);
+      if (removed != null) {
+        removeObsoleteFacets(removed);
+      }
     }
   }
 
