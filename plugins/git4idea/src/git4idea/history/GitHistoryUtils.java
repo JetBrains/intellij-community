@@ -120,7 +120,7 @@ public class GitHistoryUtils {
     }
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME);
+    GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME, SHORT_PARENTS);
     parser.parseStatusBeforeName(true);
     h.setNoSSH(true);
     h.setSilent(true);
