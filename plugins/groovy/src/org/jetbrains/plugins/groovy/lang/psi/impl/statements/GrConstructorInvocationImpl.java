@@ -89,8 +89,9 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       PsiType thisType = factory.createType(clazz, substitutor);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY,
                                                                       allVariants);
-      clazz.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, this);
-      ResolveUtil.processNonCodeMethods(thisType, processor, this);
+      final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
+      clazz.processDeclarations(processor, state, null, this);
+      ResolveUtil.processNonCodeMethods(thisType, processor, this, state);
 
       return processor.getCandidates();
     }

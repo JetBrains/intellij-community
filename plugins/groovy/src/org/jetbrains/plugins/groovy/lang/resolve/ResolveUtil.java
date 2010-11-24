@@ -156,7 +156,7 @@ public class ResolveUtil {
       return false;
     }
 
-    if (!GroovyDslFileIndex.processExecutors(type, place, processor)) {
+    if (!GroovyDslFileIndex.processExecutors(type, place, processor, state)) {
       return false;
     }
 
