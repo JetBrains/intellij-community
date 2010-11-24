@@ -273,7 +273,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean isOutdated() {
     if (!myDisposed) {
-      LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+      CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      LOG.assertTrue(this == current, current);
     }
     return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
