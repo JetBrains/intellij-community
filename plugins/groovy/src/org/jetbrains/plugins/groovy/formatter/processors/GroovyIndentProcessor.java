@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -150,7 +151,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
     // Conditional expression
     if (psiParent instanceof GrConditionalExpression &&
-        (child.getPsi().equals(((GrConditionalExpression) psiParent).getThenBranch()) ||
+        (child.getPsi().equals(((GrConditionalExpression) psiParent).getThenBranch()) && !(psiParent instanceof GrElvisExpression) ||
             child.getPsi().equals(((GrConditionalExpression) psiParent).getElseBranch()))) {
       return Indent.getNormalIndent();
     }
