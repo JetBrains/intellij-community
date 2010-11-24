@@ -960,6 +960,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (charWidth < 0) {
       charWidth = EditorUtil.charWidth(c, fontType, this);
     }
+    
+    if (charWidth <= 0) {
+      charWidth = spaceSize;
+    }
 
     if (x >= px && c == '\t' && !onSoftWrapDrawing) {
       if (mySettings.isCaretInsideTabs()) {
@@ -975,8 +979,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((x - px) * 2 < charWidth) column++;
       }
       else {
-        column += (px - x) / spaceSize;
-        if ((px - x) * 2 >= spaceSize) {
+        int diff = px - x;
+        column += diff / spaceSize;
+        if ((diff % spaceSize) * 2 >= spaceSize) {
           column++;
         }
       }
