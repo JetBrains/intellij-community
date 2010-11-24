@@ -35,8 +35,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
-import git4idea.*;
-import git4idea.commands.*;
+import git4idea.GitBranch;
+import git4idea.GitContentRevision;
+import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitLineHandlerListener;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -44,7 +52,12 @@ import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -270,7 +283,7 @@ public class GitHistoryUtils {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    final GitLogParser parser = new GitLogParser(SHORT_HASH, COMMIT_TIME, SHORT_PARENTS);
+    final GitLogParser parser = new GitLogParser(HASH, COMMIT_TIME, SHORT_PARENTS);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
