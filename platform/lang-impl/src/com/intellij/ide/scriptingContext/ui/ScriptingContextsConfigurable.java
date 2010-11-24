@@ -53,6 +53,17 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   }
 
   @Override
+  protected Icon getIcon(ScriptingLibraryTable.LibraryModel currValue, ScriptingLibraryTable.LibraryModel libraryModel) {
+    if (libraryModel == null) return ScriptingLibraryIcons.CLEAR_ICON;
+    if (currValue instanceof ScriptingLibraryMappings.CompoundLibrary) {
+      if (((ScriptingLibraryMappings.CompoundLibrary)currValue).containsLibrary(libraryModel.getName())) {
+        return ScriptingLibraryIcons.CHECKED_ICON;
+      }
+    }
+    return ScriptingLibraryIcons.UNCHECKED_ICON;
+  }
+
+  @Override
   protected String visualize(@NotNull ScriptingLibraryTable.LibraryModel library) {
     return library.getName();
   }
