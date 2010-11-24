@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -84,16 +85,14 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     if (xmlElementsEqual(myElement, thatElement)) {
       if (myElement != thatElement) {
         //todo remove this assertion before X release
-        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-          PsiElement cur = myElement;
-          while (cur != null && !cur.isPhysical()) {
-            cur = cur.getParent();
-          }
-          throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()));
-        }
-
         final PsiElement nav1 = myElement.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
+        if (ApplicationManagerEx.getApplicationEx().isInternal() && nav1 != nav2) {
+          PsiElement cur = findIncluder(myElement);
+          PsiElement nav = findIncluder(nav1);
+          throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()) + "; nav=" + (nav == null ? null : nav.getText()));
+        }
+
         assert nav1 == nav2 : nav1.getContainingFile() +
                               ":" +
                               nav1.getTextRange().getStartOffset() +
@@ -109,6 +108,14 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiElement findIncluder(PsiElement cur) {
+    while (cur != null && !cur.isPhysical()) {
+      cur = cur.getParent();
+    }
+    return cur;
   }
 
   private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
