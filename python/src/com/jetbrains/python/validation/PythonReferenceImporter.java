@@ -88,7 +88,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
               String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
               seen_file_names.add(name);
               PsiElement res = dst_file.findExportedName(ref_text);
-              if (res != null && !(res instanceof PyFile) && dst_file.equals(res.getContainingFile())) {
+              if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dst_file.equals(res.getContainingFile())) {
                 existing_import_file = dst_file;
                 fix.addImport(res, dst_file, ielt);
               }
