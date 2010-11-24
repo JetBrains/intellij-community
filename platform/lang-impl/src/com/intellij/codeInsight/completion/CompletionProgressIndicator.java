@@ -391,10 +391,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       myLookup.show();
+      //todo remove these assertions before X release
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.assertTrue(myLookup.isVisible());
+      }
     }
     myLookup.refreshUi();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(myLookup.isVisible());
+      LOG.assertTrue(myLookup.isVisible(), "really?");
     }
     hideAutopopupIfMeaningless();
   }
