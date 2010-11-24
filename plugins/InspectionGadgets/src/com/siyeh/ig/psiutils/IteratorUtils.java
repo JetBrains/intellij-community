@@ -52,11 +52,11 @@ public class IteratorUtils {
     public static boolean isCallToHasNext(
             PsiMethodCallExpression methodCallExpression) {
         return MethodCallUtils.isCallToMethod(methodCallExpression,
-                "java.util.Iterator", PsiType.BOOLEAN, "hasNext");
+                CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext");
     }
 
     public static boolean isIterator(PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, "java.util.Iterator");
+        return ClassUtils.isSubclass(aClass, CommonClassNames.JAVA_UTIL_ITERATOR);
     }
 
     private static class CallsIteratorNextVisitor
@@ -91,12 +91,12 @@ public class IteratorUtils {
             super.visitMethodCallExpression(expression);
             if (checkScanner) {
                 if (!MethodCallUtils.isCallToMethod(expression,
-                        "java.util.Iterator", null, SCANNER_PATTERN)) {
+                        CommonClassNames.JAVA_UTIL_ITERATOR, null, SCANNER_PATTERN)) {
                     return;
                 }
             } else {
                 if (!MethodCallUtils.isCallToMethod(expression,
-                        "java.util.Iterator", null,
+                        CommonClassNames.JAVA_UTIL_ITERATOR, null,
                         HardcodedMethodConstants.NEXT)) {
                     return;
                 }

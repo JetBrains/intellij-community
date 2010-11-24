@@ -692,7 +692,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
               }
               if (!javaLangClass.processDeclarations(processor, state, null, this)) return;
               PsiType javaLangClassType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, this);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, this, state);
             }
           }
         }
@@ -701,26 +701,34 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   private void processClassQualifierType(ResolverProcessor processor, PsiType qualifierType, GroovyPsiElement resolveContext) {
+    final ResolveState state;
     if (qualifierType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType) qualifierType).resolveGenerics();
+      PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
+      state = ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor())
+        .put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext);
       if (qualifierClass != null) {
-        if (!qualifierClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor())
-          .put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext), null, this))
+        if (!qualifierClass.processDeclarations(processor, state, null, this)) {
           return;
+        }
       }
       if (!ResolveUtil.processCategoryMembers(this, processor)) return;
-    } else if (qualifierType instanceof PsiArrayType) {
+    }
+    else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(getProject()).getArrayClass();
-      if (!arrayClass.processDeclarations(processor, ResolveState.initial(), null, this)) return;
-    } else if (qualifierType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
+      state = ResolveState.initial();
+      if (!arrayClass.processDeclarations(processor, state, null, this)) return;
+    }
+    else if (qualifierType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         processClassQualifierType(processor, conjunct, resolveContext);
       }
       return;
+    } else {
+      state = ResolveState.initial();
     }
 
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, this);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, this, state);
   }
 
   public MethodResolverProcessor runMethodResolverProcessor(String referenceName, PsiType[] argTypes, final boolean allVariants) {

@@ -29,6 +29,7 @@ import org.jetbrains.android.run.LoggingReceiver;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -100,7 +101,7 @@ public class AndroidLogcatUtil {
   public static Reader startLoggingThread(final Project project,
                                           final IDevice device,
                                           final boolean clearLogcat,
-                                          final LogConsoleBase console) {
+                                          @NotNull final LogConsoleBase console) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         console.clear();

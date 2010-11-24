@@ -61,15 +61,19 @@ public interface Notifications {
       FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
         @Override
         public void run() {
-          final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-          if (EventQueue.isDispatchThread()) bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-          else {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
-              }
-            });
+          final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : (project.isDisposed() ? null : project.getMessageBus());
+          if (bus != null) {
+            if (EventQueue.isDispatchThread()) {
+              bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+            }
+            else {
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  bus.syncPublisher(TOPIC).notify(notification, defaultDisplayType);
+                }
+              });
+            }
           }
         }
       });

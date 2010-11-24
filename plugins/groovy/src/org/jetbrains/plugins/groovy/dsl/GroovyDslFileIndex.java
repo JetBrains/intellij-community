@@ -172,7 +172,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     return pair.first;
   }
 
-  public static boolean processExecutors(PsiType psiType, GroovyPsiElement place, final PsiScopeProcessor processor) {
+  public static boolean processExecutors(PsiType psiType, GroovyPsiElement place, final PsiScopeProcessor processor, ResolveState state) {
     if (PsiTreeUtil.getParentOfType(place, PsiAnnotation.class) != null) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
@@ -193,7 +193,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     };
 
     for (GroovyDslScript script : getDslScripts(place.getProject())) {
-      if (!script.processExecutor(nameChecker, psiType, place, placeFile, qname)) {
+      if (!script.processExecutor(nameChecker, psiType, place, placeFile, qname, state)) {
         return false;
       }
     }

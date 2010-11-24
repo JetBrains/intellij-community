@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -50,7 +51,7 @@ public class IteratorHasNextCallsIteratorNextInspection
         @Override public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             @NonNls final String name = method.getName();
-            if (!MethodUtils.methodMatches(method, "java.util.Iterator", null,
+            if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
                     HardcodedMethodConstants.HAS_NEXT)) {
                 return;
             }

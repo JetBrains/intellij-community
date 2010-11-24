@@ -67,7 +67,7 @@ public class PathMacroConfigurable implements SearchableConfigurable {
   }
 
   public boolean isModified() {
-    return myEditor.isModified();
+    return myEditor != null && myEditor.isModified();
   }
 
   public Icon getIcon() {

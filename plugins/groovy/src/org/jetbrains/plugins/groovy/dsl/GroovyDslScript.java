@@ -50,7 +50,8 @@ public class GroovyDslScript {
                                  final PsiType psiType,
                                  final GroovyPsiElement place,
                                  final PsiFile placeFile,
-                                 final String qname) {
+                                 final String qname,
+                                 ResolveState state) {
     final FactorTree cache = myMaps.getValue();
     CustomMembersHolder holder = cache.retrieve(place, qname);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
@@ -59,7 +60,7 @@ public class GroovyDslScript {
       cache.cache(descriptor, holder);
     }
 
-    return holder.processMembers(descriptor, processor, ResolveState.initial());
+    return holder.processMembers(descriptor, processor, state);
   }
 
   private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {

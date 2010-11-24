@@ -73,4 +73,8 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testTwoMethodWithSameName() {
     doVariantableTest "fooo", "fooo"
   }
+
+  public void testIteratorNext() {
+    doVariantableTest "next", "notify", "notifyAll"
+  }
 }
