@@ -54,7 +54,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private JCheckBox myAnnotateLocalVariablesCb;
 
   public InferNullityAnnotationsAction() {
-    super("Infer nullity", INFER_NULLITY_ANNOTATIONS);
+    super("Infer Nullity", INFER_NULLITY_ANNOTATIONS);
   }
 
   @Override
