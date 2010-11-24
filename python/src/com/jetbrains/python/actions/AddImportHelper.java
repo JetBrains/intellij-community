@@ -92,11 +92,12 @@ public class AddImportHelper {
       return false;
     }
     ImportPriority relativeToPriority = source == null ? ImportPriority.BUILTIN : getImportPriority(file, source.getContainingFile());
-    if (priority.compareTo(relativeToPriority) < 0) {
+    final int rc = priority.compareTo(relativeToPriority);
+    if (rc < 0) {
       return true;
     }
-    if (nameToImport.compareTo(relativeToName.toString()) < 0) {
-      return priority.compareTo(relativeToPriority) >= 0;
+    if (rc == 0) {
+      return nameToImport.compareTo(relativeToName.toString()) < 0;
     }
     return false;
   }
@@ -187,6 +188,14 @@ public class AddImportHelper {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES));
       if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
+        final VirtualFile sitePackages = libDir.findChild("site-packages");
+        if (sitePackages != null && VfsUtil.isAncestor(sitePackages, vFile, false)) {
+          return ImportPriority.THIRD_PARTY;
+        }
+        return ImportPriority.BUILTIN;
+      }
+      final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(pythonSdk);
+      if (skeletonsDir != null && vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
         return ImportPriority.BUILTIN;
       }
     }
