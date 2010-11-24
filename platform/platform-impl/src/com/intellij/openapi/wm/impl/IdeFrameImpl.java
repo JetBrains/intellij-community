@@ -101,6 +101,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   }
 
+  @Override
+  public JComponent getComponent() {
+    return getRootPane();
+  }
+
   private static boolean isThereActiveFrame() {
     Frame[] all = Frame.getFrames();
     for (Frame each : all) {
