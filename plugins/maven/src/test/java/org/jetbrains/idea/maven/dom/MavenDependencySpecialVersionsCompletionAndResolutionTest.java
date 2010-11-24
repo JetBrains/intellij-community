@@ -57,4 +57,25 @@ public class MavenDependencySpecialVersionsCompletionAndResolutionTest extends M
 
     checkHighlighting();
   }
+
+  public void testDoNotHighlightLatestAndReleaseDependencies() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>jmock</groupId>" +
+                     "    <artifactId>jmock</artifactId>" +
+                     "    <version>LATEST</version>" +
+                     "  </dependency>" +
+                     "  <dependency>" +
+                     "    <groupId>jmock</groupId>" +
+                     "    <artifactId>jmock</artifactId>" +
+                     "    <version>RELEASE</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
 }
