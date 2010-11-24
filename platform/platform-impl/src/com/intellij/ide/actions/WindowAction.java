@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -25,7 +26,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class WindowAction extends AnAction {
+public abstract class WindowAction extends AnAction implements DumbAware {
 
   public static final String NO_WINDOW_ACTIONS = "no.window.actions";
 
