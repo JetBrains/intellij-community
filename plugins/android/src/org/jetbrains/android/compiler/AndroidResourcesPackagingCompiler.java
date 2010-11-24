@@ -61,7 +61,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
             String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet);
             if (resourcesDirPaths.length == 0) {
-              context.addMessage(CompilerMessageCategory.WARNING, "No resources in resource directories", null, -1, -1);
+              context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),
+                                 null, -1, -1);
             }
             items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath));
           }
