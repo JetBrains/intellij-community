@@ -212,19 +212,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    synchronized(myRangeMarkers) {
-      return myRangeMarkers.remove(rangeMarker);
-    }
+    return myRangeMarkers.remove(rangeMarker);
   }
 
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    synchronized(myRangeMarkers) {
-      RangeMarkerImpl marker = (RangeMarkerImpl)rangeMarker;
-      marker.setValid(true);
-      marker.myNode = myRangeMarkers.add(rangeMarker);
-      myRangeMarkers.checkMax(true);
-    }
+    myRangeMarkers.add(rangeMarker);
   }
 
   @TestOnly

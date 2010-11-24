@@ -89,6 +89,27 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return super.checkMax(root, deltaUpToRootExclusive, assertInvalid);
   }
 
+  @Override
+  public MyNode add(@NotNull T interval) {
+    try {
+      l.writeLock().lock();
+      checkMax(true);
+      RangeMarkerImpl marker = (RangeMarkerImpl)interval;
+      marker.setValid(true);
+
+      modCount++;
+      MyNode newNode = createNewNode(interval);
+      insert(newNode);
+
+      marker.myNode = (IntervalTreeImpl.MyNode)newNode;
+      checkMax(true); // myNode already assigned
+      return newNode;
+    }
+    finally {
+      l.writeLock().unlock();
+    }
+  }
+
   private void updateMarkersOnChange(DocumentEvent e) {
     try {
       l.writeLock().lock();
