@@ -1,7 +1,6 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonDocStringFinder;
@@ -68,7 +67,7 @@ public class AddImportHelper {
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
     final PyImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createImportStatementFromText(
-        "import " + name + as_clause + "\n\n");
+        "import " + name + as_clause);
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file));
     }
