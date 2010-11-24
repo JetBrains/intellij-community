@@ -20,6 +20,8 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 
@@ -84,12 +86,20 @@ public class JUnitConfigurationModel {
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
     if (testObject != JUnitConfiguration.TEST_PACKAGE && testObject != JUnitConfiguration.TEST_PATTERN) {
-      final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
-      data.METHOD_NAME = getJUnitTextValue(METHOD);
-      if (testClass != null && testClass.isValid()) {
-        data.setMainClass(testClass);
+      try {
+        data.METHOD_NAME = getJUnitTextValue(METHOD);
+        final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
+        if (testClass != null && testClass.isValid()) {
+          data.setMainClass(testClass);
+        }
+        else {
+          data.MAIN_CLASS_NAME = className;
+        }
       }
-      else {
+      catch (ProcessCanceledException e) {
+        data.MAIN_CLASS_NAME = className;
+      }
+      catch (IndexNotReadyException e) {
         data.MAIN_CLASS_NAME = className;
       }
     }

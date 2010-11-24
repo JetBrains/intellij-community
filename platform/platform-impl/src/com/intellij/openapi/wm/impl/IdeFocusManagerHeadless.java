@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -97,5 +98,10 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   @Override
   public void runOnOwnContext(DataContext context, Runnable runnable) {
     runnable.run();
+  }
+
+  @Override
+  public Component getLastFocusedFor(IdeFrame frame) {
+    return null;
   }
 }

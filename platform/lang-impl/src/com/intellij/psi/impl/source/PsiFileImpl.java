@@ -58,6 +58,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -263,9 +264,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
-      throw new AssertionError("Invalid content element type: " + contentElementType + " of " + contentElementType.getLanguage() +
-                               "; elementType=" + myElementType + " of " + myElementType.getLanguage() + "; file=" + getClass() +
-                               "; viewProvider=" + getViewProvider());
+      throw new AssertionError("A stub in a non-stub file, stubs=" + ContainerUtil.collect(stubs));
     }
     final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
 

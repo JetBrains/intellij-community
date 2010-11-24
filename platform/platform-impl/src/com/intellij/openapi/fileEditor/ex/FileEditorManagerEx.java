@@ -123,10 +123,18 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
 
   @NotNull
   public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
-    return openFileWithProviders(file, focusEditor).getFirst ();
+    return openFileWithProviders(file, focusEditor, false).getFirst ();
   }
 
-  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor);
+  @NotNull
+  @Override
+  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean useActiveSplitter) {
+    return openFileWithProviders(file, focusEditor, useActiveSplitter).getFirst();
+  }
+
+  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                         boolean focusEditor,
+                                                                                         boolean useActiveSplitter);
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 

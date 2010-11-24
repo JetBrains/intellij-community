@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
@@ -65,7 +66,7 @@ public abstract class PsiAnchor {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
         int index = calcStubIndex((StubBasedPsiElement)element);
-        if (index != -1) return new StubIndexReference(file, index);
+        if (index != -1) return new StubIndexReference(file, index, elt.getElementType());
       }
     }
 
@@ -220,8 +221,10 @@ public abstract class PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
     private final int myIndex;
+    private final IStubElementType myElementType;
 
-    public StubIndexReference(@NotNull PsiFile file, final int index) {
+    public StubIndexReference(@NotNull PsiFile file, final int index, IStubElementType elementType) {
+      myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
@@ -253,6 +256,8 @@ public abstract class PsiAnchor {
           if (myIndex >= list.size()) return null;
           StubElement stub = list.get(myIndex);
 
+          if (stub.getStubType() != myElementType) return null;
+
           if (foreign) {
             final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
             if (cachedPsi != null) return cachedPsi;
@@ -274,12 +279,12 @@ public abstract class PsiAnchor {
 
       final StubIndexReference that = (StubIndexReference)o;
 
-      return myIndex == that.myIndex && myVirtualFile.equals(that.myVirtualFile);
+      return myIndex == that.myIndex && myVirtualFile.equals(that.myVirtualFile) && myElementType.equals(that.myElementType);
     }
 
     @Override
     public int hashCode() {
-      return 31 * myVirtualFile.hashCode() + myIndex;
+      return (31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode();
     }
 
     public int getStartOffset() {

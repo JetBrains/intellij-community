@@ -802,13 +802,13 @@
              order="after expectedType, before stats"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferNonGenericWeigher" id="nonGeneric"
-             order="after stats"/>
+             order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferAccessibleWeigher" id="accessible"
              order="after nonGeneric"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferSimpleWeigher" id="simple"
              order="after accessible"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferEnumConstantsWeigher" id="constants"
-             order="after simple, before prefix"/>
+             order="after simple, before proximity"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.SameWordsWeigher" id="sameWords"
              order="after proximity"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PreferFieldsAndGettersWeigher" id="fieldsAndGetters"

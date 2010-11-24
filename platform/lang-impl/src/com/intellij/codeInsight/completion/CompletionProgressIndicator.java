@@ -273,7 +273,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean isOutdated() {
     if (!myDisposed) {
-      LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
+      CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      LOG.assertTrue(this == current, current);
     }
     return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
@@ -327,6 +328,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
+    assert myDisposed;
+
     if (myModifiersReleased || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -391,10 +394,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       myLookup.show();
+      //todo remove these assertions before X release
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.assertTrue(myLookup.isVisible());
+      }
     }
     myLookup.refreshUi();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(myLookup.isVisible());
+      LOG.assertTrue(myLookup.isVisible(), "really?");
     }
     hideAutopopupIfMeaningless();
   }
@@ -453,8 +460,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (hideLookup) {
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
+    } else {
+      assert myDisposed;
     }
-
   }
 
   private void finishCompletionProcess() {
@@ -479,6 +487,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void cleanup() {
     assert ApplicationManager.getApplication().isDispatchThread();
+    assert myDisposed;
     myHint = null;
     myRestorePrefix = null;
     unregisterItself();
@@ -607,6 +616,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void rememberDocumentState() {
+    assert myDisposed;
     if (myModifiersReleased) {
       return;
     }
