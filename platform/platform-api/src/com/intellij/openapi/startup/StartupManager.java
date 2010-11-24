@@ -40,8 +40,9 @@ public abstract class StartupManager {
   /**
    * Registers a CacheUpdater instance that will be used to build initial caches and indices.
    * Must be called in registerPreStartupActivity or registerStartupActivity
+   * @param updater to be run
    */
-  public abstract void registerCacheUpdater(CacheUpdater updater);
+  public abstract void registerCacheUpdater(@NotNull CacheUpdater updater);
 
   /**
    * Registers an activity which is performed during project load while the "Loading Project"
@@ -49,7 +50,7 @@ public abstract class StartupManager {
    *
    * @param runnable the activity to execute.
    */
-  public abstract void registerStartupActivity(Runnable runnable);
+  public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**
    * Registers an activity which is performed during project load after the "Loading Project"
@@ -57,7 +58,7 @@ public abstract class StartupManager {
    *
    * @param runnable the activity to execute.
    */
-  public abstract void registerPostStartupActivity(Runnable runnable);
+  public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 
   /**
    * Executes the specified runnable immediately if the initialization of the current project
@@ -65,5 +66,5 @@ public abstract class StartupManager {
    *
    * @param runnable the activity to execute.
    */
-  public abstract void runWhenProjectIsInitialized(Runnable runnable);
+  public abstract void runWhenProjectIsInitialized(@NotNull Runnable runnable);
 }
