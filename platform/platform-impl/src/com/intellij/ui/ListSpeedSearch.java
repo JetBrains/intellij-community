@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -57,6 +58,6 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     if (myElementTextDelegate != null) {
       return myElementTextDelegate.fun(element);
     }
-    return element.toString();
+    return element == null ? null : element.toString();
   }
 }
