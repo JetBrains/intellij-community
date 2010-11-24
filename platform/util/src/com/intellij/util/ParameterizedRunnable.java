@@ -18,6 +18,6 @@ package com.intellij.util;
 /**
  * @author nik
  */
-public interface ParametrizedRunnable<T> {
+public interface ParameterizedRunnable<T> {
   void run(T t);
 }
