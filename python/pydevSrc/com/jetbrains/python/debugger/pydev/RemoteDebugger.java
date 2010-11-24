@@ -98,9 +98,20 @@ public class RemoteDebugger {
     return command.getRemoteVersion();
   }
 
-  public PyDebugValue evaluate(final String threadId, final String frameId, final String expression, final boolean execute)
+  public PyDebugValue evaluate(final String threadId,
+                               final String frameId,
+                               final String expression, final boolean execute) throws PyDebuggerException {
+    return evaluate(threadId, frameId, expression, execute, true);
+  }
+
+
+  public PyDebugValue evaluate(final String threadId,
+                               final String frameId,
+                               final String expression,
+                               final boolean execute,
+                               boolean trimResult)
     throws PyDebuggerException {
-    final EvaluateCommand command = new EvaluateCommand(this, threadId, frameId, expression, execute);
+    final EvaluateCommand command = new EvaluateCommand(this, threadId, frameId, expression, execute, trimResult);
     command.execute();
     return command.getValue();
   }

@@ -183,15 +183,16 @@ public class PyClassRefactoringUtil {
     final PsiFile file = target.getContainingFile();
     if (newFile == file) return;
     final String importableName = ResolveImportUtil.findShortestImportableName(target, vFile);
+    final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(target, newFile);
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || newClass instanceof PyFile) {
       if (newClass instanceof PyFile) {
-        AddImportHelper.addImportStatement(file, importableName, null);
+        AddImportHelper.addImportStatement(file, importableName, null, priority);
       } else {
         final String name = newClass.getName();
-        AddImportHelper.addImportStatement(file, importableName + "." + name, null);
+        AddImportHelper.addImportStatement(file, importableName + "." + name, null, priority);
       }
     } else {
-      AddImportHelper.addImportFrom(file, importableName, newClass.getName());
+      AddImportHelper.addImportFrom(file, importableName, newClass.getName(), priority);
     }
   }
 

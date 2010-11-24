@@ -679,19 +679,20 @@ class InternalGetFrame(InternalThreadCommand):
 class InternalEvaluateExpression(InternalThreadCommand):
     """ gets the value of a variable """
 
-    def __init__(self, seq, thread_id, frame_id, expression, doExec):
+    def __init__(self, seq, thread_id, frame_id, expression, doExec, doTrim):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.expression = expression
         self.doExec = doExec
+        self.doTrim = doTrim
     
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
             result = pydevd_vars.evaluateExpression(self.thread_id, self.frame_id, self.expression, self.doExec)
             xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, "")
+            xml += pydevd_vars.varToXML(result, "", self.doTrim)
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
             dbg.writer.addCommand(cmd)
