@@ -358,9 +358,13 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       if (element instanceof LayoutViewElement && SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
         XmlElement xmlElement = element.getXmlElement();
         String tagName = xmlElement instanceof XmlTag ? ((XmlTag)xmlElement).getName() : null;
-        if (!"merge".equals(tagName) &&
-            ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
-          extension.addCustomAnnotation(new MyRequired());
+        if (!"merge".equals(tagName)) {
+          XmlTag parentTag = xmlElement instanceof XmlTag ? ((XmlTag)xmlElement).getParentTag() : null;
+          String parentTagName = parentTag != null ? parentTag.getName() : null;
+          if (!"TableRow".equals(parentTagName) && !"TableLayout".equals(parentTagName) &&
+              ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
+            extension.addCustomAnnotation(new MyRequired());
+          }
         }
       }
     }
