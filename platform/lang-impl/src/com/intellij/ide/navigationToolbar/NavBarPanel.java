@@ -53,6 +53,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
@@ -1165,7 +1166,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     public ModalityState getModalityState() {
       return ModalityState.stateForComponent(NavBarPanel.this);
     }
-
+                            git a
     public void run() {
       if (!isShowing()) {
         return;
@@ -1175,17 +1176,30 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         @Override
         public void run() {
           Window wnd = SwingUtilities.windowForComponent(NavBarPanel.this);
-          if (wnd == null || !wnd.isActive()) return;
+          if (wnd == null) return;
 
-          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          if (window instanceof Dialog) {
-            final Dialog dialog = (Dialog)window;
-            if (dialog.isModal() && !SwingUtilities.isDescendingFrom(NavBarPanel.this, dialog)) {
-              return;
+          Component focus = null;
+
+          if (!wnd.isActive()) {
+            IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, NavBarPanel.this);
+            if (frame != null) {
+              focus = IdeFocusManager.getInstance(myProject).getLastFocusedFor(frame);
+            }
+          } else {
+            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+            if (window instanceof Dialog) {
+              final Dialog dialog = (Dialog)window;
+              if (dialog.isModal() && !SwingUtilities.isDescendingFrom(NavBarPanel.this, dialog)) {
+                return;
+              }
             }
           }
 
-          queueModelUpdateFromFocus();
+          if (focus != null && focus.isShowing()) {
+            queueModelUpdate(DataManager.getInstance().getDataContext(focus));
+          } else if (wnd.isActive()) {
+            queueModelUpdateFromFocus();
+          }
         }
       });
     }

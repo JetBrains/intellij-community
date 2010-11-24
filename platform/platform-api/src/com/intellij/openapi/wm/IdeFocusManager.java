@@ -134,4 +134,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract Component getFocusOwner();
 
   public abstract void runOnOwnContext(DataContext context, Runnable runnable);
+
+  @Nullable
+  public abstract Component getLastFocusedFor(IdeFrame frame);
 }
