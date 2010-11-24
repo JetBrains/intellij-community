@@ -109,4 +109,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
   }
 
+  public void testJoinIf() {
+    doTest(PyBundle.message("INTN.join.if"));
+  }
 }

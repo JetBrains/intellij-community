@@ -1,3 +1,4 @@
+a = 2
 smth = []
 for z in xrange(14):
     if z != 3:
@@ -9,3 +10,5 @@ for z in xrange(14):
                             if x != 2:
                                 if x != 5:
                                     smth.append(x + y + z)
+
+a = 5
