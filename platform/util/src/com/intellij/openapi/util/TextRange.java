@@ -57,6 +57,10 @@ public class TextRange {
     return myStartOffset <= startOffset && myEndOffset >= endOffset;
   }
 
+  public boolean containsOffset(int offset) {
+    return myStartOffset <= offset && offset <= myEndOffset;
+  }
+
   public String toString() {
     return "(" + myStartOffset + "," + myEndOffset + ")";
   }

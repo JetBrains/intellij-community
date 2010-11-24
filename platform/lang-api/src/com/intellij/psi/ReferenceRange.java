@@ -59,12 +59,12 @@ public class ReferenceRange {
   public static boolean containsOffsetInElement(PsiReference ref, int offset) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
-        if (range.contains(offset)) return true;
+        if (range.containsOffset(offset)) return true;
       }
 
       return false;
     }
-    return ref.getRangeInElement().contains(offset);
+    return ref.getRangeInElement().containsOffset(offset);
   }
 
   public static boolean containsRangeInElement(PsiReference ref, TextRange rangeInElement) {
