@@ -105,14 +105,29 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
           VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           if (outputDir != null) {
             VirtualFile[] externalJars = getExternalJars(module, configuration);
-            String resPackage = AndroidResourcesPackagingCompiler.getOutputPath(module, outputDir);
-            String outputPath = facet.getApkPath();
-            String classesDexPath = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME).getPath();
+
+            File resPackage = AndroidResourcesPackagingCompiler.getOutputFile(module, outputDir);
+            String resPackagePath = FileUtil.toSystemDependentName(resPackage.getPath());
+            if (!resPackage.exists()) {
+              context.addMessage(CompilerMessageCategory.ERROR, "File " + resPackagePath + " not found. Try to rebuild project",
+                                 null, -1, -1);
+              continue;
+            }
+
+            File classesDexFile = new File(outputDir.getPath(), AndroidUtils.CLASSES_FILE_NAME);
+            String classesDexPath = FileUtil.toSystemDependentName(classesDexFile.getPath());
+            if (!classesDexFile.exists()) {
+              context.addMessage(CompilerMessageCategory.ERROR, "File " + classesDexPath + " not found. Try to rebuild project",
+                                 null, -1, -1);
+              continue;
+            }
+
             IAndroidTarget target = configuration.getAndroidTarget();
             String sdkPath = configuration.getSdkPath();
+            String outputPath = facet.getApkPath();
             if (target != null && sdkPath != null && outputPath != null) {
               AptPackagingItem item =
-                new AptPackagingItem(sdkPath, manifestFile, resPackage, outputPath, configuration.GENERATE_UNSIGNED_APK);
+                new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
               item.setNativeLibsFolders(collectNativeLibsFolders(facet));
               item.setClassesDexPath(classesDexPath);
               item.setSourceRoots(sourceRoots);

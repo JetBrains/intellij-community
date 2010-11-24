@@ -51,7 +51,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
           AndroidFacetConfiguration configuration = facet.getConfiguration();
           VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           if (outputDir != null) {
-            String outputPath = getOutputPath(module, outputDir);
+            String outputPath = getOutputFile(module, outputDir).getPath();
             IAndroidTarget target = configuration.getAndroidTarget();
             if (target != null) {
               String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
@@ -65,8 +65,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     return items.toArray(new ProcessingItem[items.size()]);
   }
 
-  static String getOutputPath(Module module, VirtualFile outputDir) {
-    return new File(outputDir.getPath(), module.getName() + ".apk.res").getPath();
+  static File getOutputFile(Module module, VirtualFile outputDir) {
+    return new File(outputDir.getPath(), module.getName() + ".apk.res");
   }
 
   @Override
