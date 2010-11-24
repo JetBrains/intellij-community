@@ -430,6 +430,9 @@ public class FocusTrackback {
     Component eachToFocus = getFocusOwner();
     FocusTrackback eachTrackback = this;
     while (true) {
+      if (eachToFocus == null) {
+        break;
+      }
       if (SwingUtilities.isDescendingFrom(eachToFocus, parent)) return true;
 
       if (eachTrackback.getRequestor() instanceof AbstractPopup) {
