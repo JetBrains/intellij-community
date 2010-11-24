@@ -27,17 +27,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StaticMembersWeigher extends CompletionWeigher {
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation loc) {
-    if (loc == null) {
-      return null;
-    }
     if (loc.getCompletionType() != CompletionType.BASIC) return 0;
-
-    final PsiElement position = loc.getCompletionParameters().getPosition();
 
     // cheap weigher applicability goes first
     final Object o = element.getObject();
     if (!(o instanceof PsiMember)) return 0;
-    
+
+    final PsiElement position = loc.getCompletionParameters().getPosition();
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) return 0;
     if (position.getParent() instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)position.getParent();
@@ -55,8 +51,9 @@ public class StaticMembersWeigher extends CompletionWeigher {
       if (o instanceof PsiField) return 4;
     }
 
-    if (o instanceof PsiClass && ((PsiClass) o).getContainingClass() != null) {
-      return 3;
+    if (o instanceof PsiClass) {
+      if (((PsiClass) o).getContainingClass() != null) return 3;
+      return 2;
     }
 
     //instance method or field
