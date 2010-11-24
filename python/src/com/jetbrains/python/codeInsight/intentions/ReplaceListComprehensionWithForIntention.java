@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -13,6 +14,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenSeparatorGenerator;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyStatementListImpl;
 import org.jetbrains.annotations.NotNull;
 import sun.tools.tree.Statement;
 
@@ -57,18 +60,19 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     if (parent instanceof PyAssignmentStatement) {
-      PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
-      PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.getDefault(), PyAssignmentStatement.class,
-                                                                         leftExpr.getText() + " = []");
-      PsiElement lineBreak = elementGenerator.createFromText(LanguageLevel.getDefault(), PsiWhiteSpace.class, "\n");
-      initAssignment.add(lineBreak);
 
+      PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
+      PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
+                                                                         leftExpr.getText() + " = []");
       PyStatement result = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyStatement.class,
                                                           leftExpr.getText() + ".append("+ getResult(expression).getText() +")");
-
       PyForStatement forStatement = createForLoop(expression, elementGenerator, result);
-      initAssignment.add(forStatement);
-      parent.replace(initAssignment);
+
+      PyStatementList stList = new PyStatementListImpl(initAssignment.getNode());
+      stList.add(initAssignment);
+      stList.add(forStatement);
+      stList.getStatements()[0].delete();
+      parent.replace(stList);
 
     }
     else if (parent instanceof PyPrintStatement) {
@@ -84,7 +88,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
 
     if (forComps.size() != 0) {
       ComprhForComponent forComponent = forComps.get(0);
-      PyForStatement forStatement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyForStatement.class,
+      PyForStatement forStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
                              "for " + forComponent.getIteratorVariable().getText()  + " in " +
                              forComponent.getIteratedList().getText() + ":\n  a+1");
 
@@ -92,9 +96,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
       if (ifComps.size() != 0) {
         addIfComponents(forStatement, ifComps, elementGenerator);
       }
-
       addForComponents(forStatement, expression.getResultExpression(), elementGenerator, result);
-
       return forStatement;
     }
     return null;
@@ -105,7 +107,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
                                PyElementGenerator elementGenerator) {
     PyStatementList pyStatementList = forStatement.getForPart().getStatementList();
     for (ComprhIfComponent ifComp : ifComps) {
-      PyIfStatement ifStat = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class,
+      PyIfStatement ifStat = elementGenerator.createFromText(LanguageLevel.forElement(forStatement), PyIfStatement.class,
                            "if " + ifComp.getTest().getText() + ":\n  a+1");
       pyStatementList.getStatements()[0].replace(ifStat);
       pyStatementList = ((PyIfStatement)pyStatementList.getStatements()[0]).getIfPart().getStatementList();
@@ -131,7 +133,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
       List <ComprhForComponent> forComps = ((PyListCompExpression)expression).getForComponents();
       if ( forComps.size() != 0) {
         ComprhForComponent comp = forComps.get(0);
-        PyForStatement pyForStatement = elementGenerator.createFromText(LanguageLevel.getDefault(), PyForStatement.class,
+        PyForStatement pyForStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
                                "for " + comp.getIteratorVariable().getText()  + " in "+ comp.getIteratedList().getText() + ":\n  a+1");
         List<ComprhIfComponent> ifComps = ((PyListCompExpression)expression).getIfComponents();
         if (ifComps.size() != 0) {
