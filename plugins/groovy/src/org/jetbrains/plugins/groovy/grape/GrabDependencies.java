@@ -131,16 +131,7 @@ public class GrabDependencies implements IntentionAction {
         return grAnnotation.getText();
       }
     };
-    String common = StringUtil.join(excludes, mapper, ",");
-    if (!resolvers.isEmpty()) {
-      if (!common.isEmpty()) {
-        common += ",";
-      }
-      common += StringUtil.join(resolvers, mapper, ",");
-    }
-    if (!common.isEmpty()) {
-      common = "," + common;
-    }
+    String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
 
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null;
@@ -151,7 +142,7 @@ public class GrabDependencies implements IntentionAction {
     final Map<String, GeneralCommandLine> lines = new HashMap<String, GeneralCommandLine>();
     for (GrAnnotation grab : grabs) {
       String grabText = grab.getText();
-      String query = "@Grapes([" + grabText + common + "])";
+      String query = grabText + " " + common;
 
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
