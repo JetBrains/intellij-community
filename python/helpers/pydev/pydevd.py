@@ -1,5 +1,6 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from pydevd_constants import * #@UnusedWildImport
+from pydevd_breakpoints import * #@UnusedWildImport
 
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
@@ -52,6 +53,7 @@ import pydevd_tracing
 import pydevd_io
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo 
 import time
+
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
 
@@ -126,95 +128,6 @@ class PyDBCommandThread(PyDBDaemonThread):
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
             
-
-_original_excepthook = None
-_handle_exceptions = None
-_exception_set = set()
-
-
-#=======================================================================================================================
-# excepthook
-#=======================================================================================================================
-def excepthook(exctype, value, tb):
-    if _handle_exceptions is not None:
-        if not issubclass(exctype, _handle_exceptions):
-            return _original_excepthook(exctype, value, tb)
-    
-    #Always call the original excepthook before going on to call the debugger post mortem to show it.
-    _original_excepthook(exctype, value, tb)
-    
-    frames = []
-
-    traceback = tb
-    while tb:
-        frames.append(tb.tb_frame)
-        tb = tb.tb_next
-
-    thread = threadingCurrentThread()
-    frames_byid = dict([(id(frame),frame) for frame in frames])
-    frame = frames[-1]
-    thread.additionalInfo.pydev_force_stop_at_exception = (frame, frames_byid)
-    thread.additionalInfo.message = exctype.__name__
-    #sys.exc_info = lambda : (exctype, value, traceback)
-    debugger = GetGlobalDebugger()
-    debugger.force_post_mortem_stop += 1
-        
-        
-#=======================================================================================================================
-# set_pm_excepthook
-#=======================================================================================================================
-def set_pm_excepthook(handle_exceptions=None):
-    '''
-    Should be called to register the excepthook to be used.
-    
-    It's only useful for uncaucht exceptions. I.e.: exceptions that go up to the excepthook.
-    
-    Can receive a parameter to stop only on some exceptions.
-    
-    E.g.: 
-        register_excepthook((IndexError, ValueError))
-        
-        or 
-        
-        register_excepthook(IndexError)
-        
-        if passed without a parameter, will break on any exception
-    
-    @param handle_exceptions: exception or tuple(exceptions)
-        The exceptions that should be handled.
-    '''
-    global _handle_exceptions
-    global _original_excepthook
-    if sys.excepthook != excepthook:
-        #Only keep the original if it's not our own excepthook (if called many times).
-        _original_excepthook = sys.excepthook
-        
-    _handle_exceptions = handle_exceptions
-    sys.excepthook = excepthook
-
-def restore_pm_excepthook():
-    global _original_excepthook
-    if (_original_excepthook):
-        sys.excepthook = _original_excepthook
-        _original_excepthook = None
-
-
-def update_exception_hook():
-    if len(_exception_set) >0:
-        set_pm_excepthook(tuple(_exception_set))
-    else:
-        restore_pm_excepthook()
-
-def get_class( kls ):
-    parts = kls.split('.')
-    module = ".".join(parts[:-1])
-    if (module == ""):
-        module = "__builtin__"
-    m = __import__( module )
-    for comp in parts[-1:]:
-        m = getattr(m, comp)
-    return m
-
 try:
     import thread
 except ImportError:
@@ -437,7 +350,23 @@ class PyDB:
                     
         finally:
             self.release()
-      
+
+    def enable_tracing(self):
+        #and enable the tracing for existing threads (because there may be frames being executed that
+        #are currently untraced).
+        threads = threadingEnumerate()
+        for t in threads:
+            if not t.getName().startswith('pydevd.'):
+            #TODO: optimize so that we only actually add that tracing if it's in
+            #the new breakpoint context.
+                additionalInfo = getattr(t, 'additionalInfo', None)
+
+                if additionalInfo is not None:
+                    for frame in additionalInfo.IterFrames():
+                        frame.f_trace = self.trace_dispatch
+                        SetTraceForParents(frame, self.trace_dispatch)
+                        del frame
+
     def processNetCommand(self, cmd_id, seq, text):
         '''Processes a command received from the Java side
         
@@ -628,25 +557,8 @@ class PyDB:
                     
                         
                     self.breakpoints[file] = breakDict
-                    
-                    #and enable the tracing for existing threads (because there may be frames being executed that
-                    #are currently untraced).
-                    threads = threadingEnumerate()
-                    for t in threads:
-                        if not t.getName().startswith('pydevd.'):
-                            #TODO: optimize so that we only actually add that tracing if it's in
-                            #the new breakpoint context.
-                            additionalInfo = None
-                            try:
-                                additionalInfo = t.additionalInfo
-                            except AttributeError:
-                                pass #that's ok, no info currently set
-                                
-                            if additionalInfo is not None:
-                                for frame in additionalInfo.IterFrames():
-                                    frame.f_trace = self.trace_dispatch
-                                    SetTraceForParents(frame, self.trace_dispatch)
-                                    del frame
+
+                    self.enable_tracing()
                     
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
@@ -685,17 +597,28 @@ class PyDB:
                     self.postInternalCommand(int_cmd, thread_id)
 
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
-                    exception = text
+                    global exception_set
+                    exception, notify_always, notify_on_terminate = text.split('\t', 2)
                     exc_type = get_class(exception)
+                    is_notify_always = int(notify_always) == 1
+                    is_notify_on_terminate = int(notify_on_terminate) == 1
+
                     if exc_type is not None:
-                        _exception_set.add(exc_type)
-                    update_exception_hook()
+                        exception_set.add(ExceptionBreakpoint(exc_type, is_notify_always, is_notify_on_terminate))
+
+                    if is_notify_on_terminate:
+                        update_exception_hook()
+                    if is_notify_always:
+                        global always_exception_set
+                        always_exception_set.add(exc_type)
+                        self.enable_tracing()
 
                 elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                     exception = text
                     exc_type = get_class(exception)
                     if exc_type is not None:
-                        _exception_set.remove(exc_type)
+                        exception_set.remove(exc_type)
+                        always_exception_set.remove(exc_type)
                     update_exception_hook()
 
                 else:

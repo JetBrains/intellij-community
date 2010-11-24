@@ -7,20 +7,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExceptionBreakpointCommand extends AbstractCommand {
 
-  protected String myException;
+  @NotNull
+  protected final String myException;
 
-  private ExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, final int commandCode, String exception) {
+
+  protected ExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger,
+                                     final int commandCode,
+                                     @NotNull String exception) {
     super(debugger, commandCode);
     myException = exception;
   }
 
   @Override
-  public String getPayload() {
-    return new StringBuilder().append(myException).toString();
+  protected void buildPayload(Payload payload) {
+    payload.add(myException);
   }
 
-  public static ExceptionBreakpointCommand addExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, String exception) {
-    return new ExceptionBreakpointCommand(debugger, ADD_EXCEPTION_BREAKPOINT, exception);
+  public static ExceptionBreakpointCommand addExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, String exception, AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy notifyPolicy) {
+    return new AddExceptionBreakpointCommand(debugger, exception, notifyPolicy);
   }
 
   public static ExceptionBreakpointCommand removeExceptionBreakpointCommand(@NotNull final RemoteDebugger debugger, String exception) {

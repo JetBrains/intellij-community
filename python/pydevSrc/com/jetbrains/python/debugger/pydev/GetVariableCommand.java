@@ -18,9 +18,10 @@ public class GetVariableCommand extends GetFrameCommand {
     myParent = parent;
   }
 
-  public String getPayload() {
-    return new StringBuilder().append(myThreadId).append('\t').append(myFrameId).append('\t').append("FRAME\t").append(myVariableName)
-      .toString();
+  @Override
+  protected void buildPayload(Payload payload) {
+    super.buildPayload(payload);
+    payload.add(myVariableName);
   }
 
   @Override

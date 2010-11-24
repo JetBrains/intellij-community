@@ -10,9 +10,9 @@ public class ProtocolFrame {
 
   private final int myCommand;
   private final int mySequence;
-  private final String myPayload;
+  private @NotNull final String myPayload;
 
-  public ProtocolFrame(final int command, final int sequence, final String payload) throws PyDebuggerException {
+  public ProtocolFrame(final int command, final int sequence, @NotNull final String payload) throws PyDebuggerException {
     myCommand = command;
     mySequence = sequence;
     myPayload = payload;
@@ -26,7 +26,7 @@ public class ProtocolFrame {
 
     myCommand = Integer.parseInt(parts[0]);
     mySequence = Integer.parseInt(parts[1]);
-    myPayload = (parts.length == 3 && !"".equals(parts[2]) ? ProtocolParser.decode(parts[2]) : null);
+    myPayload = (parts.length == 3 && !"".equals(parts[2]) ? ProtocolParser.decode(parts[2]) : "");
   }
 
   public int getCommand() {
@@ -37,6 +37,7 @@ public class ProtocolFrame {
     return mySequence;
   }
 
+  @NotNull
   public String getPayload() {
     return myPayload;
   }

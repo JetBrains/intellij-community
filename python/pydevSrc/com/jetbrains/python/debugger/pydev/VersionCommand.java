@@ -12,8 +12,9 @@ public class VersionCommand extends AbstractCommand {
     myVersion = version;
   }
 
-  public String getPayload() {
-    return myVersion;
+  @Override
+  protected void buildPayload(Payload payload) {
+    payload.add(myVersion);
   }
 
   @Override

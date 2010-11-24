@@ -1,8 +1,10 @@
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_constants import * #@UnusedWildImport
+from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
 import os.path
 import sys
+
 basename = os.path.basename
 
 #=======================================================================================================================
@@ -28,64 +30,69 @@ class PyDBFrame:
     def trace_dispatch(self, frame, event, arg):
         if event not in ('line', 'call', 'return', 'exception'):
             return None
-            
+
         mainDebugger, filename, info, thread = self._args
-        
-        breakpoint = mainDebugger.breakpoints.get(filename)
 
-        if info.pydev_state == STATE_RUN:
-            #we can skip if:
-            #- we have no stop marked
-            #- we should make a step return/step over and we're not in the current frame
-            can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
-            or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame) 
-        else:
+        if event is not 'exception':
+            breakpoint = mainDebugger.breakpoints.get(filename)
+
             can_skip = False
-            
-        # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint, 
-        # we will return nothing for the next trace
-        #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
-        #so, that's why the additional checks are there.
-        if not breakpoint:
-            if can_skip:
-                return None
+            if len(always_exception_set) == 0:
+                if info.pydev_state == STATE_RUN:
+                    #we can skip if:
+                    #- we have no stop marked
+                    #- we should make a step return/step over and we're not in the current frame
+                    can_skip = (info.pydev_step_cmd is None and info.pydev_step_stop is None)\
+                    or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_OVER) and info.pydev_step_stop is not frame)
 
-        else:
-            #checks the breakpoint to see if there is a context match in some function
-            curr_func_name = frame.f_code.co_name
-            
-            #global context is set with an empty name
-            if curr_func_name in ('?', '<module>'):
-                curr_func_name = ''
-                
-            for _b, condition, func_name, expression in breakpoint.values(): #jython does not support itervalues()
-                #will match either global or some function
-                if func_name in ('None', curr_func_name):
-                    break
-                
-            else: # if we had some break, it won't get here (so, that's a context that we want to skip)
+
+            # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
+            # we will return nothing for the next trace
+            #also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
+            #so, that's why the additional checks are there.
+            if not breakpoint:
                 if can_skip:
-                    #print 'skipping', frame.f_lineno, info.pydev_state, info.pydev_step_stop, info.pydev_step_cmd
-                    return None
-                
-        #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
-        #print 'NOT skipped', frame.f_lineno, frame.f_code.co_name
+                   return None
 
-        
+            else:
+                #checks the breakpoint to see if there is a context match in some function
+                curr_func_name = frame.f_code.co_name
+
+                #global context is set with an empty name
+                if curr_func_name in ('?', '<module>'):
+                    curr_func_name = ''
+
+                for _b, condition, func_name, expression in breakpoint.values(): #jython does not support itervalues()
+                    #will match either global or some function
+                    if func_name in ('None', curr_func_name):
+                        break
+
+                else: # if we had some break, it won't get here (so, that's a context that we want to skip)
+                    if can_skip:
+                        #print 'skipping', frame.f_lineno, info.pydev_state, info.pydev_step_stop, info.pydev_step_cmd
+                        return None
+        else:
+            breakpoint = None
+
+        #We may have hit a breakpoint or we are already in step mode. Either way, let's check what we should do in this frame
+        #print 'NOT skipped', frame.f_lineno, frame.f_code.co_name, event
+
         try:
             line = frame.f_lineno
 
-            #if event == 'exception' and info.pydev_state != STATE_SUSPEND and breakpoint is not None:
-            #    (exception, value, traceback) = arg
-            #    print exception
-            #    curr_func_name = frame.f_code.co_name
-            #    if curr_func_name in ('?', '<module>'):
-            #        self.setSuspend(thread, CMD_SET_BREAK)
-            #        self.doWaitSuspend(thread, frame, event, arg)
+            if event == 'exception' and info.pydev_state != STATE_SUSPEND:  #and breakpoint is not None:
+                (exception, value, traceback) = arg
+                global exception_set
+
+                exception_breakpoint = get_exception_breakpoint(exception, tuple(exception_set), NOTIFY_ALWAYS)
+                if exception_breakpoint is not None:
+                    curr_func_name = frame.f_code.co_name
+                    self.setSuspend(thread, CMD_ADD_EXCEPTION_BREAK)
+                    self.doWaitSuspend(thread, frame, event, arg)
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
             #(one for the line and the other for the return).
-            if event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoint is not None \
+            elif event != 'return' and info.pydev_state != STATE_SUSPEND and breakpoint is not None \
                 and DictContains(breakpoint, line):
                 
                 #ok, hit breakpoint, now, we have to discover if it is a conditional breakpoint

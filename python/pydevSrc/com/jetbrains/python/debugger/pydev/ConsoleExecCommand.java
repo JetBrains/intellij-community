@@ -13,9 +13,10 @@ public class ConsoleExecCommand extends AbstractFrameCommand {
     myExpression = expression;
   }
 
-  public String getPayload() {
-    return new StringBuilder().append(myThreadId).append('\t').append(myFrameId).append('\t').append("FRAME\t")
-      .append(ProtocolParser.encodeExpression(myExpression)).toString();
+  @Override
+  protected void buildPayload(Payload payload) {
+    super.buildPayload(payload);
+    payload.add(myThreadId).add(myFrameId).add("FRAME").add(myExpression);
   }
 
   @Override

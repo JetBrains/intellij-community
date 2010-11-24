@@ -39,7 +39,13 @@ public abstract class AbstractCommand {
   }
 
   @Nullable
-  public abstract String getPayload();
+  public final String getPayload() {
+    Payload payload = new Payload();
+    buildPayload(payload);
+    return payload.getText();
+  }
+
+  protected abstract void buildPayload(Payload payload);
 
   public boolean isResponseExpected() {
     return false;
@@ -69,4 +75,40 @@ public abstract class AbstractCommand {
     }
   }
 
+  protected static class Payload {
+    private final StringBuilder myBuilder = new StringBuilder();
+    private static final char SEPARATOR = '\t';
+
+
+    public Payload add(boolean flag) {
+      return doAdd(flag ? "1" : "0");
+    }
+
+    public Payload add(String text) {
+      return doAdd(text);
+    }
+
+    private Payload doAdd(String text) {
+      if (myBuilder.length() > 0) {
+        return separator().append(text);
+      }
+      else {
+        return append(text);
+      }
+    }
+
+    private Payload append(String text) {
+      myBuilder.append(ProtocolParser.encodeExpression(text));
+      return this;
+    }
+
+    private Payload separator() {
+      myBuilder.append(SEPARATOR);
+      return this;
+    }
+
+    public String getText() {
+      return myBuilder.toString();
+    }
+  }
 }

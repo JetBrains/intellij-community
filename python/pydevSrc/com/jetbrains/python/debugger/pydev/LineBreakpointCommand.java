@@ -17,4 +17,9 @@ public abstract class LineBreakpointCommand extends AbstractCommand {
     myFile = file;
     myLine = line;
   }
+
+  @Override
+  protected void buildPayload(Payload payload) {
+    payload.add(myFile).add(Integer.toString(myLine));
+  }
 }
