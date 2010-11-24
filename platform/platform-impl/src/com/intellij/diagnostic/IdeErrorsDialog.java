@@ -148,11 +148,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), getRootPane());
+    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_DOWN_MASK)), getRootPane());
     group.add(back);
 
     ForwardAction forward = new ForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), getRootPane());
+    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK)), getRootPane());
     group.add(forward);
 
     group.add(new ClearFatalsAction());
