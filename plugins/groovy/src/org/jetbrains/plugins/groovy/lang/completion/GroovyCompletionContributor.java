@@ -366,6 +366,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
     result.restartCompletionOnPrefixChange(SET_PREFIX);
     result.restartCompletionOnPrefixChange(IS_PREFIX);
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
+    final PsiElement qualifier = reference.getQualifier();
+    final PsiType qualifierType;
+    if (qualifier instanceof GrExpression) {
+      qualifierType = ((GrExpression)qualifier).getType();
+    }
+    else {
+      qualifierType = null;
+    }
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
@@ -388,7 +396,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         //skip default groovy methods
         if (!secondCompletionInvoked &&
             object instanceof GrGdkMethod &&
-            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor)) {
+            GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
           showInfo();
           return;
         }
@@ -420,7 +428,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-    if (reference.getQualifier() == null) {
+    if (qualifier == null) {
       completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
