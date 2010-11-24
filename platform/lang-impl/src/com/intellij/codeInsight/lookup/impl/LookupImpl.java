@@ -712,6 +712,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public Rectangle getCurrentItemBounds(){
     int index = myList.getSelectedIndex();
+    if (index < 0) {
+      LOG.error("No selected element, size=" + myList.getModel().getSize() + "; items" + getItems());
+    }
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
       LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
