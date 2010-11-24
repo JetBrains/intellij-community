@@ -112,4 +112,8 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testJoinIf() {
     doTest(PyBundle.message("INTN.join.if.text"));
   }
+
+  public void testDictConstructor() {
+    doTest(PyBundle.message("INTN.convert.dict.constructor.to.dict.literal"));
+  }
 }
