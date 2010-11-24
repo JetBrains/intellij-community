@@ -243,8 +243,8 @@ public class IdeaProjectLoader {
     MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {
-      basePath moduleBasePath
       Module currentModule = project.modules[currentModuleName]
+      currentModule.basePath = moduleBasePath
       def root = new XmlParser(false, false).parse(moduleFile)
       def componentTag = getComponent(root, "NewModuleRootManager")
       if (componentTag != null) {

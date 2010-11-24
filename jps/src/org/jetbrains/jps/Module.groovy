@@ -54,10 +54,6 @@ class Module extends LazyInitializeableObject implements ClasspathItem {
         arg.each { excludes << it }
       }
 
-      meta.basePath = {String path ->
-        basePath = path;
-      }
-
       initializer.delegate = meta
       initializer.setResolveStrategy Closure.DELEGATE_FIRST
       initializer.call()
