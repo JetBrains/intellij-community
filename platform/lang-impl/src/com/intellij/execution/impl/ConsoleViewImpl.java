@@ -28,7 +28,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -196,6 +195,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public int getLength() {
       return endOffset - startOffset;
     }
+
+    @Override
+    public String toString() {
+      return contentType + "[" + startOffset + ";" + endOffset + "]";
+    }
   }
 
   private final Project myProject;
@@ -347,6 +351,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       myDeferredTypes.clear();
       myDeferredUserInput = new StringBuffer();
+      myDeferredTokens.clear();
       myHyperlinks.clear();
       myTokens.clear();
       if (myEditor == null) return;
@@ -613,7 +618,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static void addToken(int length, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
-    boolean needNew = true;
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);
