@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +19,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyJavaTypeProvider implements PyTypeProvider {
-  public PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context) {
-    return null;
-  }
-
+public class PyJavaTypeProvider extends PyTypeProviderBase {
   @Nullable
   public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context) {
     if (referenceTarget instanceof PsiClass) {
@@ -70,11 +67,6 @@ public class PyJavaTypeProvider implements PyTypeProvider {
     if (superMethodParameterTypes.size() > 0) {
       return superMethodParameterTypes.get(0);
     }
-    return null;
-  }
-
-  @Override
-  public PyType getReturnType(PyFunction function, PyReferenceExpression callSite, TypeEvalContext context) {
     return null;
   }
 }

@@ -87,6 +87,11 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+  @Override
+  public PyType getIterationType(PyClass iterable) {
+    return null;
+  }
+
   protected void registerSelfReturnType(String classQualifiedName, Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }

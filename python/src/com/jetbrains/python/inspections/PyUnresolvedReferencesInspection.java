@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -16,7 +17,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -147,7 +147,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean unresolved;
         if (reference instanceof PsiPolyVariantReference) {
           final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
-          final ResolveResult[] resolveResults = poly.multiResolve(true);
+          final ResolveResult[] resolveResults = poly.multiResolve(false);
           unresolved = (resolveResults.length == 0);
           for (ResolveResult resolveResult : resolveResults) {
             if (resolveResult instanceof ImportedResolveResult) {
@@ -159,25 +159,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
-          // try to find the same variable in class instance attributes
-          PyClass containedClass = null;
-          PsiElement parent = node.getParent();
-          while (! (parent instanceof PyFile)) {
-            if (parent instanceof PyClass) {
-              containedClass = (PyClass)parent;
-              break;
-            }
-            parent = parent.getParent();
-          }
-          if (containedClass != null) {
-            for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
-              if (node.getName().equals(target.getName())) {
-                registerProblem(node, "Unresolved reference. Possibly missed self",new UnresolvedReferenceQuickFix());
-                return;
-              }
-            }
-          }
-          // did not find
           registerUnresolvedReferenceProblem(node, reference, severity);
           // don't highlight unresolved imports as unused
           if (node.getParent() instanceof PyImportElement) {
@@ -208,6 +189,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
 
+        }
+        else {
+          PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+          if (containedClass != null) {
+            for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
+              if (Comparing.strEqual(node.getName(), target.getName())) {
+                actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+              }
+            }
+          }
         }
         // unqualified:
         // may be module's

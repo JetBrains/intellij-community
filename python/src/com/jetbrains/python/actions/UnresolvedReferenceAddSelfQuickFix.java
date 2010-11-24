@@ -1,5 +1,6 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -13,9 +14,11 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to remove redundant parentheses from if/while/except statement
  */
-public class UnresolvedReferenceQuickFix implements LocalQuickFix {
+public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
+  private PyReferenceExpression myElement;
 
-  public UnresolvedReferenceQuickFix() {
+  public UnresolvedReferenceAddSelfQuickFix(PyReferenceExpression element) {
+    myElement = element;
   }
 
   @NotNull
@@ -29,14 +32,10 @@ public class UnresolvedReferenceQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element != null && element.isWritable()) {
-      if (element instanceof PyReferenceExpression) {
-        PyReferenceExpression ref = (PyReferenceExpression)element;
-        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-        PyExpression expression = elementGenerator.createExpressionFromText("self." + ref.getText());
-        element = element.replace(expression);
-      }
-    }
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
+      PyReferenceExpression ref = myElement;
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      PyExpression expression = elementGenerator.createExpressionFromText("self." + ref.getText());
+      myElement.replace(expression);
   }
 }

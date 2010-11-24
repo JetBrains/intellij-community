@@ -123,6 +123,14 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("int", type.getElementType(TypeEvalContext.fast()).getName());
   }
 
+  public void testExceptType() {
+    PyClassType type = (PyClassType) doTest("try:\n" +
+                                            "    pass\n" +
+                                            "except ImportError, expr:\n" +
+                                            "    pass");
+    assertEquals("ImportError", type.getName());
+  }
+
   private PyType doTest(final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

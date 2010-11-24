@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -159,6 +160,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (iterType != null) {
         return iterType;
       }
+      PyType excType = getTypeFromExcept();
+      if (excType != null) {
+        return excType;
+      }
       return null;
     }
     finally {
@@ -205,6 +210,34 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PyType sourceType = source.getType(context);
       if (sourceType instanceof PyCollectionType) {
         return ((PyCollectionType) sourceType).getElementType(context);
+      }
+      if (sourceType instanceof PyClassType) {
+        final PyClass pyClass = ((PyClassType)sourceType).getPyClass();
+        if (pyClass == null) {
+          return null;
+        }
+        for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType iterType = provider.getIterationType(pyClass);
+          if (iterType != null) {
+            return iterType;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType getTypeFromExcept() {
+    PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(this, PyExceptPart.class);
+    if (exceptPart == null || exceptPart.getTarget() != this) {
+      return null;
+    }
+    final PyExpression exceptClass = exceptPart.getExceptClass();
+    if (exceptClass instanceof PyReferenceExpression) {
+      final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
+      if (element instanceof PyClass) {
+        return new PyClassType((PyClass) element, false);
       }
     }
     return null;

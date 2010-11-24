@@ -1,8 +1,11 @@
 package com.jetbrains.python.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
 public interface PyNonlocalStatement extends PyStatement {
-  void accept(PyElementVisitor visitor);
+  @NotNull
+  PyTargetExpression[] getVariables();
 }

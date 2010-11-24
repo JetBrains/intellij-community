@@ -123,6 +123,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ReplaceListComprehensionWithForIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
@@ -344,6 +349,9 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
+
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyStdlibClassMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.PyStdlibTypeProvider"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>

@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
@@ -190,67 +191,35 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       final StubElement stub = getStub();
       if (stub != null) {
         final List children = stub.getChildrenStubs();
+        final List<PyExceptPartStub> exceptParts = new ArrayList<PyExceptPartStub>();
         for (int i=children.size()-1; i >= 0; i--) {
           Object child = children.get(i);
           if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
             return ((NamedStub) child).getPsi();
           }
           else if (child instanceof PyFromImportStatementStub) {
-            if (((PyFromImportStatementStub)child).isStarImport()) {
-              final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
-              PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
-              if (starImportSource != null) {
-                starImportSource = PyUtil.turnDirIntoInit(starImportSource);
-                if (starImportSource instanceof PyFile) {
-                  final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
-                  if (result != null) {
-                    return result;
-                  }
-                }
-              }
-            }
-            else {
-              final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
-              for (StubElement importElement : importElements) {
-                final PsiElement psi = importElement.getPsi();
-                if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
-                  final PsiElement resolved = ((PyImportElement) psi).getElementNamed(name);
-                  if (resolved != null) {
-                    return resolved;
-                  }
-                }
-              }
+            final PsiElement result = findNameInFromImportStatementStub(name, (PyFromImportStatementStub)child);
+            if (result != null) {
+              return result;
             }
           }
           else if (child instanceof PyImportStatementStub) {
-            final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
-            for (StubElement importElementStub : importElements) {
-              final PsiElement psi = importElementStub.getPsi();
-              if (psi instanceof PyImportElement) {
-                final PyImportElement importElement = (PyImportElement)psi;
-                final String asName = importElement.getAsName();
-                if (asName != null && asName.equals(name)) {
-                  final PsiElement resolved = importElement.getElementNamed(name);
-                  if (resolved != null) {
-                    return resolved;
-                  }
-                }
-                final PyQualifiedName qName = importElement.getImportedQName();
-                if (qName != null && qName.getComponentCount() > 0) {
-                  if (qName.getComponents().get(0).equals(name)) {
-                    if (qName.getComponentCount() == 1) {
-                      return psi;
-                    }
-                    return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
-                  }
-                  if (name.equals(((PyImportElement)psi).getVisibleName())) {
-                    final PsiElement resolved = importElement.getElementNamed(name);
-                    if (resolved != null) {
-                      return resolved;
-                    }
-                  }
-                }
-              }
+            final PsiElement result = findNameInImportStatementStub(name, (PyImportStatementStub)child);
+            if (result != null) {
+              return result;
+            }
+          }
+          else if (child instanceof PyExceptPartStub) {
+            exceptParts.add((PyExceptPartStub) child);
+          }
+        }
+        for (int i = exceptParts.size() - 1; i >= 0; i--) {
+          PyExceptPartStub part = exceptParts.get(i);
+          final List<StubElement> exceptChildren = part.getChildrenStubs();
+          for (int j = exceptChildren.size() - 1; j >= 0; j--) {
+            Object child = exceptChildren.get(j);
+            if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
+              return ((NamedStub) child).getPsi();
             }
           }
         }
@@ -272,6 +241,70 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     finally {
       stack.remove(name);
     }
+  }
+
+  @Nullable
+  private static PsiElement findNameInFromImportStatementStub(String name, PyFromImportStatementStub child) {
+    if (child.isStarImport()) {
+      final PyFromImportStatement statement = child.getPsi();
+      PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+      if (starImportSource != null) {
+        starImportSource = PyUtil.turnDirIntoInit(starImportSource);
+        if (starImportSource instanceof PyFile) {
+          final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+    }
+    else {
+      final List<StubElement> importElements = child.getChildrenStubs();
+      for (StubElement importElement : importElements) {
+        final PsiElement psi = importElement.getPsi();
+        if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
+          final PsiElement resolved = ((PyImportElement) psi).getElementNamed(name);
+          if (resolved != null) {
+            return resolved;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PsiElement findNameInImportStatementStub(String name, PyImportStatementStub child) {
+    final List<StubElement> importElements = child.getChildrenStubs();
+    for (StubElement importElementStub : importElements) {
+      final PsiElement psi = importElementStub.getPsi();
+      if (psi instanceof PyImportElement) {
+        final PyImportElement importElement = (PyImportElement)psi;
+        final String asName = importElement.getAsName();
+        if (asName != null && asName.equals(name)) {
+          final PsiElement resolved = importElement.getElementNamed(name);
+          if (resolved != null) {
+            return resolved;
+          }
+        }
+        final PyQualifiedName qName = importElement.getImportedQName();
+        if (qName != null && qName.getComponentCount() > 0) {
+          if (qName.getComponents().get(0).equals(name)) {
+            if (qName.getComponentCount() == 1) {
+              return psi;
+            }
+            return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
+          }
+          if (name.equals(((PyImportElement)psi).getVisibleName())) {
+            final PsiElement resolved = importElement.getElementNamed(name);
+            if (resolved != null) {
+              return resolved;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -379,7 +412,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       if (PyNames.ALL.equals(node.getName())) {
-        myResult = getStringListFromTargetExpression(node);
+        myResult = PyUtil.getStringListFromTargetExpression(node);
       }
     }
 
@@ -405,25 +438,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
-        return getStringListFromTargetExpression(attr);
+        return PyUtil.getStringListFromTargetExpression(attr);
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
-    final PyExpression value = attr.findAssignedValue();
-    if (value instanceof PySequenceExpression) {
-      final PyExpression[] elements = ((PySequenceExpression)value).getElements();
-      List<String> result = new ArrayList<String>(elements.length);
-      for (PyExpression element : elements) {
-        if (!(element instanceof PyStringLiteralExpression)) {
-          return null;
-        }
-        result.add(((PyStringLiteralExpression) element).getStringValue());
-      }
-      return result;
     }
     return null;
   }
