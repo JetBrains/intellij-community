@@ -156,8 +156,10 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
       @Override
       protected void run(Result result) throws Throwable {
         String name = getRefName();
-        if (ResolveImportUtil.resolveInRoots(file, name) != null) { // TODO: think about multiple possible resole results
-          AddImportHelper.addImportStatement(file, name, null);
+        final PsiElement element = ResolveImportUtil.resolveInRoots(file, name);
+        if (element != null) { // TODO: think about multiple possible resole results
+          final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(file, element.getContainingFile());
+          AddImportHelper.addImportStatement(file, name, null, priority);
         }
       }
     }.execute();

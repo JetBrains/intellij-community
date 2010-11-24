@@ -125,15 +125,16 @@ public class ImportFromExistingAction implements QuestionAction {
       }
     }
     else { // no existing import, add it then use it
+      AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
       if (myUseQualifiedImport) {
-        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null);
+        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, priority);
         String qual_name;
         if (item.getAsName() != null) qual_name = item.getAsName();
         else qual_name = item.getPath();
         myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
       }
       else {
-        AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName);
+        AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName, priority);
       }
     }
   }
