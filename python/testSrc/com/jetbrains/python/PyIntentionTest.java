@@ -110,6 +110,6 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   }
 
   public void testJoinIf() {
-    doTest(PyBundle.message("INTN.join.if"));
+    doTest(PyBundle.message("INTN.join.if.text"));
   }
 }

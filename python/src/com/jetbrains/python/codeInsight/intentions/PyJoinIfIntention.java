@@ -24,18 +24,36 @@ public class PyJoinIfIntention extends BaseIntentionAction {
 
   @NotNull
   public String getText() {
-    return PyBundle.message("INTN.join.if");
+    return PyBundle.message("INTN.join.if.text");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PyIfStatement expression =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
     while (expression != null) {
-      PyStatement firstStatement = expression.getIfPart().getStatementList().getStatements()[0];
-      if (firstStatement instanceof PyIfStatement) {
-        return true;
+      PyStatementList stList = expression.getIfPart().getStatementList();
+      if (stList != null) {
+        if (stList.getStatements().length != 0) {
+          PyStatement firstStatement = stList.getStatements()[0];
+          if (firstStatement instanceof PyIfStatement) {
+            return true;
+          }
+        }
       }
-      expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+      expression = PsiTreeUtil.getParentOfType(expression, PyIfStatement.class);
+    }
+    expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+    while (expression != null) {
+      PyStatementList stList = expression.getIfPart().getStatementList();
+      if (stList != null) {
+        if (stList.getStatements().length != 0) {
+          PyStatement firstStatement = stList.getStatements()[0];
+          if (firstStatement instanceof PyIfStatement) {
+            return true;
+          }
+        }
+      }
+      expression = PsiTreeUtil.getChildOfType(expression, PyIfStatement.class);
     }
     return false;
   }
@@ -50,7 +68,7 @@ public class PyJoinIfIntention extends BaseIntentionAction {
       if (firstStatement instanceof PyIfStatement) {
         break;
       }
-      expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
+      expression = PsiTreeUtil.getParentOfType(expression, PyIfStatement.class);
     }
     if (firstStatement != null && firstStatement instanceof PyIfStatement) {
       PyExpression condition = ((PyIfStatement)firstStatement).getIfPart().getCondition();
