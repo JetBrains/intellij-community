@@ -41,7 +41,10 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
@@ -395,32 +398,50 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return false;
   }
 
+  /**
+   * Formatter trims line that contains from white spaces symbols only, however, there is a possible case that we want
+   * to preserve them for particular line (e.g. for live template that defines blank line that contains $END$ marker).
+   * <p/>
+   * Current approach is to do the following:
+   * <pre>
+   * <ol>
+   *   <li>Insert dummy text at the end of the blank line which white space symbols should be preserved;</li>
+   *   <li>Perform formatting;</li>
+   *   <li>Remove dummy text;</li>
+   * </ol>
+   * </pre>
+   * <p/>
+   * This method inserts that dummy text if necessary (if target line contains white space symbols only)
+   * 
+   * @param document    target document
+   * @param offset      offset that defines end boundary of the target line text fragment (start boundary is the first line's symbol)
+   * @return            text range that points to the newly inserted dummy text if any; <code>null</code> otherwise
+   */
   @Nullable
-  public static PsiElement insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
-    CheckUtil.checkWritable(file);
-    final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
-    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
-    if( elementAt == null )
-    {
+  public static TextRange insertNewLineIndentMarker(@NotNull Document document, int offset) {
+    int line = document.getLineNumber(offset);
+    int startLineOffset = document.getLineStartOffset(line);
+    if (startLineOffset >= offset) {
+      // There is no point in inserting dummy text at the start of the line.
       return null;
     }
-    ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
-    ASTNode parent = element.getTreeParent();
-    int elementStart = element.getTextRange().getStartOffset();
-    if (element.getElementType() != TokenType.WHITE_SPACE) {
-      /*
-      if (elementStart < offset) return null;
-      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
-      ChangeUtil.addChild(parent, marker, element);
-      return marker;
-      */
+    
+    CharSequence text = document.getCharsSequence();
+    boolean whiteSpacesOnly = true;
+    for (int i = startLineOffset; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c != ' ' && c != '\t') {
+        whiteSpacesOnly = false;
+        break;
+      }
+    }
+    
+    if (!whiteSpacesOnly) {
       return null;
     }
-
-    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
-    parent.addChild(marker, space1.getTreeNext());
-    return SourceTreeToPsiMap.treeElementToPsi(marker);
+    
+    document.insertString(offset, DUMMY_IDENTIFIER);
+    return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
   }
 
   public Indent getIndent(String text, FileType fileType) {

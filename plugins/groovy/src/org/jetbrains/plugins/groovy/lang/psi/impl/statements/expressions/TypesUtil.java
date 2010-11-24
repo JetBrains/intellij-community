@@ -117,17 +117,21 @@ public class TypesUtil {
     if (operatorName != null) {
       MethodResolverProcessor processor =
         new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
+      final ResolveState state;
       if (thisType instanceof PsiClassType) {
         final PsiClassType classtype = (PsiClassType)thisType;
         final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
         final PsiClass lClass = resolveResult.getElement();
+        state = ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor());
         if (lClass != null) {
-          lClass
-            .processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor()), null, place);
+          lClass.processDeclarations(processor, state, null, place);
         }
       }
+      else {
+        state = ResolveState.initial();
+      }
 
-      ResolveUtil.processNonCodeMethods(thisType, processor, place);
+      ResolveUtil.processNonCodeMethods(thisType, processor, place, state);
       return processor.getCandidates();
     }
     return GroovyResolveResult.EMPTY_ARRAY;

@@ -187,7 +187,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
                 newStatementText.append("final ");
             }
-            newStatementText.append("java.util.Iterator");
+            newStatementText.append(CommonClassNames.JAVA_UTIL_ITERATOR);
             if (parameterType != null) {
                 final String typeText = parameterType.getCanonicalText();
                 newStatementText.append('<');
@@ -318,7 +318,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiElementFactory factory = facade.getElementFactory();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             final PsiClass iteratorClass =
-                    facade.findClass("java.util.Iterator", scope);
+                    facade.findClass(CommonClassNames.JAVA_UTIL_ITERATOR, scope);
             if (iteratorClass == null) {
                 return "iterator";
             }

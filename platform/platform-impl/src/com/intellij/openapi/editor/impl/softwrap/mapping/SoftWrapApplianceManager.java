@@ -1025,7 +1025,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
      * [{@link #startOffset}; {@link #skipToLineEnd} is set to <code>'true'</code> otherwise
      */
     public void tryToShiftToNextLine() {
-      for (int i = startOffset; i < endOffset; i++, currentPosition.offset++) {
+      for (int i = currentPosition.offset; i < endOffset; i++, currentPosition.offset++) {
         char c = text.charAt(i);
         currentPosition.offset = i;
         if (c == '\n') {

@@ -60,7 +60,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
 
         @Override public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
-            if (!MethodUtils.methodMatches(method, "java.util.Iterator", null,
+            if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
                     HardcodedMethodConstants.NEXT)) {
                 return;
             }

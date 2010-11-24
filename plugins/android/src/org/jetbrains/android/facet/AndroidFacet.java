@@ -251,9 +251,14 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private boolean canRunOnDevice(IAndroidTarget projectTarget, AndroidVersion deviceVersion) {
     int minSdkVersion = -1;
     int maxSdkVersion = -1;
-    Manifest manifest = getManifest();
+    final Manifest manifest = getManifest();
     if (manifest != null) {
-      XmlTag manifestTag = manifest.getXmlTag();
+      XmlTag manifestTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
+        @Override
+        public XmlTag compute() {
+          return manifest.getXmlTag();
+        }
+      });
       if (manifestTag != null) {
         XmlTag[] tags = manifestTag.findSubTags("uses-sdk");
         for (XmlTag tag : tags) {
