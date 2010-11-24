@@ -198,7 +198,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             return ((NamedStub) child).getPsi();
           }
           else if (child instanceof PyFromImportStatementStub) {
-            return findNameInFromImportStatementStub(name, (PyFromImportStatementStub) child);
+            final PsiElement result = findNameInFromImportStatementStub(name, (PyFromImportStatementStub)child);
+            if (result != null) {
+              return result;
+            }
           }
           else if (child instanceof PyImportStatementStub) {
             final PsiElement result = findNameInImportStatementStub(name, (PyImportStatementStub)child);
