@@ -512,6 +512,7 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (myInStack) {
+        myFocusTrackback.setForcedRestore(!myOk);
         myFocusTrackback.restoreFocus();
       }
 
