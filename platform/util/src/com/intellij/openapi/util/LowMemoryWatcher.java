@@ -50,6 +50,7 @@ public class LowMemoryWatcher {
 
   static {
     final Thread thread = new Thread("LowMemoryWatcher") {
+      boolean shouldCleanup = false;
       public void run() {
         updateRef();
         final Set<WeakReference<LowMemoryWatcher>> toRemove = new HashSet<WeakReference<LowMemoryWatcher>>();
@@ -58,10 +59,12 @@ public class LowMemoryWatcher {
           try {
             ourRefQueue.remove();
             updateRef();
-            
-            final Runtime runtime = Runtime.getRuntime();
-            final boolean shouldCleanup = (runtime.maxMemory() - runtime.totalMemory()) <= MEM_THRESHOLD;
-            
+
+            if (!shouldCleanup) {
+              final Runtime runtime = Runtime.getRuntime();
+              shouldCleanup = (runtime.maxMemory() - runtime.totalMemory()) <= MEM_THRESHOLD;
+            }
+
             for (WeakReference<LowMemoryWatcher> instanceRef : ourInstances) {
               final LowMemoryWatcher watcher = instanceRef.get();
               if (watcher == null) {
