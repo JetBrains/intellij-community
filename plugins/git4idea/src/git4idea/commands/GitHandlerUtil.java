@@ -15,7 +15,6 @@
  */
 package git4idea.commands;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,16 +22,14 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.EventQueue;
 import java.util.Collection;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Handler utilities that allow running handlers with progress indicators
@@ -185,118 +182,7 @@ public class GitHandlerUtil {
    * @param postStartAction an action that is executed
    */
   static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
-    final GitVcs vcs = GitVcs.getInstance(handler.myProject);
-    if (vcs == null) { return; }
-
-    boolean suspendable = false;
-    switch (handler.myCommand.lockingPolicy()) {
-      case META:
-        // do nothing no locks are taken for metadata
-        break;
-      case READ:
-        vcs.getCommandLock().readLock().lock();
-        break;
-      case WRITE_SUSPENDABLE:
-        suspendable = true;
-        //noinspection fallthrough
-      case WRITE:
-        vcs.getCommandLock().writeLock().lock();
-        break;
-    }
-    try {
-      if (suspendable) {
-        final Object EXIT = new Object();
-        final Object SUSPEND = new Object();
-        final Object RESUME = new Object();
-        final LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
-        Runnable suspend = new Runnable() {
-          public void run() {
-            queue.add(SUSPEND);
-          }
-        };
-        Runnable resume = new Runnable() {
-          public void run() {
-            queue.add(RESUME);
-          }
-        };
-        handler.setSuspendResume(suspend, resume);
-        handler.start();
-        if (handler.isStarted()) {
-          if (postStartAction != null) {
-            postStartAction.run();
-          }
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              handler.waitFor();
-              queue.add(EXIT);
-            }
-          });
-          boolean suspended = false;
-          while (true) {
-            Object action;
-            while (true) {
-              try {
-                action = queue.take();
-                break;
-              }
-              catch (InterruptedException e) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("queue.take() is interrupted", e);
-                }
-              }
-            }
-            if (action == EXIT) {
-              if (suspended) {
-                LOG.error("Exiting while RW lock is suspended (reacquiring W-lock command)");
-                vcs.getCommandLock().writeLock().lock();
-              }
-              break;
-            }
-            else if (action == SUSPEND) {
-              if (suspended) {
-                LOG.error("Suspending suspended W-lock (ignoring command)");
-              }
-              else {
-                vcs.getCommandLock().writeLock().unlock();
-                suspended = true;
-              }
-            }
-            else if (action == RESUME) {
-              if (!suspended) {
-                LOG.error("Resuming not suspended W-lock (ignoring command)");
-              }
-              else {
-                vcs.getCommandLock().writeLock().lock();
-                suspended = false;
-              }
-            }
-          }
-        }
-      }
-      else {
-        handler.start();
-        if (handler.isStarted()) {
-          if (postStartAction != null) {
-            postStartAction.run();
-          }
-          handler.waitFor();
-        }
-      }
-    }
-    finally {
-      switch (handler.myCommand.lockingPolicy()) {
-        case META:
-          // do nothing no locks are taken for metadata
-          break;
-        case READ:
-          vcs.getCommandLock().readLock().unlock();
-          break;
-        case WRITE_SUSPENDABLE:
-        case WRITE:
-          vcs.getCommandLock().writeLock().unlock();
-          break;
-      }
-    }
+    handler.runInCurrentThread(postStartAction);
   }
 
   /**
