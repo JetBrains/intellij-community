@@ -328,6 +328,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
+    assert myDisposed;
+
     if (myModifiersReleased || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -458,8 +460,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (hideLookup) {
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
+    } else {
+      assert myDisposed;
     }
-
   }
 
   private void finishCompletionProcess() {
@@ -484,6 +487,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void cleanup() {
     assert ApplicationManager.getApplication().isDispatchThread();
+    assert myDisposed;
     myHint = null;
     myRestorePrefix = null;
     unregisterItself();
@@ -612,6 +616,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void rememberDocumentState() {
+    assert myDisposed;
     if (myModifiersReleased) {
       return;
     }
