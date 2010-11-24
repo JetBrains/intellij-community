@@ -31,14 +31,13 @@ public abstract class XDebuggerEvaluator {
 
   /**
    * Evaluate <code>expression</code> to boolean
+   *
    * @param expression expression to evaluate
    * @return result
-   *
-   * @deprecated This method is used to evaluate breakpoints' conditions only. Instead of implementing it you should evaluate breakpoint's condition
-   * in your code and call {@link XDebugSession#breakpointReached(XBreakpoint, XSuspendContext)}
-   * only if the condition evaluates to <code>true</code>.
-   *
    * @see XBreakpoint#getCondition()
+   * @deprecated This method is used to evaluate breakpoints' conditions only. Instead of implementing it you should evaluate breakpoint's condition
+   *             in your code and call {@link XDebugSession#breakpointReached(XBreakpoint, XSuspendContext)}
+   *             only if the condition evaluates to <code>true</code>.
    */
   @Deprecated
   public boolean evaluateCondition(@NotNull String expression) {
@@ -47,11 +46,11 @@ public abstract class XDebuggerEvaluator {
 
   /**
    * Evaluate <code>expression</code> to string
+   *
    * @param expression expression to evaluate
    * @return result
-   *
    * @deprecated This method is used to evaluate breakpoints' log messages only. Instead of implementing it you should evaluate breakpoint's
-   * log message in your code and pass it to {@link XDebugSession#breakpointReached(XBreakpoint, String, XSuspendContext)}.
+   *             log message in your code and pass it to {@link XDebugSession#breakpointReached(XBreakpoint, String, XSuspendContext)}.
    */
   @Deprecated
   @Nullable
@@ -61,8 +60,9 @@ public abstract class XDebuggerEvaluator {
 
   /**
    * Start evaluating expression.
+   *
    * @param expression expression to evaluate
-   * @param callback used to notify that the expression has been evaluated or an error occurs
+   * @param callback   used to notify that the expression has been evaluated or an error occurs
    */
   public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
     evaluate(expression, callback);
@@ -77,9 +77,10 @@ public abstract class XDebuggerEvaluator {
 
   /**
    * Return text range of expression which can be evaluated.
-   * @param project project
+   *
+   * @param project  project
    * @param document document
-   * @param offset offset
+   * @param offset   offset
    * @return text range of expression
    */
   @Nullable

@@ -24,7 +24,7 @@ import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -253,6 +253,25 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     
     backspace();
     assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  public void testRemoveOfAllSymbolsFromLastLine() throws IOException {
+    // There was a problem that removing all text from the last document line corrupted soft wraps cache.
+    String text =
+      "Line1\n" +
+      "Long line2 that is expected to be soft-wrapped<caret>";
+    init(150, text);
+
+    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(softWrapsBeforeModification.size() > 0);
+
+    int offset = myEditor.getCaretModel().getOffset();
+    VisualPosition positionBeforeModification = myEditor.offsetToVisualPosition(offset);
+    type("\n123");
+    myEditor.getSelectionModel().setSelection(offset + 1, myEditor.getDocument().getTextLength());
+    delete();
+    assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+    assertEquals(positionBeforeModification, myEditor.offsetToVisualPosition(offset));
   }
   
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
