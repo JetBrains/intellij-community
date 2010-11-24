@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class UnusedParametersInspection extends GlobalJavaInspectionTool {
+
+  @NonNls public static final String SHORT_NAME = "UnusedParameters";
 
   @Nullable
   public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
@@ -204,7 +207,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
   @NotNull
   public String getShortName() {
-    return "UnusedParameters";
+    return SHORT_NAME;
   }
 
 
