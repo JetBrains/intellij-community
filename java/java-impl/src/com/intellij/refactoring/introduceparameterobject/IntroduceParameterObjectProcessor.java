@@ -275,7 +275,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         final PsiFile containingFile = method.getContainingFile();
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
         final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true);
+        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
 
         if (directory != null) {
 

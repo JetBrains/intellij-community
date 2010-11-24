@@ -58,9 +58,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   /** Upper boundary of time interval to check editor settings. */
   private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
 
-  private final OffsetToLogicalTask myOffsetToLogicalTask = new OffsetToLogicalTask();
-  private final VisualToLogicalTask myVisualToLogicalTask = new VisualToLogicalTask();
-  private final LogicalToVisualTask myLogicalToVisualTask = new LogicalToVisualTask();
+  private final OffsetToLogicalTask   myOffsetToLogicalTask   = new OffsetToLogicalTask();
+  private final VisualToLogicalTask   myVisualToLogicalTask   = new VisualToLogicalTask();
+  private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
+  private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
@@ -284,7 +285,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myActive++;
     try {
       myVisualToLogicalTask.input = visual;
-      performMapping(myVisualToLogicalTask);
+      executeSafely(myVisualToLogicalTask);
       return myVisualToLogicalTask.output;
     } finally {
       myActive--;
@@ -300,7 +301,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myActive++;
     try {
       myOffsetToLogicalTask.input = offset;
-      performMapping(myOffsetToLogicalTask);
+      executeSafely(myOffsetToLogicalTask);
       return myOffsetToLogicalTask.output;
     } finally {
       myActive--;
@@ -316,7 +317,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myActive++;
     try {
       myOffsetToLogicalTask.input = offset;
-      performMapping(myOffsetToLogicalTask);
+      executeSafely(myOffsetToLogicalTask);
       return myOffsetToLogicalTask.output;
     } finally {
       myActive--;
@@ -333,7 +334,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     try {
       myLogicalToVisualTask.input = logical;
       myLogicalToVisualTask.defaultOutput = defaultVisual;
-      performMapping(myLogicalToVisualTask);
+      executeSafely(myLogicalToVisualTask);
       return myLogicalToVisualTask.output;
     }
     finally {
@@ -510,9 +511,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if (!isSoftWrappingEnabled()) {
       return;
     }
-    for (FoldingListener listener : myFoldListeners) {
-      listener.onFoldProcessingEnd();
-    }
+    executeSafely(myFoldProcessingEndTask);
   }
 
   @Override
@@ -538,60 +537,61 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * <p/>
    * Current method encapsulates the logic mentioned above.
    *
-   * @param task    object that encapsulates data and entry point for document dimension mapping algorithm
+   * @param task    command object that which execution may trigger incremental update of update soft wraps cache
    */
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
-  private void performMapping(SoftWrapAwareMappingTask task) {
+  private void executeSafely(SoftWrapAwareTask task) {
     try {
-      task.performMapping(true);
-    } catch (Exception e) {
+      task.run(true);
+    } catch (Throwable e) {
       if (Boolean.getBoolean(DEBUG_PROPERTY_NAME)) {
         LOG.error(String.format(
-          "Unexpected exception occurred during performing document dimension mapping '%s'. Current soft wraps cache: %n"
+          "Unexpected exception occurred during performing '%s'. Current soft wraps cache: %n"
           + "%s%nDocument:%n%s%nFold regions: %s",
           task, myDataMapper, myEditor.getDocument().getText(), Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e);
       }
       myDataMapper.release();
       myApplianceManager.release();
       try {
-        task.performMapping(true);
+        task.run(true);
       }
-      catch (Exception e1) {
+      catch (Throwable e1) {
         LOG.error(String.format(
-          "Can't perform document dimension mapping %s even with complete soft wraps cache re-parsing. Current soft wraps cache: %n"
+          "Can't perform %s even with complete soft wraps cache re-parsing. Current soft wraps cache: %n"
           + "%s. Document:%n%s%nFold regions: %s", task, myDataMapper, myEditor.getDocument().getText(),
           Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e1
         );
         myEditor.getSettings().setUseSoftWraps(false);
-        task.performMapping(false);
+        task.run(false);
       }
     }
   }
 
   /**
-   * Defines generic interface to encapsulate task of mapping one document dimension to another.
+   * Defines generic interface for the command that may be proceeded in both <code>'soft wraps aware'</code> and
+   * <code>'soft wraps unaware'</code> modes.
    */
-  private interface SoftWrapAwareMappingTask {
+  private interface SoftWrapAwareTask {
 
     /**
-     * Asks current task to perform the mapping.
+     * Asks current task to do the job.
      * <p/>
-     * It's assumed that input data is already stored at the task object. Mapping result is assumed to be stored there as well
-     * for further retrieval for task in implementation-specific manner.
+     * It's assumed that input data (if any) is already stored at the task object. Processing result (if any) is assumed
+     * to be stored there as well for further retrieval in implementation-specific manner.
      *
-     * @param softWrapAware             flag that indicates if soft wraps-aware mapping should be performed
-     * @throws IllegalStateException    in case of inability to perform the mapping
+     * @param softWrapAware             flag that indicates if soft wraps-aware processing should be performed
+     * @throws IllegalStateException    in case of inability to do the job
      */
-    void performMapping(boolean softWrapAware) throws IllegalStateException;
+    void run(boolean softWrapAware) throws IllegalStateException;
   }
 
-  private class OffsetToLogicalTask implements SoftWrapAwareMappingTask {
+  private class OffsetToLogicalTask implements SoftWrapAwareTask {
 
     public int             input;
     public LogicalPosition output;
 
     @Override
-    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+    public void run(boolean softWrapAware) throws IllegalStateException {
       if (softWrapAware) {
         output = myDataMapper.offsetToLogicalPosition(input);
       }
@@ -599,15 +599,20 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         output = myEditor.offsetToLogicalPosition(input, false);
       }
     }
+
+    @Override
+    public String toString() {
+      return "mapping from offset (" + input + ") to logical position";
+    }
   }
 
-  private class VisualToLogicalTask implements SoftWrapAwareMappingTask {
+  private class VisualToLogicalTask implements SoftWrapAwareTask {
 
     public VisualPosition  input;
     public LogicalPosition output;
 
     @Override
-    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+    public void run(boolean softWrapAware) throws IllegalStateException {
       if (softWrapAware) {
         output = myDataMapper.visualToLogical(input);
       }
@@ -615,17 +620,44 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         output = myEditor.visualToLogicalPosition(input, false);
       }
     }
+
+    @Override
+    public String toString() {
+      return "mapping from visual position (" + input + ") to logical position";
+    }
   }
 
-  private class LogicalToVisualTask implements SoftWrapAwareMappingTask {
+  private class LogicalToVisualTask implements SoftWrapAwareTask {
 
     public LogicalPosition input;
     public VisualPosition  defaultOutput;
     public VisualPosition  output;
 
     @Override
-    public void performMapping(boolean softWrapAware) throws IllegalStateException {
+    public void run(boolean softWrapAware) throws IllegalStateException {
       output = softWrapAware ? myDataMapper.logicalToVisualPosition(input, defaultOutput) : defaultOutput;
+    }
+
+    @Override
+    public String toString() {
+      return "mapping from logical position (" + input + ") to visual position";
+    }
+  }
+  
+  private class FoldProcessingEndTask implements SoftWrapAwareTask {
+    @Override
+    public void run(boolean softWrapAware) {
+      if (!softWrapAware) {
+        return;
+      }
+      for (FoldingListener listener : myFoldListeners) {
+        listener.onFoldProcessingEnd();
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "fold regions state change processing";
     }
   }
 }

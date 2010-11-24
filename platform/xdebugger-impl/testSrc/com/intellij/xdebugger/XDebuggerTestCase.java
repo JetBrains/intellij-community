@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl;
 import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -90,8 +87,10 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
     }
 
     @Override
-    public MyBreakpointProperties createDefaultBreakpointProperties() {
-      return new MyBreakpointProperties("default");
+    public XBreakpoint<MyBreakpointProperties> createDefaultBreakpoint(@NotNull XBreakpointCreator<MyBreakpointProperties> creator) {
+      final XBreakpoint<MyBreakpointProperties> breakpoint = creator.createBreakpoint(new MyBreakpointProperties("default"));
+      breakpoint.setEnabled(true);
+      return breakpoint;
     }
   }
 

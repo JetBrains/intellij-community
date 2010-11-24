@@ -112,11 +112,27 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    if (!HighlightLevelUtil.shouldInspect(myFile)) return;
-    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    final InspectionProfileWrapper profile = myProfileWrapper;
-    final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-    inspect(tools, iManager, true, true, true, progress);
+    try {
+      if (!HighlightLevelUtil.shouldInspect(myFile)) return;
+      final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+      final InspectionProfileWrapper profile = myProfileWrapper;
+      final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
+      inspect(tools, iManager, true, true, true, progress);
+    }
+    finally {
+      disposeDescriptors();
+    }
+  }
+
+  private void disposeDescriptors() {
+    for (List<InspectionResult> list : result.values()) {
+      for (InspectionResult inspectionResult : list) {
+         for (ProblemDescriptor pd: inspectionResult.foundProblems) {
+           ((ProblemDescriptorImpl)pd).dispose();
+         }
+      }
+    }
+    result.clear();
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
@@ -202,8 +218,26 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
-    visitPriorityElementsAndInit(tools, iManager, isOnTheFly, ignoreSuppressed, indicator, inside, session, init);
-    visitRestElementsAndCleanup(tools,iManager,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
+    boolean finished = false;
+    try {
+      visitPriorityElementsAndInit(tools, iManager, isOnTheFly, ignoreSuppressed, indicator, inside, session, init);
+      visitRestElementsAndCleanup(tools,iManager,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
+      finished = true;
+    }
+    finally {
+      if (!finished) {
+        synchronized (init) {
+          for (Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity : init) {
+            List<ProblemDescriptor> results = trinity.second.getResults();
+            if (results != null) {
+              for (ProblemDescriptor pd : results) {
+                ((ProblemDescriptorImpl)pd).dispose();
+              }
+            }
+          }
+        }
+      }
+    }
 
     indicator.checkCanceled();
 
@@ -553,8 +587,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlightInfo;
   }
 
-  private static void registerQuickFixes(final LocalInspectionTool tool, final ProblemDescriptor descriptor,
-                                         final HighlightInfo highlightInfo, final Set<TextRange> emptyActionRegistered) {
+  private static void registerQuickFixes(final LocalInspectionTool tool,
+                                         final ProblemDescriptor descriptor,
+                                         final HighlightInfo highlightInfo,
+                                         final Set<TextRange> emptyActionRegistered) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     boolean needEmptyAction = true;
     final QuickFix[] fixes = descriptor.getFixes();
@@ -572,7 +608,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       needEmptyAction = false;
     }
     if (((ProblemDescriptorImpl)descriptor).getEnforcedTextAttributes() != null) {
-      needEmptyAction = false;      
+      needEmptyAction = false;
     }
     if (needEmptyAction && emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());

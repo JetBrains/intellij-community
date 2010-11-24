@@ -50,7 +50,10 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
         buf = channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
       }
       catch (IOException e) {
-        throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength, e);
+        final MappingFailedException mapFailed =
+          new MappingFailedException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength, e);
+        LOG.error(mapFailed);
+        throw mapFailed;
       }
       finally {
         if (channel != null) {
@@ -66,7 +69,10 @@ public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
     }
 
     if (buf == null) {
-      throw new RuntimeException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength);
+      final MappingFailedException mapFailed =
+        new MappingFailedException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength);
+      LOG.error(mapFailed);
+      throw mapFailed;
     }
 
     return buf;

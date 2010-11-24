@@ -62,6 +62,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
     assertTrue(myBreakpointManager.isDefaultBreakpoint(breakpoints[0]));
     assertEquals("default", assertInstanceOf(breakpoints[0].getProperties(), MyBreakpointProperties.class).myOption);
+    assertTrue(breakpoints[0].isEnabled());
 
     XLineBreakpoint lineBreakpoint = assertInstanceOf(breakpoints[1], XLineBreakpoint.class);
     assertEquals(239, lineBreakpoint.getLine());
@@ -85,14 +86,14 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals(0, element.getContent().size());
   }
 
-  public void testSaveEnabledDefaultBreakpoint() throws Exception {
+  public void testSaveChangedDefaultBreakpoint() throws Exception {
     reload();
     final XBreakpoint<MyBreakpointProperties> breakpoint = getSingleBreakpoint();
-    breakpoint.setEnabled(true);
+    breakpoint.setEnabled(false);
 
     assertFalse(save().getContent().isEmpty());
     reload();
-    assertTrue(getSingleBreakpoint().isEnabled());
+    assertFalse(getSingleBreakpoint().isEnabled());
   }
 
   public void testSaveDefaultBreakpointWithModifiedProperties() throws Exception {

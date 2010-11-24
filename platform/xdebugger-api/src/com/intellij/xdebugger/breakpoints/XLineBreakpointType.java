@@ -86,10 +86,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Default line breakpoints cannot be supported
+   * Default line breakpoints aren't supported
    */
   @Override
-  public final P createDefaultBreakpointProperties() {
+  public final XLineBreakpoint<P> createDefaultBreakpoint(@NotNull XBreakpointCreator<P> creator) {
     return null;
   }
 

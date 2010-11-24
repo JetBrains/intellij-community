@@ -898,7 +898,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public boolean isFoldingOutlineShown() {
     return myEditor.getSettings().isFoldingOutlineShown() &&
-           ((FoldingModelEx)myEditor.getFoldingModel()).isFoldingEnabled();
+           myEditor.getFoldingModel().isFoldingEnabled();
   }
 
   public int getLineNumberAreaWidth() {

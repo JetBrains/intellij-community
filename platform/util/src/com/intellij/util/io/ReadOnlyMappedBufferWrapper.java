@@ -43,7 +43,9 @@ public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Mapping failed for: " + myFile.getPath(), e);
+      final MappingFailedException mapFailed = new MappingFailedException("Mapping failed for: " + myFile.getPath(), e);
+      LOG.error(mapFailed);
+      throw mapFailed;
     }
   }
 }

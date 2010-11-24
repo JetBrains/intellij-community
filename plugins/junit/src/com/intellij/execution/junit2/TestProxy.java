@@ -78,7 +78,7 @@ public class TestProxy extends AbstractTestProxy {
     }
   }
 
-  private void fireStateChanged() {
+  public void fireStateChanged() {
     myStateTimestamp++;
     pullEvent(new StateChangedEvent(this));
     if (myParent != null)

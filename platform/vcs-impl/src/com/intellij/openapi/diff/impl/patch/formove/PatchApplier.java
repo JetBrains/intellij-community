@@ -96,7 +96,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
     if (ApplyPatchStatus.FAILURE.equals(patchStatus)) return patchStatus;
 
-    final ApplyPatchStatus applyStatus = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    final ApplyPatchStatus applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
       public ApplyPatchStatus compute() {
         final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
@@ -172,21 +172,28 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   protected ApplyPatchStatus executeWritable() {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    final Application application = ApplicationManager.getApplication();
+    return application.runReadAction(new Computable<ApplyPatchStatus>() {
       public ApplyPatchStatus compute() {
         final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
-            if (! myVerifier.execute()) {
+            final Boolean result = application.runWriteAction(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return myVerifier.execute();
+              }
+            });
+            if (! result) {
               return;
             }
 
-            if (! makeWritable(myVerifier.getWritableFiles())) {
+            if (!makeWritable(myVerifier.getWritableFiles())) {
               return;
             }
 
             final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
-            if (! fileTypesAreOk(textPatches)) {
+            if (!fileTypesAreOk(textPatches)) {
               return;
             }
 

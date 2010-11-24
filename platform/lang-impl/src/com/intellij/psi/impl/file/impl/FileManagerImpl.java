@@ -652,7 +652,7 @@ public class FileManagerImpl implements FileManager {
 
             if (!vFile.isDirectory()) {
               PsiFile psiFile = findFile(vFile);
-              if (psiFile != null) {
+              if (psiFile != null && psiFile.getProject() == myManager.getProject()) {
                 PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
                 treeEvent.setParent(parentDir);
                 myManager.beforeChildAddition(treeEvent);
@@ -662,7 +662,7 @@ public class FileManagerImpl implements FileManager {
             }
             else {
               PsiDirectory psiDir = findDirectory(vFile);
-              if (psiDir != null) {
+              if (psiDir != null && psiDir.getProject() == myManager.getProject()) {
                 PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
                 treeEvent.setParent(parentDir);
                 myManager.beforeChildAddition(treeEvent);

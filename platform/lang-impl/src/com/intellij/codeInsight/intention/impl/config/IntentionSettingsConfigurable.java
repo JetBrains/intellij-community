@@ -103,4 +103,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
     return HELP_ID;
   }
 
+  public void selectIntention(String familyName) {
+    myPanel.selectIntention(familyName);
+  }
 }

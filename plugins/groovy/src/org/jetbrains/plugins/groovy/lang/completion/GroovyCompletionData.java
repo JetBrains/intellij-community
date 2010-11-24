@@ -155,7 +155,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerInstanceofCompletion() {
-    registerStandardCompletion(new InstanceOfFilter(), "instanceof");
+    registerStandardCompletion(new InstanceOfFilter(), "instanceof", "in");
   }
 
   private void registerBranchCompletion() {

@@ -149,6 +149,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
   }
 
+  @Override
+  public void dispose() {
+    if (myElementInfo != null) {
+      myElementInfo.dispose();
+      myElementInfo = null;
+      myElement = null;
+    }
+  }
+
   public void fastenBelt() {
     if (myElementInfo != null && myElement != null && myElement.isValid()) return;
 
@@ -156,5 +165,4 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       myElementInfo = createElementInfo();
     }
   }
-
 }

@@ -28,7 +28,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -43,7 +42,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -196,6 +194,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public int getLength() {
       return endOffset - startOffset;
     }
+
+    @Override
+    public String toString() {
+      return contentType + "[" + startOffset + ";" + endOffset + "]";
+    }
   }
 
   private final Project myProject;
@@ -347,6 +350,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       myDeferredTypes.clear();
       myDeferredUserInput = new StringBuffer();
+      myDeferredTokens.clear();
       myHyperlinks.clear();
       myTokens.clear();
       if (myEditor == null) return;
@@ -613,7 +617,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static void addToken(int length, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
-    boolean needNew = true;
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);
@@ -1623,9 +1626,52 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(AnActionEvent e, final boolean state) {
         super.setSelected(e, state);
-        EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
+
+        final String placeholder = myCommandLineFolding.getPlaceholder(0);
+        if (state && placeholder == null) {
+          return;
+        }
+        
+        final FoldingModel foldingModel = myEditor.getFoldingModel();
+        FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
+        Runnable foldTask = null;
+        
+        final int endFoldRegionOffset = myEditor.getDocument().getLineEndOffset(0);
+        Runnable addCollapsedFoldRegionTask = new Runnable() {
+          @Override
+          public void run() {
+            FoldRegion foldRegion = foldingModel.addFoldRegion(0, endFoldRegionOffset, placeholder == null ? "..." : placeholder);
+            if (foldRegion != null) {
+              foldRegion.setExpanded(false);
+            }
+          }
+        };
+        if (foldRegions.length <= 0) {
+          if (!state) {
+            return;
+          }
+          foldTask = addCollapsedFoldRegionTask;
+        }
+        else {
+          final FoldRegion foldRegion = foldRegions[0];
+          if (foldRegion.getStartOffset() == 0 && foldRegion.getEndOffset() == endFoldRegionOffset) {
+            foldTask = new Runnable() {
+              @Override
+              public void run() {
+                foldRegion.setExpanded(!state);
+              }
+            };
+          }
+          else if (state) {
+            foldTask = addCollapsedFoldRegionTask;
+          }
+        }
+        
+        if (foldTask != null) {
+          foldingModel.runBatchFoldingOperation(foldTask);
+        }
       }
     };
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
