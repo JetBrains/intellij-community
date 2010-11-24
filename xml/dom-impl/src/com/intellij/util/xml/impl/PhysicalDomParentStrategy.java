@@ -114,7 +114,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
   private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
     if (fst.equals(snd)) return true;
 
-    if (fst.isPhysical() || snd.isPhysical()) return false;
+    if (fst.isValid() && fst.isPhysical() || snd.isValid() && snd.isPhysical()) return false;
     if (fst.getTextLength() != snd.getTextLength()) return false;
     if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
 
