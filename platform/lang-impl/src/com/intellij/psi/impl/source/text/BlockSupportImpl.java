@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -109,7 +110,16 @@ public class BlockSupportImpl extends BlockSupport {
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
         if (reparseable.getLanguage() == baseLanguage) {
-          CharSequence newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift);
+          final int start = textRange.getStartOffset();
+          final int end = start + textRange.getLength() + lengthShift;
+          if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+            throw new AssertionError("IOOBE: type=" + elementType +
+                                     "; oldText=" + node.getText() +
+                                     "; newText=" + newFileText.subSequence(start, newFileText.length()) +
+                                     "; length=" + node.getTextLength() + "; fromFile=" + textRange.substring(fileImpl.getText()));
+          }
+
+          CharSequence newTextStr = newFileText.subSequence(start, end);
 
           if (reparseable.isParsable(newTextStr, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
