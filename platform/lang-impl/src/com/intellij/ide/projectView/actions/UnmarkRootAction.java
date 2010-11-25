@@ -16,14 +16,30 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.Ref;
 
 /**
  * @author yole
  */
-public class MarkRootGroup extends DefaultActionGroup {
+public class UnmarkRootAction extends MarkRootAction {
+  public UnmarkRootAction() {
+    super(true);
+  }
+
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(MarkRootAction.canMark(e, true, true, null));
+    Ref<Boolean> rootType = new Ref<Boolean>();
+    boolean enabled = canMark(e, true, true, rootType);
+    if (rootType.get() == null) {
+      enabled = false;
+    }
+    else if (rootType.get()) {
+      e.getPresentation().setText("Unmark as Source Root");
+    }
+    else {
+      e.getPresentation().setText("Unmark as Test Source Root");
+    }
+    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabled(enabled);
   }
 }
