@@ -34,7 +34,7 @@ import keyword
 
 try:
     import inspect
-except:
+except ImportError:
     inspect = None # it may fail
 
 import re
@@ -384,8 +384,8 @@ def transformSeq(results, toplevel=True):
                 if toplevel:
                     ret.append(sanitizeIdent(token_name, is_clr) + "=" + sanitizeValue(token[2]))
                 else:
-                # smth like "a, (b1=1, b2=2)", make it "a, p_b"
-                    return ["p_" + results[0][1]] # NOTE: fishy. investigate.
+                    # smth like "a, (b1=1, b2=2)", make it "a, p_b"
+                    return ["p_" + results[0][1]] # NOTE: for each item of tuple, return the same name of its 1st item.
             elif token_name == TRIPLE_DOT:
                 if toplevel and not hasItemStartingWith(ret, "*"):
                     ret.append("*more")
@@ -395,7 +395,11 @@ def transformSeq(results, toplevel=True):
             else: # just name
                 ret.append(sanitizeIdent(token_name, is_clr))
         elif token_type is T_NESTED:
-            ret.append(transformSeq(token[1:], False))
+            inner = transformSeq(token[1:], False)
+            if len(inner) != 1:
+                ret.append(inner)
+            else:
+                ret.append(inner[0]) # [foo] -> foo
         elif token_type is T_OPTIONAL:
             ret.extend(transformOptionalSeq(token))
         elif token_type is T_RETURN:
@@ -1142,7 +1146,7 @@ class ModuleRedeclarator(object):
             note = self.SIG_DOC_NOTE
 
         # add 'self' if needed YYY
-        if class_name:
+        if class_name and (not seq or seq[0] != 'self'):
             first_param = self.proposeFirstParam(deco)
             if first_param:
                 seq.insert(0, first_param)
@@ -1419,69 +1423,74 @@ class ModuleRedeclarator(object):
         methods = {}
         properties = {}
         others = {}
-        if hasattr(p_class, "__dict__"):
-            we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME)
-            for item_name in p_class.__dict__:
-                if item_name in ("__doc__", "__module__"):
-                    if we_are_the_base_class:
-                        item = "" # must be declared in base types
-                    else:
-                        continue # in all other cases. must be skipped
-                elif keyword.iskeyword(item_name):    # for example, PyQt4 contains definitions of methods named 'exec'
-                    continue
+        we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME)
+        has_dict = hasattr(p_class, "__dict__")
+        if has_dict:
+            field_source = p_class.__dict__
+        else:
+            field_source = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
+        for item_name in field_source:
+            if item_name in ("__doc__", "__module__"):
+                if we_are_the_base_class:
+                    item = "" # must be declared in base types
                 else:
-                    try:
-                        item = getattr(p_class, item_name) # let getters do the magic
-                    except:
-                        item = p_class.__dict__[item_name]   # have it raw
-                if isCallable(item):
-                    methods[item_name] = item
-                elif isProperty(item):
-                    properties[item_name] = item
-                else:
-                    others[item_name] = item
-                #
-            if we_are_the_base_class:
-                others["__dict__"] = {} # force-feed it, for __dict__ does not contain a reference to itself :)
-            # add fake __init__s to type and tuple to have the right sig
-            if p_class in self.FAKE_BUILTIN_INITS:
-                methods["__init__"] = self.fake_builtin_init
-            elif '__init__' not in methods:
-                init_method = getattr(p_class, '__init__')
-                if init_method: methods['__init__'] = init_method
-                
+                    continue # in all other cases must be skipped
+            elif keyword.iskeyword(item_name):  # for example, PyQt4 contains definitions of methods named 'exec'
+                continue
+            else:
+                try:
+                    item = getattr(p_class, item_name) # let getters do the magic
+                except AttributeError:
+                    item = field_source[item_name] # have it raw
+            if isCallable(item):
+                methods[item_name] = item
+            elif isProperty(item):
+                properties[item_name] = item
+            else:
+                others[item_name] = item
             #
-            for item_name in sortedNoCase(methods.keys()):
-                item = methods[item_name]
-                self.redoFunction(item, item_name, indent + 1, p_class, p_modname)
-            #
-            known_props = self.KNOWN_PROPS.get(p_modname, {})
-            a_setter = "lambda self, v: None"
-            a_deleter = "lambda self: None"
-            for item_name in sortedNoCase(properties.keys()):
-                prop_key = (p_name, item_name)
-                if prop_key in known_props:
-                    prop_descr = known_props.get(prop_key, None)
-                    if prop_descr is None:
-                        continue # explicitly omitted
-                    acc_line, getter = prop_descr
-                    accessors = []
-                    accessors.append("r" in acc_line and getter or "None")
-                    accessors.append("w" in acc_line and a_setter or "None")
-                    accessors.append("d" in acc_line and a_deleter or "None")
-                    self.out(item_name + " = property(" + ", ".join(accessors) + ")", indent + 1)
-                else:
-                    self.out(item_name + " = property(lambda self: object(), None, None) # default", indent + 1)
-                # TODO: handle docstring
-            if properties:
-                self.out("", 0) # empty line after the block
-            #
-            for item_name in sortedNoCase(others.keys()):
-                item = others[item_name]
-                self.fmtValue(item, indent + 1, prefix=item_name + " = ")
-            if others:
-                self.out("", 0) # empty line after the block
-            #
+        if we_are_the_base_class:
+            others["__dict__"] = {} # force-feed it, for __dict__ does not contain a reference to itself :)
+        # add fake __init__s to have the right sig
+        if p_class in self.FAKE_BUILTIN_INITS:
+            methods["__init__"] = self.fake_builtin_init
+        elif '__init__' not in methods:
+            init_method = getattr(p_class, '__init__', None)
+            if init_method:
+                methods['__init__'] = init_method
+
+        #
+        for item_name in sortedNoCase(methods.keys()):
+            item = methods[item_name]
+            self.redoFunction(item, item_name, indent + 1, p_class, p_modname)
+        #
+        known_props = self.KNOWN_PROPS.get(p_modname, {})
+        a_setter = "lambda self, v: None"
+        a_deleter = "lambda self: None"
+        for item_name in sortedNoCase(properties.keys()):
+            prop_key = (p_name, item_name)
+            if prop_key in known_props:
+                prop_descr = known_props.get(prop_key, None)
+                if prop_descr is None:
+                    continue # explicitly omitted
+                acc_line, getter = prop_descr
+                accessors = []
+                accessors.append("r" in acc_line and getter or "None")
+                accessors.append("w" in acc_line and a_setter or "None")
+                accessors.append("d" in acc_line and a_deleter or "None")
+                self.out(item_name + " = property(" + ", ".join(accessors) + ")", indent + 1)
+            else:
+                self.out(item_name + " = property(lambda self: object(), None, None) # default", indent + 1)
+            # TODO: handle docstring
+        if properties:
+            self.out("", 0) # empty line after the block
+        #
+        for item_name in sortedNoCase(others.keys()):
+            item = others[item_name]
+            self.fmtValue(item, indent + 1, prefix=item_name + " = ")
+        if others:
+            self.out("", 0) # empty line after the block
+        #
         if not methods and not properties and not others:
             self.out("pass", indent + 1)
 
@@ -1518,7 +1527,7 @@ class ModuleRedeclarator(object):
             if module_name in imported_module_names and module_obj != self.module and module_name not in self.imported_modules and module_obj:
                 self.imported_modules[module_name] = module_obj
                 self.out("import " + module_name)
-                                
+
         self.out("", 0) # empty line after imports
         # group what else we have into buckets
         vars_simple = {}
