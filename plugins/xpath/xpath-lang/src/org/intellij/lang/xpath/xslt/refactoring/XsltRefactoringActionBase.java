@@ -28,42 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class XsltRefactoringActionBase implements RefactoringActionHandler {
-//    protected boolean myExplicitInjectedContext;
-//
-//    protected XsltRefactoringActionBase() {
-//        myExplicitInjectedContext = true;
-//    }
-//
-//    public final void update(AnActionEvent e) {
-//        super.update(e);
-//        if (!e.getPresentation().isEnabled()) {
-//            updateImpl(e);
-//        }
-//    }
-//
-//    protected void updateImpl(AnActionEvent e) {
-//        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-//        if (file != null) {
-//            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
-//            if (context != null && XsltSupport.isXsltFile(context)) {
-//                final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-//                e.getPresentation().setEnabled(editor != null);
-//            }
-//        }
-//    }
-//
-//    public void actionPerformed(AnActionEvent e) {
-//        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-//        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-//        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
-//
-//        if (project != null && editor != null && file != null) {
-//            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
-//            if (context != null && XsltSupport.isXsltFile(context)) {
-//                invoke(project, editor, file, e.getDataContext());
-//            }
-//        }
-//    }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
         final int offset = editor.getCaretModel().getOffset();
