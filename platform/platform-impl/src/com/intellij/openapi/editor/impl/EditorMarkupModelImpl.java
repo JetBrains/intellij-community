@@ -283,6 +283,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + getMinHeight());
   }
 
+  private boolean isMirrored() {
+    return myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+  }
+
   private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
@@ -346,9 +350,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      g.translate(6, 0);
+      int shift = isMirrored() ? -6 : 6;
+      g.translate(shift, 0);
       super.paintThumb(g, c, thumbBounds);
-      g.translate(-6, 0);
+      g.translate(-shift, 0);
     }
 
     @Override
@@ -362,8 +367,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
-      super.paintTrack(g, c, trackBounds);
+    protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+      g.setColor(TRACK_BACKGROUND);
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+      g.setColor(TRACK_BORDER);
+      int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
+      g.drawLine(border, bounds.y, border, bounds.y + bounds.height);
 
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
@@ -481,7 +491,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         int i = stripes.indexOf(endingStripe);
         stripes.remove(i);
         if (i == 0) {
-          // visible                                                    f
+          // visible
           drawSpot(g, width, endingStripe.thin, yStart, endingStripe.yEnd, endingStripe.color, true, true);
           yStart = endingStripe.yEnd;
         }
@@ -497,12 +507,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
-      int x = 4;
+      int x = isMirrored() ? 2 : 4;
       int paintWidth = width;
       if (thinErrorStripeMark) {
         paintWidth /= 2;
         paintWidth += 1;
-        x = 0;
+        x = isMirrored() ? width : 0;
       }
       if (color == null) return;
       g.setColor(color);

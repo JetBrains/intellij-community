@@ -202,7 +202,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       myLowLevelAccess.loadCommits(myStartingPoints, Collections.<String>emptyList(), filters, new AsynchConsumer<GitCommit>() {
         @Override
         public void consume(GitCommit gitCommit) {
-          myDetailsCache.acceptAnswer(Collections.singleton(gitCommit), myRootHolder.getRoot());
+          if (gitCommit.getParentsHashes().size() <= 1) {
+            myDetailsCache.acceptAnswer(Collections.singleton(gitCommit), myRootHolder.getRoot());
+          }
           myRepeatingLoadConsumer.consume(GitCommitToCommitConvertor.getInstance().convert(gitCommit));
         }
 

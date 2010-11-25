@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
   protected final ComponentType myComponent;
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final TipComponent myTipComponent;
@@ -168,8 +170,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     handleSelectionChange(selected, false);
   }
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  
   protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       return;
@@ -179,13 +179,16 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       public void run() {
         doHandleSelectionChange(selected, processIfUnfocused);
       }
-    }, 150);
+    }, 10);
   }
 
   private void doHandleSelectionChange(KeyType selected, boolean processIfUnfocused) {
     if (!isEnabled) return;
 
-    if (selected == null || !myComponent.isShowing() || (!myComponent.isFocusOwner() && !processIfUnfocused)) {
+    if (selected == null
+        || !myComponent.isShowing()
+        || (!myComponent.isFocusOwner() && !processIfUnfocused)
+        || isPopup()) {
       hideHint();
       return;
     }
@@ -206,6 +209,11 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       repaintHint(location);
     }
+  }
+
+  private boolean isPopup() {
+    Window window = SwingUtilities.getWindowAncestor(myComponent);
+    return window != null && !(window instanceof Dialog || window instanceof Frame);
   }
 
   private void hideHint() {

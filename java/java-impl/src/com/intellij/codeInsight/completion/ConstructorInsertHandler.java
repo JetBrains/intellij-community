@@ -83,7 +83,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     }
   }
 
-  public static void insertParentheses(InsertionContext context, LookupItem delegate, final PsiClass psiClass) {
+  public static boolean insertParentheses(InsertionContext context, LookupItem delegate, final PsiClass psiClass) {
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;
@@ -97,6 +97,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     }
 
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams);
+    return hasParams;
   }
 
   private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {

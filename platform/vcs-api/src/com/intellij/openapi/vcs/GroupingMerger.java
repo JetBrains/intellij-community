@@ -78,6 +78,10 @@ public abstract class GroupingMerger<T, S> {
       if (comp <= 0) {
         adder.consume(firstOne);
         ++ idx1;
+        if (comp == 0) {
+          // take only one
+          ++ idx2;
+        }
       } else {
         adder.consume(two.get(idx2));
         ++ idx2;

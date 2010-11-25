@@ -1058,7 +1058,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(final PsiNewExpression expression) {
       PsiType expressionPsiType = expression.getType();
       if (expressionPsiType instanceof PsiArrayType) {
         Evaluator dimensionEvaluator = null;
@@ -1115,8 +1115,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           initializerEvaluator
         );
       }
-      else { // must be a class ref
-        LOG.assertTrue(expressionPsiType instanceof PsiClassType);
+      else if (expressionPsiType instanceof PsiClassType){ // must be a class ref
         PsiClass aClass = ((PsiClassType)expressionPsiType).resolve();
         if(aClass instanceof PsiAnonymousClass) {
           throwEvaluateException(DebuggerBundle.message("evaluation.error.anonymous.class.evaluation.not.supported"));
@@ -1150,6 +1149,14 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           signature,
           argumentEvaluators
         );
+      }
+      else {
+        if (expressionPsiType != null) {
+          throwEvaluateException("Unsupported expression type: " + expressionPsiType.getPresentableText());
+        }
+        else {
+          throwEvaluateException("Unknown type for expression: " + expression.getText());
+        }
       }
     }
 
