@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 public class LoadLibraryWithNonConstantStringInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "load.library.with.non.constant.string.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "load.library.with.non.constant.string.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new RuntimeExecVisitor();
     }
@@ -77,7 +80,7 @@ public class LoadLibraryWithNonConstantStringInspection
                 return;
             }
             final String typeText = type.getCanonicalText();
-            if (!"java.lang.String".equals(typeText)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
                 return;
             }
             final String stringValue =

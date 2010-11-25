@@ -589,6 +589,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
+        if (substitution == null) return;
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
      }
     }.execute().throwException();
@@ -1303,7 +1304,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument);
+    return codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument,null);
   }
 
   public static void ensureIndexesUpToDate(Project project) {

@@ -160,7 +160,7 @@ public class LengthOneStringsInConcatenationInspection
                 return false;
             }
             final String className = methodClass.getQualifiedName();
-            return "java.lang.StringBuffer".equals(className) ||
+            return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
                    "java.lang.StringBuilder".equals(className);
         }
     }

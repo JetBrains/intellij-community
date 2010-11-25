@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
@@ -80,7 +81,8 @@ public class ExceptionNameDoesntEndWithExceptionInspection
             if (className.endsWith(exception)) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "java.lang.Exception")) {
+            if (!ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_EXCEPTION)) {
                 return;
             }
             registerClassError(aClass);

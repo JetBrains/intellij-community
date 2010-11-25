@@ -16,10 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAware;
@@ -29,15 +26,14 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -143,6 +139,8 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
 
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    final Map<String, Integer> map = new LinkedHashMap<String, Integer>();
+    final List<String> paths = new ArrayList<String>();
     synchronized (myState) {
       outer: for (String recentPath : myState.recentPaths) {
 
@@ -153,10 +151,16 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
           }
         }
 
-        actions.add(new ReopenProjectAction(recentPath));
+        final String projectName = getProjectName(recentPath);
+        map.put(projectName, map.containsKey(projectName) ? map.get(projectName) + 1 : 1);
+        paths.add(recentPath);
       }
     }
 
+    for (final String path : paths) {
+      final String projectName = getProjectName(path);
+      actions.add(map.get(projectName) > 1 ? new ReopenProjectAction(path, path) : new ReopenProjectAction(path, projectName));
+    }
 
     if (actions.size() == 0) {
       return new AnAction[0];
@@ -218,50 +222,57 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
-  private class ReopenProjectAction extends AnAction implements DumbAware {
-    private final String myProjectPath;
-
-    public ReopenProjectAction(String projectPath) {
-      myProjectPath = projectPath;
-
-      String _text = projectPath;
-      final String projectName = getProjectName(projectPath);
-      if (projectName != null) {
-        _text = String.format("%s (%s)", projectPath, projectName);
-      }
-
-      getTemplatePresentation().setText(_text, false);
-    }
-
-    @Nullable
-    private String getProjectName(String path) {
-      if (new File(path).isDirectory()) {
-        final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
-        if (nameFile.exists()) {
-          BufferedReader in = null;
-          try {
-            in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
-            final String name = in.readLine();
-            if (name != null && name.length() > 0) return name.trim();
-          }
-          catch (IOException e) {
-            // ignore
-          }
-          finally {
-            if (in != null) {
-              try {
-                in.close();
-              }
-              catch (IOException e) {
-                // ignore
-              }
+  @Nullable
+  private static String getProjectName(String path) {
+    final File file = new File(path);
+    if (file.isDirectory()) {
+      final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
+      if (nameFile.exists()) {
+        BufferedReader in = null;
+        try {
+          in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
+          final String name = in.readLine();
+          if (name != null && name.length() > 0) return name.trim();
+        }
+        catch (IOException e) {
+          // ignore
+        }
+        finally {
+          if (in != null) {
+            try {
+              in.close();
+            }
+            catch (IOException e) {
+              // ignore
             }
           }
         }
+      } else {
+        return file.getName();
+      }
+    } else {
+      return FileUtil.getNameWithoutExtension(file.getName());
+    }
+
+    return null;
+  }
+
+  private class ReopenProjectAction extends AnAction implements DumbAware {
+    private final String myProjectPath;
+
+    public ReopenProjectAction(final String projectPath, final String projectName) {
+      myProjectPath = projectPath;
+
+      String _text = projectPath;
+      if (projectName != null) {
+        _text = String.format("%s", projectName);
       }
 
-      return null;
+      final Presentation presentation = getTemplatePresentation();
+      presentation.setText(_text, false);
+      presentation.setDescription(projectPath);
     }
+
 
     public void actionPerformed(AnActionEvent e) {
       final int modifiers = e.getModifiers();

@@ -21,8 +21,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -102,11 +105,13 @@ public class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
+    boolean selectFirstItem = false;
     if (SWITCHER == null) {
       synchronized (Switcher.class) {
         if (SWITCHER == null) {
           SWITCHER = new SwitcherPanel(project);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
+          selectFirstItem = !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile();
         }
       }
     }
@@ -114,7 +119,11 @@ public class Switcher extends AnAction implements DumbAware {
     if (e.getInputEvent().isShiftDown()) {
       SWITCHER.goBack();
     } else {
-      SWITCHER.goForward();
+      if (selectFirstItem) {
+        SWITCHER.files.setSelectedIndex(0);
+      } else {
+        SWITCHER.goForward();
+      }
     }
   }
 
@@ -128,6 +137,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
+    final Map<VirtualFile, FileEditor> files2editors;
 
     SwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
@@ -212,11 +222,20 @@ public class Switcher extends AnAction implements DumbAware {
       separator.setBackground(Color.WHITE);      
 
       final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-      final VirtualFile[] openFiles = editorManager.getOpenFiles();
-
-      try {
-        Arrays.sort(openFiles, new RecentFilesComparator(project));
-      } catch (Exception e) {// IndexNotReadyException
+      final FileEditor[] allEditors = editorManager.getAllEditors();
+      files2editors = new HashMap<VirtualFile, FileEditor>();
+      for (FileEditor editor : allEditors) {
+        files2editors.put(((FileEditorManagerImpl)editorManager).getFile(editor), editor);
+      }
+      final VirtualFile[] recentFiles = EditorHistoryManager.getInstance(project).getFiles();
+      final ArrayList<VirtualFile> openFiles = new ArrayList<VirtualFile>();
+      for (VirtualFile recentFile : recentFiles) {
+        openFiles.add(0, recentFile);
+      }
+      final ArrayList<VirtualFile> tmp = new ArrayList<VirtualFile>(files2editors.keySet());
+      tmp.removeAll(openFiles);
+      for (VirtualFile virtualFile : tmp) {
+        openFiles.add(0, virtualFile);
       }
 
       final DefaultListModel filesModel = new DefaultListModel();
@@ -315,7 +334,15 @@ public class Switcher extends AnAction implements DumbAware {
             return true;
           }
         }).createPopup();
-      myPopup.showInCenterOf(ideFrame.getContentPane());
+      Component comp = null;
+      final EditorWindow result = FileEditorManagerEx.getInstanceEx(project).getActiveWindow().getResult();
+      if (result != null) {
+        comp = result.getOwner();
+      }
+      if (comp == null) {
+        comp = ideFrame.getContentPane();
+      }
+      myPopup.showInCenterOf(comp);
     }
 
     private int getModifiers(ShortcutSet shortcutSet) {
@@ -494,7 +521,8 @@ public class Switcher extends AnAction implements DumbAware {
         ((ToolWindow)value).activate(null, true, true);
       }
       else if (value instanceof VirtualFile) {
-        FileEditorManager.getInstance(project).openFile((VirtualFile)value, true);
+        final VirtualFile file = (VirtualFile)value;
+        FileEditorManager.getInstance(project).openFile(file, true, true);
       }
     }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.CaretListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -43,11 +44,11 @@ public class TextComponentCaretModel implements CaretModel {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void moveToLogicalPosition(final LogicalPosition pos) {
+  public void moveToLogicalPosition(@NotNull final LogicalPosition pos) {
     moveToOffset(myEditor.logicalPositionToOffset(pos), false);
   }
 
-  public void moveToVisualPosition(final VisualPosition pos) {
+  public void moveToVisualPosition(@NotNull final VisualPosition pos) {
     moveToLogicalPosition(myEditor.visualToLogicalPosition(pos));
   }
 
@@ -60,6 +61,7 @@ public class TextComponentCaretModel implements CaretModel {
     myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
   }
 
+  @NotNull
   public LogicalPosition getLogicalPosition() {
     int caretPos = myTextComponent.getCaretPosition();
     int line;
@@ -81,6 +83,7 @@ public class TextComponentCaretModel implements CaretModel {
     return new LogicalPosition(line, caretPos - lineStart);
   }
 
+  @NotNull
   public VisualPosition getVisualPosition() {
     LogicalPosition pos = getLogicalPosition();
     return new VisualPosition(pos.line, pos.column);
@@ -90,11 +93,11 @@ public class TextComponentCaretModel implements CaretModel {
     return myTextComponent.getCaretPosition();
   }
 
-  public void addCaretListener(final CaretListener listener) {
+  public void addCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  public void removeCaretListener(final CaretListener listener) {
+  public void removeCaretListener(@NotNull final CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

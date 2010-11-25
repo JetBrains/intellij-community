@@ -80,7 +80,7 @@ public class RefusedBequestInspection extends BaseInspection {
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if("java.lang.Object".equals(className)){
+            if(CommonClassNames.JAVA_LANG_OBJECT.equals(className)){
                 return;
             }
             if (ignoreEmptySuperMethods){

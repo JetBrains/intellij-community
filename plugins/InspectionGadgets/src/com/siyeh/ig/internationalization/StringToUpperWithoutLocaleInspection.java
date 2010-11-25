@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,23 +29,27 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringToUpperWithoutLocaleInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "StringToUpperCaseOrToLowerCaseWithoutLocale";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.touppercase.tolowercase.without.locale.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.touppercase.tolowercase.without.locale.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiReferenceExpression methodExpression =
@@ -60,6 +64,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
                 AnnotationUtil.NON_NLS, annotatableQualifier));
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringToUpperWithoutLocaleVisitor();
     }
@@ -93,7 +98,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if(!"java.lang.String".equals(className)) {
+            if(!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             final PsiExpression qualifier =

@@ -29,8 +29,10 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +44,14 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
   private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public void actionPerformed(final AnActionEvent e) {
-    final IdeFrameImpl ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
-    final ComboBoxButton button = (ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
+    final IdeFrame ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    final ComboBoxButton button = (ComboBoxButton)ideFrame.getComponent().getRootPane().getClientProperty(BUTTON_KEY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
   }
 
-  private static IdeFrameImpl findFrame(final Component component) {
-    return IJSwingUtilities.findParentOfType(component, IdeFrameImpl.class);
+  private static IdeFrame findFrame(final Component component) {
+    return UIUtil.getParentOfType(IdeFrame.class, component);
   }
 
   public void update(final AnActionEvent e) {
@@ -112,9 +114,9 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
     return new ComboBoxButton(presentation) {
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
-        final IdeFrameImpl frame = findFrame(this);
+        final IdeFrame frame = findFrame(this);
         LOG.assertTrue(frame != null);
-        frame.getRootPane().putClientProperty(BUTTON_KEY, this);
+        frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
       }
     };
   }

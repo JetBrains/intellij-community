@@ -238,14 +238,14 @@ public class SegmentArray {
 
   public int getSegmentStart(int index) {
     if (index < 0 || index >= mySegmentCount) {
-      throw new IndexOutOfBoundsException("Wrong line: " + index);
+      throw new IndexOutOfBoundsException("Wrong line: " + index + ". Available lines count: " + mySegmentCount);
     }
     return myStarts[index];
   }
 
   public int getSegmentEnd(int index) {
     if (index < 0 || index >= mySegmentCount) {
-      throw new IndexOutOfBoundsException("Wrong line: " + index);
+      throw new IndexOutOfBoundsException("Wrong line: " + index + ". Available lines count: " + mySegmentCount);
     }
     return myEnds[index];
   }

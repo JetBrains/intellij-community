@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 
-public class MavenGotoPropertyFileContibutor implements ChooseByNameContributor {
+public class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
     return MavenPropertiesVirtualFileSystem.PROPERTIES_FILES;

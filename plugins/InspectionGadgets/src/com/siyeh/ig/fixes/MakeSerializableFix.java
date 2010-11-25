@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,18 +33,19 @@ public class MakeSerializableFix extends InspectionGadgetsFix{
                 "make.class.serializable.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException{
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass containingClass =
                 ClassUtils.getContainingClass(nameElement);
         assert containingClass != null;
-        final PsiManager psiManager = containingClass.getManager();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory =
+              JavaPsiFacade.getElementFactory(project);
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiJavaCodeReferenceElement referenceElement =
                 elementFactory.createReferenceElementByFQClassName(
-                        "java.io.Serializable", scope);
+                        CommonClassNames.JAVA_IO_SERIALIZABLE, scope);
         final PsiReferenceList implementsList =
                 containingClass.getImplementsList();
         assert implementsList != null;

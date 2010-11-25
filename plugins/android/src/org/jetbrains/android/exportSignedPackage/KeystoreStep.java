@@ -149,6 +149,11 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.specify.keystore";
+  }
+
+  @Override
   protected void commitForNext() throws CommitStepException {
     String keyStoreLocation = myKeystoreLocationField.getText().trim();
     if (keyStoreLocation.length() == 0) {

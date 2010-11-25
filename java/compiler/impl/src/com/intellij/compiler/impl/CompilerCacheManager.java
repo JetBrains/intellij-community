@@ -23,8 +23,6 @@ import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +46,6 @@ public class CompilerCacheManager implements ProjectComponent {
   private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
-  private LowMemoryWatcher myMemWatcher;
-  
-  private final Runnable myShutdownTask = new Runnable() {
-    public void run() {
-      flushCaches();
-    }
-  };
-  
   private final Project myProject;
 
   public CompilerCacheManager(Project project) {
@@ -68,18 +58,9 @@ public class CompilerCacheManager implements ProjectComponent {
   }
   
   public void projectOpened() {
-    myMemWatcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
-      public void force() {
-        flushCaches();
-      }
-    });
-    ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
   }
 
   public void projectClosed() {
-    myMemWatcher.stop();
-    ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
-    flushCaches();
   }
 
   @NotNull
@@ -101,15 +82,17 @@ public class CompilerCacheManager implements ProjectComponent {
   }
 
   public synchronized <Key, SourceState, OutputState> GenericCompilerCache<Key, SourceState, OutputState>
-                                 getGenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
+                                 getGenericCompilerCache(final GenericCompiler<Key, SourceState, OutputState> compiler) throws IOException {
     GenericCompilerCache<?,?,?> cache = myGenericCachesMap.get(compiler);
     if (cache == null) {
       final GenericCompilerCache<?,?,?> genericCache = new GenericCompilerCache<Key, SourceState, OutputState>(compiler, GenericCompilerRunner
         .getGenericCompilerCacheDir(myProject, compiler));
       myGenericCachesMap.put(compiler, genericCache);
       myCacheDisposables.add(new Disposable() {
-        @Override
         public void dispose() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing cache for feneric compiler " + compiler.getId());
+          }
           genericCache.close();
         }
       });
@@ -119,15 +102,17 @@ public class CompilerCacheManager implements ProjectComponent {
     return (GenericCompilerCache<Key, SourceState, OutputState>)cache;
   }
 
-  public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(FileProcessingCompiler compiler) throws IOException {
+  public synchronized FileProcessingCompilerStateCache getFileProcessingCompilerCache(final FileProcessingCompiler compiler) throws IOException {
     Object cache = myCompilerToCacheMap.get(compiler);
     if (cache == null) {
-      final FileProcessingCompilerStateCache stateCache = new FileProcessingCompilerStateCache(getCompilerRootDir(compiler),
-          compiler
-      );
+      final File compilerRootDir = getCompilerRootDir(compiler);
+      final FileProcessingCompilerStateCache stateCache = new FileProcessingCompilerStateCache(compilerRootDir, compiler);
       myCompilerToCacheMap.put(compiler, stateCache);
       myCacheDisposables.add(new Disposable() {
         public void dispose() {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Closing cache for compiler " + compiler.getDescription() + "; cache root dir: " + compilerRootDir);
+          }
           stateCache.close();
         }
       });

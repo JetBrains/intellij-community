@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -29,24 +30,28 @@ import org.jetbrains.annotations.Nullable;
 
 public class NonFinalFieldOfExceptionInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.final.field.of.exception.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.final.field.of.exception.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiField field = (PsiField) infos[0];
         return MakeFieldFinalFix.buildFix(field);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonFinalFieldOfExceptionVisitor();
     }
@@ -65,7 +70,7 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
                 return;
             }
             if (!ClassUtils.isSubclass(containingClass,
-                    "java.lang.Exception")) {
+                    CommonClassNames.JAVA_LANG_EXCEPTION)) {
                 return;
             }
             registerFieldError(field, field);

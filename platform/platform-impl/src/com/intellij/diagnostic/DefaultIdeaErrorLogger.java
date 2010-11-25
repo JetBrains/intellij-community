@@ -15,9 +15,15 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.io.MappingFailedException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -28,6 +34,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccured = false;
+  private static boolean mappingFailedNotificationPosted = false;
   @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   @NonNls private static final String DISABLED_VALUE = "disabled";
   @NonNls private static final String ENABLED_VALUE = "enabled";
@@ -39,7 +46,8 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     return notificationEnabled ||
            !(IdeErrorsDialog.getSubmitter(event.getThrowable()) instanceof ITNReporter) ||
            ApplicationManagerEx.getApplicationEx().isInternal() ||
-           event.getThrowable() instanceof OutOfMemoryError;
+           event.getThrowable() instanceof OutOfMemoryError     ||
+           event.getThrowable() instanceof MappingFailedException;
   }
 
   /**
@@ -49,6 +57,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     try {
       if (event.getThrowable() instanceof OutOfMemoryError) {
         processOOMError(event);
+      }
+      else if (event.getThrowable() instanceof MappingFailedException) {
+        processMappingFailed(event);
       }
       else if (!ourOomOccured) {
         MessagePool.getInstance().addIdeFatalMessage(event);
@@ -62,7 +73,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   /**
    * @noinspection CallToPrintStackTrace
    */
-  private void processOOMError(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
+  private static void processOOMError(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
     ourOomOccured = true;
     event.getThrowable().printStackTrace();
 
@@ -76,4 +87,15 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       }
     });
   }
+
+  private static void processMappingFailed(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
+    if (!mappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
+      mappingFailedNotificationPosted = true;
+      final String exceptionMessage = event.getThrowable().getMessage();
+      final String text = exceptionMessage + 
+        "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>Reducing JVM's maximum heap size (-Xmx) may help."; 
+      Notifications.Bus.notify(new Notification("Memory", "Memory Mapping Failed", text, NotificationType.WARNING), NotificationDisplayType.BALLOON, null);      
+    }
+  }
+  
 }

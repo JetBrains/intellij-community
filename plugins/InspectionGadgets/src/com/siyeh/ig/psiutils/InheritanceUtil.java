@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
@@ -45,11 +46,11 @@ public class InheritanceUtil{
         }
 
         final String className = class1.getQualifiedName();
-        if("java.lang.Object".equals(className)){
+        if(CommonClassNames.JAVA_LANG_OBJECT.equals(className)){
             return true;
         }
         final String class2Name = class2.getQualifiedName();
-        if("java.lang.Object".equals(class2Name)){
+        if(CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)){
             return true;
         }
         if(class1.isInheritor(class2, true) ||
@@ -61,10 +62,10 @@ public class InheritanceUtil{
         final Query<PsiClass> search =
                 ClassInheritorsSearch.search(class1, scope, true, true);
         return !search.forEach(new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass inheritor) {
-            return !inheritor.equals(class2) && !inheritor.isInheritor(class2, true);
-          }
+            public boolean process(PsiClass inheritor) {
+                return !inheritor.equals(class2) &&
+                        !inheritor.isInheritor(class2, true);
+            }
         });
     }
 

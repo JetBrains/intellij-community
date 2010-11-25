@@ -47,17 +47,24 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
-        if (manifestFile != null) {
-          AndroidFacetConfiguration configuration = facet.getConfiguration();
-          VirtualFile outputDir = context.getModuleOutputDirectory(module);
-          if (outputDir != null) {
-            String outputPath = getOutputPath(module, outputDir);
-            IAndroidTarget target = configuration.getAndroidTarget();
-            if (target != null) {
-              String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
-              String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet);
-              items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath));
+        if (manifestFile == null) {
+          context.addMessage(CompilerMessageCategory.ERROR, "AndroidManifest.xml file not found. Please, check Android facet settings.",
+                             null, -1, -1);
+          continue;
+        }
+        AndroidFacetConfiguration configuration = facet.getConfiguration();
+        VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
+        if (outputDir != null) {
+          String outputPath = getOutputFile(module, outputDir).getPath();
+          IAndroidTarget target = configuration.getAndroidTarget();
+          if (target != null) {
+            String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
+            String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet);
+            if (resourcesDirPaths.length == 0) {
+              context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),
+                                 null, -1, -1);
             }
+            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath));
           }
         }
       }
@@ -65,8 +72,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     return items.toArray(new ProcessingItem[items.size()]);
   }
 
-  static String getOutputPath(Module module, VirtualFile outputDir) {
-    return new File(outputDir.getPath(), module.getName() + ".apk.res").getPath();
+  static File getOutputFile(Module module, VirtualFile outputDir) {
+    return new File(outputDir.getPath(), module.getName() + ".apk.res");
   }
 
   @Override
@@ -138,7 +145,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     @NotNull
     @Override
     public VirtualFile getFile() {
-      return myManifestFile;
+      VirtualFile moduleFile = myModule.getModuleFile();
+      return moduleFile != null ? moduleFile : myManifestFile;
     }
 
     @Override

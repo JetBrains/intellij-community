@@ -139,6 +139,10 @@ public abstract class RenamePsiElementProcessor {
     }
   }
 
+  public boolean showRenamePreviewButton(final PsiElement psiElement){
+    return true;
+  }
+
   /**
    * Returns the element to be renamed instead of the element on which the rename refactoring was invoked (for example, a super method
    * of an inherited method).

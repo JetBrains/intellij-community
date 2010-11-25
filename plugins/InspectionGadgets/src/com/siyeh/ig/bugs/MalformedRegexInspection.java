@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -77,7 +74,8 @@ public class MalformedRegexInspection extends BaseInspection {
                 return;
             }
             final PsiExpression argument = arguments[0];
-            if(!TypeUtils.expressionHasType(argument, "java.lang.String")){
+            if(!TypeUtils.expressionHasType(argument,
+                    CommonClassNames.JAVA_LANG_STRING)){
                 return;
             }
             if(!PsiUtil.isConstantExpression(argument)){

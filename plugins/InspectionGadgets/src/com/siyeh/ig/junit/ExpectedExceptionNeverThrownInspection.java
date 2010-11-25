@@ -89,7 +89,8 @@ public class ExpectedExceptionNeverThrownInspection
             }
             final PsiClassType classType = (PsiClassType) type;
             final PsiClass aClass = classType.resolve();
-            if (ClassUtils.isSubclass(aClass, "java.lang.RuntimeException")) {
+            if (ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
                 return;
             }
             final Set<PsiClassType> exceptionsThrown =

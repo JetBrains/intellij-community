@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.MessageFormat;
-
 public class MultipleExceptionsDeclaredOnTestMethodInspection
         extends BaseInspection {
 
@@ -55,7 +53,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
         return new MultipleExceptionsDeclaredOnTestMethodFix();
     }
 
-    private class MultipleExceptionsDeclaredOnTestMethodFix
+    private static class MultipleExceptionsDeclaredOnTestMethodFix
             extends InspectionGadgetsFix {
 
         @NotNull
@@ -82,7 +80,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
             final GlobalSearchScope scope = referenceList.getResolveScope();
             final PsiJavaCodeReferenceElement referenceElement =
                     factory.createReferenceElementByFQClassName(
-                            "java.lang.Exception", scope);
+                            CommonClassNames.JAVA_LANG_EXCEPTION, scope);
             referenceList.add(referenceElement);
         }
     }
@@ -92,7 +90,7 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection
         return new RedundantExceptionDeclarationVisitor();
     }
 
-    private class RedundantExceptionDeclarationVisitor
+    private static class RedundantExceptionDeclarationVisitor
             extends BaseInspectionVisitor {
 
         @Override

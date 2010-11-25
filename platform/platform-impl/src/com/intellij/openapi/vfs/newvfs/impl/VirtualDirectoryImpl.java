@@ -97,6 +97,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       final NewVirtualFileSystem delegate = getFileSystem();
       VirtualFile fake = new FakeVirtualFile(this, name);
       name = delegate.getCanonicallyCasedName(fake);
+      if (name.length() == 0) return null;
     }
 
     synchronized (this) {

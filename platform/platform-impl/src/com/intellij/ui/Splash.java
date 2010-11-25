@@ -56,8 +56,10 @@ public class Splash extends JDialog {
       g.setColor(textColor);
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
       if (provider != null) {
-        g.drawString(provider.getLicensedToMessage(), x + 20, y + height - 52);
-        g.drawString(provider.getLicenseRestrictionsMessage(), x + 20, y + height - 32);
+        final String licensedToMessage = provider.getLicensedToMessage();
+        final String licenseRestrictionsMessage = provider.getLicenseRestrictionsMessage();
+        g.drawString(licensedToMessage, x + 20, y + height - 52);
+        g.drawString(licenseRestrictionsMessage, x + 20, y + height - 32);
       }
       return true;
     }

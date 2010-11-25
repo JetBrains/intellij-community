@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsObjectInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("extends.object.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "ClassExplicitlyExtendsObject";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "extends.object.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ExtendsObjectFix();
     }
@@ -59,6 +64,7 @@ public class ExtendsObjectInspection extends BaseInspection {
                     "extends.object.remove.quickfix");
         }
 
+        @Override
         public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
@@ -80,6 +86,7 @@ public class ExtendsObjectInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ExtendsObjectVisitor();
     }
@@ -95,7 +102,7 @@ public class ExtendsObjectInspection extends BaseInspection {
             }
             final PsiClassType[] types = aClass.getExtendsListTypes();
             for (final PsiClassType type : types){
-                if (type.equalsToText("java.lang.Object")){
+                if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)){
                     registerClassError(aClass);
                 }
             }

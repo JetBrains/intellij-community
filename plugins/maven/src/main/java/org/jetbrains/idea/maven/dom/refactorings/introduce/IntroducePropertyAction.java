@@ -87,7 +87,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
     final PsiElement elementAtStart = file.findElementAt(startOffset);
     if (elementAtStart == null) return null;
-    final PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    final PsiElement elementAtEnd = file.findElementAt(endOffset == startOffset ? endOffset : endOffset - 1);
     if (elementAtEnd == null) return null;
 
     PsiElement elementAt = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);

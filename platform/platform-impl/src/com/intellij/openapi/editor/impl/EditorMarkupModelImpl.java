@@ -762,6 +762,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       else {
         endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * myEditorTargetHeight);
       }
+      if (endY < startY) endY = startY;
     }
     return new ProperTextRange(startY, endY);
   }

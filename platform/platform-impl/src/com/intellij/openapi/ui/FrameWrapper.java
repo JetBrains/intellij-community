@@ -280,6 +280,11 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
+    public JComponent getComponent() {
+      return getRootPane();
+    }
+
+    @Override
     public StatusBar getStatusBar() {
       return myStatusBar != null ? myStatusBar : myParent.getStatusBar();
     }

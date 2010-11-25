@@ -547,18 +547,31 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 //-------------------------------------- Open File ----------------------------------------
 
-  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file, final boolean focusEditor) {
+  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
+                                                                                 final boolean focusEditor,
+                                                                                 boolean searchForSplitter) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
-    EditorsSplitters splitters = getSplitters();
 
-    EditorWindow wndToOpenIn = splitters.getCurrentWindow();
-    if (wndToOpenIn == null) {
-      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+    EditorWindow wndToOpenIn = null;
+    if (searchForSplitter) {
+      for (EditorsSplitters splitters : getAllSplitters()) {
+        final EditorWindow window = splitters.getCurrentWindow();
+        if (window == null) continue;
+
+        if (window.isFileOpen(file)) {
+          wndToOpenIn = window;
+          break;
+        }
+      }
+    } else {
+      wndToOpenIn = getSplitters().getCurrentWindow();
     }
-
+    if (wndToOpenIn == null) {
+      wndToOpenIn = getSplitters().getOrCreateCurrentWindow(file);
+    }
     return openFileImpl2(wndToOpenIn, file, focusEditor);
   }
 
@@ -728,7 +741,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
       if (focusEditor) {
         //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
-        window.setAsCurrentWindow(false);
+        window.setAsCurrentWindow(true);
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
       }
     }
@@ -1018,10 +1031,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public FileEditor[] getAllEditors() {
     assertReadAccess();
     final ArrayList<FileEditor> result = new ArrayList<FileEditor>();
-    final EditorWithProviderComposite[] editorsComposites = getSplitters().getEditorsComposites();
-    for (EditorWithProviderComposite editorsComposite : editorsComposites) {
-      final FileEditor[] editors = editorsComposite.getEditors();
-      ContainerUtil.addAll(result, editors);
+    final Set<EditorsSplitters> allSplitters = getAllSplitters();
+    for (EditorsSplitters splitter : allSplitters) {
+      final EditorWithProviderComposite[] editorsComposites = splitter.getEditorsComposites();
+      for (EditorWithProviderComposite editorsComposite : editorsComposites) {
+        final FileEditor[] editors = editorsComposite.getEditors();
+        ContainerUtil.addAll(result, editors);
+      }
     }
     return result.toArray(new FileEditor[result.size()]);
   }
@@ -1168,15 +1184,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   private EditorWithProviderComposite getEditorComposite(@NotNull final FileEditor editor) {
-    final EditorWithProviderComposite[] editorsComposites = getSplitters().getEditorsComposites();
-    for (int i = editorsComposites.length - 1; i >= 0; i--) {
-      final EditorWithProviderComposite composite = editorsComposites[i];
-      final FileEditor[] editors = composite.getEditors();
-      for (int j = editors.length - 1; j >= 0; j--) {
-        final FileEditor _editor = editors[j];
-        LOG.assertTrue(_editor != null);
-        if (editor.equals(_editor)) {
-          return composite;
+    for (EditorsSplitters splitters : getAllSplitters()) {
+      final EditorWithProviderComposite[] editorsComposites = splitters.getEditorsComposites();
+      for (int i = editorsComposites.length - 1; i >= 0; i--) {
+        final EditorWithProviderComposite composite = editorsComposites[i];
+        final FileEditor[] editors = composite.getEditors();
+        for (int j = editors.length - 1; j >= 0; j--) {
+          final FileEditor _editor = editors[j];
+          LOG.assertTrue(_editor != null);
+          if (editor.equals(_editor)) {
+            return composite;
+          }
         }
       }
     }

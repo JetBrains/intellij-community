@@ -62,6 +62,7 @@ public class FocusTrackback {
   private WeakReference myRequestor;
   private boolean mySheduledForRestore;
   private boolean myWillBeSheduledForRestore;
+  private boolean myForcedRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, (parent instanceof Window) ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
@@ -190,7 +191,7 @@ public class FocusTrackback {
 
     if (project != null && !project.isDisposed()) {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-      focusManager.requestFocus(new MyFocusCommand(), false).doWhenProcessed(new Runnable() {
+      focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(new Runnable() {
         public void run() {
           dispose();
         }
@@ -389,6 +390,10 @@ public class FocusTrackback {
     return myWillBeSheduledForRestore;
   }
 
+  public void setForcedRestore(boolean forcedRestore) {
+    myForcedRestore = forcedRestore;
+  }
+
   public interface Provider {
     FocusTrackback getFocusTrackback();
   }
@@ -425,6 +430,9 @@ public class FocusTrackback {
     Component eachToFocus = getFocusOwner();
     FocusTrackback eachTrackback = this;
     while (true) {
+      if (eachToFocus == null) {
+        break;
+      }
       if (SwingUtilities.isDescendingFrom(eachToFocus, parent)) return true;
 
       if (eachTrackback.getRequestor() instanceof AbstractPopup) {

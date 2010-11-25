@@ -266,7 +266,9 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
       ChangeSomethingAction(@Nullable final VirtualFile file, @Nullable final T t) {
         super("", "", null);
-        getTemplatePresentation().setText(t == null ? "Clear" : visualize(t));
+        Presentation presentation = getTemplatePresentation();
+        presentation.setText(t == null ? "Clear" : visualize(t));
+        presentation.setIcon(getIcon(myTreeView.getValues().get(file), t));
         myFile = file;
         myDialect = t;
       }
@@ -277,5 +279,10 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
       protected abstract void chosen(final VirtualFile file, final T t);
     }
+  }
+
+  @Nullable
+  protected Icon getIcon(T currentValue, T selectableValue) {
+    return null;
   }
 }

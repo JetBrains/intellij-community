@@ -209,6 +209,11 @@ class ApkStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.specify.apk.location";
+  }
+
+  @Override
   protected void commitForNext() throws CommitStepException {
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {

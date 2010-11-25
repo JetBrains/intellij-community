@@ -65,6 +65,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     final boolean needLeftParenth = isToInsertParenth(context, item);
     final boolean hasParams = needLeftParenth && hasParams(context, item);
+    final boolean annotation = insertingAnnotation(context, item);
 
     if (CompletionUtil.isOverwrite(item, completionChar)) {
       removeEndOfIdentifier(needLeftParenth && hasParams, context);
@@ -106,15 +107,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 
-    if (completionChar == '#') {
-      context.setLaterRunnable(new Runnable() {
-        public void run() {
-           new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
-        }
-      });
-    }
-
-    if (insertingAnnotation(context, item)) {
+    if (annotation) {
       // Check if someone inserts annotation class that require @
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
@@ -323,7 +316,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case ':': return TailType.CASE_COLON; //?
       case '<':
       case '>':
-      case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
     }

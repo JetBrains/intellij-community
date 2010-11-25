@@ -69,7 +69,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) parent;
             if (TypeUtils.expressionHasType(binaryExpression,
-                    "java.lang.String")) {
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 result.add(new CharUsedInArithmeticContentFix());
                 break;
             }

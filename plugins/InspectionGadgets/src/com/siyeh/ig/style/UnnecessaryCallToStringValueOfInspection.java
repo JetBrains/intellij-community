@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,17 +111,20 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) parent;
             final PsiType type = binaryExpression.getType();
-            if (!TypeUtils.typeEquals("java.lang.String", type)) {
+            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                    type)) {
                 return;
             }
             final PsiExpression lhs = binaryExpression.getLOperand();
             if (lhs == expression) {
                 final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs == null || !TypeUtils.typeEquals("java.lang.String",
+                if (rhs == null || !TypeUtils.typeEquals(
+                        CommonClassNames.JAVA_LANG_STRING,
                         rhs.getType())) {
                     return;
                 }
-            } else if (!TypeUtils.typeEquals("java.lang.String", lhs.getType())) {
+            } else if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                    lhs.getType())) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
@@ -143,8 +146,11 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
             final String qualifiedName = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(qualifiedName)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
                 return;
             }
             registerError(expression, argument);

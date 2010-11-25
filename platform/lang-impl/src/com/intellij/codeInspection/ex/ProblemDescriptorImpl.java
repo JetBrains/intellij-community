@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.smartPointers.SmartPointerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,6 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   @NotNull private final SmartPsiElementPointer myStartSmartPointer;
   @Nullable private final SmartPsiElementPointer myEndSmartPointer;
-
 
   private final ProblemHighlightType myHighlightType;
   private Navigatable myNavigatable;
@@ -66,7 +66,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, true, hintAction, onTheFly);
   }
 
-  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement,
+                               String descriptionTemplate,
+                               LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                final TextRange rangeInElement,
@@ -190,5 +193,10 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public boolean showTooltip() {
     return myShowTooltip;
+  }
+
+  public void dispose() {
+    ((SmartPointerEx)myStartSmartPointer).dispose();
+    if (myEndSmartPointer != null) ((SmartPointerEx)myEndSmartPointer).dispose();
   }
 }

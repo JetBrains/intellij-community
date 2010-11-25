@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,30 +28,36 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "RedundantStringToString";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("string.to.string.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.to.string.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringToStringVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringToStringFix();
     }
@@ -64,6 +70,7 @@ public class StringToStringInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression call =
@@ -104,7 +111,7 @@ public class StringToStringInspection extends BaseInspection {
                 return;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             registerError(expression);

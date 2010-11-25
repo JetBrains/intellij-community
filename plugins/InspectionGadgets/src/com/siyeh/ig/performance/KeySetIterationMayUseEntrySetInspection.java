@@ -379,7 +379,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.util.Map".equals(className)) {
+            if (!CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
                 return false;
             }
             final GetValueFromMapChecker checker =

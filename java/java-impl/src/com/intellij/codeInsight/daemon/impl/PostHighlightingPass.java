@@ -34,6 +34,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.Language;
@@ -49,6 +50,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -172,29 +174,32 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private void optimizeImportsOnTheFly(@NotNull final Editor editor) {
     if (myHasRedundantImports || myHasMissortedImports) {
-      invokeOnTheFlyImportOptimizer(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed() || editor.isDisposed()) {
-            return;
-          }
-          OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
-          if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final OptimizeImportsFix optimizeImportsFix = new OptimizeImportsFix();
+      if (optimizeImportsFix.isAvailable(myProject, editor, myFile) && myFile.isWritable()) {
+        invokeOnTheFlyImportOptimizer(new Runnable() {
+          public void run() {
             optimizeImportsFix.invoke(myProject, editor, myFile);
           }
-        }
-      });
+        }, myFile, editor);
+      }
     }
   }
 
-  public static void invokeOnTheFlyImportOptimizer(final Runnable runnable) {
+  public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file, @NotNull final Editor editor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (file.getProject().isDisposed() || editor.isDisposed()) return;
+        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+        String beforeText = file.getText();
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(runnable);
           }
         });
+        String afterText = file.getText();
+        if (Comparing.strEqual(beforeText, afterText)) {
+          LOG.error("Import optimizer for the '"+file.getVirtualFile().getPath()+"' hasn't optimized any imports. Text:\n"+afterText);
+        }
       }
     });
   }
@@ -263,6 +268,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return processField((PsiField)parent, identifier, progress);
     }
     if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
+      if (InspectionManagerEx.isSuppressed(identifier, UnusedParametersInspection.SHORT_NAME)) return null;
       return processParameter((PsiParameter)parent, progress);
     }
     if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {

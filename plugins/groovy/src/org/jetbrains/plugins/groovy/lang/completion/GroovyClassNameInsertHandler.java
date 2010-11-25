@@ -71,7 +71,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     AllClassesGetter.TRY_SHORTENING.handleInsert(context, item);
 
-    if (inNew && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, position)) {
+    if (inNew && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
       JavaCompletionUtil.insertParentheses(context, item, false, GroovyCompletionUtil.hasConstructorParameters(psiClass));
     }
 

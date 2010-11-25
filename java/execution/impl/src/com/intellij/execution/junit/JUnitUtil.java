@@ -31,6 +31,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.Convertor;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -207,6 +208,18 @@ public class JUnitUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  protected static PsiMethod findFirstTestMethod(PsiClass clazz) {
+    PsiMethod testMethod = null;
+    for (PsiMethod method : clazz.getMethods()) {
+      if (isTestMethod(MethodLocation.elementInClass(method, clazz)) || isSuiteMethod(method)) {
+        testMethod = method;
+        break;
+      }
+    }
+    return testMethod;
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {

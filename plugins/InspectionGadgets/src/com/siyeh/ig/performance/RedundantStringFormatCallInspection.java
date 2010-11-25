@@ -119,7 +119,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
             }
             final PsiClass aClass = (PsiClass) target;
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             final PsiExpression firstArgument = arguments[0];
@@ -130,7 +130,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
             if (containsPercentN(firstArgument)) {
                 return;
             }
-            if (firstType.equalsToText("java.lang.String") &&
+            if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
                     arguments.length == 1) {
                 registerMethodCallError(expression);
             } else if (firstType.equalsToText("java.util.Locale")) {
@@ -142,7 +142,8 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
                 if (secondType == null) {
                     return;
                 }
-                if (secondType.equalsToText("java.lang.String")) {
+                if (secondType.equalsToText(
+                        CommonClassNames.JAVA_LANG_STRING)) {
                     registerMethodCallError(expression);
                 }
             }

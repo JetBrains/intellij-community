@@ -170,7 +170,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                                        @NotNull Document document,
                                        @NotNull TextEditor textEditor,
                                        @NotNull int[] toIgnore,
-                                       boolean canChangeDocument) {
+                                       boolean canChangeDocument,
+                                       @Nullable Runnable callbackWhileWaiting) {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     assert !application.isWriteAccessAllowed();
@@ -191,16 +192,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
     HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
 
-    final DaemonProgressIndicator progress = new DaemonProgressIndicator();
+    final DaemonProgressIndicator progress = createUpdateProgress();
     progress.setDebug(true);
-    progress.start();
     myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
     try {
       while (progress.isRunning()) {
         if (progress.isCanceled() && progress.isRunning()) {
           // write action sneaked in the AWT. restart
           waitForTermination();
-          return runPasses(file, document, textEditor, toIgnore, canChangeDocument);
+          return runPasses(file, document, textEditor, toIgnore, canChangeDocument,callbackWhileWaiting);
+        }
+        if (callbackWhileWaiting != null) {
+          callbackWhileWaiting.run();
         }
         progress.waitFor(100);
         try {
@@ -678,21 +681,23 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         // cancel all after calling createPasses() since there are perverts {@link com.intellij.util.xml.ui.DomUIFactoryImpl} who are changing PSI there
         cancelUpdateProgress(true, "Cancel by alarm");
         myAlarm.cancelAllRequests();
-        DaemonProgressIndicator progress;
-        synchronized (DaemonCodeAnalyzerImpl.this) {
-          progress = new DaemonProgressIndicator() {
-            @Override
-            public void stopIfRunning() {
-              super.stopIfRunning();
-              myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
-            }
-          };
-          progress.start();
-          myUpdateProgress = progress;
-        }
+        DaemonProgressIndicator progress = createUpdateProgress();
         myPassExecutorService.submitPasses(passes, progress, Job.DEFAULT_PRIORITY);
       }
     };
+  }
+
+  private synchronized DaemonProgressIndicator createUpdateProgress() {
+    DaemonProgressIndicator progress = new DaemonProgressIndicator() {
+      @Override
+      public void stopIfRunning() {
+        super.stopIfRunning();
+        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
+      }
+    };
+    progress.start();
+    myUpdateProgress = progress;
+    return progress;
   }
 
   public boolean canChangeFileSilently(PsiFileSystemItem file) {

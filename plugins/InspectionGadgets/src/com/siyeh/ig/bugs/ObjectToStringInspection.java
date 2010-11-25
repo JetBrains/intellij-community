@@ -112,7 +112,7 @@ public class ObjectToStringInspection extends BaseInspection {
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
                 if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                        "java.lang.AbstractStringBuilder")) {
+                        CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
                     return;
                 }
                 final PsiExpressionList argumentList =
@@ -133,7 +133,7 @@ public class ObjectToStringInspection extends BaseInspection {
                         (PsiReferenceExpression) qualifierExpression;
                 final String canonicalText =
                         referenceExpression.getCanonicalText();
-                if (!"java.lang.String".equals(canonicalText)) {
+                if (!CommonClassNames.JAVA_LANG_STRING.equals(canonicalText)) {
                     return;
                 }
                 final PsiExpressionList argumentList =
@@ -163,7 +163,7 @@ public class ObjectToStringInspection extends BaseInspection {
                 return;
             }
             final PsiClassType classType = (PsiClassType) type;
-            if (type.equalsToText("java.lang.Object")) {
+            if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
                 return;
             }
             final PsiClass referencedClass = classType.resolve();

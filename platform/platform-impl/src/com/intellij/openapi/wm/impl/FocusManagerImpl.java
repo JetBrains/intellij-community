@@ -79,10 +79,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
   };
-  private boolean myFlushWasDelayedToFixFocusByDefaultRequest;
-
-  private FocusCommand myRestoreFocusOnFlushCmd;
-  private ActionCallback myRestoreFocusOnFlushCallback;
+  private boolean myFlushWasDelayedToFixFocus;
 
   private boolean canFlushIdleRequests() {
     return isFocusTransferReady() && !isIdleQueueEmpty();
@@ -176,12 +173,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     if (forced) {
       myForcedFocusRequestsAlarm.cancelAllRequests();
       setLastEffectiveForcedRequest(command);
-
-      if (myRestoreFocusOnFlushCmd != null) {
-        rejectCommand(myRestoreFocusOnFlushCmd, myRestoreFocusOnFlushCallback, false);
-        myRestoreFocusOnFlushCmd = null;
-        myRestoreFocusOnFlushCallback = null;
-      }
     }
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -230,7 +221,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }).notify(focusTimeout);
         }
         else {
-          rejectCommand(command, result, false);
+          rejectCommand(command, result);
         }
       }
     });
@@ -238,7 +229,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
     if (cmd.isExpired()) {
-      rejectCommand(cmd, result, false);
+      rejectCommand(cmd, result);
       return true;
     }
 
@@ -250,14 +241,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         result.setDone();
       }
       else {
-        rejectCommand(cmd, result, true);
+        rejectCommand(cmd, result);
       }
       return true;
     }
 
 
     if (lastRequest != null && lastRequest.dominatesOver(cmd)) {
-      rejectCommand(cmd, result, false);
+      rejectCommand(cmd, result);
       return true;
     }
 
@@ -432,28 +423,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
 
       if (isPendingKeyEventsRedispatched()) {
-        boolean focusOk = getFocusOwner() != null;
+        boolean focusOk = getFocusOwner() != null || myFlushWasDelayedToFixFocus;
+        if (!focusOk) {
+          IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
+          myFlushWasDelayedToFixFocus = true;
+        }
 
-        if (!focusOk && myRestoreFocusOnFlushCmd != null) {
-          FocusCommand cmd = myRestoreFocusOnFlushCmd;
-          ActionCallback cb = myRestoreFocusOnFlushCallback;
-
-          myRestoreFocusOnFlushCmd = null;
-          myRestoreFocusOnFlushCallback = null;
-
-          requestFocus(cmd, true).notify(cb);
-        } else {
-          boolean noNeedToFixFocus = focusOk || myFlushWasDelayedToFixFocusByDefaultRequest;
-
-          if (!noNeedToFixFocus) {
-            IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
-            myFlushWasDelayedToFixFocusByDefaultRequest = true;
-          }
-
-          if (canFlushIdleRequests() && getFlushingIdleRequests() <= 1 && (noNeedToFixFocus || !myFlushWasDelayedToFixFocusByDefaultRequest)) {
-            myFlushWasDelayedToFixFocusByDefaultRequest = false;
-            flushNow();
-          }
+        if (canFlushIdleRequests() && getFlushingIdleRequests() <= 1 && (focusOk || !myFlushWasDelayedToFixFocus)) {
+          myFlushWasDelayedToFixFocus = false;
+          flushNow();
         }
       }
     }
@@ -636,6 +614,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
+  @Override
+  public Component getLastFocusedFor(IdeFrame frame) {
+    WeakReference<Component> ref = myLastFocused.get(frame);
+    return ref != null ? ref.get() : null;
+  }
+
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
@@ -676,25 +660,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void forceFinishFocusSettledown(FocusCommand cmd, ActionCallback cmdCallback) {
-    rejectCommand(cmd, cmdCallback, false);
+    rejectCommand(cmd, cmdCallback);
   }
 
 
-  private void rejectCommand(FocusCommand cmd, ActionCallback callback, boolean canBeUseToFixNullFocusOnFlush) {
-    resetCommand(cmd, !canBeUseToFixNullFocusOnFlush);
+  private void rejectCommand(FocusCommand cmd, ActionCallback callback) {
+    resetCommand(cmd, true);
     resetUnforcedCommand(cmd);
 
-
-    if (canBeUseToFixNullFocusOnFlush) {
-      if (myRestoreFocusOnFlushCmd != null) {
-        rejectCommand(myRestoreFocusOnFlushCmd, myRestoreFocusOnFlushCallback, false);
-      }
-
-      myRestoreFocusOnFlushCmd = cmd;
-      myRestoreFocusOnFlushCallback = callback;
-    } else {
-      callback.setRejected();
-    }
+    callback.setRejected();
   }
 
   private class AppListener extends ApplicationAdapter {

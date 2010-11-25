@@ -83,7 +83,7 @@ public class MavenFoldersImporter {
       configSourceFolders();
       configOutputFolders();
     }
-    configExcludedFolders();
+    configGeneratedAndExcludedFolders();
   }
 
   private void configSourceFolders() {
@@ -122,7 +122,7 @@ public class MavenFoldersImporter {
     myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
   }
 
-  private void configExcludedFolders() {
+  private void configGeneratedAndExcludedFolders() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
     Map<File, Boolean> generatedDirs = new THashMap<File, Boolean>();
     generatedDirs.put(new File(myMavenProject.getGeneratedSourcesDirectory(true)), true);
@@ -143,6 +143,9 @@ public class MavenFoldersImporter {
         myModel.addExcludedFolder(f.getPath());
       }
     }
+
+    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true);
+    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false);
 
     List<String> facetExcludes = new ArrayList<String>();
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {

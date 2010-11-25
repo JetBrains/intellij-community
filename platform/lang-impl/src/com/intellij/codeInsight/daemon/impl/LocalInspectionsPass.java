@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -106,17 +107,34 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
     myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
     mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
+    LOG.assertTrue(mySeverityRegistrar != null);
 
     // initial guess
     setProgressLimit(300 * 2);
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    if (!HighlightLevelUtil.shouldInspect(myFile)) return;
-    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
-    final InspectionProfileWrapper profile = myProfileWrapper;
-    final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-    inspect(tools, iManager, true, true, true, progress);
+    try {
+      if (!HighlightLevelUtil.shouldInspect(myFile)) return;
+      final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+      final InspectionProfileWrapper profile = myProfileWrapper;
+      final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
+      inspect(tools, iManager, true, true, true, progress);
+    }
+    finally {
+      disposeDescriptors();
+    }
+  }
+
+  private void disposeDescriptors() {
+    for (List<InspectionResult> list : result.values()) {
+      for (InspectionResult inspectionResult : list) {
+         for (ProblemDescriptor pd: inspectionResult.foundProblems) {
+           ((ProblemDescriptorImpl)pd).dispose();
+         }
+      }
+    }
+    result.clear();
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
@@ -202,8 +220,26 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
-    visitPriorityElementsAndInit(tools, iManager, isOnTheFly, ignoreSuppressed, indicator, inside, session, init);
-    visitRestElementsAndCleanup(tools,iManager,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
+    boolean finished = false;
+    try {
+      visitPriorityElementsAndInit(tools, iManager, isOnTheFly, ignoreSuppressed, indicator, inside, session, init);
+      visitRestElementsAndCleanup(tools,iManager,isOnTheFly,ignoreSuppressed, indicator, outside, session, init);
+      finished = true;
+    }
+    finally {
+      if (!finished) {
+        synchronized (init) {
+          for (Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity : init) {
+            List<ProblemDescriptor> results = trinity.second.getResults();
+            if (results != null) {
+              for (ProblemDescriptor pd : results) {
+                ((ProblemDescriptorImpl)pd).dispose();
+              }
+            }
+          }
+        }
+      }
+    }
 
     indicator.checkCanceled();
 
@@ -357,7 +393,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(element);
-    return new HighlightInfo(mySeverityRegistrar.getTextAttributesBySeverity(severity), highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+    TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
+    return new HighlightInfo(attributes, highlightInfoType, textRange.getStartOffset(),
+                             textRange.getEndOffset(), message, toolTip,
                              severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
@@ -513,7 +551,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
-      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
+      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(),
+                                                                 hostRange.getEndOffset(), info.description, info.toolTip);
       if (patched != null) {
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);
@@ -553,8 +592,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlightInfo;
   }
 
-  private static void registerQuickFixes(final LocalInspectionTool tool, final ProblemDescriptor descriptor,
-                                         final HighlightInfo highlightInfo, final Set<TextRange> emptyActionRegistered) {
+  private static void registerQuickFixes(final LocalInspectionTool tool,
+                                         final ProblemDescriptor descriptor,
+                                         final HighlightInfo highlightInfo,
+                                         final Set<TextRange> emptyActionRegistered) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     boolean needEmptyAction = true;
     final QuickFix[] fixes = descriptor.getFixes();
@@ -572,7 +613,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       needEmptyAction = false;
     }
     if (((ProblemDescriptorImpl)descriptor).getEnforcedTextAttributes() != null) {
-      needEmptyAction = false;      
+      needEmptyAction = false;
     }
     if (needEmptyAction && emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());

@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -24,8 +23,11 @@ import java.util.Date;
  * @author yole
  */
 public abstract class LicenseeInfoProvider {
+  public static LicenseeInfoProvider ourInstance;
+
+  @Nullable
   public static LicenseeInfoProvider getInstance() {
-    return ServiceManager.getService(LicenseeInfoProvider.class);
+    return ourInstance;
   }
 
   public abstract String getLicensedToMessage();

@@ -73,6 +73,7 @@ import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -198,7 +199,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     runStartupActivities();
   }
 
-  @Nullable
+  @NotNull
   public static Project createProject(File projectFile, String creationPlace) {
     try {
       Project project =
@@ -251,7 +252,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected Module doCreateRealModule(final String moduleName) {
-    final VirtualFile baseDir = myProject.getBaseDir();
+    return doCreateRealModuleIn(moduleName, myProject, getModuleType());
+  }
+
+  protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
+    final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
                                      moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
@@ -261,7 +266,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       @Override
       protected void run(Result<Module> result) throws Throwable {
         final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-        Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath(), getModuleType());
+        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType);
         module.getModuleFile();
         result.setResult(module);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,21 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CollectionsFieldAccessReplaceableByMethodCallInspection
         extends BaseInspection {
 
+    @Override
     @Nls @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collections.field.access.replaceable.by.method.call.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -46,6 +49,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
                 infos[1]);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiReferenceExpression expression =
@@ -59,7 +63,8 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
 
         private final String replacementText;
 
-        private CollectionsFieldAccessReplaceableByMethodCallFix(String referenceName) {
+        private CollectionsFieldAccessReplaceableByMethodCallFix(
+                String referenceName) {
             replacementText = getCollectionsMethodCallText(referenceName);
         }
 
@@ -70,6 +75,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
                     replacementText);
         }
 
+        @NonNls
         private static String getCollectionsMethodCallText(
                 PsiReferenceExpression referenceExpression) {
             final String referenceName = referenceExpression.getReferenceName();
@@ -77,35 +83,42 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
             if (!(parent instanceof PsiExpressionList)) {
                 return getUntypedCollectionsMethodCallText(referenceName);
             }
-            final PsiType type = ExpectedTypeUtils.findExpectedType(referenceExpression, false);
+            final PsiType type = ExpectedTypeUtils.findExpectedType(
+                    referenceExpression, false);
             if (!(type instanceof PsiClassType)) {
                 return getUntypedCollectionsMethodCallText(referenceName);
             }
             final PsiClassType classType = (PsiClassType) type;
             final PsiType[] parameterTypes = classType.getParameters();
             boolean useTypeParameter = false;
-            String[] canonicalTexts = new String[parameterTypes.length];
+            final String[] canonicalTexts = new String[parameterTypes.length];
             for (int i = 0, parameterTypesLength = parameterTypes.length;
                  i < parameterTypesLength; i++) {
                 final PsiType parameterType = parameterTypes[i];
-                if (!parameterType.equalsToText("java.lang.Object")) {
+                if (!parameterType.equalsToText(
+                        CommonClassNames.JAVA_LANG_OBJECT)) {
                     useTypeParameter = true;
                 }
                 canonicalTexts[i] = parameterType.getCanonicalText();
             }
             if (useTypeParameter) {
-                return "Collections.<" + StringUtil.join(canonicalTexts, ",") + ">" +
+                return "Collections.<" + StringUtil.join(canonicalTexts, ",") +
+                        '>' +
                         getCollectionsMethodCallText(referenceName);
             } else {
                 return getUntypedCollectionsMethodCallText(referenceName);
             }
         }
 
-        private static String getUntypedCollectionsMethodCallText(String referenceName) {
+        @NonNls
+        private static String getUntypedCollectionsMethodCallText(
+                String referenceName) {
             return "Collections." + getCollectionsMethodCallText(referenceName);
         }
 
-        private static String getCollectionsMethodCallText(String referenceName) {
+        @NonNls
+        private static String getCollectionsMethodCallText(
+                @NonNls String referenceName) {
             if ("EMPTY_LIST".equals(referenceName)) {
                 return "emptyList()";
             } else if ("EMPTY_MAP".equals(referenceName)) {
@@ -118,18 +131,23 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
             }
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
             if (!(element instanceof PsiReferenceExpression)) {
                 return;
             }
-            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression) element;
-            final String newMethodCallText = getCollectionsMethodCallText(referenceExpression);
-            replaceExpression(referenceExpression, "java.util." + newMethodCallText);
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) element;
+            final String newMethodCallText =
+                    getCollectionsMethodCallText(referenceExpression);
+            replaceExpression(referenceExpression,
+                    "java.util." + newMethodCallText);
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CollectionsFieldAccessReplaceableByMethodCallVisitor();
     }
@@ -144,8 +162,8 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
                 return;
             }
             super.visitReferenceExpression(expression);
-            final String name = expression.getReferenceName();
-            final String replacement;
+            @NonNls final String name = expression.getReferenceName();
+            @NonNls final String replacement;
             if ("EMPTY_LIST".equals(name)) {
                 replacement = "emptyList()";
             } else if ("EMPTY_MAP".equals(name)) {
@@ -165,7 +183,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
                 return;
             }
             final String qualifiedName = containingClass.getQualifiedName();
-            if (!"java.util.Collections".equals(qualifiedName)) {
+            if (!CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(qualifiedName)) {
                 return;
             }
             registerError(expression, expression, replacement);

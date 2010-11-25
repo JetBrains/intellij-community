@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 
 public class ClassNewInstanceInspection extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -40,6 +42,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
                 "class.new.instance.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -59,6 +62,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
                     "class.new.instance.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -89,10 +93,9 @@ public class ClassNewInstanceInspection extends BaseInspection {
                 addThrowsClause(method, "java.lang.NoSuchMethodException",
                         "java.lang.reflect.InvocationTargetException");
             }
-            System.out.println("parentOfType: " + parentOfType);
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression)grandParent;
-            final String newExpression = qualifier.getText() +
+            @NonNls final String newExpression = qualifier.getText() +
                     ".getConstructor().newInstance()";
             replaceExpression(methodCallExpression, newExpression);
             
@@ -159,6 +162,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ClassNewInstanceVisitor();
     }
@@ -170,7 +174,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
                 PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName = methodExpression.getReferenceName();
             if (!"newInstance".equals(methodName)) {
                 return;
             }
@@ -189,7 +193,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
                 return;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.Class".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_CLASS.equals(className)) {
                 return;
             }
             registerMethodCallError(expression);

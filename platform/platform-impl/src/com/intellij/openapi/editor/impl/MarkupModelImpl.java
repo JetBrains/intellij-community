@@ -111,12 +111,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    int endOffset,
                                                                    int layer,
                                                                    TextAttributes textAttributes,
-                                                                   HighlighterTargetArea targetArea,
+                                                                   @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<RangeHighlighterEx> changeAttributesAction) {
     RangeHighlighterEx highlighter = isPersistent
-                                            ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
-                                            : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
+                                     ? new PersistentRangeHighlighterImpl(this, startOffset, layer, targetArea, textAttributes)
+                                     : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributes);
 
     RangeMarkerImpl marker = (RangeMarkerImpl)highlighter;
     marker.registerInDocument();
@@ -145,9 +145,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   void addRangeHighlighter(RangeHighlighterEx marker) {
-    marker.setValid(true);
-    ((RangeMarkerImpl)marker).myNode = (IntervalTreeImpl.MyNode)myHighlighterTree.add(marker);
-    myHighlighterTree.checkMax(true);
+    myHighlighterTree.add(marker);
   }
 
   @NotNull
@@ -159,7 +157,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, targetArea, false, null);
   }
 
-  public void removeHighlighter(RangeHighlighter segmentHighlighter) {
+  public void removeHighlighter(@NotNull RangeHighlighter segmentHighlighter) {
     myCachedHighlighters = null;
     if (!segmentHighlighter.isValid()) return;
 

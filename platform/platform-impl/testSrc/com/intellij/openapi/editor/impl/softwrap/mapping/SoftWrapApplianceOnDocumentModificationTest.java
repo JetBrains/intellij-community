@@ -24,7 +24,7 @@ import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -253,6 +253,47 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     
     backspace();
     assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  public void testRemoveOfAllSymbolsFromLastLine() throws IOException {
+    // There was a problem that removing all text from the last document line corrupted soft wraps cache.
+    String text =
+      "Line1\n" +
+      "Long line2 that is expected to be soft-wrapped<caret>";
+    init(150, text);
+
+    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(softWrapsBeforeModification.size() > 0);
+
+    int offset = myEditor.getCaretModel().getOffset();
+    VisualPosition positionBeforeModification = myEditor.offsetToVisualPosition(offset);
+    type("\n123");
+    myEditor.getSelectionModel().setSelection(offset + 1, myEditor.getDocument().getTextLength());
+    delete();
+    assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+    assertEquals(positionBeforeModification, myEditor.offsetToVisualPosition(offset));
+  }
+  
+  public void testTypingBeforeCollapsedFoldRegion() throws IOException {
+    // We had a problem that soft wraps cache entries that lay after the changed region were considered to be affected by the change.
+    // This test checks that situation.
+    String text =
+      "\n" +
+      "fold line1\n" +
+      "fold line2\n" +
+      "fold line3\n" +
+      "fold line4\n" +
+      "normal line1";
+    init(150, text);
+    
+    int afterFoldOffset = text.indexOf("normal line1");
+    addCollapsedFoldRegion(text.indexOf("fold line1") + 2, afterFoldOffset - 1, "...");
+    VisualPosition beforeModification = myEditor.offsetToVisualPosition(afterFoldOffset);
+    
+    myEditor.getCaretModel().moveToOffset(0);
+    type('a');
+    
+    assertEquals(beforeModification, myEditor.offsetToVisualPosition(afterFoldOffset + 1));
   }
   
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {

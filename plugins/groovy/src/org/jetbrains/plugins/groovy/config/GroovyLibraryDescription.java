@@ -44,6 +44,7 @@ import java.util.Set;
 public class GroovyLibraryDescription extends CustomLibraryDescription {
   private final Condition<List<VirtualFile>> myCondition;
   private String myEnvVariable;
+  private final String myFrameworkName;
 
   public GroovyLibraryDescription() {
     this("GROOVY_HOME", getAllGroovyKinds());
@@ -59,11 +60,15 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return kinds;
   }
 
-  public GroovyLibraryDescription(@NotNull String envVariable, @NotNull LibraryKind<?> libraryKind) {
-    this(envVariable, Collections.singleton(libraryKind));
+  public GroovyLibraryDescription(@NotNull String envVariable, @NotNull LibraryKind<?> libraryKind, String frameworkName) {
+    this(envVariable, Collections.singleton(libraryKind), frameworkName);
   }
 
   public GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds) {
+    this(envVariable, libraryKinds, "Groovy");
+  }
+
+  private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind<?>> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
     myCondition = new Condition<List<VirtualFile>>() {
       @Override
@@ -71,6 +76,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         return LibraryPresentationManager.getInstance().isLibraryOfKind(virtualFiles, libraryKinds);
       }
     };
+    myFrameworkName = frameworkName;
   }
 
   @Nullable
@@ -119,8 +125,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         return findManager(file) != null;
       }
     };
-    descriptor.setTitle("Groovy SDK");
-    descriptor.setDescription("Choose a directory containing Groovy distribution");
+    descriptor.setTitle(myFrameworkName + " SDK");
+    descriptor.setDescription("Choose a directory containing " + myFrameworkName + " distribution");
     final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, initial);
     if (files.length != 1) return null;
 

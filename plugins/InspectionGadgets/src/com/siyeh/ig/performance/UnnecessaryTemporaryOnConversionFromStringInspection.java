@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,25 +40,28 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             new HashMap<String, String>(7);
 
     static {
-        s_conversionMap.put("java.lang.Boolean", "valueOf");
-        s_conversionMap.put("java.lang.Byte", "parseByte");
-        s_conversionMap.put("java.lang.Double", "parseDouble");
-        s_conversionMap.put("java.lang.Float", "parseFloat");
-        s_conversionMap.put("java.lang.Integer", "parseInt");
-        s_conversionMap.put("java.lang.Long", "parseLong");
-        s_conversionMap.put("java.lang.Short", "parseShort");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "valueOf");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_BYTE, "parseByte");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_INTEGER, "parseInt");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_LONG, "parseLong");
+        s_conversionMap.put(CommonClassNames.JAVA_LANG_SHORT, "parseShort");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.from.string.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String replacementString =
@@ -94,7 +97,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         final String qualifierType = type.getPresentableText();
         final String canonicalType = type.getCanonicalText();
         final String conversionName = s_conversionMap.get(canonicalType);
-        if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
+        if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type)) {
             if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
                 return qualifierType + '.' + conversionName + '(' +
                         arg.getText() + ").booleanValue()";
@@ -108,6 +111,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         }
     }
 
+    @Override
     @Nullable
     public InspectionGadgetsFix buildFix(Object... infos) {
         final String replacementExpression =
@@ -137,6 +141,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression expression =
@@ -150,6 +155,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryTemporaryObjectVisitor();
     }
@@ -162,13 +168,13 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
                 new HashMap<String, String>(7);
 
         static {
-            s_basicTypeMap.put("java.lang.Boolean", "booleanValue");
-            s_basicTypeMap.put("java.lang.Byte", "byteValue");
-            s_basicTypeMap.put("java.lang.Double", "doubleValue");
-            s_basicTypeMap.put("java.lang.Float", "floatValue");
-            s_basicTypeMap.put("java.lang.Integer", "intValue");
-            s_basicTypeMap.put("java.lang.Long", "longValue");
-            s_basicTypeMap.put("java.lang.Short", "shortValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_BYTE, "byteValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "doubleValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_FLOAT, "floatValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_INTEGER, "intValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_LONG, "longValue");
+            s_basicTypeMap.put(CommonClassNames.JAVA_LANG_SHORT, "shortValue");
         }
 
         @Override public void visitMethodCallExpression(
@@ -186,17 +192,18 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             if (!(qualifier instanceof PsiNewExpression)) {
                 return;
             }
-            final PsiNewExpression newExp = (PsiNewExpression) qualifier;
-            final PsiExpressionList argList = newExp.getArgumentList();
-            if (argList== null) {
+            final PsiNewExpression newExpression = (PsiNewExpression) qualifier;
+            final PsiExpressionList argumentList =
+                    newExpression.getArgumentList();
+            if (argumentList == null) {
                 return;
             }
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 1) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
                 return;
             }
-            final PsiType argType = args[0].getType();
-            if (!TypeUtils.isJavaLangString(argType)) {
+            final PsiType argumentType = arguments[0].getType();
+            if (!TypeUtils.isJavaLangString(argumentType)) {
                 return;
             }
             final PsiType type = qualifier.getType();
