@@ -1,0 +1,1 @@
+a = '\'Hello\' - said man.'

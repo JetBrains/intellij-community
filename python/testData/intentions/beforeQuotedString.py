@@ -1,0 +1,1 @@
+a = "'Hello'<caret> - said man."

@@ -1,0 +1,79 @@
+package com.jetbrains.python.codeInsight.intentions;
+
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * User: catherine
+ *
+ * Intention to convert dict literal expression to dict constructor if the keys are all string constants on a literal dict.
+ * For instance,
+ * {} -> dict
+ * {'a': 3, 'b': 5} -> dict(a=3, b=5)
+ * {a: 3, b: 5} -> no transformation
+ */
+public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction {
+  @NotNull
+  public String getFamilyName() {
+    return PyBundle.message("INTN.convert.dict.literal.to.dict.constructor");
+  }
+
+  @NotNull
+  public String getText() {
+    return PyBundle.message("INTN.convert.dict.literal.to.dict.constructor");
+  }
+
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+
+    PyDictLiteralExpression dictExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyDictLiteralExpression.class);
+
+    if (dictExpression != null) {
+      PyKeyValueExpression[] elements = dictExpression.getElements();
+      if (elements.length != 0) {
+        for (PyKeyValueExpression element : elements) {
+          if (! (element.getKey() instanceof PyStringLiteralExpression)) return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    PyDictLiteralExpression dictExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyDictLiteralExpression.class);
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    if (dictExpression != null) {
+      replaceDictLiteral(dictExpression, elementGenerator);
+    }
+  }
+
+  private static void replaceDictLiteral(PyDictLiteralExpression dictExpression, PyElementGenerator elementGenerator) {
+    PyExpression[] argumentList = dictExpression.getElements();
+    StringBuilder stringBuilder = new StringBuilder();
+    int size = argumentList.length;
+    for (int i = 0; i != size; ++i) {
+      PyExpression argument = argumentList[i];
+      if (argument instanceof PyKeyValueExpression) {
+        PyExpression key = ((PyKeyValueExpression)argument).getKey();
+        if (key instanceof PyStringLiteralExpression)
+          stringBuilder.append(((PyStringLiteralExpression)key).getStringValue());
+        stringBuilder.append("=");
+        stringBuilder.append(((PyKeyValueExpression)argument).getValue().getText());
+        if (i != size-1)
+          stringBuilder.append(", ");
+      }
+    }
+    PyStatement callExpression = elementGenerator.createFromText(LanguageLevel.forElement(dictExpression), PyStatement.class,
+                                                      "dict(" + stringBuilder.toString() + ")");
+    dictExpression.replace(callExpression);
+  }
+}
