@@ -5207,7 +5207,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         if (isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }
       }
