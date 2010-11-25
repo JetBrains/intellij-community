@@ -24,10 +24,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,10 +38,7 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
@@ -397,9 +391,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     return false;
   }
+  
+  private static boolean isWhiteSpaceSymbol(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
+  }
 
   /**
-   * Formatter trims line that contains from white spaces symbols only, however, there is a possible case that we want
+   * Formatter trims line that contains white spaces symbols only, however, there is a possible case that we want
    * to preserve them for particular line (e.g. for live template that defines blank line that contains $END$ marker).
    * <p/>
    * Current approach is to do the following:
@@ -411,37 +409,106 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy text if necessary (if target line contains white space symbols only)
-   * 
+   * This method inserts that dummy text if necessary (if target line contains white space symbols only).
+   * <p/>
+   * Please note that it tries to do that via PSI at first (checks if given offset points to
+   * {@link TokenType#WHITE_SPACE white space element} and inserts dummy text as dedicated element if necessary) and,
+   * in case of the negative answer, tries to perform the examination considering document just as a sequence of characters
+   * and assuming that white space symbols are white spaces, tabulations and line feeds. The rationale for such an approach is:
+   * <pre>
+   * <ul>
+   *   <li>
+   *      there is a possible case that target language considers symbols over than white spaces, tabulations and line feeds
+   *      to be white spaces and the answer lays at PSI structure of the file;
+   *   </li>
+   *   <li>
+   *      dummy text inserted during PSI-based processing has {@link TokenType#NEW_LINE_INDENT special type} that may be treated
+   *      specifically during formatting;
+   *   </li>
+   * </ul>
+   * </pre>
+   * <p/>
+   * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
+   * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
+   * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
+   * are updated correspondingly after current method call and whole white space region is reformatted.
+   *
    * @param document    target document
    * @param offset      offset that defines end boundary of the target line text fragment (start boundary is the first line's symbol)
    * @return            text range that points to the newly inserted dummy text if any; <code>null</code> otherwise
    */
   @Nullable
-  public static TextRange insertNewLineIndentMarker(@NotNull Document document, int offset) {
-    int line = document.getLineNumber(offset);
-    int startLineOffset = document.getLineStartOffset(line);
-    if (startLineOffset >= offset) {
-      // There is no point in inserting dummy text at the start of the line.
+  public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) 
+    throws IncorrectOperationException 
+  {
+    TextRange result = insertNewLineIndentMarker(file, offset);
+    if (result == null) {
+      result = insertNewLineIndentMarker(document, offset);
+    }
+    return result;
+  }
+  
+  
+  @Nullable
+  private static TextRange insertNewLineIndentMarker(@NotNull Document document, final int offset) {
+    CharSequence text = document.getCharsSequence();
+    if (!isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
     }
     
-    CharSequence text = document.getCharsSequence();
-    boolean whiteSpacesOnly = true;
-    for (int i = startLineOffset; i < offset; i++) {
-      char c = text.charAt(i);
-      if (c != ' ' && c != '\t') {
-        whiteSpacesOnly = false;
+    int start = offset;
+    for (int i = offset - 1; i >= 0; i--) {
+      if (!isWhiteSpaceSymbol(text.charAt(i))) {
+        break;
+      }
+      start = i;
+    }
+    
+    int end = offset;
+    for (; end < text.length(); end++) {
+      if (!isWhiteSpaceSymbol(text.charAt(end))) {
         break;
       }
     }
     
-    if (!whiteSpacesOnly) {
-      return null;
-    }
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(text.subSequence(start, end));
+    
+    // Modify the document in order to expand range markers pointing to the given offset to the whole white space range.
+    document.deleteString(start, end);
+    document.insertString(start, buffer);
     
     document.insertString(offset, DUMMY_IDENTIFIER);
     return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
+  }
+
+  @Nullable
+  private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
+    CheckUtil.checkWritable(file);
+    final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
+    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
+    if( elementAt == null )
+    {
+      return null;
+    }
+    ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
+    ASTNode parent = element.getTreeParent();
+    int elementStart = element.getTextRange().getStartOffset();
+    if (element.getElementType() != TokenType.WHITE_SPACE) {
+      /*
+      if (elementStart < offset) return null;
+      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
+      ChangeUtil.addChild(parent, marker, element);
+      return marker;
+      */
+      return null;
+    }
+
+    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
+    parent.addChild(marker, space1.getTreeNext());
+    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
+    return psiElement == null ? null : psiElement.getTextRange();
   }
 
   public Indent getIndent(String text, FileType fileType) {
