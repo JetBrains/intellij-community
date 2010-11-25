@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -38,7 +37,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -214,6 +212,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     final Project project = targetClass.getProject();
     final PsiFile targetFile = targetClass.getContainingFile();
     Document document = PsiDocumentManager.getInstance(project).getDocument(targetFile);
+    if (document == null) return;
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
 
@@ -225,7 +224,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     method = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(method);
     if (method == null) return;
 
-    assert document != null;
     RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
     final Editor newEditor = positionCursor(project, targetFile, method);
     Template template = builder.buildTemplate();
