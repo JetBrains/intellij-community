@@ -452,7 +452,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Nullable
   private static TextRange insertNewLineIndentMarker(@NotNull Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
-    if (!isWhiteSpaceSymbol(text.charAt(offset))) {
+    if (offset < 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
     }
     

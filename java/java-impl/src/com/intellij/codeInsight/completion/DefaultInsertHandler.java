@@ -107,14 +107,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 
-    if (completionChar == '#') {
-      context.setLaterRunnable(new Runnable() {
-        public void run() {
-           new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
-        }
-      });
-    }
-
     if (annotation) {
       // Check if someone inserts annotation class that require @
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
@@ -324,7 +316,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case ':': return TailType.CASE_COLON; //?
       case '<':
       case '>':
-      case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
     }

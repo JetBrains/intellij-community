@@ -1,6 +1,6 @@
 class A{
 {
  String str;
- str.toCharArray();
+ str.toString();
  }
 }

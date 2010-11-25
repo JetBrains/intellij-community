@@ -1603,6 +1603,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
         if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
           int logStartLine = offsetToLogicalPosition(startOffset).line;
+          if (logStartLine >= myDocument.getLineCount()) {
+            return;
+          }
           LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
           Point end = logicalPositionToXY(logPosition);
           int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);

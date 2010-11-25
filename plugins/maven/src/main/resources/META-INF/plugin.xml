@@ -95,8 +95,9 @@
     <codeInsight.unresolvedReferenceQuickFixProvider
         implementation="org.jetbrains.idea.maven.dom.intentions.ResolveReferenceQuickFixProvider"/>
 
-    <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContibutor"/>
-    <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContibutor"/>
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoFileContributor"/>
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContributor"/>
+    <gotoFileContributor implementation="org.jetbrains.idea.maven.vfs.MavenGotoPropertyFileContributor"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
 
     <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
