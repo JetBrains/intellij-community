@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -32,6 +33,7 @@ import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -66,8 +68,29 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         return;
       }
 
-      if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(item.getObject(), file)) {
-        ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
+      PsiElement position = file.findElementAt(offset);
+      PsiClass psiClass = item.getObject();
+
+      if (context.getCompletionChar() == '#') {
+        context.setLaterRunnable(new Runnable() {
+          public void run() {
+             new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(context.getProject(), context.getEditor(), file);
+          }
+        });
+        TailType.insertChar(context.getEditor(), context.getTailOffset(), '#');
+      }
+
+      if (position != null) {
+        PsiElement parent = position.getParent();
+        if (parent instanceof PsiJavaCodeReferenceElement && PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null) {
+          if (((PsiJavaCodeReferenceElement)parent).isReferenceTo(psiClass)) {
+            return;
+          }
+        }
+      }
+
+      if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
+        ConstructorInsertHandler.insertParentheses(context, item, psiClass);
         DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
       } else {
         new DefaultInsertHandler().handleInsert(context, item);
