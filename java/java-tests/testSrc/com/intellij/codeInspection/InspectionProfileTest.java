@@ -72,26 +72,8 @@ public class InspectionProfileTest extends UsefulTestCase {
 
   private static Element loadOldStyleProfile() throws IOException, JDOMException {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
-                                                    "  <used_levels>\n" +
-                                                    "    <error>\n" +
-                                                    "      <option name=\"myName\" value=\"ERROR\" />\n" +
-                                                    "      <option name=\"myVal\" value=\"400\" />\n" +
-                                                    "    </error>\n" +
-                                                    "    <warning>\n" +
-                                                    "      <option name=\"myName\" value=\"WARNING\" />\n" +
-                                                    "      <option name=\"myVal\" value=\"300\" />\n" +
-                                                    "    </warning>\n" +
-                                                    "    <information>\n" +
-                                                    "      <option name=\"myName\" value=\"INFO\" />\n" +
-                                                    "      <option name=\"myVal\" value=\"200\" />\n" +
-                                                    "    </information>\n" +
-                                                    "    <server>\n" +
-                                                    "      <option name=\"myName\" value=\"SERVER PROBLEM\" />\n" +
-                                                    "      <option name=\"myVal\" value=\"100\" />\n" +
-                                                    "    </server>\n" +
-                                                    "  </used_levels>\n" +
                                                     "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
                                                     "      <value>\n" +
@@ -119,6 +101,7 @@ public class InspectionProfileTest extends UsefulTestCase {
                                                     "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
@@ -127,7 +110,7 @@ public class InspectionProfileTest extends UsefulTestCase {
 
   private static Element loadProfile() throws IOException, JDOMException {
     final Document document = JDOMUtil.loadDocument("<inspections version=\"1.0\" is_locked=\"false\">\n" +
-                                                    "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                                    "  <option name=\"myName\" value=\"ToConvert\" />\n" +
                                                     "  <option name=\"myLocal\" value=\"true\" />\n" +
                                                     "  <inspection_tool class=\"JavaDoc\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\">\n" +
                                                     "    <option name=\"TOP_LEVEL_CLASS_OPTIONS\">\n" +
@@ -156,6 +139,7 @@ public class InspectionProfileTest extends UsefulTestCase {
                                                     "    <option name=\"IGNORE_DEPRECATED\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_JAVADOC_PERIOD\" value=\"false\" />\n" +
                                                     "    <option name=\"IGNORE_DUPLICATED_THROWS\" value=\"false\" />\n" +
+                                                    "    <option name=\"IGNORE_POINT_TO_ITSELF\" value=\"false\" />\n" +
                                                     "    <option name=\"myAdditionalJavadocTags\" value=\"tag1,tag2 \" />\n" +
                                                     "  </inspection_tool>\n" +
                                                     "</inspections>");
