@@ -25,25 +25,25 @@ import java.awt.*;
 
 public class JBScrollPane extends JScrollPane {
   public JBScrollPane() {
-    init();
+    setupCorners();
   }
 
   public JBScrollPane(Component view) {
     super(view);
-    init();
+    setupCorners();
   }
 
   public JBScrollPane(int vsbPolicy, int hsbPolicy) {
     super(vsbPolicy, hsbPolicy);
-    init();
+    setupCorners();
   }
 
   public JBScrollPane(Component view, int vsbPolicy, int hsbPolicy) {
     super(view, vsbPolicy, hsbPolicy);
-    init();
+    setupCorners();
   }
 
-  protected void init() {
+  public void setupCorners() {
     setBorder(IdeBorderFactory.createBorder());
     setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
     setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));

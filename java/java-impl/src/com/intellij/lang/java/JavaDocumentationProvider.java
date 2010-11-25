@@ -49,6 +49,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -763,6 +764,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
     final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
 
+    return fetchExternalJavadoc(element, docURLs, docFilter);
+  }
+
+  public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {
