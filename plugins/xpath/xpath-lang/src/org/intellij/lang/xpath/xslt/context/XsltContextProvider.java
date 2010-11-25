@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.context;
 
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -52,7 +50,6 @@ import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
-import org.intellij.lang.xpath.xslt.psi.impl.XsltLanguage;
 import org.intellij.lang.xpath.xslt.util.NSDeclTracker;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.jetbrains.annotations.NotNull;
@@ -366,11 +363,5 @@ public class XsltContextProvider extends ContextProvider {
     @NotNull
     public XPathQuickFixFactory getQuickFixFactory() {
         return XsltQuickFixFactory.INSTANCE;
-    }
-
-    @Override
-    @Nullable
-    public RefactoringSupportProvider getRefactoringSupportProvider() {
-        return LanguageRefactoringSupport.INSTANCE.forLanguage(XsltLanguage.INSTANCE);
     }
 }

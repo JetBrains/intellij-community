@@ -15,27 +15,19 @@
  */
 package org.intellij.lang.xpath.context;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionContext;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.QNameElement;
-import org.intellij.lang.xpath.psi.XPathElement;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.psi.XPathType;
-import org.intellij.lang.xpath.psi.XPathFunction;
+import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 import java.util.Set;
@@ -73,7 +65,7 @@ public abstract class ContextProvider {
     }
 
     @NotNull
-    public synchronized XPathQuickFixFactory getQuickFixFactory() {
+    public XPathQuickFixFactory getQuickFixFactory() {
         return XPathQuickFixFactoryImpl.INSTANCE;
     }
 
@@ -183,11 +175,6 @@ public abstract class ContextProvider {
         } else {
             return null;
         }
-    }
-
-    @Nullable
-    public RefactoringSupportProvider getRefactoringSupportProvider() {
-        return null;
     }
 
     static class DefaultProvider extends ContextProvider {
