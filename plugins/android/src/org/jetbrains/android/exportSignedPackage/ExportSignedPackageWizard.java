@@ -130,6 +130,10 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
   @Override
   protected String getHelpID() {
+    ExportSignedPackageWizardStep step = getCurrentStepObject();
+    if (step != null) {
+      return step.getHelpId();
+    }
     return null;
   }
 
