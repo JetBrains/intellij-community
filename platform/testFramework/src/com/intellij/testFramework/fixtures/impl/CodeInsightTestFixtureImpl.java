@@ -589,6 +589,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
+        if (element == null) return;
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
      }
     }.execute().throwException();
