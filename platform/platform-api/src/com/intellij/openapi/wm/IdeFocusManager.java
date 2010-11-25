@@ -137,4 +137,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   @Nullable
   public abstract Component getLastFocusedFor(IdeFrame frame);
+
+  public abstract void toFront(JComponent c);
 }

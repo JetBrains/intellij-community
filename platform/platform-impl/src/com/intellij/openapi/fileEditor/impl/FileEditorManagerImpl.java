@@ -717,11 +717,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     newSelectedComposite.getSelectedEditor().selectNotify();
 
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     if (newEditorCreated) {
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+      focusManager.doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
-          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(FileEditorManagerImpl.this, file);
+          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+            .fileOpened(FileEditorManagerImpl.this, file);
         }
       });
 
@@ -743,6 +745,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
         window.setAsCurrentWindow(true);
         ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        focusManager.toFront(window.getOwner());
       }
     }
 

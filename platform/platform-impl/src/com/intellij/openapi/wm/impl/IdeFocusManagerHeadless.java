@@ -104,4 +104,8 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   public Component getLastFocusedFor(IdeFrame frame) {
     return null;
   }
+
+  @Override
+  public void toFront(JComponent c) {
+  }
 }
