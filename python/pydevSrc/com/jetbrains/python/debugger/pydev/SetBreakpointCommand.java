@@ -24,8 +24,10 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
     myLogExpression = logExpression;
   }
 
-  public String getPayload() {
-    return new StringBuilder().append(myFile).append('\t').append(Integer.toString(myLine)).append("\t").append(buildCondition(myCondition)).append("\t").append(buildCondition(myLogExpression)).toString();
+  @Override
+  protected void buildPayload(Payload payload) {
+    super.buildPayload(payload);
+    payload.add(buildCondition(myCondition)).add(buildCondition(myLogExpression));
   }
 
   @NotNull

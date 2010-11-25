@@ -20,9 +20,10 @@ public class ChangeVariableCommand extends AbstractFrameCommand {
     myDebugProcess = debugger.getDebugProcess();
   }
 
-  public String getPayload() {
-    return new StringBuilder().append(myThreadId).append('\t').append(myFrameId).append('\t').append("FRAME\t").append(myVariableName)
-      .append('\t').append(ProtocolParser.encodeExpression(myValue)).toString();
+
+  @Override
+  protected void buildPayload(Payload payload) {
+    payload.add("FRAME").add(myVariableName).add(myValue);
   }
 
   @Override

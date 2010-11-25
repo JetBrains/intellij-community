@@ -40,10 +40,11 @@ public class GetCompletionsCommand extends AbstractFrameCommand {
     }
   }
 
+
   @Override
-  public String getPayload() {
-    return new StringBuilder().append(myThreadId).append('\t').append(myFrameId).append('\t').append("FRAME\t")
-      .append(myActionToken).toString();
+  protected void buildPayload(Payload payload) {
+    super.buildPayload(payload);
+    payload.add("FRAME").add(myActionToken);
   }
 
   @Nullable

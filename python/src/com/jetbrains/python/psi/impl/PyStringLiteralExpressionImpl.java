@@ -279,7 +279,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PyStringLiteralExpression.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {

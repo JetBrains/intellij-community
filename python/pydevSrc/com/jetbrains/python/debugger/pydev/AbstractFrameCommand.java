@@ -10,4 +10,9 @@ public abstract class AbstractFrameCommand extends AbstractThreadCommand {
     myFrameId = frameId;
   }
 
+  @Override
+  protected void buildPayload(Payload payload) {
+    super.buildPayload(payload);
+    payload.add(myFrameId);
+  }
 }

@@ -285,7 +285,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (myDebugger.isConnected()) {
       final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException());
+        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException(), new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(breakpoint.getProperties().isNotifyAlways(), breakpoint.getProperties().isNotifyOnTerminate()));
       myDebugger.execute(command);
     }
   }

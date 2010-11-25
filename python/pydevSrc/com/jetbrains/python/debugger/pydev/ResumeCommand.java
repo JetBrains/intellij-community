@@ -20,9 +20,4 @@ public class ResumeCommand extends AbstractThreadCommand {
   public String getThreadId() {
     return myThreadId;
   }
-
-  public String getPayload() {
-    return myThreadId;
-  }
-
 }

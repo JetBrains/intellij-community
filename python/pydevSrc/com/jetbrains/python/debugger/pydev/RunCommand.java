@@ -7,8 +7,7 @@ public class RunCommand extends AbstractCommand {
     super(debugger, RUN);
   }
 
-  public String getPayload() {
-    return null;
+  @Override
+  protected void buildPayload(Payload payload) {
   }
-
 }

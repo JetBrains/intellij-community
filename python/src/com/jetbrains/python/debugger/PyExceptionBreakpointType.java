@@ -11,12 +11,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.jetbrains.python.debugger.ui.PyClassTreeChooserDialog;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
@@ -24,15 +28,17 @@ import java.util.HashMap;
 public class PyExceptionBreakpointType
   extends XBreakpointType<XBreakpoint<PyExceptionBreakpointProperties>, PyExceptionBreakpointProperties> {
 
+  private static final String BASE_EXCEPTION = "BaseException";
+
   public PyExceptionBreakpointType() {
     super("python-exception", "Python Exception Breakpoint", false);
   }
 
-
   @Override
   public PyExceptionBreakpointProperties createProperties() {
-    return new PyExceptionBreakpointProperties("BaseException");
-  }
+    return p();
+  }private PyExceptionBreakpointProperties p() {
+  return new PyExceptionBreakpointProperties(BASE_EXCEPTION);}
 
   @Override
   public boolean isAddBreakpointButtonVisible() {
@@ -47,7 +53,6 @@ public class PyExceptionBreakpointType
                                                                          new PyExceptionCachingFilter(), null);
 
     dialog.showDialog();
-
 
     // on ok
     final PyClass pyClass = dialog.getSelected();
@@ -96,8 +101,94 @@ public class PyExceptionBreakpointType
   public String getDisplayText(XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
     PyExceptionBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
-      return properties.getException();
+      String exception = properties.getException();
+      if (BASE_EXCEPTION.equals(exception)) {
+        return "All exceptions";
+      }
+      return exception;
     }
     return "";
+  }
+
+  @Override
+  public XBreakpoint<PyExceptionBreakpointProperties> createDefaultBreakpoint(@NotNull XBreakpointCreator<PyExceptionBreakpointProperties> creator) {
+    final XBreakpoint<PyExceptionBreakpointProperties> breakpoint = creator.createBreakpoint(createDefaultBreakpointProperties());
+    breakpoint.setEnabled(true);
+    return breakpoint;
+  }
+
+  private static PyExceptionBreakpointProperties createDefaultBreakpointProperties() {
+    PyExceptionBreakpointProperties p = new PyExceptionBreakpointProperties(BASE_EXCEPTION);
+    p.setNotifyOnTerminate(true);
+    p.setNotifyAlways(false);
+    return p;
+  }
+
+  @Override
+  public XBreakpointCustomPropertiesPanel<XBreakpoint<PyExceptionBreakpointProperties>> createCustomPropertiesPanel() {
+    return new PyExceptionBreakpointPropertiesPanel();
+  }
+
+
+  private static class PyExceptionBreakpointPropertiesPanel
+    extends XBreakpointCustomPropertiesPanel<XBreakpoint<PyExceptionBreakpointProperties>> {
+    private JCheckBox myNotifyOnTerminateCheckBox;
+    private JCheckBox myNotifyAlwaysCheckBox;
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      myNotifyOnTerminateCheckBox = new JCheckBox("On terminate");
+      myNotifyAlwaysCheckBox = new JCheckBox("Always");
+
+      Box notificationsBox = Box.createVerticalBox();
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myNotifyOnTerminateCheckBox, BorderLayout.NORTH);
+      notificationsBox.add(panel);
+      panel = new JPanel(new BorderLayout());
+      panel.add(myNotifyAlwaysCheckBox, BorderLayout.NORTH);
+      notificationsBox.add(panel);
+
+      panel = new JPanel(new BorderLayout());
+      JPanel innterPanel = new JPanel(new BorderLayout());
+      innterPanel.add(notificationsBox, BorderLayout.CENTER);
+      innterPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
+      innterPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
+      panel.add(innterPanel, BorderLayout.NORTH);
+      panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Notifications"));
+
+      ActionListener listener = new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (!myNotifyOnTerminateCheckBox.isSelected() && !myNotifyAlwaysCheckBox.isSelected()) {
+            Object source = e.getSource();
+            JCheckBox toCheck = null;
+            if (myNotifyOnTerminateCheckBox.equals(source)) {
+              toCheck = myNotifyAlwaysCheckBox;
+            }
+            else if (myNotifyAlwaysCheckBox.equals(source)) {
+              toCheck = myNotifyOnTerminateCheckBox;
+            }
+            if (toCheck != null) {
+              toCheck.setSelected(true);
+            }
+          }
+        }
+      };
+      myNotifyOnTerminateCheckBox.addActionListener(listener);
+      myNotifyAlwaysCheckBox.addActionListener(listener);
+      return panel;
+    }
+
+    @Override
+    public void saveTo(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+      breakpoint.getProperties().setNotifyAlways(myNotifyAlwaysCheckBox.isSelected());
+      breakpoint.getProperties().setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
+    }
+
+    @Override
+    public void loadFrom(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
+      myNotifyAlwaysCheckBox.setSelected(breakpoint.getProperties().isNotifyAlways());
+      myNotifyOnTerminateCheckBox.setSelected(breakpoint.getProperties().isNotifyOnTerminate());
+    }
   }
 }
