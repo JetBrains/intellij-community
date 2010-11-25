@@ -126,8 +126,8 @@ class Project {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
   }
 
-  def makeSelected (Collection<Module> modules) {
-    builder.buildSelected (modules)
+  def makeSelected (Collection<Module> modules, boolean tests) {
+    builder.buildSelected (modules, tests)
   }
 
   def makeAll() {
@@ -158,6 +158,11 @@ class Project {
     return builder.projectRuntimeClasspath(true);
   }
 
+  def cleanModule (Module m) {
+    binding.ant.delete(dir: m.outputPath)
+    binding.ant.delete(dir: m.testOutputPath)
+  }
+
   def clean() {
     if (!dryRun) {
       if (targetFolder != null) {
@@ -167,8 +172,7 @@ class Project {
       else {
         stage("Cleaning output folders for ${modules.size()} modules")
         modules.values().each {
-          binding.ant.delete(dir: it.outputPath)
-          binding.ant.delete(dir: it.testOutputPath)
+          cleanModule (it)
         }
         stage("Cleaning output folders for ${artifacts.size()} artifacts")
         artifacts.values().each {

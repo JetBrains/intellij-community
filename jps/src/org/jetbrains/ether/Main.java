@@ -23,10 +23,15 @@ public class Main {
                 new Options.Descriptor("make", "make", "m", Options.ArgumentSpecifier.OPTIONAL),
                 new Options.Descriptor("inspect", "inspect", "i", Options.ArgumentSpecifier.OPTIONAL),
                 new Options.Descriptor("force", "force", "f", Options.ArgumentSpecifier.NONE),
-                new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE)
+                new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE),
+                new Options.Descriptor("tests", "tests", "t", Options.ArgumentSpecifier.NONE)
         };
 
         myOptions = new Options(descrs);
+    }
+
+    private static boolean doTests() {
+        return myOptions.get("tests") instanceof Options.Switch;
     }
 
     private static boolean doRebuild() {
@@ -86,13 +91,13 @@ public class Main {
 
                 System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
                 project.load();
-                project.makeModule(module, doForce());
+                project.makeModule(module, doForce(), doTests());
                 project.save();
             }
             else if (make instanceof Options.Switch) {
                 System.out.println("Making project \"" + prj + "\"");
                 project.load();
-                project.make();
+                project.make(doForce (), doTests());
                 project.save();
             }
 

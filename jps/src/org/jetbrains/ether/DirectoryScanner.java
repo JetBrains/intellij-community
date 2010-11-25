@@ -43,14 +43,13 @@ public class DirectoryScanner {
         public long myLatest = 0;
     }
 
-    public static Result getFiles (final String root, final String[] exts) {
-        final FileFilter ff = filterByExtensions(exts);
+    public static Result getFiles (final String root) {
         final Result result = new Result ();
 
         new Object(){
             public void run (File root) {
                 if (root.exists()) {
-                  final File[] files = root.listFiles(ff);
+                  final File[] files = root.listFiles();
 
                   for (int i = 0; i<files.length; i++) {
                       long t = files[i].lastModified();

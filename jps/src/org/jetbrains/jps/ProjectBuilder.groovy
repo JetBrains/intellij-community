@@ -70,8 +70,8 @@ class ProjectBuilder {
     buildAllModules(true)
   }
 
-  public def buildSelected (Collection<Module> modules) {
-    buildModules (modules, true)
+  public def buildSelected (Collection<Module> modules, boolean tests) {
+    buildModules (modules, tests)
   }
 
   public def buildProduction() {
@@ -84,7 +84,16 @@ class ProjectBuilder {
     listeners*.onBuildFinished(project)
   }
 
+  private def clearChunks (Collection<Module> modules) {
+    getChunks(true).getChunkList().each {
+          if (!modules.intersect(it.modules).isEmpty()) {
+            clearChunk(it)
+          }
+        }
+  }
+
   private def buildModules(Collection<Module> modules, boolean includeTests) {
+    clearChunks(modules)
     buildChunks(modules, false)
     if (includeTests) {
       buildChunks(modules, true)
@@ -137,6 +146,13 @@ class ProjectBuilder {
     buildModules(dependencies, includeTests)
   }
 
+  private def clearChunk (ModuleChunk chunk) {
+    if (!project.dryRun) {
+      project.stage("Cleaning module ${chunk.name}")
+      chunk.modules.each {project.cleanModule it}
+    }
+  }
+
   private def buildChunk(ModuleChunk chunk, boolean tests) {
     Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks
     if (compiledSet.contains(chunk)) return
@@ -182,7 +198,6 @@ class ProjectBuilder {
     if (chunkSources.isEmpty()) return
 
     if (!project.dryRun) {
-
       List<String> chunkClasspath = moduleClasspath(chunk, getCompileClasspathKind(tests))
       List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()

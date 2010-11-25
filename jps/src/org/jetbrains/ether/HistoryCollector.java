@@ -29,9 +29,6 @@ public class HistoryCollector {
         return new Pair<Long, Long> (Math.min(a.fst, b.fst), Math.max(a.snd, b.snd));
     }
 
-    private static String[] mySourceExts = {".java", ".groovy"};
-    private static String[] myClassExts = {".class"};
-
     private static Comparator<Library> myLibraryComparator = new Comparator<Library>() {
             public int compare (Library a, Library b) {
                 return a.getName().compareTo(b.getName());
@@ -82,9 +79,9 @@ public class HistoryCollector {
         listToBuffer(buf, list);
     }
 
-    private static Pair<Long, Long> directoryToBuffer (StringBuffer buf, final String dir, final String[] exts) {
+    private static Pair<Long, Long> directoryToBuffer (StringBuffer buf, final String dir) {
         if (dir != null) {
-            final DirectoryScanner.Result result = DirectoryScanner.getFiles(dir, exts);
+            final DirectoryScanner.Result result = DirectoryScanner.getFiles(dir);
 
             for (String name : prepare (result.myFiles)) {
                 buf.append(name + "\n");
@@ -104,7 +101,7 @@ public class HistoryCollector {
         for (String d : prepare (dir)) {
             if (dir != null) {
                 buf.append(d + ":\n");
-                result = join (result, directoryToBuffer(buf, d, mySourceExts));
+                result = join (result, directoryToBuffer(buf, d));
             }
         }
 
@@ -143,11 +140,11 @@ public class HistoryCollector {
 
         long ss = sourceRootToBuffer(buf, "SourceRoots", module.getSourceRoots()).snd;
         buf.append("OutputPath: " + module.getOutputPath() + "\n");
-        long os = directoryToBuffer(buf, module.getOutputPath(), myClassExts).fst;
+        long os = directoryToBuffer(buf, module.getOutputPath()).fst;
 
         long tss = sourceRootToBuffer(buf, "TestRoots", module.getTestRoots()).snd;
         buf.append("TestOutputPath: " + module.getTestOutputPath() + "\n");
-        long tos = directoryToBuffer(buf, module.getTestOutputPath(), myClassExts).fst;
+        long tos = directoryToBuffer(buf, module.getTestOutputPath()).fst;
 
         buf.append("Dependencies:\n");
         for (Module.ModuleDependency dep : module.getDependencies()){
