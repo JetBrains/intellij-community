@@ -29,6 +29,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -207,12 +208,13 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
         final String message = XmlErrorMessages.message("unknown.html.tag", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
+        assert startTagName != null;
         final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
         List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
         quickfixes.add(action);
         if (isOnTheFly) {
-          quickfixes.add(new CreateNSDeclarationIntentionFix(startTagName, ""));
+          ContainerUtil.addIfNotNull(CreateNSDeclarationIntentionFix.createFix(startTagName, ""), quickfixes);
         }
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
           quickfixes.add(new SwitchToHtml5Action());

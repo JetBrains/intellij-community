@@ -26,8 +26,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.BasicAttributeValueReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 * User: sweinreuter
 * Date: 24.07.2007
 */
-public class PrefixReferenceProvider extends PsiReferenceProviderBase {
+public class PrefixReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.references.PrefixReferenceProvider");
 
   @NotNull
@@ -102,8 +102,8 @@ public class PrefixReferenceProvider extends PsiReferenceProviderBase {
         final String[] name = value.split(":");
         final XmlTag tag = factory.createTagFromText("<" + (name.length > 1 ? name[1] : value) + " />", XMLLanguage.INSTANCE);
 
-        QuickFixAction.registerQuickFixAction(info,
-              new CreateNSDeclarationIntentionFix(tag, reference.getCanonicalText()));
+        CreateNSDeclarationIntentionFix fix = CreateNSDeclarationIntentionFix.createFix(tag, reference.getCanonicalText());
+        QuickFixAction.registerQuickFixAction(info, fix);
       } catch (Throwable e) {
         LOG.error(e);
       }
