@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -95,7 +96,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  public void moveToVisualPosition(VisualPosition pos) {
+  public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
     int column = pos.column;
@@ -296,7 +297,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  public void moveToLogicalPosition(LogicalPosition pos) {
+  public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
     moveToLogicalPosition(pos, false);
   }
 
@@ -426,6 +427,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
+  @NotNull
   public LogicalPosition getLogicalPosition() {
     validateCallContext();
     return myLogicalCaret;
@@ -435,6 +437,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     LOG.assertTrue(!myIsInUpdate, "Caret model is in its update process. All requests are illegal at this point.");
   }
 
+  @NotNull
   public VisualPosition getVisualPosition() {
     validateCallContext();
     return myVisibleCaret;
@@ -453,11 +456,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     return myVisualLineEnd;
   }
 
-  public void addCaretListener(CaretListener listener) {
+  public void addCaretListener(@NotNull CaretListener listener) {
     myCaretListeners.add(listener);
   }
 
-  public void removeCaretListener(CaretListener listener) {
+  public void removeCaretListener(@NotNull CaretListener listener) {
     boolean success = myCaretListeners.remove(listener);
     LOG.assertTrue(success);
   }
@@ -540,7 +543,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     return EditorDocumentPriorities.CARET_MODEL;
   }
 
-  private void setCurrentLogicalCaret(LogicalPosition position) {
+  private void setCurrentLogicalCaret(@NotNull LogicalPosition position) {
     myLogicalCaret = position;
     myCaretInfo = createVerticalInfo(position);
   }
