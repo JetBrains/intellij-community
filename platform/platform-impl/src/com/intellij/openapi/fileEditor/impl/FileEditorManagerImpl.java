@@ -549,23 +549,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                                  final boolean focusEditor,
-                                                                                 boolean useActiveSplitter) {
+                                                                                 boolean searchForSplitter) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
     assertDispatchThread();
 
     EditorWindow wndToOpenIn = null;
-    if (useActiveSplitter) {
+    if (searchForSplitter) {
       for (EditorsSplitters splitters : getAllSplitters()) {
         final EditorWindow window = splitters.getCurrentWindow();
         if (window == null) continue;
 
         if (window.isFileOpen(file)) {
           wndToOpenIn = window;
-          if (wndToOpenIn != getActiveWindow().getResult()) {
-            System.out.println("Not active");
-          }
           break;
         }
       }
