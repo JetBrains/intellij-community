@@ -33,9 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -141,6 +139,8 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
 
     ArrayList<AnAction> actions = new ArrayList<AnAction>();
+    final Map<String, Integer> map = new LinkedHashMap<String, Integer>();
+    final List<String> paths = new ArrayList<String>();
     synchronized (myState) {
       outer: for (String recentPath : myState.recentPaths) {
 
@@ -151,10 +151,16 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
           }
         }
 
-        actions.add(new ReopenProjectAction(recentPath));
+        final String projectName = getProjectName(recentPath);
+        map.put(projectName, map.containsKey(projectName) ? map.get(projectName) + 1 : 1);
+        paths.add(recentPath);
       }
     }
 
+    for (final String path : paths) {
+      final String projectName = getProjectName(path);
+      actions.add(map.get(projectName) > 1 ? new ReopenProjectAction(path, path) : new ReopenProjectAction(path, projectName));
+    }
 
     if (actions.size() == 0) {
       return new AnAction[0];
@@ -216,16 +222,50 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
     }
   }
 
+  @Nullable
+  private static String getProjectName(String path) {
+    final File file = new File(path);
+    if (file.isDirectory()) {
+      final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
+      if (nameFile.exists()) {
+        BufferedReader in = null;
+        try {
+          in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
+          final String name = in.readLine();
+          if (name != null && name.length() > 0) return name.trim();
+        }
+        catch (IOException e) {
+          // ignore
+        }
+        finally {
+          if (in != null) {
+            try {
+              in.close();
+            }
+            catch (IOException e) {
+              // ignore
+            }
+          }
+        }
+      } else {
+        return file.getName();
+      }
+    } else {
+      return FileUtil.getNameWithoutExtension(file.getName());
+    }
+
+    return null;
+  }
+
   private class ReopenProjectAction extends AnAction implements DumbAware {
     private final String myProjectPath;
 
-    public ReopenProjectAction(String projectPath) {
+    public ReopenProjectAction(final String projectPath, final String projectName) {
       myProjectPath = projectPath;
 
       String _text = projectPath;
-      final String projectName = getProjectName(projectPath);
       if (projectName != null) {
-        _text = String.format("%s [%s]", projectPath, projectName);
+        _text = String.format("%s", projectName);
       }
 
       final Presentation presentation = getTemplatePresentation();
@@ -233,40 +273,6 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       presentation.setDescription(projectPath);
     }
 
-    @Nullable
-    private String getProjectName(String path) {
-      final File file = new File(path);
-      if (file.isDirectory()) {
-        final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
-        if (nameFile.exists()) {
-          BufferedReader in = null;
-          try {
-            in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), "UTF-8"));
-            final String name = in.readLine();
-            if (name != null && name.length() > 0) return name.trim();
-          }
-          catch (IOException e) {
-            // ignore
-          }
-          finally {
-            if (in != null) {
-              try {
-                in.close();
-              }
-              catch (IOException e) {
-                // ignore
-              }
-            }
-          }
-        } else {
-          return file.getName();
-        }
-      } else {
-        return FileUtil.getNameWithoutExtension(file.getName());
-      }
-
-      return null;
-    }
 
     public void actionPerformed(AnActionEvent e) {
       final int modifiers = e.getModifiers();
