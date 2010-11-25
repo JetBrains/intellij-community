@@ -229,4 +229,16 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
   }
 
+  public void testPrefixLengthDependentSorting() {
+    myFixture.addClass("package foo; public class PsiJavaCodeReferenceElement {}")
+    myFixture.configureByText("a.java", """
+    class PsiJavaCodeReferenceElementImpl {
+      { <caret> }
+    }
+    """)
+    type 'PJCR'
+    assertOrderedEquals myFixture.lookupElementStrings, 'PsiJavaCodeReferenceElement', 'PsiJavaCodeReferenceElementImpl'
+
+  }
+
 }
