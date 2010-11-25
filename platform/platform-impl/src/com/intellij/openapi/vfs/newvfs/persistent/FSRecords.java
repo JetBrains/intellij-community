@@ -24,6 +24,8 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -98,7 +100,6 @@ public class FSRecords implements Forceable {
 
   private static class DbConnection {
     private static int refCount = 0;
-    private static final Object LOCK = new Object();
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
     private static PersistentStringEnumerator myNames;
@@ -112,7 +113,7 @@ public class FSRecords implements Forceable {
     private static boolean myCorrupted = false;
 
     public static DbConnection connect() {
-      synchronized (LOCK) {
+      synchronized (lock) {
         if (refCount == 0) {
           init();
           scanFreeRecords();
@@ -246,7 +247,15 @@ public class FSRecords implements Forceable {
 
     private static void invalidateIndex() {
       LOG.info("Marking VFS as corrupted");
-      FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
+      final File indexRoot = PathManager.getIndexRoot();
+      if (indexRoot.exists()) {
+        final String[] children = indexRoot.list();
+        if (children != null && children.length > 0) {
+          // create index corruption marker only if index directory exists and is non-empty
+          // It is incorrect to consider non-existing indices "corrupted" 
+          FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
+        }
+      }
     }
 
     private static File basePath() {
@@ -368,7 +377,7 @@ public class FSRecords implements Forceable {
     }
 
     public void dispose() throws IOException {
-      synchronized (LOCK) {
+      synchronized (lock) {
         refCount--;
         if (refCount == 0) {
           closeFiles();
@@ -1047,7 +1056,7 @@ public class FSRecords implements Forceable {
     return new ContentOutputStream(fileId, readOnly);
   }
 
-  public void writeContent(int fileId, byte[] bytes, boolean readOnly) throws IOException {
+  public void writeContent(int fileId, ByteSequence bytes, boolean readOnly) throws IOException {
     new ContentOutputStream(fileId, readOnly).writeBytes(bytes, fileId);
   }
 
@@ -1117,7 +1126,7 @@ public class FSRecords implements Forceable {
     protected final boolean myFixedSize;
 
     private BaseOutputStream(final int fileId, boolean fixedSize) {
-      super(new ByteArrayOutputStream());
+      super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
       myFixedSize = fixedSize;
     }
@@ -1134,10 +1143,11 @@ public class FSRecords implements Forceable {
     }
 
     protected void doFlush() throws IOException {
-      writeBytes(((ByteArrayOutputStream)out).toByteArray(), myFileId);
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFileId);
     }
 
-    public void writeBytes(byte[] bytes, int fileId) throws IOException {
+    public void writeBytes(ByteSequence bytes, int fileId) throws IOException {
       final int page;
       synchronized (lock) {
         DbConnection.markDirty();

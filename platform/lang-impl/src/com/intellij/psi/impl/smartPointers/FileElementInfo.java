@@ -18,10 +18,8 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,5 +47,9 @@ class FileElementInfo implements SmartPointerElementInfo {
   public PsiElement restoreElement() {
     myFile = SelfElementInfo.restoreFile(myFile, myProject);
     return myFile;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

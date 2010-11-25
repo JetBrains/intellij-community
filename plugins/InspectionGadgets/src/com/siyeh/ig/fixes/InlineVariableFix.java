@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class InlineVariableFix extends InspectionGadgetsFix {
 
@@ -34,16 +37,27 @@ public class InlineVariableFix extends InspectionGadgetsFix {
         return InspectionGadgetsBundle.message("inline.variable.quickfix");
     }
 
+    @Override
     public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiLocalVariable variable =
                 (PsiLocalVariable) nameElement.getParent();
-        final JavaRefactoringActionHandlerFactory factory =
-                JavaRefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler inlineHandler =
-                factory.createInlineHandler();
-        final DataManager dataManager = DataManager.getInstance();
-        final DataContext dataContext = dataManager.getDataContext();
-        inlineHandler.invoke(project, new PsiElement[]{variable}, dataContext);
+        final PsiExpression initializer = variable.getInitializer();
+        if (initializer == null) {
+            return;
+        }
+        final PsiMember member =
+                PsiTreeUtil.getParentOfType(variable, PsiMember.class);
+        final Query<PsiReference> search =
+                ReferencesSearch.search(variable, new LocalSearchScope(member));
+        final Collection<PsiElement> replacedElements = new ArrayList();
+        final Collection<PsiReference> references = search.findAll();
+        for (PsiReference reference : references) {
+            final PsiElement replacedElement =
+                    reference.getElement().replace(initializer);
+            replacedElements.add(replacedElement);
+        }
+        HighlightUtils.highlightElements(replacedElements);
+        variable.delete();
     }
 }

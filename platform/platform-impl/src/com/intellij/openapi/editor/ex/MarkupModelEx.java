@@ -51,7 +51,7 @@ public interface MarkupModelEx extends MarkupModel, Iterable<RangeHighlighterEx>
                                                           int endOffset,
                                                           int layer,
                                                           TextAttributes textAttributes,
-                                                          HighlighterTargetArea targetArea,
+                                                          @NotNull HighlighterTargetArea targetArea,
                                                           boolean isPersistent,
                                                           Consumer<RangeHighlighterEx> changeAttributesAction);
 

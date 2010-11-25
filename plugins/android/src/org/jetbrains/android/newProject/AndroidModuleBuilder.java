@@ -121,13 +121,9 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private void createProject(VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
     if (myProjectType == ProjectType.APPLICATION) {
       createDirectoryStructure(contentRoot, sourceRoot, facet);
-      addRunConfiguration(facet);
     }
     else {
       createProjectByAndroidTool(contentRoot, sourceRoot, facet);
-      if (myProjectType == ProjectType.TEST) {
-        addTestRunConfiguration(facet);
-      }
     }
   }
 
@@ -142,9 +138,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     createResourcesAndLibs(project, contentRoot);
     PsiDirectory sourceDir = sourceRoot != null ? PsiManager.getInstance(project).findDirectory(sourceRoot) : null;
     createActivityAndSetupManifest(facet, sourceDir);
+    addRunConfiguration(facet);
   }
 
-  private boolean createProjectByAndroidTool(final VirtualFile contentRoot, final VirtualFile sourceRoot, final AndroidFacet facet) {
+  private boolean createProjectByAndroidTool(final VirtualFile contentRoot,
+                                             final VirtualFile sourceRoot,
+                                             final AndroidFacet facet) {
     AndroidFacetConfiguration configuration = facet.getConfiguration();
     AndroidPlatform platform = configuration.getAndroidPlatform();
     IAndroidTarget target = configuration.getAndroidTarget();
@@ -232,7 +231,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                       createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
                     }
                     VirtualFile srcDir = contentRoot.findChild(SdkConstants.FD_SOURCES);
-                    if (srcDir != sourceRoot) {
+                    if (srcDir != sourceRoot && sourceRoot != null) {
                       moveContentAndRemoveDir(project, srcDir, sourceRoot);
                     }
                   }
@@ -241,6 +240,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                   }
                 }
               });
+              if (myProjectType == ProjectType.APPLICATION) {
+                addRunConfiguration(facet);
+              }
+              else if (myProjectType == ProjectType.TEST) {
+                addTestRunConfiguration(facet);
+              }
             }
           });
         }
@@ -249,7 +254,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return true;
   }
 
-  private static void moveContentAndRemoveDir(Project project, VirtualFile from, VirtualFile to) throws IOException {
+  private static void moveContentAndRemoveDir(Project project, VirtualFile from, @NotNull VirtualFile to) throws IOException {
     for (VirtualFile child : from.getChildren()) {
       child.move(project, to);
     }

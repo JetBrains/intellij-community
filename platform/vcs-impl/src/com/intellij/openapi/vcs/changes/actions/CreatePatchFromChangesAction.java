@@ -50,7 +50,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if ((changes == null) || (changes.length == 0)) return;
-    String commitMessage = "";
+    String commitMessage = null;
     ShelvedChangeList[] shelvedChangeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     if (shelvedChangeLists != null && shelvedChangeLists.length > 0) {
       commitMessage = shelvedChangeLists [0].DESCRIPTION;
@@ -60,6 +60,12 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
       if (changeLists != null && changeLists.length > 0) {
         commitMessage = changeLists [0].getComment();
       }
+    }
+    if (commitMessage == null) {
+      commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    }
+    if (commitMessage == null) {
+      commitMessage = "";
     }
     List<Change> changeCollection = new ArrayList<Change>();
     Collections.addAll(changeCollection, changes);
@@ -105,7 +111,8 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
   public void update(final AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    final String presetMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
     e.getPresentation().setEnabled(changes != null && changes.length > 0 &&
-                                   (changeLists == null || changeLists.length == 1));
+                                   ((changeLists == null || changeLists.length == 1)) || (presetMessage != null));
   }
 }

@@ -55,7 +55,12 @@ public class CreateFieldFromConstructorLabelFix extends CreateFieldFix {
     if (expression != null) {
       type = expression.getType();
     }
-    return new TypeConstraint[]{SupertypeConstraint.create(type, type)};
+    if (type != null) {
+      return new TypeConstraint[]{SupertypeConstraint.create(type, type)};
+    }
+    else {
+      return TypeConstraint.EMPTY_ARRAY;
+    }
   }
 
   @Override

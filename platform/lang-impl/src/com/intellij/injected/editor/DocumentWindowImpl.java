@@ -27,7 +27,10 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -53,6 +56,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
+  private CachedText myCachedText = null;
+
   public DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, Place shreds) {
     myDelegate = delegate;
     myOneLine = oneLine;
@@ -60,6 +65,26 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(0).prefix));
     mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myShreds.get(shreds.size()- 1).suffix));
   }
+
+  private static class CachedText {
+    private final String text;
+    private final long modificationStamp;
+
+    private CachedText(@NotNull String text, long modificationStamp) {
+      this.text = text;
+      this.modificationStamp = modificationStamp;
+    }
+
+    @NotNull
+    private String getText() {
+      return text;
+    }
+
+    private long getModificationStamp() {
+      return modificationStamp;
+    }
+  }
+
 
   public int getLineCount() {
     return 1 + StringUtil.countNewLines(getText());
@@ -122,8 +147,19 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public String getText() {
+    CachedText cachedText = myCachedText;
+
+    if (cachedText == null || cachedText.getModificationStamp() != getModificationStamp()) {
+      myCachedText = cachedText = new CachedText(calcText(), getModificationStamp());
+    }
+
+    return cachedText.getText();
+  }
+
+  @NotNull
+  private String calcText() {
     StringBuilder text = new StringBuilder();
-    String hostText = myDelegate.getText();
+    CharSequence hostText = myDelegate.getCharsSequence();
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker hostRange = shred.getHostRangeMarker();
       if (hostRange.isValid()) {

@@ -15,16 +15,28 @@
  */
 package git4idea.history;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitContentRevision;
+import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -37,25 +49,20 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 class GitLogRecord {
   private final Map<GitLogParser.GitLogOption, String> myOptions;
   private final List<String> myPaths;
-  private final char myNameStatus;
+  private final List<List<String>> myParts;
 
-  GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options, @NotNull List<String> paths, char nameStatus) {
+  GitLogRecord(Map<GitLogParser.GitLogOption, String> options, List<String> paths, List<List<String>> parts) {
     myOptions = options;
     myPaths = paths;
-    myNameStatus = nameStatus;
+    myParts = parts;
   }
 
-  /**
-   * Status of the file requested by --name-status flag.
-   * @return Character indicating the file status ('M', 'D', 'R' (for R100) or else) or 0 if no status was returned by git log
-   * (which may happen, for example, if we didn't request it).
-   */
-  char getNameStatus() {
-    return myNameStatus;
-  }
-
-  @NotNull List<String> getPaths() {
+  List<String> getPaths() {
     return myPaths;
+  }
+
+  public List<List<String>> getParts() {
+    return myParts;
   }
 
   @NotNull
@@ -94,6 +101,10 @@ class GitLogRecord {
     return Long.parseLong(myOptions.get(COMMIT_TIME).trim());
   }
 
+  long getAuthorTimeStamp() {
+    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim());
+  }
+
   String getAuthorAndCommitter() {
     String author = String.format("%s <%s>", myOptions.get(AUTHOR_NAME), myOptions.get(AUTHOR_EMAIL));
     String committer = String.format("%s <%s>", myOptions.get(COMMITTER_NAME), myOptions.get(COMMITTER_EMAIL));
@@ -105,26 +116,39 @@ class GitLogRecord {
   }
 
   String[] getParentsShortHashes() {
-    return lookup(SHORT_PARENTS).split(" ");
+    final String parents = lookup(SHORT_PARENTS);
+    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return parents.split(" ");
   }
 
   String[] getParentsHashes() {
-    return lookup(PARENTS).split(" ");
+    final String parents = lookup(PARENTS);
+    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return parents.split(" ");
   }
 
+  public Collection<String> getRefs() {
+    final String decorate = myOptions.get(REF_NAMES);
+    final String[] refNames = parseRefNames(decorate);
+    final List<String> result = new ArrayList<String>(refNames.length);
+    for (String refName : refNames) {
+      result.add(shortBuffer(refName));
+    }
+    return result;
+  }
   /**
    * Returns the list of tags and the list of branches.
    * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
    * @return
    * @param allBranchesSet
    */
-  Pair<List<String>, List<String>> getTagsAndBranches(Collection<String> allBranchesSet) {
+  /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
     final String decorate = myOptions.get(REF_NAMES);
     final String[] refNames = parseRefNames(decorate);
     final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
     final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
     for (String refName : refNames) {
-      if (allBranchesSet.contains(refName)) {
+      if (refs.contains(refName)) {
         // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
         if (!branches.contains(refName)) {
           branches.add(shortBuffer(refName));
@@ -136,7 +160,7 @@ class GitLogRecord {
       }
     }
     return Pair.create(tags, branches);
-  }
+  }*/
 
   private static String[] parseRefNames(final String decorate) {
     final int startParentheses = decorate.indexOf("(");
@@ -150,4 +174,66 @@ class GitLogRecord {
     return new String(raw);
   }
 
+  public List<Change> coolChangesParser(Project project, VirtualFile vcsRoot) throws VcsException {
+    final List<Change> result = new ArrayList<Change>();
+    final GitRevisionNumber thisRevision = new GitRevisionNumber(getHash(), getDate());
+    final String[] parentsShortHashes = getParentsShortHashes();
+    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
+    for (String parentsShortHash : parentsShortHashes) {
+      parents.add(AbstractHash.create(parentsShortHash));
+    }
+    final List<List<String>> parts = getParts();
+    if (parts != null) {
+      for (List<String> partsPart: parts) {
+        result.add(parseChange(project, vcsRoot, parents, partsPart, thisRevision));
+      }
+    }
+    return result;
+  }
+
+  private Change parseChange(final Project project, final VirtualFile vcsRoot, final List<AbstractHash> parents,
+                             final List<String> parts, final VcsRevisionNumber thisRevision) throws VcsException {
+    final ContentRevision before;
+    final ContentRevision after;
+    FileStatus status = null;
+    final String path = parts.get(1);
+    final List<GitRevisionNumber> parentRevisions = new ArrayList<GitRevisionNumber>(parents.size());
+    for (AbstractHash parent : parents) {
+      parentRevisions.add(new GitRevisionNumber(parent.getString()));
+    }
+
+    switch (parts.get(0).charAt(0)) {
+      case 'C':
+      case 'A':
+        before = null;
+        status = FileStatus.ADDED;
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        break;
+      case 'U':
+        status = FileStatus.MERGED_WITH_CONFLICTS;
+      case 'M':
+        if (status == null) {
+          status = FileStatus.MODIFIED;
+        }
+        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true);
+        before = GitContentRevision.createMultipleParentsRevision(project, filePath, parentRevisions);
+        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false);
+        break;
+      case 'D':
+        status = FileStatus.DELETED;
+        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true);
+        before = GitContentRevision.createMultipleParentsRevision(project, filePathDeleted, parentRevisions);
+        after = null;
+        break;
+      case 'R':
+        status = FileStatus.MODIFIED;
+        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, parts.get(2), false, false);
+        after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename, parentRevisions);
+        before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true);
+        break;
+      default:
+        throw new VcsException("Unknown file status: " + Arrays.asList(parts));
+    }
+    return new Change(before, after, status);
+  }
 }

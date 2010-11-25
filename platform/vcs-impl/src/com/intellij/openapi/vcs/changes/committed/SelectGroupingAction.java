@@ -33,6 +33,6 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
   }
 
   protected ComboBoxModel createModel() {
-    return new DefaultComboBoxModel(new Object[] { new ChangeListGroupingStrategy.DateChangeListGroupingStrategy(), ChangeListGroupingStrategy.USER });
+    return new DefaultComboBoxModel(new Object[] { new DateChangeListGroupingStrategy(), ChangeListGroupingStrategy.USER });
   }
 }

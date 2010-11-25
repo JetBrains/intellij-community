@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
@@ -37,6 +38,8 @@ public interface IdeFrame {
   void setFileTitle(String fileTitle, File ioFile);
 
   IdeRootPaneNorthExtension getNorthExtension(String key);
+
+  JComponent getComponent();
 
   interface Child extends IdeFrame {
 

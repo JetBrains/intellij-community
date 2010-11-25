@@ -356,8 +356,9 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
+    final boolean versionFileExisted = versionFile.exists();
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
-      if (!isCurrentVersionCorrupted) {
+      if (!isCurrentVersionCorrupted && versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
       }
@@ -1162,7 +1163,12 @@ public class FileBasedIndex implements ApplicationComponent {
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         public void run() {
           try {
-            final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
+            final String contentText = content.getText();
+            if (isTooLarge(vFile, contentText.length())) {
+              return;
+            }
+
+            final FileContent newFc = new FileContent(vFile, contentText, vFile.getCharset());
 
             if (dominantContentFile != null) {
               dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
@@ -1813,6 +1819,14 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private boolean isTooLarge(VirtualFile file) {
     if (SingleRootFileViewProvider.isTooLarge(file)) {
+      final FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
+      return !myNoLimitCheckTypes.contains(type);
+    }
+    return false;
+  }
+
+  private boolean isTooLarge(VirtualFile file, long contentSize) {
+    if (SingleRootFileViewProvider.isTooLarge(file, contentSize)) {
       final FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
       return !myNoLimitCheckTypes.contains(type);
     }

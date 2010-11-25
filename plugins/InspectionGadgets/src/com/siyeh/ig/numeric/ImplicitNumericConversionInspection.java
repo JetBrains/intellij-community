@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,7 +402,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            return "java.lang.String".equals(className);
+            return CommonClassNames.JAVA_LANG_STRING.equals(className);
         }
     }
 

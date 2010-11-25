@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "UseOfArchaicSystemPropertyAccessors";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "archaic.system.property.accessors.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiMethodCallExpression call =
@@ -56,6 +59,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
         }
     }
 
+    @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos){
         return new InspectionGadgetsFix[]{new ReplaceWithParseMethodFix(),
@@ -70,6 +74,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
                     "archaic.system.property.accessors.replace.parse.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -104,6 +109,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
                     "archaic.system.property.accessors.replace.standard.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier location =
@@ -137,6 +143,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ArchaicSystemPropertyAccessVisitor();
     }
@@ -156,15 +163,17 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
     }
 
     static boolean isIntegerGetInteger(PsiMethodCallExpression expression){
-        return isCallTo(expression, "java.lang.Integer", "getInteger");
+        return isCallTo(expression, CommonClassNames.JAVA_LANG_INTEGER,
+                "getInteger");
     }
 
     static boolean isLongGetLong(PsiMethodCallExpression expression){
-        return isCallTo(expression, "java.lang.Long", "getLong");
+        return isCallTo(expression, CommonClassNames.JAVA_LANG_LONG, "getLong");
     }
 
     static boolean isBooleanGetBoolean(PsiMethodCallExpression expression){
-        return isCallTo(expression, "java.lang.Boolean", "getBoolean");
+        return isCallTo(expression, CommonClassNames.JAVA_LANG_BOOLEAN,
+                "getBoolean");
     }
 
     private static boolean isCallTo(PsiMethodCallExpression expression,

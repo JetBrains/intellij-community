@@ -91,18 +91,27 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   }
 
   @Override
+  @Nullable
   public ScriptingLibraryTable.LibraryModel chosenToStored(VirtualFile file, ScriptingLibraryTable.LibraryModel value) {
     if (value instanceof CompoundLibrary) return value;
     CompoundLibrary compoundLib = file == null ? myProjectLibs : myCompoundLibMap.get(file);
-    if (compoundLib == null) {
-      compoundLib = new CompoundLibrary();
-      myCompoundLibMap.put(file, compoundLib);
-    }
     if (value == null) {
-      compoundLib.clearLibraries();
+      if (compoundLib != null) {
+        compoundLib.clearLibraries();
+        myCompoundLibMap.remove(file);
+        compoundLib = null;
+      }
     }
     else {
+      if (compoundLib == null) {
+        compoundLib = new CompoundLibrary();
+        myCompoundLibMap.put(file, compoundLib);
+      }
       compoundLib.toggleLibrary(value);
+      if (compoundLib.isEmpty()) {
+        myCompoundLibMap.remove(file);
+        compoundLib = null;
+      }
     }
     return compoundLib;
   }
@@ -147,6 +156,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
         return;
       }
       myLibraries.put(libName, library);
+    }
+
+    public boolean containsLibrary(String libName) {
+      return myLibraries.containsKey(libName);
     }
 
     @Override

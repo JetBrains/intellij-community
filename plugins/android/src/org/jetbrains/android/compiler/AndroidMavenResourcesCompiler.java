@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidMavenExecutor;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -63,7 +62,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
 
   public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
     if (items != null && items.length > 0) {
-      context.getProgressIndicator().setText("Copying resources from Maven artifacts...");
+      context.getProgressIndicator().setText("Processing resources by Maven...");
       Computable<GenerationItem[]> computation = new Computable<GenerationItem[]>() {
         public GenerationItem[] compute() {
           if (context.getProject().isDisposed()) {
@@ -175,11 +174,6 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       }
     }
 
-    @Override
-    protected VirtualFile getResourcesDir(Module module, AndroidFacet facet) {
-      return AndroidRootUtil.getResourceDir(module);
-    }
-
     public MyValidityState(DataInput is) throws IOException {
       super(is);
       int c = is.readInt();
@@ -227,7 +221,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
         MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myContext.getProject());
         if (mavenProjectsManager != null && mavenProjectsManager.isMavenizedModule(module)) {
           AndroidFacet facet = AndroidFacet.getInstance(module);
-          if (facet != null && facet.getConfiguration().COPY_RESOURCES_FROM_ARTIFACTS) {
+          if (facet != null && facet.getConfiguration().RUN_PROCESS_RESOURCES_MAVEN_TASK) {
             Manifest manifest = facet.getManifest();
             String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
             if (aPackage != null) {

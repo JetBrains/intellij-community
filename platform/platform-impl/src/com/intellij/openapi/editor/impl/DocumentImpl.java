@@ -212,19 +212,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    synchronized(myRangeMarkers) {
-      return myRangeMarkers.remove(rangeMarker);
-    }
+    return myRangeMarkers.remove(rangeMarker);
   }
 
   public void addRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     ApplicationManagerEx.getApplicationEx().assertReadAccessToDocumentsAllowed();
-    synchronized(myRangeMarkers) {
-      RangeMarkerImpl marker = (RangeMarkerImpl)rangeMarker;
-      marker.setValid(true);
-      marker.myNode = myRangeMarkers.add(rangeMarker);
-      myRangeMarkers.checkMax(true);
-    }
+    myRangeMarkers.add(rangeMarker);
   }
 
   @TestOnly
@@ -462,9 +455,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return null; // suppress events in shutdown hook
     }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
-    //System.out.printf("%nbefore change: offset=%d, old text='%n%s%n', new text='%n%s%n', document modification stamp=%d%nDocument:'%s'%n",
-    //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getDocument().getModificationStamp(),
-    //                  event.getDocument().getText());
+    //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s'%n document: id=%d, modification stamp=%d%nDocument:'%s'%n",
+    //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), System.identityHashCode(this),
+    //                  getModificationStamp(), getText());
 
     DocumentListener[] listeners = getCachedListeners();
     for (int i = listeners.length - 1; i >= 0; i--) {
@@ -481,8 +474,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
-    //System.out.printf("after change: new modification stamp=%d%ndocument='%s'%n", event.getDocument().getModificationStamp(),
-    //                  event.getDocument().getText());
+    //System.out.printf("after change: document id=%d, new modification stamp=%d%ndocument='%s'%n", System.identityHashCode(this),
+    //                  getModificationStamp(), getText());
     if (ShutDownTracker.isShutdownHookRunning()) {
       return; // suppress events in shutdown hook
     }

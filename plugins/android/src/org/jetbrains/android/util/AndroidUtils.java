@@ -171,6 +171,7 @@ public class AndroidUtils {
       @Nullable
       public T compute() {
         Project project = module.getProject();
+        if (project.isDisposed()) return null;
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile == null || !(psiFile instanceof XmlFile)) {
           return null;

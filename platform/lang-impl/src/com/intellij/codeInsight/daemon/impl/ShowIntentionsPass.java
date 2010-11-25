@@ -209,6 +209,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+        enableDisableIntentionAction.add(new IntentionHintComponent.EditIntentionSettingsAction(action));
         intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
       }
     }

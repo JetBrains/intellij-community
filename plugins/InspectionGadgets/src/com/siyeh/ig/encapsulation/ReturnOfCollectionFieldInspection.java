@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,17 +38,20 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     /** @noinspection PublicField*/
     public boolean ignorePrivateMethods = true;
 
+    @Override
     @NotNull
     public String getID(){
         return "ReturnOfCollectionOrArrayField";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "return.of.collection.array.field.display.name");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -56,6 +60,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
                 "ignorePrivateMethods");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiField field = (PsiField)infos[0];
@@ -69,13 +74,14 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
         }
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression) infos[1];
         final String text = referenceExpression.getText();
         if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
-            "java.util.Map")) {
+                CommonClassNames.JAVA_UTIL_MAP)) {
             if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
                     "java.util.SortedMap")) {
                 return new ReturnOfCollectionFieldFix(
@@ -85,9 +91,9 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
             return new ReturnOfCollectionFieldFix(
                     "java.util.Collections.unmodifiableMap(" + text + ')');
         } else if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
-                "java.util.Collection")) {
+                CommonClassNames.JAVA_UTIL_COLLECTION)) {
             if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
-                    "java.util.Set")) {
+                    CommonClassNames.JAVA_UTIL_SET)) {
                 if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
                         "java.util.SortedSet")) {
                     return new ReturnOfCollectionFieldFix(
@@ -97,7 +103,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
                 return new ReturnOfCollectionFieldFix(
                         "java.util.Collections.unmodifiableSet(" + text + ')');
             } else if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression,
-                    "java.util.List")) {
+                    CommonClassNames.JAVA_UTIL_LIST)) {
                 return new ReturnOfCollectionFieldFix(
                         "java.util.Collections.unmodifiableList(" + text + ')');
             }
@@ -108,6 +114,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
         return null;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ReturnOfCollectionFieldVisitor();
     }
@@ -117,7 +124,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
 
         private final String replacementText;
 
-        ReturnOfCollectionFieldFix(String replacementText) {
+        ReturnOfCollectionFieldFix(@NonNls String replacementText) {
             this.replacementText = replacementText;
         }
 
@@ -127,6 +134,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
                     "return.of.collection.field.quickfix", replacementText);
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();

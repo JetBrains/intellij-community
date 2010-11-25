@@ -48,6 +48,8 @@ public class ProcessedModulesTable extends JPanel {
 
     myTableModel = new MyTableModel();
     myTable = new Table(myTableModel);
+    myTable.getEmptyText().setText("No modules configured");
+
     //myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);

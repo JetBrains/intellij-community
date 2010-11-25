@@ -135,9 +135,9 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     } else {
       modifier = settings.getVisibilityModifier();
     }
-
-    String[] modifiers =
-      modifier == null ? new String[]{GrModifier.STATIC, GrModifier.FINAL} : new String[]{modifier, GrModifier.STATIC, GrModifier.FINAL};
+    String[] modifiers = modifier == null || GrModifier.PACKAGE_LOCAL.equals(modifier)
+                         ? new String[]{GrModifier.STATIC, GrModifier.FINAL}
+                         : new String[]{modifier, GrModifier.STATIC, GrModifier.FINAL};
     return GroovyPsiElementFactory.getInstance(context.project).createFieldDeclaration(modifiers, name, context.expression, type);
   }
 

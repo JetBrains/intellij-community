@@ -66,7 +66,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.lang.Throwable")) {
+                    CommonClassNames.JAVA_LANG_THROWABLE)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -76,7 +76,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 final PsiClass containingClass = method.getContainingClass();
                 if (ClassUtils.isSubclass(containingClass,
-                        "java.lang.Throwable")) {
+                        CommonClassNames.JAVA_LANG_THROWABLE)) {
                     return;
                 }
             }

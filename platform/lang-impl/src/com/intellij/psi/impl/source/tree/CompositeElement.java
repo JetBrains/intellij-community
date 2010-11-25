@@ -170,13 +170,19 @@ public class CompositeElement extends TreeElement {
   }
 
   public int getNotCachedLength() {
-    int length = 0;
-    TreeElement child = getFirstChildNode();
-    while(child != null){
-      length += child.getNotCachedLength();
-      child = child.getTreeNext();
-    }
-    return length;
+    final int[] result = new int[]{0};
+
+    acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      protected void visitNode(final TreeElement element) {
+        if (element instanceof LeafElement || TreeUtil.isCollapsedChameleon(element)) {
+          result[0] += element.getNotCachedLength();
+        }
+        super.visitNode(element);
+      }
+    });
+
+    return result[0];
   }
 
   @NotNull

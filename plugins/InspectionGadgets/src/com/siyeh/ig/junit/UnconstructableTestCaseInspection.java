@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,23 +25,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnconstructableTestCaseInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "UnconstructableJUnitTestCase";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unconstructable.test.case.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unconstructable.test.case.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnconstructableTestCaseVisitor();
     }
@@ -79,7 +83,8 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
                 if (parametersCount == 1) {
                     final PsiParameter[] parameters = parameterList.getParameters();
                     final PsiType type = parameters[0].getType();
-                    if (TypeUtils.typeEquals("java.lang.String", type)) {
+                    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                            type)) {
                         hasStringConstructor = true;
                     }
                 }

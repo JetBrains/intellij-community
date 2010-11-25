@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.siyeh.ipp.switchtoif;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class CaseUtil{
@@ -142,87 +142,141 @@ class CaseUtil{
     @Nullable
     public static PsiExpression getCaseExpression(PsiIfStatement statement){
         final PsiExpression condition = statement.getCondition();
-        final List<PsiExpression> possibleCaseExpressions =
-                determinePossibleCaseExpressions(condition);
-        if(possibleCaseExpressions == null){
+        final LanguageLevel languageLevel =
+                PsiUtil.getLanguageLevel(statement);
+        final boolean stringSwitch =
+                languageLevel.compareTo(LanguageLevel.JDK_1_7) >= 0;
+        final PsiExpression possibleCaseExpression =
+                determinePossibleCaseExpressions(condition, stringSwitch);
+        if(possibleCaseExpression == null){
             return null;
         }
-        for(Object possibleCaseExpression : possibleCaseExpressions){
-            final PsiExpression caseExpression =
-                    (PsiExpression) possibleCaseExpression;
-            if(!SideEffectChecker.mayHaveSideEffects(caseExpression)){
-                PsiIfStatement statementToCheck = statement;
-                while(true){
-                    final PsiExpression caseCondition =
-                            statementToCheck.getCondition();
-                    if(canBeMadeIntoCase(caseCondition, caseExpression)){
-                        final PsiStatement elseBranch =
-                                statementToCheck.getElseBranch();
-                        if(elseBranch == null ||
-                                !(elseBranch instanceof PsiIfStatement)){
-                            return caseExpression;
-                        }
-                        statementToCheck = (PsiIfStatement) elseBranch;
-                    } else{
-                        break;
-                    }
-                }
+        if (SideEffectChecker.mayHaveSideEffects(possibleCaseExpression)) {
+            return null;
+        }
+        while(true){
+            final PsiExpression caseCondition = statement.getCondition();
+            if (!canBeMadeIntoCase(caseCondition, possibleCaseExpression,
+                    stringSwitch)) {
+                break;
             }
+            final PsiStatement elseBranch = statement.getElseBranch();
+            if(!(elseBranch instanceof PsiIfStatement)){
+                return possibleCaseExpression;
+            }
+            statement = (PsiIfStatement) elseBranch;
         }
         return null;
     }
 
-    private static List<PsiExpression> determinePossibleCaseExpressions(
-            PsiExpression expression){
-        PsiExpression expressionToCheck = expression;
-        while(expressionToCheck instanceof PsiParenthesizedExpression){
+    private static PsiExpression determinePossibleCaseExpressions(
+            PsiExpression expression, boolean stringSwitch){
+        while(expression instanceof PsiParenthesizedExpression){
             final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expressionToCheck;
-            expressionToCheck = parenthesizedExpression.getExpression();
+                    (PsiParenthesizedExpression)expression;
+            expression = parenthesizedExpression.getExpression();
         }
-        final List<PsiExpression> out=new ArrayList<PsiExpression>(10);
-        if(!(expressionToCheck instanceof PsiBinaryExpression)){
-            return out;
+        if (expression == null) {
+            return null;
+        }
+        if (stringSwitch) {
+            final PsiExpression jdk17Expression =
+                    determinePossibleStringCaseExpression(expression);
+            if (jdk17Expression != null) {
+                return jdk17Expression;
+            }
+        }
+        if (!(expression instanceof PsiBinaryExpression)){
+            return null;
         }
         final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) expressionToCheck;
+                (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType operation = sign.getTokenType();
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
-            return determinePossibleCaseExpressions(lhs);
+            return determinePossibleCaseExpressions(lhs, stringSwitch);
         } else if(operation.equals(JavaTokenType.EQEQ)){
             if(canBeCaseLabel(lhs)){
-                out.add(rhs);
-            }
-            if(canBeCaseLabel(rhs)){
-                out.add(lhs);
+                return rhs;
+            } else if (canBeCaseLabel(rhs)){
+                return lhs;
             }
         }
-        return out;
+        return null;
     }
 
-    private static boolean canBeMadeIntoCase(PsiExpression expression,
-                                             PsiExpression caseExpression){
-        PsiExpression expressionToCheck = expression;
-        while(expressionToCheck instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expressionToCheck;
-            expressionToCheck = parenthesizedExpression.getExpression();
+    private static PsiExpression determinePossibleStringCaseExpression(
+            PsiExpression expression) {
+        if (!(expression instanceof PsiMethodCallExpression)) {
+            return null;
         }
-        if(!(expressionToCheck instanceof PsiBinaryExpression)){
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression) expression;
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        final String referenceName = methodExpression.getReferenceName();
+        if (!"equals".equals(referenceName)) {
+            return null;
+        }
+        final PsiExpression qualifierExpression =
+                methodExpression.getQualifierExpression();
+        if (qualifierExpression == null) {
+            return null;
+        }
+        final PsiType type = qualifierExpression.getType();
+        if (type == null || !type.equalsToText("java.lang.String")) {
+            return null;
+        }
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length != 1) {
+            return null;
+        }
+        final PsiExpression argument = arguments[0];
+        final PsiType argumentType = argument.getType();
+        if (argumentType == null ||
+                !argumentType.equalsToText("java.lang.String")) {
+            return null;
+        }
+        if (PsiUtil.isConstantExpression(qualifierExpression)) {
+            return argument;
+        } else if (PsiUtil.isConstantExpression(argument)) {
+            return qualifierExpression;
+        }
+        return null;
+    }
+
+    private static boolean canBeMadeIntoCase(
+            PsiExpression expression, PsiExpression caseExpression,
+            boolean stringSwitch) {
+        while(expression instanceof PsiParenthesizedExpression){
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expression;
+            expression = parenthesizedExpression.getExpression();
+        }
+        if (stringSwitch) {
+            final PsiExpression stringCaseExpression =
+                    determinePossibleStringCaseExpression(expression);
+            if (EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                    stringCaseExpression)) {
+                return true;
+            }
+        }
+        if(!(expression instanceof PsiBinaryExpression)){
             return false;
         }
         final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) expressionToCheck;
+                (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType operation = sign.getTokenType();
         final PsiExpression lOperand = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
-            return canBeMadeIntoCase(lOperand, caseExpression) &&
-                    canBeMadeIntoCase(rhs, caseExpression);
+            return canBeMadeIntoCase(lOperand, caseExpression, stringSwitch) &&
+                    canBeMadeIntoCase(rhs, caseExpression, stringSwitch);
         } else if(operation.equals(JavaTokenType.EQEQ)){
             if(canBeCaseLabel(lOperand) &&
                     EquivalenceChecker.expressionsAreEquivalent(caseExpression,

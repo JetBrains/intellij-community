@@ -204,16 +204,22 @@ public abstract class ResourceManager {
   }
 
   @Nullable
-  public String getFileResourceType(@NotNull PsiFile file) {
-    PsiDirectory dir = file.getContainingDirectory();
-    if (dir == null) return null;
-    PsiDirectory possibleResDir = dir.getParentDirectory();
-    if (possibleResDir == null || !isResourceDir(possibleResDir.getVirtualFile())) {
-      return null;
-    }
-    String type = getResourceTypeByDirName(dir.getName());
-    if (type == null) return null;
-    return isCorrectFileName(type, file.getName()) ? type : null;
+  public String getFileResourceType(@NotNull final PsiFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Nullable
+      @Override
+      public String compute() {
+        PsiDirectory dir = file.getContainingDirectory();
+        if (dir == null) return null;
+        PsiDirectory possibleResDir = dir.getParentDirectory();
+        if (possibleResDir == null || !isResourceDir(possibleResDir.getVirtualFile())) {
+          return null;
+        }
+        String type = getResourceTypeByDirName(dir.getName());
+        if (type == null) return null;
+        return isCorrectFileName(type, file.getName()) ? type : null;
+      }
+    });
   }
 
   @NotNull

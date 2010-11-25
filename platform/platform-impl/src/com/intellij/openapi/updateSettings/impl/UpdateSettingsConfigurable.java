@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +84,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public boolean isModified() {
+    if (myUpdatesSettingsPanel == null) return false;
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.myPluginHosts.equals(myUpdatesSettingsPanel.getPluginsHosts())) return true;
     return settings.CHECK_NEEDED != myUpdatesSettingsPanel.myCbCheckForUpdates.isSelected();
@@ -107,7 +109,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     private JButton myAddButton;
     private JButton myDeleteButton;
-    private JList myUrlsList;
+    private JBList myUrlsList;
     private JButton myEditButton;
 
     public UpdatesSettingsPanel() {
@@ -137,6 +139,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       LabelTextReplacingUtil.replaceText(myPanel);
 
+      myUrlsList.getEmptyText().setText(IdeBundle.message("update.no.update.hosts"));
       myUrlsList.setModel(new DefaultListModel());
       myUrlsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 

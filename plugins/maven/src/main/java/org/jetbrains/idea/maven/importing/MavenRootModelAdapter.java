@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -197,7 +198,7 @@ public class MavenRootModelAdapter {
     return new Path(path);
   }
 
-  public void addModuleDependency(String moduleName, DependencyScope scope) {
+  public void addModuleDependency(@NotNull String moduleName, @NotNull DependencyScope scope) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;

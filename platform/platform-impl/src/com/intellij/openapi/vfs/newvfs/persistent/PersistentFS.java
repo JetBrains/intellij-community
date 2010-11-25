@@ -24,6 +24,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -61,6 +63,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final MessageBus myEventsBus;
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
+  private NewVirtualFile myFakeRoot;
   private final Object INPUT_LOCK = new Object();
   /**
    * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
@@ -232,7 +235,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return myRecords.writeContent(getFileId(file), readOnly);
   }
 
-  private void writeContent(VirtualFile file, byte[] content, boolean readOnly) throws IOException {
+  private void writeContent(VirtualFile file, ByteSequence content, boolean readOnly) throws IOException {
     myRecords.writeContent(getFileId(file), content, readOnly);
   }
 
@@ -436,7 +439,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       if ((!delegate.isReadOnly() || (!application.isInternal() && !application.isUnitTestMode())) &&
           !noCaching && content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
-          writeContent(file, content, delegate.isReadOnly());
+          writeContent(file, new ByteSequence(content), delegate.isReadOnly());
 
           myRecords.setLength(getFileId(file), content.length);
           setFlag(file, MUST_RELOAD_CONTENT, false);
@@ -479,14 +482,14 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private ReplicatorInputStream createReplicator(final VirtualFile file, final InputStream nativeStream, final long len, final boolean readOnly) {
-    final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
+    final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)len);
     return new ReplicatorInputStream(nativeStream, cache) {
       public void close() throws IOException {
         super.close();
 
         synchronized (INPUT_LOCK) {
           if (getBytesRead() == len) {
-            writeContent(file, cache.toByteArray(), readOnly);
+            writeContent(file, new ByteSequence(cache.getInternalBuffer(), 0, cache.size()), readOnly);
             myRecords.setLength(getFileId(file), len);
             setFlag(file, MUST_RELOAD_CONTENT, false);
           }
@@ -633,6 +636,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     synchronized (LOCK) {
       final String rootUrl = fs.getProtocol() + "://" + basePath;
       NewVirtualFile root = myRoots.get(rootUrl);
+      if (root == null && basePath.length() == 0) {
+        root = myFakeRoot;
+      }
       if (root == null) {
         try {
           final int rootId = myRecords.findRootRecord(rootUrl);
@@ -658,6 +664,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         if (basePath.length() > 0) {
           myRoots.put(rootUrl, root);
+        }
+        else {
+          myFakeRoot = root;
         }
       }
 

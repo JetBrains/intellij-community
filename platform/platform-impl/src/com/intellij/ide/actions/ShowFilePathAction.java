@@ -110,7 +110,7 @@ public class ShowFilePathAction extends AnAction {
             eachIcon = FileSystemView.getFileSystemView().getSystemIcon(ioFile);
           }
           else {
-            eachIcon = new EmptyIcon(16, 16);
+            eachIcon = EmptyIcon.ICON_16;
           }
 
           icons.add(eachIcon);

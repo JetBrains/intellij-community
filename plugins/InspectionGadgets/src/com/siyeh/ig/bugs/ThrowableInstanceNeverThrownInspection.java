@@ -41,15 +41,16 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
         final PsiExpression expression = (PsiExpression)infos[0];
         final String type =
                 TypeUtils.expressionHasTypeOrSubtype(expression,
-                        "java.lang.RuntimeException", "java.lang.Exception",
-                        "java.lang.Error");
-        if ("java.lang.RuntimeException".equals(type)) {
+                        CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION,
+                        CommonClassNames.JAVA_LANG_EXCEPTION,
+                        CommonClassNames.JAVA_LANG_ERROR);
+        if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.runtime.exception.problem.descriptor");
-        } else if ("java.lang.Exception".equals(type)) {
+        } else if (CommonClassNames.JAVA_LANG_EXCEPTION.equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.checked.exception.problem.descriptor");
-        } else if ("java.lang.Error".equals(type)) {
+        } else if (CommonClassNames.JAVA_LANG_ERROR.equals(type)) {
             return InspectionGadgetsBundle.message(
                     "throwable.instance.never.thrown.error.problem.descriptor");
         } else {
@@ -74,7 +75,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
         @Override public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.lang.Throwable")) {
+                    CommonClassNames.JAVA_LANG_THROWABLE)) {
                 return;
             }
             final PsiElement parent = getParent(expression.getParent());
@@ -183,7 +184,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
             final PsiParameter[] parameters =
                     parameterList.getParameters();
             final PsiType type = parameters[0].getType();
-            if (!type.equalsToText("java.lang.Throwable")) {
+            if (!type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE)) {
                 return null;
             }
             return getParent(methodCallExpression.getParent());

@@ -77,4 +77,9 @@ public abstract class BaseResourceReference extends PsiReferenceBase.Poly<XmlEle
     }
     return myValue.getXmlTag();
   }
+
+  @Override
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return null;
+  }
 }

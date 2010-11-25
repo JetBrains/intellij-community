@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,26 +28,30 @@ public class SerializationUtils {
     }
 
     public static boolean isSerializable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, "java.io.Serializable");
+        return ClassUtils.isSubclass(aClass,
+                CommonClassNames.JAVA_IO_SERIALIZABLE);
     }
 
     public static boolean isExternalizable(@Nullable PsiClass aClass) {
-        return ClassUtils.isSubclass(aClass, "java.io.Externalizable");
+        return ClassUtils.isSubclass(aClass,
+                CommonClassNames.JAVA_IO_EXTERNALIZABLE);
     }
 
     public static boolean isDirectlySerializable(@NotNull PsiClass aClass) {
         final PsiReferenceList implementsList = aClass.getImplementsList();
-        if (implementsList != null) {
-            final PsiJavaCodeReferenceElement[] interfaces =
-                    implementsList.getReferenceElements();
-            for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
-                final PsiClass implemented = (PsiClass) aInterfaces.resolve();
-                if (implemented != null) {
-                    final String name = implemented.getQualifiedName();
-                    if ("java.io.Serializable".equals(name)) {
-                        return true;
-                    }
-                }
+        if (implementsList == null) {
+            return false;
+        }
+        final PsiJavaCodeReferenceElement[] interfaces =
+                implementsList.getReferenceElements();
+        for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
+            final PsiClass implemented = (PsiClass) aInterfaces.resolve();
+            if (implemented == null) {
+                continue;
+            }
+            final String name = implemented.getQualifiedName();
+            if (CommonClassNames.JAVA_IO_SERIALIZABLE.equals(name)) {
+                return true;
             }
         }
         return false;
@@ -75,9 +79,9 @@ public class SerializationUtils {
     }
 
     public static boolean isReadObject(@NotNull PsiMethod method) {
-        final PsiManager manager = method.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final Project project = method.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClassType type = factory.createTypeByFQClassName(
                 "java.io.ObjectInputStream", scope);
@@ -86,9 +90,9 @@ public class SerializationUtils {
     }
 
     public static boolean isWriteObject(@NotNull PsiMethod method) {
-        final PsiManager manager = method.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final Project project = method.getProject();
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiElementFactory factory = psiFacade.getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClassType type = factory.createTypeByFQClassName(
                 "java.io.ObjectOutputStream", scope);
@@ -97,14 +101,14 @@ public class SerializationUtils {
     }
 
     public static boolean isReadResolve(@NotNull PsiMethod method) {
-        return MethodUtils.simpleMethodMatches(method, null, "java.lang.Object",
-                "readResolve");
+        return MethodUtils.simpleMethodMatches(method, null,
+                CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
 
     }
 
     public static boolean isWriteReplace(@NotNull PsiMethod method) {
-        return MethodUtils.simpleMethodMatches(method, null, "java.lang.Object",
-                "writeReplace");
+        return MethodUtils.simpleMethodMatches(method, null,
+                CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
     }
 
     public static boolean isProbablySerializable(PsiType type) {
@@ -115,7 +119,8 @@ public class SerializationUtils {
             return true;
         }
         if (type instanceof PsiArrayType) {
-            final PsiType componentType = ((PsiArrayType) type).getComponentType();
+            final PsiArrayType arrayType = (PsiArrayType) type;
+            final PsiType componentType = arrayType.getComponentType();
             return isProbablySerializable(componentType);
         }
         if (type instanceof PsiClassType) {
@@ -127,8 +132,10 @@ public class SerializationUtils {
             if (isExternalizable(psiClass)) {
                 return true;
             }
-            if (ClassUtils.isSubclass(psiClass, "java.util.Collection") ||
-                    ClassUtils.isSubclass(psiClass, "java.util.Map")) {
+            if (ClassUtils.isSubclass(psiClass,
+                    CommonClassNames.JAVA_UTIL_COLLECTION) ||
+                    ClassUtils.isSubclass(psiClass,
+                            CommonClassNames.JAVA_UTIL_MAP)) {
                 final PsiType[] parameters = classTYpe.getParameters();
                 for (PsiType parameter : parameters) {
                     if (!isProbablySerializable(parameter)) {

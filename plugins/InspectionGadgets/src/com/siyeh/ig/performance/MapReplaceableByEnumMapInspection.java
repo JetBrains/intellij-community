@@ -67,7 +67,7 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.util.Map")) {
+                    CommonClassNames.JAVA_UTIL_MAP)) {
                 return;
             }
             if (null != TypeUtils.expressionHasTypeOrSubtype(expression,

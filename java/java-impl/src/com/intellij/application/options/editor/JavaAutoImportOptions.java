@@ -33,6 +33,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
-  private JList myExcludePackagesList;
+  private JBList myExcludePackagesList;
   private JButton myAddPackageButton;
   private JButton myRemoveButton;
   private JCheckBox myCbAddUnambiguousImports;
@@ -93,6 +94,8 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
         ListUtil.removeSelectedItems(myExcludePackagesList);
       }
     });
+
+    myExcludePackagesList.getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
   }
 
   public void addExcludePackage(String packageName) {

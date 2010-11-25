@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -37,16 +38,19 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
                 "new.string.buffer.with.char.argument.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "new.string.buffer.with.char.argument.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiExpression argument = (PsiExpression) infos[0];
@@ -65,6 +69,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
                     "new.string.buffer.with.char.argument.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -87,6 +92,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringBufferWithCharArgumentVisitor();
     }
@@ -115,7 +121,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
             }
             final PsiClass aClass = constructor.getContainingClass();
             if (!ClassUtils.isSubclass(aClass,
-                    "java.lang.AbstractStringBuilder")) {
+                    CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
                 return;
             }
             registerNewExpressionError(expression, argument);

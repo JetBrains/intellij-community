@@ -125,20 +125,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
-      if (indicator.isRepeatedInvocation(myCompletionType, editor)) {
-        if (!indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
-          return;
-        }
-        else {
-          time = indicator.getParameters().getInvocationCount() + 1;
-          new WriteCommandAction(project) {
-            protected void run(Result result) throws Throwable {
-              indicator.restorePrefix();
-            }
-          }.execute();
-        }
+      boolean repeated = indicator.isRepeatedInvocation(myCompletionType, editor);
+      if (repeated && !indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
+        return;
       }
-      indicator.closeAndFinish(false);
+
+      if (repeated) {
+        time = indicator.getParameters().getInvocationCount() + 1;
+        indicator.restorePrefix();
+      } else {
+        indicator.closeAndFinish(false);
+      }
     }
 
     if (time > 1) {
@@ -163,6 +160,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
+
+            assert editor.getDocument().getTextLength() == psiFile.getTextLength() : "unsuccessful commit";
 
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {
@@ -196,12 +195,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       int offset = editor.getCaretModel().getOffset();
 
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      assert offset > 0;
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset - 1);
       if (elementAt == null) {
-        elementAt = psiFile.findElementAt(offset);
-        if (elementAt == null && offset > 0) {
-          elementAt = psiFile.findElementAt(offset - 1);
-        }
+        elementAt = psiFile.findElementAt(offset - 1);
       }
 
       Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
@@ -272,7 +269,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
 
-    if (!invokedExplicitly && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!invokedExplicitly && (!ApplicationManager.getApplication().isUnitTestMode() || CompletionAutoPopupHandler.ourTestingAutopopup)) {
       indicator.notifyBackgrounded();
       return;
     }
@@ -313,13 +310,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     spawnProcess(ProgressWrapper.wrap(indicator), new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            startSemaphore.up();
-            indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
-            indicator.duringCompletion(initContext);
-          }
-        });
+        try {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              startSemaphore.up();
+              indicator.setFocusLookupWhenDone(autopopup && shouldFocusLookup(parameters));
+              indicator.duringCompletion(initContext);
+            }
+          });
+        }
+        finally {
+          indicator.duringCompletionPassed();
+        }
       }
     });
 
@@ -400,7 +402,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(fileCopy.findElementAt(offset) == insertedElement, "wrong offset");
 
     final TextRange range = insertedElement.getTextRange();
-    LOG.assertTrue(range.substring(fileCopy.getText()).equals(insertedElement.getText()), "wrong text");
+    if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
+      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'");
+    }
 
     return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);
   }
@@ -475,6 +479,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
         indicator.fillInCommonPrefix(false);
@@ -489,7 +494,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService() == null) {
+      if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
       }
     }

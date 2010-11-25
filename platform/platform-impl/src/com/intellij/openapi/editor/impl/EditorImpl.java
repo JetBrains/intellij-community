@@ -843,6 +843,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
+  public int yPositionToLogicalLineNumber(int y) {
+    int line = yPositionToVisibleLineNumber(y);
+    LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
+    return logicalPosition.line;
+  }
+
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
@@ -960,6 +966,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (charWidth < 0) {
       charWidth = EditorUtil.charWidth(c, fontType, this);
     }
+    
+    if (charWidth <= 0) {
+      charWidth = spaceSize;
+    }
 
     if (x >= px && c == '\t' && !onSoftWrapDrawing) {
       if (mySettings.isCaretInsideTabs()) {
@@ -975,8 +985,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if ((x - px) * 2 < charWidth) column++;
       }
       else {
-        column += (px - x) / spaceSize;
-        if ((px - x) * 2 >= spaceSize) {
+        int diff = px - x;
+        column += diff / spaceSize;
+        if ((diff % spaceSize) * 2 >= spaceSize) {
           column++;
         }
       }
@@ -1043,7 +1054,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // optimization: do not do column calculations here since we are interested in line number only
   public int offsetToVisualLine(int offset) {
     int line = calcLogicalLineNumber(offset);
-    return logicalToVisualLine(line);
+    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int result = logicalToVisualLine(line);
+    
+    // There is a possible case that logical line that contains target offset is soft-wrapped (represented in more than one visual
+    // line). Hence, we need to perform necessary adjustments to the visual line that is used to show logical line start if necessary.
+    int i = getSoftWrapModel().getSoftWrapIndex(lineStartOffset);
+    if (i < 0) {
+      i = -i - 1;
+    }
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+    for (; i < softWraps.size(); i++) {
+      SoftWrap softWrap = softWraps.get(i);
+      if (softWrap.getStart() > offset) {
+        break;
+      }
+      result++; // Assuming that every soft wrap contains only one virtual line feed symbol
+    }
+    return result;
   }
   private int logicalToVisualLine(int line) {
     assertReadAccess();
@@ -1052,13 +1080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    final Point pp;
-    if (p.x >= 0 && p.y >= 0) {
-      pp = p;
-    }
-    else {
-      pp = new Point(Math.max(p.x, 0), Math.max(p.y, 0));
-    }
+    Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
 
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
@@ -1581,6 +1603,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
         if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
           int logStartLine = offsetToLogicalPosition(startOffset).line;
+          if (logStartLine >= myDocument.getLineCount()) {
+            return;
+          }
           LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
           Point end = logicalPositionToXY(logPosition);
           int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
@@ -5182,7 +5207,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         if (isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }
       }

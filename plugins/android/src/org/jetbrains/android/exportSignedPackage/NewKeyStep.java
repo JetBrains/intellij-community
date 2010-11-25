@@ -92,6 +92,11 @@ public class NewKeyStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.create.key";
+  }
+
+  @Override
   protected void commitForNext() throws CommitStepException {
     if (myAliasField.getText().trim().length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.export.package.specify.key.alias.error"));

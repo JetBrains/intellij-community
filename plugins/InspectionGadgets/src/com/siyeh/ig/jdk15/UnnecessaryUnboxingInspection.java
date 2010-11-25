@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,18 +38,17 @@ import java.util.Map;
 public class UnnecessaryUnboxingInspection extends BaseInspection {
 
     @NonNls static final Map<String, String> s_unboxingMethods =
-            new HashMap<String, String>(9);
+            new HashMap<String, String>(8);
 
     static {
-        s_unboxingMethods.put("java.lang.Integer", "intValue");
-        s_unboxingMethods.put("java.lang.Short", "shortValue");
-        s_unboxingMethods.put("java.lang.Boolean", "booleanValue");
-        s_unboxingMethods.put("java.lang.Long", "longValue");
-        s_unboxingMethods.put("java.lang.Byte", "byteValue");
-        s_unboxingMethods.put("java.lang.Float", "floatValue");
-        s_unboxingMethods.put("java.lang.Long", "longValue");
-        s_unboxingMethods.put("java.lang.Double", "doubleValue");
-        s_unboxingMethods.put("java.lang.Character", "charValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_INTEGER, "intValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_SHORT, "shortValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_LONG, "longValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_BYTE, "byteValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_FLOAT, "floatValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_DOUBLE, "doubleValue");
+        s_unboxingMethods.put(CommonClassNames.JAVA_LANG_CHARACTER, "charValue");
     }
 
     @Override
@@ -114,7 +113,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
                         return;
                     }
                     final String classname = containingClass.getQualifiedName();
-                    if ("java.lang.Boolean".equals(classname)) {
+                    if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(classname)) {
                         @NonNls final String name = field.getName();
                         if ("TRUE".equals(name)) {
                             replaceExpression(methodCall, "true");

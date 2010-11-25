@@ -16,10 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.DumbAware;
@@ -29,6 +26,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,15 +225,18 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       String _text = projectPath;
       final String projectName = getProjectName(projectPath);
       if (projectName != null) {
-        _text = String.format("%s (%s)", projectPath, projectName);
+        _text = String.format("%s [%s]", projectPath, projectName);
       }
 
-      getTemplatePresentation().setText(_text, false);
+      final Presentation presentation = getTemplatePresentation();
+      presentation.setText(_text, false);
+      presentation.setDescription(projectPath);
     }
 
     @Nullable
     private String getProjectName(String path) {
-      if (new File(path).isDirectory()) {
+      final File file = new File(path);
+      if (file.isDirectory()) {
         final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ".name");
         if (nameFile.exists()) {
           BufferedReader in = null;
@@ -257,7 +258,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
               }
             }
           }
+        } else {
+          return file.getName();
         }
+      } else {
+        return FileUtil.getNameWithoutExtension(file.getName());
       }
 
       return null;

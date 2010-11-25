@@ -36,8 +36,6 @@ import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +61,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private JPanel mySearchComponentWrapper;
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
-  private volatile LogConsoleBase myLogConsole;
+  private final LogConsoleBase myLogConsole;
   private volatile Reader myCurrentReader;
 
   private final AndroidDebugBridge.IDeviceChangeListener myDeviceChangeListener = new AndroidDebugBridge.IDeviceChangeListener() {
@@ -109,18 +107,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   public AndroidLogcatToolWindowView(final Project project) {
     myProject = project;
     Disposer.register(myProject, this);
-
-    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
-    if (facets.size() == 0) {
-      Messages.showErrorDialog(project, AndroidBundle.message("android.logcat.no.android.facets.error"), CommonBundle.getErrorTitle());
-      return;
-    }
-    AndroidFacet facet = facets.get(0);
-    AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-    if (platform == null) {
-      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-      return;
-    }
 
     myDeviceCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

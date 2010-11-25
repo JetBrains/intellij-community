@@ -218,7 +218,7 @@ public class AbstractPopup implements JBPopup {
     myHeaderAlwaysFocusable = headerAlwaysFocusable;
     myMovable = movable;
 
-    ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(new EmptyIcon(0)) : titleIcon;
+    ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
 
     myHeaderPanel = new JPanel(new BorderLayout());
 
@@ -512,6 +512,7 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (myInStack) {
+        myFocusTrackback.setForcedRestore(!myOk);
         myFocusTrackback.restoreFocus();
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,20 @@ public class StringReplaceableByStringBufferInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean onlyWarnOnLoop = true;
 
+    @Override
     @NotNull
     public String getID() {
         return "NonConstantStringShouldBeStringBuffer";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.replaceable.by.string.buffer.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -55,6 +58,7 @@ public class StringReplaceableByStringBufferInspection extends BaseInspection {
                 this, "onlyWarnOnLoop");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringReplaceableByStringBufferVisitor();
     }
@@ -71,7 +75,8 @@ public class StringReplaceableByStringBufferInspection extends BaseInspection {
                 return;
             }
             final PsiType type = variable.getType();
-            if (!TypeUtils.typeEquals("java.lang.String", type)) {
+            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                    type)) {
                 return;
             }
             if (!variableIsAppendedTo(variable, codeBlock)) {

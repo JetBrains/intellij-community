@@ -258,7 +258,7 @@ public abstract class FileColorSettingsTable extends StripeTable {
 
       myManager = manager;
 
-      setIcon(new EmptyIcon(16));
+      setIcon(EmptyIcon.ICON_16);
     }
 
     private void setIconColor(final Color color) {

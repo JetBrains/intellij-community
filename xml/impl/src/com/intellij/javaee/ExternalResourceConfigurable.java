@@ -127,6 +127,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myExtPanel.setData(myPairs);
     myIgnorePanel.setData(myIgnoredUrls);
 
+    myExtPanel.getEmptyText().setText(XmlBundle.message("no.external.resources"));
+    myIgnorePanel.getEmptyText().setText(XmlBundle.message("no.ignored.resources"));
+
     return myPanel;
   }
 

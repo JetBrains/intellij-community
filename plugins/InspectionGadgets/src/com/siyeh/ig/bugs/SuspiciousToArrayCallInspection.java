@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousToArrayCallInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "suspicious.to.array.call.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiType type = (PsiType)infos[0];
@@ -39,10 +41,12 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                 type.getPresentableText());
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SuspiciousToArrayCallVisitor();
     }
@@ -72,7 +76,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
             final PsiClassType classType = (PsiClassType)type;
             final PsiClass aClass = classType.resolve();
             if (aClass == null ||
-                    !ClassUtils.isSubclass(aClass, "java.util.Collection")) {
+                    !ClassUtils.isSubclass(aClass,
+                            CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

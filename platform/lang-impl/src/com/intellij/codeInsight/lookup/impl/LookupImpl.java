@@ -476,7 +476,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) {
-      LOG.error(myArranger);
+      LOG.error(myArranger + "; " + myEditor.isDisposed());
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
@@ -646,6 +646,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e){
         setFocused(true);
+        markSelectionTouched();
 
         final Point point = e.getPoint();
         final int i = myList.locationToIndex(point);
@@ -697,6 +698,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void setCurrentItem(LookupElement item){
+    markSelectionTouched();
     ListScrollingUtil.selectItem(myList, item);
   }
 
@@ -710,6 +712,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public Rectangle getCurrentItemBounds(){
     int index = myList.getSelectedIndex();
+    if (index < 0) {
+      LOG.error("No selected element, size=" + myList.getModel().getSize() + "; items" + getItems());
+    }
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
       LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
@@ -895,6 +900,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myPositionedAbove != null && myPositionedAbove.booleanValue();
   }
 
+  public boolean isSelectionTouched() {
+    return mySelectionTouched;
+  }
+
   public void hide(){
     hideLookup(true);
   }
@@ -997,7 +1006,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myPreselectedItem = null;
   }
 
-  boolean isDisposed() {
+  public boolean isLookupDisposed() {
     return myDisposed;
   }
 

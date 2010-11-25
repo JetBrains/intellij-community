@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,17 @@ import java.util.Map;
 public class UnnecessaryBoxingInspection extends BaseInspection {
 
     @NonNls static final Map<String, String> s_boxingArgs =
-            new HashMap<String, String>(9);
+            new HashMap<String, String>(8);
 
     static {
-        s_boxingArgs.put("java.lang.Integer", "int");
-        s_boxingArgs.put("java.lang.Short", "short");
-        s_boxingArgs.put("java.lang.Boolean", "boolean");
-        s_boxingArgs.put("java.lang.Long", "long");
-        s_boxingArgs.put("java.lang.Byte", "byte");
-        s_boxingArgs.put("java.lang.Float", "float");
-        s_boxingArgs.put("java.lang.Double", "double");
-        s_boxingArgs.put("java.lang.Long", "long");
-        s_boxingArgs.put("java.lang.Character", "char");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_SHORT, "short");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_LONG, "long");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
+        s_boxingArgs.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
     }
 
     @Override

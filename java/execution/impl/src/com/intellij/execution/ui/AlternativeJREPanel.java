@@ -36,30 +36,31 @@ import java.util.ArrayList;
  * User: anna
  * Date: Jun 21, 2005
  */
-public class AlternativeJREPanel extends JPanel{
+public class AlternativeJREPanel extends JPanel {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JCheckBox myCbEnabled;
   final TextFieldWithHistory myFieldWithHistory;
 
   public AlternativeJREPanel() {
     super(new GridBagLayout());
+
     myCbEnabled = new JCheckBox(ExecutionBundle.message("run.configuration.use.alternate.jre.checkbox"));
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                          GridBagConstraints.HORIZONTAL, new Insets(2, -2, 2, 2), 0, 0);
     add(myCbEnabled, gc);
 
     myFieldWithHistory = new TextFieldWithHistory();
-    myFieldWithHistory.setBorder(BorderFactory.createEtchedBorder());
-    final ArrayList<String> foundJdks = new ArrayList<String>();
-    final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (Sdk jdk : allJdks) {
-      foundJdks.add(jdk.getHomePath());
+    final ArrayList<String> foundJDKs = new ArrayList<String>();
+    final Sdk[] allJDKs = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk jdk : allJDKs) {
+      foundJDKs.add(jdk.getHomePath());
     }
-    myFieldWithHistory.setHistory(foundJdks);
+    myFieldWithHistory.setHistory(foundJDKs);
     myPathField = new ComponentWithBrowseButton<TextFieldWithHistory>(myFieldWithHistory, null);
     myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
                                         ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                        null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR, TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+                                        null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
+                                        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     gc.insets.left = 20;
     add(myPathField, gc);
     InsertPathAction.addTo(myFieldWithHistory.getTextEditor());
@@ -103,4 +104,3 @@ public class AlternativeJREPanel extends JPanel{
     setPath(path);
   }
 }
-

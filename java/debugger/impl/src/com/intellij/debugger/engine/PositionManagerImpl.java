@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -24,7 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -58,11 +59,11 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type,
-                                        SourcePosition position) {
+  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
     try {
       int line = position.getLine() + 1;
-      List<Location> locs = (getDebugProcess().getVirtualMachineProxy().versionHigher("1.4") ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line));
+      List<Location> locs = (getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
+                             ? type.locationsOfLine(DebugProcessImpl.JAVA_STRATUM, null, line) : type.locationsOfLine(line));
       if (locs.size() > 0) {
         return locs;
       }
@@ -73,20 +74,20 @@ public class PositionManagerImpl implements PositionManager {
     return Collections.emptyList();
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) {
+  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
     final Ref<String> waitPrepareFor = new Ref<String>(null);
     final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         PsiClass psiClass = JVMNameUtil.getClassAt(position);
-        if(psiClass == null) {
+        if (psiClass == null) {
           return;
         }
 
-        if(PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+        if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
           PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
 
-          if(parent == null) {
+          if (parent == null) {
             return;
           }
 
@@ -122,7 +123,7 @@ public class PositionManagerImpl implements PositionManager {
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
-  public SourcePosition getSourcePosition(final Location location) {
+  public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(location == null) {
       return null;
@@ -204,7 +205,7 @@ public class PositionManagerImpl implements PositionManager {
   }
 
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) {
+  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
     final Trinity<String, Boolean, PsiClass> trinity = calcClassName(classPosition);
     if (trinity == null) {
       return Collections.emptyList();
@@ -231,7 +232,7 @@ public class PositionManagerImpl implements PositionManager {
 
   @Nullable
   private static Trinity<String, Boolean, PsiClass> calcClassName(final SourcePosition classPosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Trinity<String, Boolean, PsiClass>> () {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<Trinity<String, Boolean, PsiClass>>() {
       public Trinity<String, Boolean, PsiClass> compute() {
         final PsiClass psiClass = JVMNameUtil.getClassAt(classPosition);
 
@@ -296,7 +297,7 @@ public class PositionManagerImpl implements PositionManager {
           // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
           final int finalRangeBegin = rangeBegin;
           final int finalRangeEnd = rangeEnd;
-          return ApplicationManager.getApplication().runReadAction(new Computable<ReferenceType>() {
+          return ApplicationManager.getApplication().runReadAction(new NullableComputable<ReferenceType>() {
             public ReferenceType compute() {
               final int line = Math.min(finalRangeBegin + 1, finalRangeEnd);
               final SourcePosition candidatePosition = SourcePosition.createFromLine(classToFind.getContainingFile(), line);

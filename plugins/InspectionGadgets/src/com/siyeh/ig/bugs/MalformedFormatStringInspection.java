@@ -41,13 +41,11 @@ public class MalformedFormatStringInspection extends BaseInspection{
     @NotNull
     public String buildErrorString(Object... infos){
         final Object value = infos[0];
-        final Validator[] validators;
         if (value instanceof Exception) {
             return InspectionGadgetsBundle.message(
                     "malformed.format.string.problem.descriptor.malformed");
-        } else {
-            validators = (Validator[]) value;
         }
+        final Validator[] validators = (Validator[]) value;
         final int argumentCount = ((Integer)infos[1]).intValue();
         if(validators.length < argumentCount){
             return InspectionGadgetsBundle.message(
@@ -90,7 +88,7 @@ public class MalformedFormatStringInspection extends BaseInspection{
             formatClassNames.add("java.io.PrintWriter");
             formatClassNames.add("java.io.PrintStream");
             formatClassNames.add("java.util.Formatter");
-            formatClassNames.add("java.lang.String");
+            formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
         }
 
         @Override public void visitMethodCallExpression(
@@ -115,7 +113,7 @@ public class MalformedFormatStringInspection extends BaseInspection{
             }
             final PsiExpression formatArgument = arguments[formatArgPosition];
             if(!TypeUtils.expressionHasType(formatArgument,
-                    "java.lang.String")) {
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             if(!PsiUtil.isConstantExpression(formatArgument)){

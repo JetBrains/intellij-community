@@ -191,7 +191,7 @@ public class TooBroadCatchInspection extends BaseInspection {
             if (tryBlock == null) {
                 return;
             }
-            final Set<PsiClassType> exceptionsThrown =
+            final Set<? extends PsiType> exceptionsThrown =
                     ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final int numExceptionsThrown = exceptionsThrown.size();
             final Set<PsiType> exceptionsCaught =
@@ -212,11 +212,11 @@ public class TooBroadCatchInspection extends BaseInspection {
                 if (exceptionsThrown.contains(typeCaught)) {
                     exceptionsCaught.add(typeCaught);
                 }
-                final List<PsiClassType> typesMasked = new ArrayList();
-                for (PsiClassType typeThrown : exceptionsThrown) {
+                final List<PsiType> typesMasked = new ArrayList();
+                for (PsiType typeThrown : exceptionsThrown) {
                     if (!exceptionsCaught.contains(typeThrown) &&
                         typeCaught.isAssignableFrom(typeThrown)) {
-                        exceptionsCaught.add(typeCaught);
+                        exceptionsCaught.add(typeThrown);
                         typesMasked.add(typeThrown);
                     }
                 }

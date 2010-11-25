@@ -17,14 +17,15 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
@@ -53,8 +54,21 @@ public class GenericInlineHandler {
       return settings != null;
     }
 
-    final Collection<PsiReference> allReferences =
-      settings.isOnlyOneReferenceToInline() ? Collections.singleton(invocationReference) : ReferencesSearch.search(element).findAll();
+    final Collection<PsiReference> allReferences;
+
+    if (settings.isOnlyOneReferenceToInline()) {
+      allReferences = Collections.singleton(invocationReference);
+    } else {
+      final Ref<Collection<PsiReference>> usagesRef = new Ref<Collection<PsiReference>>();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
+        public void run() {
+          usagesRef.set(ReferencesSearch.search(element).findAll());
+        }
+      }, "Find Usages", false, editor.getProject());
+      allReferences = usagesRef.get();
+    }
+
     final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
 
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();

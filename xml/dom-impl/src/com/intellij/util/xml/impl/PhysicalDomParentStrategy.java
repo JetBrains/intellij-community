@@ -15,11 +15,13 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -82,20 +84,44 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
     if (xmlElementsEqual(myElement, thatElement)) {
       if (myElement != thatElement) {
+        //todo remove this assertion before X release
         final PsiElement nav1 = myElement.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
-        assert nav1 == nav2 : nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset() +
-                              "; " + (nav1==myElement) + ";" + (nav2==thatElement);
+        if (ApplicationManagerEx.getApplicationEx().isInternal() && nav1 != nav2) {
+          PsiElement cur = findIncluder(myElement);
+          PsiElement nav = findIncluder(nav1);
+          throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()) + "; nav=" + (nav == null ? null : nav.getText()));
+        }
+
+        assert nav1 == nav2 : nav1.getContainingFile() +
+                              ":" +
+                              nav1.getTextRange().getStartOffset() +
+                              "!=" +
+                              nav2.getContainingFile() +
+                              ":" +
+                              nav2.getTextRange().getStartOffset() +
+                              "; " +
+                              (nav1 == myElement) +
+                              ";" +
+                              (nav2 == thatElement);
       }
       return true;
     }
     return false;
   }
 
+  @Nullable
+  private static PsiElement findIncluder(PsiElement cur) {
+    while (cur != null && !cur.isPhysical()) {
+      cur = cur.getParent();
+    }
+    return cur;
+  }
+
   private static boolean xmlElementsEqual(@NotNull final PsiElement fst, @NotNull final PsiElement snd) {
     if (fst.equals(snd)) return true;
 
-    if (fst.isPhysical() || snd.isPhysical()) return false;
+    if (fst.isValid() && fst.isPhysical() || snd.isValid() && snd.isPhysical()) return false;
     if (fst.getTextLength() != snd.getTextLength()) return false;
     if (fst.getStartOffsetInParent() != snd.getStartOffsetInParent()) return false;
 

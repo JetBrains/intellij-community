@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 
 import java.util.ArrayList;
@@ -154,9 +155,10 @@ class FormatDecode{
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
 
-            return PsiType.LONG.equals(type) || "java.lang.Long".equals(text) ||
-                    "java.util.Date".equals(text) ||
-                    "java.util.Calendar".equals(text);
+            return PsiType.LONG.equals(type) ||
+                    CommonClassNames.JAVA_LANG_LONG.equals(text) ||
+                    CommonClassNames.JAVA_UTIL_DATE.equals(text) ||
+                    CommonClassNames.JAVA_UTIL_CALENDAR.equals(text);
         }
 
         public String type(){
@@ -169,7 +171,7 @@ class FormatDecode{
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
             return PsiType.CHAR.equals(type) ||
-                    "java.lang.Character".equals(text);
+                    CommonClassNames.JAVA_LANG_CHARACTER.equals(text);
         }
 
         public String type(){
@@ -181,10 +183,14 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return PsiType.INT.equals(type) || "java.lang.Integer".equals(text) ||
-                   PsiType.LONG.equals(type) || "java.lang.Long".equals(text) ||
-                   PsiType.SHORT.equals(type) || "java.lang.Short".equals(text) ||
-                   PsiType.BYTE.equals(type) || "java.lang.Byte".equals(text) ||
+            return PsiType.INT.equals(type) ||
+                    CommonClassNames.JAVA_LANG_INTEGER.equals(text) ||
+                    PsiType.LONG.equals(type) ||
+                    CommonClassNames.JAVA_LANG_LONG.equals(text) ||
+                    PsiType.SHORT.equals(type) ||
+                    CommonClassNames.JAVA_LANG_SHORT.equals(text) ||
+                    PsiType.BYTE.equals(type) ||
+                    CommonClassNames.JAVA_LANG_BYTE.equals(text) ||
                     "java.math.BigInteger".equals(text);
         }
 
@@ -197,8 +203,10 @@ class FormatDecode{
 
         public boolean valid(PsiType type){
             final String text = type.getCanonicalText();
-            return PsiType.DOUBLE.equals(type) || "java.lang.Double".equals(text) ||
-                   PsiType.FLOAT.equals(type) || "java.lang.Float".equals(text) ||
+            return PsiType.DOUBLE.equals(type) ||
+                    CommonClassNames.JAVA_LANG_DOUBLE.equals(text) ||
+                   PsiType.FLOAT.equals(type) ||
+                    CommonClassNames.JAVA_LANG_FLOAT.equals(text) ||
                     "java.math.BigDecimal".equals(text);
         }
 

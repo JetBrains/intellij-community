@@ -64,7 +64,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (!real) {
       if (item.getObject() instanceof String) {
-        return new EmptyIcon(0, 0);
+        return EmptyIcon.ICON_0;
       }
 
       return new EmptyIcon(SAMPLE_ICON.getIconWidth() * 2, SAMPLE_ICON.getIconHeight());

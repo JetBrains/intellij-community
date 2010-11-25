@@ -103,6 +103,10 @@ interface SoftWrapAwareDocumentParsingListener {
 
   /**
    * Notifies current listener that particular document region re-parsing is about to begin.
+   * <p/>
+   * There is a possible case that recalculation is finished abruptly
+   * (see {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)}). So, the listener is expected to be able to rollback
+   * all changes made after the current method call if necessary
    * 
    * @param event   object that contains information about re-parsed document region
    */
@@ -112,6 +116,8 @@ interface SoftWrapAwareDocumentParsingListener {
    * Notifies current listener that particular document region re-parsing has just finished.
    *
    * @param event   object that contains information about re-parsed document region
+   * @param normal  flag that indicates if recalculation is finished correctly. All information about changed region
+   *                should be rolled back if this param value is <code>false</code>
    */
-  void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event);
+  void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal);
 }

@@ -43,6 +43,7 @@ public class XmlSmartCompletionProvider {
 
     final XmlTag tag = (XmlTag)element.getParent();
     final XmlTag parentTag = tag.getParentTag();
+    if (parentTag == null) return;
     final XmlContentDFA dfa = XmlContentDFA.getContentDFA(parentTag);
     if (dfa == null) return;
     ApplicationManager.getApplication().runReadAction(new Runnable() {

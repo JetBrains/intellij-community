@@ -49,6 +49,8 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
 
     mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
     mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
+
+
   }
 
   public void apply() {

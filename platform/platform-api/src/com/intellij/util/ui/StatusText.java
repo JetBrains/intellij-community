@@ -37,6 +37,8 @@ public abstract class StatusText {
   private Component myOwner;
   private final MouseAdapter myMouseListener;
 
+  private boolean myIsDefaultText;
+
   private String myText = "";
   private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
   private final ArrayList<ActionListener> myClickListeners = new ArrayList<ActionListener>();
@@ -72,6 +74,7 @@ public abstract class StatusText {
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
     setText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
+    myIsDefaultText = true;
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -118,29 +121,40 @@ public abstract class StatusText {
     return myText;
   }
 
-  public void setText(String text) {
-    setText(text, DEFAULT_ATTRIBUTES);
+  public StatusText setText(String text) {
+    return setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public void setText(String text, SimpleTextAttributes attrs) {
-    clear();
-    appendText(text, attrs);
+  public StatusText setText(String text, SimpleTextAttributes attrs) {
+    return clear().appendText(text, attrs);
   }
 
-  public void clear() {
+  public StatusText clear() {
     myText = "";
     myComponent.clear();
     myClickListeners.clear();
+    return this;
   }
 
-  public void appendText(String text, SimpleTextAttributes attrs) {
-    appendText(text, attrs, null);
+  public StatusText appendText(String text) {
+    return appendText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public void appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(String text, SimpleTextAttributes attrs) {
+    return appendText(text, attrs, null);
+  }
+
+  public StatusText appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+    if (myIsDefaultText) {
+      clear();
+      myIsDefaultText = false;
+    }
+
     myText += text;
     myComponent.append(text, attrs);
     myClickListeners.add(listener);
+
+    return this;
   }
 
   public void paint(Component owner, Graphics g) {

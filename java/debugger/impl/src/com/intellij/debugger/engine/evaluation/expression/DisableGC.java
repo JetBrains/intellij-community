@@ -38,6 +38,10 @@ public class DisableGC implements Evaluator{
     return result;
   }
 
+  public Evaluator getDelegate() {
+    return myDelegate;
+  }
+
   public Modifier getModifier() {
     return myDelegate.getModifier();
   }

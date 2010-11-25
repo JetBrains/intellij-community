@@ -39,7 +39,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class LookupCellRenderer implements ListCellRenderer {
-  private Icon myEmptyIcon = new EmptyIcon(5);
+  private Icon myEmptyIcon = EmptyIcon.create(5);
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
   private final FontMetrics myNormalMetrics;

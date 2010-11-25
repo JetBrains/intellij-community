@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,9 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             throws IncorrectOperationException {
         final PsiJavaToken switchToken = (PsiJavaToken) element;
         PsiIfStatement ifStatement = (PsiIfStatement)switchToken.getParent();
-        assert ifStatement != null;
+        if (ifStatement == null) {
+            return;
+        }
         boolean breaksNeedRelabeled = false;
         PsiStatement breakTarget = null;
         String labelString = "";
@@ -78,8 +80,9 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             final Set<String> topLevelVariables = new HashSet<String>(5);
             final Set<String> innerVariables = new HashSet<String>(5);
             final PsiExpression condition = ifStatement.getCondition();
-            final PsiExpression[] labels =
-                    getValuesFromCondition(condition, caseExpression);
+            final List<PsiExpression> labels =
+                    getValuesFromExpression(condition, caseExpression,
+                            new ArrayList());
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             DeclarationUtils.calculateVariablesDeclared(thenBranch,
                     topLevelVariables,
@@ -139,7 +142,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         }
 
         @NonNls final StringBuilder switchStatementText =
-                new StringBuilder(1024);
+                new StringBuilder();
         switchStatementText.append("switch(");
         switchStatementText.append(caseExpression.getText());
         switchStatementText.append(')');
@@ -224,7 +227,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             if (sibling instanceof PsiWhiteSpace) {
                 final String whiteSpaceText = sibling.getText();
                 if (whiteSpaceText.startsWith("\n")) {
-                    commentText = whiteSpaceText.substring(1) + comment.getText();
+                    commentText = whiteSpaceText.substring(1) +
+                            comment.getText();
                 } else {
                     commentText = comment.getText();
                 }
@@ -247,7 +251,8 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             if (sibling instanceof PsiWhiteSpace) {
                 final String whiteSpaceText = sibling.getText();
                 if (whiteSpaceText.startsWith("\n")) {
-                    commentText = whiteSpaceText.substring(1) + comment.getText();
+                    commentText = whiteSpaceText.substring(1) +
+                            comment.getText();
                 } else {
                     commentText = comment.getText();
                 }
@@ -276,17 +281,27 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         }
     }
 
-    private static PsiExpression[] getValuesFromCondition(
-            PsiExpression condition, PsiExpression caseExpression) {
-        final List<PsiExpression> values = new ArrayList<PsiExpression>(10);
-        getValuesFromExpression(condition, caseExpression, values);
-        return values.toArray(new PsiExpression[values.size()]);
-    }
-
-    private static void getValuesFromExpression(PsiExpression expression,
-                                                PsiExpression caseExpression,
-                                                List<PsiExpression> values) {
-        if (expression instanceof PsiBinaryExpression) {
+    private static List<PsiExpression> getValuesFromExpression(
+            PsiExpression expression, PsiExpression caseExpression,
+            List<PsiExpression> values) {
+        if (expression instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            final PsiExpression argument = arguments[0];
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                    argument)) {
+                values.add(qualifierExpression);
+            } else {
+                values.add(argument);
+            }
+        } else if (expression instanceof PsiBinaryExpression) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression)expression;
             final PsiExpression lhs = binaryExpression.getLOperand();
@@ -312,6 +327,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
             final PsiExpression contents = parenExpression.getExpression();
             getValuesFromExpression(contents, caseExpression, values);
         }
+        return values;
     }
 
     private static void dumpBranch(StringBuilder switchStatementString,

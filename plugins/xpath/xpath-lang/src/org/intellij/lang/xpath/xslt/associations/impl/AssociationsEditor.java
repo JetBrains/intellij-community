@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -45,7 +46,7 @@ class AssociationsEditor {
 
     private JPanel myComponent;
     private JPanel myToolbar;
-    private JList myList;
+    private JBList myList;
     private Tree myTree;
     private JSplitPane mySplitPane;
 
@@ -101,6 +102,8 @@ class AssociationsEditor {
         } else {
             mySplitPane.setDividerLocation(location);
         }
+
+        myList.getEmptyText().setText("No associated files");
     }
 
     private void expandTree(DefaultTreeModel newModel, Project project, ProjectTreeBuilder builder) {

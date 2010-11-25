@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -185,11 +184,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     private int endOffset;
     private final TextAttributes attributes;
 
-    private TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
+    TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
       this.contentType = contentType;
       this.startOffset = startOffset;
       this.endOffset = endOffset;
       attributes = contentType.getAttributes();
+    }
+    
+    public int getLength() {
+      return endOffset - startOffset;
+    }
+
+    @Override
+    public String toString() {
+      return contentType + "[" + startOffset + ";" + endOffset + "]";
     }
   }
 
@@ -201,11 +209,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final Object LOCK = new Object();
 
+  /**
+   * Holds number of symbols managed by the current console.
+   * <p/>
+   * Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
+   * are awaiting to be pushed to the document.
+   */
   private int myContentSize;
+
+  /** Buffer for deferred stdout, stderr and stdin output. */
   private StringBuffer myDeferredOutput = new StringBuffer();
+
+  /** Buffer for deferred stdin and stderr output. */
   private StringBuffer myDeferredUserInput = new StringBuffer();
 
+  /**
+   * Holds information about lexical division by offsets of the text already pushed to document.
+   * <p/>
+   * Target offsets are anchored to the document here.
+   */
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
+
+  /**
+   * Holds information about lexical division by offsets of the text that is not yet pushed to document.
+   * <p/>
+   * Target offsets are anchored to the {@link #myDeferredOutput deferred buffer}.
+   */
+  private final List<TokenInfo> myDeferredTokens = new ArrayList<TokenInfo>();
+  
   private final Hyperlinks myHyperlinks = new Hyperlinks();
   private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
 
@@ -280,7 +311,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     this(project, GlobalSearchScope.allScope(project), viewer, fileType);
   }
 
-
   public ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType) {
     super(new BorderLayout());
     isViewer = viewer;
@@ -320,6 +350,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       myDeferredTypes.clear();
       myDeferredUserInput = new StringBuffer();
+      myDeferredTokens.clear();
       myHyperlinks.clear();
       myTokens.clear();
       if (myEditor == null) return;
@@ -445,6 +476,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void print(String s, final ConsoleViewContentType contentType) {
     synchronized (LOCK) {
+      int numberOfSymbolsToProceed = s.length();
+      if (contentType != ConsoleViewContentType.USER_INPUT) {
+        numberOfSymbolsToProceed = trimDeferredOutputIfNecessary(s.length());
+      }
+      
+      if (numberOfSymbolsToProceed <= 0) {
+        return;
+      }
+      
+      if (numberOfSymbolsToProceed < s.length()) {
+        s = s.substring(s.length() - numberOfSymbolsToProceed);
+      }
+      
       myDeferredTypes.add(contentType);
 
       s = StringUtil.convertLineSeparators(s);
@@ -454,7 +498,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myDeferredUserInput.append(s);
       }
 
-      addToken(s.length(), contentType);
+      addToken(s.length(), contentType, myDeferredTokens);
 
       if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
         if (contentType == ConsoleViewContentType.USER_INPUT) {
@@ -468,23 +512,124 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  /**
+   * IJ console works as follows - it receives managed process outputs from dedicated thread that serves that process and
+   * pushes it to the {@link Document document} of editor used to represent process console. Important point here is that process
+   * output is received in a control flow of the thread over than EDT but push to the document is performed from EDT. Hence, we 
+   * have a potential situation when particular process outputs a lot and EDT is busy or push to the document is performed slowly.
+   * <p/>
+   * We don't want to keep too many information from the underlying process then and want to trim text buffer that holds text
+   * to push to the document then. Current method serves exactly that purpose, i.e. it's expected to be called when new chunk of
+   * text is received from the underlying process and trims existing text buffer if necessary.
+   * 
+   * @param numberOfNewSymbols    number of symbols read from the managed process output
+   * @return                      number of newly read symbols that should be accepted
+   */
+  private int trimDeferredOutputIfNecessary(final int numberOfNewSymbols) {
+    if (!USE_CYCLIC_BUFFER || myDeferredOutput.length() <= 0 || myDeferredOutput.length() + numberOfNewSymbols <= CYCLIC_BUFFER_SIZE) {
+      return numberOfNewSymbols;
+    }
+    
+    final int numberOfSymbolsToRemove = myDeferredOutput.length() + numberOfNewSymbols - CYCLIC_BUFFER_SIZE;
+    myDeferredTypes.clear();
+    
+    int removedSymbolsNumber = 0;
+    int endIndex = -1;
+    for (int i = 0; i < myDeferredTokens.size(); i++) {
+      TokenInfo tokenInfo = myDeferredTokens.get(i);
+      
+      if (removedSymbolsNumber < numberOfSymbolsToRemove) {
+        int tokenLength = tokenInfo.getLength();
+
+        // Don't remove input text.
+        if (tokenInfo.contentType == ConsoleViewContentType.USER_INPUT) {
+          tokenInfo.startOffset -= removedSymbolsNumber;
+          tokenInfo.endOffset -= removedSymbolsNumber;
+          removedSymbolsNumber += tokenLength;
+          continue;
+        }
+        
+        int remainingNumberOfSymbolsToRemove = numberOfSymbolsToRemove - removedSymbolsNumber;
+        if (remainingNumberOfSymbolsToRemove >= tokenLength) {
+          // We assume here that token construction is smart enough to extend end index in case of subsequent tokens of the same type,
+          // hence, we trim deferred text on per-token basis and don't try to remove adjacent tokens together.
+          myDeferredOutput.delete(tokenInfo.startOffset - removedSymbolsNumber, tokenInfo.endOffset - removedSymbolsNumber);
+          removedSymbolsNumber += tokenLength;
+        }
+        else {
+          // We assume here that token construction is smart enough to extend end index in case of subsequent tokens of the same type,
+          // hence, we trim deferred text on per-token basis and don't try to remove adjacent tokens together.
+          myDeferredOutput.delete(
+            tokenInfo.startOffset - removedSymbolsNumber,
+            tokenInfo.startOffset - removedSymbolsNumber + remainingNumberOfSymbolsToRemove
+          );
+          tokenInfo.startOffset += remainingNumberOfSymbolsToRemove;
+          removedSymbolsNumber = numberOfSymbolsToRemove;
+        }
+      }
+            
+      if (removedSymbolsNumber < numberOfSymbolsToRemove) {
+        continue;
+      }
+      
+      if (endIndex < 0) {
+        endIndex = i;
+      }
+
+      tokenInfo.startOffset -= numberOfSymbolsToRemove;
+      tokenInfo.endOffset -= numberOfSymbolsToRemove;
+      myDeferredTypes.add(tokenInfo.contentType);
+    }
+    
+    if (endIndex < 0) {
+      myDeferredTokens.clear();
+    }
+    else if (endIndex > 0) {
+      myDeferredTokens.subList(0, endIndex).clear();
+    }
+
+    if (!myDeferredTokens.isEmpty()) {
+      TokenInfo tokenInfo = myDeferredTokens.get(0);
+      if (tokenInfo.startOffset > 0) {
+        myDeferredTokens.add(0, new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
+        myDeferredTypes.add(ConsoleViewContentType.USER_INPUT);
+      }
+    }
+
+    myContentSize -= removedSymbolsNumber;
+    if (numberOfNewSymbols + myDeferredOutput.length() > CYCLIC_BUFFER_SIZE) {
+      int result = CYCLIC_BUFFER_SIZE - myDeferredOutput.length();
+      if (result < 0) {
+        return 0;
+      }
+      return result;
+    }
+    return numberOfNewSymbols;
+  }
+  
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
     myContentSize+=length;
     addToken(length, contentType);
   }
 
   private void addToken(int length, ConsoleViewContentType contentType) {
-    boolean needNew = true;
-    if (!myTokens.isEmpty()) {
-      final TokenInfo lastToken = myTokens.get(myTokens.size() - 1);
+    addToken(length, contentType, myTokens);
+  }
+
+  private static void addToken(int length, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
+    int startOffset = 0;
+    if (!tokens.isEmpty()) {
+      final TokenInfo lastToken = tokens.get(tokens.size() - 1);
       if (lastToken.contentType == contentType) {
-        lastToken.endOffset = myContentSize; // optimization
-        needNew = false;
+        lastToken.endOffset += length; // optimization
+        return;
+      }
+      else {
+        startOffset = lastToken.endOffset;
       }
     }
-    if (needNew) {
-      myTokens.add(new TokenInfo(contentType, myContentSize - length, myContentSize));
-    }
+
+    tokens.add(new TokenInfo(contentType, startOffset, startOffset + length));
   }
 
   private ModalityState getStateForUpdate() {
@@ -512,12 +657,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     final String text;
+    final Collection<ConsoleViewContentType> contentTypes;
     synchronized (LOCK) {
       if (myOutputPaused) return;
       if (myDeferredOutput.length() == 0) return;
       if (myEditor == null) return;
 
       text = myDeferredOutput.substring(0, myDeferredOutput.length());
+      contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myDeferredTypes));
+      for (TokenInfo deferredToken : myDeferredTokens) {
+        addToken(deferredToken.getLength(), deferredToken.contentType);
+      }
+      myDeferredTokens.clear();
+      myDeferredTypes.clear();
       if (USE_CYCLIC_BUFFER) {
         myDeferredOutput = new StringBuffer(Math.min(myDeferredOutput.length(), CYCLIC_BUFFER_SIZE));
       }
@@ -532,8 +684,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         document.insertString(document.getTextLength(), text);
-        synchronized (LOCK) {
-          fireChange();
+        if (!contentTypes.isEmpty()) {
+          for (ChangeListener each : myListeners) {
+            each.contentAdded(contentTypes);
+          }
         }
       }
     }, null, DocCommandGroupId.noneGroupId(document));
@@ -1472,9 +1626,52 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(AnActionEvent e, final boolean state) {
         super.setSelected(e, state);
-        EditorSettingsExternalizable.getInstance().setUseSoftWraps(myEditor.getSettings().isUseSoftWraps(), SoftWrapAppliancePlaces.CONSOLE);
+
+        final String placeholder = myCommandLineFolding.getPlaceholder(0);
+        if (state && placeholder == null) {
+          return;
+        }
+        
+        final FoldingModel foldingModel = myEditor.getFoldingModel();
+        FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
+        Runnable foldTask = null;
+        
+        final int endFoldRegionOffset = myEditor.getDocument().getLineEndOffset(0);
+        Runnable addCollapsedFoldRegionTask = new Runnable() {
+          @Override
+          public void run() {
+            FoldRegion foldRegion = foldingModel.addFoldRegion(0, endFoldRegionOffset, placeholder == null ? "..." : placeholder);
+            if (foldRegion != null) {
+              foldRegion.setExpanded(false);
+            }
+          }
+        };
+        if (foldRegions.length <= 0) {
+          if (!state) {
+            return;
+          }
+          foldTask = addCollapsedFoldRegionTask;
+        }
+        else {
+          final FoldRegion foldRegion = foldRegions[0];
+          if (foldRegion.getStartOffset() == 0 && foldRegion.getEndOffset() == endFoldRegionOffset) {
+            foldTask = new Runnable() {
+              @Override
+              public void run() {
+                foldRegion.setExpanded(!state);
+              }
+            };
+          }
+          else if (state) {
+            foldTask = addCollapsedFoldRegionTask;
+          }
+        }
+        
+        if (foldTask != null) {
+          foldingModel.runBatchFoldingOperation(foldTask);
+        }
       }
     };
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
@@ -1504,17 +1701,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void setEditorEnabled(boolean enabled) {
     myEditor.getContentComponent().setEnabled(enabled);
-  }
-
-  private void fireChange() {
-    if (myDeferredTypes.isEmpty()) return;
-    Collection<ConsoleViewContentType> types = Collections.unmodifiableCollection(myDeferredTypes);
-
-    for (ChangeListener each : myListeners) {
-      each.contentAdded(types);
-    }
-
-    myDeferredTypes.clear();
   }
 
   public void addChangeListener(final ChangeListener listener, final Disposable parent) {

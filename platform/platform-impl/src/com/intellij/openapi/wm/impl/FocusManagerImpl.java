@@ -614,6 +614,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
+  @Override
+  public Component getLastFocusedFor(IdeFrame frame) {
+    WeakReference<Component> ref = myLastFocused.get(frame);
+    return ref != null ? ref.get() : null;
+  }
+
   private static class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;

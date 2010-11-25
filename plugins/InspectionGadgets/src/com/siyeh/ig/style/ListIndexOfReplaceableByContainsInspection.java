@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,7 +235,8 @@ public class ListIndexOfReplaceableByContainsInspection
                     GlobalSearchScope.allScope(project);
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
             final PsiClass javaUtilListClass =
-                    psiFacade.findClass("java.util.List", projectScope);
+                    psiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST,
+                            projectScope);
             if (javaUtilListClass == null) {
                 return false;
             }

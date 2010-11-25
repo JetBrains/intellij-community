@@ -46,7 +46,7 @@ import java.util.Set;
 
 public class ActionMenuItem extends JMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
-  private static final Icon ourUncheckedIcon = new EmptyIcon(18, 18);
+  private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;

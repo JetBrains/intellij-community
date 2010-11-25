@@ -138,7 +138,7 @@ public class ExpressionUtils {
                 return false;
             }
             final PsiType type = castType.getType();
-            return TypeUtils.typeEquals("java.lang.String", type);
+            return TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, type);
         }
         return false;
     }

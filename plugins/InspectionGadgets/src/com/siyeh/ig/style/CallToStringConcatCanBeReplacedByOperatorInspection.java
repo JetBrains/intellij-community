@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class CallToStringConcatCanBeReplacedByOperatorInspection
         extends BaseInspection {
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -39,17 +40,20 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
                 "call.to.string.concat.can.be.replaced.by.operator.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "call.to.string.concat.can.be.replaced.by.operator.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new CallToStringConcatCanBeReplacedByOperatorFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CallToStringConcatCanBeReplacedByOperatorVisitor();
     }
@@ -62,6 +66,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
             return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
         }
 
+        @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -91,7 +96,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
             final PsiExpression argument = arguments[0];
             @NonNls
             final String newExpression =
-                    qualifier.getText() + "+" + argument.getText();
+                    qualifier.getText() + '+' + argument.getText();
             replaceExpression(methodCallExpression, newExpression);
         }
     }
@@ -102,15 +107,18 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
         @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            final PsiManager manager = expression.getManager();
-          final PsiClass stringClass =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.String", expression.getResolveScope());
+            final Project project = expression.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass stringClass =
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING,
+                            expression.getResolveScope());
             if (stringClass == null) {
                 return;
             }
           final PsiClassType stringType =
-                    JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(stringClass);
-            if (!MethodCallUtils.isCallToMethod(expression, "java.lang.String",
+                    psiFacade.getElementFactory().createType(stringClass);
+            if (!MethodCallUtils.isCallToMethod(expression,
+                    CommonClassNames.JAVA_LANG_STRING,
                     stringType, "concat", stringType)) {
                 return;
             }

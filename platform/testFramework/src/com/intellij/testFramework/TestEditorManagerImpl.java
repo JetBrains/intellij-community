@@ -66,7 +66,9 @@ import java.util.Map;
 
   @Override
   @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file, boolean focusEditor) {
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                        boolean focusEditor,
+                                                                        boolean useActiveSplitter) {
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});

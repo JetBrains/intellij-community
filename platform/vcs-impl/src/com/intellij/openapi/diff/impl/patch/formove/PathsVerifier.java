@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -463,7 +464,21 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
       myBeforePaths.add(new FilePathImpl(file.getParent(), file.getName(), file.isDirectory()));
-      final VirtualFile moveResult = movedFile.doMove();
+      final IOException[] exc = new IOException[1];
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            final VirtualFile moveResult = movedFile.doMove();
+          }
+          catch (IOException e) {
+            exc[0] = e;
+          }
+        }
+      });
+      if (exc[0] != null) {
+        throw exc[0];
+      }
     }
   }
 
@@ -540,13 +555,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     public Collection<FilePatch> doDelayed() {
       final List<FilePatch> result = new LinkedList<FilePatch>();
       if (! myOverrideExisting.isEmpty()) {
-        final String prompt = myOverrideExisting.size() == 1 ? "The following file already exists. Do you want to override it?" :
-          "The following files already exist. Do you want to override them?";
-        final String title = "Override existing files";
+        final String title = "Overwrite existing files";
         final Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
           new ArrayList<FilePath>(myOverrideExisting.keySet()), title,
-          "\nThe following files should be created by patch, but they already exist.\nDo you want to override them?\n", title,
-          "The following file should be created by patch, but it already exists.\nDo you want to override it?\n{0}",
+          "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
+          "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
           VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
         if (selected != null) {
           for (FilePath path : selected) {

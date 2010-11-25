@@ -25,6 +25,7 @@ import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
+import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -33,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -487,6 +489,51 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     @Override
     public String toString() {
       return getText();
+    }
+  }
+
+  public static class EditIntentionSettingsAction implements IntentionAction {
+    private String myFamilyName;
+
+    public EditIntentionSettingsAction(IntentionAction action) {
+      myFamilyName = action.getFamilyName();
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Edit intention settings";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      final IntentionSettingsConfigurable configurable = new IntentionSettingsConfigurable();
+      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+        @Override
+        public void run() {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              configurable.selectIntention(myFamilyName);
+            }
+          });
+        }
+      });
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

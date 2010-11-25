@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-def ctx = context(scope: scriptScope(), scripttype : ["gant"])
+def ctx = context(scope: scriptScope(), scriptType : "gant")
 
 contributor ([ctx], {
   property name:"ant", type:"org.codehaus.gant.GantBuilder"

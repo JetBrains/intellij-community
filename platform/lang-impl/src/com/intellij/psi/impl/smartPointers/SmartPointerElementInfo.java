@@ -28,4 +28,6 @@ interface SmartPointerElementInfo {
 
   @Nullable
   PsiElement restoreElement();
+
+  void dispose();
 }

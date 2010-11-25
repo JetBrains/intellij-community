@@ -24,8 +24,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -56,7 +58,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
     if (node == null) return;
     IElementType type = node.getElementType();
 
-    if (BLOCK_SET.contains(type) || type == CLOSABLE_BLOCK) {
+    if (BLOCK_SET.contains(type) && !isSingleClassBody(element) || type == CLOSABLE_BLOCK) {
       if (isMultiline(element)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
@@ -81,6 +83,21 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
       GroovyFile file = (GroovyFile)element;
       addFoldingsForImports(descriptors, file);
     }
+  }
+
+  private static boolean isSingleClassBody(PsiElement element) {
+    if (element instanceof GrTypeDefinitionBody) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrTypeDefinition &&
+          !((GrTypeDefinition)parent).isAnonymous() &&
+          ((GrTypeDefinition)parent).getContainingClass() == null) {
+        final PsiFile file = element.getContainingFile();
+        if (file instanceof GroovyFile) {
+          return ((GroovyFile)file).getClasses().length == 1;
+        }
+      }
+    }
+    return false;
   }
 
   private static void addFoldingForStrings(List<FoldingDescriptor> descriptors, ASTNode node) {

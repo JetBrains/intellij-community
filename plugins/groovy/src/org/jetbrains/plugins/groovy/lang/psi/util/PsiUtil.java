@@ -318,7 +318,7 @@ public class PsiUtil {
         }
 
         if (!ref.isReferenceTo(resolved)) {
-          setQualifier(ref, qualifier);
+          setQualifier(ref, qualifier.copy());
           return false;
         } else {
           return true;
@@ -668,11 +668,12 @@ public class PsiUtil {
       MethodResolverProcessor processor = new MethodResolverProcessor("getAt", expr, false, qualifierType, argTypes, PsiType.EMPTY_ARRAY);
 
       final PsiClass qClass = resolveResult.getElement();
+      final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
       if (qClass != null) {
-        qClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY), null, expr);
+        qClass.processDeclarations(processor, state, null, expr);
       }
 
-      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr);
+      ResolveUtil.processNonCodeMethods(qualifierType, processor, expr, state);
       final GroovyResolveResult[] candidates = processor.getCandidates();
       PsiType type = null;
       if (candidates.length == 1) {

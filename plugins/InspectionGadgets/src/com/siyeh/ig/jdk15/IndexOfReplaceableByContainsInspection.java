@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Bas Leijdekkers
+ * Copyright 2005-2010  Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,7 +227,8 @@ public class IndexOfReplaceableByContainsInspection
             }
             final PsiType argumentType = arguments[0].getType();
             if (argumentType == null ||
-                    !argumentType.equalsToText("java.lang.String")) {
+                    !argumentType.equalsToText(
+                            CommonClassNames.JAVA_LANG_STRING)) {
                 return false;
             }
             final PsiExpression qualifier =
@@ -237,7 +238,7 @@ public class IndexOfReplaceableByContainsInspection
             }
             final PsiType qualifierType = qualifier.getType();
             return qualifierType != null &&
-                   qualifierType.equalsToText("java.lang.String");
+                   qualifierType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
         }
     }
 }

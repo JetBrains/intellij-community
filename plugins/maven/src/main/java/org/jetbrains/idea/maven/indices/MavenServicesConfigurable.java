@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.Processor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
@@ -56,7 +57,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
-  private JTable myTable;
+  private JBTable myIndicesTable;
   private JButton myUpdateButton;
   private JButton myRemoveButton;
   private JButton myAddButton;
@@ -125,26 +126,29 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
       }
     });
 
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    myIndicesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         updateButtonsState();
       }
     });
 
-    myTable.addMouseMotionListener(new MouseMotionListener() {
+    myIndicesTable.addMouseMotionListener(new MouseMotionListener() {
       public void mouseDragged(MouseEvent e) {
       }
 
       public void mouseMoved(MouseEvent e) {
-        int row = myTable.rowAtPoint(e.getPoint());
+        int row = myIndicesTable.rowAtPoint(e.getPoint());
         if (row == -1) return;
         updateIndexHint(row);
       }
     });
 
-    myTable.setDefaultRenderer(Object.class, new MyCellRenderer());
-    myTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
+    myIndicesTable.setDefaultRenderer(Object.class, new MyCellRenderer());
+    myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
                                new MyIconCellRenderer());
+
+    myServiceList.getEmptyText().setText("No services");
+    myIndicesTable.getEmptyText().setText("No remote repositories");
 
     updateButtonsState();
   }
@@ -165,7 +169,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
             sb.append("\n  ");
             sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
           }
-          Messages.showMessageDialog(sb.toString(), "Service Connection Successfull", Messages.getInformationIcon());
+          Messages.showMessageDialog(sb.toString(), "Service Connection Successful", Messages.getInformationIcon());
         }
         return true;
       }
@@ -173,7 +177,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   }
 
   private void updateButtonsState() {
-    boolean hasSelection = !myTable.getSelectionModel().isSelectionEmpty();
+    boolean hasSelection = !myIndicesTable.getSelectionModel().isSelectionEmpty();
     myUpdateButton.setEnabled(hasSelection);
   }
 
@@ -181,10 +185,10 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
     MavenIndex index = getIndexAt(row);
     String message = index.getFailureMessage();
     if (message == null) {
-      myTable.setToolTipText(null);
+      myIndicesTable.setToolTipText(null);
     }
     else {
-      myTable.setToolTipText(message);
+      myIndicesTable.setToolTipText(message);
     }
   }
 
@@ -194,14 +198,14 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
 
   private List<MavenIndex> getSelectedIndices() {
     List<MavenIndex> result = new ArrayList<MavenIndex>();
-    for (int i : myTable.getSelectedRows()) {
+    for (int i : myIndicesTable.getSelectedRows()) {
       result.add(getIndexAt(i));
     }
     return result;
   }
 
   private MavenIndex getIndexAt(int i) {
-    MyTableModel model = (MyTableModel)myTable.getModel();
+    MyTableModel model = (MyTableModel)myIndicesTable.getModel();
     return model.getIndex(i);
   }
 
@@ -238,18 +242,18 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
     myServiceUrls.addAll(MavenServicesManager.getInstance().getUrls());
     myServiceList.setModel(new CollectionListModel(myServiceUrls));
 
-    myTable.setModel(new MyTableModel(myManager.getIndices()));
-    myTable.getColumnModel().getColumn(0).setPreferredWidth(400);
-    myTable.getColumnModel().getColumn(1).setPreferredWidth(50);
-    myTable.getColumnModel().getColumn(2).setPreferredWidth(50);
-    myTable.getColumnModel().getColumn(3).setPreferredWidth(20);
+    myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
+    myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
+    myIndicesTable.getColumnModel().getColumn(1).setPreferredWidth(50);
+    myIndicesTable.getColumnModel().getColumn(2).setPreferredWidth(50);
+    myIndicesTable.getColumnModel().getColumn(3).setPreferredWidth(20);
 
     myUpdatingIcon = new AsyncProcessIcon(IndicesBundle.message("maven.indices.updating"));
     myUpdatingIcon.resume();
 
     myTimerListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myTable.repaint();
+        myIndicesTable.repaint();
       }
     };
     myRepaintTimer = new Timer(AsyncProcessIcon.CYCLE_LENGTH / AsyncProcessIcon.COUNT, myTimerListener);

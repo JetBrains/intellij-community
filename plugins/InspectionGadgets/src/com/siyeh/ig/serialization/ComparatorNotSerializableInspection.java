@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,23 +30,27 @@ import org.jetbrains.annotations.Nullable;
 
 public class ComparatorNotSerializableInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "comparator.not.serializable.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "comparator.not.serializable.problem.descriptor");
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MakeSerializableFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ComparatorNotSerializableVisitor();
     }
@@ -58,7 +63,8 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
             if (aClass instanceof PsiAnonymousClass) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "java.util.Comparator")) {
+            if (!ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_UTIL_COMPARATOR)) {
                 return;
             }
             if (SerializationUtils.isSerializable(aClass)) {

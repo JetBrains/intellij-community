@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreExpressionsContainingConstants = false;
 
+    @Override
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
           InspectionGadgetsBundle.message(
@@ -61,16 +62,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "pointless.boolean.expression.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         if(infos[0] instanceof PsiBinaryExpression){
@@ -88,6 +92,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new PointlessBooleanExpressionVisitor();
     }
@@ -176,6 +181,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         }
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new BooleanLiteralComparisonFix();
     }
@@ -188,6 +194,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
@@ -236,7 +243,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
                 return;
             }
             if(!rhsType.equals(PsiType.BOOLEAN)&&
-                       !rhsType.equalsToText("java.lang.Boolean")){
+                       !rhsType.equalsToText(
+                               CommonClassNames.JAVA_LANG_BOOLEAN)){
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
@@ -245,7 +253,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
                 return;
             }
             if(!lhsType.equals(PsiType.BOOLEAN) &&
-                       !lhsType.equalsToText("java.lang.Boolean")){
+                       !lhsType.equalsToText(
+                               CommonClassNames.JAVA_LANG_BOOLEAN)){
                 return;
             }
             final IElementType tokenType = sign.getTokenType();
@@ -319,7 +328,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && value;
+        return value != null && value.booleanValue();
     }
 
     private  boolean isFalse(PsiExpression expression){
@@ -333,6 +342,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && !value;
+        return value != null && !value.booleanValue();
     }
 }

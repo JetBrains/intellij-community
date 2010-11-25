@@ -35,6 +35,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Set;
 
@@ -167,15 +168,27 @@ public class DomSemContributor extends SemContributor {
 
         if (parent == null) return null;
 
-        final CustomDomChildrenDescription customDescription = parent.getGenericInfo().getCustomNameChildrenDescription();
+        DomGenericInfoEx info = parent.getGenericInfo();
+        final CustomDomChildrenDescription customDescription = info.getCustomNameChildrenDescription();
         if (customDescription == null) return null;
 
         if (mySemService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
             mySemService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
-            final CollectionElementInvocationHandler handler =
-              new CollectionElementInvocationHandler(customDescription.getType(), tag, (AbstractCollectionChildDescription)customDescription, parent);
-            tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
-            return handler;
+
+          String localName = tag.getLocalName();
+          XmlFile file = parent.getFile();
+          for (final DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
+            XmlName xmlName = description.getXmlName();
+            if (localName.equals(xmlName.getLocalName()) && DomImplUtil.isNameSuitable(xmlName, tag, parent, file)) {
+              return null;
+            }
+          }
+
+          AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)customDescription;
+          Type type = customDescription.getType();
+          final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, desc, parent);
+          tag.putUserData(DomManagerImpl.CACHED_DOM_HANDLER, handler);
+          return handler;
         }
 
         return null;

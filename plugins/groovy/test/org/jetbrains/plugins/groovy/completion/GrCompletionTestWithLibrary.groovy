@@ -69,4 +69,12 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testClosureDefaultParameterInEachMethod() throws Throwable {doBasicTest();}
   public void testEachMethodForRanges() throws Throwable {doBasicTest();}
   public void testEachMethodForEnumRanges() throws Throwable {doBasicTest();}
+
+  public void testTwoMethodWithSameName() {
+    doVariantableTest "fooo", "fooo"
+  }
+
+  public void testIteratorNext() {
+    doVariantableTest "next", "notify", "notifyAll"
+  }
 }

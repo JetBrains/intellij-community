@@ -73,9 +73,9 @@ public class LineStatusTracker {
 
   public void initialize(@NotNull final String upToDateContent) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(BaseLoadState.LOADING == myBaseLoaded);
 
     synchronized (myLock) {
+      LOG.assertTrue(BaseLoadState.LOADING == myBaseLoaded);
       try {
         myUpToDateDocument.setReadOnly(false);
         myUpToDateDocument.replaceString(0, myUpToDateDocument.getTextLength(), upToDateContent);
@@ -218,10 +218,10 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
 
     public void beforeDocumentChange(DocumentEvent e) {
-      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
+        if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
           myFirstChangedLine = myDocument.getLineNumber(e.getOffset());
           myLastChangedLine = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
@@ -270,10 +270,10 @@ public class LineStatusTracker {
     }
 
     public void documentChanged(DocumentEvent e) {
-      if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
+        if (myBulkUpdate || (BaseLoadState.LOADED != myBaseLoaded)) return;
         try {
 
           int line = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
