@@ -225,7 +225,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       String _text = projectPath;
       final String projectName = getProjectName(projectPath);
       if (projectName != null) {
-        _text = String.format("%s - %s", projectPath, projectName);
+        _text = String.format("%s [%s]", projectPath, projectName);
       }
 
       final Presentation presentation = getTemplatePresentation();
