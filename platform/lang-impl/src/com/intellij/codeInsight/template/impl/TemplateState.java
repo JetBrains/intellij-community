@@ -985,7 +985,7 @@ public class TemplateState implements Disposable {
           RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
-            TextRange range = CodeStyleManagerImpl.insertNewLineIndentMarker(myDocument, endVarOffset);
+            TextRange range = CodeStyleManagerImpl.insertNewLineIndentMarker(file, myDocument, endVarOffset);
             if (range != null) rangeMarker = myDocument.createRangeMarker(range);
           }
           int startOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getStartOffset() : myTemplateRange.getStartOffset();
