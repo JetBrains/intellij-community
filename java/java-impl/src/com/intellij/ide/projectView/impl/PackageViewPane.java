@@ -19,6 +19,9 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
@@ -27,6 +30,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -51,13 +55,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
+  private MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   public PackageViewPane(Project project) {
     super(project);
@@ -91,6 +94,12 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public Object getData(final String dataId) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      final PackageElement selectedPackageElement = getSelectedPackageElement();
+      if (selectedPackageElement != null) {
+        return myDeletePSIElementProvider;
+      }
+    }
     if (PackageElement.DATA_KEY.is(dataId)) {
       final PackageElement packageElement = getSelectedPackageElement();
     }
@@ -288,6 +297,32 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         }
       }
       return modules.toArray(new Module[modules.size()]);
+    }
+  }
+
+  private final class MyDeletePSIElementProvider implements DeleteProvider {
+    public boolean canDeleteElement(DataContext dataContext) {
+      for (PsiDirectory directory : getSelectedDirectories()) {
+        if (!directory.getManager().isInProject(directory)) return false;
+      }
+      return true;
+    }
+
+    public void deleteElement(DataContext dataContext) {
+      List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
+      List<PsiElement> validElements = new ArrayList<PsiElement>();
+      for (PsiElement psiElement : allElements) {
+        if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
+      }
+      final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
+
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
+      try {
+        DeleteHandler.deletePsiElement(elements, myProject);
+      }
+      finally {
+        a.finish();
+      }
     }
   }
 }
