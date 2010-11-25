@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
@@ -64,7 +63,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
@@ -227,23 +228,6 @@ public class GitLogUI implements Disposable {
 
   @Override
   public void dispose() {
-  }
-
-  private static class SelectorList extends AbstractList<Integer> {
-    private final static SelectorList ourInstance = new SelectorList();
-
-    public static SelectorList getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public Integer get(int index) {
-      return index;
-    }
-    @Override
-    public int size() {
-      return Integer.MAX_VALUE;
-    }
   }
 
   public UIRefresh getUIRefresh() {
@@ -531,12 +515,18 @@ public class GitLogUI implements Disposable {
 
     final JPanel wrapper = new DataProviderPanel(new BorderLayout());
     wrapper.add(actionToolbar.getComponent(), BorderLayout.NORTH);
-    wrapper.add(scrollPane, BorderLayout.CENTER);
+    final JPanel mainBorderWrapper = new JPanel(new BorderLayout());
+    mainBorderWrapper.add(scrollPane, BorderLayout.CENTER);
+    mainBorderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+    wrapper.add(mainBorderWrapper, BorderLayout.CENTER);
     final JComponent specificDetails = myDetails.create();
+    final JPanel borderWrapper = new JPanel(new BorderLayout());
+    borderWrapper.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
+    borderWrapper.add(specificDetails, BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(true, 0.6f);
     splitter.setFirstComponent(wrapper);
-    splitter.setSecondComponent(specificDetails);
+    splitter.setSecondComponent(borderWrapper);
     splitter.setDividerWidth(4);
     return splitter;
   }

@@ -15,15 +15,10 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.BigArray;
 import com.intellij.openapi.vcs.GroupingMerger;
-import com.intellij.openapi.vcs.ReadonlyListsMerger;
 import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.ReadonlyList;
 import com.intellij.util.containers.StepList;
@@ -154,7 +149,12 @@ public class BigTableTableModel extends AbstractTableModel {
 
     @Override
     public int compare(CommitI o1, CommitI o2) {
-      final long result = o1.getTime() - o2.getTime();
+      long result = o1.getTime() - o2.getTime();
+      if (result == 0) {
+        final Integer rep1 = o1.selectRepository(SelectorList.getInstance());
+        final Integer rep2 = o2.selectRepository(SelectorList.getInstance());
+        result = rep1 - rep2;
+      }
       // descending
       return result == 0 ? 0 : (result < 0 ? 1 : -1);
     }
