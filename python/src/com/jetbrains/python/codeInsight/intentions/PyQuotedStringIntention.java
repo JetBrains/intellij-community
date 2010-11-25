@@ -20,6 +20,7 @@ import java.util.List;
 
 /**
  * User: catherine
+ * Intention to convert between single-quoted and double-quoted strings 
  */
 public class PyQuotedStringIntention extends BaseIntentionAction {
 

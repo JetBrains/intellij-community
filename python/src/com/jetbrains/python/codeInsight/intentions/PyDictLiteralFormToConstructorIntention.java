@@ -8,19 +8,24 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
+ *
+ * Intention to convert dict literal expression to dict constructor if the keys are all string constants on a literal dict.
+ * For instance,
+ * {} -> dict
+ * {'a': 3, 'b': 5} -> dict(a=3, b=5)
+ * {a: 3, b: 5} -> no transformation
  */
 public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction {
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.convert.dict");
+    return PyBundle.message("INTN.convert.dict.literal.to.dict.constructor");
   }
 
+  @NotNull
   public String getText() {
     return PyBundle.message("INTN.convert.dict.literal.to.dict.constructor");
   }

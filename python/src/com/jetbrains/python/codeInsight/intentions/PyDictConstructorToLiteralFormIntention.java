@@ -14,13 +14,20 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
+ * Intention to convert dict constructor to dict literal expression with only explicit keyword arguments
+ * For instance,
+ * dict() -> {}
+ * dict(a=3, b=5) -> {'a': 3, 'b': 5}
+ * dict(foo) -> no transformation
+ * dict(**foo) -> no transformation
  */
 public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction {
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.convert.dict");
+    return PyBundle.message("INTN.convert.dict.constructor.to.dict.literal");
   }
 
+  @NotNull
   public String getText() {
     return PyBundle.message("INTN.convert.dict.constructor.to.dict.literal");
   }
