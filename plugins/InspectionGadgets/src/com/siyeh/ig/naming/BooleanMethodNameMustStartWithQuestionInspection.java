@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -165,7 +166,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 return;
             } else if(!returnType.equals(PsiType.BOOLEAN)){
                 if (ignoreBooleanMethods ||
-                    !returnType.equalsToText("java.lang.Boolean")) {
+                    !returnType.equalsToText(
+                            CommonClassNames.JAVA_LANG_BOOLEAN)) {
                     return;
                 }
             }

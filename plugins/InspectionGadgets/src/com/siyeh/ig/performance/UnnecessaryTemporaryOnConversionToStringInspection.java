@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,19 @@ import java.util.Set;
 public class UnnecessaryTemporaryOnConversionToStringInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.temporary.on.conversion.to.string.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String replacementString = calculateReplacementExpression(
@@ -82,6 +85,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         return qualifierType + ".toString(" + argumentText + ')';
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         final String replacement = calculateReplacementExpression(
                 (PsiMethodCallExpression)infos[0]);
@@ -106,6 +110,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression expression =
@@ -119,6 +124,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryTemporaryObjectVisitor();
     }
@@ -130,14 +136,14 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
         private static final Set<String> s_basicTypes = new HashSet<String>(8);
 
         static {
-            s_basicTypes.add("java.lang.Boolean");
-            s_basicTypes.add("java.lang.Byte");
-            s_basicTypes.add("java.lang.Character");
-            s_basicTypes.add("java.lang.Double");
-            s_basicTypes.add("java.lang.Float");
-            s_basicTypes.add("java.lang.Integer");
-            s_basicTypes.add("java.lang.Long");
-            s_basicTypes.add("java.lang.Short");
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_BYTE);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_DOUBLE);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_FLOAT);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_LONG);
+            s_basicTypes.add(CommonClassNames.JAVA_LANG_SHORT);
         }
 
         @Override public void visitMethodCallExpression(
@@ -168,7 +174,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             final PsiExpression argument = arguments[0];
             final PsiType argumentType = argument.getType();
             if (argumentType != null &&
-                    argumentType.equalsToText("java.lang.String")) {
+                    argumentType.equalsToText(
+                            CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             final PsiType type = qualifier.getType();

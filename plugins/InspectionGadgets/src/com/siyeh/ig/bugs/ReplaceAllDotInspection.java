@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAllDotInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "replace.all.dot.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "replace.all.dot.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SystemSetSecurityManagerVisitor();
     }
@@ -55,24 +58,26 @@ public class ReplaceAllDotInspection extends BaseInspection {
             if (!"replaceAll".equals(methodName)) {
                 return;
             }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 2) {
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 2) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            if (!PsiUtil.isConstantExpression(arg)) {
+            final PsiExpression argument = arguments[0];
+            if (!PsiUtil.isConstantExpression(argument)) {
                 return;
             }
-            final PsiType argType = arg.getType();
-            if (argType == null) {
+            final PsiType argumentType = argument.getType();
+            if (argumentType == null) {
                 return;
             }
-            if (!"java.lang.String".equals(argType.getCanonicalText())) {
+            final String canonicalText = argumentType.getCanonicalText();
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(canonicalText)) {
                 return;
             }
             final String argValue =
-                    (String) ConstantExpressionUtil.computeCastTo(arg, argType);
+                    (String) ConstantExpressionUtil.computeCastTo(argument,
+                            argumentType);
             if (!".".equals(argValue)) {
                 return;
             }
@@ -85,7 +90,7 @@ public class ReplaceAllDotInspection extends BaseInspection {
                 return;
             }
             final String qualifiedName = containingClass.getQualifiedName();
-            if (!"java.lang.String".equals(qualifiedName)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
                 return;
             }
             registerMethodCallError(expression);

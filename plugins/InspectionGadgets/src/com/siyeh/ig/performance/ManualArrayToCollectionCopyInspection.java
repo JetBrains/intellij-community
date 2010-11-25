@@ -564,7 +564,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
             }
             final PsiClass containingClass = method.getContainingClass();
             return ClassUtils.isSubclass(containingClass,
-                    "java.util.Collection");
+                    CommonClassNames.JAVA_UTIL_COLLECTION);
         }
     }
 }

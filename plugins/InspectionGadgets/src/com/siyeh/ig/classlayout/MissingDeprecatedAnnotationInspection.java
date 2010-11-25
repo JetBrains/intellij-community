@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,18 +30,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "missing.deprecated.annotation.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "missing.deprecated.annotation.problem.descriptor");
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new MissingDeprecatedAnnotationFix();
     }
@@ -55,15 +58,15 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
                     "missing.deprecated.annotation.add.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiModifierListOwner parent =
                     (PsiModifierListOwner)identifier.getParent();
             assert parent != null;
-            final PsiManager psiManager = parent.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
             final PsiAnnotation annotation =
                     factory.createAnnotationFromText("@java.lang.Deprecated",
                             parent);
@@ -75,6 +78,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MissingDeprecatedAnnotationVisitor();
     }
@@ -132,7 +136,8 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
                 return false;
             }
             final PsiAnnotation annotation =
-                    modifierList.findAnnotation("java.lang.Deprecated");
+                    modifierList.findAnnotation(
+                            CommonClassNames.JAVA_LANG_DEPRECATED);
             return annotation != null;
         }
 

@@ -119,16 +119,20 @@ public class BooleanConstructorInspection extends BaseInspection {
     private static class BooleanConstructorVisitor
             extends BaseInspectionVisitor{
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
-            if (type == null || !type.equalsToText("java.lang.Boolean")){
+            if (type == null || !type.equalsToText(
+                    CommonClassNames.JAVA_LANG_BOOLEAN)){
                 return;
             }
             final PsiClass aClass = ClassUtils.getContainingClass(expression);
-            if(aClass!=null &&
-                    "java.lang.Boolean".equals(aClass.getQualifiedName())){
-                return;
+            if(aClass != null) {
+                final String qualifiedName = aClass.getQualifiedName();
+                if(CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)){
+                    return;
+                }
             }
             registerError(expression);
         }

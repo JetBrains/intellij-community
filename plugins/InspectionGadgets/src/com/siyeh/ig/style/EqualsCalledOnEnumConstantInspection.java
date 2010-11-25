@@ -142,7 +142,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                    "java.lang.Enum")) {
+                    CommonClassNames.JAVA_LANG_ENUM)) {
                 return;
             }
             registerMethodCallError(expression, expression);

@@ -58,18 +58,12 @@ public class CollectionUtils{
         s_collectionClassesRequiringCapacity.add("java.util.Hashtable");
         s_collectionClassesRequiringCapacity.add("java.util.HashSet");
         s_collectionClassesRequiringCapacity.add("java.util.LinkedHashSet");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.BitSet");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.Vector");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.ArrayList");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.HashMap");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.Hashtable");
-        s_collectionClassesRequiringCapacity
-                .add("com.sun.java.util.collections.HashSet");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.BitSet");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Vector");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.ArrayList");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashMap");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.Hashtable");
+        s_collectionClassesRequiringCapacity.add("com.sun.java.util.collections.HashSet");
 
         s_allCollectionClasses.add("java.util.ArrayList");
         s_allCollectionClasses.add("java.util.EnumMap");
@@ -102,8 +96,8 @@ public class CollectionUtils{
         s_allCollectionClassesAndInterfaces.add("java.util.AbstractSequentialList");
         s_allCollectionClassesAndInterfaces.add("java.util.AbstractSet");
         s_allCollectionClassesAndInterfaces.add("java.util.ArrayList");
-        s_allCollectionClassesAndInterfaces.add("java.util.Collection");
-        s_allCollectionClassesAndInterfaces.add("java.util.Dictionary");
+        s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_COLLECTION);
+        s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_DICTIONARY);
         s_allCollectionClassesAndInterfaces.add("java.util.HashMap");
         s_allCollectionClassesAndInterfaces.add("java.util.HashSet");
         s_allCollectionClassesAndInterfaces.add("java.util.Hashtable");
@@ -111,10 +105,10 @@ public class CollectionUtils{
         s_allCollectionClassesAndInterfaces.add("java.util.LinkedHashMap");
         s_allCollectionClassesAndInterfaces.add("java.util.LinkedHashSet");
         s_allCollectionClassesAndInterfaces.add("java.util.LinkedList");
-        s_allCollectionClassesAndInterfaces.add("java.util.List");
-        s_allCollectionClassesAndInterfaces.add("java.util.Map");
+        s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_LIST);
+        s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_MAP);
         s_allCollectionClassesAndInterfaces.add("java.util.Queue");
-        s_allCollectionClassesAndInterfaces.add("java.util.Set");
+        s_allCollectionClassesAndInterfaces.add(CommonClassNames.JAVA_UTIL_SET);
         s_allCollectionClassesAndInterfaces.add("java.util.SortedMap");
         s_allCollectionClassesAndInterfaces.add("java.util.SortedSet");
         s_allCollectionClassesAndInterfaces.add("java.util.Stack");
@@ -122,34 +116,20 @@ public class CollectionUtils{
         s_allCollectionClassesAndInterfaces.add("java.util.TreeSet");
         s_allCollectionClassesAndInterfaces.add("java.util.Vector");
         s_allCollectionClassesAndInterfaces.add("java.util.WeakHashMap");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.ArrayList");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.Collection");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.HashMap");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.HashSet");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.Hashtable");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.LinkedList");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.List");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.Map");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.Set");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.SortedMap");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.SortedSet");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.TreeMap");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.TreeSet");
-        s_allCollectionClassesAndInterfaces
-                .add("com.sun.java.util.collections.Vector");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.ArrayList");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Collection");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.HashMap");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.HashSet");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Hashtable");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.LinkedList");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.List");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Map");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Set");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.SortedMap");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.SortedSet");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.TreeMap");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.TreeSet");
+        s_allCollectionClassesAndInterfaces.add("com.sun.java.util.collections.Vector");
 
         s_interfaceForCollection.put("ArrayList", "List");
         s_interfaceForCollection.put("EnumMap", "Map");
@@ -166,41 +146,29 @@ public class CollectionUtils{
         s_interfaceForCollection.put("TreeSet", "SortedSet");
         s_interfaceForCollection.put("Vector", "List");
         s_interfaceForCollection.put("WeakHashMap", "Map");
-        s_interfaceForCollection.put("java.util.ArrayList", "java.util.List");
-        s_interfaceForCollection.put("java.util.EnumMap", "java.util.Map");
-        s_interfaceForCollection.put("java.util.EnumSet", "java.util.Set");
-        s_interfaceForCollection.put("java.util.HashMap", "java.util.Map");
-        s_interfaceForCollection.put("java.util.HashSet", "java.util.Set");
-        s_interfaceForCollection.put("java.util.Hashtable", "java.util.Map");
-        s_interfaceForCollection
-                .put("java.util.IdentityHashMap", "java.util.Map");
-        s_interfaceForCollection
-                .put("java.util.LinkedHashMap", "java.util.Map");
-        s_interfaceForCollection
-                .put("java.util.LinkedHashSet", "java.util.Set");
-        s_interfaceForCollection.put("java.util.LinkedList", "java.util.List");
-        s_interfaceForCollection.put("java.util.PriorityQueue",
-                                     "java.util.Queue");
-        s_interfaceForCollection.put("java.util.TreeMap", "java.util.Map");
-        s_interfaceForCollection.put("java.util.TreeSet", "java.util.Set");
-        s_interfaceForCollection.put("java.util.Vector", "java.util.List");
-        s_interfaceForCollection.put("java.util.WeakHashMap", "java.util.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.HashSet",
-                                     "com.sun.java.util.collections.Set");
-        s_interfaceForCollection.put("com.sun.java.util.collections.TreeSet",
-                                     "com.sun.java.util.collections.Set");
-        s_interfaceForCollection.put("com.sun.java.util.collections.Vector",
-                                     "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.ArrayList",
-                                     "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.LinkedList",
-                                     "com.sun.java.util.collections.List");
-        s_interfaceForCollection.put("com.sun.java.util.collections.TreeMap",
-                                     "com.sun.java.util.collections.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.HashMap",
-                                     "com.sun.java.util.collections.Map");
-        s_interfaceForCollection.put("com.sun.java.util.collections.Hashtable",
-                                     "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("java.util.ArrayList", CommonClassNames.JAVA_UTIL_LIST);
+        s_interfaceForCollection.put("java.util.EnumMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.EnumSet", CommonClassNames.JAVA_UTIL_SET);
+        s_interfaceForCollection.put("java.util.HashMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.HashSet", CommonClassNames.JAVA_UTIL_SET);
+        s_interfaceForCollection.put("java.util.Hashtable", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.IdentityHashMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.LinkedHashMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.LinkedHashSet", CommonClassNames.JAVA_UTIL_SET);
+        s_interfaceForCollection.put("java.util.LinkedList", CommonClassNames.JAVA_UTIL_LIST);
+        s_interfaceForCollection.put("java.util.PriorityQueue", "java.util.Queue");
+        s_interfaceForCollection.put("java.util.TreeMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("java.util.TreeSet", CommonClassNames.JAVA_UTIL_SET);
+        s_interfaceForCollection.put("java.util.Vector", CommonClassNames.JAVA_UTIL_LIST);
+        s_interfaceForCollection.put("java.util.WeakHashMap", CommonClassNames.JAVA_UTIL_MAP);
+        s_interfaceForCollection.put("com.sun.java.util.collections.HashSet", "com.sun.java.util.collections.Set");
+        s_interfaceForCollection.put("com.sun.java.util.collections.TreeSet", "com.sun.java.util.collections.Set");
+        s_interfaceForCollection.put("com.sun.java.util.collections.Vector", "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.ArrayList", "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.LinkedList", "com.sun.java.util.collections.List");
+        s_interfaceForCollection.put("com.sun.java.util.collections.TreeMap", "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("com.sun.java.util.collections.HashMap", "com.sun.java.util.collections.Map");
+        s_interfaceForCollection.put("com.sun.java.util.collections.Hashtable", "com.sun.java.util.collections.Map");
     }
 
     private CollectionUtils(){

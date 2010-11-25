@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,28 +35,32 @@ public class CachedNumberConstructorCallInspection
 
     private static final Set<String> cachedNumberTypes = new HashSet<String>();
     static {
-        cachedNumberTypes.add("java.lang.Long");
-        cachedNumberTypes.add("java.lang.Byte");
-        cachedNumberTypes.add("java.lang.Integer");
-        cachedNumberTypes.add("java.lang.Short");
+        cachedNumberTypes.add(CommonClassNames.JAVA_LANG_LONG);
+        cachedNumberTypes.add(CommonClassNames.JAVA_LANG_BYTE);
+        cachedNumberTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
+        cachedNumberTypes.add(CommonClassNames.JAVA_LANG_SHORT);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "cached.number.constructor.call.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "cached.number.constructor.call.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new LongConstructorVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         final PsiNewExpression expression = (PsiNewExpression) infos[0];
         final PsiJavaCodeReferenceElement classReference =
@@ -127,7 +131,8 @@ public class CachedNumberConstructorCallInspection
             final PsiExpression argument = arguments[0];
             final PsiType argumentType = argument.getType();
             if (argumentType == null ||
-                    argumentType.equalsToText("java.lang.String")) {
+                    argumentType.equalsToText(
+                            CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             registerError(expression, expression);

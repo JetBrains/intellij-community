@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 public class AbstractClassExtendsConcreteClassInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "abstract.class.extends.concrete.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "abstract.class.extends.concrete.class.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AbstractClassExtendsConcreteClassVisitor();
     }
@@ -60,7 +64,7 @@ public class AbstractClassExtendsConcreteClassInspection
                 return;
             }
             final String superclassName = superClass.getQualifiedName();
-            if ("java.lang.Object".equals(superclassName)) {
+            if (CommonClassNames.JAVA_LANG_OBJECT.equals(superclassName)) {
                 return;
             }
             registerClassError(aClass);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 public class CallToNativeMethodWhileLockedInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "call.to.native.method.while.locked.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "call.to.native.method.while.locked.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CallToNativeMethodWhileLockedVisitor();
     }
@@ -61,7 +61,7 @@ public class CallToNativeMethodWhileLockedInspection
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if ("java.lang.Object".equals(className)) {
+            if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
                 return;
             }
             if (!SynchronizationUtil.isInSynchronizedContext(expression)) {

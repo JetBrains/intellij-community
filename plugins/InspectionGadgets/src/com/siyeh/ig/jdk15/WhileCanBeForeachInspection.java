@@ -467,9 +467,10 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             if (qualifierClass == null) {
                 return false;
             }
-            if (!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
+            if (!ClassUtils.isSubclass(qualifierClass,
+                    CommonClassNames.JAVA_LANG_ITERABLE) &&
                 !ClassUtils.isSubclass(qualifierClass,
-                        "java.util.Collection")) {
+                        CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 return false;
             }
             final PsiExpression condition = whileStatement.getCondition();

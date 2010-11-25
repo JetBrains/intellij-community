@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class WeakestTypeFinder {
         final Project project = manager.getProject();
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final PsiClass javaLangObjectClass =
-                facade.findClass("java.lang.Object", scope);
+                facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope);
         if (javaLangObjectClass == null ||
                 variableOrMethodClass.equals(javaLangObjectClass)) {
             return Collections.emptyList();
@@ -128,11 +129,12 @@ public class WeakestTypeFinder {
             } else if (referenceParent instanceof PsiForeachStatement) {
                 final PsiForeachStatement foreachStatement =
                         (PsiForeachStatement)referenceParent;
-                if (foreachStatement.getIteratedValue() != referenceElement) {
+                if (!foreachStatement.getIteratedValue().equals(referenceElement)) {
                     return Collections.emptyList();
                 }
                 final PsiClass javaLangIterableClass =
-                        facade.findClass("java.lang.Iterable", scope);
+                        facade.findClass(CommonClassNames.JAVA_LANG_ITERABLE,
+                                scope);
                 if (javaLangIterableClass == null) {
                     return Collections.emptyList();
                 }
@@ -293,7 +295,7 @@ public class WeakestTypeFinder {
         if (!useParameterizedTypeForCollectionMethods) {
             return checkType(type, substitutor, weakestTypeClasses);
         }
-        final String methodName = method.getName();
+        @NonNls final String methodName = method.getName();
         if (HardcodedMethodConstants.REMOVE.equals(methodName) ||
                 HardcodedMethodConstants.GET.equals(methodName) ||
                 "containsKey".equals(methodName) ||
@@ -303,8 +305,9 @@ public class WeakestTypeFinder {
                 HardcodedMethodConstants.LAST_INDEX_OF.equals(methodName)) {
             final PsiClass containingClass = method.getContainingClass();
             if (ClassUtils.isSubclass(containingClass,
-                    "java.util.Map") || ClassUtils.isSubclass(containingClass,
-                    "java.util.Collection")) {
+                    CommonClassNames.JAVA_UTIL_MAP) ||
+                    ClassUtils.isSubclass(containingClass,
+                            CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
                 final PsiExpression qualifier =
@@ -467,7 +470,7 @@ public class WeakestTypeFinder {
                         throwStatement.getResolveScope());
         final PsiClass runtimeExceptionClass = runtimeExceptionType.resolve();
         if (runtimeExceptionClass != null &&
-                com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(variableOrMethodClass,
+                InheritanceUtil.isInheritorOrSelf(variableOrMethodClass,
                         runtimeExceptionClass, true)) {
             if (!checkType(runtimeExceptionType, weakestTypeClasses)) {
                 return false;
@@ -518,9 +521,9 @@ public class WeakestTypeFinder {
                 return true;
             }
             if (!ClassUtils.isSubclass(aClass,
-                    "java.lang.RuntimeException") &&
+                    CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) &&
                     !ClassUtils.isSubclass(aClass,
-                            "java.lang.Error")) {
+                            CommonClassNames.JAVA_LANG_ERROR)) {
                 return true;
             }
 
@@ -579,8 +582,11 @@ public class WeakestTypeFinder {
     }
 
     private static void checkClass(
-            @NotNull PsiClass aClass,
+            @Nullable PsiClass aClass,
             @NotNull Collection<PsiClass> weakestTypeClasses) {
+        if (aClass == null) {
+            return;
+        }
         boolean shouldAdd = true;
         for (Iterator<PsiClass> iterator =
                 weakestTypeClasses.iterator(); iterator.hasNext();) {
@@ -636,6 +642,9 @@ public class WeakestTypeFinder {
             return false;
         }
         final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) {
+            return false;
+        }
         if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
             if (referencingClass.isInheritor(containingClass, true)) {
                 return true;

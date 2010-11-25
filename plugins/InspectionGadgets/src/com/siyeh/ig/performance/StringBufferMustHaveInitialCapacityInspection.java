@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,23 +25,27 @@ import org.jetbrains.annotations.NotNull;
 public class StringBufferMustHaveInitialCapacityInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "StringBufferWithoutInitialCapacity";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.buffer.must.have.initial.capacity.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.buffer.must.have.initial.capacity.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringBufferInitialCapacityVisitor();
     }
@@ -52,11 +53,13 @@ public class StringBufferMustHaveInitialCapacityInspection
     private static class StringBufferInitialCapacityVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
 
-            if (!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
+            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                    type) &&
                     !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
                 return;
             }

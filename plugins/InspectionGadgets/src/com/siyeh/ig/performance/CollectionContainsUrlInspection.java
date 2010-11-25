@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,14 @@ import java.util.Set;
 
 public class CollectionContainsUrlInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collection.contains.url.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final ClassType type = (ClassType) infos[0];
@@ -42,6 +44,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
                 "collection.contains.url.problem.decriptor", type);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CollectionContainsUrlVisitor();
     }
@@ -115,9 +118,9 @@ public class CollectionContainsUrlInspection extends BaseInspection {
                 return ClassType.OTHER;
             }
             @NonNls final String className = aClass.getQualifiedName();
-            if ("java.util.Set".equals(className)){
+            if (CommonClassNames.JAVA_UTIL_SET.equals(className)){
                 return ClassType.SET;
-            } else if ("java.util.Map".equals(className)){
+            } else if (CommonClassNames.JAVA_UTIL_MAP.equals(className)){
                 return ClassType.MAP;
             }
             final PsiClass[] supers = aClass.getSupers();
@@ -160,7 +163,8 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             }
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) qualifierExpression;
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if (collectionType == ClassType.SET &&
                     !"add".equals(methodName)) {
                 return;

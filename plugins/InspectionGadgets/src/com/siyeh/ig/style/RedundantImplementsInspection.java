@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,7 +30,9 @@ import javax.swing.*;
 
 public class RedundantImplementsInspection extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreSerializable = false;
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreCloneable = false;
 
     @Override
@@ -154,10 +153,12 @@ public class RedundantImplementsInspection extends BaseInspection {
                 PsiJavaCodeReferenceElement[] implementsElements) {
             final String qualifiedName = implementedClass.getQualifiedName();
             if (ignoreSerializable &&
-                    "java.io.Serializable".equals(qualifiedName)) {
+                    CommonClassNames.JAVA_IO_SERIALIZABLE.equals(
+                            qualifiedName)) {
                 return;
             } else if (ignoreCloneable &&
-                    "java.lang.Cloneable".equals(qualifiedName)) {
+                    CommonClassNames.JAVA_LANG_CLONEABLE.equals(
+                            qualifiedName)) {
                 return;
             }
             for (final PsiJavaCodeReferenceElement extendsElement :

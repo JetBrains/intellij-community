@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 public class NonSerializableObjectPassedToObjectStreamInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.object.passed.to.object.stream.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.serializable.object.passed.to.object.stream.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonSerializableObjectPassedToObjectStreamVisitor();
     }
@@ -53,24 +53,25 @@ public class NonSerializableObjectPassedToObjectStreamInspection
             super.visitMethodCallExpression(methodCallExpression);
 
             if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
-                    "java.io.ObjectOutputStream",
-                    PsiType.VOID, "writeObject", "java.lang.Object")) {
+                    "java.io.ObjectOutputStream", PsiType.VOID, "writeObject",
+                    CommonClassNames.JAVA_LANG_OBJECT)) {
                 return;
             }
-            final PsiExpressionList argList =
+            final PsiExpressionList argumentList =
                     methodCallExpression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if(args.length!=1) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
                 return;
             }
-            final PsiType argType = args[0].getType();
-            if(argType == null) {
+            final PsiExpression argument = arguments[0];
+            final PsiType argumentType = argument.getType();
+            if (argumentType == null) {
                 return;
             }
-            if (SerializationUtils.isProbablySerializable(argType)) {
+            if (SerializationUtils.isProbablySerializable(argumentType)) {
                 return;
             }
-            registerError(args[0]);
+            registerError(argument);
         }
     }
 }

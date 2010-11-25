@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,23 +33,27 @@ import java.util.List;
 
 public class StringCompareToInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "CallToStringCompareTo";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.compareto.call.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.compareto.call.problem.descriptor");
     }
 
+    @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final PsiMethodCallExpression methodCallExpression =
@@ -78,6 +82,7 @@ public class StringCompareToInspection extends BaseInspection {
         return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringCompareToVisitor();
     }
@@ -135,7 +140,7 @@ public class StringCompareToInspection extends BaseInspection {
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            return "java.lang.String".equals(className);
+            return CommonClassNames.JAVA_LANG_STRING.equals(className);
         }
     }
 }

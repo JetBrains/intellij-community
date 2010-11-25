@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,22 +26,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ErrorRethrownInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "ErrorNotRethrown";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message("error.rethrown.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "error.rethrown.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ErrorRethrownVisitor();
     }
@@ -69,7 +73,8 @@ public class ErrorRethrownInspection extends BaseInspection {
             if (aClass == null) {
                 return;
             }
-            if (!ClassUtils.isSubclass(aClass, "java.lang.Error")) {
+            if (!ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_ERROR)) {
                 return;
             }
             if (TypeUtils.typeEquals("java.lang.ThreadDeath", type)) {

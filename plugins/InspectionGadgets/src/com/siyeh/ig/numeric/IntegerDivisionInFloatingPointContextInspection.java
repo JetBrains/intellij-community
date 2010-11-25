@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,25 +40,28 @@ public class IntegerDivisionInFloatingPointContextInspection
         s_integralTypes.add("short");
         s_integralTypes.add("byte");
         s_integralTypes.add("char");
-        s_integralTypes.add("java.lang.Integer");
-        s_integralTypes.add("java.lang.Long");
-        s_integralTypes.add("java.lang.Short");
-        s_integralTypes.add("java.lang.Byte");
-        s_integralTypes.add("java.lang.Character");
+        s_integralTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
+        s_integralTypes.add(CommonClassNames.JAVA_LANG_LONG);
+        s_integralTypes.add(CommonClassNames.JAVA_LANG_SHORT);
+        s_integralTypes.add(CommonClassNames.JAVA_LANG_BYTE);
+        s_integralTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "integer.division.in.floating.point.context.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "integer.division.in.floating.point.context.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new IntegerDivisionInFloatingPointContextVisitor();
     }
