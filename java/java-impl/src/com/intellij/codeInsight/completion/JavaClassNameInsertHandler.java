@@ -71,8 +71,15 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     if (position != null) {
       PsiElement parent = position.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null) {
-        if (((PsiJavaCodeReferenceElement)parent).isReferenceTo(psiClass)) {
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
+        if (PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null) {
+          if (ref.isReferenceTo(psiClass)) {
+            return;
+          }
+        }
+        final PsiReferenceParameterList parameterList = ref.getParameterList();
+        if (parameterList != null && parameterList.getTextLength() > 0) {
           return;
         }
       }

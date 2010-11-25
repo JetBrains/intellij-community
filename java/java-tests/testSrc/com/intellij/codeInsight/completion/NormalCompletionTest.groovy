@@ -747,6 +747,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult();
   }
 
+  public void testClassNameWithGenericsTab() throws Throwable {
+    configure()
+    myFixture.type '\t'
+    checkResult();
+  }
+
   public void testRightShift() throws Throwable {
     configure()
     assertStringItems("myField1", "myField2");
