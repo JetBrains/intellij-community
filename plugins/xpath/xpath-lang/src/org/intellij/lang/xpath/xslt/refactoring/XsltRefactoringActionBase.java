@@ -15,98 +15,55 @@
  */
 package org.intellij.lang.xpath.xslt.refactoring;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class XsltRefactoringActionBase extends AnAction implements HookedAction, RefactoringActionHandler {
-    protected AnAction hookedAction;
-    protected boolean myExplicitInjectedContext;
-
-    protected XsltRefactoringActionBase() {
-        myExplicitInjectedContext = true;
-    }
-
-    public XsltRefactoringActionBase(AnAction hookedAction) {
-        setHookedAction(hookedAction);
-    }
-
-    public void setHookedAction(AnAction hookedAction) {
-        this.hookedAction = hookedAction;
-        copyFrom(hookedAction);
-        setEnabledInModalContext(hookedAction.isEnabledInModalContext());
-    }
-
-    public boolean displayTextInToolbar() {
-        return hookedAction.displayTextInToolbar();
-    }
-
-    public final void update(AnActionEvent e) {
-        super.update(e);
-        hookedAction.update(e);
-        if (!e.getPresentation().isEnabled()) {
-            updateImpl(e);
-        }
-    }
-
-    protected void updateImpl(AnActionEvent e) {
-        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-        if (file != null) {
-            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
-            if (context != null && XsltSupport.isXsltFile(context)) {
-                final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-                e.getPresentation().setEnabled(editor != null);
-            }
-        }
-    }
-
-    public void setDefaultIcon(boolean b) {
-        hookedAction.setDefaultIcon(b);
-    }
-
-    public boolean isDefaultIcon() {
-        return hookedAction.isDefaultIcon();
-    }
-
-    public void setInjectedContext(boolean worksInInjected) {
-        hookedAction.setInjectedContext(worksInInjected);
-    }
-
-    public boolean isInInjectedContext() {
-        return myExplicitInjectedContext || hookedAction.isInInjectedContext();
-    }
-
-    public AnAction getHookedAction() {
-        return hookedAction;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
-        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
-
-        if (project != null && editor != null && file != null) {
-            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
-            if (context != null && XsltSupport.isXsltFile(context)) {
-                invoke(project, editor, file, e.getDataContext());
-            } else {
-                getHookedAction().actionPerformed(e);
-            }
-        } else {
-            getHookedAction().actionPerformed(e);
-        }
-    }
+public abstract class XsltRefactoringActionBase implements RefactoringActionHandler {
+//    protected boolean myExplicitInjectedContext;
+//
+//    protected XsltRefactoringActionBase() {
+//        myExplicitInjectedContext = true;
+//    }
+//
+//    public final void update(AnActionEvent e) {
+//        super.update(e);
+//        if (!e.getPresentation().isEnabled()) {
+//            updateImpl(e);
+//        }
+//    }
+//
+//    protected void updateImpl(AnActionEvent e) {
+//        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+//        if (file != null) {
+//            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
+//            if (context != null && XsltSupport.isXsltFile(context)) {
+//                final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
+//                e.getPresentation().setEnabled(editor != null);
+//            }
+//        }
+//    }
+//
+//    public void actionPerformed(AnActionEvent e) {
+//        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
+//        final PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+//        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+//
+//        if (project != null && editor != null && file != null) {
+//            final PsiFile context = PsiTreeUtil.getContextOfType(file, XmlFile.class, false);
+//            if (context != null && XsltSupport.isXsltFile(context)) {
+//                invoke(project, editor, file, e.getDataContext());
+//            }
+//        }
+//    }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
         final int offset = editor.getCaretModel().getOffset();
@@ -119,8 +76,8 @@ public abstract class XsltRefactoringActionBase extends AnAction implements Hook
         }
 
         final String message = getErrorMessage(editor, file, context);
-        Messages.showErrorDialog(editor.getProject(), "Cannot perform refactoring.\n" +
-                (message != null ? message : getRefactoringName() + " is not available in the current context."), "XSLT - " + getRefactoringName());
+        CommonRefactoringUtil.showErrorHint(editor.getProject(), editor, "Cannot perform refactoring.\n" +
+                (message != null ? message : getRefactoringName() + " is not available in the current context."), "XSLT - " + getRefactoringName(), null);
     }
 
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
