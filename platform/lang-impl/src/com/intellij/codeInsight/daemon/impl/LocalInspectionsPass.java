@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -106,6 +107,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfileWrapper customProfile = file.getUserData(InspectionProfileWrapper.KEY);
     myProfileWrapper = customProfile == null ? InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper() : customProfile;
     mySeverityRegistrar = ((SeverityProvider)myProfileWrapper.getInspectionProfile().getProfileManager()).getSeverityRegistrar();
+    LOG.assertTrue(mySeverityRegistrar != null);
 
     // initial guess
     setProgressLimit(300 * 2);
@@ -391,7 +393,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(element);
-    return new HighlightInfo(mySeverityRegistrar.getTextAttributesBySeverity(severity), highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+    TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
+    return new HighlightInfo(attributes, highlightInfoType, textRange.getStartOffset(),
+                             textRange.getEndOffset(), message, toolTip,
                              severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
@@ -547,7 +551,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
-      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(), hostRange.getEndOffset(), info.description, info.toolTip);
+      HighlightInfo patched = HighlightInfo.createHighlightInfo(info.type, psiElement, hostRange.getStartOffset(),
+                                                                 hostRange.getEndOffset(), info.description, info.toolTip);
       if (patched != null) {
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);

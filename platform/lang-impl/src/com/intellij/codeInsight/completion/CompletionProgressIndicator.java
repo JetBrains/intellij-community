@@ -274,7 +274,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private boolean isOutdated() {
     if (!myDisposed) {
       CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-      LOG.assertTrue(this == current, current);
+      LOG.assertTrue(this == current, current + " != " + this);
     }
     return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
   }
@@ -328,7 +328,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
-    assert myDisposed;
+    LOG.assertTrue(myDisposed);
 
     if (myModifiersReleased || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -421,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (!unitTestMode) {
-      assert !ApplicationManager.getApplication().isDispatchThread();
+      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
     myLookup.addItem(item);
@@ -461,7 +461,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
     } else {
-      assert myDisposed;
+      LOG.assertTrue(myDisposed);
     }
   }
 
@@ -469,7 +469,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myToRestart = false;
     cancel();
 
-    assert !myDisposed;
+    LOG.assertTrue(!myDisposed);
     myDisposed = true;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -486,8 +486,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void cleanup() {
-    assert ApplicationManager.getApplication().isDispatchThread();
-    assert myDisposed;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myDisposed);
     myHint = null;
     myRestorePrefix = null;
     unregisterItself();
@@ -522,7 +522,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           LookupManager.getInstance(getProject()).hideActiveLookup();
 
           final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-          assert current == null : current + "!=" + CompletionProgressIndicator.this;
+          LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
           if (!isAutopopupCompletion()) {
             myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this);
@@ -544,14 +544,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       final List<LookupElement> items = myLookup.getItems();
       if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
-        assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
+        LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
         return true;
       }
 
       for (LookupElement item : items) {
         if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
-          assert CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null;
+          LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
           return true;
         }
       }
@@ -616,7 +616,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void rememberDocumentState() {
-    assert myDisposed;
+    LOG.assertTrue(myDisposed);
     if (myModifiersReleased) {
       return;
     }

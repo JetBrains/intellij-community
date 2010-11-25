@@ -318,23 +318,27 @@ public class JavaCompletionUtil {
 
     final PsiReference reference = file.findReferenceAt(selectionEndOffset);
     if(reference != null) {
+      /*
       if(reference instanceof PsiJavaCodeReferenceElement){
         offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
       }
       else{
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
-                                 reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
       }
+      */
+      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET,
+                          reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
     }
     else if (isWord(element)){
+      /*
       if(element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement){
         offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getParent().getTextRange().getEndOffset());
       }
       else{
-        offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
       }
+      */
+      offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, element.getTextRange().getEndOffset());
 
       element = file.findElementAt(offsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
       if (element == null) return;

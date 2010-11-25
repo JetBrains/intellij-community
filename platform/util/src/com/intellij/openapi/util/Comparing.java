@@ -136,13 +136,36 @@ public class Comparing {
   public static int hashcode(Object obj) { return obj == null ? 0 : obj.hashCode(); }
   public static int hashcode(Object obj1, Object obj2) { return hashcode(obj1) ^ hashcode(obj2); }
 
-  public static int compare(int name1, int name2) {
-    return name1 < name2 ? -1 : name1 == name2 ? 0 : 1;
+  public static int compare(byte o1, byte o2) {
+    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
   }
 
-  public static <T extends Comparable<T>> int compare(final T name1, final T name2) {
-    if (name1 == null) return name2 == null ? 0 : -1;
-    if (name2 == null) return 1;
-    return name1.compareTo(name2);
+  public static int compare(int o1, int o2) {
+    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+  }
+
+  public static int compare(long o1, long o2) {
+    return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+  }
+
+  public static int compare(byte[] o1, byte[] o2) {
+    if (o1 == o2) return 0;
+    else if (o1 == null) return 1;
+    else if (o2 == null) return -1;
+
+    if (o1.length > o2.length) return 1;
+    else if (o1.length < o2.length) return -1;
+
+    for (int i = 0; i < o1.length; i++) {
+      if (o1[i] > o2[i]) return 1;
+      else if (o1[i] < o2[i]) return -1;
+    }
+    return 0;
+  }
+
+  public static <T extends Comparable<T>> int compare(final T o1, final T o2) {
+    if (o1 == null) return o2 == null ? 0 : -1;
+    if (o2 == null) return 1;
+    return o1.compareTo(o2);
   }
 }

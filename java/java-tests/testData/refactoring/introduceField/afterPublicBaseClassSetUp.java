@@ -9,11 +9,11 @@ class Base extends TestCase {
 public class T extends Base {
     private int i;
 
-    public void test() {
-    }
-
     public void setUp() throws Exception {
         super.setUp();
         i = 9;
+    }
+
+    public void test() {
     }
 }

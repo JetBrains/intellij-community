@@ -3844,6 +3844,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
+    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -5207,7 +5208,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         if (isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }
       }
@@ -5221,9 +5222,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    protected void init() {
-      super.init();
-      setCorner(LOWER_LEFT_CORNER, new JPanel() {
+    public void setupCorners() {
+      super.setupCorners();
+      setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
+                LOWER_RIGHT_CORNER :
+                LOWER_LEFT_CORNER, new JPanel() {
         @Override
         public void paint(Graphics g) {
           final Rectangle bounds = getBounds();

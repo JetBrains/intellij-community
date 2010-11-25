@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
@@ -90,7 +91,7 @@ public abstract class BreakpointPropertiesPanel {
   private JButton myMakeDefaultButton;
 
   ButtonGroup mySuspendPolicyGroup;
-  public static final @NonNls String CONTROL_LOG_MESSAGE = "logMessage";
+  @NonNls public static final String CONTROL_LOG_MESSAGE = "logMessage";
   private BreakpointComboboxHandler myBreakpointComboboxHandler;
   private static final int MAX_COMBO_WIDTH = 300;
   private final FixedSizeButton myConditionMagnifierButton;
@@ -220,8 +221,7 @@ public abstract class BreakpointPropertiesPanel {
       public void actionPerformed(ActionEvent e) {
         reloadClassFilters();
 
-        ClassFilter classFilter;
-        classFilter = createClassConditionFilter();
+        ClassFilter classFilter = createClassConditionFilter();
 
         EditClassFiltersDialog _dialog = new EditClassFiltersDialog(myProject, classFilter);
         _dialog.setFilters(myClassFilters, myClassExclusionFilters);
@@ -321,7 +321,7 @@ public abstract class BreakpointPropertiesPanel {
    */
   public void initFrom(Breakpoint breakpoint) {
     myBreakpointComboboxHandler.initFrom(breakpoint);
-    myPassCountField.setText((breakpoint.COUNT_FILTER > 0)? Integer.toString(breakpoint.COUNT_FILTER) : "");
+    myPassCountField.setText(breakpoint.COUNT_FILTER > 0 ? Integer.toString(breakpoint.COUNT_FILTER) : "");
 
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
@@ -367,7 +367,7 @@ public abstract class BreakpointPropertiesPanel {
   /**
    * Save values in the UI components to the breakpoint object
    */
-  public void saveTo(Breakpoint breakpoint, Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
     myBreakpointComboboxHandler.saveTo(breakpoint, myLeaveEnabledRadioButton.isSelected());
     try {
       String text = myPassCountField.getText().trim();
@@ -379,11 +379,11 @@ public abstract class BreakpointPropertiesPanel {
     }
     catch (Exception e) {
     }
-    breakpoint.COUNT_FILTER_ENABLED = breakpoint.COUNT_FILTER > 0? myPassCountCheckbox.isSelected() : false;
+    breakpoint.COUNT_FILTER_ENABLED = breakpoint.COUNT_FILTER > 0 && myPassCountCheckbox.isSelected();
     breakpoint.setCondition(myConditionCombo.getText());
-    breakpoint.CONDITION_ENABLED = !breakpoint.getCondition().isEmpty() ? myConditionCheckbox.isSelected() : false;
+    breakpoint.CONDITION_ENABLED = !breakpoint.getCondition().isEmpty() && myConditionCheckbox.isSelected();
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
-    breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty()? myLogExpressionCheckBox.isSelected() : false;
+    breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
     breakpoint.SUSPEND_POLICY = getSelectedSuspendPolicy();
     reloadInstanceFilters();
@@ -391,8 +391,8 @@ public abstract class BreakpointPropertiesPanel {
     updateInstanceFilterEditor(true);
     updateClassFilterEditor(true);
 
-    breakpoint.INSTANCE_FILTERS_ENABLED = myInstanceFiltersField.getText().length() > 0 ? myInstanceFiltersCheckBox.isSelected() : false;
-    breakpoint.CLASS_FILTERS_ENABLED = myClassFiltersField.getText().length() > 0 ? myClassFiltersCheckBox.isSelected() : false;
+    breakpoint.INSTANCE_FILTERS_ENABLED = myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected();
+    breakpoint.CLASS_FILTERS_ENABLED = myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected();
     breakpoint.setClassFilters(myClassFilters);
     breakpoint.setClassExclusionFilters(myClassExclusionFilters);
     breakpoint.setInstanceFilters(myInstanceFilters);
@@ -402,21 +402,11 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.updateUI(afterUpdate);
   }
 
-  private String concatWith(List<String> s, String concator) {
-    String result = "";
-    for (Iterator iterator = s.iterator(); iterator.hasNext();) {
-      String str = (String) iterator.next();
-      result += str + concator;
-    }
-    if (result.length() > 0) {
-      return result.substring(0, result.length() - concator.length());
-    }
-    else {
-      return "";
-    }
+  private static String concatWith(List<String> s, String concator) {
+    return StringUtil.join(s, concator);
   }
 
-  private String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
+  private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
     String result = "";
     int i = 1;
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
@@ -435,9 +425,8 @@ public abstract class BreakpointPropertiesPanel {
 
   private void updateInstanceFilterEditor(boolean updateText) {
     List<String> filters = new ArrayList<String>();
-    for (int i = 0; i < myInstanceFilters.length; i++) {
-      InstanceFilter instanceFilter = myInstanceFilters[i];
-      if(instanceFilter.isEnabled()) {
+    for (InstanceFilter instanceFilter : myInstanceFilters) {
+      if (instanceFilter.isEnabled()) {
         filters.add(Long.toString(instanceFilter.getId()));
       }
     }
@@ -465,38 +454,35 @@ public abstract class BreakpointPropertiesPanel {
         }
       }
     }
-    for (int i = 0; i < myInstanceFilters.length; i++) {
-      InstanceFilter instanceFilter = myInstanceFilters[i];
-      if(!instanceFilter.isEnabled()) idxs.add(instanceFilter);
+    for (InstanceFilter instanceFilter : myInstanceFilters) {
+      if (!instanceFilter.isEnabled()) idxs.add(instanceFilter);
     }
     myInstanceFilters = idxs.toArray(new InstanceFilter[idxs.size()]);
   }
 
   private void updateClassFilterEditor(boolean updateText) {
     List<String> filters = new ArrayList<String>();
-    for (int i = 0; i < myClassFilters.length; i++) {
-      com.intellij.ui.classFilter.ClassFilter classFilter = myClassFilters[i];
-      if(classFilter.isEnabled()) {
+    for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassFilters) {
+      if (classFilter.isEnabled()) {
         filters.add(classFilter.getPattern());
       }
     }
     List<String> excludeFilters = new ArrayList<String>();
-    for (int i = 0; i < myClassExclusionFilters.length; i++) {
-      com.intellij.ui.classFilter.ClassFilter classFilter = myClassExclusionFilters[i];
-      if(classFilter.isEnabled()) {
+    for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassExclusionFilters) {
+      if (classFilter.isEnabled()) {
         excludeFilters.add("-" + classFilter.getPattern());
       }
     }
     if (updateText) {
       String editorText = concatWith(filters, " ");
-      if(filters.size() > 0) editorText += " ";
+      if(!filters.isEmpty()) editorText += " ";
       editorText += concatWith(excludeFilters, " ");
       myClassFiltersField.setText(editorText);
     }
 
     int width = (int)Math.sqrt(myClassExclusionFilters.length + myClassFilters.length) + 1;
     String tipText = concatWithEx(filters, " ", width, "\n");
-    if(filters.size() > 0) tipText += "\n";
+    if(!filters.isEmpty()) tipText += "\n";
     tipText += concatWithEx(excludeFilters, " ", width, "\n");
     myClassFiltersField.getTextField().setToolTipText(tipText);
 
@@ -522,13 +508,11 @@ public abstract class BreakpointPropertiesPanel {
         }
       }
     }
-    for (int i = 0; i < myClassFilters.length; i++) {
-      com.intellij.ui.classFilter.ClassFilter classFilter = myClassFilters[i];
-      if(!classFilter.isEnabled()) classFilters.add(classFilter);
+    for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassFilters) {
+      if (!classFilter.isEnabled()) classFilters.add(classFilter);
     }
-    for (int i = 0; i < myClassExclusionFilters.length; i++) {
-      com.intellij.ui.classFilter.ClassFilter classFilter = myClassExclusionFilters[i];
-      if(!classFilter.isEnabled()) exclusionFilters.add(classFilter);
+    for (com.intellij.ui.classFilter.ClassFilter classFilter : myClassExclusionFilters) {
+      if (!classFilter.isEnabled()) exclusionFilters.add(classFilter);
     }
     myClassFilters          = classFilters    .toArray(new com.intellij.ui.classFilter.ClassFilter[classFilters    .size()]);
     myClassExclusionFilters = exclusionFilters.toArray(new com.intellij.ui.classFilter.ClassFilter[exclusionFilters.size()]);
@@ -537,18 +521,17 @@ public abstract class BreakpointPropertiesPanel {
   public void setEnabled(boolean enabled) {
     myPanel.setEnabled(enabled);
     Component[] components = myPanel.getComponents();
-    for (int i = 0; i < components.length; i++) {
-      Component component = components[i];
+    for (Component component : components) {
       component.setEnabled(enabled);
     }
   }
 
   protected void updateCheckboxes() {
-    JCheckBox [] checkBoxes = new JCheckBox[] { myConditionCheckbox, myInstanceFiltersCheckBox, myClassFiltersCheckBox};
+    JCheckBox [] checkBoxes = { myConditionCheckbox, myInstanceFiltersCheckBox, myClassFiltersCheckBox };
     JCheckBox    selected   = null;
-    for(int i =0; i < checkBoxes.length; i++) {
-      if(checkBoxes[i].isSelected()) {
-        selected = checkBoxes[i];
+    for (JCheckBox checkBoxe : checkBoxes) {
+      if (checkBoxe.isSelected()) {
+        selected = checkBoxe;
         break;
       }
     }
@@ -559,8 +542,8 @@ public abstract class BreakpointPropertiesPanel {
       myPassCountCheckbox.setEnabled(true);
     }
 
-    for(int i =0; i < checkBoxes.length; i++) {
-      checkBoxes[i].setEnabled (!myPassCountCheckbox.isSelected());
+    for (JCheckBox checkBoxe : checkBoxes) {
+      checkBoxe.setEnabled(!myPassCountCheckbox.isSelected());
     }
 
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
@@ -597,9 +580,8 @@ public abstract class BreakpointPropertiesPanel {
     }
 
     public void selectBreakpoint(Breakpoint breakpoint) {
-      for (int idx = 0; idx < myItems.length; idx++) {
-        final ComboboxItem item = myItems[idx];
-        if (breakpoint == null? item.getBreakpoint() == null : breakpoint.equals(item.getBreakpoint())) {
+      for (final ComboboxItem item : myItems) {
+        if (breakpoint == null ? item.getBreakpoint() == null : breakpoint.equals(item.getBreakpoint())) {
           if (!item.equals(getSelectedItem())) {
             setSelectedItem(item);
           }
@@ -636,7 +618,7 @@ public abstract class BreakpointPropertiesPanel {
     }
 
     public int hashCode() {
-      return (breakpoint != null ? breakpoint.hashCode() : 0);
+      return breakpoint != null ? breakpoint.hashCode() : 0;
     }
   }
   
@@ -705,8 +687,9 @@ public abstract class BreakpointPropertiesPanel {
       setText(text);
       final Icon icon;
       if (breakpoint != null) {
-        icon = (breakpoint instanceof BreakpointWithHighlighter)?
-                          breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)breakpoint).getDisabledIcon(false) : breakpoint.getIcon();
+        icon = breakpoint instanceof BreakpointWithHighlighter ?
+                          breakpoint.ENABLED? ((BreakpointWithHighlighter)breakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)breakpoint)
+                            .getDisabledIcon(false) : breakpoint.getIcon();
       }
       else {
         icon = null;
