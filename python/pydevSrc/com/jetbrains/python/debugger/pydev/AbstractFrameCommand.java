@@ -3,7 +3,7 @@ package com.jetbrains.python.debugger.pydev;
 
 public abstract class AbstractFrameCommand extends AbstractThreadCommand {
 
-  protected final String myFrameId;
+  private final String myFrameId;
 
   protected AbstractFrameCommand(final RemoteDebugger debugger, final int commandCode, final String threadId, final String frameId) {
     super(debugger, commandCode, threadId);

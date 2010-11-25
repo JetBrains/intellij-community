@@ -16,8 +16,4 @@ public class ResumeCommand extends AbstractThreadCommand {
   public ResumeCommand(final RemoteDebugger debugger, final String threadId, final Mode mode) {
     super(debugger, mode.code, threadId);
   }
-
-  public String getThreadId() {
-    return myThreadId;
-  }
 }
