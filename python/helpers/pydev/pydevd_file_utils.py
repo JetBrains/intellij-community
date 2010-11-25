@@ -100,6 +100,7 @@ try:
         sys.stderr.write('pydev debugger: The debugger may still function, but it will work slower and may miss breakpoints.\n')
         sys.stderr.write('pydev debugger: Related bug: http://bugs.python.org/issue1666807\n')
         sys.stderr.write('-------------------------------------------------------------------------------\n')
+        sys.stderr.flush()
         
         NORM_SEARCH_CACHE = {}
         

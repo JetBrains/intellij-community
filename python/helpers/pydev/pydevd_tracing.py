@@ -58,6 +58,7 @@ def _InternalSetTrace(tracing_func):
                     #only warn about each message once...
                     TracingFunctionHolder._warnings_shown[message] = 1
                     sys.stderr.write('%s\n' % (message,))
+                    sys.stderr.flush()
             
     TracingFunctionHolder._original_tracing(tracing_func)
 

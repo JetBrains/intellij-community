@@ -109,6 +109,7 @@ class PyDBFrame:
                     except:
                         sys.stderr.write('Error while evaluating expression\n')
                         traceback.print_exc()
+                        sys.stderr.flush()
                         return self.trace_dispatch
 
                 expression = breakpoint[line][3]
