@@ -233,30 +233,55 @@ public abstract class AbstractConsoleRunnerWithHistory {
     final EditorEx consoleEditor = myConsoleView.getConsole().getConsoleEditor();
     final Document document = consoleEditor.getDocument();
     final CaretModel caretModel = consoleEditor.getCaretModel();
+
     final AnAction upAction = new AnAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final int lineNumber = consoleEditor.getDocument().getLineNumber(caretModel.getOffset());
-        if (lineNumber > 0){
-          caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
-        } else {
-          if (myHistory.hasHistory(true)) {
-            historyProcessor.process(e, myHistory.getHistoryNext());
-          }
+        historyProcessor.process(e, myHistory.getHistoryNext());
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        // Check if we have anything in history
+        final boolean hasHistory = myHistory.hasHistory(true);
+        if (!hasHistory){
+          e.getPresentation().setEnabled(false);
+          return;
         }
+        // Check if we don't have active lookup
+        if (LookupManager.getActiveLookup(consoleEditor) != null){
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        // Check if cannot move
+        final int lineNumber = document.getLineNumber(caretModel.getOffset());
+        final boolean canMove = lineNumber > 0;
+        e.getPresentation().setEnabled(!canMove);
       }
     };
     final AnAction downAction = new AnAction() {
       @Override
       public void actionPerformed(final AnActionEvent e) {
-        final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        if (lineNumber < document.getLineCount() - 1 && !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()))){
-          caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
-        } else {
-          if (myHistory.hasHistory(false)) {
-            historyProcessor.process(e, myHistory.getHistoryPrev());
-          }
+        historyProcessor.process(e, myHistory.getHistoryPrev());
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        // Check if we have anything in history
+        final boolean hasHistory = myHistory.hasHistory(false);
+        if (!hasHistory){
+          e.getPresentation().setEnabled(false);
+          return;
         }
+        // Check if we don't have active lookup
+        if (LookupManager.getActiveLookup(consoleEditor) != null){
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        // Check if cannot move
+        final int lineNumber = document.getLineNumber(caretModel.getOffset());
+        final boolean canMove = lineNumber < document.getLineCount() - 1 && !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+        e.getPresentation().setEnabled(!canMove);
       }
     };
 
