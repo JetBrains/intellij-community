@@ -570,4 +570,22 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     return myPanel;
   }
 
+  @Override
+  public Set<String> processListOptions() {
+    Set<String> result = new HashSet<String>();
+    for (BooleanOptionKey key : myKeys) {
+      result.add(key.title);
+      if (key.groupName != null) {
+        result.add(key.groupName);
+      }
+    }
+    result.addAll(myRenamedFields.values());
+    for (String groupName : myCustomOptions.keySet()) {
+      result.add(groupName);
+      for (Trinity<Class<? extends CustomCodeStyleSettings>, String, String> trinity : myCustomOptions.get(groupName)) {
+        result.add(trinity.third);
+      }
+    }
+    return result;
+  }
 }
