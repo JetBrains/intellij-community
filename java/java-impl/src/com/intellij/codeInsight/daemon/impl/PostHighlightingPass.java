@@ -28,9 +28,12 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
@@ -77,10 +80,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
@@ -103,6 +103,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private boolean myInLibrary;
   private HighlightDisplayKey myDeadCodeKey;
   private HighlightInfoType myDeadCodeInfoType;
+  private UnusedParametersInspection myUnusedParametersInspection;
 
   PostHighlightingPass(@NotNull Project project,
                        @NotNull PsiFile file,
@@ -220,6 +221,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myDeadCodeKey = HighlightDisplayKey.find(UnusedDeclarationInspection.SHORT_NAME);
     myDeadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
+
+    myUnusedParametersInspection =
+      (UnusedParametersInspection)((GlobalInspectionToolWrapper)profile.getInspectionTool(UnusedParametersInspection.SHORT_NAME, myFile)).getTool();
     if (unusedImportEnabled && JspPsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = JspPsiUtil.getJspFile(myFile);
       if (jspFile != null) {
@@ -430,7 +434,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           !PsiClassImplUtil.isMainMethod(method)) {
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
         if (highlightInfo != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), myUnusedSymbolKey);
+          final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
+          options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, myFile));
+          Collections.addAll(options, myUnusedParametersInspection.getSuppressActions(parameter));
+          //need suppress from Unused Parameters but settings from Unused Symbol
+          QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter),
+                                                options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
           return highlightInfo;
         }
       }
