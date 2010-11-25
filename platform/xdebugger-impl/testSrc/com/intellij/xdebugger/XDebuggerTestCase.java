@@ -33,7 +33,7 @@ import org.picocontainer.MutablePicoContainer;
  * @author nik
  */
 public abstract class XDebuggerTestCase extends PlatformLiteFixture {
-  protected static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
+  public static final MyLineBreakpointType MY_LINE_BREAKPOINT_TYPE = new MyLineBreakpointType();
   protected static final MySimpleBreakpointType MY_SIMPLE_BREAKPOINT_TYPE = new MySimpleBreakpointType();
 
   @Override
@@ -46,8 +46,12 @@ public abstract class XDebuggerTestCase extends PlatformLiteFixture {
 
     MutablePicoContainer container = getApplication().getPicoContainer();
     registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
-    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
+    registerVfsComponents(container);
     registerComponentImplementation(container, HttpFileSystem.class, HttpFileSystemImpl.class);
+  }
+
+  protected void registerVfsComponents(MutablePicoContainer container) {
+    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
   }
 
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
