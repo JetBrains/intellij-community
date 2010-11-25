@@ -356,8 +356,9 @@ public class FileBasedIndex implements ApplicationComponent {
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
+    final boolean versionFileExisted = versionFile.exists();
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
-      if (!isCurrentVersionCorrupted) {
+      if (!isCurrentVersionCorrupted && versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
       }
