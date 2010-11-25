@@ -31,6 +31,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
@@ -222,8 +223,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myDeadCodeInspection = (UnusedDeclarationInspection)profile.getInspectionTool(UnusedDeclarationInspection.SHORT_NAME, myFile);
     myDeadCodeEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
 
-    myUnusedParametersInspection =
-      (UnusedParametersInspection)((GlobalInspectionToolWrapper)profile.getInspectionTool(UnusedParametersInspection.SHORT_NAME, myFile)).getTool();
+    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(UnusedParametersInspection.SHORT_NAME, myFile);
+    myUnusedParametersInspection = inspectionTool != null ?  (UnusedParametersInspection)((GlobalInspectionToolWrapper)inspectionTool).getTool() : null;
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myUnusedParametersInspection != null);
     if (unusedImportEnabled && JspPsiUtil.isInJspFile(myFile)) {
       final JspFile jspFile = JspPsiUtil.getJspFile(myFile);
       if (jspFile != null) {
@@ -436,7 +438,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         if (highlightInfo != null) {
           final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
           options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, myFile));
-          Collections.addAll(options, myUnusedParametersInspection.getSuppressActions(parameter));
+          if (myUnusedParametersInspection != null) {
+            Collections.addAll(options, myUnusedParametersInspection.getSuppressActions(parameter));
+          }
           //need suppress from Unused Parameters but settings from Unused Symbol
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter),
                                                 options, HighlightDisplayKey.getDisplayNameByKey(myUnusedSymbolKey));
