@@ -151,7 +151,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }                                                                       
   }
 
-  private static boolean isAtTokenNeeded(InsertionContext myContext) {
+  static boolean isAtTokenNeeded(InsertionContext myContext) {
     HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
     LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
     iterator.retreat();
@@ -256,7 +256,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     return false;
   }
 
-  private static boolean insertingAnnotationWithParameters(InsertionContext context, LookupElement item) {
+  public static boolean insertingAnnotationWithParameters(InsertionContext context, LookupElement item) {
     if(insertingAnnotation(context, item)) {
       final Document document = context.getEditor().getDocument();
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
@@ -275,7 +275,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     return false;
   }
 
-  private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {
+  static boolean insertingAnnotation(InsertionContext context, LookupElement item) {
     final Object obj = item.getObject();
     if (!(obj instanceof PsiClass) || !((PsiClass)obj).isAnnotationType()) return false;
 

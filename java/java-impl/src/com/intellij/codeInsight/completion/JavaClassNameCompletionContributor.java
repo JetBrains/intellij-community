@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -56,7 +57,12 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
   private static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-      context.setAddCompletionChar(false);
+      final char c = context.getCompletionChar();
+
+      if (c != '.' && c != ' ' && c != '#') {
+        context.setAddCompletionChar(false);
+      }
+
       int offset = context.getTailOffset() - 1;
       final PsiFile file = context.getFile();
       if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
@@ -70,14 +76,16 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
       PsiElement position = file.findElementAt(offset);
       PsiClass psiClass = item.getObject();
+      final Project project = context.getProject();
+      final boolean annotation = DefaultInsertHandler.insertingAnnotation(context, item);
 
-      if (context.getCompletionChar() == '#') {
+      final Editor editor = context.getEditor();
+      if (c == '#') {
         context.setLaterRunnable(new Runnable() {
           public void run() {
-             new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(context.getProject(), context.getEditor(), file);
+            new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
           }
         });
-        TailType.insertChar(context.getEditor(), context.getTailOffset(), '#');
       }
 
       if (position != null) {
@@ -90,11 +98,31 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       }
 
       if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
-        ConstructorInsertHandler.insertParentheses(context, item, psiClass);
-        DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
-      } else {
-        new DefaultInsertHandler().handleInsert(context, item);
+        if (ConstructorInsertHandler.insertParentheses(context, item, psiClass)) {
+          AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
+        }
       }
+      else if (DefaultInsertHandler.insertingAnnotationWithParameters(context, item)) {
+        JavaCompletionUtil.insertParentheses(context, item, false, true);
+        AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
+      }
+      DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
+
+      if (annotation) {
+        // Check if someone inserts annotation class that require @
+        PsiElement elementAt = file.findElementAt(context.getStartOffset());
+        final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
+
+        if (elementAt instanceof PsiIdentifier &&
+            (PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null ||
+             parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile // top level annotation without @
+            )
+            && DefaultInsertHandler.isAtTokenNeeded(context)) {
+          int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
+          context.getDocument().insertString(expectedOffsetForAtToken, "@");
+        }
+      }
+
     }
 
     private boolean completingRawConstructor(InsertionContext context, JavaPsiClassReferenceElement item) {
