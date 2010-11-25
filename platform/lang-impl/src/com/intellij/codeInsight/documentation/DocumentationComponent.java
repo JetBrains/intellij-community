@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.actions.ExternalJavaDocAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
@@ -131,6 +132,12 @@ public class DocumentationComponent extends JPanel implements Disposable {
           return;
         }
         super.processKeyEvent(e);
+      }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        UISettings.setupAntialiasing(g);
+        super.paintComponent(g);
       }
     };
     myText = "";

@@ -23,8 +23,15 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Random;
 
 public class RemoteServer {
+  private static Remote ourRemote;
+  private static Remote ourStub;
+
   protected static void start(Remote remote) throws Exception {
     setupRMI();
+
+    if (ourRemote != null) throw new AssertionError("Already started");
+
+    ourRemote = remote;
 
     Registry registry;
     int port = 0;
@@ -39,9 +46,9 @@ public class RemoteServer {
       }
     }
     try {
-      final Remote stub = UnicastRemoteObject.exportObject(remote, 0);
-      final String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
-      registry.bind(name, stub);
+      ourStub =  UnicastRemoteObject.exportObject(ourRemote, 0);
+      final String name = remote.getClass().getSimpleName() + Integer.toHexString(ourStub.hashCode());
+      registry.bind(name, ourStub);
 
       System.out.println("Port/ID:" + port + "/" + name);
       Object lock = new Object();
