@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.DiffManagerImpl");
@@ -86,7 +87,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   public DiffTool getIdeaDiffTool() { return INTERNAL_DIFF; }
 
   public DiffTool getDiffTool() {
-    DiffTool[] standardTools = new DiffTool[]{
+    DiffTool[] standardTools = {
       ExtCompareFolders.INSTANCE,
       ExtCompareFiles.INSTANCE,
       INTERNAL_DIFF,
@@ -94,10 +95,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       BinaryDiffTool.INSTANCE
     };
     ArrayList<DiffTool> allTools = new ArrayList<DiffTool>(myAdditionTools);
-    for (int i = 0; i < standardTools.length; i++) {
-      DiffTool standardTool = standardTools[i];
-      allTools.add(standardTool);
-    }
+    allTools.addAll(Arrays.asList(standardTools));
     return new CompositeDiffTool(allTools);
   }
 
@@ -133,8 +131,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     final String policyName = element.getAttributeValue(COMPARISON_POLICY_ATTR_NAME);
     if (policyName != null) {
       ComparisonPolicy[] policies = ComparisonPolicy.getAllInstances();
-      for (int i = 0; i < policies.length; i++) {
-        ComparisonPolicy policy = policies[i];
+      for (ComparisonPolicy policy : policies) {
         if (policy.getName().equals(policyName)) {
           myComparisonPolicy = policy;
           break;

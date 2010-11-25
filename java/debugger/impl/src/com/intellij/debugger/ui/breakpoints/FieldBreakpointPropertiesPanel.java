@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +91,7 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     myWatchModificationCheckBox.setSelected(fieldBreakpoint.WATCH_MODIFICATION);
   }
 
-  public void saveTo(Breakpoint breakpoint, Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
     FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)breakpoint;
 
     fieldBreakpoint.WATCH_ACCESS = myWatchAccessCheckBox.isSelected();
