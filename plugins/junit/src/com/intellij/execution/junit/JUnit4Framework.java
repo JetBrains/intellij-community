@@ -86,7 +86,12 @@ public class JUnit4Framework extends JavaTestFramework {
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     method = factory.createMethodFromText("@org.junit.Before public void setUp() throws Exception {\n}", null);
-    method = (PsiMethod)clazz.add(method);
+    final PsiMethod testMethod = JUnitUtil.findFirstTestMethod(clazz);
+    if (testMethod != null) {
+      method = (PsiMethod)clazz.addBefore(method, testMethod);
+    } else {
+      method = (PsiMethod)clazz.add(method);
+    }
     JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(method);
 
     return method;
