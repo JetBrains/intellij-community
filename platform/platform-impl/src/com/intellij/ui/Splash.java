@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -52,6 +53,8 @@ public class Splash extends JDialog {
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
     if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
+      GraphicsConfig config = new GraphicsConfig(g);
+      config.setAntialiasing(true);
       g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
       g.setColor(textColor);
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
@@ -61,6 +64,7 @@ public class Splash extends JDialog {
         g.drawString(licensedToMessage, x + 20, y + height - 52);
         g.drawString(licenseRestrictionsMessage, x + 20, y + height - 32);
       }
+      config.restore();
       return true;
     }
     return false;
@@ -76,17 +80,17 @@ public class Splash extends JDialog {
     }
 
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      yeild();
+      yield();
       myOriginalIcon.paintIcon(c, g, x, y);
 
       showLicenseeInfo(g, x, y, getIconHeight(), myTextColor);
     }
 
-    private static void yeild() {
+    private static void yield() {
       try {
         Thread.sleep(10);
       }
-      catch (InterruptedException e) {
+      catch (InterruptedException ignore) {
       }
     }
 

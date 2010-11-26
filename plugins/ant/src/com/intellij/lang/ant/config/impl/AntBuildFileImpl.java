@@ -154,7 +154,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   private boolean myExpandFirstTime = true;
 
   public AntBuildFileImpl(final XmlFile antFile, final AntConfigurationBase configuration) {
-    myVFile = antFile.getVirtualFile();
+    myVFile = antFile.getOriginalFile().getVirtualFile();
     myProject = antFile.getProject();
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
