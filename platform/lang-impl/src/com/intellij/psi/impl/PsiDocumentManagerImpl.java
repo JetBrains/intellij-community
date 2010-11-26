@@ -435,6 +435,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
+      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() ? file.getText() : null;
+
       int startOffset;
       int endOffset;
       int lengthShift;
@@ -459,7 +461,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
                                    "; doc len=" + document.getTextLength() +
                                    "; file text=" + file.getText() +
-                                   "; doc text=" + document.getText());
+                                   "; doc text=" + document.getText() +
+                                   "; old file text=" + oldText);
         }
 
         throw new AssertionError("commitDocument left PSI inconsistent");
