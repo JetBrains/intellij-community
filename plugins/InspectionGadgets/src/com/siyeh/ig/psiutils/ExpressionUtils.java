@@ -59,10 +59,26 @@ public class ExpressionUtils {
     }
 
     public static boolean isDeclaredConstant(PsiExpression expression) {
-        final PsiField field =
+        PsiField field =
                 PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (field == null) {
-            return false;
+            final PsiAssignmentExpression assignmentExpression =
+                    PsiTreeUtil.getParentOfType(expression,
+                            PsiAssignmentExpression.class);
+            if (assignmentExpression == null) {
+                return false;
+            }
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            if (!(lhs instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) lhs;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return false;
+            }
+            field = (PsiField) target;
         }
         return field.hasModifierProperty(PsiModifier.STATIC) &&
                 field.hasModifierProperty(PsiModifier.FINAL);

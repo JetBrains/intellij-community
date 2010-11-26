@@ -16,8 +16,8 @@
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.AntNoFileException;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -90,11 +90,9 @@ public class AddAntBuildFile extends AnAction {
       return;
     }
 
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
-      if (file.equals(buildFile.getVirtualFile())) {
-        disable(presentation);
-        return;
-      }
+    if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
+      disable(presentation);
+      return;
     }
 
     enable(presentation);
