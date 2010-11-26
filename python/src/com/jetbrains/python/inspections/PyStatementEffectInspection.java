@@ -62,7 +62,7 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      registerProblem(expression, "Statement seems to have no effect", new StatementEffectIntroduceVariableQuickFix());
+      registerProblem(expression, "Statement seems to have no effect", new StatementEffectIntroduceVariableQuickFix(expression));
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {

@@ -77,14 +77,11 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(lambdaExpression),
                                                             PyFunction.class, stringBuilder.toString());
 
-      PyFunction parentFunction = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class);
-      if (parentFunction != null) {
-        PyStatementList statements = parentFunction.getStatementList();
-        statements.addBefore(function, statements.getStatements()[0]);
-      }
-      else {
-        PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
-        file.addBefore(function, statement);
+      PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
+      if (statement != null) {
+        PsiElement parentOfStatement = statement.getParent();
+        if (parentOfStatement != null)
+          parentOfStatement.addBefore(function, statement);
       }
       if (parent instanceof PyAssignmentStatement) {
         parent.delete();

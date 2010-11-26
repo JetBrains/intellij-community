@@ -2,7 +2,6 @@ package com.jetbrains.python.actions;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -19,8 +18,10 @@ import org.jetbrains.annotations.NotNull;
  * Quickfix to introduce variable if statement seems to have no effect
  */
 public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
-
-  public StatementEffectIntroduceVariableQuickFix() {}
+  PyExpression myExpression;
+  public StatementEffectIntroduceVariableQuickFix(PyExpression expression) {
+    myExpression = expression;
+  }
 
   @NotNull
   public String getName() {
@@ -34,9 +35,8 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
     String name = "var";
-    if (expression != null) {
+    if (myExpression != null) {
       Application application = ApplicationManager.getApplication();
       if (application != null && !application.isUnitTestMode()) {
         name = Messages.showInputDialog(project, "Enter new variable name",
@@ -45,8 +45,8 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
       }
       if (name.isEmpty()) return;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                         name + " = " + expression.getText()));
+      myExpression.replace(elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
+                                                         name + " = " + myExpression.getText()));
     }
   }
 }

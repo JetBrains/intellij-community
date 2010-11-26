@@ -186,7 +186,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return;
         }
         if (refex.getQualifier() != null) {
-          System.out.println("refex.getQualifier() " + refex.getQualifier().getText());
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
 
