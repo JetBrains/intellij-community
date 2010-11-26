@@ -86,7 +86,7 @@ public class PyDebugValue extends XValue {
         result.append('[').append(removeId(myName)).append(']');
       }
       else if (("set".equals(myParent.getType())) && !isLen(myName)) {
-        result.append("[").append(myName).append("]");
+        //set doesn't support indexing
       }
       else if (isLen(myName)) {
         result.append('.').append(myName).append("()");
