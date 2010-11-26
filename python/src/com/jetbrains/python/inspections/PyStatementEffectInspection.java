@@ -2,12 +2,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.StatementEffectQuickFix;
+import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
+import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -15,8 +15,6 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.sql.Statement;
 
 /**
  * @author Alexey.Ivanov
@@ -64,7 +62,7 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      registerProblem(expression, "Statement seems to have no effect");
+      registerProblem(expression, "Statement seems to have no effect", new StatementEffectIntroduceVariableQuickFix());
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {
@@ -125,7 +123,7 @@ public class PyStatementEffectInspection extends PyInspection {
         ResolveResult[] results = referenceExpression.getReference().multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
-            registerProblem(expression, "Statement seems to have no effect and can be replaced with function call to have effect", new StatementEffectQuickFix());
+            registerProblem(expression, "Statement seems to have no effect and can be replaced with function call to have effect", new StatementEffectFunctionCallQuickFix());
             return true;
           }
         }

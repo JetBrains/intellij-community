@@ -1,10 +1,12 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,15 +52,12 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       else {
         Application application = ApplicationManager.getApplication();
         if (application != null && !application.isUnitTestMode()) {
-          AskNameDialog dialog = new AskNameDialog(project);
-          dialog.setTitle("Enter function name");
-          dialog.show();
-          if (!dialog.isOK()) return; // 'Cancel' button cancels everything
-          name = dialog.getAlias();
-          if (name.isEmpty()) return;
+          name = Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.variable.name"),
+                                        IdeBundle.message("title.new.variable"), Messages.getQuestionIcon());
+          if (name == null) return;
         }
       }
-      
+      if (name.isEmpty()) return;
       PyExpression body = lambdaExpression.getBody();
       PyParameter[] parameters = lambdaExpression.getParameterList().getParameters();
       StringBuilder stringBuilder = new StringBuilder();
