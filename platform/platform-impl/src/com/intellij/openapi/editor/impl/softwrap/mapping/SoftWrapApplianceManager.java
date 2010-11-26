@@ -197,7 +197,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     while (!iterationState.atEnd() && myContext.currentPosition.offset <= event.getNewEndOffset()) {
       FoldRegion currentFold = iterationState.getCurrentFold();
       if (currentFold == null) {
-        myContext.endOffset = iterationState.getEndOffset();
+        myContext.tokenEndOffset = iterationState.getEndOffset();
         processNonFoldToken();
       }
       else {
@@ -210,8 +210,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       iterationState.advance();
       attributes = iterationState.getMergedAttributes();
       myContext.fontType = attributes.getFontType();
-      myContext.startOffset = iterationState.getStartOffset();
-      myOffset2fontType.fill(myContext.startOffset, iterationState.getEndOffset(), myContext.fontType);
+      myContext.tokenStartOffset = iterationState.getStartOffset();
+      myOffset2fontType.fill(myContext.tokenStartOffset, iterationState.getEndOffset(), myContext.fontType);
     }
     notifyListenersOnVisualLineEnd();
     return true;
@@ -231,35 +231,27 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     String placeholder = foldRegion.getPlaceholderText();
     FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), myContext.fontType, myEditor);
-    int newX = myContext.currentPosition.x;
+    int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {
-      newX += fontInfo.charWidth(placeholder.charAt(i), myContext.contentComponent);
+      placeholderWidthInPixels += fontInfo.charWidth(placeholder.charAt(i), myContext.contentComponent);
     }
+    int newX = myContext.currentPosition.x + placeholderWidthInPixels;
+    
+    notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     
     if (!myContext.exceedsVisualEdge(newX)) {
-      notifyListenersOnVisualLineStart(myContext.lineStartPosition);
-      int visualLineBefore = myContext.currentPosition.visualLine;
-      int logicalColumnBefore = myContext.currentPosition.logicalColumn;
-      myContext.currentPosition.advance(foldRegion);
-      myContext.currentPosition.x = newX;
-      int collapsedFoldingWidthInColumns = myContext.currentPosition.logicalColumn;
-      if (myContext.currentPosition.visualLine <= visualLineBefore) {
-        // Single-line fold region.
-        collapsedFoldingWidthInColumns = myContext.currentPosition.logicalColumn - logicalColumnBefore;
-      }
-      notifyListenersOnFoldRegion(foldRegion, collapsedFoldingWidthInColumns, visualLineBefore);
-      myContext.startOffset = myContext.currentPosition.offset;
-      myContext.softWrapStartOffset = foldRegion.getEndOffset();
+      
+      myContext.advance(foldRegion, placeholderWidthInPixels);
       return true;
     }
 
-    myContext.logicalLineData.update(foldRegion.getStartOffset(), myContext.getSpaceWidth());
+    myContext.logicalLineData.update(foldRegion.getStartOffset());
     SoftWrap softWrap = registerSoftWrap(
-      myContext.softWrapStartOffset, myContext.startOffset, myContext.startOffset, myContext.getSpaceWidth(), myContext.logicalLineData
+      myContext.softWrapStartOffset, myContext.tokenStartOffset, myContext.tokenStartOffset, myContext.getSpaceWidth(), myContext.logicalLineData
     );
     assert softWrap != null; // We expect that it's always possible to wrap collapsed fold region placeholder text
     myContext.softWrapStartOffset = softWrap.getStart();
-    if (softWrap.getStart() < myContext.startOffset) {
+    if (softWrap.getStart() < myContext.tokenStartOffset) {
       revertListeners(softWrap.getStart(), myContext.currentPosition.visualLine);
       for (int j = foldRegion.getStartOffset() - 1; j >= softWrap.getStart(); j--) {
         int pixelsDiff = myOffset2widthInPixels.data[j - myOffset2widthInPixels.anchor];
@@ -269,8 +261,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         myContext.currentPosition.logicalColumn -= columnsDiff;
         myContext.currentPosition.visualColumn -= columnsDiff;
       }
-      notifyListenersOnSoftWrapLineFeed(true);
     }
+    notifyListenersOnSoftWrapLineFeed(true);
 
     myContext.currentPosition.visualColumn = 0;
     myContext.currentPosition.softWrapColumnDiff = myContext.currentPosition.visualColumn - myContext.currentPosition.foldingColumnDiff 
@@ -282,18 +274,18 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myContext.currentPosition.x = softWrap.getIndentInPixels();
     myContext.currentPosition.visualColumn = softWrap.getIndentInColumns();
     myContext.currentPosition.softWrapColumnDiff += softWrap.getIndentInColumns();
-    myContext.lineStartPosition.from(myContext.currentPosition);
 
-    for (int j = softWrap.getStart(); j < myContext.startOffset; j++) {
+    for (int j = softWrap.getStart(); j < myContext.tokenStartOffset; j++) {
       char c = myContext.text.charAt(j);
       newX = calculateNewX(c);
       myContext.onNonLineFeedSymbol(c, newX);
     }
     myOffset2fontType.clear();
     myOffset2widthInPixels.clear();
+    myContext.advance(foldRegion, placeholderWidthInPixels);
     return true;
   }
-
+  
   /**
    * There is a possible case that user just removed text that contained fold region and fold model is not updated yet.
    * <p/>
@@ -343,15 +335,15 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   
   /**
    * Encapsulates logic of processing target non-fold region token defined by the {@link #myContext current processing context}
-   * (target token start offset is identified by {@link ProcessingContext#startOffset}; end offset is stored
-   * at {@link ProcessingContext#endOffset}).
+   * (target token start offset is identified by {@link ProcessingContext#tokenStartOffset}; end offset is stored
+   * at {@link ProcessingContext#tokenEndOffset}).
    * <p/>
    * <code>'Token'</code> here stands for the number of subsequent symbols that are represented using the same font by IJ editor.
    */
   private void processNonFoldToken() {
     int newX;
     
-    while (myContext.currentPosition.offset < myContext.endOffset) {
+    while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
     //for (int i = myContext.startOffset; i < myContext.endOffset; i++) {
       int offset = myContext.currentPosition.offset;
       if (offset > myContext.rangeEndOffset) {
@@ -391,10 +383,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   
   private void createSoftWrapIfPossible() {
     final int offset = myContext.currentPosition.offset;
-    myContext.logicalLineData.update(offset, myContext.getSpaceWidth());
+    myContext.logicalLineData.update(offset);
     int softWrapStartOffset = myContext.softWrapStartOffset;
     SoftWrap softWrap = registerSoftWrap(
-      softWrapStartOffset, Math.max(softWrapStartOffset, offset - 1),
+      softWrapStartOffset, Math.max(softWrapStartOffset, offset),
       calculateSoftWrapEndOffset(softWrapStartOffset, myContext.logicalLineData.endLineOffset), myContext.getSpaceWidth(),
       myContext.logicalLineData
     );
@@ -411,7 +403,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     //      (it may occur if there are no convenient wrap positions before the current offset);
     //   3. Soft wrap offset is located after the current offset and exceeds current token end offset;
     // We should process that accordingly.
-    if (actualSoftWrapOffset > myContext.endOffset) {
+    if (actualSoftWrapOffset > myContext.tokenEndOffset) {
       //CachingSoftWrapDataMapper.log(String.format(
       //  "Avoiding creating soft wrap on detected overflow on offset %d. Reason: soft wrap position (%d) lays beyond of the " +
       //  "recalculation offset (%d). Marked soft wrap as delayed (%s)", myContext.currentPosition.offset, actualSoftWrapOffset,
@@ -734,7 +726,12 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     recalculateIfNecessary(event.getOldTimeStamp());
   }
 
+  /**
+   * We need to use correct indent for soft-wrapped lines, i.e. they should be indented to the start of the logical line.
+   * This class stores information about logical line start indent. 
+   */
   private class LogicalLineData {
+    
     public int indentInColumns;
     public int indentInPixels;
     public int endLineOffset;
@@ -754,6 +751,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       CharSequence text = document.getCharsSequence();
       indentInColumns = 0;
       indentInPixels = 0;
+      myNonWhiteSpaceSymbolOffset = -1;
 
       for (int i = startLineOffset; i < endLineOffset; i++) {
         char c = text.charAt(i);
@@ -773,23 +771,16 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
      * There is a possible case that all document line symbols before the first soft wrap are white spaces. We don't want to use
      * such a big indent then.
      * <p/>
-     * This method encapsulates that 'reset' logical
+     * This method encapsulates logic that 'resets' indent to use if such a situation is detected.
      *
      * @param softWrapOffset    offset of the soft wrap that occurred on document line which data is stored at the current object
-     * @param spaceWidth        space width to use
      */
-    public void update(int softWrapOffset, int spaceWidth) {
-      if (softWrapOffset > myNonWhiteSpaceSymbolOffset) {
+    public void update(int softWrapOffset) {
+      if (myNonWhiteSpaceSymbolOffset >= 0 && softWrapOffset > myNonWhiteSpaceSymbolOffset) {
         return;
       }
-      if (myCustomIndentUsedLastTime) {
-        indentInColumns = myCustomIndentValueUsedLastTime;
-        indentInPixels = indentInColumns * spaceWidth;
-      }
-      else {
-        indentInColumns = 0;
-        indentInPixels = 0;
-      }
+      indentInColumns = 0;
+      indentInPixels = 0;
     }
   }
 
@@ -930,8 +921,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     public int            reservedWidthInPixels;
     public int            softWrapStartOffset;
     public int            rangeEndOffset;
-    public int            startOffset;
-    public int            endOffset;
+    public int            tokenStartOffset;
+    public int            tokenEndOffset;
     public int            fontType;
     public boolean        notifyListenersOnLineStartPosition;
     public boolean        skipToLineEnd;
@@ -945,8 +936,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       reservedWidthInPixels = 0;
       softWrapStartOffset = 0;
       rangeEndOffset = 0;
-      startOffset = 0;
-      endOffset = 0;
+      tokenStartOffset = 0;
+      tokenEndOffset = 0;
       fontType = 0;
       notifyListenersOnLineStartPosition = false;
       skipToLineEnd = false;
@@ -1021,11 +1012,31 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     }
 
     /**
+     * Updates state of the current context object in order to point to the end of the given collapsed fold region.
+     * 
+     * @param foldRegion    collapsed fold region to process
+     */
+    private void advance(FoldRegion foldRegion, int placeHolderWidthInPixels) {
+      int visualLineBefore = currentPosition.visualLine;
+      int logicalColumnBefore = currentPosition.logicalColumn;
+      currentPosition.advance(foldRegion);
+      currentPosition.x += placeHolderWidthInPixels;
+      int collapsedFoldingWidthInColumns = currentPosition.logicalColumn;
+      if (currentPosition.visualLine <= visualLineBefore) {
+        // Single-line fold region.
+        collapsedFoldingWidthInColumns = currentPosition.logicalColumn - logicalColumnBefore;
+      }
+      notifyListenersOnFoldRegion(foldRegion, collapsedFoldingWidthInColumns, visualLineBefore);
+      tokenStartOffset = myContext.currentPosition.offset;
+      softWrapStartOffset = foldRegion.getEndOffset();
+    }
+    
+    /**
      * Asks current context to update its state in order to show to the first symbol of the next visual line if it belongs to
-     * [{@link #startOffset}; {@link #skipToLineEnd} is set to <code>'true'</code> otherwise
+     * [{@link #tokenStartOffset}; {@link #skipToLineEnd} is set to <code>'true'</code> otherwise
      */
     public void tryToShiftToNextLine() {
-      for (int i = currentPosition.offset; i < endOffset; i++, currentPosition.offset++) {
+      for (int i = currentPosition.offset; i < tokenEndOffset; i++, currentPosition.offset++) {
         char c = text.charAt(i);
         currentPosition.offset = i;
         if (c == '\n') {
