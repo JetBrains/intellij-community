@@ -454,6 +454,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testFieldWithCastingCaret() throws Throwable { doTest(); }
+
   public void testMethodReturnType() throws Throwable {
     doTest();
   }

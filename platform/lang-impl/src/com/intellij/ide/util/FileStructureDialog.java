@@ -23,6 +23,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -260,10 +261,21 @@ public class FileStructureDialog extends DialogWrapper {
     final JCheckBox chkFilter = new JCheckBox();
     chkFilter.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
+        PsiElement currentParent = null;
+        if (builder != null) {
+          final AbstractTreeNode parentNode = builder.getParentNode();
+          final Object value = parentNode.getValue();
+          if (value instanceof PsiTreeElementBase) {
+            currentParent = ((PsiTreeElementBase) value).getValue();
+          }
+        }
         myTreeActionsOwner.setFilterIncluded(fileStructureFilter, !chkFilter.isSelected());
         myTreeStructure.rebuildTree();
-        ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         if (builder != null) {
+          if (currentParent != null) {
+            builder.enterElement(currentParent, PsiUtilBase.getVirtualFile(currentParent));
+          }
           builder.updateList(true);
         }
 

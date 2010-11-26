@@ -30,7 +30,7 @@ public class CompletionParameters {
   private final int myOffset;
   private final int myInvocationCount;
 
-  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+  protected CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                                   final CompletionType completionType, int offset, final int invocationCount) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
@@ -38,6 +38,14 @@ public class CompletionParameters {
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
+  }
+
+  public CompletionParameters withType(CompletionType type) {
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount);
+  }
+
+  public CompletionParameters withInvocationCount(int newCount) {
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount);
   }
 
   @NotNull

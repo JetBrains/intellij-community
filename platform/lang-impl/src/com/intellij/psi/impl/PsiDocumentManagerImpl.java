@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -434,6 +435,8 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
+      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() ? file.getText() : null;
+
       int startOffset;
       int endOffset;
       int lengthShift;
@@ -452,6 +455,18 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       textBlock.unlock();
       textBlock.clear();
+
+      if (file.getTextLength() != document.getTextLength()) {
+        if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+          throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
+                                   "; doc len=" + document.getTextLength() +
+                                   "; file text=" + file.getText() +
+                                   "; doc text=" + document.getText() +
+                                   "; old file text=" + oldText);
+        }
+
+        throw new AssertionError("commitDocument left PSI inconsistent");
+      }
     }
     finally {
       myTreeElementBeingReparsedSoItWontBeCollected = null;

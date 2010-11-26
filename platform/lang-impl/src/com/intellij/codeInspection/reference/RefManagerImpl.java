@@ -54,10 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class RefManagerImpl extends RefManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
   private int myLastUsedMask = 256 * 256 * 256 * 4;
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
   private final Project myProject;
   private AnalysisScope myScope;
@@ -169,7 +168,7 @@ public class RefManagerImpl extends RefManager {
     return (T)myExtensions.get(key);
   }
 
-
+  @Nullable
   public String getType(final RefEntity ref) {
     for (RefManagerExtension extension : myExtensions.values()) {
       final String type = extension.getType(ref);
@@ -379,7 +378,12 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   public RefElement getReference(final PsiElement elem) {
-    if (elem != null && (elem instanceof PsiDirectory || belongsToScope(elem))) {
+    return getReference(elem, false);
+  }
+
+  @Nullable
+  public RefElement getReference(final PsiElement elem, final boolean ignoreScope) {
+    if (elem != null && (elem instanceof PsiDirectory || belongsToScope(elem, ignoreScope))) {
       if (!elem.isValid()) return null;
 
       RefElement ref = getFromRefTable(elem);
@@ -503,6 +507,10 @@ public class RefManagerImpl extends RefManager {
   }
 
   public boolean belongsToScope(final PsiElement psiElement) {
+    return belongsToScope(psiElement, false);
+  }
+
+  private boolean belongsToScope(final PsiElement psiElement, final boolean ignoreScope) {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
     final PsiFile containingFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -521,11 +529,10 @@ public class RefManagerImpl extends RefManager {
         return psiElement.getManager().isInProject(psiElement);
       }
     });
-    return inProject.booleanValue() && (getScope() == null || getScope().contains(psiElement));
+    return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 
   public String getQualifiedName(RefEntity refEntity) {
-
     if (refEntity == null || refEntity instanceof RefElementImpl && !refEntity.isValid()) {
       return InspectionsBundle.message("inspection.reference.invalid");
     }
