@@ -263,10 +263,7 @@ public class IdeEventQueue extends EventQueue {
 
   public void removeActivityListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
-      final boolean wasRemoved = myActivityListeners.remove(runnable);
-      if (!wasRemoved) {
-        LOG.error("unknown runnable: " + runnable);
-      }
+      myActivityListeners.remove(runnable);
     }
   }
 
