@@ -214,9 +214,20 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
 
     PsiFile file = aClass.getContainingFile();
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module != null) {
-      buffer.append('[').append(module.getName()).append("] ");
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile != null && (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile))) {
+      final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      if (orderEntries.size() > 0) {
+        final OrderEntry orderEntry = orderEntries.get(0);
+        buffer.append("[").append(orderEntry.getPresentableName()).append("] ");
+      }
+    }
+    else {
+      final Module module = ModuleUtil.findModuleForPsiElement(file);
+      if (module != null) {
+        buffer.append('[').append(module.getName()).append("] ");
+      }
     }
 
     if (file instanceof PsiJavaFile) {
