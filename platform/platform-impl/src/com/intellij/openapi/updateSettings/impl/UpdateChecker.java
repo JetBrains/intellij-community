@@ -84,6 +84,7 @@ public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
 
   public static String ADDITIONAL_REQUEST_OPTIONS = "";
+  @NonNls private static final String INSTALLATION_UID = "installation.uid";
 
   private UpdateChecker() {
   }
@@ -345,7 +346,19 @@ public final class UpdateChecker {
       public void run() {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
-          String uid = PropertiesComponent.getInstance().getOrInit("installation.uid", UUID.randomUUID().toString());
+          final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+          String uid = "?";
+          if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
+            try {
+              uid = UUID.randomUUID().toString();
+            }
+            catch (Exception ignored) {
+            }
+            propertiesComponent.setValue(INSTALLATION_UID, uid);
+          }
+          else {
+            uid = propertiesComponent.getValue(INSTALLATION_UID);
+          }
           final URL requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString() + "&uid=" + uid + ADDITIONAL_REQUEST_OPTIONS);
           final InputStream inputStream = requestUrl.openStream();
           try {
