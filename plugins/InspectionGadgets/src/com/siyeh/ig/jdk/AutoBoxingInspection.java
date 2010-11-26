@@ -155,45 +155,58 @@ public class AutoBoxingInspection extends BaseInspection {
             if (qualifierExpression == null) {
                 return false;
             }
-            if (classToConstruct.equals("java.lang.Integer")) {
+            if (classToConstruct.equals(CommonClassNames.JAVA_LANG_INTEGER)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Integer", PsiType.INT, "intValue")) {
+                        CommonClassNames.JAVA_LANG_INTEGER, PsiType.INT,
+                        "intValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Short")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_SHORT)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Short", PsiType.SHORT, "shortValue")) {
+                        CommonClassNames.JAVA_LANG_SHORT, PsiType.SHORT,
+                        "shortValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Byte")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_BYTE)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Byte", PsiType.BYTE, "byteValue")) {
+                        CommonClassNames.JAVA_LANG_BYTE, PsiType.BYTE,
+                        "byteValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Character")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_CHARACTER)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Character", PsiType.CHAR, "charValue")) {
+                        CommonClassNames.JAVA_LANG_CHARACTER, PsiType.CHAR,
+                        "charValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Long")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_LONG)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Long", PsiType.LONG, "longValue")) {
+                        CommonClassNames.JAVA_LANG_LONG, PsiType.LONG,
+                        "longValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Float")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_FLOAT)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Float", PsiType.FLOAT, "floatValue")) {
+                        CommonClassNames.JAVA_LANG_FLOAT, PsiType.FLOAT,
+                        "floatValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
-            } else if (classToConstruct.equals("java.lang.Double")) {
+            } else if (classToConstruct.equals(
+                    CommonClassNames.JAVA_LANG_DOUBLE)) {
                 if (MethodCallUtils.isCallToMethod(methodCallExpression,
-                        "java.lang.Double", PsiType.DOUBLE, "doubleValue")) {
+                        CommonClassNames.JAVA_LANG_DOUBLE, PsiType.DOUBLE,
+                        "doubleValue")) {
                     expression.replace(qualifierExpression);
                     return true;
                 }
@@ -220,7 +233,8 @@ public class AutoBoxingInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(
+                PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
@@ -231,17 +245,20 @@ public class AutoBoxingInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+        @Override public void visitLiteralExpression(
+                PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             checkExpression(expression);
         }
 
-        @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
+        @Override public void visitPostfixExpression(
+                PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             checkExpression(expression);
         }
 
-        @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(
+                PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
@@ -258,7 +275,8 @@ public class AutoBoxingInspection extends BaseInspection {
             checkExpression(expression);
         }
 
-        @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        @Override public void visitTypeCastExpression(
+                PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
