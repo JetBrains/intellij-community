@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
@@ -26,6 +27,15 @@ import org.jetbrains.annotations.NotNull;
 public class SameModuleWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
-    return location.getPositionModule() == ModuleUtil.findModuleForPsiElement(element);
+    final Module elementModule = ModuleUtil.findModuleForPsiElement(element);
+    if (location.getPositionModule() == elementModule) {
+      return 2;
+    }
+
+    if (elementModule != null) {
+      return 1; // in project => still not bad
+    }
+
+    return 0;
   }
 }
