@@ -38,6 +38,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -85,6 +86,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
   private final JPanel myControlPanel;
   private boolean myControlPanelVisible;
   private final ExternalDocAction myExternalDocAction;
+  private Consumer<PsiElement> myNavigateCallback;
 
   private JBPopup myHint;
 
@@ -271,6 +273,10 @@ public class DocumentationComponent extends JPanel implements Disposable {
     return myElement != null ? myElement.getElement() : null;
   }
 
+  public void setNavigateCallback(Consumer<PsiElement> navigateCallback) {
+    myNavigateCallback = navigateCallback;
+  }
+
   public void setText(String text, PsiElement element, boolean clearHistory) {
     setText(text, element, false, clearHistory);
   }
@@ -368,6 +374,12 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
   private void restoreContext(Context context) {
     setDataInternal(context.element, context.text, context.viewRect);
+    if (myNavigateCallback != null) {
+      final PsiElement element = context.element.getElement();
+      if (element != null) {
+        myNavigateCallback.consume(element);
+      }
+    }
   }
 
   private void updateControlState() {
@@ -546,6 +558,7 @@ public class DocumentationComponent extends JPanel implements Disposable {
     myElement = null;
     myManager = null;
     myHint = null;
+    myNavigateCallback = null;
   }
 
 }
