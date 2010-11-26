@@ -482,13 +482,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
     layeredPanePoint.x -= getComponent().getInsets().left;
-    if (dim.width > layeredPane.getWidth()){
-      dim.width = layeredPane.getWidth();
-    }
-    int wshift = layeredPane.getWidth() - (layeredPanePoint.x + dim.width);
-    if (wshift < 0){
-      layeredPanePoint.x += wshift;
-    }
 
     int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
     int shiftHigh = layeredPanePoint.y - dim.height;
@@ -985,7 +978,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       Point point = calculatePosition();
-      updateBounds(point.x,point.y);
 
       final Dimension size = myProcessIcon.getPreferredSize();
       myIconPanel.setBounds(getComponent().getRootPane().getLayeredPane().getWidth() - size.width, 0, size.width, size.height);

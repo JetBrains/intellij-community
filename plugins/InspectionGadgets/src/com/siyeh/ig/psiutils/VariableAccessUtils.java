@@ -219,18 +219,14 @@ public class VariableAccessUtils{
     public static boolean evaluatesToVariable(
             @Nullable PsiExpression expression,
             @NotNull PsiVariable variable) {
-        final PsiExpression strippedExpression =
-                ParenthesesUtils.stripParentheses(expression);
-        if(strippedExpression == null){
-            return false;
-        }
+        expression = ParenthesesUtils.stripParentheses(expression);
         if (!(expression instanceof PsiReferenceExpression)) {
             return false;
         }
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression) expression;
-        final PsiElement referent = referenceExpression.resolve();
-        return variable.equals(referent);
+        final PsiElement target = referenceExpression.resolve();
+        return variable.equals(target);
     }
 
     public static boolean variableIsUsed(@NotNull PsiVariable variable,
@@ -278,8 +274,7 @@ public class VariableAccessUtils{
                     (PsiAssignmentExpression) expression;
             final IElementType tokenType =
                     assignmentExpression.getOperationTokenType();
-            PsiExpression lhs = assignmentExpression.getLExpression();
-            lhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression lhs = assignmentExpression.getLExpression();
             if (!evaluatesToVariable(lhs, variable)) {
                 return false;
             }
@@ -296,10 +291,8 @@ public class VariableAccessUtils{
                 if (binaryTokenType != JavaTokenType.MINUS) {
                     return false;
                 }
-                PsiExpression lOperand = binaryExpression.getLOperand();
-                lOperand = ParenthesesUtils.stripParentheses(lOperand);
-                PsiExpression rOperand = binaryExpression.getROperand();
-                rOperand = ParenthesesUtils.stripParentheses(rOperand);
+                final PsiExpression lOperand = binaryExpression.getLOperand();
+                final PsiExpression rOperand = binaryExpression.getROperand();
                 if (ExpressionUtils.isOne(lOperand)) {
                     if (evaluatesToVariable(rOperand, variable)) {
                         return true;
@@ -352,8 +345,7 @@ public class VariableAccessUtils{
                     (PsiAssignmentExpression) expression;
             final IElementType tokenType =
                     assignmentExpression.getOperationTokenType();
-            PsiExpression lhs = assignmentExpression.getLExpression();
-            lhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression lhs = assignmentExpression.getLExpression();
             if (!evaluatesToVariable(lhs, variable)) {
                 return false;
             }
@@ -370,10 +362,8 @@ public class VariableAccessUtils{
                 if (binaryTokenType != JavaTokenType.PLUS) {
                     return false;
                 }
-                PsiExpression lOperand = binaryExpression.getLOperand();
-                lOperand = ParenthesesUtils.stripParentheses(lOperand);
-                PsiExpression rOperand = binaryExpression.getROperand();
-                rOperand = ParenthesesUtils.stripParentheses(rOperand);
+                final PsiExpression lOperand = binaryExpression.getLOperand();
+                final PsiExpression rOperand = binaryExpression.getROperand();
                 if (ExpressionUtils.isOne(lOperand)) {
                     if (evaluatesToVariable(rOperand, variable)) {
                         return true;

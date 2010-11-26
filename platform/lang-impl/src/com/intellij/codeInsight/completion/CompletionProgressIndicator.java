@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -205,6 +206,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void setFocusLookupWhenDone(boolean focusLookup) {
     myFocusLookupWhenDone = focusLookup;
+    if (!focusLookup) {
+      myLookup.setAdvertisementText("Press " + CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) + " to choose the first suggestion");
+    }
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {

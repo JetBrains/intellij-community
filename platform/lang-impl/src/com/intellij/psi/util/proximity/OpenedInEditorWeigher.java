@@ -19,8 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ProximityLocation;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,10 @@ public class OpenedInEditorWeigher extends ProximityWeigher {
     if (location.getProject() == null){
       return null;
     }
-    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+    final PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return false;
+
+    final VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
     return virtualFile != null && ArrayUtil.find(OPENED_EDITORS.getValue(location), virtualFile) != -1;
   }
 }

@@ -59,4 +59,17 @@ public class PagedFileStorageTest extends TestCase {
       }
     }
   }
+
+  public void testResizeableMappedFile() throws Exception {
+    ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
+    synchronized (lock) {
+      for (int index = 0; index <= 2000000000; index += 2000000) {
+        file.putInt(index, index);
+        assertTrue(file.length() > index);
+        assertEquals(index, file.getInt(index));
+      }
+      file.putInt(Integer.MAX_VALUE - 20, 1234);
+      assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
+    }
+  }
 }

@@ -296,6 +296,47 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(beforeModification, myEditor.offsetToVisualPosition(afterFoldOffset + 1));
   }
   
+  public void testCollapsedFoldRegionPlaceholderThatExceedsVisibleWidth() throws IOException {
+    String text =
+      "line1\n" +
+      "line2\n" +
+      "line3\n" +
+      "line4\n" +
+      "line5\n" +
+      "this is long line that is expected to be soft-wrapped\n" +
+      "line6";
+    init(100, text);
+
+    assertTrue(!getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
+
+    int offsetAfterSingleLineFoldRegion = text.indexOf("line2") - 1;
+    int lineAfterSingleLineFoldRegion = myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line;
+
+    int offsetAfterMultiLineFoldRegion = text.indexOf("this") - 1;
+    int lineAfterMultiLineFoldRegion = myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line;
+
+    int offsetAfterSoftWrap = text.indexOf("line6") - 1;
+    VisualPosition beforePositionAfterSoftWrap = myEditor.offsetToVisualPosition(offsetAfterSoftWrap);
+    
+    // Add single-line fold region which placeholder text is long enough to exceed visual area width.
+    addCollapsedFoldRegion(2, offsetAfterSingleLineFoldRegion, "this is a very long placeholder for the single-line fold region");
+    assertEquals(lineAfterSingleLineFoldRegion + 1, myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line);
+    lineAfterSingleLineFoldRegion++;
+    
+    assertEquals(lineAfterMultiLineFoldRegion + 1, myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line);
+    lineAfterMultiLineFoldRegion++;
+    
+    beforePositionAfterSoftWrap = new VisualPosition(beforePositionAfterSoftWrap.line + 1, beforePositionAfterSoftWrap.column); 
+    assertEquals(beforePositionAfterSoftWrap, myEditor.offsetToVisualPosition(offsetAfterSoftWrap));
+    
+    // Add multi-line fold region which placeholder is also long enough to exceed visual area width.
+    addCollapsedFoldRegion(text.indexOf("line2") + 2, offsetAfterMultiLineFoldRegion, "long enough placeholder for multi-line fold region");
+    assertEquals(lineAfterSingleLineFoldRegion, myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line);
+    assertEquals(lineAfterMultiLineFoldRegion - 2, myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line);
+    beforePositionAfterSoftWrap = new VisualPosition(beforePositionAfterSoftWrap.line - 2, beforePositionAfterSoftWrap.column);
+    assertEquals(beforePositionAfterSoftWrap, myEditor.offsetToVisualPosition(offsetAfterSoftWrap));
+  }
+  
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {

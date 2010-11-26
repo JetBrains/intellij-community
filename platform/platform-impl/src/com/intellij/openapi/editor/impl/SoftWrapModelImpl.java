@@ -161,30 +161,27 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
-    if (!isSoftWrappingEnabled()) {
+    if (!isSoftWrappingEnabled() || end < start) {
       return Collections.emptyList();
-    }
-    int startIndex = myStorage.getSoftWrapIndex(start);
-    if (startIndex < 0) {
-      startIndex = -startIndex - 1;
     }
 
     List<? extends SoftWrap> softWraps = myStorage.getSoftWraps();
-    if (startIndex >= softWraps.size()) {
-      return Collections.emptyList();
+    
+    int startIndex = myStorage.getSoftWrapIndex(start);
+    if (startIndex < 0) {
+      startIndex = -startIndex - 1;
+      if (startIndex >= softWraps.size() || softWraps.get(startIndex).getStart() > end) {
+        return Collections.emptyList();
+      }
     }
 
     int endIndex = myStorage.getSoftWrapIndex(end);
-    if (endIndex < 0) {
-      endIndex = -endIndex - 1;
-    }
-    endIndex = Math.min(softWraps.size(), endIndex);
-
-    if (endIndex > startIndex) {
-      return softWraps.subList(startIndex, endIndex);
+    if (endIndex >= 0) {
+      return softWraps.subList(startIndex, endIndex + 1);
     }
     else {
-      return Collections.emptyList();
+      endIndex = -endIndex - 1;
+      return softWraps.subList(startIndex, endIndex);
     }
   }
 

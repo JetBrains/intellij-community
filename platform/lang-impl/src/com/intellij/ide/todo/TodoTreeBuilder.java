@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -386,7 +387,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof TodoItemNode){
       return false;
     } else if(element instanceof PsiFileNode) {
-      return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
+      try {
+        return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
+      }
+      catch (IndexNotReadyException e) {
+        return true;
+      }
     }
     return true;
   }
@@ -756,7 +762,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         getUpdater().runBeforeUpdate(
           new Runnable() {
             public void run() {
-              rebuildCache();
+              DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+                @Override
+                public void run() {
+                  rebuildCache();
+                }
+              });
             }
           }
         );
