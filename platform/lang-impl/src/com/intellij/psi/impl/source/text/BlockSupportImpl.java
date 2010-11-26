@@ -116,7 +116,7 @@ public class BlockSupportImpl extends BlockSupport {
             throw new AssertionError("IOOBE: type=" + elementType +
                                      "; oldText=" + node.getText() +
                                      "; newText=" + newFileText.subSequence(start, newFileText.length()) +
-                                     "; length=" + node.getTextLength() + "; fromFile=" + textRange.substring(fileImpl.getText()));
+                                     "; length=" + node.getTextLength());
           }
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
