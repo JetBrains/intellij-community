@@ -38,7 +38,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
 
   RefFieldImpl(PsiField field, RefManager manager) {
-      this((RefClass) manager.getReference(field.getContainingClass()), field, manager);
+    this((RefClass)((RefManagerImpl)manager).getReference(field.getContainingClass(), true), field, manager);
   }
 
   RefFieldImpl(RefClass ownerClass, PsiField field, RefManager manager) {
