@@ -18,7 +18,9 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -57,6 +59,13 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
       final XsltFormattingModelBuilder builder = new XsltFormattingModelBuilder(LanguageFormatting.INSTANCE.forLanguage(xmlLang));
       LanguageFormatting.INSTANCE.addExplicitExtension(xmlLang, builder);
+
+      try {
+        // TODO: put this into com.intellij.refactoring.actions.IntroduceParameterAction, just like IntroduceVariableAction
+        ActionManager.getInstance().getAction("IntroduceParameter").setInjectedContext(true);
+      } catch (Exception e) {
+        Logger.getInstance(XsltConfigImpl.class.getName()).error(e);
+      }
     }
 
     public void disposeComponent() {

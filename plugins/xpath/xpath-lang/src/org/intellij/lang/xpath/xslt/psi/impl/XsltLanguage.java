@@ -29,13 +29,11 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.RefactoringActionHandler;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-import org.intellij.lang.xpath.xslt.refactoring.introduceVariable.XsltIntroduceVariableAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,11 +48,6 @@ public class XsltLanguage extends Language {
             @Override
             public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
                 return element instanceof XsltVariable && element.getUseScope() instanceof LocalSearchScope;
-            }
-
-            @Override
-            public RefactoringActionHandler getIntroduceVariableHandler() {
-                return new XsltIntroduceVariableAction();
             }
 
             @Override
