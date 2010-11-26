@@ -154,9 +154,45 @@ public class ForCanBeForEach {
             String deliveryDiscount = ( String )iterator.next();
             currentActiveDiscountInIteration(iterator );
         }
-
     }
 
     private void currentActiveDiscountInIteration(Iterator iterator) {
+    }
+
+    private static Phases getPhases(){
+        return null;
+    }
+    public void t() {
+        for (Iterator<String> it = getPhases().iterator(3); it.hasNext();) {
+            System.out.println(it.next());
+        }
+    }
+
+    public class Phases implements Iterable<String> {
+        @Override
+        public Iterator<String> iterator() {
+            return null;
+        }
+
+        public Iterator<String> iterator(int i) {
+            return null;
+        }
+    }
+
+    void sizeInVariable(List ls) {
+        int size = ls.size();
+        for (int i = (0); (i < (size)); (i)++) {
+            Object o = ls.get(i);
+            System.out.println("o = " + o);
+        }
+    }
+
+    class X extends ArrayList {
+
+        void foo() {
+            for (int i = 0; i < size(); i++) {
+                this.get(i);
+            }
+        }
     }
 }
