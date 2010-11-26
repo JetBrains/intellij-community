@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -196,6 +197,15 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     cast.getCastType().replace(factory.createTypeElement(castType));
     cast.getOperand().replace(instanceOfExpression.getOperand());
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement("xxx", castType, cast);
+    final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
+    if (createFinals != null) {
+      final PsiElement[] declaredElements = decl.getDeclaredElements();
+      LOG.assertTrue(declaredElements.length == 1);
+      LOG.assertTrue(declaredElements[0] instanceof PsiLocalVariable);
+      final PsiModifierList modifierList = ((PsiLocalVariable)declaredElements[0]).getModifierList();
+      LOG.assertTrue(modifierList != null);
+      modifierList.setModifierProperty(PsiModifier.FINAL, createFinals.booleanValue());
+    }
     PsiDeclarationStatement element = (PsiDeclarationStatement)insertAtAnchor(instanceOfExpression, decl);
     return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
   }
