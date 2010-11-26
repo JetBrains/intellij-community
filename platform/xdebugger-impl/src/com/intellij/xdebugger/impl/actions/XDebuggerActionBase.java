@@ -36,15 +36,22 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   public void update(final AnActionEvent event) {
-    boolean enabled = isEnabled(event);
     Presentation presentation = event.getPresentation();
+    boolean hidden = isHidden(event);
+    if (hidden) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+
+    boolean enabled = isEnabled(event);
     if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);
     }
     else {
       presentation.setVisible(true);
-      presentation.setEnabled(enabled);
     }
+    presentation.setEnabled(enabled);
   }
 
   protected boolean isEnabled(final AnActionEvent e) {
@@ -89,5 +96,17 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
 
   private void perform(final Project project, final AnActionEvent e, final DebuggerSupport support) {
     getHandler(support).perform(project, e);
+  }
+
+  protected boolean isHidden(AnActionEvent event) {
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      for (DebuggerSupport support : XDebuggerSupport.getDebuggerSupports()) {
+        if (getHandler(support).isHidden(project, event)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

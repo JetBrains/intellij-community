@@ -23,6 +23,11 @@ public class CodeGenerationException extends Exception{
     myComponentId = componentId;
   }
 
+  public CodeGenerationException(final String componentId, final String message, final Throwable cause) {
+    super(message, cause);
+    myComponentId = componentId;
+  }
+
   public String getComponentId() {
     return myComponentId;
   }

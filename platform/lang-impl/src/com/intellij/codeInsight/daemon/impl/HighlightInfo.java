@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
@@ -481,18 +482,22 @@ public class HighlightInfo implements Segment {
           tool = profile.getInspectionTool(idkey.toString(), element);
         }
       }
+      InspectionProfileEntry wrappedTool = tool;
       if (tool instanceof LocalInspectionToolWrapper) {
-        final LocalInspectionTool localInspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
+        wrappedTool = ((LocalInspectionToolWrapper)tool).getTool();
         Class aClass = myAction.getClass();
         if (myAction instanceof QuickFixWrapper) {
           aClass = ((QuickFixWrapper)myAction).getFix().getClass();
         }
-        newOptions.add(new CleanupInspectionIntention(localInspectionTool, aClass));
-        if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
-          final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
-          if (suppressActions != null) {
-            ContainerUtil.addAll(newOptions, suppressActions);
-          }
+        newOptions.add(new CleanupInspectionIntention((LocalInspectionTool)wrappedTool, aClass));
+      } else if (tool instanceof GlobalInspectionToolWrapper) {
+        wrappedTool = ((GlobalInspectionToolWrapper)tool).getTool();
+      }
+
+      if (wrappedTool instanceof CustomSuppressableInspectionTool) {
+        final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
+        if (suppressActions != null) {
+          ContainerUtil.addAll(newOptions, suppressActions);
         }
       }
 

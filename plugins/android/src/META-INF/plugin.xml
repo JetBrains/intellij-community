@@ -120,6 +120,7 @@
                     serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>
     <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
     <problemFileHighlightFilter implementation="org.jetbrains.android.AndroidProblemFileHighlightingFilter"/>
+    <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidDocumentationProvider" order="first"/>
   </extensions>
 
   <extensionPoints>

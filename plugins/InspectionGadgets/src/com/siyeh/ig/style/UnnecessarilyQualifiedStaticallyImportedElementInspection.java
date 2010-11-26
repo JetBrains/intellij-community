@@ -55,7 +55,6 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
             extends InspectionGadgetsFix {
 
         @NotNull
-        @Override
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "unnecesarily.qualified.statically.imported.element.quickfix");
@@ -93,6 +92,9 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
             }
             final PsiElement parent = reference.getParent();
             if (parent instanceof PsiReferenceExpression) {
+                return;
+            }
+            if (parent instanceof PsiImportStatement) {
                 return;
             }
             final PsiElement target = reference.resolve();

@@ -46,20 +46,7 @@ public class ArtifactCompileScope {
   }
 
   public static ModuleCompileScope createScopeForModulesInArtifacts(@NotNull Project project, @NotNull Collection<? extends Artifact> artifacts) {
-    final Set<Module> modules = new HashSet<Module>();
-    final PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
-    for (Artifact artifact : artifacts) {
-      ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
-        public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
-          final Module module = moduleOutputPackagingElement.findModule(context);
-          if (module != null) {
-            modules.add(module);
-          }
-          return true;
-        }
-      }, context, true);
-    }
-
+    final Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
     return new ModuleCompileScope(project, modules.toArray(new Module[modules.size()]), true);
   }
 

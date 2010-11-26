@@ -198,6 +198,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             public void run() {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
+                  resetCommand(command, false);
                   result.setDone();
                 }
               });
@@ -205,11 +206,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }).doWhenRejected(new Runnable() {
             public void run() {
               result.setRejected();
+              resetCommand(command, true);
             }
           }).doWhenProcessed(new Runnable() {
             public void run() {
-              resetCommand(command, false);
-
               if (forced) {
                 myForcedFocusRequestsAlarm.addRequest(new EdtRunnable() {
                   public void runEdt() {
@@ -364,7 +364,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
         if (canFlushIdleRequests()) {
           flushIdleRequests();
-        } else {
+        }
+        else {
           if (needsRestart) {
             restartIdleAlarm();
           }
@@ -618,6 +619,23 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public Component getLastFocusedFor(IdeFrame frame) {
     WeakReference<Component> ref = myLastFocused.get(frame);
     return ref != null ? ref.get() : null;
+  }
+
+  @Override
+  public void toFront(JComponent c) {
+    if (c == null) return;
+
+    final Window window = UIUtil.getParentOfType(Window.class, c);
+    if (window != null && window.isShowing()) {
+      doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          if (ApplicationManager.getApplication().isActive()) {
+            window.toFront();
+          }
+        }
+      });
+    }
   }
 
   private static class FurtherRequestor implements FocusRequestor {

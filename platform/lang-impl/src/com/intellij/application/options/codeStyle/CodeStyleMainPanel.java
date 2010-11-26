@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
@@ -29,6 +30,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListener {
   private final CardLayout myLayout = new CardLayout();
@@ -217,5 +219,11 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);
     }
+  }
+
+  public Set<String> processListOptions() {
+    final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
+    final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
+    return panel.processListOptions();
   }
 }

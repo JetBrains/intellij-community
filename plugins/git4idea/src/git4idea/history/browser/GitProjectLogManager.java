@@ -16,30 +16,25 @@
 package git4idea.history.browser;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import git4idea.GitBranch;
-import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
 import git4idea.history.wholeTree.GitLog;
 import git4idea.history.wholeTree.LogFactoryService;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -106,6 +101,7 @@ public class GitProjectLogManager {
   }
 
   public void deactivate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     myVcsManager.removeVcsListener(myListener);
     if (myCurrentContent.get() != null) {
       final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myProject);
@@ -118,6 +114,7 @@ public class GitProjectLogManager {
   }
 
   public void activate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     myVcsManager.addVcsListener(myListener);
     recalculateWindows();
     myConnection = myProject.getMessageBus().connect(myProject);

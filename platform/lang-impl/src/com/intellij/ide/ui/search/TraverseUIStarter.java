@@ -16,7 +16,6 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -94,9 +92,7 @@ public class TraverseUIStarter implements ApplicationStarter {
       if (configurable instanceof KeymapConfigurable){
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){
-        processColorAndFontsSettings((OptionsContainingConfigurable)configurable, configurableElement);
-      } else if (configurable instanceof CodeStyleSchemesConfigurable){
-        processCodeStyleConfigurable((CodeStyleSchemesConfigurable)configurable, configurableElement);
+        processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
       }
       root.addContent(configurableElement);
       configurable.disposeUIResources();
@@ -108,17 +104,17 @@ public class TraverseUIStarter implements ApplicationStarter {
     ((ApplicationEx)ApplicationManager.getApplication()).exit(true);
   }
 
-  private static void processCodeStyleConfigurable(final CodeStyleSchemesConfigurable configurable, final Element configurableElement) {
-    final TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
-    options.addAll(configurable.processOptions());
-    for (OptionDescription description : options) {
-      append(description.getPath(), description.getHit(), description.getOption(), configurableElement);
+  private static void processOptionsContainingConfigurable(final OptionsContainingConfigurable configurable,
+                                                           final Element configurableElement) {
+    final Set<String> optionsPath = configurable.processListOptions();
+    final TreeSet<OptionDescription> result = wordsToOptionDescriptors(optionsPath);
+    for (OptionDescription option : result) {
+      append(option.getPath(), option.getHit(), option.getOption(), configurableElement);
     }
   }
 
-  private static void processColorAndFontsSettings(final OptionsContainingConfigurable configurable, final Element configurableElement) {
+  private static TreeSet<OptionDescription> wordsToOptionDescriptors(Set<String> optionsPath) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> optionsPath = configurable.processListOptions();
     final TreeSet<OptionDescription> result = new TreeSet<OptionDescription>();
     for (String opt : optionsPath) {
       final Set<String> words = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(opt);
@@ -128,9 +124,7 @@ public class TraverseUIStarter implements ApplicationStarter {
         }
       }
     }
-    for (OptionDescription option : result) {
-      append(option.getPath(), option.getHit(), option.getOption(), configurableElement);
-    }
+    return result;
   }
 
   private static void processKeymap(final Element configurableElement){

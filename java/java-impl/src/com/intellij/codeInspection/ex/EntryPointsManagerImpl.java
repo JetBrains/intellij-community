@@ -342,7 +342,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   @Override
   public void configureAnnotations() {
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by");
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by", true);
     new DialogWrapper(myProject) {
       {
         init();

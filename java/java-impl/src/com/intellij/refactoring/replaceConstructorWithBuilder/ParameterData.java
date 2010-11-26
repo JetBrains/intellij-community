@@ -61,8 +61,12 @@ public class ParameterData {
       int i = 0;
       for (final PsiParameter parameter : chainedConstructor.getParameterList().getParameters()) {
         if (!parameter.isVarArgs()) {
+          final PsiExpression arg = args[i];
           final ParameterData parameterData = initParameterData(parameter, result);
-          parameterData.setDefaultValue(args[i++].getText());
+          if (!(arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).resolve() instanceof PsiParameter)) {
+            parameterData.setDefaultValue(arg.getText());
+          }
+          i++;
         }
       }
     }
