@@ -31,7 +31,7 @@ import org.jetbrains.generate.tostring.util.StringUtil;
 /**
  * Basic PSI Adapter with common function that works in all supported versions of IDEA.
  */
-public abstract class PsiAdapter {
+public class PsiAdapter {
 
     /**
      * Constructor - use {@link PsiAdapterFactory}.
@@ -793,12 +793,4 @@ public abstract class PsiAdapter {
             }
         }
     }
-
-  /**
-     * Get's the full filename to this plugin .jar file
-     *
-     * @return the full filename to this plugin .jar file
-     */
-    public abstract String getPluginFilename();
-
 }

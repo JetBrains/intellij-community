@@ -15,8 +15,6 @@
  */
 package org.jetbrains.generate.tostring.psi;
 
-import org.jetbrains.generate.tostring.psi.idea7.PsiAdapter7;
-
 /**
  * Factory to get a PsiAdapter class compatible with the correct version of IDEA.
  *
@@ -36,7 +34,7 @@ public class PsiAdapterFactory {
      */
     public static PsiAdapter getPsiAdapter() {
         if (instance == null) {
-            instance = new PsiAdapter7();
+            instance = new PsiAdapter();
         }
 
         return instance;
