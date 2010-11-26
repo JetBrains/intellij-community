@@ -23,6 +23,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -50,6 +51,8 @@ import java.util.List;
  * @author yole
  */
 public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass");
+
   private final PsiFile myFile;
   private final Editor myEditor;
   private final Collection<TextRange> myReadAccessRanges = new ArrayList<TextRange>();
@@ -75,8 +78,16 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     if (handler != null) {
       List<PsiElement> targets = handler.getTargets();
       handler.computeUsages(targets);
-      myReadAccessRanges.addAll(handler.getReadUsages());
-      myWriteAccessRanges.addAll(handler.getWriteUsages());
+      final List<TextRange> readUsages = handler.getReadUsages();
+      for (TextRange readUsage : readUsages) {
+        LOG.assertTrue(readUsage != null, "null text range from " + handler);
+      }
+      myReadAccessRanges.addAll(readUsages);
+      final List<TextRange> writeUsages = handler.getWriteUsages();
+      for (TextRange writeUsage : writeUsages) {
+        LOG.assertTrue(writeUsage != null, "null text range from " + handler);
+      }
+      myWriteAccessRanges.addAll(writeUsages);
       return;
     }
 
