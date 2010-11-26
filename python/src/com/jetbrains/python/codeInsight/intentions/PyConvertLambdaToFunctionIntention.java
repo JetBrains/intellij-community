@@ -42,7 +42,7 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (lambdaExpression != null) {
-      String name;
+      String name = "function";
       PsiElement parent = lambdaExpression.getParent();
       if (parent instanceof PyAssignmentStatement) {
         name = ((PyAssignmentStatement)parent).getLeftHandSideExpression().getText();
@@ -57,8 +57,6 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
           name = dialog.getAlias();
           if (name.isEmpty()) return;
         }
-        else
-          name = "function";
       }
       
       PyExpression body = lambdaExpression.getBody();
@@ -80,9 +78,10 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(lambdaExpression),
                                                             PyFunction.class, stringBuilder.toString());
 
-      PyFunction pyFunction = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class);
-      if (pyFunction != null) {
-        pyFunction.getStatementList().addBefore(function, pyFunction.getStatementList().getStatements()[0]);
+      PyFunction parentFunction = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class);
+      if (parentFunction != null) {
+        PyStatementList statements = parentFunction.getStatementList();
+        statements.addBefore(function, statements.getStatements()[0]);
       }
       else {
         PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
