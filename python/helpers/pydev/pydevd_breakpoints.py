@@ -1,3 +1,4 @@
+from pydevd_constants import *
 import sys
 
 _original_excepthook = None
@@ -110,7 +111,10 @@ def get_class( kls ):
     parts = kls.split('.')
     module = ".".join(parts[:-1])
     if (module == ""):
-        module = "__builtin__"
+        if IS_PY3K:
+            module = "builtins"
+        else:
+            module = "__builtin__"
     m = __import__( module )
     for comp in parts[-1:]:
         m = getattr(m, comp)

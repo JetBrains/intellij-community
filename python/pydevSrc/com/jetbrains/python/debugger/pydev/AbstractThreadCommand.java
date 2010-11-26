@@ -2,7 +2,7 @@ package com.jetbrains.python.debugger.pydev;
 
 
 public abstract class AbstractThreadCommand extends AbstractCommand {
-  protected final String myThreadId;
+  private final String myThreadId;
 
   protected AbstractThreadCommand(final RemoteDebugger debugger, final int commandCode, final String threadId) {
     super(debugger, commandCode);
@@ -19,6 +19,10 @@ public abstract class AbstractThreadCommand extends AbstractCommand {
            command == KILL_THREAD ||
            command == RESUME_THREAD ||
            command == SUSPEND_THREAD;
+  }
+
+  public String getThreadId() {
+    return myThreadId;
   }
 
 }
