@@ -20,7 +20,7 @@ all this too.
 
 from datetime import datetime
 
-OUR_OWN_DATETIME = datetime(2010, 11, 23, 19, 27, 45) # datetime.now() of edit time
+OUR_OWN_DATETIME = datetime(2010, 11, 26, 17, 14, 0) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
 # Note: DON'T FORGET TO UPDATE!
@@ -706,6 +706,8 @@ class ModuleRedeclarator(object):
         ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
 
         ("time", None, "ctime"): ("(seconds=None)", DEFAULT_STR_LIT),
+
+        ("_collections", "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
 
         ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
         ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
