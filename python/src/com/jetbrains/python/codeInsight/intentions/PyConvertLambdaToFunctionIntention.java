@@ -52,8 +52,8 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       else {
         Application application = ApplicationManager.getApplication();
         if (application != null && !application.isUnitTestMode()) {
-          name = Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.variable.name"),
-                                        IdeBundle.message("title.new.variable"), Messages.getQuestionIcon());
+          name = Messages.showInputDialog(project, "Enter new function name",
+                                        "New function name", Messages.getQuestionIcon());
           if (name == null) return;
         }
       }

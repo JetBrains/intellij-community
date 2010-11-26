@@ -39,8 +39,8 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
     if (expression != null) {
       Application application = ApplicationManager.getApplication();
       if (application != null && !application.isUnitTestMode()) {
-        name = Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.variable.name"),
-                                        IdeBundle.message("title.new.variable"), Messages.getQuestionIcon());
+        name = Messages.showInputDialog(project, "Enter new variable name",
+                                        "New variable name", Messages.getQuestionIcon());
         if (name == null) return;
       }
       if (name.isEmpty()) return;
