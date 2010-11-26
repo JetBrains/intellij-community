@@ -17,13 +17,11 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildFile {
-  Key<AntBuildFile> ANT_BUILD_FILE_KEY = Key.create("ANT_BUILD_FILE");
 
   @Nullable
   String getPresentableName();

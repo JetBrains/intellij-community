@@ -19,7 +19,6 @@ import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
@@ -301,7 +300,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public ClassLoader getClassLoader() {
     if (myClassLoader == null) {
-      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+      final XmlFile xmlFile = getSourceElement();
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(xmlFile.getProject()).getAntBuildFile(xmlFile);
       if (buildFile != null) {
         myClassLoader = buildFile.getClassLoader();
       }
@@ -323,7 +323,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntInstallation getAntInstallation() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+    final XmlFile xmlFile = getSourceElement();
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(xmlFile.getProject()).getAntBuildFile(xmlFile);
     if (buildFile != null) {
       final AntInstallation assignedInstallation = AntBuildFileImpl.ANT_INSTALLATION.get(buildFile.getAllOptions());
       if (assignedInstallation != null) {
@@ -344,7 +345,8 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public Sdk getTargetJdk() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+    final XmlFile xmlFile = getSourceElement();
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(xmlFile.getProject()).getAntBuildFile(xmlFile);
     if (buildFile == null) {
       return ProjectRootManager.getInstance(getProject()).getProjectSdk();
     }
