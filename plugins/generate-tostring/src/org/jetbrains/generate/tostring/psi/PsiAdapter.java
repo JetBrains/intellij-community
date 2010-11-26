@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -510,21 +511,7 @@ public class PsiAdapter {
             return null;
         }
 
-        // return part after get
-        String getName = StringUtil.after(method.getName(), "get");
-        if (getName != null) {
-            getName = StringUtil.firstLetterToLowerCase(getName);
-            return getName;
-        }
-
-        // return part after is
-        String isName = StringUtil.after(method.getName(), "is");
-        if (isName != null) {
-            isName = StringUtil.firstLetterToLowerCase(isName);
-            return isName;
-        }
-
-        return null;
+        return PropertyUtil.getPropertyNameByGetter(method);
     }
 
   /**

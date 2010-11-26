@@ -15,9 +15,9 @@
  */
 package org.jetbrains.generate.tostring.element;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.generate.tostring.config.FilterPattern;
 import org.jetbrains.generate.tostring.config.Filterable;
-import org.jetbrains.generate.tostring.util.StringUtil;
 
 import java.io.Serializable;
 
@@ -26,84 +26,121 @@ import java.io.Serializable;
  *
  * @see ElementFactory
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class MethodElement extends AbstractElement implements Serializable, Element, Filterable {
 
-  private String methodName;
-  private String fieldName;
-  private boolean modifierAbstract;
-  private boolean returnTypeVoid;
-  private boolean getter;
+    private String methodName;
+    private String fieldName;
+    private boolean modifierAbstract;
+    private boolean modifierSynchronzied;
+    private boolean returnTypeVoid;
+    private boolean getter;
+    private boolean deprecated;
 
-  public String getMethodName() {
-    return methodName;
-  }
-
-  public void setMethodName(String methodName) {
-    this.methodName = methodName;
-  }
-
-  public String getFieldName() {
-    return fieldName;
-  }
-
-  public void setFieldName(String fieldName) {
-    this.fieldName = fieldName;
-  }
-
-  public String getAccessor() {
-    return methodName + "()";
-  }
-
-  public boolean isModifierAbstract() {
-    return modifierAbstract;
-  }
-
-  public void setModifierAbstract(boolean modifierAbstract) {
-    this.modifierAbstract = modifierAbstract;
-  }
-
-  public boolean isReturnTypeVoid() {
-    return returnTypeVoid;
-  }
-
-  public void setReturnTypeVoid(boolean returnTypeVoid) {
-    this.returnTypeVoid = returnTypeVoid;
-  }
-
-  public boolean isGetter() {
-    return getter;
-  }
-
-  public void setGetter(boolean getter) {
-    this.getter = getter;
-  }
-
-  public boolean applyFilter(FilterPattern pattern) {
-    if (pattern == null) {
-      return false;
+    public String getMethodName() {
+        return methodName;
     }
 
-    if (StringUtil.isNotEmpty(pattern.getMethodName()) && methodName.matches(pattern.getMethodName())) {
-      return true;
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 
-    if (StringUtil.isNotEmpty(pattern.getMethodType()) && !returnTypeVoid && !isPrimitive && getTypeQualifiedName() != null) {
-      String type = getTypeQualifiedName();
-      if (type.matches(pattern.getMethodType())) {
-        return true;
-      }
+    public String getFieldName() {
+        return fieldName;
     }
 
-    return false;
-  }
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
+    }
 
-  public String toString() {
-    return super.toString() + " ::: MethodElement{" +
-           "fieldName='" + fieldName + "'" +
-           ", methodName='" + methodName + "'" +
-           ", modifierAbstract=" + modifierAbstract +
-           ", returnTypeVoid=" + returnTypeVoid +
-           ", getter=" + getter +
-           "}";
-  }
+    public String getAccessor() {
+        return methodName + "()";
+    }
+
+    public boolean isModifierAbstract() {
+        return modifierAbstract;
+    }
+
+    public void setModifierAbstract(boolean modifierAbstract) {
+        this.modifierAbstract = modifierAbstract;
+    }
+
+    public boolean isModifierSynchronzied() {
+        return modifierSynchronzied;
+    }
+
+    public void setModifierSynchronzied(boolean modifierSynchronzied) {
+        this.modifierSynchronzied = modifierSynchronzied;
+    }
+
+    public boolean isReturnTypeVoid() {
+        return returnTypeVoid;
+    }
+
+    public void setReturnTypeVoid(boolean returnTypeVoid) {
+        this.returnTypeVoid = returnTypeVoid;
+    }
+
+    public boolean isGetter() {
+        return getter;
+    }
+
+    public void setGetter(boolean getter) {
+        this.getter = getter;
+    }
+
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+    }
+
+    /**
+     * Performs a regular expression matching the methodname.
+     *
+     * @param regexp regular expression.
+     * @return true if the methodname matches the regular expression.
+     * @throws IllegalArgumentException is throw if the given input is invalid (an empty String) or a pattern matching error.
+     */
+    public boolean matchName(String regexp) throws IllegalArgumentException {
+        if (StringUtil.isEmpty(regexp)) {
+            throw new IllegalArgumentException("Can't perform regular expression since the given input is empty. Check the Method body velocity code: regexp='" + regexp + "'");
+        }
+
+        return methodName.matches(regexp);
+    }
+
+    public boolean applyFilter(FilterPattern pattern) {
+        if (pattern == null)
+            return false;
+
+        if (StringUtil.isNotEmpty(pattern.getMethodName()) && methodName.matches(pattern.getMethodName())) {
+            return true;
+        }
+
+        if (StringUtil.isNotEmpty(pattern.getMethodType()) && !returnTypeVoid && !isPrimitive && getTypeQualifiedName() != null) {
+            String type = getTypeQualifiedName();
+            if (type.matches(pattern.getMethodType())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public String toString() {
+        return super.toString() + " ::: MethodElement{" +
+                "fieldName='" + fieldName + "'" +
+                ", methodName='" + methodName + "'" +
+                ", modifierAbstract=" + modifierAbstract +
+                ", modifierSynchronzied=" + modifierSynchronzied +
+                ", returnTypeVoid=" + returnTypeVoid +
+                ", getter=" + getter +
+                ", deprecated=" + deprecated +
+                "}";
+    }
+
+
 }

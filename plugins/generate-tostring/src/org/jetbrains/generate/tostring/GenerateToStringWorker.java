@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -39,7 +40,6 @@ import org.jetbrains.generate.tostring.exception.GenerateCodeException;
 import org.jetbrains.generate.tostring.psi.PsiAdapter;
 import org.jetbrains.generate.tostring.psi.PsiAdapterFactory;
 import org.jetbrains.generate.tostring.template.TemplateResource;
-import org.jetbrains.generate.tostring.util.StringUtil;
 import org.jetbrains.generate.tostring.velocity.VelocityFactory;
 import org.jetbrains.generate.tostring.view.MethodExistsDialog;
 
@@ -166,7 +166,7 @@ public class GenerateToStringWorker {
     if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
 
     // fix weird linebreak problem in IDEA #3296 and later
-    body = StringUtil.fixLineBreaks(body);
+    body = StringUtil.convertLineSeparators(body);
 
     // create psi newMethod named toString()
     PsiMethod newMethod = elementFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", null);
