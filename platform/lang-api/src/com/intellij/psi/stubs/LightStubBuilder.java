@@ -66,6 +66,7 @@ public class LightStubBuilder implements StubBuilder {
   protected void buildStubTree(final LighterAST tree, final LighterASTNode root, final StubElement rootStub) {
     final Stack<LighterASTNode> parents = new Stack<LighterASTNode>();
     final TIntStack childNumbers = new TIntStack();
+    final Stack<List<LighterASTNode>> kinderGarden = new Stack<List<LighterASTNode>>();
     final Stack<StubElement> parentStubs = new Stack<StubElement>();
 
     LighterASTNode parent = null;
@@ -83,6 +84,7 @@ public class LightStubBuilder implements StubBuilder {
         if (parent != null) {
           parents.push(parent);
           childNumbers.push(childNumber);
+          kinderGarden.push(children);
           parentStubs.push(parentStub);
         }
         parent = element;
@@ -98,8 +100,9 @@ public class LightStubBuilder implements StubBuilder {
 
       element = null;
       while (parents.size() > 0) {
-        children = tree.getChildren((parent = parents.pop()));
+        parent = parents.pop();
         childNumber = childNumbers.pop();
+        children = kinderGarden.pop();
         parentStub = parentStubs.pop();
         while (++childNumber < children.size()) {
           element = children.get(childNumber);
