@@ -85,6 +85,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     final PsiElement[] elements = localSearchScope.getScope();
     for (PsiElement element : elements) {
       if (element instanceof PsiDirectory) return true;
+      if (!element.isValid()) continue;
       final PsiFile file = element.getContainingFile();
       if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) return true;
     }
