@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,14 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreInMatchingInstanceof = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "overly.strong.type.cast.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiType expectedType = (PsiType)infos[0];
@@ -52,6 +54,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
                 "overly.strong.type.cast.problem.descriptor", typeText);
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
@@ -60,6 +63,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
                 this, "ignoreInMatchingInstanceof");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new OverlyStrongCastFix();
     }
@@ -72,6 +76,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
                     "overly.strong.type.cast.weaken.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement castTypeElement = descriptor.getPsiElement();
@@ -97,6 +102,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new OverlyStrongTypeCastVisitor();
     }
