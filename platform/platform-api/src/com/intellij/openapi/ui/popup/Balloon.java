@@ -33,6 +33,8 @@ public interface Balloon extends Disposable {
 
   void show(JLayeredPane pane);
 
+  void showInCenterOf(JComponent component);
+
   Dimension getPreferredSize();
 
   void setBounds(Rectangle bounds);
