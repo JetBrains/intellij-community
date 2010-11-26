@@ -247,7 +247,15 @@ public class FSRecords implements Forceable {
 
     private static void invalidateIndex() {
       LOG.info("Marking VFS as corrupted");
-      FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
+      final File indexRoot = PathManager.getIndexRoot();
+      if (indexRoot.exists()) {
+        final String[] children = indexRoot.list();
+        if (children != null && children.length > 0) {
+          // create index corruption marker only if index directory exists and is non-empty
+          // It is incorrect to consider non-existing indices "corrupted" 
+          FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
+        }
+      }
     }
 
     private static File basePath() {

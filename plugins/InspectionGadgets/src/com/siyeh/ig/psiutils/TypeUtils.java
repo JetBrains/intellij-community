@@ -53,15 +53,15 @@ public class TypeUtils {
 
     public static PsiClassType getJavaLangObjectType(
             @NotNull PsiElement context) {
-        return getType("java.lang.Object", context);
+        return getType(CommonClassNames.JAVA_LANG_OBJECT, context);
     }
 
     public static boolean isJavaLangObject(@Nullable PsiType targetType) {
-        return typeEquals("java.lang.Object", targetType);
+        return typeEquals(CommonClassNames.JAVA_LANG_OBJECT, targetType);
     }
 
     public static boolean isJavaLangString(@Nullable PsiType targetType) {
-        return typeEquals("java.lang.String", targetType);
+        return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
     }
 
     public static boolean expressionHasTypeOrSubtype(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -29,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 public class NonSerializableObjectBoundToHttpSessionInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "non.serializable.object.bound.to.http.session.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.serializable.object.bound.to.http.session.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NonSerializableObjectBoundToHttpSessionVisitor();
     }
@@ -53,11 +53,12 @@ public class NonSerializableObjectBoundToHttpSessionInspection
             super.visitMethodCallExpression(methodCallExpression);
             if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
                     "javax.servlet.http.HttpSession", PsiType.VOID,
-                    "putValue", "java.lang.String", "java.lang.Object") &&
+                    "putValue", CommonClassNames.JAVA_LANG_STRING,
+                    CommonClassNames.JAVA_LANG_OBJECT) &&
                     !MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
                             "javax.servlet.http.HttpSession", PsiType.VOID,
-                            "setAttribute", "java.lang.String",
-                            "java.lang.Object")) {
+                            "setAttribute", CommonClassNames.JAVA_LANG_STRING,
+                            CommonClassNames.JAVA_LANG_OBJECT)) {
                 return;
             }
             final PsiExpressionList argumentList =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "covariant.compareto.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "covariant.compareto.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CovariantCompareToVisitor();
     }
@@ -77,9 +80,12 @@ public class CovariantCompareToInspection extends BaseInspection {
                     return;
                 }
             }
-            final PsiManager manager = method.getManager();
-          final PsiClass comparableClass =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Comparable", method.getResolveScope());
+            final Project project = method.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final GlobalSearchScope scope = method.getResolveScope();
+            final PsiClass comparableClass =
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE,
+                            scope);
             if (comparableClass != null &&
                     comparableClass.getTypeParameters().length == 1) {
                 final PsiSubstitutor superSubstitutor =

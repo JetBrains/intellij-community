@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,11 +252,14 @@ public class AutoUnboxingInspection extends BaseInspection {
             }
             final PsiField field = (PsiField) target;
             final PsiClass containingClass = field.getContainingClass();
-            final String qualifiedName = containingClass.getQualifiedName();
-            if (!"java.lang.Boolean".equals(qualifiedName)) {
+            if (containingClass == null) {
                 return null;
             }
-            final String name = field.getName();
+            final String qualifiedName = containingClass.getQualifiedName();
+            if (!CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {
+                return null;
+            }
+            @NonNls final String name = field.getName();
             if ("TRUE".equals(name)) {
                 return "true";
             } else if ("FALSE".equals(name)) {

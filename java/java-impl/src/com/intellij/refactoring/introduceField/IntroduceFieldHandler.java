@@ -99,7 +99,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,
       currentMethodConstructor,
-      false, declareStatic, occurencesNumber,
+      localVariable != null, declareStatic, occurencesNumber,
       allowInitInMethod, allowInitInMethodIfAll,
       new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences)
     );

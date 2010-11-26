@@ -274,6 +274,28 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(positionBeforeModification, myEditor.offsetToVisualPosition(offset));
   }
   
+  public void testTypingBeforeCollapsedFoldRegion() throws IOException {
+    // We had a problem that soft wraps cache entries that lay after the changed region were considered to be affected by the change.
+    // This test checks that situation.
+    String text =
+      "\n" +
+      "fold line1\n" +
+      "fold line2\n" +
+      "fold line3\n" +
+      "fold line4\n" +
+      "normal line1";
+    init(150, text);
+    
+    int afterFoldOffset = text.indexOf("normal line1");
+    addCollapsedFoldRegion(text.indexOf("fold line1") + 2, afterFoldOffset - 1, "...");
+    VisualPosition beforeModification = myEditor.offsetToVisualPosition(afterFoldOffset);
+    
+    myEditor.getCaretModel().moveToOffset(0);
+    type('a');
+    
+    assertEquals(beforeModification, myEditor.offsetToVisualPosition(afterFoldOffset + 1));
+  }
+  
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {

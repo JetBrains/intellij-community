@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
@@ -28,23 +29,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class DateToStringInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "CallToDateToString";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "call.to.date.tostring.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "call.to.date.tostring.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new DateToStringVisitor();
     }
@@ -59,7 +64,8 @@ public class DateToStringInspection extends BaseInspection {
                 return;
             }
             final PsiType targetType = MethodCallUtils.getTargetType(expression);
-            if (!TypeUtils.typeEquals("java.util.Date", targetType)) {
+            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_DATE,
+                    targetType)) {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();

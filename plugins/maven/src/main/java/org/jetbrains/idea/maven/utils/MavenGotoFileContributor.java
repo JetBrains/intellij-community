@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,36 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor, DumbAware {
+public class MavenGotoFileContributor implements ChooseByNameContributor {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
+    List<String> result = new ArrayList<String>();
 
-    Set<String> result = new THashSet<String>();
-    for (VirtualFile each : getSettingsFiles(project)) {
-      result.add(each.getName());
+    for (MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
+      result.add(each.getMavenId().getArtifactId());
     }
-    return ArrayUtil.toStringArray(result);
+
+    return result.toArray(new String[result.size()]);
   }
 
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
-
     List<NavigationItem> result = new ArrayList<NavigationItem>();
-    for (VirtualFile each : getSettingsFiles(project)) {
-      if (each.getName().equals(name)) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(each);
+
+    for (final MavenProject each : MavenProjectsManager.getInstance(project).getProjects()) {
+      if (name.equals(each.getMavenId().getArtifactId())) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(each.getFile());
         if (psiFile != null) result.add(psiFile);
       }
     }
-    return result.toArray(new NavigationItem[result.size()]);
-  }
 
-  private List<VirtualFile> getSettingsFiles(Project project) {
-    return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles();
+    return result.toArray(new NavigationItem[result.size()]);
   }
 }

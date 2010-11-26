@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,23 +37,27 @@ import java.util.Set;
 public class StringBufferReplaceableByStringBuilderInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "StringBufferMayBeStringBuilder";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.buffer.replaceable.by.string.builder.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.buffer.replaceable.by.string.builder.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringBufferMayBeStringBuilderFix();
     }
@@ -67,6 +71,7 @@ public class StringBufferReplaceableByStringBuilderInspection
                     "string.buffer.replaceable.by.string.builder.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement variableIdentifier =
@@ -83,6 +88,7 @@ public class StringBufferReplaceableByStringBuilderInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringBufferReplaceableByStringBuilderVisitor();
     }
@@ -91,7 +97,8 @@ public class StringBufferReplaceableByStringBuilderInspection
             extends BaseInspectionVisitor {
 
         private static final Set<String> excludes = new HashSet(Arrays.asList(
-                "java.lang.StringBuilder", "java.lang.StringBuffer"));
+                "java.lang.StringBuilder",
+                CommonClassNames.JAVA_LANG_STRING_BUFFER));
 
         @Override public void visitLocalVariable(
                 @NotNull PsiLocalVariable variable) {
@@ -105,7 +112,8 @@ public class StringBufferReplaceableByStringBuilderInspection
                 return;
             }
             final PsiType type = variable.getType();
-            if (!TypeUtils.typeEquals("java.lang.StringBuffer", type)) {
+            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                    type)) {
                 return;
             }
             final PsiExpression initializer = variable.getInitializer();

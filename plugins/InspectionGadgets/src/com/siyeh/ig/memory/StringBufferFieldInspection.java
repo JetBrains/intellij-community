@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,12 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringBufferFieldInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "stringbuffer.field.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final PsiType type = (PsiType)infos[0];
@@ -38,6 +41,7 @@ public class StringBufferFieldInspection extends BaseInspection {
                 "stringbuffer.field.problem.descriptor", typeName);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringBufferFieldVisitor();
     }
@@ -48,7 +52,7 @@ public class StringBufferFieldInspection extends BaseInspection {
         @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             final PsiType type = field.getType();
-            if (!type.equalsToText("java.lang.StringBuffer") &&
+            if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
                         !type.equalsToText("java.lang.StringBuilder")) {
                 return;
             }

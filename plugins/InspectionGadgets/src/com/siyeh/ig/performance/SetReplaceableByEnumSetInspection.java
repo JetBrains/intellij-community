@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,7 +66,7 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.util.Set")) {
+                    CommonClassNames.JAVA_UTIL_SET)) {
                 return;
             }
             if (TypeUtils.expressionHasTypeOrSubtype(expression,

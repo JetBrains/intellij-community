@@ -358,6 +358,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
     catch (Throwable e) {
       markCorrupted();
+      LOG.error(e);
       throw new RuntimeException(e);
     }
   }

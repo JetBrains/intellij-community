@@ -50,7 +50,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
                                                                    int endOffset,
                                                                    int layer,
                                                                    TextAttributes textAttributes,
-                                                                   HighlighterTargetArea targetArea,
+                                                                   @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    Consumer<RangeHighlighterEx> changeAttributesAction) {
     throw new ProcessCanceledException();
@@ -66,7 +66,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
     throw new ProcessCanceledException();
   }
 
-  public void removeHighlighter(RangeHighlighter rangeHighlighter) {
+  public void removeHighlighter(@NotNull RangeHighlighter rangeHighlighter) {
   }
 
   public void removeAllHighlighters() {

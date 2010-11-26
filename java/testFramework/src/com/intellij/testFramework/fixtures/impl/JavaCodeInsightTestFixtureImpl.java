@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -49,12 +51,17 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return psiClass;
   }
 
-  private PsiClass addClass(@NonNls String rootPath, @NotNull @NonNls final String classText) throws IOException {
+  private PsiClass addClass(@NonNls final String rootPath, @NotNull @NonNls final String classText) throws IOException {
     final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
     final String qName = aClass.getQualifiedName();
     assert qName != null;
 
-    final PsiFile psiFile = addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText);
+    final PsiFile psiFile = new WriteCommandAction<PsiFile>(getProject()) {
+      @Override
+      protected void run(Result<PsiFile> result) throws Throwable {
+        result.setResult(addFileToProject(rootPath, qName.replace('.', '/') + ".java", classText));
+      }
+    }.execute().getResultObject();
     return ((PsiJavaFile)psiFile).getClasses()[0];
   }
 

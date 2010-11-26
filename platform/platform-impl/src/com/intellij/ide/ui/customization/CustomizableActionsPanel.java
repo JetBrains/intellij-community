@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -60,9 +59,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: anna
@@ -90,10 +88,9 @@ public class CustomizableActionsPanel {
 
 
 
-  private JPanel myDetailsPanel;
+  private JButton myRestoreAllDefaultButton;
   private JButton myRestoreDefaultButton;
   public static final Icon FULLISH_ICON = IconLoader.getIcon("/toolbar/unknown.png");
-  private DetailsComponent myDetailsComponent;
 
   public CustomizableActionsPanel() {
 
@@ -144,6 +141,7 @@ public class CustomizableActionsPanel {
         }
         myMoveActionUpButton.setEnabled(isMoveSupported(myActionsTree, -1));
         myMoveActionDownButton.setEnabled(isMoveSupported(myActionsTree, 1));
+        myRestoreDefaultButton.setEnabled(!findActionsUnderSelection().isEmpty());
       }
     });
 
@@ -178,7 +176,7 @@ public class CustomizableActionsPanel {
 
     myEditIconButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myRestoreDefaultButton.setEnabled(true);
+        myRestoreAllDefaultButton.setEnabled(true);
         final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null) {
@@ -270,10 +268,25 @@ public class CustomizableActionsPanel {
       }
     });
 
-    myRestoreDefaultButton.addActionListener(new ActionListener() {
+    myRestoreAllDefaultButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         mySelectedSchema.copyFrom(new CustomActionsSchema());
         patchActionsTreeCorrespondingToSchema(root);
+        myRestoreAllDefaultButton.setEnabled(false);
+      }
+    });
+
+    myRestoreDefaultButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final List<ActionUrl> otherActions = new ArrayList<ActionUrl>(mySelectedSchema.getActions());
+        otherActions.removeAll(findActionsUnderSelection());
+        mySelectedSchema.copyFrom(new CustomActionsSchema());
+        for (ActionUrl otherAction : otherActions) {
+          mySelectedSchema.addAction(otherAction);
+        }
+        final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        patchActionsTreeCorrespondingToSchema(root);
+        restorePathsAfterTreeOptimization(treePaths);
         myRestoreDefaultButton.setEnabled(false);
       }
     });
@@ -283,18 +296,32 @@ public class CustomizableActionsPanel {
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree);
   }
 
+  private List<ActionUrl> findActionsUnderSelection() {
+    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
+    final TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
+    if (selectionPaths != null) {
+      for (TreePath path : selectionPaths) {
+        final ActionUrl selectedUrl = CustomizationUtil.getActionUrl(path, ActionUrl.MOVE);
+        final ArrayList<String> selectedGroupPath = new ArrayList<String>(selectedUrl.getGroupPath());
+        final Object component = selectedUrl.getComponent();
+        if (component instanceof Group) {
+          selectedGroupPath.add(((Group)component).getName());
+          for (ActionUrl action : mySelectedSchema.getActions()) {
+            final ArrayList<String> groupPath = action.getGroupPath();
+            final int idx = Collections.indexOfSubList(groupPath, selectedGroupPath);
+            if (idx > -1) {
+              actions.add(action);
+            }
+          }
+        }
+      }
+    }
+    return actions;
+  }
+
   private void addCustomizedAction(ActionUrl url) {
     mySelectedSchema.addAction(url);
-    myRestoreDefaultButton.setEnabled(true);
-  }
-
-  public void initUi() {
-    myDetailsComponent = new DetailsComponent();
-    myDetailsComponent.setContent(myDetailsPanel);
-  }
-
-  public DetailsComponent getDetails() {
-    return myDetailsComponent;
+    myRestoreAllDefaultButton.setEnabled(true);
   }
 
   private void editToolbarIcon(String actionId, DefaultMutableTreeNode node) {
@@ -401,7 +428,7 @@ public class CustomizableActionsPanel {
     mySelectedSchema = new CustomActionsSchema();
     mySelectedSchema.copyFrom(CustomActionsSchema.getInstance());
     patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
-    myRestoreDefaultButton.setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
+    myRestoreAllDefaultButton.setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
   }
 
   public boolean isModified() {

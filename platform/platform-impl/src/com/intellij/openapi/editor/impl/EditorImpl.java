@@ -843,6 +843,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
+  public int yPositionToLogicalLineNumber(int y) {
+    int line = yPositionToVisibleLineNumber(y);
+    LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
+    return logicalPosition.line;
+  }
+
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
@@ -1074,13 +1080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    final Point pp;
-    if (p.x >= 0 && p.y >= 0) {
-      pp = p;
-    }
-    else {
-      pp = new Point(Math.max(p.x, 0), Math.max(p.y, 0));
-    }
+    Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
 
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
@@ -1603,6 +1603,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
         if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
           int logStartLine = offsetToLogicalPosition(startOffset).line;
+          if (logStartLine >= myDocument.getLineCount()) {
+            return;
+          }
           LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
           Point end = logicalPositionToXY(logPosition);
           int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
@@ -3841,6 +3844,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
+    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -5204,7 +5208,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         if (isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }
       }
@@ -5218,9 +5222,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    protected void init() {
-      super.init();
-      setCorner(LOWER_LEFT_CORNER, new JPanel() {
+    public void setupCorners() {
+      super.setupCorners();
+      setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
+                LOWER_RIGHT_CORNER :
+                LOWER_LEFT_CORNER, new JPanel() {
         @Override
         public void paint(Graphics g) {
           final Rectangle bounds = getBounds();

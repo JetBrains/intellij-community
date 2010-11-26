@@ -73,9 +73,10 @@ public class StubTree {
     final Map<StubIndexKey, Map<Object, TIntArrayList>> result = new HashMap<StubIndexKey, Map<Object, TIntArrayList>>();
 
     for (int i = 0; i < myPlainList.size(); i++) {
-      StubElement<?> stub = myPlainList.get(i);
+      final StubElement<?> stub = myPlainList.get(i);
       final StubSerializer serializer = SerializationManager.getInstance().getSerializer(stub);
       final int stubIdx = i;
+      //noinspection unchecked
       serializer.indexStub(stub, new IndexSink() {
         public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
           Map<Object, TIntArrayList> map = result.get(indexKey);

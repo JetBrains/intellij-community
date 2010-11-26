@@ -255,11 +255,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       }
     }
 
-    protected boolean fromSameProject(final PsiElement[] sourceElements, final PsiElement targetElement) {
-      return targetElement != null && sourceElements.length > 0 && sourceElements[0] != null &&
-             targetElement.getProject() == sourceElements[0].getProject();
-    }
-
   }
 
   protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
@@ -292,7 +287,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       final PsiElement targetElement = getPsiElement(targetNode);
       return sourceElements.length == 0 ||
              ((targetNode == null || targetElement != null) &&
-              fromSameProject(sourceElements, targetElement) && MoveHandler.canMove(sourceElements, targetElement));
+              MoveHandler.canMove(sourceElements, targetElement));
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
@@ -348,7 +343,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
       return (targetElement instanceof PsiDirectoryContainer || targetElement instanceof PsiDirectory) &&
-             fromSameProject(sourceElements, targetElement) && CopyHandler.canCopy(sourceElements);
+             CopyHandler.canCopy(sourceElements);
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {

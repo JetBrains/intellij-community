@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,8 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             final int argumentIndex;
-            if (firstParameterType.equalsToText("java.lang.String")) {
+            if (firstParameterType.equalsToText(
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 if (arguments.length < 3) {
                     return;
                 }

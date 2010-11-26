@@ -43,9 +43,7 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return;
         }
         super.visitMethodCallExpression(expression);
-        if (isGetClassCall(expression)) {
-            checked = true;
-        } else if (isGetInstanceCall(expression)) {
+        if (isGetClassCall(expression) || isGetInstanceCall(expression)) {
             checked = true;
         }
     }
@@ -67,7 +65,7 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return false;
         }
         final String className = aClass.getQualifiedName();
-        if (!"java.lang.Class".equals(className)) {
+        if (!CommonClassNames.JAVA_LANG_CLASS.equals(className)) {
             return false;
         }
         final PsiExpressionList argumentList =
@@ -103,7 +101,7 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
             return false;
         }
         final String className = aClass.getQualifiedName();
-        if (!"java.lang.Object".equals(className)) {
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
             return false;
         }
         final PsiExpression qualifier =

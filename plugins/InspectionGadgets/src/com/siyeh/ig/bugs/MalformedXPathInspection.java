@@ -77,7 +77,8 @@ public class MalformedXPathInspection extends BaseInspection {
                 return;
             }
             final PsiExpression xpathArgument = arguments[0];
-            if(!TypeUtils.expressionHasType(xpathArgument, "java.lang.String")){
+            if(!TypeUtils.expressionHasType(xpathArgument,
+                    CommonClassNames.JAVA_LANG_STRING)){
                 return;
             }
             if(!PsiUtil.isConstantExpression(xpathArgument)){

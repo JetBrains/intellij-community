@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import javax.swing.*;
 
@@ -115,14 +116,22 @@ public class TestNGFramework extends JavaTestFramework {
 
     final PsiMethod[] psiMethods = clazz.getMethods();
     PsiMethod inClass = null;
+    PsiMethod testMethod = null;
     for (PsiMethod psiMethod : psiMethods) {
-      if (AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), false)) {
+      if (inClass == null && AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), false)) {
         inClass = psiMethod;
-        break;
+      }
+      if (testMethod == null && AnnotationUtil.isAnnotated(psiMethod, Test.class.getName(), false) && !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+        testMethod = psiMethod;
       }
     }
     if (inClass == null) {
-      final PsiMethod psiMethod = (PsiMethod)clazz.add(patternMethod);
+      final PsiMethod psiMethod;
+      if (testMethod != null) {
+        psiMethod = (PsiMethod)clazz.addBefore(patternMethod, testMethod);
+      } else {
+        psiMethod = (PsiMethod)clazz.add(patternMethod);
+      }
       JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(clazz);
       return psiMethod;
     }

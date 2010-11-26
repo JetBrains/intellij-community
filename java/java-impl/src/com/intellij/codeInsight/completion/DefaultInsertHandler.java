@@ -24,8 +24,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -63,18 +61,14 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     InsertHandlerState state = new InsertHandlerState(context.getSelectionEndOffset(), context.getSelectionEndOffset());
 
-    final boolean needLeftParenth = isToInsertParenth(context, item);
-    final boolean hasParams = needLeftParenth && hasParams(context, item);
-    final boolean annotation = insertingAnnotation(context, item);
-
     if (CompletionUtil.isOverwrite(item, completionChar)) {
-      removeEndOfIdentifier(needLeftParenth && hasParams, context);
+      removeEndOfIdentifier(context);
     }
     else if(context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) {
       JavaCompletionUtil.resetParensInfo(context.getOffsetMap());
     }
 
-    handleParentheses(hasParams, needLeftParenth, tailType, context, state);
+    handleParentheses(false, false, tailType, context, state);
     handleBrackets(item, document, state);
 
     if (item.getObject() instanceof PsiVariable) {
@@ -98,37 +92,10 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     qualifyIfNeeded(context, item);
 
 
-    if (needLeftParenth && hasParams){
-      // Invoke parameters popup
-      AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
-    }
-
-    if (tailType == TailType.DOT && !(item.getObject() instanceof PsiClass)) {
+    if (tailType == TailType.DOT) {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 
-    if (completionChar == '#') {
-      context.setLaterRunnable(new Runnable() {
-        public void run() {
-           new CodeCompletionHandlerBase(CompletionType.BASIC).invoke(project, editor, file);
-        }
-      });
-    }
-
-    if (annotation) {
-      // Check if someone inserts annotation class that require @
-      PsiElement elementAt = file.findElementAt(context.getStartOffset());
-      final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
-
-      if (elementAt instanceof PsiIdentifier &&
-          (PsiTreeUtil.getParentOfType(elementAt, PsiAnnotationParameterList.class) != null ||
-           parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof PsiJavaFile // top level annotation without @
-          )
-          && isAtTokenNeeded(context)) {
-        int expectedOffsetForAtToken = elementAt.getTextRange().getStartOffset();
-        document.insertString(expectedOffsetForAtToken, "@");
-      }
-    }
   }
 
   private static void qualifyIfNeeded(InsertionContext context, LookupElement item) {
@@ -157,14 +124,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     catch(IncorrectOperationException e){
       LOG.error(e);
     }                                                                       
-  }
-
-  private static boolean isAtTokenNeeded(InsertionContext myContext) {
-    HighlighterIterator iterator = ((EditorEx)myContext.getEditor()).getHighlighter().createIterator(myContext.getStartOffset());
-    LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
-    iterator.retreat();
-    if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
-    return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
   }
 
   private static void handleBrackets(LookupElement item, Document document, InsertHandlerState myState){
@@ -243,71 +202,11 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
   }
 
-  protected static boolean isToInsertParenth(InsertionContext context, LookupElement item){
-    return insertingAnnotationWithParameters(context, item);
-  }
-
-  private static boolean hasParams(InsertionContext context, LookupElement item){
-    final String lookupString = item.getLookupString();
-    if (PsiKeyword.SYNCHRONIZED.equals(lookupString)) {
-      final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
-      return PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
-    }
-    else if(PsiKeyword.CATCH.equals(lookupString) ||
-            PsiKeyword.SWITCH.equals(lookupString) ||
-            PsiKeyword.WHILE.equals(lookupString) ||
-            PsiKeyword.FOR.equals(lookupString))
-      return true;
-    else if (insertingAnnotationWithParameters(context, item)) {
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean insertingAnnotationWithParameters(InsertionContext context, LookupElement item) {
-    if(insertingAnnotation(context, item)) {
-      final Document document = context.getEditor().getDocument();
-      PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-      PsiElement elementAt = context.getFile().findElementAt(context.getStartOffset());
-      if (elementAt instanceof PsiIdentifier) {
-        final PsiModifierListOwner parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, false, PsiCodeBlock.class);
-        if (parent != null) {
-          for (PsiMethod m : ((PsiClass)item.getObject()).getMethods()) {
-            if (!(m instanceof PsiAnnotationMethod)) continue;
-            final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
-            if (defaultValue == null) return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean insertingAnnotation(InsertionContext context, LookupElement item) {
-    final Object obj = item.getObject();
-    if (!(obj instanceof PsiClass) || !((PsiClass)obj).isAnnotationType()) return false;
-
-    final Document document = context.getEditor().getDocument();
-    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-    final int offset = context.getStartOffset();
-
-    final PsiFile file = context.getFile();
-
-    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatement.class, false) != null) return false;
-
-    //outside of any class: we are surely inserting an annotation
-    if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiClass.class, false) == null) return true;
-
-    //the easiest check that there's a @ before the identifier
-    return PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiAnnotation.class, false) != null;
-
-  }
-
-  protected static void removeEndOfIdentifier(boolean needParenth, InsertionContext context){
+  private static void removeEndOfIdentifier(InsertionContext context){
     final Document document = context.getEditor().getDocument();
     JavaCompletionUtil.initOffsets(context.getFile(), context.getProject(), context.getOffsetMap());
     document.deleteString(context.getSelectionEndOffset(), context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
-    if(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0 && !needParenth){
+    if(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) > 0){
       document.deleteString(context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET),
                               context.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET));
       JavaCompletionUtil.resetParensInfo(context.getOffsetMap());
@@ -324,7 +223,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case ':': return TailType.CASE_COLON; //?
       case '<':
       case '>':
-      case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
     }

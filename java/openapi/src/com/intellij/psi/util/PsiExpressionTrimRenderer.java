@@ -18,7 +18,7 @@
  * User: anna
  * Date: 28-Oct-2008
  */
-package com.intellij.refactoring.introduceVariable;
+package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.util.Function;
@@ -219,9 +219,13 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
 
   public static class RenderFunction implements Function<PsiExpression, String> {
     public String fun(PsiExpression psiExpression) {
-      StringBuilder buf = new StringBuilder();
-      psiExpression.accept(new PsiExpressionTrimRenderer(buf));
-      return buf.toString();
+      return render(psiExpression);
     }
+  }
+
+  public static String render(PsiExpression expression) {
+    StringBuilder buf = new StringBuilder();
+    expression.accept(new PsiExpressionTrimRenderer(buf));
+    return buf.toString();
   }
 }

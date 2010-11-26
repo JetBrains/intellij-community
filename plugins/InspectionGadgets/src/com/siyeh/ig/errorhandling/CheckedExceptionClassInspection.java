@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -24,18 +25,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class CheckedExceptionClassInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "checked.exception.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "checked.exception.class.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CheckedExceptionClassVisitor();
     }
@@ -43,10 +47,12 @@ public class CheckedExceptionClassInspection extends BaseInspection {
     private static class CheckedExceptionClassVisitor
             extends BaseInspectionVisitor {
         @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!ClassUtils.isSubclass(aClass, "java.lang.Throwable")) {
+            if (!ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_THROWABLE)) {
                 return;
             }
-            if (ClassUtils.isSubclass(aClass, "java.lang.RuntimeException")) {
+            if (ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
                 return;
             }
             registerClassError(aClass);

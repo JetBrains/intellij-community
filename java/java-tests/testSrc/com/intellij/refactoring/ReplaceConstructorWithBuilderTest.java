@@ -50,6 +50,13 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
     doTest(true, defaults);
   }
 
+  public void testConstructorChainWithoutDefaults() throws Exception {
+    final HashMap<String, String> defaults = new HashMap<String, String>();
+    defaults.put("i", "2");
+    defaults.put("j", null);
+    doTest(true, defaults);
+  }
+
   public void testConstructorTree() throws Exception {
     doTest(true, null, "Found constructors are not reducible to simple chain");
   }

@@ -81,4 +81,9 @@ public class EditLogPatternDialog extends DialogWrapper {
     return myFilePattern.getText();
   }
 
+
+  @Override
+  protected String getHelpId() {
+    return "reference.run.configuration.edit.logfile.aliases";
+  }
 }

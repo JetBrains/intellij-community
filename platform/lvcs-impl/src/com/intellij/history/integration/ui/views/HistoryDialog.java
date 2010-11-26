@@ -264,11 +264,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
 
       public void run() {
-        if (myProject.isDisposed()) return;
+        if (isDisposed() || myProject.isDisposed()) return;
 
         invokeAndWait(new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (isDisposed() || myProject.isDisposed()) return;
 
             isUpdating = true;
             updateActions();
@@ -287,7 +287,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         final Runnable finalApply = apply;
         invokeAndWait(new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (isDisposed() || myProject.isDisposed()) return;
 
             isUpdating = false;
             if (finalApply != null) {

@@ -19,10 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -63,10 +60,20 @@ public class LoadController implements Loader {
       final LoaderAndRefresherImpl.MyRootHolder rootHolder = roots.size() == 1 ?
         new LoaderAndRefresherImpl.OneRootHolder(root) :
         new LoaderAndRefresherImpl.ManyCaseHolder(i, rootsHolder);
-      final LoaderAndRefresherImpl loaderAndRefresher =
-        new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex);
 
-      list.add(loaderAndRefresher);
+      if (filters.isEmpty()) {
+        final LoaderAndRefresherImpl loaderAndRefresher =
+        new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex);
+        list.add(loaderAndRefresher);
+      } else {
+        for (ChangesFilter.Filter filter : filters) {
+          final LoaderAndRefresherImpl loaderAndRefresher =
+          new LoaderAndRefresherImpl(ticket, Collections.singletonList(filter), myMediator, startingPoints, myDetailsCache, myProject,
+                                     rootHolder, myUsersIndex);
+          list.add(loaderAndRefresher);
+        }
+      }
+
       ++ i;
     }
 

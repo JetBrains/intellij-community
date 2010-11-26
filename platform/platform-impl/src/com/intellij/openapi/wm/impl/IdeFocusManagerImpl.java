@@ -103,6 +103,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     return getGlobalInstance().getLastFocusedFor(frame);
   }
 
+  @Override
+  public void toFront(JComponent c) {
+    getGlobalInstance().toFront(c);
+  }
+
   public boolean isFocusBeingTransferred() {
     return getGlobalInstance().isFocusBeingTransferred();
   }

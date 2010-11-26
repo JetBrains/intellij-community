@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -49,17 +50,17 @@ public class StandardVariableNamesInspection extends BaseInspection {
         s_expectedTypes.put("m", "int");
         s_expectedTypes.put("n", "int");
         s_expectedTypes.put("l", "long");
-        s_expectedTypes.put("s", "java.lang.String");
-        s_expectedTypes.put("str", "java.lang.String");
+        s_expectedTypes.put("s", CommonClassNames.JAVA_LANG_STRING);
+        s_expectedTypes.put("str", CommonClassNames.JAVA_LANG_STRING);
 
-        s_boxingClasses.put("int", "java.lang.Integer");
-        s_boxingClasses.put("short", "java.lang.Short");
-        s_boxingClasses.put("boolean", "java.lang.Boolean");
-        s_boxingClasses.put("long", "java.lang.Long");
-        s_boxingClasses.put("byte", "java.lang.Byte");
-        s_boxingClasses.put("float", "java.lang.Float");
-        s_boxingClasses.put("double", "java.lang.Double");
-        s_boxingClasses.put("char", "java.lang.Character");
+        s_boxingClasses.put("int", CommonClassNames.JAVA_LANG_INTEGER);
+        s_boxingClasses.put("short", CommonClassNames.JAVA_LANG_SHORT);
+        s_boxingClasses.put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
+        s_boxingClasses.put("long", CommonClassNames.JAVA_LANG_LONG);
+        s_boxingClasses.put("byte", CommonClassNames.JAVA_LANG_BYTE);
+        s_boxingClasses.put("float", CommonClassNames.JAVA_LANG_FLOAT);
+        s_boxingClasses.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
+        s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
     }
 
     @Override

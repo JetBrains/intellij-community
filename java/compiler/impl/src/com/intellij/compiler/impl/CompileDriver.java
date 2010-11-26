@@ -228,6 +228,7 @@ public class CompileDriver {
         }
         finally {
           compileContext.commitZipFiles(); // just to be on the safe side; normally should do nothing if called in isUpToDate()
+          CompilerCacheManager.getInstance(myProject).flushCaches();
         }
       }
     }, null);
@@ -455,6 +456,7 @@ public class CompileDriver {
             compileContext.getMessageCount(CompilerMessageCategory.WARNING),
             finish - start
           );
+          CompilerCacheManager.getInstance(myProject).flushCaches();
           //if (LOG.isDebugEnabled()) {
           //  LOG.debug("COMPILATION FINISHED");
           //}
@@ -792,7 +794,6 @@ public class CompileDriver {
       finally {
         // drop in case it has not been dropped yet.
         dropDependencyCache(context);
-
         final VirtualFile[] allOutputDirs = context.getAllOutputDirectories();
 
         if (didSomething && GENERATE_CLASSPATH_INDEX) {

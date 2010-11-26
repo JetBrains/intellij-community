@@ -15,13 +15,14 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.FileASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import gnu.trove.TIntStack;
 
@@ -34,15 +35,23 @@ public class LightStubBuilder implements StubBuilder {
 
   @Override
   public StubElement buildStubTree(final PsiFile file) {
-    final FileASTNode node = file.getNode();
-    assert node != null;
-
-    if (!(node.getElementType() instanceof ILightStubFileElementType)) {
-      LOG.error("File is not of ILightStubFileElementType: " + file);
+    final FileType fileType = file.getFileType();
+    if (!(fileType instanceof LanguageFileType)) {
+      LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
       return null;
     }
 
-    final ILightStubFileElementType<?> type = (ILightStubFileElementType)node.getElementType();
+    final Language language = ((LanguageFileType)fileType).getLanguage();
+    final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
+    if (!(contentType instanceof ILightStubFileElementType)) {
+      LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
+      return null;
+    }
+
+    final FileASTNode node = file.getNode();
+    assert node != null : file;
+
+    final ILightStubFileElementType<?> type = (ILightStubFileElementType)contentType;
     final LighterAST tree = new LighterAST(node.getCharTable(), type.parseContentsLight(node));
     final StubElement rootStub = createStubForFile(file, tree);
     buildStubTree(tree, tree.getRoot(), rootStub);

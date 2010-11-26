@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,7 +204,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             out.append(' ');
             out.append(contentVariableName);
             out.append(": ");
-            final String listName;
+            @NonNls final String listName;
             if (listReference == null) {
                 listName = "this";
             } else {
@@ -1102,8 +1102,10 @@ public class ForCanBeForeachInspection extends BaseInspection{
         if(qualifierClass == null){
             return false;
         }
-        if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
-                !ClassUtils.isSubclass(qualifierClass, "java.util.Collection")){
+        if(!ClassUtils.isSubclass(qualifierClass,
+                CommonClassNames.JAVA_LANG_ITERABLE) &&
+                !ClassUtils.isSubclass(qualifierClass,
+                        CommonClassNames.JAVA_UTIL_COLLECTION)){
             return false;
         }
         final String iteratorName = variable.getName();
@@ -1291,7 +1293,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return false;
         }
         final PsiClass aClass = method.getContainingClass();
-        return ClassUtils.isSubclass(aClass, "java.util.List");
+        return ClassUtils.isSubclass(aClass, CommonClassNames.JAVA_UTIL_LIST);
     }
 
     private static boolean expressionIsArrayLengthLookup(

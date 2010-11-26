@@ -36,7 +36,8 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -82,6 +83,17 @@ public class XLineBreakpointManager {
           myDependentBreakpointManager.removeListener(myDependentBreakpointListener);
         }
       });
+      VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileUrlChangeAdapter() {
+        @Override
+        protected void fileUrlChanged(String oldUrl, String newUrl) {
+          for (XLineBreakpointImpl breakpoint : myBreakpoints.keySet()) {
+            final String url = breakpoint.getFileUrl();
+            if (FileUtil.startsWith(url, oldUrl)) {
+              breakpoint.setFileUrl(newUrl + url.substring(oldUrl.length()));
+            }
+          }
+        }
+      }, project);
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project);
 

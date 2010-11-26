@@ -357,9 +357,10 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     public void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element) {
       if (element instanceof LayoutViewElement && SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
         XmlElement xmlElement = element.getXmlElement();
-        String tagName = xmlElement instanceof XmlTag ? ((XmlTag)xmlElement).getName() : null;
-        if (!"merge".equals(tagName)) {
-          XmlTag parentTag = xmlElement instanceof XmlTag ? ((XmlTag)xmlElement).getParentTag() : null;
+        XmlTag tag = xmlElement instanceof XmlTag ? (XmlTag)xmlElement : null;
+        String tagName = tag != null ? tag.getName() : null;
+        if (!"merge".equals(tagName) && (tag == null || tag.getAttribute("style") == null)) {
+          XmlTag parentTag = tag != null ? tag.getParentTag() : null;
           String parentTagName = parentTag != null ? parentTag.getName() : null;
           if (!"TableRow".equals(parentTagName) && !"TableLayout".equals(parentTagName) &&
               ("layout_width".equals(attrName.getLocalName()) || "layout_height".equals(attrName.getLocalName()))) {
