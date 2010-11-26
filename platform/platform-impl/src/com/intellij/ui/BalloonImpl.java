@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
@@ -394,6 +393,12 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   public void show(JLayeredPane pane) {
     show(pane, null);
+  }
+
+  @Override
+  public void showInCenterOf(JComponent component) {
+    final Dimension size = component.getSize();
+    show(new RelativePoint(component, new Point(size.width/2, size.height/2)), Balloon.Position.above);
   }
 
   public void show(JLayeredPane pane, @Nullable Rectangle bounds) {

@@ -116,6 +116,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "YyyXxx", "YyyZzz");
   }
 
+  public void testPreferTopLevelClasses() throws Throwable {
+    checkPreferredItems(0, "XxxYyy", "XxzYyy");
+  }
+
   public void testDontDispreferImplsAfterNew() throws Throwable {
     VfsUtil.saveText(getSourceRoot().createChildDirectory(this, "foo").createChildData(this, "Xxx.java"), "package foo; public interface Xxx {}");
     checkPreferredItems(0, "Xxx", "XxxImpl");

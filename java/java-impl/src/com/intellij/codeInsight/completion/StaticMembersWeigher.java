@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -52,8 +51,8 @@ public class StaticMembersWeigher extends CompletionWeigher {
     }
 
     if (o instanceof PsiClass) {
-      if (((PsiClass) o).getContainingClass() != null) return 3;
-      return 2;
+      //if (((PsiClass) o).getContainingClass() != null) return 2;
+      return 3;
     }
 
     //instance method or field
