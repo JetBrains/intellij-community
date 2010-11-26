@@ -17,82 +17,111 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ProjectWrapper {
+    // Home direcroty
+    private static final String myHomeDir = System.getProperty("user.home");
+
+    // JPS directory
+    private static final String myJPSDir = ".jps";
+
+    // JPS directory initialization
+    private static void initJPSDirectory () {
+        final File f = new File(myHomeDir + File.separator + myJPSDir);
+
+        if (! f.exists())
+            f.mkdir();
+    }
+
+    // File separator replacement
+    private static final char myFileSeparatorReplacement = '-';
+
     // Original JPS Project
-    private Project myProject;
+    private final Project myProject;
 
     // Project directory
-    private String myRoot;
+    private final String myRoot;
 
-    // Some predefined belongings
-    private final String myHistoryName = ".history";
+    // Project snapshot file
+    private final String myProjectSnapshot;
 
     // Project history
-    private ProjectHistory myHistory;
-    private ProjectHistory myPresent;
+    private ProjectSnapshot mySnapshot;
+    private ProjectSnapshot myPresent;
 
     public ProjectWrapper(final String prjDir) {
         myProject = new Project(new GantBinding());
-        myRoot = prjDir;
+        myRoot = new File (prjDir).getAbsolutePath();
+        myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
     }
 
-    private String getProjectHistoryFileName() {
-        return myRoot + File.separator + myHistoryName;
+    private String getProjectSnapshotFileName() {
+        return myProjectSnapshot;
     }
 
-    private ProjectHistory loadHistory() {
-        ProjectHistory result = null;
+    private ProjectSnapshot loadSnapshot() {
+        initJPSDirectory();
+
+        ProjectSnapshot result = null;
 
         try {
-            FileInputStream fis = new FileInputStream(getProjectHistoryFileName());
-            ObjectInputStream in = new ObjectInputStream(fis);
+            final String path = getProjectSnapshotFileName();
 
-            result = (ProjectHistory) in.readObject();
+            byte[] buffer = new byte[(int) new File(path).length()];
 
-            in.close();
-        } catch (IOException e) {
-            //e.printStackTrace();
-        } catch (ClassNotFoundException c) {
-            c.printStackTrace();
+            BufferedInputStream f = new BufferedInputStream(new FileInputStream(path));
+
+            f.read(buffer);
+
+            f.close();
+
+            result = new ProjectSnapshot(new String(buffer));
+        }
+        catch (FileNotFoundException e) {
+
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
 
         return result;
     }
 
-    private void saveHistory() {
-        final ProjectHistory history = HistoryCollector.collectHistory(myProject);
+    private void saveSnapshot() {
+        initJPSDirectory();
+
+        final ProjectSnapshot snapshot = StatusCollector.collectHistory(myProject);
 
         try {
-            FileOutputStream fos = new FileOutputStream(getProjectHistoryFileName());
-            ObjectOutputStream out = new ObjectOutputStream(fos);
+            BufferedWriter bw = new BufferedWriter(new FileWriter(getProjectSnapshotFileName()));
 
-            out.writeObject(history);
-            out.close();
+            bw.write(snapshot.toString());
+
+            bw.close();
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
     }
 
     public void load() {
         IdeaProjectLoader.loadFromPath(myProject, myRoot);
-        myHistory = loadHistory();
-        myPresent = HistoryCollector.collectHistory(myProject);
+        mySnapshot = loadSnapshot();
+        myPresent = StatusCollector.collectHistory(myProject);
     }
 
     public void report(final String module) {
-        final ModuleHistory m = myPresent.myModuleHistories.get(module);
+        final ModuleStatus m = myPresent.myModuleHistories.get(module);
 
         if (m == null) {
             System.out.println("No module \"" + module + "\" found in project \"");
         } else {
-            System.out.println("Module " + m.myName + " " + (m.isDirty() ? "is outdated" : "is up-to-date"));
+            System.out.println("Module " + m.myName + " " + (m.isOutdated() ? "is outdated" : "is up-to-date"));
         }
     }
 
     private boolean structureChanged() {
-        if (myHistory == null)
+        if (mySnapshot == null)
             return true;
 
-        return myPresent.structureChanged(myHistory);
+        return myPresent.structureChanged(mySnapshot);
     }
 
     public void report() {
@@ -100,7 +129,7 @@ public class ProjectWrapper {
 
         System.out.println("Project \"" + myRoot + "\" report:");
 
-        if (myHistory == null) {
+        if (mySnapshot == null) {
             System.out.println("   no project history found");
         } else {
             if (structureChanged()) {
@@ -110,14 +139,14 @@ public class ProjectWrapper {
         }
 
         if (moduleReport) {
-            for (ModuleHistory mh : myPresent.myModuleHistories.values()) {
-                System.out.println("   module " + mh.myName + " " + (mh.isDirty() ? "is outdated" : "is up-to-date"));
+            for (ModuleStatus mh : myPresent.myModuleHistories.values()) {
+                System.out.println("   module " + mh.myName + " " + (mh.isOutdated() ? "is outdated" : "is up-to-date"));
             }
         }
     }
 
     public void save() {
-        saveHistory();
+        saveSnapshot();
     }
 
     public void clean() {
@@ -137,13 +166,13 @@ public class ProjectWrapper {
 
         final List<Module> modules = new ArrayList<Module>();
 
-        for (Map.Entry<String, ModuleHistory> entry : myPresent.myModuleHistories.entrySet()) {
-            if (entry.getValue().isDirty())
+        for (Map.Entry<String, ModuleStatus> entry : myPresent.myModuleHistories.entrySet()) {
+            if (entry.getValue().isOutdated())
                 modules.add(myProject.getModules().get(entry.getKey()));
         }
 
         if (modules.isEmpty() && !force) {
-            System.out.println("All module are up-to-date.");
+            System.out.println("All modules are up-to-date.");
             return;
         }
 
@@ -200,8 +229,8 @@ public class ProjectWrapper {
             return;
         }
 
-        final ModuleHistory h = myPresent.myModuleHistories.get(modName);
-        if (h != null && !h.isDirty() && !force) {
+        final ModuleStatus h = myPresent.myModuleHistories.get(modName);
+        if (h != null && !h.isOutdated() && !force) {
             System.out.println("Module \"" + modName + "\" in project \"" + myRoot + "\" is up-to-date.");
             return;
         }

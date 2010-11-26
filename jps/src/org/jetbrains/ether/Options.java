@@ -78,7 +78,7 @@ public class Options {
         }
 
         public boolean nextIsArg () {
-            return (! endOf()) && ! myArgs[myPos+1].startsWith("-");
+            return (myPos < myLength - 1 && ! myArgs[myPos+1].startsWith("-"));
         }
 
         public boolean endOf () {
@@ -97,16 +97,45 @@ public class Options {
         private final String myKey;
         private final String myLong;
         private final String myShort;
+        private final String myMemo;
 
         private final Pattern myLongPattern;
 
-        Descriptor (final String key, final String longForm, final String shortForm, final ArgumentSpecifier as) {
+        Descriptor (final String key, final String longForm, final String shortForm, final ArgumentSpecifier as, final String memo) {
             myArgumentSpecifier = as;
             myKey = key;
             myLong = longForm;
             myShort = shortForm;
+            myMemo = memo;
 
             myLongPattern = myLong == null ? null : Pattern.compile("^--" + myLong + "(=(.*))?$");
+        }
+
+        public String memo () {
+            final StringBuffer buf = new StringBuffer();
+            String longArg = "", shortArg = "";
+
+            switch (myArgumentSpecifier) {
+                case OPTIONAL:
+                    longArg = "[=<argument>]";
+                    shortArg = " [<argument>]";
+                    break;
+
+                case NONE:
+                    longArg = "";
+                    shortArg = "";
+                    break;
+
+                case MANDATORY:
+                    longArg = "=<argument>";
+                    shortArg = " <argument>";
+                    break;
+            }
+
+            buf.append("  --" + myLong + longArg + ", -" + myShort + shortArg + "\n");
+            buf.append("          " + myMemo + "\n");
+
+            return buf.toString();
         }
 
         public boolean proceed (final Cursor cursor, final Callback callback) {
@@ -133,6 +162,7 @@ public class Options {
                         else
                             switch (myArgumentSpecifier) {
                                 case OPTIONAL:
+                                    callback.update(myKey, SWITCH);
                                     break;
                                 case MANDATORY:
                                     callback.report("option \"" + arg + "\" requires an argument, discarding");
@@ -223,5 +253,15 @@ public class Options {
 
     public List<String> getFree () {
         return myFree;
+    }
+
+    public String memo () {
+        StringBuffer buf = new StringBuffer ();
+
+        for (int i = 0; i<myDescriptors.length; i++) {
+            buf.append(myDescriptors[i].memo() + "\n");
+        }
+
+        return buf.toString();
     }
 }

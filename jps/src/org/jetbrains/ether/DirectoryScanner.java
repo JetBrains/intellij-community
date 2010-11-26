@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,13 +45,81 @@ public class DirectoryScanner {
         public long myLatest = 0;
     }
 
-    public static Result getFiles (final String root) {
+    private static FileFilter myTrueFilter = new FileFilter() {
+                public boolean accept (File s) {
+                    return true;
+                }
+            };
+
+    private static FileFilter createFilter (final List<String> excludes) {
+        if (excludes == null) {
+            return myTrueFilter;
+        }
+
+        StringBuffer buf = new StringBuffer();
+
+        for (String exclude : excludes) {
+            StringBuffer alternative = new StringBuffer();
+
+            if (exclude != null) {
+                for (int i = 0; i<exclude.length(); i++) {
+                    final char c = exclude.charAt(i);
+
+                    switch (c) {
+                        case '.':
+                        case '\\':
+                        case '*':
+                        case '^':
+                        case '$':
+                        case '[':
+                        case '(':
+                        case '|':
+                            alternative.append("\\");
+                            alternative.append(c);
+                            break;
+
+                        case '?':
+                            alternative.append(".");
+                            break;
+
+                        default:
+                            alternative.append(c);
+                    }
+                }
+            }
+
+            if (alternative.length() > 0) {
+                if (buf.length() > 0) {
+                    buf.append("|(");
+                    buf.append(alternative);
+                    buf.append(')');
+                }
+            }
+        }
+
+        if (buf.length() > 0) {
+            final Pattern patt = Pattern.compile(buf.toString());
+
+            return new FileFilter() {
+                public boolean accept (File f) {
+                    final Matcher m = patt.matcher(f.getName());
+
+                    return !m.matches();
+                }
+            };
+        }
+
+        return myTrueFilter;
+    }
+
+    public static Result getFiles (final String root, final List<String> excludes) {
         final Result result = new Result ();
+        final FileFilter ff = createFilter(excludes);
 
         new Object(){
             public void run (File root) {
                 if (root.exists()) {
-                  final File[] files = root.listFiles();
+                  final File[] files = root.listFiles(ff);
 
                   for (int i = 0; i<files.length; i++) {
                       long t = files[i].lastModified();

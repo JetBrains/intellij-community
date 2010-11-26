@@ -1,9 +1,6 @@
 package org.jetbrains.ether;
 
 import com.sun.tools.javac.util.Pair;
-import org.jetbrains.ether.DirectoryScanner;
-import org.jetbrains.ether.ModuleHistory;
-import org.jetbrains.ether.ProjectHistory;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.resolvers.PathEntry;
 
@@ -16,7 +13,7 @@ import java.util.*;
  * Time: 19:57
  * To change this template use File | Settings | File Templates.
  */
-public class HistoryCollector {
+public class StatusCollector {
     private static Pair<Long, Long> myDefaultPair = new Pair<Long, Long> (Long.MAX_VALUE, 0l);
 
     private static Pair<Long, Long> join (final Pair<Long, Long> a, final Pair<Long, Long> b) {
@@ -79,9 +76,9 @@ public class HistoryCollector {
         listToBuffer(buf, list);
     }
 
-    private static Pair<Long, Long> directoryToBuffer (StringBuffer buf, final String dir) {
+    private static Pair<Long, Long> directoryToBuffer (StringBuffer buf, final String dir, final List<String> excludes) {
         if (dir != null) {
-            final DirectoryScanner.Result result = DirectoryScanner.getFiles(dir);
+            final DirectoryScanner.Result result = DirectoryScanner.getFiles(dir, excludes);
 
             for (String name : prepare (result.myFiles)) {
                 buf.append(name + "\n");
@@ -93,7 +90,7 @@ public class HistoryCollector {
         return myDefaultPair;
     }
 
-    private static Pair<Long, Long> sourceRootToBuffer (StringBuffer buf, final String name, final List<String> dir) {
+    private static Pair<Long, Long> sourceRootToBuffer (StringBuffer buf, final String name, final List<String> dir, final List<String> excludes) {
         Pair<Long, Long> result = myDefaultPair;
 
         buf.append(name + ":\n");
@@ -101,7 +98,7 @@ public class HistoryCollector {
         for (String d : prepare (dir)) {
             if (dir != null) {
                 buf.append(d + ":\n");
-                result = join (result, directoryToBuffer(buf, d));
+                result = join (result, directoryToBuffer(buf, d, excludes));
             }
         }
 
@@ -127,7 +124,7 @@ public class HistoryCollector {
         classPathItemToBuffer(buf, library, false);
     }
 
-    public static ModuleHistory moduleToBuffer (StringBuffer buf, final Module module) {
+    public static ModuleStatus moduleToBuffer (StringBuffer buf, final Module module) {
         buf.append("Module: " + module.getName() + "\n");
 
         classPathItemToBuffer(buf, module, true);
@@ -138,13 +135,13 @@ public class HistoryCollector {
             libraryToBuffer(buf, lib);
         }
 
-        long ss = sourceRootToBuffer(buf, "SourceRoots", module.getSourceRoots()).snd;
+        long ss = sourceRootToBuffer(buf, "SourceRoots", module.getSourceRoots(), module.getExcludes()).snd;
         buf.append("OutputPath: " + module.getOutputPath() + "\n");
-        long os = directoryToBuffer(buf, module.getOutputPath()).fst;
+        long os = directoryToBuffer(buf, module.getOutputPath(), null).fst;
 
-        long tss = sourceRootToBuffer(buf, "TestRoots", module.getTestRoots()).snd;
+        long tss = sourceRootToBuffer(buf, "TestRoots", module.getTestRoots(), module.getExcludes()).snd;
         buf.append("TestOutputPath: " + module.getTestOutputPath() + "\n");
-        long tos = directoryToBuffer(buf, module.getTestOutputPath()).fst;
+        long tos = directoryToBuffer(buf, module.getTestOutputPath(), null).fst;
 
         buf.append("Dependencies:\n");
         for (Module.ModuleDependency dep : module.getDependencies()){
@@ -169,12 +166,12 @@ public class HistoryCollector {
             }
         }
 
-        return new ModuleHistory(module.getName(), ss, os, tss, tos);
+        return new ModuleStatus(module.getName(), ss, os, tss, tos);
     }
 
-    public static ProjectHistory collectHistory (final Project prj) {
+    public static ProjectSnapshot collectHistory (final Project prj) {
         StringBuffer buf = new StringBuffer();
-        Map<String, ModuleHistory> moduleHistories = new HashMap<String, ModuleHistory> ();
+        Map<String, ModuleStatus> moduleHistories = new HashMap<String, ModuleStatus> ();
 
         for (Library lib : prepare (prj.getLibraries().values(), myLibraryComparator)) {
             libraryToBuffer(buf, lib);
@@ -184,6 +181,6 @@ public class HistoryCollector {
             moduleHistories.put(mod.getName(), moduleToBuffer(buf, mod));
         }
 
-        return new ProjectHistory(buf.toString(), moduleHistories);
+        return new ProjectSnapshot(buf.toString(), moduleHistories);
     }
 }
