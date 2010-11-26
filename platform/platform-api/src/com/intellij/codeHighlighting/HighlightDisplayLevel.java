@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,7 +54,7 @@ public class HighlightDisplayLevel {
     return ourMap.get(severity);
   }
 
-  public HighlightDisplayLevel(HighlightSeverity severity, Icon icon){
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity, Icon icon){
     mySeverity = severity;
     myIcon = icon;
     ourMap.put(mySeverity, this);
@@ -67,11 +68,12 @@ public class HighlightDisplayLevel {
     return myIcon;
   }
 
+  @NotNull
   public HighlightSeverity getSeverity(){
     return mySeverity;
   }
 
-  public static void registerSeverity(final HighlightSeverity severity, final Color renderColor) {
+  public static void registerSeverity(@NotNull HighlightSeverity severity, final Color renderColor) {
     Icon severityIcon = createIconByMask(renderColor);
     final HighlightDisplayLevel level = ourMap.get(severity);
     if (level == null) {

@@ -386,10 +386,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                     @NotNull HighlightInfoType highlightInfoType,
-                                                    String message,
+                                                    @NotNull String message,
                                                     String toolTip) {
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
+    if (textRange == null || element == null) return null;
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(element);
