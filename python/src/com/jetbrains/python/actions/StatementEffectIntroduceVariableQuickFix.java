@@ -1,11 +1,11 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Quickfix to introduce variable if statement seems to have no effect
  */
 public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
-  PyExpression myExpression;
+  PsiElement myExpression;
   public StatementEffectIntroduceVariableQuickFix(PyExpression expression) {
     myExpression = expression;
   }
@@ -35,18 +35,16 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    String name = "var";
     if (myExpression != null) {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && !application.isUnitTestMode()) {
-        name = Messages.showInputDialog(project, "Enter new variable name",
-                                        "New variable name", Messages.getQuestionIcon());
-        if (name == null) return;
-      }
-      if (name.isEmpty()) return;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      myExpression.replace(elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
-                                                         name + " = " + myExpression.getText()));
+      PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
+                                                         "var = " + myExpression.getText());
+      
+      myExpression = myExpression.replace(assignment);
+      myExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myExpression);
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(myExpression);
+      builder.replaceElement(((PyAssignmentStatement)myExpression).getLeftHandSideExpression(), "var");
+      builder.run();
     }
   }
 }
