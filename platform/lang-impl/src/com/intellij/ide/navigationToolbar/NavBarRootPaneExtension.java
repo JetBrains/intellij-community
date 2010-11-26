@@ -76,7 +76,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private void toggleRunPanel(final boolean show) {
     if (show && myRunPanel == null) {
       final ActionManager manager = ActionManager.getInstance();
-      final AnAction toolbarRunGroup = manager.getAction("ToolbarRunGroup");
+      final AnAction toolbarRunGroup = manager.getAction("NavBarToolBar");
       if (toolbarRunGroup instanceof DefaultActionGroup) {
         final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
         boolean needsGap = false;

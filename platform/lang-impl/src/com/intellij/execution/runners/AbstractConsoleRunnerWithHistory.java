@@ -35,9 +35,11 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -49,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -227,66 +228,41 @@ public abstract class AbstractConsoleRunnerWithHistory {
     };
 
     final EditorEx consoleEditor = languageConsole.getConsoleEditor();
-    final Document document = consoleEditor.getDocument();
-    final CaretModel caretModel = consoleEditor.getCaretModel();
-
-    final AnAction upAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        historyProcessor.process(e, myHistory.getHistoryNext());
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        // Check if we have anything in history
-        final boolean hasHistory = myHistory.hasHistory(true);
-        if (!hasHistory){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        // Check if we don't have active lookup
-        if (LookupManager.getActiveLookup(consoleEditor) != null){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        // Check if cannot move
-        final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        final boolean canMove = lineNumber > 0;
-        e.getPresentation().setEnabled(!canMove);
-      }
-    };
-    final AnAction downAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        historyProcessor.process(e, myHistory.getHistoryPrev());
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        // Check if we have anything in history
-        final boolean hasHistory = myHistory.hasHistory(false);
-        if (!hasHistory){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        // Check if we don't have active lookup
-        if (LookupManager.getActiveLookup(consoleEditor) != null){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        // Check if cannot move
-        final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        final boolean canMove = lineNumber < document.getLineCount() - 1 && !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
-        e.getPresentation().setEnabled(!canMove);
-      }
-    };
-
-    upAction.getTemplatePresentation().setVisible(false);
-    downAction.getTemplatePresentation().setVisible(false);
-    upAction.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-    downAction.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+    final AnAction upAction = ConsoleHistoryModel.createConsoleHistoryUpAction(createCanMoveUpComputable(consoleEditor),
+                                                                               myHistory,
+                                                                               historyProcessor);
+    final AnAction downAction = ConsoleHistoryModel.createConsoleHistoryDownAction(createCanMoveDownComputable(consoleEditor),
+                                                                                   myHistory,
+                                                                                   historyProcessor);
 
     return new ConsoleExecutionActions(runAction, downAction, upAction);
+  }
+
+  public static Computable<Boolean> createCanMoveDownComputable(final Editor consoleEditor) {
+    return new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final Document document = consoleEditor.getDocument();
+        final CaretModel caretModel = consoleEditor.getCaretModel();
+
+        // Check if we have active lookup or if we can move in editor
+        return LookupManager.getActiveLookup(consoleEditor) != null ||
+               document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
+                                !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+      }
+    };
+  }
+
+  public static Computable<Boolean> createCanMoveUpComputable(final Editor consoleEditor) {
+    return new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final Document document = consoleEditor.getDocument();
+        final CaretModel caretModel = consoleEditor.getCaretModel();
+        // Check if we have active lookup or if we can move in editor
+        return LookupManager.getActiveLookup(consoleEditor) != null || document.getLineNumber(caretModel.getOffset()) > 0;
+      }
+    };
   }
 
   @NotNull

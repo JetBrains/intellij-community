@@ -195,9 +195,7 @@ public class ExpressionUtils {
         if (expression == null) {
             return false;
         }
-        final PsiType expressionType = expression.getType();
-        final Object value = ConstantExpressionUtil.computeCastTo(
-                expression, expressionType);
+        final Object value = computeConstantExpression(expression);
         if(value == null){
             return false;
         }
@@ -282,12 +280,12 @@ public class ExpressionUtils {
 
     private static boolean expressionIsOffsetVariableLookup(
             @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-        final PsiExpression strippedExpression =
-                ParenthesesUtils.stripParentheses(expression);
-        if (VariableAccessUtils.evaluatesToVariable(strippedExpression,
+        if (VariableAccessUtils.evaluatesToVariable(expression,
                 variable)) {
             return true;
         }
+        final PsiExpression strippedExpression =
+                ParenthesesUtils.stripParentheses(expression);
         if (!(strippedExpression instanceof PsiBinaryExpression)) {
             return false;
         }
@@ -321,13 +319,11 @@ public class ExpressionUtils {
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.LT) ||
                 tokenType.equals(JavaTokenType.LE)) {
-            PsiExpression lhs = binaryExpression.getLOperand();
-            lhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression lhs = binaryExpression.getLOperand();
             return VariableAccessUtils.evaluatesToVariable(lhs, variable);
         } else if (tokenType.equals(JavaTokenType.GT) ||
                 tokenType.equals(JavaTokenType.GE)) {
-            PsiExpression rhs = binaryExpression.getROperand();
-            rhs = ParenthesesUtils.stripParentheses(rhs);
+            final PsiExpression rhs = binaryExpression.getROperand();
             return VariableAccessUtils.evaluatesToVariable(rhs, variable);
         }
         return false;
@@ -346,13 +342,11 @@ public class ExpressionUtils {
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.GT) ||
                 tokenType.equals(JavaTokenType.GE)) {
-            PsiExpression lhs = binaryExpression.getLOperand();
-            lhs = ParenthesesUtils.stripParentheses(lhs);
+            final PsiExpression lhs = binaryExpression.getLOperand();
             return VariableAccessUtils.evaluatesToVariable(lhs, variable);
         } else if (tokenType.equals(JavaTokenType.LT) ||
                 tokenType.equals(JavaTokenType.LE)) {
-            PsiExpression rhs = binaryExpression.getROperand();
-            rhs = ParenthesesUtils.stripParentheses(rhs);
+            final PsiExpression rhs = binaryExpression.getROperand();
             return VariableAccessUtils.evaluatesToVariable(rhs, variable);
         }
         return false;

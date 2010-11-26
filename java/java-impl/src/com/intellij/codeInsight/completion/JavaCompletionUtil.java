@@ -687,6 +687,7 @@ public class JavaCompletionUtil {
             document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
 
             CompletionUtil.emulateInsertion(context, exprStart + prefix.length(), to);
+            context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
           }
         }
 

@@ -28,7 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.refactoring.introduceVariable.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.List;

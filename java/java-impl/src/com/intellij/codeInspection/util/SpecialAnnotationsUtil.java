@@ -24,17 +24,21 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReorderableListController;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -58,6 +62,10 @@ import java.util.List;
  */
 public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list, final String borderTitle) {
+    return createSpecialAnnotationsListControl(list, borderTitle, false);
+  }
+
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final String borderTitle, final boolean acceptPatterns) {
     final SortedListModel<String> listModel = new SortedListModel<String>(new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareTo(o2);
@@ -72,11 +80,36 @@ public class SpecialAnnotationsUtil {
     final ReorderableListController<String> controller = ReorderableListController.create(injectionList, actionGroup);
     controller.addAddAction(InspectionsBundle.message("special.annotations.list.add.annotation.class"), new Factory<String>() {
       public String create() {
-        return Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.class"),
-                                        InspectionsBundle.message("special.annotations.list.add.annotation.class"),
-                                        Messages.getQuestionIcon());
+        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
+          .createWithInnerClassesScopeChooser(InspectionsBundle.message("special.annotations.list.annotation.class"),
+                                              GlobalSearchScope.allScope(project), new ClassFilter() {
+              @Override
+              public boolean isAccepted(PsiClass aClass) {
+                return aClass.isAnnotationType();
+              }
+            }, null);
+        chooser.showDialog();
+        final PsiClass selected = chooser.getSelected();
+        return selected != null ? selected.getQualifiedName() : null;
       }
     }, true);
+    if (acceptPatterns) {
+      controller.addAction(new AnAction(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                        InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                        IconLoader.getIcon("/general/add.png")) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                              InspectionsBundle.message("special.annotations.list.annotation.pattern"),
+                                              Messages.getQuestionIcon());
+          if (selectedPattern != null) {
+            listModel.add(selectedPattern);
+          }
+        }
+      });
+    }
     controller.addRemoveAction(InspectionsBundle.message("special.annotations.list.remove.annotation.class"));
     injectionList.getModel().addListDataListener(new ListDataListener() {
       public void intervalAdded(ListDataEvent e) {
@@ -86,7 +119,7 @@ public class SpecialAnnotationsUtil {
       private void listChanged() {
         list.clear();
         for (int i = 0; i < listModel.getSize(); i++) {
-            list.add((String)listModel.getElementAt(i));
+          list.add((String)listModel.getElementAt(i));
         }
       }
 

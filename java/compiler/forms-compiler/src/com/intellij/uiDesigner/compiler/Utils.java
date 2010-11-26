@@ -211,7 +211,7 @@ public final class Utils {
             rootContainer = nestedFormLoader.loadForm(formName);
         }
         catch (Exception e) {
-            throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage());
+            throw new CodeGenerationException(null, "Error loading nested form: " + e.getMessage(), e);
         }
         final Set thisFormNestedForms = new HashSet();
         final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];

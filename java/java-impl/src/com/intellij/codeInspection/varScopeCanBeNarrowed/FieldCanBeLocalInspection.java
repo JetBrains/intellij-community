@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -23,13 +24,16 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -42,9 +46,13 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,6 +65,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection");
 
   @NonNls public static final String SHORT_NAME = "FieldCanBeLocal";
+  public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
 
   @NotNull
   public String getGroupDisplayName() {
@@ -73,6 +82,24 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (!EXCLUDE_ANNOS.isEmpty()) {
+      super.writeSettings(node);
+    }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel listPanel = SpecialAnnotationsUtil
+      .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
+
+    final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(listPanel, BorderLayout.NORTH);
+    return panel;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -84,17 +111,20 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
         for (PsiClass aClass : file.getClasses()) {
-          docheckClass(aClass, holder);
+          docheckClass(aClass, holder, EXCLUDE_ANNOS);
         }
       }
     };
   }
 
-  private static void docheckClass(final PsiClass aClass, ProblemsHolder holder) {
+  private static void docheckClass(final PsiClass aClass, ProblemsHolder holder, final List<String> excludeAnnos) {
     if (aClass.isInterface()) return;
     final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<PsiField>();
     for (PsiField field : fields) {
+      if (AnnotationUtil.isAnnotated(field, excludeAnnos)) {
+        continue;
+      }
       if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
         candidates.add(field);
       }

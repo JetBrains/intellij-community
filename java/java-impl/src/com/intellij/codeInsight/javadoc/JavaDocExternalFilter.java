@@ -74,7 +74,7 @@ public class JavaDocExternalFilter {
   @NonNls private static final String HR = "<HR>";
   @NonNls private static final String P = "<P>";
   @NonNls private static final String DL = "<DL>";
-  @NonNls private static final String H2 = "</H2>";
+  @NonNls protected static final String H2 = "</H2>";
   @NonNls protected static final String HTML_CLOSE = "</HTML>";
   @NonNls protected static final String HTML = "<HTML>";
   @NonNls private static final String BR = "<BR>";

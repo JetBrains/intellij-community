@@ -537,7 +537,8 @@ public class ImportUtils{
         final String memberName = member.getName();
         final PsiImportStatementBase existingImportStatement =
                 importList.findSingleImportStatement(memberName);
-        if (existingImportStatement != null) {
+        if (existingImportStatement != null &&
+                existingImportStatement instanceof PsiImportStaticStatement) {
             final PsiElement target = existingImportStatement.resolve();
             return member.equals(target);
         } else {

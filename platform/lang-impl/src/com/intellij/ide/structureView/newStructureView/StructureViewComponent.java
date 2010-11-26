@@ -202,8 +202,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return tree != null ? convertPathsToValues(tree.getSelectionPaths()): ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
+  @Nullable
   private Object[] getSelectedTreeElements() {
-    return convertPathsToTreeElements(getTree().getSelectionPaths());
+    final JTree tree = getTree();
+    return tree != null ? convertPathsToTreeElements(tree.getSelectionPaths()) : null;
   }
 
 
@@ -228,6 +230,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
+  @Nullable
   private static Object[] convertPathsToTreeElements(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
       Object[] result = new Object[selectionPaths.length];
