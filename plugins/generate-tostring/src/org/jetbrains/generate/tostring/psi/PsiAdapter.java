@@ -40,27 +40,6 @@ public abstract class PsiAdapter {
     }
 
   /**
-     * Finds the class for the given element.
-     * <p/>
-     * Will look in the element's parent hieracy.
-     *
-     * @param element element to find it's class
-     * @return the class, null if not found.
-     */
-    @Nullable
-    public PsiClass findClass(PsiElement element) {
-        if (element instanceof PsiClass) {
-            return (PsiClass) element;
-        }
-
-        if (element.getParent() != null) {
-            return findClass(element.getParent());
-        }
-
-        return null;
-    }
-
-    /**
      * Returns true if a field is constant.
      * <p/>
      * This is identifed as the name of the field is only in uppercase and it has
@@ -473,28 +452,6 @@ public abstract class PsiAdapter {
         }
     }
 
-  /**
-     * Find's an existing field with the given name.
-     * If there isn't a field with the name, null is returned.
-     *
-     * @param clazz the class
-     * @param name  name of field to find
-     * @return the found field, null if none exist
-     */
-    @Nullable
-    public PsiField findFieldByName(PsiClass clazz, String name) {
-        PsiField[] fields = clazz.getFields();
-
-        // use reverse to find from botton as the duplicate conflict resolution policy requires this
-        for (int i = fields.length - 1; i >= 0; i--) {
-            PsiField field = fields[i];
-            if (name.equals(field.getName()))
-                return field;
-        }
-
-        return null;
-    }
-
     /**
      * Is the given type a "void" type.
      *
@@ -607,20 +564,6 @@ public abstract class PsiAdapter {
      */
     public static boolean isExceptionClass(PsiClass clazz) {
       return InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_LANG_THROWABLE);
-    }
-
-    /**
-     * Is the class an abstract class
-     *
-     * @param clazz class to check.
-     * @return true if class is abstract.
-     */
-    public boolean isAbstractClass(PsiClass clazz) {
-        PsiModifierList list = clazz.getModifierList();
-        if (list == null) {
-            return false;
-        }
-        return clazz.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
     }
 
   /**

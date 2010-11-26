@@ -58,7 +58,7 @@ public class ElementFactory {
     ce.setEnum(clazz.isEnum());
     ce.setDeprecated(clazz.isDeprecated());
     ce.setException(PsiAdapter.isExceptionClass(clazz));
-    ce.setAbstract(psi.isAbstractClass(clazz));
+    ce.setAbstract(clazz.hasModifierProperty(PsiModifier.ABSTRACT));
 
     return ce;
   }
@@ -126,11 +126,9 @@ public class ElementFactory {
 
     // misc
     me.setReturnTypeVoid(psi.isTypeOfVoid(method.getReturnType()));
-    me.setDeprecated(method.isDeprecated());
 
     // modifiers
     if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) me.setModifierAbstract(true);
-    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronzied(true);
 
     return me;
   }
