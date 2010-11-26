@@ -26,11 +26,11 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.structuralsearch.plugin.ui.DialogBase;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -144,8 +144,9 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         return "<unknown>";
       }
 
+      @NotNull
       public String getTitle() {
-        return null;
+        return "";
       }
 
       public String getCancelText() {
@@ -244,11 +245,11 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
     int start = 0;
     int end = 0;
 
-    for(Iterator i=l.iterator();i.hasNext();) {
-      final SmartPsiElementPointer ptr = (SmartPsiElementPointer)i.next();
+    for (Object aL : l) {
+      final SmartPsiElementPointer ptr = (SmartPsiElementPointer)aL;
       final PsiElement element = UIUtil.getNavigationElement(ptr.getElement());
 
-      if (pointer==null) {
+      if (pointer == null) {
         pointer = ptr;
         start = element.getTextRange().getStartOffset();
       }
