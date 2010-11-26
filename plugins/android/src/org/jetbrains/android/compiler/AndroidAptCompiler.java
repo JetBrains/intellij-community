@@ -107,6 +107,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     for (GenerationItem item : items) {
       if (item instanceof AptGenerationItem) {
         final AptGenerationItem aptItem = (AptGenerationItem)item;
+
         try {
           Map<CompilerMessageCategory, List<String>> messages = AndroidApt
             .compile(aptItem.myAndroidTarget, aptItem.myManifestPath, aptItem.mySourceRootPath, aptItem.myResourcesPaths,
@@ -162,7 +163,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
            : AndroidRootUtil.getResourceDir(module);
   }
 
-  private final static class AptGenerationItem implements GenerationItem {
+  final static class AptGenerationItem implements GenerationItem {
     final Module myModule;
     final String myManifestPath;
     final String[] myResourcesPaths;
@@ -191,6 +192,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myCustomPackage = customPackage;
       myGeneratedFile =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+    }
+
+    public File getGeneratedFile() {
+      return myGeneratedFile;
     }
 
     public String getPath() {

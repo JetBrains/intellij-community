@@ -20,6 +20,7 @@ import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -164,11 +166,42 @@ public class AndroidCompileUtil {
     generate(compiler, contextWrapper[0]);
   }
 
-  public static void generate(GeneratingCompiler compiler, CompileContext context) {
+  public static void generate(GeneratingCompiler compiler, final CompileContext context) {
     if (context != null) {
+
       GeneratingCompiler.GenerationItem[] items = compiler.getGenerationItems(context);
-      compiler.generate(context, items, null);
+
+      final boolean[] run = {true};
+      final VirtualFile[] files = getFilesToCheckReadonlyStatus(items);
+      if (files.length > 0) {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            run[0] = ReadonlyStatusHandler.ensureFilesWritable(context.getProject(), files);
+          }
+        }, ModalityState.defaultModalityState());
+      }
+
+      if (run[0]) {
+        compiler.generate(context, items, null);
+      }
     }
+  }
+
+  private static VirtualFile[] getFilesToCheckReadonlyStatus(GeneratingCompiler.GenerationItem[] items) {
+    List<VirtualFile> filesToCheck = new ArrayList<VirtualFile>();
+    for (GeneratingCompiler.GenerationItem item : items) {
+      if (item instanceof AndroidAptCompiler.AptGenerationItem) {
+        File generatedFile = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFile();
+        if (generatedFile.exists()) {
+          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+          if (generatedVFile != null) {
+            filesToCheck.add(generatedVFile);
+          }
+        }
+      }
+    }
+    return filesToCheck.toArray(new VirtualFile[filesToCheck.size()]);
   }
 
   private static void collectModules(Module module, Set<Module> result, Module[] allModules) {
