@@ -52,6 +52,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) return null;
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
     myPsiClass = getAppletClass(element, PsiManager.getInstance(project));

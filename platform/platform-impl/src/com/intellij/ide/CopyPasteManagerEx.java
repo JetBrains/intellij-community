@@ -87,6 +87,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
           success[0] = true;
         }
         catch (Throwable e) {
+          LOG.info(e);
           // No luck
         }        
         finally {

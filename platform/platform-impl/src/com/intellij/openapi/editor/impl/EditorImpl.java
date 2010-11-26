@@ -3801,7 +3801,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean isCutEnabled(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public boolean isCutVisible(DataContext dataContext) {
@@ -3814,11 +3814,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public boolean isPastePossible(DataContext dataContext) {
       // Copy of isPasteEnabled. See interface method javadoc.
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public boolean isPasteEnabled(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public void deleteElement(DataContext dataContext) {
@@ -3826,7 +3826,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean canDeleteElement(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     private void executeAction(String actionId, DataContext dataContext) {

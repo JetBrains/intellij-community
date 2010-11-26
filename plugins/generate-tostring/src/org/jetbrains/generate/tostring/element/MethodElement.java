@@ -15,9 +15,9 @@
  */
 package org.jetbrains.generate.tostring.element;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.generate.tostring.config.FilterPattern;
 import org.jetbrains.generate.tostring.config.Filterable;
-import org.jetbrains.generate.tostring.util.StringUtil;
 
 import java.io.Serializable;
 
@@ -26,6 +26,7 @@ import java.io.Serializable;
  *
  * @see ElementFactory
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class MethodElement extends AbstractElement implements Serializable, Element, Filterable {
 
     private String methodName;

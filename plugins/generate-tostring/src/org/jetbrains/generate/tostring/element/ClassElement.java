@@ -15,14 +15,17 @@
  */
 package org.jetbrains.generate.tostring.element;
 
-import org.jetbrains.generate.tostring.util.StringUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Information about the class that contains the fields that are target for the toString() code generation.
+ *
+ * Note: getters are accessed from Velocity templates, they aren't dead code
  */
+@SuppressWarnings({"UnusedDeclaration"})
 public class ClassElement implements Serializable {
 
     private String name;

@@ -102,7 +102,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     return;
                 }
 
-                if (excludeAbstract && psi.isAbstractClass(clazz)) {
+                if (excludeAbstract && clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
                     log.debug("Class is abstract");
                     return;
                 }
