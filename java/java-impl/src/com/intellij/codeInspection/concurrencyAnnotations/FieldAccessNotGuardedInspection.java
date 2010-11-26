@@ -68,6 +68,9 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
       if (containingMethod != null && JCiPUtil.isGuardedBy(containingMethod, guard)) {
         return;
       }
+      if (containingMethod != null && containingMethod.isConstructor()) {
+        return;
+      }
       if ("this".equals(guard)) {
         if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           return;
