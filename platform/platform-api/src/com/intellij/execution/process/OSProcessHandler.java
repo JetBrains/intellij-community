@@ -69,7 +69,7 @@ public class OSProcessHandler extends ProcessHandler {
     myWaitFor = new ProcessWaitFor(process);
   }
 
-  private class ProcessWaitFor  {
+  private class ProcessWaitFor {
     private final Future<?> myWaitForThreadFuture;
     private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
 
@@ -83,9 +83,15 @@ public class OSProcessHandler extends ProcessHandler {
         public void run() {
           int exitCode = 0;
           try {
-            exitCode = process.waitFor();
-          }
-          catch (InterruptedException ignored) {
+            while (true) {
+              try {
+                exitCode = process.waitFor();
+                break;
+              }
+              catch (InterruptedException e) {
+                LOG.info(e);
+              }
+            }
           }
           finally {
             try {

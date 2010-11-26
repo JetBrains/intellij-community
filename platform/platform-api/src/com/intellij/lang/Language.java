@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -82,7 +83,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return collection of all languages registered so far.
    */
   public static Collection<Language> getRegisteredLanguages() {
-    return Collections.unmodifiableCollection(ourRegisteredLanguages.values());
+    final Collection<Language> languages = ourRegisteredLanguages.values();
+    return Collections.unmodifiableCollection(new ArrayList<Language>(languages));
   }
 
   /**
