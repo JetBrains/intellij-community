@@ -1,0 +1,1 @@
+<warning descr="Unresolved reference 'ref'">ref</warning>

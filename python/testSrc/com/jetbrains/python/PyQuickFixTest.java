@@ -200,6 +200,10 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                           PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
   }
 
+  public void testUnresolvedRefCreateFunction() {  // PY-2092
+    doInspectionTest("UnresolvedRefCreateFunction.py", PyUnresolvedReferencesInspection.class,
+                          PyBundle.message("QFIX.unresolved.reference.create.function"), true, true);
+  }
   @Override
   @NonNls
   protected String getTestDataPath() {
