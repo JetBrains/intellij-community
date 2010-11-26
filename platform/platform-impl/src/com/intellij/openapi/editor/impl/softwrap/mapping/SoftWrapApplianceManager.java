@@ -205,6 +205,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         if (!continueProcessing) {
           return false;
         }
+        
+        // 'myOffset2widthInPixels' contains information necessary to processing soft wraps that lay before the current offset.
+        // We do know that soft wraps are not allowed to go backward after processed collapsed fold region, hence, we drop
+        // information about processed symbols width.
+        myOffset2widthInPixels.clear();
       }
       
       iterationState.advance();
@@ -240,7 +245,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     
     if (!myContext.exceedsVisualEdge(newX)) {
-      
       myContext.advance(foldRegion, placeholderWidthInPixels);
       return true;
     }
@@ -281,7 +285,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       myContext.onNonLineFeedSymbol(c, newX);
     }
     myOffset2fontType.clear();
-    myOffset2widthInPixels.clear();
     myContext.advance(foldRegion, placeholderWidthInPixels);
     return true;
   }
@@ -991,7 +994,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         myOffset2widthInPixels.anchor = currentPosition.offset;
       }
       if (currentPosition.offset - myOffset2widthInPixels.anchor >= myOffset2widthInPixels.data.length) {
-        int[] newData = new int[myOffset2widthInPixels.data.length * 2];
+        int newLength = Math.max(myOffset2widthInPixels.data.length * 2, currentPosition.offset - myOffset2widthInPixels.anchor + 1);
+        int[] newData = new int[newLength];
         System.arraycopy(myOffset2widthInPixels.data, 0, newData, 0, myOffset2widthInPixels.data.length);
         myOffset2widthInPixels.data = newData;
       }
