@@ -83,15 +83,15 @@ public class OSProcessHandler extends ProcessHandler {
         public void run() {
           int exitCode = 0;
           try {
-            //while (true) {
+            while (true) {
               try {
                 exitCode = process.waitFor();
-                //break;
+                break;
               }
               catch (InterruptedException e) {
                 LOG.info(e);
               }
-            //}
+            }
           }
           finally {
             try {
