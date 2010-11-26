@@ -9,6 +9,9 @@ from generator3 import *
 
 M = ModuleRedeclarator
 
+import sys
+IS_CLI = sys.platform == 'cli'
+
 class TestRestoreFuncByDocComment(unittest.TestCase):
   """
   Tries to restore function signatures by doc strings.
@@ -207,23 +210,47 @@ class TestAnnotatedParameters(unittest.TestCase):
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
 
-class TestInspect(unittest.TestCase):
-  "See that inspect actually works if needed"
-  def setUp(self):
-    self.m = ModuleRedeclarator(None, None)
+if not IS_CLI:
+  class TestInspect(unittest.TestCase):
+    "See that inspect actually works if needed"
+    def setUp(self):
+      self.m = ModuleRedeclarator(None, None)
+
+    def testSimple(self):
+      def target(a,b,c=1, *d, **e):
+        pass
+      result = self.m.restoreByInspect(target)
+      self.assertEquals(result, "(a, b, c=1, *d, **e)")
+
+    def testNested(self):
+      def target(a, (b, c), d, e=1):
+        pass
+      result = self.m.restoreByInspect(target)
+      self.assertEquals(result, "(a, (b, c), d, e=1)")
     
-  def testSimple(self):
-    def target(a,b,c=1, *d, **e):
-      pass
-    result = self.m.restoreByInspect(target)
-    self.assertEquals(result, "(a, b, c=1, *d, **e)")
-    
-  def testNested(self):
-    def target(a, (b, c), d, e=1):
-      pass
-    result = self.m.restoreByInspect(target)
-    self.assertEquals(result, "(a, (b, c), d, e=1)")
-    
+
+class _DiffPrintingTestCase(unittest.TestCase):
+  def assertEquals(self, etalon, specimen, msg=None):
+    if type(etalon) == str and type(specimen) == str and etalon != specimen:
+      print("%s" % "\n")
+      # print side by side
+      ei = iter(etalon.split("\n"))
+      si = iter(specimen.split("\n"))
+      for el in ei:
+        sl = si.next() # if si ends before ei, this op will correctly break the loop
+        if el != sl:
+          print("!%s" % el)
+          print("?%s" % sl)
+        else:
+          print(">%s" % sl)
+      # one of the iters might not end yet
+      for el in ei:
+        print("!%s" % el)
+      for sl in si:
+        print("?%s" % sl)
+      raise self.failureException(msg)
+    else:
+      self.failUnlessEqual(etalon, specimen, msg)
 
 
 class TestSpecialCases(unittest.TestCase):
@@ -255,9 +282,57 @@ class TestSpecialCases(unittest.TestCase):
 
   def testFilter(self):
     self._testBuiltinFuncName("filter", "(function_or_none, sequence)")
-    
 
-class TestDataOutput(unittest.TestCase):
+if not IS_CLI:
+  class TestNonDictClasses(_DiffPrintingTestCase):
+    "Tests classes that don't have a __dict__"
+
+    def setUp(self):
+      from StringIO import StringIO
+      self.out = StringIO()
+      self.m = ModuleRedeclarator(None, self.out, 4)
+
+    def checkRedoClass(self, p_class, expected):
+      self.out.seek(0)
+      self.out.truncate()
+      self.m.redoClass(p_class, p_class.__name__, 0)
+      self.out.seek(0)
+      result = "".join(self.out.readlines()).strip()
+      self.assertEquals(expected, result)
+
+    def testOne(self):
+      class One(object):
+        "Doc of One"
+        __slots__ = ('A', 'B', 'foo')
+        A = 1
+        B = "boo"
+        def foo(self, x):
+          "blah foo(x) -> int"
+          return x+1
+      expected = "\n".join((
+        "class One(object):",
+        '    """ Doc of One """',
+        '    def foo(self, x): # real signature unknown; restored from __doc__',
+        '        """ blah foo(x) -> int """',
+        '        return 0',
+        "",
+        "    def __init__(self, *args, **kwargs): # real signature unknown",
+        "        pass",
+        '',
+        '    A = 1',
+        "    B = 'boo'",
+        "    __slots__ = (",
+        "        'A',",
+        "        'B',",
+        "        'foo',",
+        "    )",
+      ))
+      self.checkRedoClass(One, expected)
+
+
+
+
+class TestDataOutput(_DiffPrintingTestCase):
   "Tests for sanity of output of data members"
 
   def setUp(self):
@@ -302,6 +377,55 @@ class TestDataOutput(unittest.TestCase):
         "]"
       ))
       self.checkFmtValue(data, expected)
+
+if not IS_CLI:
+
+  class TestReturnTypes(unittest.TestCase):
+    "Tests for sanity of output of data members"
+
+    def setUp(self):
+      self.m = ModuleRedeclarator(None, None, 4)
+
+    def checkRestoreFunction(self, doc, expected):
+      spec, ret_literal, note = self.m.parseFuncDoc(doc, "foo", "foo", None)
+      self.assertEqual(expected, ret_literal, "%r != %r; spec=%r, note=%r" % (expected, ret_literal, spec, note))
+      pass
+
+    def testSimpleArrowInt(self):
+      doc = "This is foo(bar) -> int"
+      self.checkRestoreFunction(doc, "0")
+
+    def testSimpleArrowList(self):
+      doc = "This is foo(bar) -> list"
+      self.checkRestoreFunction(doc, "[]")
+
+    def testArrowListOf(self):
+      doc = "This is foo(bar) -> list of int"
+      self.checkRestoreFunction(doc, "[]")
+
+#    def testArrowTupleOf(self):
+#      doc = "This is foo(bar) -> (a, b,..)"
+#      self.checkRestoreFunction(doc, "()")
+
+    def testSimplePrefixInt(self):
+      doc = "This is int foo(bar)"
+      self.checkRestoreFunction(doc, "0")
+
+    def testSimplePrefixObject(self):
+      doc = "Makes an instance: object foo(bar)"
+      self.checkRestoreFunction(doc, "object()")
+
+    def testSimpleArrowFile(self):
+      doc = "Opens a file: foo(bar) -> file"
+      self.checkRestoreFunction(doc, "file('/dev/null')")
+
+    def testUnrelatedPrefix(self):
+      doc = """
+        Consumes a list of int
+        foo(bar)
+      """
+      self.checkRestoreFunction(doc, None)
+
 
 ###
 if __name__ == '__main__':

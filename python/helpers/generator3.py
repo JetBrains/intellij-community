@@ -1027,7 +1027,9 @@ class ModuleRedeclarator(object):
                         if not seen_values:
                           seen_values = [p_value]
                         self.out(prefix + "{", indent)
-                        for k in p_value:
+                        keys = p_value.keys()
+                        keys.sort()
+                        for k in keys:
                             v = p_value[k]
                             if v in seen_values:
                                 v = SELF_VALUE
