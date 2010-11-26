@@ -347,7 +347,7 @@ public final class UpdateChecker {
         try {
           HttpConfigurable.getInstance().prepareURL(url);
           final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-          String uid = "?";
+          String uid = "";
           if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
             try {
               uid = UUID.randomUUID().toString();
