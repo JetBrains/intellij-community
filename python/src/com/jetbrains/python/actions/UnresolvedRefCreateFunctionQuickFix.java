@@ -1,6 +1,8 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -36,13 +38,18 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(myElement), PyFunction.class,
-                                                          "def " + myElement.getText() + "():\n  pass");
+                                                          "def " + myElement.getText() + "(a):\n  pass");
 
     PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
     if (statement != null) {
       PsiElement parent = statement.getParent();
       if (parent != null)
-        parent.addBefore(function, statement);
+        function = (PyFunction)parent.addBefore(function, statement);
     }
+    function = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
+    builder.replaceElement(function.getParameterList().getParameters()[0], "");
+    builder.replaceElement(function.getStatementList().getStatements()[0], "pass");
+    builder.run();
   }
 }
