@@ -52,9 +52,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class CodeInsightTestUtil {
-  
-  private CodeInsightTestUtil() {
-  }
+  private CodeInsightTestUtil() { }
 
   @Nullable
   public static IntentionAction findIntentionByText(List<IntentionAction> actions, @NonNls String text) {
@@ -72,7 +70,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
-                                     @NotNull final String before, @NotNull final String after) throws Exception {
+                                     @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     final IntentionAction intentionAction = findIntentionByText(fixture.getAvailableIntentions(), action);
     assert intentionAction != null : "Action not found: " + action;
@@ -86,7 +84,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doWordSelectionTest(@NotNull final CodeInsightTestFixture fixture,
-                                         @NotNull final String before, final String... after) throws Exception {
+                                         @NotNull final String before, final String... after) {
     assert after != null && after.length > 0;
     fixture.configureByFile(before);
 
@@ -99,7 +97,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
-                                        @NotNull final String before, @NotNull final String after) throws Exception {
+                                        @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     new WriteCommandAction.Simple(fixture.getProject()) {
       @Override
@@ -111,7 +109,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
-                                        @NotNull final String before, @NotNull final String after) throws Exception {
+                                        @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
@@ -126,7 +124,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doSmartEnterTest(@NotNull final CodeInsightTestFixture fixture,
-                                      @NotNull final String before, @NotNull final String after) throws Exception {
+                                      @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(fixture.getFile().getLanguage());
     new WriteCommandAction(fixture.getProject()) {
@@ -142,7 +140,7 @@ public class CodeInsightTestUtil {
   }
 
   public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
-                                      @NotNull final String before, @NotNull final String after) throws Exception {
+                                      @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
       @Override
@@ -153,16 +151,14 @@ public class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
     final Editor editor = fixture.getEditor();
     PsiElement element = fixture.getElementAtCaret();
-    VariableInplaceRenamer renamer = null;
     Project project = editor.getProject();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     try {
       templateManager.setTemplateTesting(true);
-      renamer = handler.doRename(element, editor, null);
+      VariableInplaceRenamer renamer = handler.doRename(element, editor, null);
       TemplateState state = TemplateManagerImpl.getTemplateState(editor);
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
@@ -181,12 +177,10 @@ public class CodeInsightTestUtil {
     finally {
       templateManager.setTemplateTesting(false);
     }
-
   }
 
-  public static void doInlineRenameTest(VariableInplaceRenameHandler handler, String file,
-                                         String extension, String newName,
-                                         CodeInsightTestFixture fixture) {
+  public static void doInlineRenameTest(VariableInplaceRenameHandler handler, String file, String extension,
+                                        String newName, CodeInsightTestFixture fixture) {
     fixture.configureByFile(file + "." + extension);
     doInlineRename(handler, newName, fixture);
     fixture.checkResultByFile(file + "_after." + extension);
