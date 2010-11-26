@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,8 +113,7 @@ public class AutoBoxingInspection extends BaseInspection {
             if (expectedType == null) {
                 return;
             }
-            final String expectedTypeText =
-                    expectedType.getCanonicalText();
+            final String expectedTypeText = expectedType.getCanonicalText();
             final String classToConstruct;
             if (s_boxingClasses.containsValue(expectedTypeText)) {
                 classToConstruct = expectedTypeText;
@@ -125,9 +125,80 @@ public class AutoBoxingInspection extends BaseInspection {
                 final String expressionTypeText = type.getCanonicalText();
                 classToConstruct = s_boxingClasses.get(expressionTypeText);
             }
-            @NonNls final String newExpression =
-                    classToConstruct + ".valueOf(" + expression.getText() + ')';
+            if (shortcutReplace(expression, classToConstruct)) {
+                return;
+            }
+            @NonNls final String expressionText = expression.getText();
+            @NonNls final String newExpression;
+            if ("true".equals(expressionText)) {
+                newExpression =  "java.lang.Boolean.TRUE";
+            } else if ("false".equals(expressionText)) {
+                newExpression = "java.lang.Boolean.FALSE";
+            } else {
+                newExpression = classToConstruct + ".valueOf(" +
+                        expressionText + ')';
+            }
             replaceExpression(expression, newExpression);
+        }
+
+        private static boolean shortcutReplace(PsiExpression expression,
+                                               String classToConstruct) {
+            if (!(expression instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression == null) {
+                return false;
+            }
+            if (classToConstruct.equals("java.lang.Integer")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Integer", PsiType.INT, "intValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Short")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Short", PsiType.SHORT, "shortValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Byte")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Byte", PsiType.BYTE, "byteValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Character")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Character", PsiType.CHAR, "charValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Long")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Long", PsiType.LONG, "longValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Float")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Float", PsiType.FLOAT, "floatValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            } else if (classToConstruct.equals("java.lang.Double")) {
+                if (MethodCallUtils.isCallToMethod(methodCallExpression,
+                        "java.lang.Double", PsiType.DOUBLE, "doubleValue")) {
+                    expression.replace(qualifierExpression);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

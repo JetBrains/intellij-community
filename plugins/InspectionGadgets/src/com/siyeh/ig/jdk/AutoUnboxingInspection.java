@@ -32,6 +32,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,26 +137,12 @@ public class AutoUnboxingInspection extends BaseInspection {
             if (unboxedType == null) {
                 return;
             }
-            final String unboxedTypeText = unboxedType.getCanonicalText();
-            final String expressionText = expression.getText();
-            final String boxClassName = s_unboxingMethods.get(unboxedTypeText);
-            final String newExpressionText;
-            if (expression instanceof PsiTypeCastExpression) {
-                newExpressionText = '(' + expressionText + ")." +
-                        boxClassName + "()";
-            } else{
-                final String constantText =
-                        computeConstantBooleanText(expression);
-                if (constantText != null) {
-                    newExpressionText = constantText;
-                } else {
-                    newExpressionText =
-                            expressionText + '.' + boxClassName + "()";
-                }
-            }
+            final String newExpressionText =
+                    buildNewExpressionText(expression, unboxedType);
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
             final PsiElementFactory factory = psiFacade.getElementFactory();
             final PsiElement parent = expression.getParent();
+            final String expressionText = expression.getText();
             if (parent instanceof PsiPrefixExpression &&
                     !unboxedType.equalsToText("boolean") ) {
                 final PsiPrefixExpression prefixExpression =
@@ -236,6 +223,68 @@ public class AutoUnboxingInspection extends BaseInspection {
             } else {
                 replaceExpression(expression, newExpressionText);
             }
+        }
+
+        private static String buildNewExpressionText(PsiExpression expression,
+                                                     PsiType unboxedType) {
+            final String unboxedTypeText = unboxedType.getCanonicalText();
+            final String expressionText = expression.getText();
+            final String boxMethodName = s_unboxingMethods.get(unboxedTypeText);
+            if (expression instanceof PsiTypeCastExpression) {
+                return '(' + expressionText + ")." + boxMethodName + "()";
+            }
+            final String constantText =
+                    computeConstantBooleanText(expression);
+            if (constantText != null) {
+                return constantText;
+            }
+            if (expression instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) expression;
+                if (isValueOfCall(methodCallExpression)) {
+                    final PsiExpressionList argumentList =
+                            methodCallExpression.getArgumentList();
+                    final PsiExpression[] arguments =
+                            argumentList.getExpressions();
+                    final PsiExpression argument = arguments[0];
+                    return argument.getText();
+                }
+
+            }
+            return expressionText + '.' + boxMethodName + "()";
+        }
+
+        private static boolean isValueOfCall(
+                PsiMethodCallExpression methodCallExpression) {
+            final PsiExpressionList argumentList =
+                    methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
+                return false;
+            }
+            final PsiExpression argument = arguments[0];
+            final PsiType type = argument.getType();
+            return (MethodCallUtils.isCallToMethod(methodCallExpression,
+                    CommonClassNames.JAVA_LANG_INTEGER, null, "valueOf",
+                    PsiType.INT) && PsiType.INT.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_SHORT, null, "valueOf",
+                            PsiType.SHORT) && PsiType.SHORT.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_BYTE, null, "valueOf",
+                            PsiType.BYTE) && PsiType.BYTE.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_LONG, null, "valueOf",
+                            PsiType.LONG) && PsiType.LONG.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_CHARACTER, null, "valueOf",
+                            PsiType.CHAR) && PsiType.CHAR.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_DOUBLE, null, "valueOf",
+                            PsiType.DOUBLE) && PsiType.DOUBLE.equals(type)) ||
+                    (MethodCallUtils.isCallToMethod(methodCallExpression,
+                            CommonClassNames.JAVA_LANG_FLOAT, null, "valueOf",
+                            PsiType.FLOAT) && PsiType.FLOAT.equals(type));
         }
 
         @NonNls
