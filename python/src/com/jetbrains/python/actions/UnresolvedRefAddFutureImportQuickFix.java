@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  *
- * QuickFix to remove redundant parentheses from if/while/except statement
+ * QuickFix to add 'from __future__ import with_statement'' if python version is less than 2.6
  */
 public class UnresolvedRefAddFutureImportQuickFix implements LocalQuickFix {
   private PyReferenceExpression myElement;

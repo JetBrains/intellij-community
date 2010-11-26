@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  *
- * QuickFix to remove redundant parentheses from if/while/except statement
+ * QuickFix to add self to unresolved reference
  */
 public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
   private PyReferenceExpression myElement;
@@ -33,9 +33,8 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
-      PyReferenceExpression ref = myElement;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression expression = elementGenerator.createExpressionFromText("self." + ref.getText());
+      PyExpression expression = elementGenerator.createExpressionFromText("self." + myElement.getText());
       myElement.replace(expression);
   }
 }
