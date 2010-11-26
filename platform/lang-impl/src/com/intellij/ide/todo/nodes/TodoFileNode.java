@@ -25,6 +25,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -125,7 +126,13 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     }
 
     int nameEndOffset=newName.length();
-    int todoItemCount=myBuilder.getTodoTreeStructure().getTodoItemCount(getValue());
+    int todoItemCount;
+    try {
+      todoItemCount = myBuilder.getTodoTreeStructure().getTodoItemCount(getValue());
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     if(mySingleFileMode){
       if(todoItemCount==0){
         newName = IdeBundle.message("node.todo.no.items.found", newName);
