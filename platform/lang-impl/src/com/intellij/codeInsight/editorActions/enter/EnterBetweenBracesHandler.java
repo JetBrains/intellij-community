@@ -16,6 +16,9 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,6 +26,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
