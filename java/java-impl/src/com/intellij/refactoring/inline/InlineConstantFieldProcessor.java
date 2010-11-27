@@ -40,13 +40,13 @@ import java.util.HashSet;
 /**
  * @author ven
  */
-class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
+public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineConstantFieldProcessor");
   private PsiField myField;
   private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;
 
-  InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
+  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
     super(project);
     myField = field;
     myRefExpr = ref;
