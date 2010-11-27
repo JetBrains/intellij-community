@@ -182,20 +182,20 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
 
+    final GrModifierList modifierList = method.getModifierList();
     if (changeInfo.isVisibilityChanged()) {
-      method.getModifierList().setModifierProperty(changeInfo.getNewVisibility(), true);
+      modifierList.setModifierProperty(changeInfo.getNewVisibility(), true);
     }
 
     PsiSubstitutor substitutor = baseMethod != null ? calculateSubstitutor(method, baseMethod) : PsiSubstitutor.EMPTY;
 
     final PsiMethod context = changeInfo.getMethod();
+    GrTypeElement oldReturnTypeElement = method.getReturnTypeElementGroovy();
     if (changeInfo.isReturnTypeChanged()) {
       CanonicalTypes.Type newReturnType = changeInfo.getNewReturnType();
-      GrTypeElement element = method.getReturnTypeElementGroovy();
       if (newReturnType == null) {
-        if (element != null) {
-          element.delete();
-          GrModifierList modifierList = method.getModifierList();
+        if (oldReturnTypeElement != null) {
+          oldReturnTypeElement.delete();
           if (modifierList.getModifiers().length == 0) {
             modifierList.setModifierProperty(GrModifier.DEF, true);
           }
@@ -205,8 +205,11 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         PsiType type = newReturnType.getType(context, method.getManager());
         final PsiType oldReturnType = method.getReturnType();
         if (!TypesUtil
-          .isAssignable(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type
+          .isAssignableByMethodCallConversion(type, oldReturnType, context.getManager(), context.getResolveScope())) { //todo ask for replace covariant type
           method.setReturnType(substitutor.substitute(type));
+          if (oldReturnTypeElement==null) {
+            modifierList.setModifierProperty(GrModifier.DEF, false);;
+          }
         }
       }
     }
