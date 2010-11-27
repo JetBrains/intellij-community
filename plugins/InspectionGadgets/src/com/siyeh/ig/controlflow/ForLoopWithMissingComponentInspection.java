@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,14 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreCollectionLoops = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "for.loop.with.missing.component.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final boolean hasInitializer = ((Boolean)infos[0]).booleanValue();
@@ -71,6 +73,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
         }
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -78,6 +81,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
                 this, "ignoreCollectionLoops");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ForLoopWithMissingComponentVisitor();
     }
@@ -126,51 +130,57 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
                     (PsiDeclarationStatement) initialization;
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
-            if(declaredElements.length != 1){
-                return false;
+            for (PsiElement declaredElement : declaredElements) {
+                if (!(declaredElement instanceof PsiVariable)) {
+                    continue;
+                }
+                final PsiVariable variable = (PsiVariable)declaredElement;
+                final PsiType variableType = variable.getType();
+                if(!(variableType instanceof PsiClassType)){
+                    continue;
+                }
+                final PsiClassType classType = (PsiClassType) variableType;
+                final PsiClass declaredClass = classType.resolve();
+                if(declaredClass == null){
+                    continue;
+                }
+                if(!ClassUtils.isSubclass(declaredClass,
+                        CommonClassNames.JAVA_UTIL_ITERATOR)){
+                    continue;
+                }
+                final PsiExpression initialValue = variable.getInitializer();
+                if(initialValue == null){
+                    continue;
+                }
+                if(!(initialValue instanceof PsiMethodCallExpression)){
+                    continue;
+                }
+                final PsiMethodCallExpression initialCall =
+                        (PsiMethodCallExpression) initialValue;
+                final PsiReferenceExpression initialMethodExpression =
+                        initialCall.getMethodExpression();
+                final String initialCallName =
+                        initialMethodExpression.getReferenceName();
+                if(!HardcodedMethodConstants.ITERATOR.equals(initialCallName)){
+                    continue;
+                }
+                final PsiExpression condition = forStatement.getCondition();
+                if (isHasNext(condition, variable)) {
+                    return true;
+                }
             }
-            final PsiElement declaredElement = declaredElements[0];
-            if (!(declaredElement instanceof PsiLocalVariable)) {
-                return false;
-            }
-            final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-            if(variable == null){
-                return false;
-            }
-            final PsiType variableType = variable.getType();
-            if(!(variableType instanceof PsiClassType)){
-                return false;
-            }
-            final PsiClassType classType = (PsiClassType) variableType;
-            final PsiClass declaredClass = classType.resolve();
-            if(declaredClass == null){
-                return false;
-            }
-            if(!ClassUtils.isSubclass(declaredClass, CommonClassNames.JAVA_UTIL_ITERATOR)){
-                return false;
-            }
-            final PsiExpression initialValue = variable.getInitializer();
-            if(initialValue == null){
-                return false;
-            }
-            if(!(initialValue instanceof PsiMethodCallExpression)){
-                return false;
-            }
-            final PsiMethodCallExpression initialCall =
-                    (PsiMethodCallExpression) initialValue;
-            final PsiReferenceExpression initialMethodExpression =
-                    initialCall.getMethodExpression();
-            final String initialCallName =
-                    initialMethodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.ITERATOR.equals(initialCallName)){
-                return false;
-            }
-            final String iteratorName = variable.getName();
-            final PsiExpression condition = forStatement.getCondition();
-            return isHasNext(condition, iteratorName);
+            return false;
         }
 
-        private boolean isHasNext(PsiExpression condition, String iterator){
+        private boolean isHasNext(PsiExpression condition,
+                                  PsiVariable iterator){
+            if (condition instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) condition;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                final PsiExpression rhs = binaryExpression.getROperand();
+                return isHasNext(lhs, iterator) || isHasNext(rhs, iterator);
+            }
             if(!(condition instanceof PsiMethodCallExpression)){
                 return false;
             }
@@ -189,10 +199,12 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier == null){
+            if(!(qualifier instanceof PsiReferenceExpression)){
                 return true;
             }
-            final String target = qualifier.getText();
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement target = referenceExpression.resolve();
             return iterator.equals(target);
         }
     }
