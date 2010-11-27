@@ -22,13 +22,21 @@ def extractTypeParameter(def typeText) {
   final int start = typeText.indexOf('<')
   final int end = typeText.lastIndexOf('>')
 
-  if (start < 0) return "java.lang.Object"
+  if (start < 0) return null
   if (end < 0) return typeText.substring(start + 1)
   return typeText.substring(start + 1, end);
 }
 
-contributor(ctype:"java.util.Collection") {
+def constructTypeArg(def psiType) {
+  def typeText = psiType.canonicalText ?: psiType.presentableText
+  if (!typeText) return ""
+  def arg = extractTypeParameter(typeText)
+  if (!arg) return ""
+  return "<$arg>"
+}
+
+contributor(ctype: "java.util.Collection") {
   method name: "getAt", params: [arg: "java.lang.Number"], type: extractTypeParameter(psiType.canonicalText ?: psiType.presentableText)
-  method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List<${extractTypeParameter(psiType.canonicalText ?: psiType.presentableText)}>"
-  method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List<${extractTypeParameter(psiType.canonicalText ?: psiType.presentableText)}>"
+  method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List${constructTypeArg(psiType)}"
+  method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List${constructTypeArg(psiType)}"
 }
