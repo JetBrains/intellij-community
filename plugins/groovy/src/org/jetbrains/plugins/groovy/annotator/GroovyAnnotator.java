@@ -33,10 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -244,7 +241,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void registerAccessFix(Annotation annotation, GrReferenceExpression place, PsiMember refElement) {
+  private static void registerAccessFix(Annotation annotation, PsiElement place, PsiMember refElement) {
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
@@ -570,6 +567,19 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           ((PsiMethod)constructor).getParameterList().getParametersCount() == 0) {
         checkDefaultMapConstructor(myHolder, argList, constructor);
       }
+
+      if (!constructorResolveResult.isAccessible()) {
+        String message = GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)constructor, PsiSubstitutor.EMPTY,
+                                                                                          PsiFormatUtil.SHOW_NAME |
+                                                                                          PsiFormatUtil.SHOW_TYPE |
+                                                                                          PsiFormatUtil.TYPE_AFTER |
+                                                                                          PsiFormatUtil.SHOW_PARAMETERS,
+                                                                                          PsiFormatUtil.SHOW_TYPE
+        ));
+        final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(refElement), message);
+        registerAccessFix(annotation, refElement, ((PsiMember)constructor));
+      }
+
     }
     else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
