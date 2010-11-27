@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
+import java.util.Map;
+
 /**
  * @author ven
  */
@@ -35,12 +39,20 @@ public class GrClosureType extends PsiClassType {
   private final GlobalSearchScope myScope;
   private final PsiManager myManager;
   private final @NotNull GrClosureSignature mySignature;
+  private final PsiType[] myTypeArgs;
 
   private GrClosureType(LanguageLevel languageLevel, GlobalSearchScope scope, PsiManager manager, @NotNull GrClosureSignature closureSignature) {
     super(languageLevel);
     myScope = scope;
     myManager = manager;
     mySignature = closureSignature;
+    final PsiClass psiClass = resolve();
+    if (psiClass!=null && psiClass.getTypeParameters().length==1) {
+      myTypeArgs = new PsiType[]{mySignature.getReturnType()};
+    }
+    else {
+      myTypeArgs = PsiType.EMPTY_ARRAY;
+    }
   }
 
   @Nullable
@@ -54,19 +66,30 @@ public class GrClosureType extends PsiClassType {
 
   @NotNull
   public PsiType[] getParameters() {
-    //todo
-    return PsiType.EMPTY_ARRAY;
+    return myTypeArgs;
   }
 
   @NotNull
   public ClassResolveResult resolveGenerics() {
+    final PsiClass closure = resolve();
+    final PsiSubstitutor substitutor;
+    if (closure != null && closure.getTypeParameters().length == 1) {
+      final PsiTypeParameter parameter = closure.getTypeParameters()[0];
+      final Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
+      map.put(parameter, mySignature.getReturnType());
+      substitutor = PsiSubstitutorImpl.createSubstitutor(map);
+    }
+    else {
+      substitutor = PsiSubstitutor.EMPTY;
+    }
+
     return new ClassResolveResult() {
       public PsiClass getElement() {
-        return resolve();
+        return closure;
       }
 
       public PsiSubstitutor getSubstitutor() {
-        return PsiSubstitutor.UNKNOWN;
+        return substitutor;
       }
 
       public boolean isPackagePrefixPackageReference() {
@@ -99,12 +122,22 @@ public class GrClosureType extends PsiClassType {
 
   @NotNull
   public String getPresentableText() {
-    return "Closure";
+    if (myTypeArgs.length == 0 || myTypeArgs[0] == null) {
+      return "Closure";
+    }
+    else {
+      return "Closure<" + myTypeArgs[0].getPresentableText() + ">";
+    }
   }
 
   @Nullable
   public String getCanonicalText() {
-    return GrClosableBlock.GROOVY_LANG_CLOSURE;
+    if (myTypeArgs.length == 0 || myTypeArgs[0] == null) {
+      return GrClosableBlock.GROOVY_LANG_CLOSURE;
+    }
+    else {
+      return GrClosableBlock.GROOVY_LANG_CLOSURE + "<" + myTypeArgs[0].getCanonicalText() + ">";
+    }
   }
 
   @Nullable
