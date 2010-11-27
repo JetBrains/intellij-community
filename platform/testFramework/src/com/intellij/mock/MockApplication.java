@@ -36,10 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
@@ -48,6 +44,7 @@ public class MockApplication extends MockComponentManager implements Application
     super(null);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return "mock";
@@ -212,14 +209,14 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
                                                      final JComponent parentComponent) {
     return false;
   }
 
   @Override
-  public boolean runProcessWithProgressSynchronously(Runnable process,
-                                                     String progressTitle,
+  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                     @NotNull String progressTitle,
                                                      boolean canBeCanceled,
                                                      @Nullable Project project,
                                                      JComponent parentComponent,
@@ -228,8 +225,8 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean runProcessWithProgressSynchronously(Runnable process,
-                                                     String progressTitle,
+  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                     @NotNull String progressTitle,
                                                      boolean canBeCanceled,
                                                      Project project) {
     return false;
@@ -303,12 +300,6 @@ public class MockApplication extends MockComponentManager implements Application
       MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     return MODALITY_STATE_NONE;
-  }
-
-  @Override
-  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull final Collection<Callable<T>> tasks, final ExecutorService executorService)
-    throws Throwable {
-    return null;
   }
 
   @Override

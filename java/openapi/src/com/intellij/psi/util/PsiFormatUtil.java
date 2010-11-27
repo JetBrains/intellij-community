@@ -86,7 +86,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null){
         buffer.append(" = ");
-        String text = initializer.getText();
+        String text = PsiExpressionTrimRenderer.render(initializer);
         int index1 = text.lastIndexOf('\n');
         if (index1 < 0) index1 = text.length();
         int index2 = text.lastIndexOf('\r');

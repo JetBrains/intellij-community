@@ -217,4 +217,28 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup
   }
 
+  public void testFocusInJavadoc() {
+    myFixture.configureByText("a.java", """
+    /**
+    * {@link ArrLi<caret>}
+    */
+      class Foo {}
+    """)
+    type 's'
+    assert lookup.focused
+
+  }
+
+  public void testPrefixLengthDependentSorting() {
+    myFixture.addClass("package foo; public class PsiJavaCodeReferenceElement {}")
+    myFixture.configureByText("a.java", """
+    class PsiJavaCodeReferenceElementImpl {
+      { <caret> }
+    }
+    """)
+    type 'PJCR'
+    assertOrderedEquals myFixture.lookupElementStrings, 'PsiJavaCodeReferenceElement', 'PsiJavaCodeReferenceElementImpl'
+
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantStringInternInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "constant.string.intern.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "constant.string.intern.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ConstantStringInternFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ConstantStringInternVisitor();
     }
@@ -57,6 +61,7 @@ public class ConstantStringInternInspection extends BaseInspection {
                     "constant.string.intern.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
@@ -94,15 +99,12 @@ public class ConstantStringInternInspection extends BaseInspection {
             }
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifier == null)
-            {
+            if(qualifier == null) {
                 return;
             }
-            if(!PsiUtil.isConstantExpression(qualifier))
-            {
+            if(!PsiUtil.isConstantExpression(qualifier)) {
                 return;
             }
-
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {
                 return;
@@ -112,7 +114,7 @@ public class ConstantStringInternInspection extends BaseInspection {
                 return;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             registerMethodCallError(expression);

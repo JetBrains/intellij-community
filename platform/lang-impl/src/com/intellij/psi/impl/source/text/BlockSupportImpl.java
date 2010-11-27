@@ -18,6 +18,8 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -109,13 +111,34 @@ public class BlockSupportImpl extends BlockSupport {
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
         if (reparseable.getLanguage() == baseLanguage) {
-          CharSequence newTextStr = newFileText.subSequence(textRange.getStartOffset(), textRange.getStartOffset() + textRange.getLength() + lengthShift);
+          final int start = textRange.getStartOffset();
+          final int end = start + textRange.getLength() + lengthShift;
+          if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+            String newTextBefore = newFileText.subSequence(0, start).toString();
+            String oldTextBefore = file.getText().subSequence(0, start).toString();
+            throw new AssertionError("IOOBE: type=" + elementType +
+                                     "; oldText=" + node.getText() +
+                                     "; newText=" + newFileText.subSequence(start, newFileText.length()) +
+                                     "; length=" + node.getTextLength() +
+                                     "; oldTextBefore=" + oldTextBefore +
+                                     "; newTextBefore=" + newTextBefore);
+          }
+
+          CharSequence newTextStr = newFileText.subSequence(start, end);
 
           if (reparseable.isParsable(newTextStr, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
             if (chameleon != null) {
               DummyHolder holder = DummyHolderFactory.createHolder(fileImpl.getManager(), null, node.getPsi(), charTable);
               holder.getTreeElement().rawAddChildren((TreeElement)chameleon);
+
+              if (holder.getTextLength() != newTextStr.length()) {
+                if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+                  LOG.error("Inconsistent reparse: text=" + newTextStr + "; treeText=" + holder.getText() + "; type=" + elementType);
+                } else {
+                  LOG.error("Inconsistent reparse: type=" + elementType);
+                }
+              }
 
               mergeTrees(fileImpl, node, chameleon);
               return;

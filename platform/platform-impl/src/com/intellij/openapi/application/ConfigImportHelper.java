@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -136,15 +137,24 @@ public class ConfigImportHelper {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static File[] getLaunchFilesCandidates(File instHome) {
     File bin = new File(instHome, BIN_FOLDER);
-    return new File[]{
-      new File(bin, "idea.properties"),
-      new File(bin, "idea.lax"),
-      new File(bin, "idea.bat"),
-      new File(bin, "idea.sh"),
-      new File(new File(instHome, "Contents"), "Info.plist"),
-      new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"),
-      new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist")
-    };
+    if (SystemInfo.isMac) {
+      return new File[]{
+        new File(new File(instHome, "Contents"), "Info.plist"),
+        new File(new File(new File(bin, "idea.app"), "Contents"), "Info.plist"),
+        new File(new File(new File(instHome, "idea.app"), "Contents"), "Info.plist"),
+        new File(bin, "idea.properties"),
+        new File(bin, "idea.lax"),
+        new File(bin, "idea.bat"),
+        new File(bin, "idea.sh")
+      };
+    } else {
+      return new File[]{
+        new File(bin, "idea.properties"),
+        new File(bin, "idea.lax"),
+        new File(bin, "idea.bat"),
+        new File(bin, "idea.sh")
+      };
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

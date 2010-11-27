@@ -193,8 +193,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     addKeywords(parameters, result);
 
     if (shouldRunClassNameCompletion(result, position)) {
-      result.runRemainingContributors(
-        new CompletionParameters(position, parameters.getOriginalFile(), CompletionType.CLASS_NAME, parameters.getOffset(), parameters.getInvocationCount()),
+      result.runRemainingContributors(parameters.withType(CompletionType.CLASS_NAME),
         new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement lookupElement) {

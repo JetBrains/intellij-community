@@ -34,28 +34,34 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   private ActionCallback myCallback;
 
   protected FocusCommand() {
+    saveAllocation();
   }
 
   protected FocusCommand(Component dominationComp) {
     myDominationComponent = dominationComp;
+    saveAllocation();
   }
 
   protected FocusCommand(final Object object) {
     super(object);
+    saveAllocation();
   }
 
   protected FocusCommand(final Object object, Component dominationComp) {
     super(object);
     myDominationComponent = dominationComp;
+    saveAllocation();
   }
 
   protected FocusCommand(final Object[] objects) {
     super(objects);
+    saveAllocation();
   }
 
   protected FocusCommand(final Object[] objects, Component dominationComp) {
     super(objects);
     myDominationComponent = dominationComp;
+    saveAllocation();
   }
 
   public final ActionCallback getCallback() {

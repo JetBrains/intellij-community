@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,23 +36,27 @@ public class StringConstructorInspection extends BaseInspection {
     /** @noinspection PublicField*/
     public boolean ignoreSubstringArguments = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.constructor.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "RedundantStringConstructorCall";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.constructor.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
@@ -60,14 +64,17 @@ public class StringConstructorInspection extends BaseInspection {
                 "ignoreSubstringArguments");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringConstructorVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         final Boolean noArguments = (Boolean) infos[0];
         return new StringConstructorFix(noArguments.booleanValue());
@@ -92,6 +99,7 @@ public class StringConstructorInspection extends BaseInspection {
             return m_name;
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiNewExpression expression =
@@ -112,7 +120,8 @@ public class StringConstructorInspection extends BaseInspection {
     private class StringConstructorVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if (!TypeUtils.isJavaLangString(type)) {
@@ -132,27 +141,35 @@ public class StringConstructorInspection extends BaseInspection {
                 if (!TypeUtils.isJavaLangString(parameterType)) {
                     return;
                 }
-                if (ignoreSubstringArguments) {
-                    if (argument instanceof PsiMethodCallExpression) {
-                        final PsiMethodCallExpression methodCallExpression =
-                                (PsiMethodCallExpression)argument;
-                        final PsiReferenceExpression methodExpression =
-                                methodCallExpression.getMethodExpression();
-                        final PsiElement element = methodExpression.resolve();
-                        if (element instanceof PsiMethod) {
-                            final PsiMethod method = (PsiMethod)element;
-                            final PsiClass aClass = method.getContainingClass();
-                            final String className = aClass.getQualifiedName();
-                            @NonNls final String methodName = method.getName();
-                            if ("java.lang.String".equals(className) &&
-                                    methodName.equals("substring")) {
-                                return;
-                            }
-                        }
-                    }
+                if (ignoreSubstringArguments &&
+                        hasSubstringArgument(argument)) {
+                    return;
                 }
             }
             registerError(expression, Boolean.valueOf(arguments.length == 0));
+        }
+
+        private boolean hasSubstringArgument(PsiExpression argument) {
+            if (!(argument instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression)argument;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiElement element = methodExpression.resolve();
+            if (!(element instanceof PsiMethod)) {
+                return false;
+            }
+            final PsiMethod method = (PsiMethod)element;
+            final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return true;
+            }
+            final String className = aClass.getQualifiedName();
+            @NonNls final String methodName = method.getName();
+            return CommonClassNames.JAVA_LANG_STRING.equals(className) &&
+                    methodName.equals("substring");
         }
     }
 }

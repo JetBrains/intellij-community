@@ -259,6 +259,7 @@ public class GroovyCompletionUtil {
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
+    assert psiClass.isValid();
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 

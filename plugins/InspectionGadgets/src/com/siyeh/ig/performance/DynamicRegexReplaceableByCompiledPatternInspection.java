@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
             final PsiExpressionList list =
                     methodCallExpression.getArgumentList();
             final PsiExpression[] expressions = list.getExpressions();
-            final StringBuilder fieldText =
+            @NonNls final StringBuilder fieldText =
                     new StringBuilder(
                             "private static final java.util.regex.Pattern PATTERN = " +
                                     "java.util.regex.Pattern.compile(");
@@ -121,11 +121,13 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
                     factory.createFieldFromText(fieldText.toString(), element);
             final PsiElement field = aClass.add(newField);
 
-            final StringBuilder expressionText = new StringBuilder("PATTERN.");
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final StringBuilder expressionText =
+                    new StringBuilder("PATTERN.");
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            final String qualifierText;
+            @NonNls final String qualifierText;
             if (qualifier == null) {
                 qualifierText = "this";
             } else {
@@ -167,8 +169,8 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
                             newMethodCallExpression);
             final PsiReferenceExpression reference =
                     getReference(newMethodCallExpression);
-            HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner) field,
-                    reference);
+            HighlightUtils.showRenameTemplate(aClass,
+                    (PsiNameIdentifierOwner) field, reference);
         }
 
         private static PsiReferenceExpression getReference(
@@ -232,7 +234,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection
                 return false;
             }
             final String className = containingClass.getQualifiedName();
-            return "java.lang.String".equals(className);
+            return CommonClassNames.JAVA_LANG_STRING.equals(className);
         }
     }
 }

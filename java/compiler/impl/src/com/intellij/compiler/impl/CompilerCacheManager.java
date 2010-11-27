@@ -23,8 +23,6 @@ import com.intellij.openapi.compiler.generic.GenericCompiler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,14 +46,6 @@ public class CompilerCacheManager implements ProjectComponent {
   private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>>();
   private final List<Disposable> myCacheDisposables = new ArrayList<Disposable>();
   private final File myCachesRoot;
-  private LowMemoryWatcher myMemWatcher;
-  
-  private final Runnable myShutdownTask = new Runnable() {
-    public void run() {
-      flushCaches();
-    }
-  };
-  
   private final Project myProject;
 
   public CompilerCacheManager(Project project) {
@@ -68,18 +58,9 @@ public class CompilerCacheManager implements ProjectComponent {
   }
   
   public void projectOpened() {
-    myMemWatcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
-      public void force() {
-        flushCaches();
-      }
-    });
-    ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
   }
 
   public void projectClosed() {
-    myMemWatcher.stop();
-    ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
-    flushCaches();
   }
 
   @NotNull

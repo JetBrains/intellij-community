@@ -35,7 +35,7 @@ public abstract class ProgressManager {
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
 
-  public abstract void runProcess(Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
 
   public abstract ProgressIndicator getProgressIndicator();
 
@@ -51,16 +51,16 @@ public abstract class ProgressManager {
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   @Deprecated
-  public abstract void registerFunComponentProvider(ProgressFunComponentProvider provider);
+  public abstract void registerFunComponentProvider(@NotNull ProgressFunComponentProvider provider);
   @Deprecated
-  public abstract void removeFunComponentProvider(ProgressFunComponentProvider provider);
+  public abstract void removeFunComponentProvider(@NotNull ProgressFunComponentProvider provider);
 
   /**
    * @see ProgressFunComponentProvider
    */
-  public abstract JComponent getProvidedFunComponent(Project project, @NonNls String processId);
+  public abstract JComponent getProvidedFunComponent(Project project, @NotNull @NonNls String processId);
 
-  public abstract void executeNonCancelableSection(Runnable r);
+  public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
   public abstract NonCancelableSection startNonCancelableSection(); 
 
   public abstract void setCancelButtonText(String cancelButtonText);
@@ -77,7 +77,7 @@ public abstract class ProgressManager {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @Nls String progressTitle,
+                                                              @NotNull @Nls String progressTitle,
                                                               boolean canBeCanceled,
                                                               Project project);
 
@@ -92,8 +92,11 @@ public abstract class ProgressManager {
    * @param parentComponent the component which will be used to calculate the progress window ancestor
    * @return true if the operation completed successfully, false if it was cancelled.
    */
-  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process, @Nls String progressTitle, boolean canBeCanceled,
-                                                              Project project, JComponent parentComponent);
+  public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
+                                                              @NotNull @Nls String progressTitle,
+                                                              boolean canBeCanceled,
+                                                              Project project,
+                                                              JComponent parentComponent);
 
   /**
    * Runs a specified <code>process</code> in a background thread and shows a progress dialog, which can be made non-modal by pressing

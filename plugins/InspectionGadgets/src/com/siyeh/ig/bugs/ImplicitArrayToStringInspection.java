@@ -160,13 +160,13 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 if (!lhs.equals(expression)) {
                     final PsiType lhsType = lhs.getType();
                     return !(lhsType == null ||
-                            !lhsType.equalsToText("java.lang.String"));
+                            !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING));
                 }
                 final PsiExpression rhs = binaryExpression.getROperand();
                 if (rhs != null && !rhs.equals(expression)) {
                     final PsiType rhsType = rhs.getType();
                     return !(rhsType == null ||
-                            !rhsType.equalsToText("java.lang.String"));
+                            !rhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING));
                 }
             } else if (parent instanceof PsiExpressionList) {
                 final PsiExpressionList expressionList =
@@ -231,7 +231,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                     }
                     final PsiClass aClass = (PsiClass)target;
                     final String className = aClass.getQualifiedName();
-                    if (!"java.lang.String".equals(className)) {
+                    if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                         return false;
                     }
                 }

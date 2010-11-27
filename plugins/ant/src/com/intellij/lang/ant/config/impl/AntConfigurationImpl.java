@@ -547,7 +547,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       throw new AntNoFileException("the file is not recognized as an ANT file", file);
     }
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
-    xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
       myBuildFiles.add(buildFile);
@@ -612,7 +611,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private void removeBuildFileImpl(AntBuildFile buildFile) {
     final XmlFile antFile = buildFile.getAntFile();
     if (antFile != null) {
-      antFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, null);
       AntSupport.markFileAsAntFile(antFile.getOriginalFile().getVirtualFile(), antFile.getProject(), false);
     }
     synchronized (myBuildFiles) {
@@ -892,6 +890,19 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
     final XmlFile xmlFile = (XmlFile)psiFile;
     return AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
+  }
+
+  @Nullable
+  public AntBuildFile getAntBuildFile(@NotNull PsiFile file) {
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile != null) {
+      for (AntBuildFileBase bFile : getBuildFiles()) {
+        if (vFile.equals(bFile.getVirtualFile())) {
+          return bFile;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable

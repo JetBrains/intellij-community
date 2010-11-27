@@ -269,8 +269,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   public VirtualFile getRootDirectory() {
     if (getParameters().myImportRoot == null && isUpdate()) {
       final Project project = getProjectToUpdate();
-      assert project != null;
-      getParameters().myImportRoot = project.getBaseDir();
+      getParameters().myImportRoot = project != null ? project.getBaseDir() : null;
     }
     return getParameters().myImportRoot;
   }

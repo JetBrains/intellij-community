@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -28,14 +29,11 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -47,14 +45,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -78,6 +77,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -114,13 +115,81 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
   private MyItemLabel myContextObject;
 
+  private PropertyChangeListener myFocusListener = new PropertyChangeListener() {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      if ("focusOwner".equals(evt.getPropertyName()) || "permanentFocusOwner".equals(evt.getPropertyName())) {
+        restartRebuild();
+      }
+    }
+  };
+
+  private void restartRebuild() {
+    myUserActivityAlarm.cancelAllRequests();
+    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
+  }
+
+  private Alarm myUserActivityAlarm = new Alarm();
+  private Runnable myUserActivityAlarmRunnable = new Runnable() {
+    @Override
+    public void run() {
+      processUserActivity();
+    }
+  };
+
+  private Runnable myUserActivityRunnable = new Runnable() {
+    @Override
+    public void run() {
+      restartRebuild();
+    }
+  };
+
+  private void processUserActivity() {
+    if (!isShowing()) {
+      return;
+    }
+
+    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        Window wnd = SwingUtilities.windowForComponent(NavBarPanel.this);
+        if (wnd == null) return;
+
+        Component focus = null;
+
+        if (!wnd.isActive()) {
+          IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, NavBarPanel.this);
+          if (frame != null) {
+            focus = IdeFocusManager.getInstance(myProject).getLastFocusedFor(frame);
+          }
+        } else {
+          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+          if (window instanceof Dialog) {
+            final Dialog dialog = (Dialog)window;
+            if (dialog.isModal() && !SwingUtilities.isDescendingFrom(NavBarPanel.this, dialog)) {
+              return;
+            }
+          }
+        }
+
+        if (focus != null && focus.isShowing()) {
+          queueModelUpdate(DataManager.getInstance().getDataContext(focus));
+        } else if (wnd.isActive()) {
+          queueModelUpdateFromFocus();
+        }
+      }
+    });
+  }
+
   public NavBarPanel(final Project project) {
     super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
 
     myProject = project;
     myModel = new NavBarModel(myProject);
 
-    myUpdateQueue = new MergingUpdateQueue("NavBar", 150, true, MergingUpdateQueue.ANY_COMPONENT, project, null);
+    IdeEventQueue.getInstance().addActivityListener(myUserActivityRunnable);
+
+    myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
@@ -445,6 +514,17 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         if (eachLabel.getObject() == null || !eachLabel.getObject().equals(eachElement)) {
           return true;
         }
+
+
+        SimpleTextAttributes modelAttributes1 = myModel.getTextAttributes(eachElement, true);
+        SimpleTextAttributes modelAttributes2 = myModel.getTextAttributes(eachElement, false);
+        SimpleTextAttributes labelAttributes = eachLabel.getAttributes();
+
+        if (!modelAttributes1.toTextAttributes().equals(labelAttributes.toTextAttributes())
+            && !modelAttributes2.toTextAttributes().equals(labelAttributes.toTextAttributes())) {
+          return true;
+        }
+
         index++;
       }
 
@@ -895,15 +975,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     final MyPsiTreeChangeAdapter psiListener = new MyPsiTreeChangeAdapter();
     final MyProblemListener problemListener = new MyProblemListener();
     final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-    final MyTimerListener timerListener = new MyTimerListener();
 
 
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener);
     WolfTheProblemSolver.getInstance(myProject).addProblemListener(problemListener);
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener);
 
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(10000, timerListener);
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(myFocusListener);
 
     final MessageBusConnection busConnection = myProject.getMessageBus().connect();
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
@@ -923,7 +1002,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
     myDetacher = new Runnable() {
       public void run() {
-        ActionManagerEx.getInstanceEx().removeTimerListener(timerListener);
         busConnection.disconnect();
 
         WolfTheProblemSolver.getInstance(myProject).removeProblemListener(problemListener);
@@ -934,6 +1012,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void uninstallListeners() {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
+    IdeEventQueue.getInstance().removeActivityListener(myUserActivityRunnable);
     myDetacher.run();
     myDetacher = null;
   }
@@ -1131,6 +1211,10 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       return myObject;
     }
 
+    public SimpleTextAttributes getAttributes() {
+      return myAttributes;
+    }
+
     private void update() {
       clear();
 
@@ -1157,37 +1241,6 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
 
       repaint();
-    }
-  }
-
-  private final class MyTimerListener implements TimerListener {
-
-    public ModalityState getModalityState() {
-      return ModalityState.stateForComponent(NavBarPanel.this);
-    }
-
-    public void run() {
-      if (!isShowing()) {
-        return;
-      }
-
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          Window wnd = SwingUtilities.windowForComponent(NavBarPanel.this);
-          if (wnd == null || !wnd.isActive()) return;
-
-          final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          if (window instanceof Dialog) {
-            final Dialog dialog = (Dialog)window;
-            if (dialog.isModal() && !SwingUtilities.isDescendingFrom(NavBarPanel.this, dialog)) {
-              return;
-            }
-          }
-
-          queueModelUpdateFromFocus();
-        }
-      });
     }
   }
 

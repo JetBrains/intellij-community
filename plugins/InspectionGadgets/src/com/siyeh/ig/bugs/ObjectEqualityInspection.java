@@ -204,13 +204,13 @@ public class ObjectEqualityInspection extends BaseInspection {
             }
             final PsiClassType classType = (PsiClassType) type;
             final PsiClassType rawType = classType.rawType();
-            return rawType.equalsToText("java.lang.Class");
+            return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
         }
 
         private boolean isEnumType(@Nullable PsiExpression expression) {
             return expression != null &&
                     TypeUtils.expressionHasTypeOrSubtype(expression,
-                            "java.lang.Enum");
+                            CommonClassNames.JAVA_LANG_ENUM);
         }
 
         private  boolean isObjectType(PsiExpression expression) {
@@ -223,7 +223,7 @@ public class ObjectEqualityInspection extends BaseInspection {
                     !(type instanceof PsiPrimitiveType) &&
                     !TypeUtils.isJavaLangString(type) &&
                     !TypeUtils.expressionHasTypeOrSubtype(expression,
-                            "java.lang.Number");
+                            CommonClassNames.JAVA_LANG_NUMBER);
         }
     }
 }

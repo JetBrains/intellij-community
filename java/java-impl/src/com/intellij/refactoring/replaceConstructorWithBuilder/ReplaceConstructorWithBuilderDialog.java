@@ -160,7 +160,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       final String className = myNewClassName.getText().trim();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid builder class name");
       final String packageName = myPackageTextField.getText().trim();
-      if (!nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("\'" + StringUtil.last(packageName , 10, true)+ "\' is invalid builder package name");
+      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("\'" + StringUtil.last(packageName , 10, true)+ "\' is invalid builder package name");
     } else {
       final String qualifiedName = myExistentClassTF.getText().trim();
       if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException("\'" + StringUtil.last(qualifiedName, 10, true) + "\' is invalid builder qualified class name");

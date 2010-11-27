@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,14 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         bitwiseTokens.add(">>>");
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "pointless.bitwise.expression.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final String replacementExpression =
@@ -65,10 +67,12 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                 replacementExpression);
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -115,10 +119,12 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new PointlessBitwiseVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new PointlessBitwiseFix();
     }
@@ -131,6 +137,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                     "pointless.bitwise.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor
@@ -160,7 +167,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                 return;
             }
             if(rhsType.equals(PsiType.BOOLEAN) ||
-                    rhsType.equalsToText("java.lang.Boolean")){
+                    rhsType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)){
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
@@ -169,7 +176,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
                 return;
             }
             if(lhsType.equals(PsiType.BOOLEAN) ||
-                    lhsType.equalsToText("java.lang.Boolean")){
+                    lhsType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)){
                 return;
             }
             final IElementType tokenType = sign.getTokenType();
@@ -235,18 +242,18 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
         if(value == null){
             return false;
         }
-        if(value instanceof Integer && ((Integer) value) == 0xffffffff){
+        if(value instanceof Integer && ((Integer) value).intValue() == 0xffffffff){
             return true;
         }
-        if(value instanceof Long && ((Long) value) == 0xffffffffffffffffL){
+        if(value instanceof Long && ((Long) value).longValue() == 0xffffffffffffffffL){
             return true;
         }
-        if(value instanceof Short && ((Short) value) == (short) 0xffff){
+        if(value instanceof Short && ((Short) value).shortValue() == (short) 0xffff){
             return true;
         }
-        if(value instanceof Character && ((Character) value) == (char) 0xffff){
+        if(value instanceof Character && ((Character) value).charValue() == (char) 0xffff){
             return true;
         }
-        return value instanceof Byte && ((Byte) value) == (byte) 0xff;
+        return value instanceof Byte && ((Byte) value).byteValue() == (byte) 0xff;
     }
 }

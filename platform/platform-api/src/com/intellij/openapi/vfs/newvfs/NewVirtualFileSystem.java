@@ -47,6 +47,9 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, this);
     if (file == null || !file.exists()) return null;
 
+    if (normalizedPath.length() < basePath.length()) {
+      return null;
+    }
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
       if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {

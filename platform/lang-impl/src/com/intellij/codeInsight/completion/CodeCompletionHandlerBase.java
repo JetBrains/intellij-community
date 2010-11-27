@@ -402,7 +402,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     LOG.assertTrue(fileCopy.findElementAt(offset) == insertedElement, "wrong offset");
 
     final TextRange range = insertedElement.getTextRange();
-    LOG.assertTrue(range.substring(fileCopy.getText()).equals(insertedElement.getText()), "wrong text");
+    if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
+      LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'");
+    }
 
     return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);
   }

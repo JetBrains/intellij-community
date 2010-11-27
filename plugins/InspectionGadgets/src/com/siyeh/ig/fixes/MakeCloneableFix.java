@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,32 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeCloneableFix extends InspectionGadgetsFix {
+
     @NotNull
     public String getName() {
         return InspectionGadgetsBundle.message("make.cloneable.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                     throws IncorrectOperationException{
+            throws IncorrectOperationException{
         final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiClass containingClass = ClassUtils.getContainingClass(nameElement);
-        assert containingClass != null;
-        final PsiManager psiManager = containingClass.getManager();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+        final PsiClass containingClass =
+                ClassUtils.getContainingClass(nameElement);
+        if (containingClass == null) {
+            return;
+        }
+        final PsiElementFactory elementFactory =
+                JavaPsiFacade.getElementFactory(project);
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiJavaCodeReferenceElement ref = elementFactory.createReferenceElementByFQClassName("java.lang.Cloneable", scope);
-            final PsiReferenceList implementsList = containingClass.getImplementsList();
-            assert implementsList != null;
-            implementsList.add(ref);
-
+        final PsiJavaCodeReferenceElement ref =
+                elementFactory.createReferenceElementByFQClassName(
+                        CommonClassNames.JAVA_LANG_CLONEABLE, scope);
+        final PsiReferenceList implementsList =
+                containingClass.getImplementsList();
+        if (implementsList == null) {
+            return;
+        }
+        implementsList.add(ref);
     }
 }

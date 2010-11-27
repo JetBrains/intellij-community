@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class NonExceptionNameEndsWithExceptionInspection
             final GlobalSearchScope scope = aClass.getResolveScope();
             final PsiJavaCodeReferenceElement reference =
                     factory.createReferenceElementByFQClassName(
-                            "java.lang.Exception", scope);
+                            CommonClassNames.JAVA_LANG_EXCEPTION, scope);
             final PsiJavaCodeReferenceElement[] referenceElements =
                     extendsList.getReferenceElements();
             for (PsiJavaCodeReferenceElement referenceElement :
@@ -123,7 +123,8 @@ public class NonExceptionNameEndsWithExceptionInspection
             if (!className.endsWith(exception)) {
                 return;
             }
-            if (ClassUtils.isSubclass(aClass, "java.lang.Exception")) {
+            if (ClassUtils.isSubclass(aClass,
+                    CommonClassNames.JAVA_LANG_EXCEPTION)) {
                 return;
             }
             registerClassError(aClass, className, Boolean.valueOf(isOnTheFly()));

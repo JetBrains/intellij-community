@@ -27,5 +27,6 @@ public class XsltResourceProvider implements StandardResourceProvider {
 
   public void registerResources(ResourceRegistrar registrar) {
      registrar.addStdResource(XsltSupport.XSLT_NS, "/org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass());
+     registrar.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
   }
 }

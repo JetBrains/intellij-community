@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.xpath.xslt.impl;
+package com.intellij.codeInsight.completion;
 
-import com.intellij.javaee.ResourceRegistrar;
-import com.intellij.javaee.StandardResourceProvider;
-import org.intellij.lang.xpath.xslt.XsltSupport;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author peter
  */
-public class XsltStandardResourceProvider implements StandardResourceProvider {
+public class FocusInJavadoc extends CompletionConfidence {
+  @NotNull
   @Override
-  public void registerResources(ResourceRegistrar registrar) {
-    registrar.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
+  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
+    if (PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiDocTag.class) != null) {
+      return ThreeState.YES;
+    }
+    return ThreeState.UNSURE;
   }
 }

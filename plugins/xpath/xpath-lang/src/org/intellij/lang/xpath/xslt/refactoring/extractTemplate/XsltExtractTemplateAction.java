@@ -149,6 +149,9 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
             return false;
         }
         final XmlTag parentScope = PsiTreeUtil.getParentOfType(start, XmlTag.class, true);
+        if (parentScope == null) {
+          return false;
+        }
 
         final StringBuilder sb = new StringBuilder("\n");
         final Set<String> vars = new LinkedHashSet<String>();

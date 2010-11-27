@@ -38,6 +38,7 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -186,11 +187,12 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     exitModality();
   }
 
+  @NotNull
   public String getProcessId() {
     return myProcessId;
   }
 
-  public void setProcessId(final String processId) {
+  public void setProcessId(@NotNull String processId) {
     myProcessId = processId;
   }
 

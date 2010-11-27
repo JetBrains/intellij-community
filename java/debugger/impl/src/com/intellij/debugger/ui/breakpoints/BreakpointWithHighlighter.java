@@ -69,7 +69,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
-  private Icon myIcon = getSetIcon(false);
+  private volatile Icon myIcon = getSetIcon(false);
   @Nullable private String myClassName;
   @Nullable private String myPackageName;
   @Nullable private String myInvalidMessage;
@@ -317,7 +317,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   /**
    * updates the state of breakpoint and all the related UI widgets etc
    */
-  public final void updateUI(final Runnable afterUpdate) {
+  public final void updateUI(@NotNull final Runnable afterUpdate) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -359,8 +359,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private void updateGutter() {
     if(myVisible) {
-      if (getHighlighter() != null && getHighlighter().isValid() && isValid()) {
-        setupGutterRenderer();
+      RangeHighlighter highlighter = getHighlighter();
+      if (highlighter != null && highlighter.isValid() && isValid()) {
+        setupGutterRenderer(highlighter);
       }
       else {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this);
@@ -369,7 +370,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   /**
-   * called by BreakpointManeger when destroying the breakpoint
+   * called by BreakpointManager when destroying the breakpoint
    */
   public void delete() {
     if (isVisible()) {
@@ -414,9 +415,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     });
   }
 
-  private void setupGutterRenderer() {
+  private void setupGutterRenderer(@NotNull RangeHighlighter highlighter) {
     MyGutterIconRenderer renderer = new MyGutterIconRenderer(getIcon(), getDescription());
-    getHighlighter().setGutterIconRenderer(renderer);
+    highlighter.setGutterIconRenderer(renderer);
   }
 
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();

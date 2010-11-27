@@ -38,7 +38,8 @@ public class CommonBundle {
 
   private CommonBundle() {}
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return message(getCommonBundle(), key, params);
   }
 
@@ -79,7 +80,8 @@ public class CommonBundle {
     return value;
   }
 
-  public static String message(final ResourceBundle bundle, final String key, final Object... params) {
+  @NotNull
+  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
     return messageOrDefault(bundle, key, null, params);
   }
 

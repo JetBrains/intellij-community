@@ -454,6 +454,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testFieldWithCastingCaret() throws Throwable { doTest(); }
+
   public void testMethodReturnType() throws Throwable {
     doTest();
   }
@@ -738,6 +740,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testSuggestExpectedTypeMembersInCall() throws Throwable {
     configure()
     selectItem myItems[0]
+    checkResult();
+  }
+
+  public void testClassNameWithInnersTab() throws Throwable {
+    configure()
+    myFixture.type '\t'
+    checkResult();
+  }
+
+  public void testClassNameWithGenericsTab() throws Throwable {
+    configure()
+    myFixture.type '\t'
     checkResult();
   }
 

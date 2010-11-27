@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,8 @@ public class AssignmentToDateFieldFromParameterInspection
                 return;
             }
             final String type = TypeUtils.expressionHasTypeOrSubtype(lhs,
-                    "java.util.Date", "java.util.Calendar");
+                    CommonClassNames.JAVA_UTIL_DATE,
+                    CommonClassNames.JAVA_UTIL_CALENDAR);
             if (type == null) {
                 return;
             }

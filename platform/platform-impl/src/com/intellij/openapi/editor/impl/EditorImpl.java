@@ -843,6 +843,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return y / getLineHeight();
   }
 
+  public int yPositionToLogicalLineNumber(int y) {
+    int line = yPositionToVisibleLineNumber(y);
+    LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
+    return logicalPosition.line;
+  }
+
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     int line = yPositionToVisibleLineNumber(p.y);
@@ -1074,13 +1080,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-    final Point pp;
-    if (p.x >= 0 && p.y >= 0) {
-      pp = p;
-    }
-    else {
-      pp = new Point(Math.max(p.x, 0), Math.max(p.y, 0));
-    }
+    Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
 
     return visualToLogicalPosition(xyToVisualPosition(pp));
   }
@@ -1603,6 +1603,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (!getFoldingModel().isOffsetCollapsed(startOffset)) {
         if (visibleStartLine >= startLineNumber && visibleStartLine <= endLineNumber) {
           int logStartLine = offsetToLogicalPosition(startOffset).line;
+          if (logStartLine >= myDocument.getLineCount()) {
+            return;
+          }
           LogicalPosition logPosition = offsetToLogicalPosition(myDocument.getLineEndOffset(logStartLine));
           Point end = logicalPositionToXY(logPosition);
           int charWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);
@@ -1739,6 +1742,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
+          softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
+          if (softWrap != null) {
+            position.x = drawSoftWrapAwareBackground(
+              g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+              defaultBackground, clip, softWrapsToSkip, caretRowPainted
+            );
+          }
           position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
         }
         else {
@@ -1835,7 +1845,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                           boolean[] caretRowPainted)
   {
     int startToUse = start;
-    List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, end);
+    // Given 'end' offset is exclusive though SoftWrapModel.getSoftWrapsForRange() uses inclusive end offset.
+    // Hence, we decrement it if necessary. Please note that we don't do that if start is equal to end. That is the case,
+    // for example, for soft-wrapped collapsed fold region - we need to draw soft wrap before it.
+    int softWrapRetrievalEndOffset = end;
+    if (end > start) {
+      softWrapRetrievalEndOffset--;
+    }
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, softWrapRetrievalEndOffset);
     for (SoftWrap softWrap : softWraps) {
       int softWrapStart = softWrap.getStart();
       if (processSoftWrap.contains(softWrapStart)) {
@@ -1980,6 +1997,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // current painting iteration.
     Ref<LogicalPosition> logicalPosition = new Ref<LogicalPosition>(xyToLogicalPosition(new Point(0, clip.y)));
     int startLineNumber = logicalPosition.get().line;
+    int start = logicalPositionToOffset(logicalPosition.get());
 
     Point position = new Point(0, visibleLineNumber * lineHeight);
     if (startLineNumber == 0 && myPrefixText != null) {
@@ -1992,7 +2010,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-    int start = myDocument.getLineStartOffset(startLineNumber);
     IterationState iterationState = new IterationState(this, start, paintSelection());
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
@@ -2035,7 +2052,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         FoldRegion collapsedFolderAt = iterationState.getCurrentFold();
         if (collapsedFolderAt != null) {
           SoftWrap softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
-          if (softWrap != null && logicalPosition.get() != null) {
+          if (softWrap != null) {
             position.x = drawStringWithSoftWraps(
               g, chars, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, clip, effectColor, effectType,
               fontType, currentColor, logicalPosition
@@ -2263,13 +2280,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     startToUse = Math.max(startToUse, start);
 
-    if (startToUse >= end) {
+    if (startToUse >= end && getSoftWrapModel().getSoftWrap(startToUse) == null) {
       return position.x;
     }
     startDrawingLogicalPosition.set(null);
 
+    // Given 'end' offset is exclusive though SoftWrapModel.getSoftWrapsForRange() uses inclusive end offset.
+    // Hence, we decrement it if necessary. Please note that we don't do that if start is equal to end. That is the case,
+    // for example, for soft-wrapped collapsed fold region - we need to draw soft wrap before it.
+    int softWrapRetrievalEndOffset = end;
+    if (startToUse < end) {
+      softWrapRetrievalEndOffset--;
+    }
+    
     outer:
-    for (SoftWrap softWrap : getSoftWrapModel().getSoftWrapsForRange(startToUse, end)) {
+    for (SoftWrap softWrap : getSoftWrapModel().getSoftWrapsForRange(startToUse, softWrapRetrievalEndOffset)) {
       char[] softWrapChars = softWrap.getChars();
 
       if (softWrap.equals(lastSkippedSoftWrap)) {
@@ -3776,7 +3801,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean isCutEnabled(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public boolean isCutVisible(DataContext dataContext) {
@@ -3789,11 +3814,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public boolean isPastePossible(DataContext dataContext) {
       // Copy of isPasteEnabled. See interface method javadoc.
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public boolean isPasteEnabled(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     public void deleteElement(DataContext dataContext) {
@@ -3801,7 +3826,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public boolean canDeleteElement(DataContext dataContext) {
-      return !isViewer() && getDocument().isWritable();
+      return !isViewer();
     }
 
     private void executeAction(String actionId, DataContext dataContext) {
@@ -3841,6 +3866,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScrollPane.setLayout(new ScrollPaneLayout());
     }
+    ((JBScrollPane)myScrollPane).setupCorners();
     myScrollingModel.scrollHorizontally(currentHorOffset);
   }
 
@@ -5218,9 +5244,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    protected void init() {
-      super.init();
-      setCorner(LOWER_LEFT_CORNER, new JPanel() {
+    public void setupCorners() {
+      super.setupCorners();
+      setCorner(getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT ?
+                LOWER_RIGHT_CORNER :
+                LOWER_LEFT_CORNER, new JPanel() {
         @Override
         public void paint(Graphics g) {
           final Rectangle bounds = getBounds();

@@ -178,7 +178,7 @@ public class GeneralCommandLine {
     return myProgramParams;
   }
 
-  private static String quoteParameter(final String param) {
+  public static String quoteParameter(final String param) {
     if (!SystemInfo.isWindows) {
       return param;
     }

@@ -91,6 +91,11 @@ public class RenameDialog extends RefactoringDialog {
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 
+  @Override
+  protected boolean hasPreviewButton() {
+    return RenamePsiElementProcessor.forElement(myPsiElement).showRenamePreviewButton(myPsiElement);
+  }
+
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();

@@ -26,7 +26,7 @@ import java.util.List;
 
 public interface PositionManager {
   @Nullable
-  SourcePosition getSourcePosition(Location location) throws NoDataException;
+  SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException;
 
   @NotNull
   List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;

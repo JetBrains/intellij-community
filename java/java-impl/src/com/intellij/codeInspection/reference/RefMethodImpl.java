@@ -63,7 +63,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   protected final RefClass myOwnerClass;
 
   RefMethodImpl(PsiMethod method, RefManager manager) {
-      this((RefClass) manager.getReference(method.getContainingClass()), method,  manager);
+    this((RefClass)((RefManagerImpl)manager).getReference(method.getContainingClass(), true), method, manager);
   }
 
   RefMethodImpl(RefClass ownerClass, PsiMethod method, RefManager manager) {

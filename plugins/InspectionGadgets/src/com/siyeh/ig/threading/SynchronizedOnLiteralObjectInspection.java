@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
             final Project project = expression.getProject();
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
             final PsiClass javaLangNumberClass =
-                    psiFacade.findClass("java.lang.Number",
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_NUMBER,
                             expression.getResolveScope());
             if (javaLangNumberClass == null) {
                 return false;
@@ -89,9 +89,9 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
                     psiFacade.getElementFactory();
             final PsiClassType javaLangNumberType =
                     elementFactory.createType(javaLangNumberClass);
-            return type.equalsToText("java.lang.String") ||
-                    type.equalsToText("java.lang.Boolean") ||
-                    type.equalsToText("java.lang.Character") ||
+            return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                    type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) ||
+                    type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
                     javaLangNumberType.isAssignableFrom(type);
         }
     }

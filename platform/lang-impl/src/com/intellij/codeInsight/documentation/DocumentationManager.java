@@ -65,6 +65,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -257,6 +258,16 @@ public class DocumentationManager {
     }
 
     final DocumentationComponent component = new DocumentationComponent(this);
+    component.setNavigateCallback(new Consumer<PsiElement>() {
+      @Override
+      public void consume(PsiElement psiElement) {
+        final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+        if(jbPopup != null) {
+          final String title = getTitle(psiElement, false);
+          jbPopup.setCaption(title);
+        }
+      }
+    });
     Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
       public boolean process(JBPopup popup) {
         createToolWindow(element, originalElement, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "collection.added.to.self.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "collection.added.to.self.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CollectionAddedToSelfVisitor();
     }
@@ -88,8 +91,10 @@ public class CollectionAddedToSelfInspection extends BaseInspection {
             if(qualifierClass == null){
                 return;
             }
-            if(!ClassUtils.isSubclass(qualifierClass, "java.util.Collection") &&
-               !ClassUtils.isSubclass(qualifierClass, "java.util.Map")) {
+            if(!ClassUtils.isSubclass(qualifierClass,
+                    CommonClassNames.JAVA_UTIL_COLLECTION) &&
+               !ClassUtils.isSubclass(qualifierClass,
+                       CommonClassNames.JAVA_UTIL_MAP)) {
                 return;
             }
             registerError(qualifier);

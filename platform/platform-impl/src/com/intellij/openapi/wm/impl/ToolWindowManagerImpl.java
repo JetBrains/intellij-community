@@ -1876,14 +1876,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return;
       }
 
-      // Sometimes focus gained comes when editor is active. For example it can happen when
-      // user switches between menus or closes some dialog. In that case we just ignore this event,
-      // i.e. don't initiate deactivation of tool windows and requesting focus in editor.
-      if (isEditorComponentActive()) {
-        return;
-      }
-
-
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
 

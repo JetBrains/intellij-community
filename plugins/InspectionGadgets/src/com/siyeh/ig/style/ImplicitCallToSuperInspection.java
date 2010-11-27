@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,22 +34,26 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
     @SuppressWarnings("PublicField")
     public boolean m_ignoreForObjectSubclasses = false;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "implicit.call.to.super.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "implicit.call.to.super.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new AddExplicitSuperCall();
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "implicit.call.to.super.ignore.option"),
@@ -64,6 +68,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                     "implicit.call.to.super.make.explicit.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement methodName = descriptor.getPsiElement();
@@ -72,10 +77,11 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                 return;
             }
             final PsiCodeBlock body = method.getBody();
-            final PsiManager psiManager = PsiManager.getInstance(project);
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
             final PsiStatement newStatement =
                     factory.createStatementFromText("super();", null);
+            final PsiManager psiManager = PsiManager.getInstance(project);
             final CodeStyleManager styleManager =
                     psiManager.getCodeStyleManager();
             if (body == null) {
@@ -87,6 +93,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ImplicitCallToSuperVisitor();
     }
@@ -109,7 +116,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                 final PsiClass superClass = containingClass.getSuperClass();
                 if (superClass != null) {
                     final String superClassName = superClass.getQualifiedName();
-                    if ("java.lang.Object".equals(superClassName)) {
+                    if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
                         return;
                     }
                 }

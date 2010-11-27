@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ public class StringBufferReplaceableByStringInspection
             return;
             }
             final PsiType type = variable.getType();
-            if(!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&
+            if(!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                    type) &&
                        !TypeUtils.typeEquals("java.lang.StringBuilder", type)){
                 return;
             }

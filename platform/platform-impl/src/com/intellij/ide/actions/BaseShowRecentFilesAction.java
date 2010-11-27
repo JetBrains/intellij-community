@@ -156,7 +156,7 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
         Object[] values = list.getSelectedValues();
         for (Object value : values) {
           VirtualFile file = (VirtualFile) value;
-          FileEditorManager.getInstance(project).openFile(file, true);
+          FileEditorManager.getInstance(project).openFile(file, true, true);
         }
       }
     };

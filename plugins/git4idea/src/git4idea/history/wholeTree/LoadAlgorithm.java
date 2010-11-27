@@ -207,7 +207,7 @@ public class LoadAlgorithm {
   }
 
   // pseudo enum
-  private class State {
+  private static class State {
     private boolean myLoadFull;
     private long myContinuationTs;
     @Nullable

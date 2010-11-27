@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides services for moving the caret and retrieving information about caret position.
@@ -45,14 +46,14 @@ public interface CaretModel {
    *
    * @param pos the position to move to.
    */
-  void moveToLogicalPosition(LogicalPosition pos);
+  void moveToLogicalPosition(@NotNull LogicalPosition pos);
 
   /**
    * Moves the caret to the specified visual position.
    *
    * @param pos the position to move to.
    */
-  void moveToVisualPosition(VisualPosition pos);
+  void moveToVisualPosition(@NotNull VisualPosition pos);
 
   /**
    * Short hand for calling {@link #moveToOffset(int, boolean)} with <code>'false'</code> as a second argument.
@@ -77,6 +78,7 @@ public interface CaretModel {
    *
    * @return the caret position.
    */
+  @NotNull
   LogicalPosition getLogicalPosition();
 
   /**
@@ -84,6 +86,7 @@ public interface CaretModel {
    *
    * @return the caret position.
    */
+  @NotNull
   VisualPosition getVisualPosition();
 
   /**
@@ -98,14 +101,14 @@ public interface CaretModel {
    *
    * @param listener the listener instance.
    */
-  void addCaretListener(CaretListener listener);
+  void addCaretListener(@NotNull CaretListener listener);
 
   /**
    * Removes a listener for receiving notifications about caret movement.
    * 
    * @param listener the listener instance.
    */
-  void removeCaretListener(CaretListener listener);
+  void removeCaretListener(@NotNull CaretListener listener);
 
   /**
    * @return    document offset for the start of the logical line where caret is located

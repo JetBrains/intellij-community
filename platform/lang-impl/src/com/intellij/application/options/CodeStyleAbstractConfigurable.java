@@ -22,8 +22,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
+import java.util.Set;
 
-public abstract class CodeStyleAbstractConfigurable implements Configurable {
+public abstract class CodeStyleAbstractConfigurable implements Configurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
@@ -97,4 +98,8 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
     myPanel.onSomethingChanged();
   }
 
+  @Override
+  public Set<String> processListOptions() {
+    return myPanel.processListOptions();
+  }
 }

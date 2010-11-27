@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                     return null;
                 }
                 final PsiExpression dimension = dimensions[0];
-                final String replacementText = qualifierText + ".size()";
+                @NonNls final String replacementText = qualifierText + ".size()";
                 return getElementText(expression, dimension, replacementText);
             } else if (argument instanceof PsiReferenceExpression) {
                 final PsiReferenceExpression referenceExpression =
@@ -133,7 +134,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
                 }
                 final PsiType componentType = type.getComponentType();
                 final String typeText = componentType.getCanonicalText();
-                final String replacementText =
+                @NonNls final String replacementText =
                         "new " + typeText + "[" + qualifierText + ".size()]";
                 return getElementText(expression, referenceExpression,
                         replacementText);
@@ -155,7 +156,8 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
+            @NonNls final String methodName =
+                    methodExpression.getReferenceName();
             if (!"toArray".equals(methodName)) {
                 return;
             }
@@ -190,7 +192,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
             }
             final PsiClass containingClass = method.getContainingClass();
             if (!ClassUtils.isSubclass(containingClass,
-                    "java.util.Collection")) {
+                    CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 return;
             }
             registerMethodCallError(expression, expression, argument);

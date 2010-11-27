@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,18 +153,6 @@ public class MethodCallUtils {
         if (method == null) {
             return false;
         }
-        if (calledOnClassName != null) {
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier != null) {
-                if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                        calledOnClassName)) {
-                    return false;
-                }
-                return MethodUtils.methodMatches(method, null, returnType,
-                        methodName, parameterTypes);
-            }
-        }
         return MethodUtils.methodMatches(method, calledOnClassName, returnType,
                 methodName, parameterTypes);
     }
@@ -187,8 +175,8 @@ public class MethodCallUtils {
             lastParameterType = substitutorForMethod.substitute(lastParameterType);
             if (lastParameter.isVarArgs()) {
                 for (int i = 0; i < parameters.length - 1; i++) {
-                    final PsiParameter parm = parameters[i];
-                    if (parm.isVarArgs()) {
+                    final PsiParameter parameter = parameters[i];
+                    if (parameter.isVarArgs()) {
                         return false;
                     }
                     final PsiType argType = types[i];
@@ -263,7 +251,7 @@ public class MethodCallUtils {
             return false;
         }
         final String className = containingClass.getQualifiedName();
-        return "java.lang.String".equals(className) ||
+        return CommonClassNames.JAVA_LANG_STRING.equals(className) ||
                        "java.util.regex.Pattern".equals(className);
     }
 }

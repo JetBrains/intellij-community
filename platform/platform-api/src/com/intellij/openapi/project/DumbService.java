@@ -54,6 +54,10 @@ public abstract class DumbService {
    */
   public abstract boolean isDumb();
 
+  public static boolean isDumb(Project project) {
+    return getInstance(project).isDumb();
+  }
+
   /**
    * Run the runnable when dumb mode ends
    * @param runnable runnable to run

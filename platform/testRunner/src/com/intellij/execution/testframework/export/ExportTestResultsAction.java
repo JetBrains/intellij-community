@@ -91,10 +91,6 @@ public class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private boolean isEnabled(DataContext dataContext) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) {
-      return false;
-    }
-
     if (myModel == null) {
       return false;
     }
@@ -103,8 +99,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
       return false;
     }
 
-    AbstractTestProxy root = myModel.getRoot();
-    return !root.isInProgress() && !root.getChildren().isEmpty();
+    return !myModel.getRoot().isInProgress();
   }
 
   @Override

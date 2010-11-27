@@ -295,6 +295,14 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
+  public void setFileUrl(final String newUrl) {
+    if (!Comparing.equal(getFileUrl(), newUrl)) {
+      myState.setFileUrl(newUrl);
+      mySourcePosition = null;
+      fireBreakpointChanged();
+    }
+  }
+
   private void setLine(final int line) {
     if (getLine() != line) {
       myState.setLine(line);

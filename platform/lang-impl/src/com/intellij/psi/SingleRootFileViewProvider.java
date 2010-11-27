@@ -257,6 +257,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return fileSizeIsGreaterThan(vFile, PersistentFS.MAX_INTELLISENSE_FILESIZE);
   }
 
+  public static boolean isTooLarge(final VirtualFile vFile, final long contentSize) {
+    if (Boolean.TRUE.equals(vFile.getUserData(ourNoSizeLimitKey))) return false;
+    return contentSize > PersistentFS.MAX_INTELLISENSE_FILESIZE;
+  }
+
   private static boolean fileSizeIsGreaterThan(final VirtualFile vFile, final long maxInBytes) {
     if (vFile instanceof LightVirtualFile) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes

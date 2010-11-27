@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
         parseString(nonThreadSafeTypes, nonThreadSafeTypeList);
     }
 
+    @Override
     @Nls
     @NotNull
     public String getDisplayName() {
@@ -56,6 +57,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                 "access.to.non.thread.safe.static.field.from.instance.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         if (infos[0] instanceof PsiMethod) {
@@ -68,22 +70,26 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                 infos[1]);
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         final Form form = new Form();
         return form.getContentPanel();
     }
 
+    @Override
     public void readSettings(Element node) throws InvalidDataException {
         super.readSettings(node);
         parseString(nonThreadSafeTypes, nonThreadSafeTypeList);
     }
 
+    @Override
     public void writeSettings(Element node) throws WriteExternalException {
         nonThreadSafeTypes = formatString(nonThreadSafeTypeList);
         super.writeSettings(node);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new AccessToNonThreadSafeStaticFieldFromInstanceVisitor();
     }

@@ -535,5 +535,20 @@ public class ArtifactUtil {
     final String outputPath = artifact.getOutputPath();
     return !StringUtil.isEmpty(outputPath) && artifact.getRootElement() instanceof ArtifactRootElement<?>;
   }
+
+  public static Set<Module> getModulesIncludedInArtifacts(final @NotNull Collection<? extends Artifact> artifacts, final @NotNull Project project) {
+    final Set<Module> modules = new HashSet<Module>();
+    final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
+    for (Artifact artifact : artifacts) {
+      processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
+        @Override
+        public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
+          ContainerUtil.addIfNotNull(modules, moduleOutputPackagingElement.findModule(resolvingContext));
+          return true;
+        }
+      }, resolvingContext, true);
+    }
+    return modules;
+  }
 }
 

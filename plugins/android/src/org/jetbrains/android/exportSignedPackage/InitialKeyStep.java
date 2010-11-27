@@ -119,6 +119,11 @@ class InitialKeyStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.specify.key";
+  }
+
+  @Override
   protected void commitForNext() throws CommitStepException {
     myWizard.setKeyAliasList(myAliasList);
     char[] password = myKeyPasswordField.getPassword();

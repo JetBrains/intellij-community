@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -58,6 +59,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -263,9 +265,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
-      throw new AssertionError("Invalid content element type: " + contentElementType + " of " + contentElementType.getLanguage() +
-                               "; elementType=" + myElementType + " of " + myElementType.getLanguage() + "; file=" + getClass() +
-                               "; viewProvider=" + getViewProvider());
+      throw new AssertionError("A stub in a non-stub file '" + getVirtualFile() +"'; type: "+contentElementType+"; content:<<<\n"+
+                               StringUtil.first(getViewProvider().getContents(),200,true)+
+                               "\n>>>; stubs=" + ContainerUtil.collect(stubs));
     }
     final StubBuilder builder = ((IStubFileElementType)contentElementType).getBuilder();
 

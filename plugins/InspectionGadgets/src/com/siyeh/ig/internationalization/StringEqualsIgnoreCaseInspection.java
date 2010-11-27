@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,23 +32,27 @@ import java.util.List;
 
 public class StringEqualsIgnoreCaseInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID(){
         return "CallToStringEqualsIgnoreCase";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.equalsignorecase.call.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.equalsignorecase.call.problem.descriptor");
     }
 
+    @Override
     @NotNull
     protected InspectionGadgetsFix[] buildFixes(Object... infos) {
         final PsiMethodCallExpression methodCallExpression =
@@ -76,6 +80,7 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
         return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringEqualsIgnoreCaseVisitor();
     }
@@ -111,7 +116,7 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
                 return;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             final PsiExpression qualifier =

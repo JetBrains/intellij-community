@@ -21,4 +21,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
     <description>Catch of &lt;code&gt;RuntimeException&lt;/code&gt; is too broad, masking exception 'NullPointerException' #loc</description>
   </problem>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>49</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>Catch of &lt;code&gt;ObjectStreamException&lt;/code&gt; is too broad, masking exceptions 'NotActiveException' and 'StreamCorruptedException' #loc</description>
+  </problem>
 </problems>

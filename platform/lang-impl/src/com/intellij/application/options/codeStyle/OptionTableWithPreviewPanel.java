@@ -389,7 +389,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       try {
         field.setBoolean(getSettings(settings), ((Boolean)value).booleanValue());
       }
-      catch (IllegalAccessException e) {
+      catch (IllegalAccessException ignored) {
       }
     }
   }
@@ -655,8 +655,8 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
           myComboBox.removeAllItems();
           SelectionOption key = (SelectionOption)node.getKey();
           String[] values = key.options;
-          for (int i = 0; i < values.length; i++) {
-            myComboBox.addItem(values[i]);
+          for (String value1 : values) {
+            myComboBox.addItem(value1);
           }
           myComboBox.setSelectedItem(node.getValue());
           myComboBox.setEnabled(node.isEnabled());
@@ -695,4 +695,20 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     resetNode(root, settings);
   }
 
+  @Override
+  public Set<String> processListOptions() {
+    Set<String> options = new HashSet<String>();
+    collectOptions(options, myOptions);
+    collectOptions(options, myCustomOptions);
+    return options;
+  }
+
+  private void collectOptions(Set<String> optionNames, final List<Option> optionList) {
+    for (Option option : optionList) {
+      if (option.groupName != null) {
+        optionNames.add(option.groupName);
+      }
+      optionNames.add(option.title);
+    }
+  }
 }

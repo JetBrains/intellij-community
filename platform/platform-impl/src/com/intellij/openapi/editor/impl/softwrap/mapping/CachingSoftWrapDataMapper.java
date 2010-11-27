@@ -19,12 +19,15 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
-import com.intellij.openapi.editor.impl.softwrap.*;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDataMapper;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -468,7 +471,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
         assert false;
       }
       try {
-        log(String.format("line %d. %d-%d: '%s'", i, entry.startOffset, entry.endOffset,
+        log(String.format("line %d. %d-%d: '%s'", entry.visualLine, entry.startOffset, entry.endOffset,
                           text.subSequence(Math.min(text.length() - 1, entry.startOffset) ,Math.min(entry.endOffset, text.length() -  1))));
       }
       catch (Throwable e) {
@@ -613,6 +616,12 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       int startIndex = startCacheEntryIndex;
       if (startIndex < 0) {
         startIndex = -startIndex - 1;
+        
+        // There is a possible case that the nearest cache entry which start offset is not less than the given start offset layes
+        // after the changed region. We just stop processing then.
+        if (startIndex >= myCache.size() || myCache.get(startIndex).startOffset > endOffset) {
+          return;
+        }
       }
       int endIndex = endCacheEntryIndex;
       if (endIndex < 0) {

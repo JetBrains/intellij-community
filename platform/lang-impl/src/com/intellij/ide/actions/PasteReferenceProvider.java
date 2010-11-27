@@ -63,13 +63,23 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   public boolean isPastePossible(DataContext dataContext) {
-    return isPasteEnabled(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    return project != null && editor != null && getCopiedFqn() != null;
   }
 
   public boolean isPasteEnabled(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    return project != null && editor != null && getCopiedFqn() != null;
+    String fqn = getCopiedFqn();
+    if (project == null || fqn == null) {
+      return false;
+    }
+    for(QualifiedNameProvider provider: Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {
+      if (provider.qualifiedNameToElement(fqn, project) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {

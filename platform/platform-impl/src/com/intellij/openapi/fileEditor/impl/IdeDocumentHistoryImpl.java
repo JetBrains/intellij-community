@@ -443,7 +443,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
     final boolean wasActive = myToolWindowManager.isEditorComponentActive();
-    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive);
+    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
     final FileEditor        [] editors   = editorsWithProviders.getFirst();
     final FileEditorProvider[] providers = editorsWithProviders.getSecond();
     for (int i = 0; i < editors.length; i++) {

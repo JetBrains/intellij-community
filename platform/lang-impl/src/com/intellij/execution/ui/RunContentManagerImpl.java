@@ -355,6 +355,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
     Content content = null;
     if (descriptor != null) {
+      if (descriptor.isContentReuseProhibited()) {
+        return null;
+      }
       final Content attachedContent = descriptor.getAttachedContent();
       if (attachedContent != null && attachedContent.isValid()) content = attachedContent;
     }

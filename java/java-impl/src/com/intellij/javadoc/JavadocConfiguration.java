@@ -257,7 +257,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
         final PrintWriter writer = new PrintWriter(new FileWriter(sourcepathTempFile));
         try {
           writer.println("-sourcepath");
-          writer.println(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString());
+          writer.println(GeneralCommandLine.quote(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString()));
           final Collection<String> packages = new HashSet<String>();
           final Collection<String> sources = new HashSet<String>();
           final Runnable findRunnable = new Runnable() {

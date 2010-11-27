@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,20 @@ import org.jetbrains.annotations.NotNull;
 public class LengthOneStringInIndexOfInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "length.one.string.in.indexof.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "SingleCharacterStringConcatenation";
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final String string = (String)infos[0];
@@ -52,10 +55,12 @@ public class LengthOneStringInIndexOfInspection
                 escapedString);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new LengthOneStringsInIndexOfVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new ReplaceStringsWithCharsFix();
     }
@@ -69,6 +74,7 @@ public class LengthOneStringInIndexOfInspection
                     "length.one.strings.in.concatenation.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiExpression expression =
@@ -136,7 +142,7 @@ public class LengthOneStringInIndexOfInspection
                 return false;
             }
             final String className = methodClass.getQualifiedName();
-            return "java.lang.String".equals(className);
+            return CommonClassNames.JAVA_LANG_STRING.equals(className);
         }
     }
 }

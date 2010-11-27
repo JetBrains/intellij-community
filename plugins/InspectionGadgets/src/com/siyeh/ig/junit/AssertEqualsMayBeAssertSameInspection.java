@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
@@ -49,7 +50,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
 
         @NotNull
         public String getName() {
-            return "Replace with 'assertSame()'";
+            return InspectionGadgetsBundle.message(
+                    "assertequals.may.be.assertsame.quickfix");
         }
 
         @Override
@@ -62,7 +64,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
             }
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) grandParent;
-            final String text = methodCallExpression.getText();
+            @NonNls final String text = methodCallExpression.getText();
             final String newExpressionText =
                     text.replace("assertEquals", "assertSame");
             replaceExpression(methodCallExpression, newExpressionText);
@@ -83,7 +85,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
+            @NonNls final String name = methodExpression.getReferenceName();
             if (!"assertEquals".equals(name)) {
                 return;
             }
@@ -97,6 +99,9 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
             final String qualifiedName = aClass.getQualifiedName();
             if (!"org.junit.Assert".equals(qualifiedName) &&
                     !"junit.framework.Assert".equals(qualifiedName)) {
@@ -132,7 +137,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
             final PsiManager manager = argument1.getManager();
             final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(
                     manager.getProject());
-            final PsiClass objectClass = psiFacade.findClass("java.lang.Object",
+            final PsiClass objectClass = psiFacade.findClass(
+                    CommonClassNames.JAVA_LANG_OBJECT,
                     argumentClass.getResolveScope());
             if (objectClass == null) {
                 return false;

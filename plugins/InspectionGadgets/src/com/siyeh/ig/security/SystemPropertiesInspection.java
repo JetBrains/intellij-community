@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemPropertiesInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "AccessOfSystemProperties";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "system.properties.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         final boolean isGetSystemProperty =
@@ -56,6 +56,7 @@ public class SystemPropertiesInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SystemSetSecurityManagerVisitor();
     }
@@ -128,7 +129,7 @@ public class SystemPropertiesInspection extends BaseInspection {
             if (className == null) {
                 return false;
             }
-            return "java.lang.Integer".equals(className);
+            return CommonClassNames.JAVA_LANG_INTEGER.equals(className);
         }
 
         private static boolean isBooleanGetBoolean(
@@ -152,7 +153,7 @@ public class SystemPropertiesInspection extends BaseInspection {
             if (className == null) {
                 return false;
             }
-            return "java.lang.Boolean".equals(className);
+            return CommonClassNames.JAVA_LANG_BOOLEAN.equals(className);
         }
     }
 }

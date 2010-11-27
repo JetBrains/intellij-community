@@ -31,13 +31,13 @@ public class MavenArtifactCoordinatesVersionConverter extends MavenArtifactCoord
         || StringUtil.isEmpty(id.getVersion())) {
       return false;
     }
-    if (isVersionRange(id)) return true; // todo handle ranges more sensibly
+    if (isMagicVersion(id)) return true; // todo handle ranges more sensibly
     return manager.hasVersion(id.getGroupId(), id.getArtifactId(), id.getVersion());
   }
 
-  private boolean isVersionRange(MavenId id) {
+  private boolean isMagicVersion(MavenId id) {
     String version = id.getVersion().trim();
-    return version.startsWith("(") || version.startsWith("[");
+    return version.equals("LATEST") || version.equals("RELEASE") || version.startsWith("(") || version.startsWith("[");
   }
 
   @Override

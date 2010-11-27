@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class WaitNotInSynchronizedContextInspection
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        final String text;
+        @NonNls final String text;
         if (infos.length > 0) {
             final PsiElement element = (PsiElement)infos[0];
             text = element.getText();
@@ -78,8 +78,11 @@ public class WaitNotInSynchronizedContextInspection
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if (aClass == null) {
+                return;
+            }
             final String qualifiedName = aClass.getQualifiedName();
-            if (!qualifiedName.equals("java.lang.Object")) {
+            if (!CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
                 return;
             }
             final PsiExpression qualifier =

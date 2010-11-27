@@ -15,20 +15,24 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaFileStubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 
+import java.io.File;
 import java.security.SecureRandom;
 
 
 public class JavaStubBuilderTest extends LightIdeaTestCase {
   private static final StubBuilder OLD_BUILDER = new JavaFileStubBuilder();
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
-  private static final int SOE_TEST_DEPTH = 10000;
+  private static final int SOE_TEST_DEPTH = 20000;
 
   @Override
   public void setUp() throws Exception {
@@ -291,6 +295,22 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     System.out.println("SOE depth=" + SOE_TEST_DEPTH + ", time=" + t + "ms");
   }
 
+  public void testPerformance() throws Exception {
+    final String path = PathManagerEx.getTestDataPath() + "/psi/stub/StubPerformanceTest.java";
+    final char[] source = FileUtil.loadFileText(new File(path));
+    final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", new String(source));
+
+    final long[] t = new long[]{0};
+    IdeaTestUtil.assertTiming("should work fast", 2000, new Runnable() {
+      public void run() {
+        t[0] = System.currentTimeMillis();
+        NEW_BUILDER.buildStubTree(file);
+        t[0] = System.currentTimeMillis() - t[0];
+      }
+    });
+    System.out.println("size=" + source.length + " time=" + t[0] + "ms");
+  }
+
   private static void doTest(final String source, final String tree) {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
     final LazyParseableElement fileNode = (LazyParseableElement)file.getNode();
@@ -311,7 +331,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     final String originalStr = DebugUtil.stubTreeToString(originalTree);
     if (tree != null) {
       final String msg = "light=" + t1 + "mks, heavy=" + t2 + "mks, gain=" + (100 * (t2 - t1) / t2) + "%";
-      // todo: assertTrue("Expected to be at least 2x faster: " + msg, 2*t1 <= t2);
+      //assertTrue("Expected to be faster: " + msg, 3*t1/2 <= t2);  // doesn't work on build server
       System.out.println(msg);
 
       assertEquals("wrong test data", tree, originalStr);

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -32,15 +33,24 @@ import org.jetbrains.annotations.Nullable;
 public class MarkRootAction extends AnAction {
   private final boolean myMarkAsTestSources;
   private final boolean myMarkAsExcluded;
+  private final boolean myUnmark;
 
   public MarkRootAction() {
     myMarkAsTestSources = false;
     myMarkAsExcluded = false;
+    myUnmark = false;
   }
 
   protected MarkRootAction(boolean markAsTestSources, boolean markAsExcluded) {
     myMarkAsTestSources = markAsTestSources;
     myMarkAsExcluded = markAsExcluded;
+    myUnmark = false;
+  }
+
+  protected MarkRootAction(boolean unmark) {
+    myMarkAsTestSources = false;
+    myMarkAsExcluded = false;
+    myUnmark = true;
   }
 
   @Override
@@ -59,11 +69,13 @@ public class MarkRootAction extends AnAction {
             break;
           }
         }
-        if (myMarkAsExcluded) {
-          entry.addExcludeFolder(vFile);
-        }
-        else {
-          entry.addSourceFolder(vFile, myMarkAsTestSources);
+        if (!myUnmark) {
+          if (myMarkAsExcluded) {
+            entry.addExcludeFolder(vFile);
+          }
+          else {
+            entry.addSourceFolder(vFile, myMarkAsTestSources);
+          }
         }
       }
     }
@@ -89,12 +101,12 @@ public class MarkRootAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = canMark(e, myMarkAsTestSources || myMarkAsExcluded, !myMarkAsTestSources || myMarkAsExcluded);
+    boolean enabled = canMark(e, myMarkAsTestSources || myMarkAsExcluded || myUnmark, !myMarkAsTestSources || myMarkAsExcluded || myUnmark, null);
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
   }
 
-  public static boolean canMark(AnActionEvent e, boolean acceptSourceRoot, boolean acceptTestSourceRoot) {
+  public static boolean canMark(AnActionEvent e, boolean acceptSourceRoot, boolean acceptTestSourceRoot, Ref<Boolean> rootType) {
     Module module = e.getData(LangDataKeys.MODULE);
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (module == null || vFiles == null) {
@@ -110,8 +122,14 @@ public class MarkRootAction extends AnAction {
       }
       if (fileIndex.getSourceRootForFile(vFile) == vFile) {
         boolean isTestSourceRoot = fileIndex.isInTestSourceContent(vFile);
-        if (acceptSourceRoot && !isTestSourceRoot) return true;
-        if (acceptTestSourceRoot && isTestSourceRoot) return true;
+        if (acceptSourceRoot && !isTestSourceRoot) {
+          if (rootType != null) rootType.set(true);
+          return true;
+        }
+        if (acceptTestSourceRoot && isTestSourceRoot) {
+          if (rootType != null) rootType.set(false);
+          return true;
+        }
       }
       if (fileIndex.isInSourceContent(vFile)) {
         return false;

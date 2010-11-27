@@ -95,6 +95,12 @@ public class SaveAsTemplateAction extends AnAction {
                   TextRange referenceRange = reference.getRangeInElement();
                   TextRange range = element.getTextRange().cutOut(referenceRange).shiftRight(-offsetDelta);
                   final String oldText = document.getText(range);
+                  // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
+                  // they will be duplicated
+                  int pos = canonicalText.indexOf('<');
+                  if (pos > 0 && !oldText.contains("<")) {
+                    canonicalText = canonicalText.substring(0, pos);
+                  }
                   if (!canonicalText.equals(oldText)) {
                     rangeToText.put(document.createRangeMarker(range), canonicalText);
                   }

@@ -26,18 +26,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "properties.object.as.hashtable.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "properties.object.as.hashtable.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new SystemSetSecurityManagerVisitor();
     }
@@ -71,7 +74,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
                 return;
             }
             if(!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-		            "java.util.Properties")){
+                    CommonClassNames.JAVA_UTIL_PROPERTIES)){
                 return;
             }
             registerMethodCallError(expression);

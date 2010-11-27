@@ -509,23 +509,22 @@ public class ExpectedTypeUtils{
             }
             final int parametersCount = parameterList.getParametersCount();
             final PsiParameter[] parameters;
-            if(parameterPosition >= parametersCount){
+            if (parameterPosition >= parametersCount) {
                 final int lastParameterPosition = parametersCount - 1;
-                if(lastParameterPosition < 0){
+                if (lastParameterPosition < 0) {
                     return null;
                 }
                 parameters = parameterList.getParameters();
                 final PsiParameter lastParameter =
                         parameters[lastParameterPosition];
-                if(lastParameter.isVarArgs()){
+                if (lastParameter.isVarArgs()) {
                     final PsiArrayType arrayType =
-                            (PsiArrayType)lastParameter.getType();
+                            (PsiArrayType) lastParameter.getType();
                     return substitutor.substitute(arrayType.getComponentType());
                 }
                 return null;
-            } else {
-                parameters = parameterList.getParameters();
             }
+            parameters = parameterList.getParameters();
             final PsiParameter parameter = parameters[parameterPosition];
             final PsiType parameterType = parameter.getType();
             if(parameter.isVarArgs()){
@@ -545,7 +544,8 @@ public class ExpectedTypeUtils{
                     final String typeString = typeStringCreator.getTypeString();
                     return factory.createTypeFromText(typeString, method);
                 } catch (IncorrectOperationException e) {
-                    throw new AssertionError(e);
+                    throw new AssertionError("incorrect type string generated from " +
+                            type + ": " + e.getMessage());
                 }
             }
             return type;
@@ -571,7 +571,8 @@ public class ExpectedTypeUtils{
                 if (wildcardType.isExtends()) {
                     final PsiType extendsBound = wildcardType.getExtendsBound();
                     if (extendsBound instanceof PsiClassType) {
-                        PsiClassType classType = (PsiClassType) extendsBound;
+                        final PsiClassType classType =
+                                (PsiClassType) extendsBound;
                         final PsiClass aClass = classType.resolve();
                         if (aClass != null &&
                                 aClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -598,7 +599,7 @@ public class ExpectedTypeUtils{
                     }
                     for (int i = 1; i < parameterTypes.length; i++) {
                         typeString.append(',');
-                        PsiType parameterType = parameterTypes[i];
+                        final PsiType parameterType = parameterTypes[i];
                         // IDEADEV-25549 again
                         if (parameterType != null) {
                             parameterType.accept(this);

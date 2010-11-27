@@ -31,7 +31,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiClass;
@@ -41,14 +40,13 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
 public abstract class Breakpoint extends FilteredRequestor implements ClassPrepareRequestor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.Breakpoint");
-
   public boolean ENABLED = true;
   public boolean LOG_ENABLED = false;
   public boolean LOG_EXPRESSION_ENABLED = false;
@@ -134,7 +132,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final SourcePosition classPosition) {
-    debugProcess.getRequestsManager().callbackOnPrepareClasses(Breakpoint.this, classPosition);
+    debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
 
     List list = debugProcess.getPositionManager().getAllClasses(classPosition);
     for (final Object aList : list) {
@@ -163,7 +161,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       return false;
     }
 
-    final String[] title = new String[] {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
+    final String[] title = {DebuggerBundle.message("title.error.evaluating.breakpoint.condition") };
 
     try {
       final StackFrameProxyImpl frameProxy = context.getThread().frame(0);
@@ -245,7 +243,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     updateUI(EmptyRunnable.getInstance());
   }
 
-  public void updateUI(final Runnable afterUpdate) {
+  public void updateUI(@NotNull Runnable afterUpdate) {
   }
 
   public void delete() {

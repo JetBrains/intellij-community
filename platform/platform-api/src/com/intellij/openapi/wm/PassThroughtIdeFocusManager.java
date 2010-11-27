@@ -98,6 +98,15 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public Component getLastFocusedFor(IdeFrame frame) {
+    return null;
+  }
+
+  @Override
+  public void toFront(JComponent c) {
+  }
+
+  @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
   }
 

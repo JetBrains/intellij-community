@@ -491,10 +491,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
     public void run() {
       if (myReader == null) return;
-      while (myRunning) {
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            myAlarm.cancelAllRequests();
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          if (myRunning) {
             try {
               int i = 0;
               while (i++ < 1000) {
@@ -510,9 +509,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
               LOG.error(e);
             }
           }
-        };
-        myAlarm.addRequest(runnable, 200);
-      }
+          myAlarm.addRequest(this, 100);
+        }
+      };
+      myAlarm.addRequest(runnable, 10);
     }
 
     public void startRunning() {

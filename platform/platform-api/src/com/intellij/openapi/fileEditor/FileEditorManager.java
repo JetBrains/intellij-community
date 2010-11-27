@@ -37,6 +37,21 @@ public abstract class FileEditorManager {
    */
   @NotNull public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
+
+  /**
+   * Opens a file
+   *
+   * @param file file to open
+   * @param focusEditor <code>true</code> if need to focus
+   * @param searchForSplitter if <code>false</code> then manager will search
+   * the file through all splitters
+   *
+   * @return array of opened editors
+   */
+  @NotNull public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   /**
    * Closes all editors opened for the file.
    * 

@@ -354,12 +354,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       String newText = entry.getValue();
       leaf.rawReplaceWithText(newText);
     }
-    ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementWalkingVisitor(){
-      protected void visitNode(TreeElement element) {
-        element.clearCaches();
-        super.visitNode(element);
-      }
-    });
+
+    TreeUtil.clearCaches((TreeElement)parsedNode);
   }
 
   private static PsiFile registerDocument(final DocumentWindowImpl documentWindow,

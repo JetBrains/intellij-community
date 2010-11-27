@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,16 +34,19 @@ import java.util.List;
 public class StringConcatenationInsideStringBufferAppendInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "string.concatenation.inside.string.buffer.append.display.name");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final PsiClass aClass = (PsiClass)infos[0];
@@ -53,10 +56,12 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 className);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new StringConcatenationInsideStringBufferAppendVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
         return new ReplaceWithChainedAppendFix();
     }
@@ -70,6 +75,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
                     "string.concatenation.inside.string.buffer.append.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement methodNameElement = descriptor.getPsiElement();
@@ -93,13 +99,17 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 useStringValueOf = false;
             } else{
                 final PsiClass containingClass = method.getContainingClass();
-                final String qualifiedName = containingClass.getQualifiedName();
-                if (qualifiedName == null){
+                if (containingClass == null) {
                     useStringValueOf = false;
-                } else{
-                    useStringValueOf =
-                            !qualifiedName.equals("java.lang.StringBuffer") &&
-                                    !qualifiedName.equals("java.lang.StringBuilder");
+                } else {
+                final String qualifiedName = containingClass.getQualifiedName();
+                    if (qualifiedName == null){
+                        useStringValueOf = false;
+                    } else{
+                        useStringValueOf = !qualifiedName.equals(
+                                CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
+                                        !qualifiedName.equals("java.lang.StringBuilder");
+                    }
                 }
             }
             final List<String> expressions =
@@ -134,7 +144,8 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 throws IncorrectOperationException{
             final PsiType type = concatenation.getType();
             if(concatenation instanceof PsiBinaryExpression){
-                if (type != null && type.equalsToText("java.lang.String")){
+                if (type != null && type.equalsToText(
+                        CommonClassNames.JAVA_LANG_STRING)){
                     PsiBinaryExpression binaryExpression =
                             (PsiBinaryExpression) concatenation;
                     PsiExpression lhs = binaryExpression.getLOperand();
@@ -150,7 +161,8 @@ public class StringConcatenationInsideStringBufferAppendInspection
                     while (lhs instanceof PsiBinaryExpression) {
                         final PsiType lhsType = lhs.getType();
                         if (lhsType == null ||
-                                !lhsType.equalsToText("java.lang.String")) {
+                                !lhsType.equalsToText(
+                                        CommonClassNames.JAVA_LANG_STRING)) {
                             break;
                         }
                         binaryExpression = (PsiBinaryExpression)lhs;
@@ -186,7 +198,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 return;
             }
             if (useStringValueOf && type != null &&
-                    !type.equalsToText("java.lang.String")){
+                    !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)){
                 out.add("String.valueOf(" + concatenation.getText() + ')');
             } else{
                 out.add(concatenation.getText());
@@ -225,15 +237,16 @@ public class StringConcatenationInsideStringBufferAppendInspection
                 return;
             }
             final String className = containingClass.getQualifiedName();
-            if("java.lang.StringBuffer".equals(className) ||
+            if(CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
                     "java.lang.StringBuilder".equals(className)){
                 registerMethodCallError(expression, containingClass);
                 return;
             }
-            final PsiManager manager = containingClass.getManager();
             final Project project = containingClass.getProject();
-          final PsiClass appendableClass =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final PsiClass appendableClass =
+                    psiFacade.findClass("java.lang.Appendable",
+                            GlobalSearchScope.allScope(project));
             if(appendableClass == null){
                 return;
             }
@@ -254,7 +267,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
             if(type == null){
                 return false;
             }
-            return type.equalsToText("java.lang.String");
+            return type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
         }
     }
 }

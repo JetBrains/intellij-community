@@ -65,6 +65,11 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.choose.module";
+  }
+
+  @Override
   protected void commitForNext() throws CommitStepException {
     if (myCheckModulePanel.hasError()) {
       throw new CommitStepException(AndroidBundle.message("android.project.contains.errors.error"));

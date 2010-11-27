@@ -104,10 +104,12 @@ public class StringBufferToStringInConcatenationInspection
             }
             if (rhs.equals(expression)) {
                 final PsiExpression lhs = parentBinary.getLOperand();
-                if (!TypeUtils.expressionHasType(lhs, "java.lang.String")) {
+                if (!TypeUtils.expressionHasType(lhs,
+                        CommonClassNames.JAVA_LANG_STRING)) {
                     return;
                 }
-            } else if (!TypeUtils.expressionHasType(rhs, "java.lang.String")) {
+            } else if (!TypeUtils.expressionHasType(rhs,
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             if (!isStringBufferToString(expression)) {
@@ -137,7 +139,7 @@ public class StringBufferToStringInConcatenationInspection
                 return false;
             }
             final String className = aClass.getQualifiedName();
-            return "java.lang.StringBuffer".equals(className) ||
+            return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
                     "java.lang.StringBuilder".equals(className);
         }
     }

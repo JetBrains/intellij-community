@@ -59,4 +59,18 @@ public class TestUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static PsiMethod findSetUpMethod(final PsiClass psiClass) {
+    final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
+    for (TestFramework framework : testFrameworks) {
+      if (framework.isTestClass(psiClass)) {
+        final PsiMethod setUpMethod = (PsiMethod)framework.findSetUpMethod(psiClass);
+        if (setUpMethod != null) {
+          return setUpMethod;
+        }
+      }
+    }
+    return null;
+  }
 }

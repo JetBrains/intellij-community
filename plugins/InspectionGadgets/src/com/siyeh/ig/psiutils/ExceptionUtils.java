@@ -31,10 +31,10 @@ public class ExceptionUtils{
             new HashSet<String>(4);
 
     static {
-        s_genericExceptionTypes.add("java.lang.Throwable");
-        s_genericExceptionTypes.add("java.lang.Exception");
-        s_genericExceptionTypes.add("java.lang.RuntimeException");
-        s_genericExceptionTypes.add("java.lang.Error");
+        s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_THROWABLE);
+        s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_EXCEPTION);
+        s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
+        s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_ERROR);
     }
 
     @NotNull public static Set<PsiClassType> calculateExceptionsThrown(

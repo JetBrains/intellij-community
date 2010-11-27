@@ -93,6 +93,10 @@ public class JUnit3Framework extends JavaTestFramework {
 
     PsiMethod inClass = clazz.findMethodBySignature(patternMethod, false);
     if (inClass == null) {
+      PsiMethod testMethod = JUnitUtil.findFirstTestMethod(clazz);
+      if (testMethod != null) {
+        return (PsiMethod)clazz.addBefore(patternMethod, testMethod);
+      }
       return (PsiMethod)clazz.add(patternMethod);
     }
     else if (inClass.getBody() == null) {

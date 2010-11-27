@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class SubstringZeroInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "substring.zero.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "substring.zero.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new SubstringZeroFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SubstringZeroVisitor();
     }
@@ -57,6 +61,7 @@ public class SubstringZeroInspection extends BaseInspection {
                     "constant.conditional.expression.simplify.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiMethodCallExpression call =
@@ -73,6 +78,7 @@ public class SubstringZeroInspection extends BaseInspection {
     }
 
     private static class SubstringZeroVisitor extends BaseInspectionVisitor {
+
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
@@ -83,16 +89,16 @@ public class SubstringZeroInspection extends BaseInspection {
             if (!"substring".equals(methodName)) {
                 return;
             }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 1) {
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            if (arg == null) {
+            final PsiExpression argument = arguments[0];
+            if (argument == null) {
                 return;
             }
-            if (!ExpressionUtils.isZero(arg)) {
+            if (!ExpressionUtils.isZero(argument)) {
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -104,7 +110,7 @@ public class SubstringZeroInspection extends BaseInspection {
                 return;
             }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.String".equals(className)) {
+            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
                 return;
             }
             registerError(expression);

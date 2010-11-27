@@ -24,6 +24,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 public class MarkRootGroup extends DefaultActionGroup {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(MarkRootAction.canMark(e, true, true));
+    e.getPresentation().setVisible(MarkRootAction.canMark(e, true, true, null));
   }
 }

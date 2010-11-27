@@ -52,7 +52,7 @@ public class CommandLineApplication {
     this(isInternal, isUnitTestMode, isHeadless, "idea");
   }
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NonNls String appName) {
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NotNull @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     ourInstance = this;
     ApplicationManagerEx.createApplication(isInternal, isUnitTestMode, isHeadless, true, appName);

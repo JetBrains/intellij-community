@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -75,7 +76,8 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
             } else {
                 replacementText = replacement.getText();
             }
-            if (TypeUtils.expressionHasType(replacement, "java.lang.String")) {
+            if (TypeUtils.expressionHasType(replacement,
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 return replacementText;
             }
         }
@@ -127,7 +129,8 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
             if (!(expression.getROperand() != null)) {
                 return;
             }
-            if (!TypeUtils.expressionHasType(expression, "java.lang.String")) {
+            if (!TypeUtils.expressionHasType(expression,
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();

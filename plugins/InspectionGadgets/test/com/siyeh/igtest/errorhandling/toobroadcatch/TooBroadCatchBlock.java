@@ -34,4 +34,26 @@ public class TooBroadCatchBlock{
 
         }
     }
+
+  void bars(boolean a, boolean b, boolean c) {
+    try {
+      if (!a) {
+        throw new NotActiveException(); // extends ObjectStreamException
+      }
+      if (b) {
+        throw new StreamCorruptedException(); // extends ObjectStreamException
+      }
+      if (c) {
+        throw new IOException();
+      }
+    } catch (ObjectStreamException e) {
+      // Deal with ObjectStreamException (a subclass of IOException)...
+    } catch (IOException e) {
+      // Deal with IOException...
+    }
+  }
+
+  class ObjectStreamException extends IOException {}
+  class StreamCorruptedException extends ObjectStreamException {}
+  class NotActiveException extends ObjectStreamException {}
 }

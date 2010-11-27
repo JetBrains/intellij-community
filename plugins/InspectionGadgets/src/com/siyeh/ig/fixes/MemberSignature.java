@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Bas Leijdekkers
+ * Copyright 2003-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +237,7 @@ public class MemberSignature implements Comparable<MemberSignature>
                     if(qualifiedName == null)
                     {
                         // for type parameters
-                        buffer.append("java.lang.Object");
+                        buffer.append(CommonClassNames.JAVA_LANG_OBJECT);
                     }
                     else
                     {

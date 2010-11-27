@@ -17,13 +17,11 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -36,8 +34,9 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract {
+public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract implements OptionsContainingConfigurable {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
@@ -286,13 +285,16 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     return "preferences.sourceCode";
   }
 
-  public HashSet<OptionDescription> processOptions() {
-    return new HashSet<OptionDescription>();
-    //TODO lesya
-    //return getActivePanel().processOptions();
+  @Override
+  public Set<String> processListOptions() {
+    HashSet<String> result = new HashSet<String>();
+    for (CodeStyleConfigurableWrapper panel : myPanels) {
+      result.addAll(panel.processListOptions());
+    }
+    return result;
   }
 
-  private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoScroll {
+  private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoScroll, OptionsContainingConfigurable {
     private boolean myInitialResetInvoked;
     private CodeStyleMainPanel myPanel;
     private final CodeStyleSettingsProvider myProvider;
@@ -389,6 +391,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     public void applyPanel() {
       ensurePanel().apply();
+    }
+
+    @Override
+    public Set<String> processListOptions() {
+      return ensurePanel().processListOptions();
     }
   }
 }
