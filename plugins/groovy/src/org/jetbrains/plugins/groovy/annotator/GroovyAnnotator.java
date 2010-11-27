@@ -30,6 +30,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -419,6 +420,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (parent instanceof GrClosableBlock) {
           duplicate = ResolveUtil
             .resolveExistingElement((GrClosableBlock)parent, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
+          if (duplicate instanceof LightElement) {
+            duplicate = null;
+          }
         }
       }
     }
