@@ -97,7 +97,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiFile psiFile = docManager.getPsiFile(document);
       if (method instanceof GrMethod &&
           method.getParameterList().getParametersCount() > 0 &&
-          method.getContainingClass() instanceof GroovyScriptClass) {
+          method.getContainingClass() instanceof GroovyScriptClass &&
+          isExpressionStatement(psiFile, context.getStartOffset())) {
         return;
       }
       if (isExpressionStatement(psiFile, context.getStartOffset()) &&
