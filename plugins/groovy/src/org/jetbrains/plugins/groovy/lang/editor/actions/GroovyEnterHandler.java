@@ -87,7 +87,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
         if (element != null &&
             element.getNode().getElementType() == mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            text.length() > caret) {
+            text.length() > caret && afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
