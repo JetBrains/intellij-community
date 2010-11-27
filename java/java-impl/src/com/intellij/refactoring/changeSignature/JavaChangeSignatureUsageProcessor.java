@@ -381,6 +381,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         final PsiExpression[] args = list.getExpressions();
         final int nonVarargCount = getNonVarargCount(changeInfo, args);
         final int varargCount = args.length - nonVarargCount;
+        if (varargCount<0) return;
         PsiExpression[] newVarargInitializers = null;
 
         final int newArgsLength;
