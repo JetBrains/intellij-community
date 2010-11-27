@@ -18,6 +18,7 @@ package com.intellij.ide.ui.search;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -70,6 +71,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
+    if (ApplicationManager.getApplication().isCommandLine() ||
+        ApplicationManager.getApplication().isUnitTestMode()) return;
     try {
       //stop words
       final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));

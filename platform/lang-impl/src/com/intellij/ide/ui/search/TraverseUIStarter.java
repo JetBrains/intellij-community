@@ -31,6 +31,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
@@ -96,6 +97,11 @@ public class TraverseUIStarter implements ApplicationStarter {
       }
       root.addContent(configurableElement);
       configurable.disposeUIResources();
+    }
+    final File file = new File(OUTPUT_PATH);
+    if (!file.isFile()) {
+      file.getParentFile().mkdirs();
+      file.createNewFile();
     }
     JDOMUtil.writeDocument(new Document(root), OUTPUT_PATH, "\n");
 
