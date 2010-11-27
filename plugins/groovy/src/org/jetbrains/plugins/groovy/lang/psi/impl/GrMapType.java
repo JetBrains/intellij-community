@@ -58,12 +58,14 @@ public class GrMapType extends GrLiteralClassType {
   public GrMapType(JavaPsiFacade facade,
                    GlobalSearchScope scope,
                    Map<String, PsiType> stringEntries,
-                   List<Pair<PsiType, PsiType>> otherEntries, LanguageLevel languageLevel) {
+                   List<Pair<PsiType, PsiType>> otherEntries,
+                   LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
     myStringEntries = stringEntries;
     myOtherEntries = otherEntries;
 
-    myJavaClassName = facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+    myJavaClassName =
+      facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
   }
 
   @Override
@@ -72,7 +74,7 @@ public class GrMapType extends GrLiteralClassType {
   }
 
   public String getClassName() {
-    return "Map";
+    return StringUtil.getShortName(myJavaClassName);
   }
 
   public PsiType[] getAllKeyTypes() {
