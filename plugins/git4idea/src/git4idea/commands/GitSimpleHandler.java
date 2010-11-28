@@ -80,7 +80,7 @@ public class GitSimpleHandler extends GitTextHandler {
    */
   protected void processTerminated(final int exitCode) {
     if (myVcs == null) { return; }
-    if (!isStdoutSuppressed() && myStdoutLine.length() != 0) {
+    if (myStdoutLine.length() != 0) {
       myVcs.showMessages(myStdoutLine.toString());
       myStdoutLine.setLength(0);
     }
