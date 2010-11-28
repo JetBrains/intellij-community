@@ -129,7 +129,7 @@ private def layoutWin(Map args, String home, Paths paths) {
   layout("$paths.distWin") {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
-      fileset(dir: "$home/bin/win") { include(name: "*.*") }
+      fileset(dir: "$home/bin/win")
     }
   }
 
@@ -194,8 +194,8 @@ def layoutLinux(Map args, String home, Paths paths) {
   layout(paths.distUnix) {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
-      fileset(dir: "$home/bin/linux") { include(name: "*.*") }
-      fileset(dir: "$home/bin/nix") { include(name: "*.*") }
+      fileset(dir: "$home/bin/linux")
+      fileset(dir: "$home/bin/nix")
       fileset(dir: "$home/build/images")
     }
   }
@@ -205,7 +205,6 @@ def layoutLinux(Map args, String home, Paths paths) {
   ant.echo(file: "$paths.distUnix/bin/idea.vmoptions", message: args.vmoptions.replace(' ', '\n') )
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "idea.vmoptions", eol: "unix")
   ant.fixcrlf(srcdir: "$paths.distUnix/bin", includes: "*.sh", eol: "unix")
-
 
   def tarRoot = "idea-$args.buildNumber"
   def tarPath = "$paths.artifacts/idea${args.buildNumber}.tar"
