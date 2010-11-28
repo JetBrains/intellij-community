@@ -182,34 +182,51 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
         }
     }
 
-    public static String buildExpressionText(PsiExpression expression,
-                                             int precedence) {
-        final String text;
-        if (expression == null) {
-            text = "";
-        } else {
-            text = expression.getText();
-        }
+    private static String buildExpressionText(PsiExpression expression,
+                                              int precedence) {
+        final StringBuilder builder = new StringBuilder();
         if (ParenthesesUtils.getPrecedence(expression) > precedence) {
-            return '(' + text + ')';
+            builder.append('(');
+            getPresentableText(expression, builder);
+            builder.append(')');
         } else {
-            return text;
+            getPresentableText(expression, builder);
+        }
+        return builder.toString();
+    }
+
+    private static void getPresentableText(PsiElement element,
+                                           StringBuilder builder) {
+        if (element == null) {
+            return;
+        }
+        if (element instanceof PsiWhiteSpace) {
+            builder.append(' ');
+            return;
+        }
+        final PsiElement[] children = element.getChildren();
+        if (children.length != 0) {
+            for (PsiElement child : children) {
+                getPresentableText(child, builder);
+            }
+        } else {
+            builder.append(element.getText());
         }
     }
 
 
     public static String buildNegatedExpressionText(
             @Nullable PsiExpression expression, int precedence) {
+        while (expression instanceof PsiParenthesizedExpression) {
+            final PsiParenthesizedExpression parenthesizedExpression =
+                    (PsiParenthesizedExpression)expression;
+            expression = parenthesizedExpression.getExpression();
+        }
         if (expression == null) {
             return "";
         }
-        if (expression instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expression;
-            final PsiExpression contentExpression =
-                    parenthesizedExpression.getExpression();
-            return buildNegatedExpressionText(contentExpression, precedence);
-        } else if (BoolUtils.isNegation(expression)) {
+        final StringBuilder result = new StringBuilder();
+        if (BoolUtils.isNegation(expression)) {
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression) expression;
             final PsiExpression operand = prefixExpression.getOperand();
@@ -219,9 +236,12 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                 return "";
             }
             if (ParenthesesUtils.getPrecedence(negated) > precedence) {
-                return '(' + negated.getText() + ')';
+                result.append('(');
+                getPresentableText(negated, result);
+                result.append(')');
+            } else {
+                getPresentableText(negated, result);
             }
-            return negated.getText();
         } else if (ComparisonUtils.isComparison(expression)) {
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
@@ -230,20 +250,27 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                     ComparisonUtils.getNegatedComparison(sign);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return lhs.getText() + negatedComparison;
-            }
             if (ParenthesesUtils.getPrecedence(expression) > precedence) {
-                return '(' + lhs.getText() + negatedComparison + rhs.getText() +
-                        ')';
+                result.append('(');
+                getPresentableText(lhs, result);
+                result.append(negatedComparison);
+                getPresentableText(rhs, result);
+                result.append(')');
+            } else {
+                getPresentableText(lhs, result);
+                result.append(negatedComparison);
+                getPresentableText(rhs, result);
             }
-            return lhs.getText() + negatedComparison + rhs.getText();
         } else if (ParenthesesUtils.getPrecedence(expression) >
                 ParenthesesUtils.PREFIX_PRECEDENCE) {
-            return "!(" + expression.getText() + ')';
+            result.append("!(");
+            getPresentableText(expression, result);
+            result.append(')');
         } else {
-            return '!' + expression.getText();
+            result.append('!');
+            getPresentableText(expression, result);
         }
+        return result.toString();
     }
 
     @Override
