@@ -52,4 +52,22 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup.focused
   }
 
+  public void testPossibleClosureParameter() {
+    myFixture.configureByText("a.gpp", "{ <caret> }")
+    type 'h'
+    assert !lookup.focused
+  }
+
+  public void testPossibleClosureParameter2() {
+    myFixture.configureByText("a.gpp", "{ a, <caret> }")
+    type 'h'
+    assert !lookup
+  }
+
+  public void testImpossibleClosureParameter() {
+    myFixture.configureByText("a.gpp", "String a; { a.<caret> }")
+    type 'h'
+    assert lookup.focused
+  }
+
 }
