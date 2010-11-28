@@ -133,7 +133,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitPyStarImportElement(node);
       myAllImports.add(node);
     }
-
+    
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
@@ -191,6 +191,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
         }
         else {
+          if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
+            if (refname.equals("with")) {
+              actions.add(new UnresolvedRefAddFutureImportQuickFix(refex));
+            }
+          }
           PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
           if (containedClass != null) {
             for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
@@ -199,6 +204,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
             }
           }
+          actions.add(new UnresolvedRefCreateFunctionQuickFix(refex));
         }
         // unqualified:
         // may be module's

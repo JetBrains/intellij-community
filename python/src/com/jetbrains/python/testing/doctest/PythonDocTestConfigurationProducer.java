@@ -156,13 +156,11 @@ public class PythonDocTestConfigurationProducer extends RuntimeConfigurationProd
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PsiElement element) {
     PsiElement file = element.getContainingFile();
-    if (file == null) return null;
+    if (file == null || !(file instanceof PyFile)) return null;
 
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      final List<PyElement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
-      if (testCases.isEmpty()) return null;
-    }
+    final PyFile pyFile = (PyFile)file;
+    final List<PyElement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(pyFile);
+    if (testCases.isEmpty()) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "doc tests from file");
     final PythonDocTestRunConfiguration configuration = (PythonDocTestRunConfiguration)settings.getConfiguration();

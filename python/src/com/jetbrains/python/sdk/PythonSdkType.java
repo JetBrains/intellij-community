@@ -373,7 +373,7 @@ public class PythonSdkType extends SdkType {
   public static VirtualFile findSkeletonsDir(Sdk sdk) {
     final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(BUILTIN_ROOT_TYPE);
     for (VirtualFile virtualFile : virtualFiles) {
-      if (virtualFile.getPath().contains(SKELETON_DIR_NAME)) {
+      if (virtualFile.isValid() && virtualFile.getPath().contains(SKELETON_DIR_NAME)) {
         return virtualFile;
       }
     }

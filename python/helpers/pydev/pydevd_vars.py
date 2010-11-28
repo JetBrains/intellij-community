@@ -227,6 +227,7 @@ def frameVarsToXML(frame):
         except Exception:
             traceback.print_exc()
             sys.stderr.write("Unexpected error, recovered safely.\n")
+            sys.stderr.flush()
     return xml
 
 def iterFrames(initialFrame):

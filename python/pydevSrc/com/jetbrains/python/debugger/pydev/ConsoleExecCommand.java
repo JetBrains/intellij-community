@@ -16,7 +16,7 @@ public class ConsoleExecCommand extends AbstractFrameCommand {
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    payload.add(myThreadId).add(myFrameId).add("FRAME").add(myExpression);
+    payload.add("FRAME").add(myExpression);
   }
 
   @Override

@@ -349,6 +349,7 @@ def StartClient(host, port):
         return s
     except:
         sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+        sys.stderr.flush()
         traceback.print_exc()
         sys.exit(1)
 
@@ -408,7 +409,7 @@ class NetCommandFactory:
         cmd = NetCommand(CMD_ERROR, seq, text)
         if DEBUG_TRACE_LEVEL > 2:
             sys.stderr.write("Error: %s" % (text,))
-        return cmd;
+        return cmd
 
     def makeThreadCreatedMessage(self, thread):
         cmdText = "<xml>" + self.threadToXML(thread) + "</xml>"
@@ -728,6 +729,9 @@ class InternalConsoleExec(InternalThreadCommand):
             sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
             dbg.writer.addCommand(cmd)
+        finally:
+            sys.stderr.flush()
+            sys.stdout.flush()
 
 #=======================================================================================================================
 # InternalGetCompletions
@@ -806,6 +810,7 @@ def PydevdFindThreadById(thread_id):
             
         sys.stderr.write("Could not find thread %s\n" % thread_id)
         sys.stderr.write("Available: %s\n" % [GetThreadId(t) for t in threads])
+        sys.stderr.flush()
     except:
         traceback.print_exc()
         

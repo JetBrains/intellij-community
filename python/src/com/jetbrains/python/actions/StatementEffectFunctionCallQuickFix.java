@@ -17,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to replace statement that has no effect with function call
  */
-public class StatementEffectQuickFix implements LocalQuickFix {
+public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
 
-  public StatementEffectQuickFix() {
+  public StatementEffectFunctionCallQuickFix() {
   }
 
   @NotNull

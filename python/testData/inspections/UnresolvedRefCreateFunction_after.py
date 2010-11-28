@@ -1,0 +1,4 @@
+def ref():
+    pass
+
+ref

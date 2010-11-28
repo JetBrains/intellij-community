@@ -6,6 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -188,6 +189,21 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                           PyBundle.message("QFIX.statement.effect"), true, true);
   }
 
+  public void testStatementEffectIntroduceVariable() {  // PY-1265
+    doInspectionTest("StatementEffectIntroduceVariable.py", PyStatementEffectInspection.class,
+                          PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
+  }
+
+  public void testUnresolvedWith() {  // PY-2083
+    setLanguageLevel(LanguageLevel.PYTHON25);
+    doInspectionTest("UnresolvedWith.py", PyUnresolvedReferencesInspection.class,
+                          PyBundle.message("QFIX.unresolved.reference.add.future"), true, true);
+  }
+
+  public void testUnresolvedRefCreateFunction() {  // PY-2092
+    doInspectionTest("UnresolvedRefCreateFunction.py", PyUnresolvedReferencesInspection.class,
+                          PyBundle.message("QFIX.unresolved.reference.create.function"), true, true);
+  }
   @Override
   @NonNls
   protected String getTestDataPath() {

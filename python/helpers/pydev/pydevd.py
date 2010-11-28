@@ -346,6 +346,7 @@ class PyDB:
                         self.processThreadNotAlive(tId)
                 except:
                     sys.stderr.write('Error iterating through %s (%s) - %s\n' % (foundThreads, foundThreads.__class__, dir(foundThreads)))
+                    sys.stderr.flush()
                     raise
                     
         finally:
@@ -457,9 +458,11 @@ class PyDB:
                     if not DictContains(sys.modules, module_name):
                         sys.stderr.write('pydev debugger: Unable to find module to reload: "'+module_name+'".\n')
                         sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')
+                        sys.stderr.flush()
                             
                     else:
                         sys.stderr.write('pydev debugger: Reloading: '+module_name+'\n')
+                        sys.stderr.flush()
                         xreload(sys.modules[module_name])
                         
                         
@@ -536,11 +539,13 @@ class PyDB:
                     if not os.path.exists(file):
                         sys.stderr.write('pydev debugger: warning: trying to add breakpoint'\
                             ' to file that does not exist: %s (will have no effect)\n' % (file,))
+                        sys.stderr.flush()
                     
                     line = int(line)
                     
                     if DEBUG_TRACE_BREAKPOINTS > 0:
                         sys.stderr.write('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
+                        sys.stderr.flush()
                         
                     if DictContains(self.breakpoints, file):
                         breakDict = self.breakpoints[file]
@@ -575,11 +580,13 @@ class PyDB:
                             del self.breakpoints[file][line] #remove the breakpoint in that line
                             if DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s\n' % (file,))
+                                sys.stderr.flush()
                         except KeyError:
                             #ok, it's not there...
                             if DEBUG_TRACE_BREAKPOINTS > 0:
                                 #Sometimes, when adding a breakpoint, it adds a remove command before (don't really know why)
                                 sys.stderr.write("breakpoint not found: %s - %s\n" % (file, line))
+                                sys.stderr.flush()
                             
                 elif cmd_id == CMD_EVALUATE_EXPRESSION or cmd_id == CMD_EXEC_EXPRESSION:
                     #command to evaluate the given expression
@@ -823,8 +830,9 @@ class PyDB:
             if hasattr(sys, 'exc_clear'): #jython does not have it
                 sys.exc_clear() #don't keep the traceback (let's keep it clear for when we go to the point of executing client code)
                 
-            if not sys.platform.startswith("java") and not sys.platform.startswith("cli"):
+            if not IS_PY3K and not sys.platform.startswith("java") and not sys.platform.startswith("cli"):
                 sys.stderr.write("pydev debugger: warning: psyco not available for speedups (the debugger will still work correctly, but a bit slower)\n")
+                sys.stderr.flush()
             
 
     def run(self, file, globals=None, locals=None):
@@ -1087,6 +1095,7 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
 
 if __name__ == '__main__':
     sys.stderr.write("pydev debugger: starting\n")
+    sys.stderr.flush()
     # parse the command line. --file is our last argument that is required
     try:
         setup = processCommandLine(sys.argv)
