@@ -16,8 +16,6 @@ import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
@@ -51,6 +49,11 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
 
         return ThreeState.YES;
       }
+
+      if (parameters.getOffset() == position.getTextRange().getStartOffset()) {
+        return ThreeState.NO; //after one dot a second dot might be expected to form a range
+      }
+
       if (expression.getType() == null) {
         return ThreeState.NO;
       }
