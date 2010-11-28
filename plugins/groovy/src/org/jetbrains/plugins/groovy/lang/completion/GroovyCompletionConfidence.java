@@ -17,6 +17,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -28,6 +29,11 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @Override
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
+
+    if (!GppTypeConverter.hasTypedContext(position)) {
+      return ThreeState.NO;
+    }
+
     if (position.getParent() instanceof GrReferenceExpression) {
       final GrExpression expression = ((GrReferenceExpression)position.getParent()).getQualifierExpression();
       if (expression == null) {
