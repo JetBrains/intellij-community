@@ -884,6 +884,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     private CloseButton() {
       myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
         protected void execute(MouseEvent e) {
+          if (!myEnableCloseButton) return;
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -893,6 +894,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         }
       };
 
+      if (!myEnableCloseButton) {
+        setVisible(false);
+      }
     }
 
     @Override
