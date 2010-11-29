@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
@@ -31,7 +32,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
  */
 
 public class ReferenceElement implements GroovyElementTypes {
-  public static final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz"; //inserted by completion
+  public static final String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
 
   public enum ReferenceElementResult {
     mayBeType, mustBeType, fail
