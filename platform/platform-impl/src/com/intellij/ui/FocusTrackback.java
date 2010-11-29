@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -372,6 +373,8 @@ public class FocusTrackback {
         ourRootWindowToParentsStack.remove(each);
       }
     }
+
+    ourRootWindowToFocusedMap.remove(frame);
   }
 
   public Object getRequestor() {

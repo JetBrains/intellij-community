@@ -142,8 +142,11 @@ public class FrameWrapper implements Disposable, DataProvider {
   public void dispose() {
     if (isDisposed()) return;
 
-    getFrame().setVisible(false);
-    getFrame().dispose();
+    JFrame frame = getFrame();
+    frame.setVisible(false);
+    frame.dispose();
+
+    FocusTrackback.release(frame);
 
     if (myStatusBar != null) {
       Disposer.dispose(myStatusBar);
