@@ -17,7 +17,6 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -710,22 +709,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private void scheduleReloadApplicationAndProject() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        IdeEventQueue.getInstance().addIdleListener(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().removeIdleListener(this);
+    // todo: commented due to "IDEA-61938 Libraries configuration is kept if switching branches"
+    // because of save which may happen _before_ project reload ;(
+
+    //ApplicationManager.getApplication().invokeLater(new Runnable() {
+    //  public void run() {
+        //IdeEventQueue.getInstance().addIdleListener(new Runnable() {
+        //  @Override
+        //  public void run() {
+        //    IdeEventQueue.getInstance().removeIdleListener(this);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (!tryToReloadApplication()) return;
                 askToReloadProjectIfConfigFilesChangedExternally();
               }
             }, ModalityState.NON_MODAL);
-          }
-        }, 2000);
-      }
-    }, ModalityState.NON_MODAL);
+          //}
+        //}, 2000);
+      //}
+    //}, ModalityState.NON_MODAL);
   }
 
   public void setCurrentTestProject(@Nullable final Project project) {
@@ -768,7 +770,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       }
     }
     else {
-      myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+      // todo[pegov] uncomment & check after X release
+      // do not schedule app reload for project files!
+      //try {
+      //  if(FileUtil.isAncestor(new File(PathManager.getOptionsPathWithoutDialog()), new File(cause.getPath()), false)) {
+          myChangedApplicationFiles.add(new Pair<VirtualFile, StateStorage>(cause, storage));
+        //}
+      //}
+      //catch (IOException e) {
+      //  LOG.info(e.getMessage());
+      //}
     }
 
     myChangedFilesAlarm.cancelAllRequests();
