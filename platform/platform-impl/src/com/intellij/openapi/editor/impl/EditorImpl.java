@@ -3108,8 +3108,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       getGutterComponentEx().invalidate();
     }
 
+    // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
+    // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
+    // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
     if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
-        && !myMousePressedEvent.isShiftDown())
+        && !myMousePressedEvent.isShiftDown() && !myMousePressedEvent.isPopupTrigger())
     {
       getSelectionModel().removeSelection();
     }
