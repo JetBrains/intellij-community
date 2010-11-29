@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 
@@ -35,10 +36,12 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private final AbstractPopup.MyContentPanel myComponent;
   private Point myStartPoint = null;
   private int myDirection = -1;
+  private IdeGlassPane myGlassPane;
 
-  public ResizeComponentListener(final AbstractPopup popup) {
+  public ResizeComponentListener(final AbstractPopup popup, IdeGlassPane glassPane) {
     myPopup = popup;
     myComponent = (AbstractPopup.MyContentPanel)popup.getContent();
+    myGlassPane = glassPane;
   }
 
   public void mousePressed(MouseEvent e) {
@@ -91,7 +94,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
 
       popupWindow.validate();
       popupWindow.repaint();
-      setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
+      setWindowCursor(Cursor.DEFAULT_CURSOR);
       myPopup.storeDimensionSize(popupWindow.getSize());
     }
     myStartPoint = null;
@@ -171,22 +174,22 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
       }
-      setWindowCursor(popupWindow, cursor);
+      setWindowCursor(cursor);
       e.consume();
     } else {
       clearBorder(popupWindow);
     }
   }
 
-  private void setWindowCursor(final Window popupWindow, final int cursor) {
-    popupWindow.setCursor(myPopup.isToDrawMacCorner()? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(cursor));
+  private void setWindowCursor(final int cursor) {
+    myGlassPane.setCursor(Cursor.getPredefinedCursor(cursor), this);
   }
 
   private void clearBorder(final Window popupWindow) {
     if (isToShowBorder()){
       myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
-    setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
+    setWindowCursor(Cursor.DEFAULT_CURSOR);
   }
 
   public void mouseDragged(MouseEvent e) {
@@ -196,7 +199,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (popupWindow == null) return;
     if (myStartPoint != null) {
       if (isToShowBorder()) {
-        setWindowCursor(popupWindow, myDirection);
+        setWindowCursor(myDirection);
       }
       doResize(point);
       myStartPoint = point;
@@ -204,7 +207,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     } else {
       if (isToShowBorder()) {
         final int cursor = getDirection(point, popupWindow.getBounds());
-        setWindowCursor(popupWindow, cursor);
+        setWindowCursor(cursor);
       }
     }
   }
@@ -217,7 +220,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
           bounds.x + bounds.width - startPoint.x > 0){
         return Cursor.SE_RESIZE_CURSOR;
       }
-      return Cursor.DEFAULT_CURSOR;
     }
     bounds = new Rectangle(bounds.x + 2, bounds.y + 2, bounds.width - 2, bounds.height - 2);
     if (!bounds.contains(startPoint)){
