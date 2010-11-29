@@ -114,7 +114,7 @@ public abstract class CreateElementActionBase extends AnAction {
     return true;
   }
 
-  protected static String filterMessage(String message) {
+  public static String filterMessage(String message) {
     if (message == null) return null;
     @NonNls final String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)) {
