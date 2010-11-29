@@ -511,8 +511,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           final PsiReference referenceAt = file.findReferenceAt(startOffset);
                           if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
                             startOffset = referenceAt.getElement().getTextRange().getEndOffset();
-                          } else {
-                            startOffset = document.getLineEndOffset(document.getLineNumber(startOffset));
+                          } else if (declarationStatement != null) {
+                            startOffset = declarationStatement.getTextRange().getEndOffset();
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
                           final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
