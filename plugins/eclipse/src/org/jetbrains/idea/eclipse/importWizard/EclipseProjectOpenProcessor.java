@@ -47,7 +47,7 @@ public class EclipseProjectOpenProcessor extends ProjectOpenProcessorBase {
     getBuilder().setRootDirectory(file.getParent().getPath());
 
     final List<String> projects = getBuilder().getList();
-    if (projects.size() != 1) {
+    if (projects == null || projects.size() != 1) {
       return false;
     }
     getBuilder().setList(projects);
