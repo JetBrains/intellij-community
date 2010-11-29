@@ -516,7 +516,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                           }
                           editor.getCaretModel().moveToOffset(startOffset);
                           final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
-                          typeSelectorManager.typeSelected(selectedType);
+                          if (selectedType != null) {
+                            typeSelectorManager.typeSelected(selectedType);
+                          }
                           ApplicationManager.getApplication().runWriteAction(new Runnable() {
                             public void run() {
                               appendTypeCasts(occurrenceMarkers, file, project, psiVariable);
