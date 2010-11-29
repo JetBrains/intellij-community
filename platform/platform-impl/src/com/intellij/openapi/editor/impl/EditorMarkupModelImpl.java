@@ -507,7 +507,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
-      int x = isMirrored() ? 2 : 4;
+      int x = isMirrored() ? 2 : 3;
       int paintWidth = width;
       if (thinErrorStripeMark) {
         paintWidth /= 2;
