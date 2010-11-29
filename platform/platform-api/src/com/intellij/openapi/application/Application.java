@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
@@ -283,6 +284,13 @@ public interface Application extends ComponentManager {
    * @return future result
    */
   Future<?> executeOnPooledThread(@NotNull Runnable action);
+
+  /**
+   * Requests pooled thread to execute the action
+   * @param action to be executed
+   * @return future result
+   */
+  <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
    * @return true if application is currently disposing (but not yet disposed completely)
