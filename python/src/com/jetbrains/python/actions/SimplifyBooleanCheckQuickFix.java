@@ -29,6 +29,14 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
     return "False".equals(expression.getText());
   }
 
+  private static boolean isNull(PyExpression expression) {
+    return "0".equals(expression.getText());
+  }
+
+  private static boolean isEmpty(PyExpression expression) {
+    return "[]".equals(expression.getText());
+  }
+
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.simplify");
@@ -48,8 +56,9 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
       final PyExpression leftExpression = binaryExpression.getLeftExpression();
       final PyExpression rightExpression = binaryExpression.getRightExpression();
       boolean positiveCondition = !TokenSet.create(PyTokenTypes.NE, PyTokenTypes.NE_OLD).contains(binaryExpression.getOperator());
-      positiveCondition ^= isFalse(leftExpression) || isFalse(rightExpression);
-      if (isTrue(leftExpression) || isFalse(leftExpression)) {
+      positiveCondition ^= isFalse(leftExpression) || isFalse(rightExpression) || isNull(rightExpression) || isNull(leftExpression)
+                           || isEmpty(rightExpression) || isEmpty(leftExpression);
+      if (isTrue(leftExpression) || isFalse(leftExpression) || isNull(leftExpression) || isEmpty(leftExpression)) {
         resultExpression = rightExpression;
       } else {
         resultExpression = leftExpression;
