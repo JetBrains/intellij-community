@@ -233,7 +233,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
     long progressLimit = 0;
     for (VirtualFile file : files) {
-      progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+      if (file.isValid()) progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
     }
     pass.setProgressLimit(progressLimit);
     final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
