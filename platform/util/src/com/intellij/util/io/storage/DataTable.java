@@ -90,6 +90,7 @@ class DataTable implements Disposable, Forceable {
   }
 
   public void reclaimSpace(int len) {
+    markDirty();
     myWasteSize += len;
   }
 

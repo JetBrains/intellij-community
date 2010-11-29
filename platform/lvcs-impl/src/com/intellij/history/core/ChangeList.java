@@ -66,7 +66,7 @@ public class ChangeList {
   }
 
   private void doBeginChangeSet() {
-    myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getTime());
+    myCurrentChangeSet = new ChangeSet(nextId(), Clock.getTime());
   }
 
   public synchronized boolean forceBeginChangeSet() {

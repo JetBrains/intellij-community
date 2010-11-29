@@ -411,40 +411,55 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     private final MouseAdapter myListener = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
-        processMouseEvent(event);
-        if (event.isConsumed()) {
-          e.consume();
-        }
+        _processMouseEvent(e);
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
-        processMouseEvent(event);
-        if (event.isConsumed()) {
-          e.consume();
-        }
+        _processMouseEvent(e);
       }
 
       @Override
       public void mouseMoved(MouseEvent e) {
-        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
-        processMouseMotionEvent(event);
-        if (event.isConsumed()) {
-          e.consume();
-        }
+        _processMouseMotionEvent(e);
       }
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, Divider.this);
-        processMouseMotionEvent(event);
-        if (event.isConsumed()) {
-          e.consume();
-        }
+        _processMouseMotionEvent(e);
       }
     };
+
+    private void _processMouseMotionEvent(MouseEvent e) {
+      MouseEvent event = getTargetEvent(e);
+      if (event == null) {
+        myGlassPane.setCursor(null, myListener);
+        return;
+      }
+
+      processMouseMotionEvent(event);
+      if (event.isConsumed()) {
+        e.consume();
+      }
+    }
+
+    private void _processMouseEvent(MouseEvent e) {
+      MouseEvent event = getTargetEvent(e);
+      if (event == null) {
+        myGlassPane.setCursor(null, myListener);
+        return;
+      }
+
+      processMouseEvent(event);
+      if (event.isConsumed()) {
+        e.consume();
+      }
+    }
+
+    private MouseEvent getTargetEvent(MouseEvent e) {
+      return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    }
+
     private boolean myWasPressedOnMe;
 
     public Divider(boolean isFirst) {

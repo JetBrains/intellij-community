@@ -573,7 +573,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
 
       final ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler == null || processHandler.isProcessTerminated()) {
+      if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
         return true;
       }
       final boolean destroyProcess;
