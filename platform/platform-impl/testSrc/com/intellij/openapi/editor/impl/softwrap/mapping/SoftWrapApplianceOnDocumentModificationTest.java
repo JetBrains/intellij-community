@@ -35,7 +35,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
 
   @Override
   protected void tearDown() throws Exception {
-    myEditor.getSettings().setUseSoftWraps(false);
+    if (myEditor != null) {
+      myEditor.getSettings().setUseSoftWraps(false);
+    }
     super.tearDown();
   }
 
@@ -134,6 +136,23 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     init(300, text);
     type('\t');
     assertEquals(new VisualPosition(2, 4), myEditor.getCaretModel().getVisualPosition());
+  }
+
+  public void testTypingThatExceedsRightMarginOnLastSoftWrappedLine() throws IOException {
+    String text = 
+      "line1\n" +
+      "long line<caret>";
+    
+    init(48, text);
+
+    int softWrapsBefore = getSoftWrapModel().getRegisteredSoftWraps().size();
+    assertTrue(softWrapsBefore > 0);
+    
+    for (int i = 0; i < 10; i++) {
+      type(String.valueOf(i));
+      assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps().size());
+      assertEquals(myEditor.getDocument().getTextLength(), myEditor.getCaretModel().getOffset());
+    }
   }
 
   public void testTrailingFoldRegionRemoval() throws IOException {
