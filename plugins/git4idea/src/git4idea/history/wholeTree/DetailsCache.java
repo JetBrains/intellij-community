@@ -71,10 +71,10 @@ public class DetailsCache {
       for (GitCommit commit : commits) {
         myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
       }
-      if (mySomethingIsMissing) {
+//      if (mySomethingIsMissing) {
         myRefresh.callMe();
         mySomethingIsMissing = false;
-      }
+//      }
     }
   }
 

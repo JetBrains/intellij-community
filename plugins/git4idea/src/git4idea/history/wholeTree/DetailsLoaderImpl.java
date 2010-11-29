@@ -132,6 +132,27 @@ public class DetailsLoaderImpl implements DetailsLoader {
       final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(myVirtualFile);
       if (holder == null) return;
       final Collection<AbstractHash> hashes = holder.get(ourLoadSize);
+      try {
+        loadDetails(hashes);
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+        for (AbstractHash hash : hashes) {
+          try {
+            loadDetails(Collections.singletonList(hash));
+          }
+          catch (VcsException e1) {
+            LOG.info(e1);
+            myDetailsCache.acceptAnswer(Collections.singletonList(createNotLoadedCommit(hash)), myAccess.getRoot());
+          }
+        }
+      }
+      if (holder.haveData()) {
+        myQueue.run(this);
+      }
+    }
+
+    private void loadDetails(Collection<AbstractHash> hashes) throws VcsException {
       final List<String> converted = new ArrayList<String>();
       for (final AbstractHash hash : hashes) {
         if (myDetailsCache.convert(myVirtualFile, hash) == null) {
@@ -139,7 +160,6 @@ public class DetailsLoaderImpl implements DetailsLoader {
         }
       }
       if (! hashes.isEmpty()) {
-        try {
           final Collection<GitCommit> result = myAccess.getCommitDetails(converted, myRefs.get(myAccess.getRoot()));
           if (result != null && (! result.isEmpty())) {
             myDetailsCache.acceptAnswer(result, myAccess.getRoot());
@@ -151,25 +171,19 @@ public class DetailsLoaderImpl implements DetailsLoader {
             // todo this is bad
             final Collection<GitCommit> error = new ArrayList<GitCommit>();
             for (String s : converted) {
-              AbstractHash shortHash = AbstractHash.create(s);
-              final String notKnown = "Can not load";
-              error.add(new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0),
-                                      "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
-                                      notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
-                                      Collections.<Change>emptyList(), 0));
+              error.add(createNotLoadedCommit(AbstractHash.create(s)));
             }
             myDetailsCache.acceptAnswer(error, myAccess.getRoot());
           }
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-          // suppress here. further : todo put fictive details!!!!!!!!!
-          // todo to dont repeat load infinitely
-        }
       }
-      if (holder.haveData()) {
-        myQueue.run(this);
-      }
+    }
+
+    private GitCommit createNotLoadedCommit(AbstractHash shortHash) {
+      final String notKnown = "Can not load";
+      return new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0),
+                              "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
+                              notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
+                              Collections.<Change>emptyList(), 0);
     }
   }
 }

@@ -33,11 +33,20 @@ public interface Mediator {
   /**
    * @return false -> ticket already changed
    */
-  boolean appendResult(final Ticket ticket, final List<CommitI> result, @Nullable final List<List<AbstractHash>> parents);
+  StepType appendResult(final Ticket ticket,
+                        final List<CommitI> result,
+                        @Nullable final List<List<AbstractHash>> parents,
+                        LoadGrowthController.ID id);
 
   void reportSymbolicRefs(final Ticket ticket, VirtualFile root, final SymbolicRefs symbolicRefs);
 
+  // does not change ticket...
+  void continueLoading();
+  void forceStop();
+
   void acceptException(final VcsException e);
+
+  void oneFinished();
 
   final class Ticket {
     private int myId;

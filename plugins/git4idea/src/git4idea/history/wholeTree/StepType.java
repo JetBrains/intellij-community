@@ -1,9 +1,12 @@
 /*
  * Copyright 2000-2010 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,15 +15,12 @@
  */
 package git4idea.history.wholeTree;
 
-import java.util.List;
-
 /**
  * @author irengrig
  */
-public interface LoaderAndRefresher<T> {
-  void loadByHashesAside(final List<String> hashes);
-  LoadAlgorithm.Result<T> load(final LoadAlgorithm.LoadType loadType, long continuation);
-  StepType flushIntoUI();
-  void interrupt();
-  boolean isInterrupted();
+public enum StepType {
+  CONTINUE,
+  STOP,      // interrupted
+  PAUSE,
+  FINISHED
 }

@@ -33,8 +33,6 @@ public class LoadController implements Loader {
   private LoadAlgorithm myPreviousAlgorithm;
   private NewGitUsersComponent myUsersComponent;
 
-  // todo: caches: in map - by root
-
   public LoadController(final Project project, final ModalityState state, final Mediator mediator, final DetailsCache detailsCache) {
     myProject = project;
     myState = state;
@@ -49,7 +47,9 @@ public class LoadController implements Loader {
   public void loadSkeleton(final Mediator.Ticket ticket,
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
-                           final Collection<ChangesFilter.Filter> filters, String[] possibleHashes) {
+                           final Collection<ChangesFilter.Filter> filters,
+                           String[] possibleHashes,
+                           final LoadGrowthController loadGrowthController) {
     if (myPreviousAlgorithm != null) {
       myPreviousAlgorithm.stop();
     }
@@ -63,13 +63,14 @@ public class LoadController implements Loader {
 
       if (filters.isEmpty()) {
         final LoaderAndRefresherImpl loaderAndRefresher =
-        new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex);
+        new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
+                                   loadGrowthController.getId());
         list.add(loaderAndRefresher);
       } else {
         for (ChangesFilter.Filter filter : filters) {
           final LoaderAndRefresherImpl loaderAndRefresher =
           new LoaderAndRefresherImpl(ticket, Collections.singletonList(filter), myMediator, startingPoints, myDetailsCache, myProject,
-                                     rootHolder, myUsersIndex);
+                                     rootHolder, myUsersIndex, loadGrowthController.getId());
           list.add(loaderAndRefresher);
         }
       }
@@ -82,6 +83,12 @@ public class LoadController implements Loader {
     //final List<String> abstractHashs = possibleHashes == null ? null : filterNumbers(possibleHashes);
     myPreviousAlgorithm = new LoadAlgorithm(myProject, list, possibleHashes == null ? null : Arrays.asList(possibleHashes));
     myPreviousAlgorithm.execute();
+  }
+
+  @Override
+  public void resume() {
+    assert myPreviousAlgorithm != null;
+    myPreviousAlgorithm.resume();
   }
 
   private List<String> filterNumbers(final String[] s) {
