@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,15 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     }
     function = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
-    builder.replaceElement(function.getStatementList().getStatements()[0], "pass");
+    ParamHelper.walkDownParamArray(
+      function.getParameterList().getParameters(),
+      new ParamHelper.ParamVisitor() {
+        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+          builder.replaceElement(param, param.getName());
+        }
+      }
+    );
+    builder.replaceElement(function.getStatementList(), "pass");
     builder.run();
   }
 }
