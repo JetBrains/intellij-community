@@ -35,6 +35,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -253,7 +254,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     //to load text
-    TreeUtil.clearCaches((TreeElement)myFile.getNode());
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        TreeUtil.clearCaches((TreeElement)myFile.getNode());
+      }
+    });
+
 
     //to initialize caches
     myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);

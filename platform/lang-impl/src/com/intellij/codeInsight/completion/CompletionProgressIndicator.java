@@ -405,7 +405,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
     myLookup.refreshUi();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.assertTrue(myLookup.isVisible(), "really?");
+      LOG.assertTrue(myLookup.isVisible(), "really?: myShown=" + myShownLookup + "; lookup.shown=" + myLookup.isShown());
     }
     hideAutopopupIfMeaningless();
   }

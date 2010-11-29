@@ -394,6 +394,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     });
   }
 
+  @Override
+  public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
+    return ourThreadExecutorsService.submit(new Callable<T>() {
+      public T call() {
+        try {
+          return action.call();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
+        return null;
+      }
+    });
+  }
+
   private static Thread ourDispatchThread = null;
 
   public boolean isDispatchThread() {
