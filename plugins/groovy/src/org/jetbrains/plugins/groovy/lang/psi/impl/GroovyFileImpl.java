@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -102,8 +103,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
-      final GrParameter candidate =
-        GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
+      final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.lang.String[]", this);
+      final GrParameter candidate = new GrLightParameter(SYNTHETIC_PARAMETER_NAME, psiType, this);
       synchronized (lock) {
         if (mySyntheticArgsParameter == null) {
           mySyntheticArgsParameter = candidate;

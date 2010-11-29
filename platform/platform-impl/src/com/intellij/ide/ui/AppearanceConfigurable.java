@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,13 +48,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   public JComponent createComponent() {
     myComponent = new MyComponent();
+
     DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
-
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
-
     myComponent.myFontSizeCombo.setEditable(true);
-//    myComponent.myLafComboBox=new JComboBox(LafManager.getInstance().getInstalledLookAndFeels());
+
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer(myComponent.myLafComboBox.getRenderer()));
 
@@ -70,6 +70,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     });
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
+    @SuppressWarnings({"UseOfObsoleteCollectionType"})
     Dictionary<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
     dictionary.put(new Integer(0), new JLabel("0%"));
     dictionary.put(new Integer(50), new JLabel("50%"));
@@ -89,7 +90,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
 
-
     return myComponent.myPanel;
   }
 
@@ -105,7 +105,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       try {
         _fontSize = Integer.parseInt(temp);
       }
-      catch (NumberFormatException ex) {
+      catch (NumberFormatException ignore) {
       }
       if (_fontSize <= 0) {
         _fontSize = settings.FONT_SIZE;
@@ -137,8 +137,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
     settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
-
-
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
 
     update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
@@ -148,8 +146,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
-      update = shouldUpdateUI = true;
-      lafManager.setCurrentLookAndFeel((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
+      UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
+      if (lafManager.checkLookAndFeel(lafInfo)) {
+        update = shouldUpdateUI = true;
+        lafManager.setCurrentLookAndFeel(lafInfo);
+      }
     }
 
     if (myComponent.myTooltipMode.getSelectedItem() != null && !myComponent.myTooltipMode.getSelectedItem().equals(Registry.stringValue("ide.tooltip.mode"))) {
@@ -261,22 +262,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return isModified;
   }
 
-  private static boolean isModified(JTextField textField, int value) {
-    try {
-      int fieldValue = Integer.parseInt(textField.getText().trim());
-      return fieldValue != value;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
-  }
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
-  }
-
   public void disposeUIResources() {
-//    if (myComponent == null)
     myComponent = null;
   }
 
@@ -306,7 +292,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     @Override
     public void customize(final JList list, final String value, final int index, final boolean selected, final boolean cellHasFocus) {
-      String s = (String)value;
+      String s = value;
       if (s != null && s.length() > 1) {
         s = s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
       }
@@ -315,7 +301,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   private static class MyComponent {
-    JPanel myPanel;
+    private JPanel myPanel;
     private JComboBox myFontCombo;
     private JComboBox myFontSizeCombo;
     private JCheckBox myAnimateWindowsCheckBox;
@@ -335,12 +321,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myOverrideLAFFonts;
     private JLabel myIDEALafFont;
 
-
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JComboBox myTooltipMode;
-
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {
@@ -370,7 +354,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
   }
 
+  @NotNull
   public String getId() {
+    //noinspection ConstantConditions
     return getHelpTopic();
   }
 

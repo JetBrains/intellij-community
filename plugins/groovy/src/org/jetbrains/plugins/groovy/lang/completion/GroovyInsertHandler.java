@@ -86,10 +86,16 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
-      if (parameters.length == 1 && CLOSURE_CLASS.equals(parameters[0].getType().getCanonicalText())) {
-        document.insertString(offset, " {}");
-        caretModel.moveToOffset(offset + 2);
-        return;
+      if (parameters.length == 1) {
+        final PsiType type = parameters[0].getType();
+        if (type instanceof PsiClassType) {
+          final PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass != null && CLOSURE_CLASS.equals(psiClass.getQualifiedName())) {
+            document.insertString(offset, " {}");
+            caretModel.moveToOffset(offset + 2);
+            return;
+          }
+        }
       }
 
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
@@ -97,7 +103,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiFile psiFile = docManager.getPsiFile(document);
       if (method instanceof GrMethod &&
           method.getParameterList().getParametersCount() > 0 &&
-          method.getContainingClass() instanceof GroovyScriptClass) {
+          method.getContainingClass() instanceof GroovyScriptClass &&
+          isExpressionStatement(psiFile, context.getStartOffset())) {
         return;
       }
       if (isExpressionStatement(psiFile, context.getStartOffset()) &&

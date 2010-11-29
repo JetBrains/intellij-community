@@ -18,6 +18,7 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import org.apache.tools.ant.IntrospectionHelper;
+import org.apache.tools.ant.TaskContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,10 @@ public final class AntIntrospector {
   private static final Object ourNullObject = new Object();
   private static final Alarm ourCacheCleaner = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private static final int CACHE_CLEAN_TIMEOUT = 10000; // 10 seconds
+  private final Class myTypeClass;
 
   public AntIntrospector(final Class aClass) {
+    myTypeClass = aClass;
     myHelper = getHelper(aClass);
   }
 
@@ -129,19 +132,22 @@ public final class AntIntrospector {
 
   public boolean isContainer() {
     try {
-      return Boolean.TRUE.equals(invokeMethod("isContainer", false));
-      //boolean isAllTasksContainer = false;
-      //final ClassLoader loader = typeClass.getClassLoader();
-      //try {
-      //  final Class<?> containerClass = loader != null? loader.loadClass(TaskContainer.class.getName()) : TaskContainer.class;
-      //  isAllTasksContainer = containerClass.isAssignableFrom(typeClass);
-      //}
-      //catch (ClassNotFoundException ignored) {
-      //}
+      final Object isContainer = invokeMethod("isContainer", true);
+      if (isContainer != null) {
+        return Boolean.TRUE.equals(isContainer);
+      }
+      final ClassLoader loader = myTypeClass.getClassLoader();
+      try {
+        final Class<?> containerClass = loader != null? loader.loadClass(TaskContainer.class.getName()) : TaskContainer.class;
+        return containerClass.isAssignableFrom(myTypeClass);
+      }
+      catch (ClassNotFoundException ignored) {
+      }
     }
     catch (RuntimeException e) {
-      return false;
+      LOG.info(e);
     }
+    return false;
   }
 
   // for debug purposes

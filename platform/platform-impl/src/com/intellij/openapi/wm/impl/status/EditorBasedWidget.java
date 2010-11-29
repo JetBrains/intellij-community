@@ -17,7 +17,10 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EditorBasedWidget extends FileEditorManagerAdapter implements StatusBarWidget {
 
   protected StatusBar myStatusBar;
-  private Project myProject;
+  protected Project myProject;
 
   protected MessageBusConnection myConnection;
 

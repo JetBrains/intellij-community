@@ -94,7 +94,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
 
     int occurencesNumber = occurences.length;
     final boolean currentMethodConstructor = containingMethod != null && containingMethod.isConstructor();
-    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && anchorElement instanceof PsiLocalVariable;
+    final boolean allowInitInMethod = (!currentMethodConstructor || !isInSuperOrThis) && (anchorElement instanceof PsiLocalVariable || anchorElement instanceof PsiStatement);
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     IntroduceFieldDialog dialog = new IntroduceFieldDialog(
       project, parentClass, expr, localVariable,

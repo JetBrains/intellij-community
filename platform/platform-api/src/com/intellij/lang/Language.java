@@ -35,7 +35,8 @@ import java.util.Map;
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
  * and its register instance wrapped with {@link com.intellij.openapi.fileTypes.LanguageFileType} instance through
  * <code>FileTypeManager.getInstance().registerFileType</code>
- * There should be exactly one instance of each Language. It is usually created when creating {@link com.intellij.openapi.fileTypes.LanguageFileType} and can be retrieved later
+ * There should be exactly one instance of each Language.
+ * It is usually created when creating {@link com.intellij.openapi.fileTypes.LanguageFileType} and can be retrieved later
  * with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.
  */

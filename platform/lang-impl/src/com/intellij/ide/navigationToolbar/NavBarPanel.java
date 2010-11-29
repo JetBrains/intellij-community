@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -28,14 +29,11 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -56,7 +54,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -122,21 +119,32 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if ("focusOwner".equals(evt.getPropertyName()) || "permanentFocusOwner".equals(evt.getPropertyName())) {
-        myFocusChangedAlarm.cancelAllRequests();
-        myFocusChangedAlarm.addRequest(myFocusChangedRunnable, 250);
+        restartRebuild();
       }
     }
   };
 
-  private Alarm myFocusChangedAlarm = new Alarm();
-  private Runnable myFocusChangedRunnable = new Runnable() {
+  private void restartRebuild() {
+    myUserActivityAlarm.cancelAllRequests();
+    myUserActivityAlarm.addRequest(myUserActivityAlarmRunnable, Registry.intValue("navbar.userActivityMergeTime"));
+  }
+
+  private Alarm myUserActivityAlarm = new Alarm();
+  private Runnable myUserActivityAlarmRunnable = new Runnable() {
     @Override
     public void run() {
-      processFocusChanged();
+      processUserActivity();
     }
   };
 
-  private void processFocusChanged() {
+  private Runnable myUserActivityRunnable = new Runnable() {
+    @Override
+    public void run() {
+      restartRebuild();
+    }
+  };
+
+  private void processUserActivity() {
     if (!isShowing()) {
       return;
     }
@@ -178,6 +186,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
     myProject = project;
     myModel = new NavBarModel(myProject);
+
+    IdeEventQueue.getInstance().addActivityListener(myUserActivityRunnable);
 
     myUpdateQueue = new MergingUpdateQueue("NavBar", Registry.intValue("navbar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, project, null);
 
@@ -1003,6 +1013,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
 
   public void uninstallListeners() {
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(myFocusListener);
+    IdeEventQueue.getInstance().removeActivityListener(myUserActivityRunnable);
     myDetacher.run();
     myDetacher = null;
   }

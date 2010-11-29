@@ -97,6 +97,11 @@ public class HgPushDialog extends DialogWrapper {
     return contentPanel;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.mercurial.push.dialog";
+  }
+
   private void updateRepository() {
     final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
     final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);

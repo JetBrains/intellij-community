@@ -15,19 +15,12 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.uiDesigner.core.Spacer;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
 
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -81,6 +74,11 @@ public class HgPullDialog extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     return mainPanel;
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.mercurial.pull.dialog";
   }
 
   private void onChangeRepository() {

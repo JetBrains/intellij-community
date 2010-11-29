@@ -16,9 +16,10 @@
 package com.intellij.openapi.progress;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface TaskInfo {
-
+  @NotNull
   String getTitle();
 
   String getCancelText();

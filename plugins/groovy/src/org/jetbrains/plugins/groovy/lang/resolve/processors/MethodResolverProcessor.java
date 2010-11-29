@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
@@ -83,14 +83,16 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       if (method.isConstructor() != myIsConstructor) return true;
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-      substitutor = obtainSubstitutor(substitutor, method);
+      substitutor = obtainSubstitutor(substitutor, method, state);
       boolean isAccessible = isAccessible(method);
-      GroovyPsiElement fileResolveContext = state.get(RESOLVE_CONTEXT);
-      boolean isStaticsOK = isStaticsOK(method, fileResolveContext);
-      if (!myAllVariants && PsiUtil.isApplicable(myArgumentTypes, method, substitutor, fileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace) && isStaticsOK) {
-        addCandidate(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
+      GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      boolean isStaticsOK = isStaticsOK(method, resolveContext);
+      if (!myAllVariants &&
+          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext), (GroovyPsiElement)myPlace) &&
+          isStaticsOK) {
+        addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, fileResolveContext, substitutor, isAccessible, isStaticsOK));
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
       }
 
       return true;
@@ -99,7 +101,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return true;
   }
 
-  private PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method) {
+  private PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (myTypeArguments.length == typeParameters.length) {
       for (int i = 0; i < typeParameters.length; i++) {
@@ -116,7 +118,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
         assert argTypes != null;
         //type inference should be performed from static method
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
-        newArgTypes[0] = myThisType;
+        final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+        if (ResolveUtil.isInWithContext(resolveContext)) {
+          newArgTypes[0] = ((GrExpression)resolveContext).getType();
+        }
+        else {
+          newArgTypes[0] = myThisType;
+        }
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
         argTypes = newArgTypes;
 

@@ -114,7 +114,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.isToolWindowActive(myId);
+    return myToolWindowManager.isToolWindowActive(myId) && (myDecorator != null && myDecorator.isFocused());
   }
 
   public final void show(final Runnable runnable) {

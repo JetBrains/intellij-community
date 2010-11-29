@@ -87,20 +87,17 @@ public class SerializableWithUnconstructableAncestorInspection
         private static boolean classHasNoArgConstructor(PsiClass ancestor) {
             boolean hasConstructor = false;
             boolean hasNoArgConstructor = false;
-            final PsiMethod[] methods = ancestor.getMethods();
-            for (final PsiMethod method : methods) {
-                if (method.isConstructor()) {
-                    hasConstructor = true;
-                    final PsiParameterList parameterList =
-                            method.getParameterList();
-                    if (parameterList.getParametersCount() == 0 &&
-                            (method.hasModifierProperty(PsiModifier.PUBLIC) ||
-                                    method.hasModifierProperty(
-                                            PsiModifier.PROTECTED))) {
-                        hasNoArgConstructor = true;
-                    }
-                }
+          for (final PsiMethod method : ancestor.getConstructors()) {
+            hasConstructor = true;
+            final PsiParameterList parameterList =
+                    method.getParameterList();
+            if (parameterList.getParametersCount() == 0 &&
+                    (method.hasModifierProperty(PsiModifier.PUBLIC) ||
+                            method.hasModifierProperty(
+                                    PsiModifier.PROTECTED))) {
+                hasNoArgConstructor = true;
             }
+          }
             return hasNoArgConstructor || !hasConstructor;
         }
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.notification;
 
+import com.intellij.ide.BrowserUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -25,5 +26,14 @@ import javax.swing.event.HyperlinkEvent;
 public interface NotificationListener {
 
   void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event);
-  
+
+  NotificationListener URL_OPENING_LISTENER = new NotificationListener() {
+    @Override
+    public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull final HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        BrowserUtil.launchBrowser(event.getURL().toExternalForm());
+      }
+    }
+  };
+
 }

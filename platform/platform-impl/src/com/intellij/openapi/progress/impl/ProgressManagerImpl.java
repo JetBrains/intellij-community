@@ -136,17 +136,17 @@ public class ProgressManagerImpl extends ProgressManager {
     return nonCancelor;
   }
 
-  public void executeNonCancelableSection(Runnable r) {
+  public void executeNonCancelableSection(@NotNull Runnable runnable) {
     NonCancelableSection nonCancelor = startNonCancelableSection();
     try {
-      r.run();
+      runnable.run();
     }
     finally {
       nonCancelor.done();
     }
   }
 
-  public JComponent getProvidedFunComponent(Project project, String processId) {
+  public JComponent getProvidedFunComponent(Project project, @NotNull String processId) {
     for(ProgressFunComponentProvider provider: Extensions.getExtensions(ProgressFunComponentProvider.EP_NAME)) {
       JComponent cmp = provider.getProgressFunComponent(project, processId);
       if (cmp != null) return cmp;
@@ -172,11 +172,11 @@ public class ProgressManagerImpl extends ProgressManager {
 
   }
 
-  public void registerFunComponentProvider(ProgressFunComponentProvider provider) {
+  public void registerFunComponentProvider(@NotNull ProgressFunComponentProvider provider) {
     myFunComponentProviders.add(provider);
   }
 
-  public void removeFunComponentProvider(ProgressFunComponentProvider provider) {
+  public void removeFunComponentProvider(@NotNull ProgressFunComponentProvider provider) {
     myFunComponentProviders.remove(provider);
   }
 
@@ -245,11 +245,11 @@ public class ProgressManagerImpl extends ProgressManager {
     return myThreadIndicator.get();
   }
 
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull String progressTitle, boolean canBeCanceled, Project project) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
   }
 
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, String progressTitle, boolean canBeCanceled, Project project, JComponent parentComponent) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull String progressTitle, boolean canBeCanceled, Project project, JComponent parentComponent) {
     Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
       public void run(@NotNull ProgressIndicator indicator) {
         process.run();
@@ -327,7 +327,7 @@ public class ProgressManagerImpl extends ProgressManager {
     });
   }
 
-  public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task) {
+  public static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     final ProgressIndicator progressIndicator;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       progressIndicator = new EmptyProgressIndicator();
@@ -338,7 +338,7 @@ public class ProgressManagerImpl extends ProgressManager {
     runProcessWithProgressAsynchronously(task, progressIndicator);
   }
 
-  public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task, final ProgressIndicator progressIndicator) {
+  public static void runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task, @NotNull final ProgressIndicator progressIndicator) {
     if (progressIndicator instanceof Disposable) {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }

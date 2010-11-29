@@ -20,6 +20,10 @@ import com.intellij.ide.ClassloaderUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.idea.Main;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -43,10 +47,12 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -64,6 +70,7 @@ public class PluginManager {
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
+  private static List<String> myPlugins2Disable = null;
   @NonNls public static final String CORE_PLUGIN_ID = "com.intellij";
 
   @NonNls public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
@@ -532,7 +539,27 @@ public class PluginManager {
 
   public static void reportPluginError() {
     if (myPluginError != null) {
-      JOptionPane.showMessageDialog(null, myPluginError, IdeBundle.message("title.plugin.error"), JOptionPane.ERROR_MESSAGE);
+      Notifications.Bus.notify(new Notification(IdeBundle.message("title.plugin.error"), IdeBundle.message("title.plugin.error"),
+                                                myPluginError, NotificationType.ERROR, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            notification.expire();
+            if (myPlugins2Disable != null) {
+              final List<String> disabledPlugins = getDisabledPlugins();
+              for (String pluginId : myPlugins2Disable) {
+                if (!disabledPlugins.contains(pluginId)) {
+                  disabledPlugins.add(pluginId);
+                }
+              }
+              try {
+                saveDisabledPlugins(disabledPlugins, false);
+              }
+              catch (IOException ignore) {
+              }
+              myPlugins2Disable = null;
+            }
+          }
+        }));
       myPluginError = null;
     }
   }
@@ -648,14 +675,14 @@ public class PluginManager {
         public boolean value(final PluginId pluginId) {
           if (!idToDescriptorMap.containsKey(pluginId)) {
             if (message.length() > 0) {
-              message.append("\n");
+              message.append("<br>");
             }
             pluginDescriptor.setEnabled(false);
             disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
             final String name = pluginDescriptor.getName();
             final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);            
             String pluginName = descriptor == null ? pluginId.getIdString() : descriptor.getName();
-            
+
             message.append(getDisabledPlugins().contains(pluginId.getIdString())
                            ? IdeBundle.message("error.required.plugin.disabled", name, pluginName)
                            : IdeBundle.message("error.required.plugin.not.installed", name, pluginName));
@@ -667,16 +694,17 @@ public class PluginManager {
       });
     }
     if (!disabledPluginIds.isEmpty()) {
-      try {
-        saveDisabledPlugins(disabledPluginIds, true);
+      myPlugins2Disable = disabledPluginIds;
+      if (message.length() > 0) {
+        message.append("<br>");
       }
-      catch (IOException e) {
-        getLogger().error(e);
-      }
+      message.append("Would you like to <a href=\"disable\">disable</a> ")
+        .append(disabledPluginIds.size() == 1 ? "it" : "them")
+        .append(" too?");
     }
     if (pluginsWithoutIdFound) {
       if (message.length() > 0) {
-        message.append("\n");
+        message.append("<br>");
       }
       message.append(IdeBundle.message("error.plugins.without.id.found"));
     }

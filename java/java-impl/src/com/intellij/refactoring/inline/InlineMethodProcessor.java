@@ -719,11 +719,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (blockData.thisVar != null) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
       if (qualifier == null) {
-        PsiElement parent = methodCall.getParent();
+        PsiElement parent = methodCall.getContext();
         while (true) {
           if (parent instanceof PsiClass) break;
           if (parent instanceof PsiFile) break;
-          parent = parent.getParent();
+          assert parent != null : methodCall;
+          parent = parent.getContext();
         }
         if (parent instanceof PsiClass) {
           PsiClass parentClass = (PsiClass)parent;

@@ -28,6 +28,11 @@ public class InstanceOfUtils {
     public static PsiInstanceOfExpression getConflictingInstanceof(
             @NotNull PsiTypeCastExpression expression) {
         final PsiType castType = expression.getType();
+        if (!(castType instanceof PsiClassType)) {
+            return null;
+        }
+        final PsiClassType classType = (PsiClassType) castType;
+        final PsiClassType rawType = classType.rawType();
         final PsiExpression operand = expression.getOperand();
         if (!(operand instanceof PsiReferenceExpression)) {
             return null;
@@ -35,7 +40,7 @@ public class InstanceOfUtils {
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)operand;
         final InstanceofChecker checker = new InstanceofChecker(
-                referenceExpression, castType, false);
+                referenceExpression, rawType, false);
         PsiElement parent = PsiTreeUtil.getParentOfType(expression,
                 PsiBinaryExpression.class, PsiIfStatement.class,
                 PsiConditionalExpression.class);

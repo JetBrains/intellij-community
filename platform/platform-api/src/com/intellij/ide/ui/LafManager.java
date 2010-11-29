@@ -43,6 +43,8 @@ public abstract class LafManager {
    */
   public abstract boolean isUnderQuaquaLookAndFeel();
 
+  public abstract boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);
+
   public abstract void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);
 
   public abstract void updateUI();

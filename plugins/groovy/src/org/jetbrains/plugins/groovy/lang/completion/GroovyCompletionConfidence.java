@@ -14,9 +14,12 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -24,15 +27,33 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  * @author peter
  */
 public class GroovyCompletionConfidence extends CompletionConfidence {
+
+  private static boolean isPossibleClosureParameter(GrReferenceExpression ref) {
+    return PsiJavaPatterns.psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref);
+  }
+
   @NotNull
   @Override
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
+
+    if (!GppTypeConverter.hasTypedContext(position)) {
+      return ThreeState.NO;
+    }
+
     if (position.getParent() instanceof GrReferenceExpression) {
-      final GrExpression expression = ((GrReferenceExpression)position.getParent()).getQualifierExpression();
+      final GrReferenceExpression ref = (GrReferenceExpression)position.getParent();
+      final GrExpression expression = ref.getQualifierExpression();
       if (expression == null) {
+        if (isPossibleClosureParameter(ref)) return ThreeState.NO;
+
         return ThreeState.YES;
       }
+
+      if (parameters.getOffset() == position.getTextRange().getStartOffset()) {
+        return ThreeState.NO; //after one dot a second dot might be expected to form a range
+      }
+
       if (expression.getType() == null) {
         return ThreeState.NO;
       }

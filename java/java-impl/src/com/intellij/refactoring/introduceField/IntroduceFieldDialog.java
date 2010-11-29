@@ -120,7 +120,12 @@ class IntroduceFieldDialog extends DialogWrapper {
       if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
     }
 
-    if (ourLastInitializerPlace == IN_CONSTRUCTOR) {
+    final PsiMethod setUpMethod = TestUtil.findSetUpMethod(myParentClass);
+    if (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) && myRbInSetUp.isEnabled() ||
+        ourLastInitializerPlace == IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
+      myRbInSetUp.setSelected(true);
+    }
+    else if (ourLastInitializerPlace == IN_CONSTRUCTOR) {
       if (myRbInConstructor.isEnabled()) {
         myRbInConstructor.setSelected(true);
       } else {
@@ -132,8 +137,6 @@ class IntroduceFieldDialog extends DialogWrapper {
       } else {
         selectInCurrentMethod();
       }
-    } else if (ourLastInitializerPlace == IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
-      myRbInSetUp.setSelected(true);
     } else {
       selectInCurrentMethod();
     }
@@ -144,8 +147,6 @@ class IntroduceFieldDialog extends DialogWrapper {
       myRbProtected.setSelected(true);
     } else if (PsiModifier.PACKAGE_LOCAL.equals(ourLastVisibility)) {
       myRbPackageLocal.setSelected(true);
-    } else if (PsiModifier.PRIVATE.equals(ourLastVisibility)) {
-      myRbPrivate.setSelected(true);
     } else {
       myRbPrivate.setSelected(true);
     }

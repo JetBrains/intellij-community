@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
@@ -130,7 +129,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   public final ClassLoader getClassLoader() {
     if (myClassLoader == null) {
       final XmlTag tag = getXmlTag();
-      final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getContainingFile().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+      final PsiFile containingFile = tag.getContainingFile();
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
       if (buildFile != null) {
         myClassLoader = buildFile.getClassLoader();
       }
@@ -158,7 +158,8 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   @Nullable
   public final Sdk getTargetJdk() {
     final XmlTag tag = getXmlTag();
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getContainingFile().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+    final PsiFile containingFile = tag.getContainingFile();
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
     if (buildFile != null) {
       String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
       if (jdkName == null || jdkName.length() == 0) {
@@ -199,7 +200,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
       Map<String, String> externals = Collections.emptyMap();
       final PsiFile containingFile = getXmlTag().getContainingFile();
       if (containingFile != null) {
-        final AntBuildFileImpl buildFile = (AntBuildFileImpl)containingFile.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+        final AntBuildFileImpl buildFile = (AntBuildFileImpl)AntConfigurationBase.getInstance(containingFile.getProject()).getAntBuildFile(containingFile);
         if (buildFile != null) {
           externals = buildFile.getExternalProperties();
         }
