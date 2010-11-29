@@ -89,7 +89,7 @@ public class OSProcessHandler extends ProcessHandler {
                 break;
               }
               catch (InterruptedException e) {
-                LOG.info(e);
+                LOG.debug(e);
               }
             }
           }
@@ -98,7 +98,7 @@ public class OSProcessHandler extends ProcessHandler {
               myTerminationCallback.take().consume(exitCode);
             }
             catch (InterruptedException e) {
-              // Ignore
+              LOG.info(e);
             }
           }
         }

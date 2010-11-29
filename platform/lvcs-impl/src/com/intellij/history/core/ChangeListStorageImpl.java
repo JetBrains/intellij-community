@@ -48,7 +48,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     String path = storageDir.getPath() + "/" + STORAGE_FILE;
     LocalHistoryStorage result = new LocalHistoryStorage(path);
 
-    long fsTimestamp = ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
+    long fsTimestamp = getVFSTimestamp();
 
     int storedVersion = result.getVersion();
     boolean versionMismatch = storedVersion != VERSION;
@@ -70,17 +70,30 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     return result;
   }
 
+  private static long getVFSTimestamp() {
+    return ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
+  }
+
   private RuntimeException handleError(Throwable e) {
+    long storageTimestamp = -1;
     try {
       if (myStorage != null) {
         myStorage.setVersion(-1);
         myStorage.force();
+
+        storageTimestamp = myStorage.getFSTimestamp();
       }
     }
     catch (Throwable ex) {
       LocalHistoryLog.LOG.error("cannot mark storage as broken", ex);
     }
-    throw new RuntimeException("Local history is broken and will be rebuilt after restart (storage version: " + VERSION + ")", e);
+    long vfsTimestamp = getVFSTimestamp();
+    long timestamp = System.currentTimeMillis() ;
+    throw new RuntimeException("Local history is broken and will be rebuilt after restart " +
+                               "(version:" + VERSION +
+                               ",current timestamp:" + timestamp +
+                               ",storage timestamp:" + storageTimestamp +
+                               ",vfs timestamp:" + vfsTimestamp+ ")", e);
   }
 
   public synchronized void close() {
