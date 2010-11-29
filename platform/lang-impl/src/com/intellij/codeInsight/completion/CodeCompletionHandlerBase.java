@@ -220,6 +220,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return true;
     }
 
+    switch (CodeInsightSettings.getInstance().FOCUS_AUTOPOPUP) {
+      case CodeInsightSettings.ALWAYS: return true;
+      case CodeInsightSettings.NEVER: return false;
+    }
+
     final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
       final ThreeState result = confidence.shouldFocusLookup(parameters);
