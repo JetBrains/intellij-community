@@ -19,12 +19,14 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -158,7 +160,9 @@ public class MavenModuleBuilderHelper {
 
         pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
         try {
-          FileDocumentManager.getInstance().saveDocument(FileDocumentManager.getInstance().getDocument(pom));
+          Document doc = FileDocumentManager.getInstance().getDocument(pom);
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+          FileDocumentManager.getInstance().saveDocument(doc);
         }
         finally {
           pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
