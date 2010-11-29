@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -179,9 +180,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     final IdeFrameImpl frame = new IdeFrameImpl(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager,
                                                 ApplicationManager.getApplication(), args);
     myProject2Frame.put(null, frame);
-    if (myFrameBounds != null) {
-      frame.setBounds(myFrameBounds);
+
+    if (myFrameBounds == null) {
+      Rectangle rect = ScreenUtil.getScreenRectangle(0, 0);
+      int yParts = rect.height / 6;
+      int xParts = rect.width / 5;
+      myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
     }
+
+    frame.setBounds(myFrameBounds);
     frame.setVisible(true);
     frame.setExtendedState(myFrameExtendedState);
   }
