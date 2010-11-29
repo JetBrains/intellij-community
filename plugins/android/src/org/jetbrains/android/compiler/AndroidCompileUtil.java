@@ -46,10 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,12 +83,67 @@ public class AndroidCompileUtil {
     });
   }
 
+  private static void collectChildrenRecursively(@NotNull VirtualFile root,
+                                                 @NotNull VirtualFile anchor,
+                                                 @NotNull Collection<VirtualFile> result) {
+    VirtualFile parent = anchor.getParent();
+    if (parent == null) {
+      return;
+    }
+    for (VirtualFile child : parent.getChildren()) {
+      if (child != anchor) {
+        result.add(child);
+      }
+    }
+    if (parent != root) {
+      collectChildrenRecursively(root, parent, result);
+    }
+  }
+
+  private static void unexcludeRootIfNeccessary(@NotNull VirtualFile root, @NotNull ModuleRootManager manager) {
+    Set<VirtualFile> excludedRoots = new HashSet<VirtualFile>(Arrays.asList(manager.getExcludeRoots()));
+    VirtualFile excludedRoot = root;
+    while (excludedRoot != null && !excludedRoots.contains(excludedRoot)) {
+      excludedRoot = excludedRoot.getParent();
+    }
+    if (excludedRoot == null) {
+      return;
+    }
+    Set<VirtualFile> rootsToExclude = new HashSet<VirtualFile>();
+    collectChildrenRecursively(excludedRoot, root, rootsToExclude);
+    final ModifiableRootModel model = manager.getModifiableModel();
+    ContentEntry contentEntry = findContentEntryForRoot(model, excludedRoot);
+    if (contentEntry != null) {
+      ExcludeFolder excludedFolder = null;
+      for (ExcludeFolder folder : contentEntry.getExcludeFolders()) {
+        if (folder.getFile() == excludedRoot) {
+          excludedFolder = folder;
+          break;
+        }
+      }
+      if (excludedFolder != null) {
+        contentEntry.removeExcludeFolder(excludedFolder);
+      }
+      for (VirtualFile rootToExclude : rootsToExclude) {
+        if (!excludedRoots.contains(rootToExclude)) {
+          contentEntry.addExcludeFolder(rootToExclude);
+        }
+      }
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
+  }
+
   public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
-      if (!rootFile.mkdir()) return;
+      if (!rootFile.mkdirs()) return;
       created = true;
     }
     else {
@@ -109,6 +161,7 @@ public class AndroidCompileUtil {
           root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
         }
         if (root != null) {
+          unexcludeRootIfNeccessary(root, manager);
           for (VirtualFile existingRoot : manager.getSourceRoots()) {
             if (existingRoot == root) return;
           }
@@ -124,6 +177,16 @@ public class AndroidCompileUtil {
 
   public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
     final ModifiableRootModel model = manager.getModifiableModel();
+    ContentEntry contentEntry = findContentEntryForRoot(model, root);
+    if (contentEntry == null) {
+      contentEntry = model.addContentEntry(root);
+    }
+    contentEntry.addSourceFolder(root, false);
+    model.commit();
+  }
+
+  @Nullable
+  private static ContentEntry findContentEntryForRoot(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
     ContentEntry contentEntry = null;
     for (ContentEntry candidate : model.getContentEntries()) {
       VirtualFile contentRoot = candidate.getFile();
@@ -131,11 +194,7 @@ public class AndroidCompileUtil {
         contentEntry = candidate;
       }
     }
-    if (contentEntry == null) {
-      contentEntry = model.addContentEntry(root);
-    }
-    contentEntry.addSourceFolder(root, false);
-    model.commit();
+    return contentEntry;
   }
 
   public static void generate(final Module module, final GeneratingCompiler compiler, boolean withDependentModules) {
