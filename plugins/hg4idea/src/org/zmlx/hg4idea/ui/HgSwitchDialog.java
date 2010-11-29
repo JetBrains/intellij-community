@@ -132,4 +132,8 @@ public class HgSwitchDialog extends DialogWrapper {
     return contentPanel;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.mercurial.switch.working.directory";
+  }
 }

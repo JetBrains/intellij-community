@@ -1,3 +1,3 @@
 class Foo {
-  def int foo(String s){}
+  int foo(String s){}
 }

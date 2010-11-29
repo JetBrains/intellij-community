@@ -34,8 +34,10 @@
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="IntelliLang" />
     <orderEntry type="module" module-name="ant" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="IntelliLang-java" scope="TEST" />
+    <orderEntry type="module" module-name="IntelliLang-xml" scope="TEST" />
   </component>
 </module>
 

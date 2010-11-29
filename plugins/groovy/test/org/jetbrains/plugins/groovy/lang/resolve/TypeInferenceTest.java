@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -141,5 +139,17 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testRawTypeInReturnExpression() {
     assertNotNull(resolve("A.groovy"));
+  }
+
+  private void assertTypeEquals(String expected, String fileName) {
+    final PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
+    assertInstanceOf(ref, GrReferenceExpression.class);
+    final PsiType type = ((GrReferenceExpression)ref).getType();
+    assertNotNull(type);
+    assertEquals(expected, type.getCanonicalText());
+  }
+
+  public void testTypeOfGroupBy() {
+    assertTypeEquals("java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>", "A.groovy");
   }
 }

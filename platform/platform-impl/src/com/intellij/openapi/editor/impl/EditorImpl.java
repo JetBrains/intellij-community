@@ -2214,9 +2214,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      int y = visibleLineNumberToYPosition(logicalToVisualLine(lineNumber));
-      if (marker.getLineSeparatorPlacement() != SeparatorPlacement.TOP) {
-        y += getLineHeight();
+      // There is a possible case that particular logical line occupies more than one visual line (because of soft wraps processing),
+      // hence, we need to consider that during calculating 'y' position for the last visual line used for the target logical
+      // line representation.
+      int y;
+      SeparatorPlacement placement = marker.getLineSeparatorPlacement();
+      if (placement == SeparatorPlacement.TOP) {
+        y = visibleLineNumberToYPosition(logicalToVisualLine(lineNumber));
+      }
+      else {
+        if (lineNumber + 1 >= myDocument.getLineCount()) {
+          y = visibleLineNumberToYPosition(offsetToVisualLine(myDocument.getTextLength()));
+        }
+        else {
+          y = logicalLineToY(lineNumber + 1);
+        }
       }
 
       if (y < clip.y || y > clip.y + clip.height) return;

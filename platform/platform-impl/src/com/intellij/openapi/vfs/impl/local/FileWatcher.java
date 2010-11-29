@@ -19,11 +19,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,10 +31,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 
@@ -279,13 +273,7 @@ public class FileWatcher {
 
             Notifications.Bus.notify(
               new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "File Watcher", message, NotificationType.WARNING,
-                               new NotificationListener() {
-                                 public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-                                   if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                     BrowserUtil.launchBrowser(event.getURL().toExternalForm());
-                                   }
-                                 }
-                               }));
+                               NotificationListener.URL_OPENING_LISTENER));
           }
           else if (REMAP_COMMAND.equals(command)) {
             Set<Pair<String, String>> pairs = new HashSet<Pair<String, String>>();

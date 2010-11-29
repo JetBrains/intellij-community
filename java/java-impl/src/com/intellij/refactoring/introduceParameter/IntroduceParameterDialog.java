@@ -156,7 +156,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   private String getParameterName() {
-    return  myParameterNameField.getEnteredName();
+    return  myParameterNameField.getEnteredName().trim();
   }
 
   private int getReplaceFieldsWithGetters() {
@@ -461,7 +461,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
-    if (name == null || !JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name.trim())) {
+    if (name == null || !JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)) {
       throw new ConfigurationException("\'" + StringUtil.first(name != null ? name : "", 10 , true) + "\' is invalid parameter name");
     }
   }

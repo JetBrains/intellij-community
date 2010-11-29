@@ -520,13 +520,32 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+    return isInUseScope(resolveResult.getCurrentFileResolveContext());
+  }
+
+  public static boolean isInUseScope(GroovyPsiElement context) {
     if (context instanceof GrMethodCall) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
         if (resolved instanceof GrGdkMethod && "use".equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
           return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean isInWithContext(GroovyPsiElement context) {
+    if (context instanceof GrExpression) {
+      final PsiElement parent = context.getParent();
+      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getQualifier() == context) {
+        final PsiElement pparent = parent.getParent();
+        if (pparent instanceof GrMethodCall) {
+          final PsiMethod method = ((GrMethodCall)pparent).resolveMethod();
+          if (method instanceof GrGdkMethod && "with".equals(method.getName())) {
+            return true;
+          }
         }
       }
     }

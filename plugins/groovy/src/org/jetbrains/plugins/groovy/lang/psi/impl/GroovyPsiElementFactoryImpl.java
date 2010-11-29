@@ -388,7 +388,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       assert defintion != null && defintion instanceof GrMethod;
       return ((GrMethod)defintion);
     }
-    catch (Error error) {
+    catch (Exception error) {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
   }

@@ -18,6 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -114,6 +115,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
 
+  private String myLastWarning = null;
+
   /**
    * invoked by reflection
    *
@@ -169,7 +172,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   public void initComponent() {
-    setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specfied by readExternal.
+    setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specified by readExternal.
     updateUI();
   }
 
@@ -227,18 +230,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   /**
    * @return default LookAndFeelInfo for the running OS. For Win32 and
-   * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
-   * RubyMine uses Native L&F for linux as well
+   *         Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
+   *         RubyMine uses Native L&F for linux as well
    */
-  private UIManager.LookAndFeelInfo getDefaultLaf(){
-    if(SystemInfo.isMac) {
-      UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
-      LOG.assertTrue(laf!=null);
+  private UIManager.LookAndFeelInfo getDefaultLaf() {
+    if (SystemInfo.isMac) {
+      UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
+      LOG.assertTrue(laf != null);
       return laf;
     }
     else if (SystemInfo.isLinux && ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
-      UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
-      LOG.assertTrue(laf!=null);
+      UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
+      LOG.assertTrue(laf != null);
       return laf;
     }
     else {
@@ -249,14 +252,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
           return defaultLaf;
         }
       }
-      return findLaf(IDEA_LAF_CLASSNAME);
+      UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASSNAME);
+      if (ideaLaf != null) {
+        return ideaLaf;
+      }
     }
+    throw new IllegalStateException("No default look&feel found");
   }
 
   /**
    * Finds LAF by its class name.
    * will be returned.
    */
+  @Nullable
   private UIManager.LookAndFeelInfo findLaf(String className){
     for (UIManager.LookAndFeelInfo laf : myLafs) {
       if (Comparing.equal(laf.getClassName(), className)) {
@@ -307,6 +315,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
     myCurrentLaf=lookAndFeelInfo;
+
+    checkLookAndFeel(lookAndFeelInfo, false);
 
     // The following code is a trick! By default Swing uses lightweight and "medium" weight
     // popups to show JPopupMenu. The code below force the creation of real heavyweight menus.
@@ -429,6 +439,39 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     return rec.getLocation();
+  }
+
+  @Override
+  public boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    return checkLookAndFeel(lookAndFeelInfo, true);
+  }
+
+  private boolean checkLookAndFeel(final UIManager.LookAndFeelInfo lafInfo, final boolean confirm) {
+    String message = null;
+
+    if (lafInfo.getName().contains("GTK") && SystemInfo.isLinux && !SystemInfo.isJavaVersionAtLeast("1.6.0_12")) {
+      message = IdeBundle.message("warning.problem.laf.1");
+    }
+
+    if (message != null) {
+      if (confirm) {
+        final String[] options = {IdeBundle.message("confirm.set.look.and.feel"), CommonBundle.getCancelButtonText()};
+        final int result = Messages.showDialog(message, CommonBundle.getWarningTitle(), options, 1, Messages.getWarningIcon());
+        if (result == 0) {
+          myLastWarning = message;
+          return true;
+        }
+        return false;
+      }
+
+      if (!message.equals(myLastWarning)) {
+        Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "L&F Manager", message, NotificationType.WARNING,
+                                                  NotificationListener.URL_OPENING_LISTENER));
+        myLastWarning = message;
+      }
+    }
+
+    return true;
   }
 
   /**

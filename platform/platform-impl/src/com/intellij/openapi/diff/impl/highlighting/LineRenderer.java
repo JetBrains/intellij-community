@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.util.ui.UIUtil;
@@ -31,8 +33,22 @@ public class LineRenderer implements LineMarkerRenderer {
 
   public void paint(Editor editor, Graphics g, Rectangle r) {
     g.setColor(Color.GRAY);
-    int y = r.y - 1;
-    if (myDrawBottom) y += r.height + editor.getLineHeight();
+    int y = r.y;
+
+    // There is a possible case that particular logical line occupies more than one visual line (because of soft wraps processing),
+    // hence, we need to consider that during calculating 'y' position for the last visual line used for the target logical
+    // line representation.
+    if (myDrawBottom) {
+      LogicalPosition logical = editor.xyToLogicalPosition(new Point(0, y));
+      Document document = editor.getDocument();
+      if (logical.line + 1 >= document.getLineCount()) {
+        y = editor.visualPositionToXY(editor.offsetToVisualPosition(document.getTextLength())).y;
+      }
+      else {
+        y = editor.logicalPositionToXY(new LogicalPosition(logical.line + 1, 0)).y;
+      }
+    }
+    y--; // Not sure why do we decrement 'y' for one pixel, remains here only because it existed at old code. 
     UIUtil.drawLine(g, 0, y, ((EditorEx)editor).getGutterComponentEx().getWidth(), y);
   }
 

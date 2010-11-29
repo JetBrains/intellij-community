@@ -21,6 +21,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -170,10 +171,30 @@ public class LazyParseableElement extends CompositeElement {
 
     ILazyParseableElementType type = (ILazyParseableElementType)getElementType();
     ASTNode parsedNode = type.parseContents(this);
+
+    if (parsedNode == null && myText.length() > 0) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error("No parse for a non-empty string: " + myText + "; type=" + getElementType());
+      } else {
+        LOG.error("No parse for a non-empty string: type=" + getElementType());
+      }
+    }
+
+    //CharSequence text = myText;
     myText = null;
 
     if (parsedNode != null) {
       rawAddChildren((TreeElement)parsedNode);
+
+      /*
+      if (getTextLength() != text.length()) {
+        if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
+        } else {
+          LOG.error("Inconsistent reparse: type=" + getElementType());
+        }
+      }
+      */
 
       //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
       ((TreeElement)parsedNode).acceptTree(CREATE_PSI);

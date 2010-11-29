@@ -337,7 +337,7 @@ public class HgCloneDialog extends DialogWrapper {
    */
   @Override
   protected String getHelpId() {
-    return "reference.VersionControl.Hg.CloneRepository";
+    return "reference.mercurial.clone.mercurial.repository";
   }
 
   private static boolean testRepository(Project project, final String repositoryUrl) {
