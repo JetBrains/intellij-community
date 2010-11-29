@@ -18,6 +18,7 @@ package org.jetbrains.generate.tostring.inspection;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringActionHandler;
 import org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl;
@@ -30,7 +31,7 @@ public class GenerateToStringQuickFix extends AbstractGenerateToStringQuickFix {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
 
         // find the class
-        PsiClass clazz = psi.findClass(desc.getPsiElement());
+        PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
         if (clazz == null) {
             return; // no class to fix, so return
         }

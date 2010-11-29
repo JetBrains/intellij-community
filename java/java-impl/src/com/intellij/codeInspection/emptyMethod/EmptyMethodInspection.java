@@ -29,10 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,6 +37,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.BidirectionalMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +57,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
 
   private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
-  private final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
@@ -237,6 +235,13 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  @Override
+  public void writeSettings(Element node) throws WriteExternalException {
+    if (!EXCLUDE_ANNOS.isEmpty()) {
+      super.writeSettings(node);
+    }
   }
 
   private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {

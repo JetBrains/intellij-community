@@ -27,7 +27,6 @@ import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
@@ -52,49 +51,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
   private static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
       PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
-  private static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
-    public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-      context.setAddCompletionChar(false);
-      int offset = context.getTailOffset() - 1;
-      final PsiFile file = context.getFile();
-      if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
-        final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiJavaCodeReferenceElement.class, false);
-        final String qname = item.getQualifiedName();
-        if (qname != null && (ref == null || !qname.equals(ref.getCanonicalText()))) {
-          AllClassesGetter.INSERT_FQN.handleInsert(context, item);
-        }
-        return;
-      }
-
-      if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(item.getObject(), file)) {
-        ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
-        DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
-      } else {
-        new DefaultInsertHandler().handleInsert(context, item);
-      }
-    }
-
-    private boolean completingRawConstructor(InsertionContext context, JavaPsiClassReferenceElement item) {
-      final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
-      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
-      if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        PsiTypeParameter[] typeParameters = item.getObject().getTypeParameters();
-        for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression) prevElement.getParent(), true)) {
-          final PsiType type = info.getType();
-
-          if (info.isArrayTypeInfo()) {
-            return false;
-          }
-          if (typeParameters.length > 0 && type instanceof PsiClassType && !((PsiClassType)type).isRaw()) {
-            return false;
-          }
-        }
-        return true;
-      }
-
-      return false;
-    }
-  };
 
   public JavaClassNameCompletionContributor() {
     extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
@@ -150,7 +106,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   }
 
   public static JavaPsiClassReferenceElement createClassLookupItem(final PsiClass psiClass, final boolean inJavaContext) {
-    return AllClassesGetter.createLookupItem(psiClass, inJavaContext ? JAVA_CLASS_INSERT_HANDLER : AllClassesGetter.TRY_SHORTENING);
+    return AllClassesGetter.createLookupItem(psiClass, inJavaContext ? JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER : AllClassesGetter.TRY_SHORTENING);
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +96,16 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void runOnOwnContext(DataContext context, Runnable runnable) {
     getGlobalInstance().runOnOwnContext(context, runnable);
+  }
+
+  @Override
+  public Component getLastFocusedFor(IdeFrame frame) {
+    return getGlobalInstance().getLastFocusedFor(frame);
+  }
+
+  @Override
+  public void toFront(JComponent c) {
+    getGlobalInstance().toFront(c);
   }
 
   public boolean isFocusBeingTransferred() {

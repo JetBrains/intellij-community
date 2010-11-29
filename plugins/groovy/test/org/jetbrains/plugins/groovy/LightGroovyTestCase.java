@@ -52,7 +52,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
       final VirtualFile groovyJar =
-        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
+        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_8LibraryName()+"!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }

@@ -112,17 +112,14 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
       ((JTextField)jComboBox.getEditor().getEditorComponent()).getDocument().addDocumentListener(new DocumentListener() {
         public void insertUpdate(DocumentEvent e) {
           validateData();
-          updateFile();
         }
 
         public void removeUpdate(DocumentEvent e) {
           validateData();
-          updateFile();
         }
 
         public void changedUpdate(DocumentEvent e) {
           validateData();
-          updateFile();
         }
       });
 

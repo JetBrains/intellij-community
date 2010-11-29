@@ -305,11 +305,12 @@ public class CompleteReferenceExpression {
   private static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
     Project project = qualifier.getProject();
     PsiType qualifierType = qualifier.getType();
+    final ResolveState state = ResolveState.initial();
     if (qualifierType == null) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiPackage) {
-          resolved.processDeclarations(processor, ResolveState.initial(), null, refExpr);
+          resolved.processDeclarations(processor, state, null, refExpr);
           return;
         }
       }
@@ -336,10 +337,10 @@ public class CompleteReferenceExpression {
               if (typeParameters.length == 1) {
                 substitutor = substitutor.put(typeParameters[0], qualifierType);
               }
-              javaLangClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
+              javaLangClass.processDeclarations(processor, state, null, refExpr);
               PsiType javaLangClassType =
                 JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory().createType(javaLangClass, substitutor);
-              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr);
+              ResolveUtil.processNonCodeMethods(javaLangClassType, processor, refExpr, state);
             }
           }
         }
@@ -389,16 +390,17 @@ public class CompleteReferenceExpression {
                                                    ResolverProcessor processor,
                                                    PsiType qualifierType,
                                                    Project project) {
+    final ResolveState state = ResolveState.initial();
     if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
       if (qualifierClass != null) {
-        qualifierClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
+        qualifierClass.processDeclarations(processor, state, null, refExpr);
       }
       if (!ResolveUtil.processCategoryMembers(refExpr, processor)) return;
     }
     else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
-      if (!arrayClass.processDeclarations(processor, ResolveState.initial(), null, refExpr)) return;
+      if (!arrayClass.processDeclarations(processor, state, null, refExpr)) return;
     }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
@@ -407,6 +409,6 @@ public class CompleteReferenceExpression {
       return;
     }
 
-    ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr);
+    ResolveUtil.processNonCodeMethods(qualifierType, processor, refExpr, state);
   }
 }

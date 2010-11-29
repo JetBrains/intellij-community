@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,15 +57,15 @@ public class ClassUtils {
         primitiveNumericTypes.add(PsiType.FLOAT);
         primitiveNumericTypes.add(PsiType.DOUBLE);
 
-        immutableTypes.add("java.lang.Boolean");
-        immutableTypes.add("java.lang.Character");
-        immutableTypes.add("java.lang.Short");
-        immutableTypes.add("java.lang.Integer");
-        immutableTypes.add("java.lang.Long");
-        immutableTypes.add("java.lang.Float");
-        immutableTypes.add("java.lang.Double");
-        immutableTypes.add("java.lang.Byte");
-        immutableTypes.add("java.lang.String");
+        immutableTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_SHORT);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_LONG);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_FLOAT);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_DOUBLE);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_BYTE);
+        immutableTypes.add(CommonClassNames.JAVA_LANG_STRING);
         immutableTypes.add("java.awt.Font");
         immutableTypes.add("java.awt.Color");
         immutableTypes.add("java.math.BigDecimal");

@@ -355,6 +355,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static RunContentDescriptor chooseReuseContentForDescriptor(final ContentManager contentManager, final RunContentDescriptor descriptor) {
     Content content = null;
     if (descriptor != null) {
+      if (descriptor.isContentReuseProhibited()) {
+        return null;
+      }
       final Content attachedContent = descriptor.getAttachedContent();
       if (attachedContent != null && attachedContent.isValid()) content = attachedContent;
     }
@@ -570,7 +573,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
 
       final ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler == null || processHandler.isProcessTerminated()) {
+      if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
         return true;
       }
       final boolean destroyProcess;

@@ -46,35 +46,7 @@ public class StringUtil {
         return ! isEmpty(s);
     }
 
-    /**
-     * Is the string in lowercase only?
-     * @param s   string to test.
-     * @return   true if string is in lowercase only, false if not.
-     */
-    public static boolean isLowerCase(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            if (! Character.isLowerCase(s.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Is the string in uppercase only?
-     * @param s   string to test.
-     * @return   true if string is in uppercase only, false if not.
-     */
-    public static boolean isUpperCase(String s) {
-        for (int i = 0; i < s.length(); i++) {
-            if (! Character.isUpperCase(s.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
+  /**
      * Does the string have an uppercase character?
      * @param s  the string to test.
      * @return   true if the string has an uppercase character, false if not.
@@ -187,23 +159,4 @@ public class StringUtil {
             return s;
         }
     }
-
-    /**
-     * Fixes linebreaks generated from Velocity to be compatible with IDEA #3296 or later.
-     * 
-     * @param s   input string
-     * @return    output string with fixed linebreaks
-     */
-    public static String fixLineBreaks(String s) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (Character.LINE_SEPARATOR != c) {
-                sb.append(c);
-            }
-        }
-
-        return sb.toString();
-    }
-
 }

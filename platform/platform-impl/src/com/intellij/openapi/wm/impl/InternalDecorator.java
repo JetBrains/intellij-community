@@ -139,7 +139,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myTitlePanel = new TitlePanel() {
       @Override
       public boolean isActive() {
-        return computeActive();
+        return isFocused();
       }
     };
     myTitleTabs = toolWindow.getContentUI().getTabComponent();
@@ -175,7 +175,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     apply(info);
   }
 
-  private boolean computeActive() {
+  public boolean isFocused() {
     Component component = IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(myToolWindow.getComponent());
     if (component != null) return true;
 
@@ -938,7 +938,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     public boolean isActive() {
-      return InternalDecorator.this.computeActive();
+      return InternalDecorator.this.isFocused();
     }
 
     public void setIcon(final Icon active, Icon inactive) {

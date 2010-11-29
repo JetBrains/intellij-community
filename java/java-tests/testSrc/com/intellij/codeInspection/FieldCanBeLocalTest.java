@@ -30,4 +30,9 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testLocalStateVar2InnerClass() throws Exception { doTest(); }
   public void testNotConstantInitializer() throws Exception {doTest();}
   public void testInnerClassFieldInitializer() throws Exception {doTest();}
+  public void testIgnoreAnnotated() throws Exception {
+    final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
+    inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
+    doTest("fieldCanBeLocal/" + getTestName(true), inspection);
+  }
 }

@@ -80,7 +80,7 @@ public interface MarkupModel extends UserDataHolder {
    *
    * @param rangeHighlighter the highlighter to remove.
    */
-  void removeHighlighter(RangeHighlighter rangeHighlighter);
+  void removeHighlighter(@NotNull RangeHighlighter rangeHighlighter);
 
   /**
    * Removes all highlighter instances.

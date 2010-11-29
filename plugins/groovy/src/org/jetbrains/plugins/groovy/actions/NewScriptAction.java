@@ -72,8 +72,9 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
   protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     PsiFile file =
       GroovyTemplatesFactory.createFromTemplate(directory, newName, newName + "." + extractExtension(templateName), templateName);
-    assert file instanceof GroovyFile : "template name: " + templateName;
-    return (GroovyFile)file;
+    if (file instanceof GroovyFile) return (GroovyFile)file;
+    final String description = file.getFileType().getDescription();
+    throw new IncorrectOperationException(GroovyBundle.message("groovy.file.extension.is.not.mapped.to.groovy.file.type", description));
   }
 
   private static String extractExtension(String templateName) {

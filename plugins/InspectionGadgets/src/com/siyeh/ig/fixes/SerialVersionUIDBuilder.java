@@ -37,8 +37,6 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
     @NonNls private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
 
-    private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
-
     private final PsiClass clazz;
     private int index = -1;
     private final Set<MemberSignature> nonPrivateConstructors;
@@ -156,7 +154,9 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
     public static long computeDefaultSUID(PsiClass psiClass) {
         final Project project = psiClass.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass serializable = JavaPsiFacade.getInstance(project).findClass(SERIALIZABLE_CLASS_NAME, scope);
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass serializable =
+                psiFacade.findClass(CommonClassNames.JAVA_IO_SERIALIZABLE, scope);
         if (serializable == null) {
             // no jdk defined for project.
             return -1L;

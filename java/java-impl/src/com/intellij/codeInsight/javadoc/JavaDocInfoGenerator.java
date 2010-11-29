@@ -807,6 +807,9 @@ public class JavaDocInfoGenerator {
                   "            background-color: #eeeeee;" +
                   "            margin-bottom: 10px;" +
                   "        }" +
+                  "        p {" +
+                  "            margin: 5px 0;" +
+                  "        }" +
                   "    </style>" +
                   "</head><body>");
   }

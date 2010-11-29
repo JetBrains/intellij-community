@@ -32,18 +32,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "string.equals.empty.string.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.equals.empty.string.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new StringEqualsEmptyStringFix();
     }
@@ -57,6 +60,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
                     "string.equals.empty.string.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiIdentifier name =
@@ -104,8 +108,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
                 }
                 final PsiType type = qualifierExpression.getType();
                 if (HardcodedMethodConstants.TO_STRING.equals(referenceName) &&
-                        type != null &&
-                        (type.equalsToText("java.lang.StringBuffer") ||
+                        type != null && (type.equalsToText(
+                        CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
                                 type.equalsToText("java.lang.StringBuilder"))) {
                     qualifierText = qualifierExpression.getText();
                 } else {
@@ -118,6 +122,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new StringEqualsEmptyStringVisitor();
     }

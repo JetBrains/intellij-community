@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,19 @@ public class CloneUtils{
     }
 
     public static boolean isCloneable(@NotNull PsiClass aClass){
-        return ClassUtils.isSubclass(aClass, "java.lang.Cloneable");
+        return ClassUtils.isSubclass(aClass,
+                CommonClassNames.JAVA_LANG_CLONEABLE);
     }
 
     public static boolean isDirectlyCloneable(@NotNull PsiClass aClass){
         final PsiClass[] interfaces = aClass.getInterfaces();
         for(PsiClass anInterface : interfaces){
-            if(anInterface != null){
-                final String qualifiedName = anInterface.getQualifiedName();
-                if("java.lang.Cloneable".equals(qualifiedName)){
-                    return true;
-                }
+            if (anInterface == null) {
+                continue;
+            }
+            final String qualifiedName = anInterface.getQualifiedName();
+            if(CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)){
+                return true;
             }
         }
         return false;

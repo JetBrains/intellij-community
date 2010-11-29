@@ -134,7 +134,7 @@
 
     <group id="CodeEditorBaseGroup">
       <separator/>
-      <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
+      <group id="CodeEditorViewGroup">
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
         <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
@@ -146,7 +146,7 @@
       </group>
       <separator/>
 
-      <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
+      <group id="ProjectViewGroup">
         <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
       </group>
       <separator/>
@@ -156,7 +156,7 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
     </group>
 
-    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingActionGroup" popup="true">
+    <group id="FoldingGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
       <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
       <separator/>
@@ -359,6 +359,10 @@
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
+    <group id="NavBarToolBar">
+      <reference ref="ToolbarRunGroup"/>
+    </group>
+
     <group id="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
@@ -406,6 +410,7 @@
         <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction"/>
         <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction"/>
         <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+        <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       </group>
     </group>
 

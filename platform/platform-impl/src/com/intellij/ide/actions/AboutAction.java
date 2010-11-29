@@ -30,6 +30,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.LicenseeInfoProvider;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
@@ -245,6 +246,8 @@ public class AboutAction extends AnAction implements DumbAware {
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
       Graphics2D g2 = (Graphics2D)g;
+      GraphicsConfig config = new GraphicsConfig(g2);
+      config.setAntialiasing(true);
 
       Font labelFont = UIUtil.getLabelFont();
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
@@ -260,10 +263,11 @@ public class AboutAction extends AnAction implements DumbAware {
           renderer.render(75, 0, myLines);
           break;
         }
-        catch (TextRenderer.OverflowException _) {
-          // ignore
+        catch (TextRenderer.OverflowException ignore) {
         }
       }
+
+      config.restore();
     }
 
     public class TextRenderer {
@@ -294,7 +298,6 @@ public class AboutAction extends AnAction implements DumbAware {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }
-
 
       public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
         x = indentX;

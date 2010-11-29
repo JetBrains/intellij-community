@@ -49,6 +49,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -213,9 +214,20 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
 
     PsiFile file = aClass.getContainingFile();
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module != null) {
-      buffer.append('[').append(module.getName()).append("] ");
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile != null && (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile))) {
+      final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      if (orderEntries.size() > 0) {
+        final OrderEntry orderEntry = orderEntries.get(0);
+        buffer.append("[").append(orderEntry.getPresentableName()).append("] ");
+      }
+    }
+    else {
+      final Module module = ModuleUtil.findModuleForPsiElement(file);
+      if (module != null) {
+        buffer.append('[').append(module.getName()).append("] ");
+      }
     }
 
     if (file instanceof PsiJavaFile) {
@@ -763,6 +775,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
     final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
 
+    return fetchExternalJavadoc(element, docURLs, docFilter);
+  }
+
+  public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
     if (docURLs != null) {
       for (String docURL : docURLs) {
         try {

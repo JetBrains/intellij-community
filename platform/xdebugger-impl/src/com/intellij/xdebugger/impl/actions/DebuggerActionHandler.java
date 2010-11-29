@@ -28,4 +28,7 @@ public abstract class DebuggerActionHandler {
 
   public abstract boolean isEnabled(@NotNull Project project, AnActionEvent event);
 
+  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+    return false;
+  }
 }

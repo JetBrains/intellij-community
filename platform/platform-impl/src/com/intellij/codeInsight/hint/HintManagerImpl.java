@@ -362,13 +362,22 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
   }
 
-  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p, HintHint hintInfo) {
+  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension size = hint.getComponent().getPreferredSize();
-    if(layeredPane.getWidth() < p.x + size.width) {
+
+    if (hint.isRealPopup()) {
+      SwingUtilities.convertPointToScreen(p, layeredPane);
+      final Rectangle rectangle = new Rectangle(p, size);
+      ScreenUtil.moveRectangleToFitTheScreen(rectangle);
+      p = rectangle.getLocation();
+      SwingUtilities.convertPointFromScreen(p, layeredPane);
+    }
+    else if (layeredPane.getWidth() < p.x + size.width) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
+
     if (hint.isVisible()) {
       hint.updateBounds(p.x, p.y);
     }

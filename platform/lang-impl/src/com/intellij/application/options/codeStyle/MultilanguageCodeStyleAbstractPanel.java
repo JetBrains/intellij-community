@@ -73,8 +73,9 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
   public void setLanguageSelector(LanguageSelector langSelector) {
-    myLanguageSelector = langSelector;
-    setPanelLanguage(langSelector.getLanguage());
+    if (myLanguageSelector == null) {
+      myLanguageSelector = langSelector;
+    }
   }
 
   public void setPanelLanguage(Language language) {

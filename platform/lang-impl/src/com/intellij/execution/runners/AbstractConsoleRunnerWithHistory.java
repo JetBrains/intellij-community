@@ -35,10 +35,13 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -48,13 +51,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
  * @author oleg
- *         This class provides basic functionality for running consoles.
- *         It launches extrnal process and handles line input with history
+ * This class provides basic functionality for running consoles.
+ * It launches external process and handles line input with history
  */
 public abstract class AbstractConsoleRunnerWithHistory {
   private final Project myProject;
@@ -226,41 +228,41 @@ public abstract class AbstractConsoleRunnerWithHistory {
     };
 
     final EditorEx consoleEditor = languageConsole.getConsoleEditor();
-    final Document document = consoleEditor.getDocument();
-    final CaretModel caretModel = consoleEditor.getCaretModel();
-    final AnAction upAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        final int lineNumber = consoleEditor.getDocument().getLineNumber(caretModel.getOffset());
-        if (lineNumber > 0){
-          caretModel.moveCaretRelatively(0, -1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
-        } else {
-          if (myHistory.hasHistory(false)) {
-            historyProcessor.process(e, myHistory.getHistoryPrev());
-          }
-        }
-      }
-    };
-    final AnAction downAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        final int lineNumber = document.getLineNumber(caretModel.getOffset());
-        if (lineNumber < document.getLineCount() - 1){
-          caretModel.moveCaretRelatively(0, 1, false, consoleEditor.getSelectionModel().hasBlockSelection(), true);
-        } else {
-          if (myHistory.hasHistory(true)) {
-            historyProcessor.process(e, myHistory.getHistoryNext());
-          }
-        }
-      }
-    };
-
-    upAction.getTemplatePresentation().setVisible(false);
-    downAction.getTemplatePresentation().setVisible(false);
-    upAction.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-    downAction.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+    final AnAction upAction = ConsoleHistoryModel.createConsoleHistoryUpAction(createCanMoveUpComputable(consoleEditor),
+                                                                               myHistory,
+                                                                               historyProcessor);
+    final AnAction downAction = ConsoleHistoryModel.createConsoleHistoryDownAction(createCanMoveDownComputable(consoleEditor),
+                                                                                   myHistory,
+                                                                                   historyProcessor);
 
     return new ConsoleExecutionActions(runAction, downAction, upAction);
+  }
+
+  public static Computable<Boolean> createCanMoveDownComputable(final Editor consoleEditor) {
+    return new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final Document document = consoleEditor.getDocument();
+        final CaretModel caretModel = consoleEditor.getCaretModel();
+
+        // Check if we have active lookup or if we can move in editor
+        return LookupManager.getActiveLookup(consoleEditor) != null ||
+               document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
+                                !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+      }
+    };
+  }
+
+  public static Computable<Boolean> createCanMoveUpComputable(final Editor consoleEditor) {
+    return new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final Document document = consoleEditor.getDocument();
+        final CaretModel caretModel = consoleEditor.getCaretModel();
+        // Check if we have active lookup or if we can move in editor
+        return LookupManager.getActiveLookup(consoleEditor) != null || document.getLineNumber(caretModel.getOffset()) > 0;
+      }
+    };
   }
 
   @NotNull

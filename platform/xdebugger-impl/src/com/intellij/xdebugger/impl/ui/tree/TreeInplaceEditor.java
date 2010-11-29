@@ -185,7 +185,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (!isShown()) return;
-        defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK);
+        defaultToolkit.addAWTEventListener(TreeInplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
       }
     });
 
@@ -201,12 +201,17 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
       return;
     }
     MouseEvent mouseEvent = (MouseEvent)event;
-    if (mouseEvent.getClickCount() == 0) {
+    if (mouseEvent.getClickCount() == 0 && !(event instanceof MouseWheelEvent)) {
       return;
     }
 
     final int id = mouseEvent.getID();
-    if ((id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED)) {
+    if (id == MouseEvent.MOUSE_WHEEL) {
+      cancelEditing();
+      return;
+    }
+
+    if (id != MouseEvent.MOUSE_PRESSED && id != MouseEvent.MOUSE_RELEASED && id != MouseEvent.MOUSE_CLICKED) {
       return;
     }
     

@@ -197,16 +197,26 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         continue;
       }
 
-      PsiType returnType1 = method.getReturnType();
-      PsiType returnType2 = existingMethod.getReturnType();
-      if (returnType1 != null && returnType2 != null) {
-        returnType1 = infoSubstitutor.substitute(returnType1);
-        returnType2 = existing.getSubstitutor().substitute(returnType2);
-        if (returnType1.isAssignableFrom(returnType2) &&
-            (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) ||
-             InheritanceUtil.isInheritorOrSelf(existingClass, class1, true))) {
-          conflicts.remove(i);
-          i--;
+      if (InheritanceUtil.isInheritorOrSelf(class1, existingClass, true) ||
+          InheritanceUtil.isInheritorOrSelf(existingClass, class1, true)) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        final PsiParameter[] existingParameters = existingMethod.getParameterList().getParameters();
+        for (int i1 = 0, parametersLength = parameters.length; i1 < parametersLength; i1++) {
+          if (parameters[i1].getType() instanceof PsiArrayType &&
+              !(existingParameters[i1].getType() instanceof PsiArrayType)) {//prefer more specific type
+            signatures.put(signature, info);
+            continue nextConflict;
+          }
+        }
+        PsiType returnType1 = method.getReturnType();
+        PsiType returnType2 = existingMethod.getReturnType();
+        if (returnType1 != null && returnType2 != null) {
+          returnType1 = infoSubstitutor.substitute(returnType1);
+          returnType2 = existing.getSubstitutor().substitute(returnType2);
+          if (returnType1.isAssignableFrom(returnType2)) {
+            conflicts.remove(i);
+            i--;
+          }
         }
       }
     }

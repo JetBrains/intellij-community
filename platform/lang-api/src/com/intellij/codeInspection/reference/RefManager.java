@@ -69,7 +69,8 @@ public abstract class RefManager {
    * @param module the module for which the reference graph node is requested.
    * @return the node for the module, or null if <code>module</code> is null.
    */
-  public abstract @Nullable RefModule getRefModule(Module module);
+  @Nullable
+  public abstract RefModule getRefModule(Module module);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI element.
@@ -78,23 +79,25 @@ public abstract class RefManager {
    * @return the node for the element, or null if the element is not valid or does not have
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
-  public abstract @Nullable RefElement getReference(PsiElement elem);
-
+  @Nullable
+  public abstract RefElement getReference(PsiElement elem);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
-   * @param type {@link SmartRefElementPointer.CLASS, SmartRefElementPointer.FIELD, SmartRefElementPointer.METHOD,
-                  SmartRefElementPointer.FILE, SmartRefElementPointer.PARAMETER}
-   * @param fqName FQName for the element
+   *
+   * @param type   {@link SmartRefElementPointer.FILE, etc.}
+   * @param fqName fully qualified name for the element
    * @return the node for the element, or null if the element is not found or does not have
-   * a corresponding reference graph node type.
+   *         a corresponding reference graph node type.
    */
-  public abstract @Nullable RefEntity getReference(String type, String fqName);
+  @Nullable
+  public abstract RefEntity getReference(String type, String fqName);
 
   public abstract int getLastUsedMask();
 
   public abstract <T> T getExtension(Key<T> key);
 
+  @Nullable
   public abstract String getType(final RefEntity ref);
 
   public abstract RefEntity getRefinedElement(final RefEntity ref);

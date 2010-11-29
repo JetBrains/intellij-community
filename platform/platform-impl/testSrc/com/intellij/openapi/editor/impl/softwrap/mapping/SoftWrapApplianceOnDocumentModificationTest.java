@@ -24,7 +24,7 @@ import gnu.trove.TIntProcedure;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,7 +35,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
 
   @Override
   protected void tearDown() throws Exception {
-    myEditor.getSettings().setUseSoftWraps(false);
+    if (myEditor != null) {
+      myEditor.getSettings().setUseSoftWraps(false);
+    }
     super.tearDown();
   }
 
@@ -134,6 +136,23 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     init(300, text);
     type('\t');
     assertEquals(new VisualPosition(2, 4), myEditor.getCaretModel().getVisualPosition());
+  }
+
+  public void testTypingThatExceedsRightMarginOnLastSoftWrappedLine() throws IOException {
+    String text = 
+      "line1\n" +
+      "long line<caret>";
+    
+    init(48, text);
+
+    int softWrapsBefore = getSoftWrapModel().getRegisteredSoftWraps().size();
+    assertTrue(softWrapsBefore > 0);
+    
+    for (int i = 0; i < 10; i++) {
+      type(String.valueOf(i));
+      assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps().size());
+      assertEquals(myEditor.getDocument().getTextLength(), myEditor.getCaretModel().getOffset());
+    }
   }
 
   public void testTrailingFoldRegionRemoval() throws IOException {
@@ -253,6 +272,88 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     
     backspace();
     assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  public void testRemoveOfAllSymbolsFromLastLine() throws IOException {
+    // There was a problem that removing all text from the last document line corrupted soft wraps cache.
+    String text =
+      "Line1\n" +
+      "Long line2 that is expected to be soft-wrapped<caret>";
+    init(150, text);
+
+    List<? extends SoftWrap> softWrapsBeforeModification = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(softWrapsBeforeModification.size() > 0);
+
+    int offset = myEditor.getCaretModel().getOffset();
+    VisualPosition positionBeforeModification = myEditor.offsetToVisualPosition(offset);
+    type("\n123");
+    myEditor.getSelectionModel().setSelection(offset + 1, myEditor.getDocument().getTextLength());
+    delete();
+    assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
+    assertEquals(positionBeforeModification, myEditor.offsetToVisualPosition(offset));
+  }
+  
+  public void testTypingBeforeCollapsedFoldRegion() throws IOException {
+    // We had a problem that soft wraps cache entries that lay after the changed region were considered to be affected by the change.
+    // This test checks that situation.
+    String text =
+      "\n" +
+      "fold line1\n" +
+      "fold line2\n" +
+      "fold line3\n" +
+      "fold line4\n" +
+      "normal line1";
+    init(150, text);
+    
+    int afterFoldOffset = text.indexOf("normal line1");
+    addCollapsedFoldRegion(text.indexOf("fold line1") + 2, afterFoldOffset - 1, "...");
+    VisualPosition beforeModification = myEditor.offsetToVisualPosition(afterFoldOffset);
+    
+    myEditor.getCaretModel().moveToOffset(0);
+    type('a');
+    
+    assertEquals(beforeModification, myEditor.offsetToVisualPosition(afterFoldOffset + 1));
+  }
+  
+  public void testCollapsedFoldRegionPlaceholderThatExceedsVisibleWidth() throws IOException {
+    String text =
+      "line1\n" +
+      "line2\n" +
+      "line3\n" +
+      "line4\n" +
+      "line5\n" +
+      "this is long line that is expected to be soft-wrapped\n" +
+      "line6";
+    init(100, text);
+
+    assertTrue(!getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
+
+    int offsetAfterSingleLineFoldRegion = text.indexOf("line2") - 1;
+    int lineAfterSingleLineFoldRegion = myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line;
+
+    int offsetAfterMultiLineFoldRegion = text.indexOf("this") - 1;
+    int lineAfterMultiLineFoldRegion = myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line;
+
+    int offsetAfterSoftWrap = text.indexOf("line6") - 1;
+    VisualPosition beforePositionAfterSoftWrap = myEditor.offsetToVisualPosition(offsetAfterSoftWrap);
+    
+    // Add single-line fold region which placeholder text is long enough to exceed visual area width.
+    addCollapsedFoldRegion(2, offsetAfterSingleLineFoldRegion, "this is a very long placeholder for the single-line fold region");
+    assertEquals(lineAfterSingleLineFoldRegion + 1, myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line);
+    lineAfterSingleLineFoldRegion++;
+    
+    assertEquals(lineAfterMultiLineFoldRegion + 1, myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line);
+    lineAfterMultiLineFoldRegion++;
+    
+    beforePositionAfterSoftWrap = new VisualPosition(beforePositionAfterSoftWrap.line + 1, beforePositionAfterSoftWrap.column); 
+    assertEquals(beforePositionAfterSoftWrap, myEditor.offsetToVisualPosition(offsetAfterSoftWrap));
+    
+    // Add multi-line fold region which placeholder is also long enough to exceed visual area width.
+    addCollapsedFoldRegion(text.indexOf("line2") + 2, offsetAfterMultiLineFoldRegion, "long enough placeholder for multi-line fold region");
+    assertEquals(lineAfterSingleLineFoldRegion, myEditor.offsetToVisualPosition(offsetAfterSingleLineFoldRegion).line);
+    assertEquals(lineAfterMultiLineFoldRegion - 2, myEditor.offsetToVisualPosition(offsetAfterMultiLineFoldRegion).line);
+    beforePositionAfterSoftWrap = new VisualPosition(beforePositionAfterSoftWrap.line - 2, beforePositionAfterSoftWrap.column);
+    assertEquals(beforePositionAfterSoftWrap, myEditor.offsetToVisualPosition(offsetAfterSoftWrap));
   }
   
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {

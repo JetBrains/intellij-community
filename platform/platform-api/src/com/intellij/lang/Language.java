@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +35,8 @@ import java.util.Map;
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
  * and its register instance wrapped with {@link com.intellij.openapi.fileTypes.LanguageFileType} instance through
  * <code>FileTypeManager.getInstance().registerFileType</code>
- * There should be exactly one instance of each Language. It is usually created when creating {@link com.intellij.openapi.fileTypes.LanguageFileType} and can be retrieved later
+ * There should be exactly one instance of each Language.
+ * It is usually created when creating {@link com.intellij.openapi.fileTypes.LanguageFileType} and can be retrieved later
  * with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.
  */
@@ -82,7 +84,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return collection of all languages registered so far.
    */
   public static Collection<Language> getRegisteredLanguages() {
-    return Collections.unmodifiableCollection(ourRegisteredLanguages.values());
+    final Collection<Language> languages = ourRegisteredLanguages.values();
+    return Collections.unmodifiableCollection(new ArrayList<Language>(languages));
   }
 
   /**

@@ -85,6 +85,11 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void show() {
+    show(true);
+  }
+
+  public void show(boolean restoreBounds) {
+
     myFocusedCallback = new ActionCallback();
 
     if (myProject != null) {
@@ -115,7 +120,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     frame.getContentPane().add(myComponent, BorderLayout.CENTER);
     frame.setTitle(myTitle);
     frame.setIconImage(myImage);
-    loadFrameState(myProject, myDimensionKey, frame);
+
+    if (restoreBounds) {
+      loadFrameState(myProject, myDimensionKey, frame);
+    }
 
     myFocusWatcher = new FocusWatcher() {
       protected void focusLostImpl(final FocusEvent e) {
@@ -277,6 +285,11 @@ public class FrameWrapper implements Disposable, DataProvider {
     private MyJFrame(IdeFrame parent) throws HeadlessException {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return getRootPane();
     }
 
     @Override

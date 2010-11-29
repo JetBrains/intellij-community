@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             final PsiStatement elseStatement =
                     ControlFlowUtils.stripBraces(elseBranch);
             final PsiExpression condition = ifStatement.getCondition();
-            final StringBuilder replacementText = new StringBuilder();
+            @NonNls final StringBuilder replacementText = new StringBuilder();
             if (thenStatement instanceof PsiReturnStatement) {
                 final PsiReturnStatement elseReturn =
                         (PsiReturnStatement) elseStatement;
@@ -133,12 +134,11 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         private static void appendExpressionText(
                 @Nullable PsiExpression expression,
                 StringBuilder out) {
-            final PsiExpression strippedExpression =
-                    ParenthesesUtils.stripParentheses(expression);
-            if (strippedExpression == null) {
+            expression = ParenthesesUtils.stripParentheses(expression);
+            if (expression == null) {
                 return;
             }
-            final String expressionText = strippedExpression.getText();
+            final String expressionText = expression.getText();
             if (ParenthesesUtils.getPrecedence(expression) >
                     ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
                 out.append('(');

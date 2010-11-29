@@ -22,22 +22,16 @@ import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.refactoring.RefactoringActionHandler;
 import org.intellij.lang.xpath.completion.CompletionLists;
-import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,8 +105,11 @@ public final class XPathLanguage extends Language {
                 if (element instanceof NavigationItem) {
                     final NavigationItem navigationItem = ((NavigationItem)element);
                     final ItemPresentation presentation = navigationItem.getPresentation();
-                    if (presentation != null && presentation.getPresentableText() != null) {
-                        return presentation.getPresentableText();
+                    if (presentation != null) {
+                      final String text = presentation.getPresentableText();
+                      if (text != null) {
+                          return text;
+                      }
                     }
                     final String name = navigationItem.getName();
                     if (name != null) {
@@ -152,54 +149,6 @@ public final class XPathLanguage extends Language {
 
         public boolean isKeyword(String text, Project project) {
             return CompletionLists.AXIS_NAMES.contains(text) || CompletionLists.NODE_TYPE_FUNCS.contains(text) || CompletionLists.OPERATORS.contains(text);
-        }
-    }
-
-    public static class XPathRefactoringSupportProvider extends RefactoringSupportProvider {
-        @Override
-        public boolean isSafeDeleteAvailable(PsiElement element) {
-            if (!element.isWritable() || element.getContainingFile() == null) return false;
-            final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(element).getRefactoringSupportProvider();
-            return realProvider != null && realProvider.isSafeDeleteAvailable(element);
-        }
-
-        @Override
-        public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
-            if (!element.isWritable() || element.getContainingFile() == null) return false;
-            final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(element).getRefactoringSupportProvider();
-            return realProvider != null && realProvider.isInplaceRenameAvailable(element, context);
-        }
-
-        @Override
-        public RefactoringActionHandler getIntroduceVariableHandler() {
-            return new RefactoringActionHandler() {
-                public void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext) {
-                    final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(file).getRefactoringSupportProvider();
-                    if (realProvider == null || realProvider.getIntroduceVariableHandler() == null) {
-                        showError(project);
-                    } else {
-                        final RefactoringActionHandler handler = realProvider.getIntroduceVariableHandler();
-                        assert handler != null;
-                        handler.invoke(project, editor, file, dataContext);
-                    }
-                }
-
-                public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
-                    assert elements.length > 0 : "No elements passed to handler";
-                    final RefactoringSupportProvider realProvider = ContextProvider.getContextProvider(elements[0]).getRefactoringSupportProvider();
-                    if (realProvider == null || realProvider.getIntroduceVariableHandler() == null) {
-                        showError(project);
-                    } else {
-                        final RefactoringActionHandler handler = realProvider.getIntroduceVariableHandler();
-                        assert handler != null;
-                        handler.invoke(project, elements, dataContext);
-                    }
-                }
-
-                private void showError(Project project) {
-                    Messages.showErrorDialog(project, "Introduce Variable is not supported in this context", "XPath - Introduce Variable");
-                }
-            };
         }
     }
 

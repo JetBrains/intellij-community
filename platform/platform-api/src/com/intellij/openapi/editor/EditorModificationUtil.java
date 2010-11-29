@@ -205,7 +205,7 @@ public class EditorModificationUtil {
         String s = getStringContent(content);
 
         String[] lines = LineTokenizer.tokenize(s.toCharArray(), false);
-        if (lines.length > 1 || selectedLinesCount <= 1) {
+        if (lines.length > 1 || selectedLinesCount == 0) {
           int longestLineLength = 0;
           for (String line : lines) {
             longestLineLength = Math.max(longestLineLength, line.length());

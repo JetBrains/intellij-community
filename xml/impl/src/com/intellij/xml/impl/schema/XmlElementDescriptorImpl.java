@@ -268,10 +268,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context, final ComplexTypeDescriptor typeDescriptor,
-                                                                     XmlAttributeDescriptor[] attributeDescriptors,
-                                                                     final String ns) {
-    if (typeDescriptor.canContainAttribute(ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+  private static XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context,
+                                                                            final ComplexTypeDescriptor typeDescriptor,
+                                                                            XmlAttributeDescriptor[] attributeDescriptors,
+                                                                            final String ns) {
+    if (typeDescriptor.canContainAttribute(ns, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
       final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
 
       if (descriptor instanceof XmlNSDescriptorImpl) {
@@ -337,7 +338,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType(context);
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
-      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace);
+      final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(namespace, qName);
 
       if (containAttributeType != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
         return new AnyXmlAttributeDescriptor(attributeName, containAttributeType);

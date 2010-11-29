@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.refactoring.introduceParameter.XsltIntroduceParameterAction;
+import org.intellij.lang.xpath.xslt.refactoring.extractTemplate.XsltExtractTemplateAction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public class XsltRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public RefactoringActionHandler getIntroduceParameterHandler() {
-    return new XsltIntroduceParameterAction();
+  public RefactoringActionHandler getExtractMethodHandler() {
+    return new XsltExtractTemplateAction();
   }
 }

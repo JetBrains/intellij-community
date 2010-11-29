@@ -85,6 +85,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     final PsiElement[] elements = localSearchScope.getScope();
     for (PsiElement element : elements) {
       if (element instanceof PsiDirectory) return true;
+      if (!element.isValid()) continue;
       final PsiFile file = element.getContainingFile();
       if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) return true;
     }
@@ -171,7 +172,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     return true;
   }
 
-  private static boolean processReferences(Processor<PsiReference> processor, final PsiFile file, String name, final PsiElement element,
+  private static boolean processReferences(final Processor<PsiReference> processor, final PsiFile file, String name, final PsiElement element,
                                            final LocalSearchScope filterScope) {
     CharSequence chars = ApplicationManager.getApplication().runReadAction(new NullableComputable<CharSequence>() {
       public CharSequence compute() {
@@ -195,15 +196,16 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
 
       if (index < 0) break;
       final int finalIndex = index;
-      final PsiReference ref = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiReference>() {
-        public PsiReference compute() {
+      final Boolean searchDone = ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
+        public Boolean compute() {
           final PsiReference ref = file.findReferenceAt(finalIndex + offset + 1);
-          return ref != null && ref.isReferenceTo(element) ? ref : null;
+          if (ref != null && ref.isReferenceTo(element)) {
+            return processor.process(ref);
+          }
+          return true;
         }
       });
-      if (ref != null) {
-        if (!processor.process(ref)) return false;
-      }
+      if (!searchDone.booleanValue()) return false;
       index++;
     }
 

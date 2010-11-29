@@ -41,6 +41,8 @@ public abstract class ExportSignedPackageWizardStep extends StepAdapter {
     return false;
   }
 
+  public abstract String getHelpId();
+
   protected static void checkNewPassword(JPasswordField passwordField, JPasswordField confirmedPasswordField) throws CommitStepException {
     char[] password = passwordField.getPassword();
     char[] confirmedPassword = confirmedPasswordField.getPassword();

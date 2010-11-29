@@ -16,7 +16,6 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -68,14 +67,7 @@ public class ConstructorCountInspection extends ClassMetricInspection {
         }
 
         private int calculateTotalConstructorCount(PsiClass aClass) {
-            final PsiMethod[] methods = aClass.getMethods();
-            int totalCount = 0;
-            for(final PsiMethod method : methods){
-                if(method.isConstructor()){
-                    totalCount++;
-                }
-            }
-            return totalCount;
+            return aClass.getConstructors().length;
         }
     }
 }

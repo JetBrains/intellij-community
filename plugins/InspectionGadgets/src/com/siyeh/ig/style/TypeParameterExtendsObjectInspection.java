@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "type.parameter.extends.object.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "TypeParameterExplicitlyExtendsObject";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final Integer type = (Integer) infos[0];
@@ -52,10 +55,12 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ExtendsObjectFix();
     }
@@ -68,6 +73,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
                     "extends.object.remove.quickfix");
         }
 
+        @Override
         public void doFix(@NotNull Project project,
                           ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
@@ -116,7 +122,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
                 return;
             }
             final PsiClassType extendsType = extendsListTypes[0];
-            if (!extendsType.equalsToText("java.lang.Object")) {
+            if (!extendsType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
                 return;
             }
             final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();

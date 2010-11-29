@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -126,8 +127,11 @@ public abstract class GroovyScriptRunner {
       }
     }
 
-    params.getProgramParametersList().add("--classpath");
-    params.getProgramParametersList().add(nonCore.getPathsString());
+    final String cp = nonCore.getPathsString();
+    if (!StringUtil.isEmptyOrSpaces(cp)) {
+      params.getProgramParametersList().add("--classpath");
+      params.getProgramParametersList().add(cp);
+    }
   }
 
 }

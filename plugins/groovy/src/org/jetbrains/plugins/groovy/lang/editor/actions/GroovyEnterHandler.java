@@ -87,7 +87,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
         if (element != null &&
             element.getNode().getElementType() == mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            text.length() > caret) {
+            text.length() > caret && afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
@@ -187,7 +187,8 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
         String text = node.getText();
         String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
         TextRange literalRange = stringElement.getTextRange();
-        document.replaceString(literalRange.getStartOffset(), literalRange.getEndOffset(), "'''" + innerText + "'''");
+        document.insertString(literalRange.getEndOffset(), "''");
+        document.insertString(literalRange.getStartOffset(), "''");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
@@ -223,7 +224,8 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
         TextRange parentRange = parent.getTextRange();
-        document.replaceString(parentRange.getStartOffset(), parentRange.getEndOffset(), "\"\"\"" + innerText + "\"\"\"");
+        document.insertString(parentRange.getEndOffset(), "\"\"");
+        document.insertString(parentRange.getStartOffset(), "\"\"");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         if (rightFromDollar) {

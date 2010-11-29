@@ -259,6 +259,7 @@ public class GroovyCompletionUtil {
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
+    assert psiClass.isValid();
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
@@ -469,6 +470,7 @@ public class GroovyCompletionUtil {
   public static final Set<String> OPERATOR_METHOD_NAMES = new HashSet<String>();
   static {
     COLLECTION_METHOD_NAMES.add("each");
+    COLLECTION_METHOD_NAMES.add("eachWithIndex");
     COLLECTION_METHOD_NAMES.add("any");
     COLLECTION_METHOD_NAMES.add("every");
     COLLECTION_METHOD_NAMES.add("reverseEach");
@@ -508,16 +510,20 @@ public class GroovyCompletionUtil {
 
 
 
-  public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor) {
+  public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor, @Nullable PsiType type) {
+    if (type == null) return false;
     String name = gdkMethod.getStaticMethod().getName();
 
     final PsiType baseType = gdkMethod.getStaticMethod().getParameterList().getParameters()[0].getType();
     if (!TypeConversionUtil.erasure(baseType).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return false;
 
-    final PsiType type = substitutor != null ? substitutor.substitute(baseType) : baseType;
+    final PsiType substituted = substitutor != null ? substitutor.substitute(baseType) : baseType;
 
     if (COLLECTION_METHOD_NAMES.contains(name)) {
-      return !(type instanceof PsiArrayType) && !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE);
+      return !(type instanceof PsiArrayType ||
+               InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE) ||
+               substituted instanceof PsiArrayType ||
+               InheritanceUtil.isInheritor(substituted, CommonClassNames.JAVA_LANG_ITERABLE));
     }
     if ("with".equals(name)) return false;
 

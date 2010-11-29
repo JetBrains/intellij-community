@@ -49,7 +49,6 @@ public class ElementFactory {
     ce.setHasSuper(psi.hasSuperClass(project, clazz));
     PsiClass superClass = psi.getSuperClass(project, clazz);
     ce.setSuperName(superClass == null ? null : superClass.getName());
-    ce.setSuperQualifiedName(superClass == null ? null : superClass.getQualifiedName());
 
     // interfaces
     ce.setImplementNames(psi.getImplementsClassnames(clazz));
@@ -58,7 +57,7 @@ public class ElementFactory {
     ce.setEnum(clazz.isEnum());
     ce.setDeprecated(clazz.isDeprecated());
     ce.setException(PsiAdapter.isExceptionClass(clazz));
-    ce.setAbstract(psi.isAbstractClass(clazz));
+    ce.setAbstract(clazz.hasModifierProperty(PsiModifier.ABSTRACT));
 
     return ce;
   }
@@ -125,8 +124,8 @@ public class ElementFactory {
     me.setGetter(psi.isGetterMethod(factory, method));
 
     // misc
-    me.setReturnTypeVoid(psi.isTypeOfVoid(method.getReturnType()));
     me.setDeprecated(method.isDeprecated());
+    me.setReturnTypeVoid(psi.isTypeOfVoid(method.getReturnType()));
 
     // modifiers
     if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) me.setModifierAbstract(true);

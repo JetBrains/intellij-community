@@ -16,12 +16,14 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.Messages;
 import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.win32.StdCallLibrary;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -37,7 +39,7 @@ public class Win32Restarter {
     int pid = kernel32.GetCurrentProcessId();
 
     try {
-      Runtime.getRuntime().exec("restarter " + Integer.toString(pid) + " " + cline);
+      Runtime.getRuntime().exec("restarter " + Integer.toString(pid) + " " + cline, null, new File(PathManager.getBinPath()));
     }
     catch (IOException ex) {
       Messages.showMessageDialog("Restart failed: " + ex.getMessage(), "Restart", Messages.getErrorIcon());

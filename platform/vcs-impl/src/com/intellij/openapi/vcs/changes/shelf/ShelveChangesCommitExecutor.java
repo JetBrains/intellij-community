@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class ShelveChangesCommitExecutor implements CommitExecutor {
+public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor");
 
   private final Project myProject;
@@ -54,6 +54,11 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
   @NotNull
   public CommitSession createCommitSession() {
     return new ShelveChangesCommitSession();
+  }
+
+  @Override
+  public String getHelpId() {
+    return "reference.dialogs.vcs.shelve";
   }
 
   private class ShelveChangesCommitSession implements CommitSession {

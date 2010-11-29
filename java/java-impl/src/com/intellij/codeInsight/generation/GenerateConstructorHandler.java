@@ -82,12 +82,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     PsiClass baseClass = aClass.getSuperClass();
     if (baseClass != null){
       ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
-      PsiMethod[] methods = baseClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (method.isConstructor()) {
-          if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, aClass)) {
-            array.add(method);
-          }
+      for (PsiMethod method : baseClass.getConstructors()) {
+        if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, aClass)) {
+          array.add(method);
         }
       }
       if (!array.isEmpty()){

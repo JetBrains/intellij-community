@@ -29,7 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ParametrizedRunnable;
+import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +45,13 @@ public class AddCustomLibraryDialog extends DialogWrapper {
   private final LibrariesContainer myLibrariesContainer;
   private final Module myModule;
   private final ModifiableRootModel myModifiableRootModel;
-  private final @Nullable ParametrizedRunnable<ModifiableRootModel> myBeforeLibraryAdded;
+  private final @Nullable ParameterizedRunnable<ModifiableRootModel> myBeforeLibraryAdded;
   private final List<Library> myAddedLibraries = new ArrayList<Library>();
 
   private AddCustomLibraryDialog(CustomLibraryDescription description, LibrariesContainer librariesContainer,
                                  Module module,
                                  ModifiableRootModel modifiableRootModel,
-                                 @Nullable ParametrizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                 @Nullable ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
     super(module.getProject(), true);
     myLibrariesContainer = librariesContainer;
     myModule = module;
@@ -68,14 +68,14 @@ public class AddCustomLibraryDialog extends DialogWrapper {
 
   public static AddCustomLibraryDialog createDialog(@NotNull CustomLibraryDescription description,
                                                     final @NotNull Module module,
-                                                    final ParametrizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    final ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
     return createDialog(description, LibrariesContainerFactory.createContainer(module), module, null, beforeLibraryAdded);
   }
 
   public static AddCustomLibraryDialog createDialog(CustomLibraryDescription description,
                                                     final @NotNull LibrariesContainer librariesContainer, final @NotNull Module module,
                                                     final @Nullable ModifiableRootModel modifiableRootModel,
-                                                    @Nullable ParametrizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    @Nullable ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
     return new AddCustomLibraryDialog(description, librariesContainer, module, modifiableRootModel, beforeLibraryAdded);
   }
 

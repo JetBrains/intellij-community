@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.TipOfTheDayManager;
 import com.intellij.featureStatistics.ui.ProgressTipPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import javax.swing.*;
 */
 public final class ProgressFunProvider implements ProgressFunComponentProvider {
   @Nullable
-  public JComponent getProgressFunComponent(Project project, String processId) {
+  public JComponent getProgressFunComponent(Project project, @NotNull String processId) {
     FeatureUsageTrackerImpl tracker = (FeatureUsageTrackerImpl) FeatureUsageTracker.getInstance();
     if (ProgressFunComponentProvider.COMPILATION_ID.equals(processId)) {
       if (!tracker.SHOW_IN_COMPILATION_PROGRESS) return null;

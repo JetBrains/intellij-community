@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -55,7 +56,8 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
         @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
-            if (!TypeUtils.expressionHasType(expression, "java.lang.String")) {
+            if (!TypeUtils.expressionHasType(expression,
+                    CommonClassNames.JAVA_LANG_STRING)) {
                 return;
             }
             final String text = expression.getText();

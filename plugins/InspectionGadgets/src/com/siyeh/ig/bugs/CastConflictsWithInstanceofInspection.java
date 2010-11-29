@@ -122,18 +122,19 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
             super(instanceofTypeElement, castType);
         }
 
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "cast.conflicts.with.instanceof.quickfix1",
+                    myCastType.getPresentableText(),
+                    myInstanceofTypeElement.getType().getPresentableText());
+        }
+
         @Override
         protected PsiElement replace(PsiTypeElement castTypeElement,
                                PsiTypeElement instanceofTypeElement,
                                Project project) {
             return castTypeElement.replace(instanceofTypeElement);
-        }
-
-        @NotNull
-        public String getName() {
-            return "Replace cast to \'" +
-                   myCastType.getPresentableText() + "\' with \'" +
-                   myInstanceofTypeElement.getType().getPresentableText() + '\'';
         }
     }
 
@@ -144,18 +145,19 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
             super(instanceofTypeElement, castExpressionType);
         }
 
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "cast.conflicts.with.instanceof.quickfix2",
+                    myInstanceofTypeElement.getType().getPresentableText(),
+                    myCastType.getPresentableText());
+        }
+
         @Override
         protected PsiElement replace(PsiTypeElement castTypeElement,
                                PsiTypeElement instanceofTypeElement,
                                Project project) {
             return instanceofTypeElement.replace(castTypeElement);
-        }
-
-        @NotNull
-        public String getName() {
-            return "Replace instanceof \'" +
-                   myInstanceofTypeElement.getType().getPresentableText() +
-                   "\' with \'" + myCastType.getPresentableText() + '\'';
         }
     }
 }

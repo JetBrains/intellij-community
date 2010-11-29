@@ -476,19 +476,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) {
-      LOG.error(myArranger);
+      LOG.error(myArranger + "; " + myEditor.isDisposed());
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
     layeredPanePoint.x -= getComponent().getInsets().left;
-    if (dim.width > layeredPane.getWidth()){
-      dim.width = layeredPane.getWidth();
-    }
-    int wshift = layeredPane.getWidth() - (layeredPanePoint.x + dim.width);
-    if (wshift < 0){
-      layeredPanePoint.x += wshift;
-    }
 
     int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
     int shiftHigh = layeredPanePoint.y - dim.height;
@@ -712,6 +705,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public Rectangle getCurrentItemBounds(){
     int index = myList.getSelectedIndex();
+    if (index < 0) {
+      LOG.error("No selected element, size=" + myList.getModel().getSize() + "; items" + getItems());
+    }
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
       LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
@@ -982,7 +978,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       Point point = calculatePosition();
-      updateBounds(point.x,point.y);
 
       final Dimension size = myProcessIcon.getPreferredSize();
       myIconPanel.setBounds(getComponent().getRootPane().getLayeredPane().getWidth() - size.width, 0, size.width, size.height);

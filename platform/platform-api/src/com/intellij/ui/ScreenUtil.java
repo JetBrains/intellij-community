@@ -24,25 +24,39 @@ import java.awt.*;
  */
 public class ScreenUtil {
 
-  public static final Rectangle getScreenRectangle(int aTargetX, int aTargetY) {
+  public static final Rectangle getScreenRectangle(int x, int y) {
     GraphicsConfiguration targetGraphicsConfiguration = null;
     GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsDevice[] devices = env.getScreenDevices();
+
+    int minDistance;
+    GraphicsConfiguration minDsitanceConfig;
     for (int i = 0; i < devices.length; i++) {
-      GraphicsDevice device = devices[i];
-      GraphicsConfiguration graphicsConfiguration = device.getDefaultConfiguration();
-      Rectangle r = graphicsConfiguration.getBounds();
-      if (r.x <= aTargetX && aTargetX < r.x + r.width && r.y <= aTargetY && aTargetY < r.y + r.height) {
-        targetGraphicsConfiguration = graphicsConfiguration;
+      GraphicsDevice eachDevice = devices[i];
+      GraphicsConfiguration eachConfig = eachDevice.getDefaultConfiguration();
+      Rectangle eachRec = eachConfig.getBounds();
+
+      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(eachConfig);
+      if (insets != null) {
+        eachRec.x -= insets.left;
+        eachRec.width += (insets.left + insets.right);
+        eachRec.y -= insets.top;
+        eachRec.height += (insets.top + insets.bottom);
+      }
+
+      if (eachRec.x <= x && x < eachRec.x + eachRec.width && eachRec.y <= y && y < eachRec.y + eachRec.height) {
+        targetGraphicsConfiguration = eachConfig;
         break;
       }
+
+
     }
     if (targetGraphicsConfiguration == null && devices.length > 0) {
       targetGraphicsConfiguration = env.getDefaultScreenDevice().getDefaultConfiguration();
     }
     if (targetGraphicsConfiguration == null) {
       throw new IllegalStateException(
-          "It's impossible to determine target graphics environment for point (" + aTargetX + "," + aTargetY + ")"
+          "It's impossible to determine target graphics environment for point (" + x + "," + y + ")"
       );
     }
 
@@ -67,8 +81,8 @@ public class ScreenUtil {
   }
 
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
-    int screenX = aRectangle.x;
-    int screenY = aRectangle.y;
+    int screenX = aRectangle.x + aRectangle.width / 2;
+    int screenY = aRectangle.y + aRectangle.height / 2;
     Rectangle screen = getScreenRectangle(screenX, screenY);
 
     moveToFit(aRectangle, screen, null);

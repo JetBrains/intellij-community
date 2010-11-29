@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,22 +28,26 @@ import java.util.*;
 public class ComparatorMethodParameterNotUsedInspection
         extends BaseInspection {
 
+    @Override
     @Nls @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "comparator.method.parameter.not.used.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "comparator.method.parameter.not.used.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new CompareMethodDoesNotUseParameterVisitor();
     }
@@ -53,7 +57,8 @@ public class ComparatorMethodParameterNotUsedInspection
 
         @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
-            if (!MethodUtils.methodMatches(method, "java.util.Comparator",
+            if (!MethodUtils.methodMatches(method,
+                    CommonClassNames.JAVA_UTIL_COMPARATOR,
                     PsiType.INT, "compare", PsiType.NULL, PsiType.NULL)) {
                 return;
             }

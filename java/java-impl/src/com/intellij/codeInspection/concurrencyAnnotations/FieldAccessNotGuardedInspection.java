@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool {
 
@@ -68,11 +69,25 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
       if (containingMethod != null && JCiPUtil.isGuardedBy(containingMethod, guard)) {
         return;
       }
+      if (containingMethod != null && containingMethod.isConstructor()) {
+        return;
+      }
       if ("this".equals(guard)) {
         if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
           return;
         }
       }
+
+      PsiElement lockExpr = findLockTryStatement(expression, guard);
+      while (lockExpr != null) {
+        PsiElement child = lockExpr;
+        while (child != null) {
+          if (isLockGuardStatement(guard, child, "lock")) return;
+          child = child.getPrevSibling();
+        }
+        lockExpr = lockExpr.getParent();
+      }
+
       PsiElement check = expression;
       while (true) {
         final PsiSynchronizedStatement syncStatement = PsiTreeUtil.getParentOfType(check, PsiSynchronizedStatement.class);
@@ -86,8 +101,41 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
         }
         check = syncStatement;
       }
-      //TODO: see if there is a lock via a .lock* call
       myHolder.registerProblem(expression, "Access to field <code>#ref</code> outside of declared guards #loc");
+    }
+
+    @Nullable
+    private static PsiTryStatement findLockTryStatement(PsiReferenceExpression expression, String guard) {
+      PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(expression, PsiTryStatement.class);
+      while (tryStatement != null) {
+        PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+        if (finallyBlock != null) {
+          for (PsiStatement psiStatement : finallyBlock.getStatements()) {
+            if (isLockGuardStatement(guard, psiStatement, "unlock")) {
+              return tryStatement;
+            }
+          }
+        }
+        tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class);
+      }
+      return tryStatement;
+    }
+
+    private static boolean isLockGuardStatement(String guard, PsiElement element, final String lockMethodStart) {
+      if (element instanceof PsiExpressionStatement) {
+        final PsiExpression psiExpression = ((PsiExpressionStatement)element).getExpression();
+        if (psiExpression instanceof PsiMethodCallExpression) {
+          final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)psiExpression).getMethodExpression();
+          final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+          if (qualifierExpression != null && qualifierExpression.getText().equals(guard)) {
+            final PsiElement resolve = methodExpression.resolve();
+            if (resolve instanceof PsiMethod && ((PsiMethod)resolve).getName().startsWith(lockMethodStart)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     }
   }
 }

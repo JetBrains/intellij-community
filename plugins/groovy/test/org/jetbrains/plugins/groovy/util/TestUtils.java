@@ -44,6 +44,7 @@ public abstract class TestUtils {
   public static final String END_MARKER = "<end>";
   public static final String GROOVY_JAR = "groovy-all.jar";
   public static final String GROOVY_JAR_17 = "groovy-all-1.7.jar";
+  public static final String GROOVY_JAR_18 = "groovy-1.8.0-beta-2.jar";
 
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
@@ -59,6 +60,14 @@ public abstract class TestUtils {
 
   public static String getMockGroovy1_7LibraryName() {
     return getMockGroovy1_7LibraryHome()+"/groovy-all-1.7.3.jar";
+  }
+
+  public static String getMockGroovy1_8LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib1.8";
+  }
+
+  public static String getMockGroovy1_8LibraryName() {
+    return getMockGroovy1_8LibraryHome()+"/"+GROOVY_JAR_18;
   }
 
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {

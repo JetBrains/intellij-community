@@ -31,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *         Date: Aug 24, 2010
  */
 public class LowMemoryWatcher {
+  private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   
   public static abstract class ForceableAdapter implements Forceable {
     public boolean isDirty() {
@@ -49,6 +50,7 @@ public class LowMemoryWatcher {
 
   static {
     final Thread thread = new Thread("LowMemoryWatcher") {
+      boolean shouldCleanup = false;
       public void run() {
         updateRef();
         final Set<WeakReference<LowMemoryWatcher>> toRemove = new HashSet<WeakReference<LowMemoryWatcher>>();
@@ -57,18 +59,25 @@ public class LowMemoryWatcher {
           try {
             ourRefQueue.remove();
             updateRef();
-            
+
+            if (!shouldCleanup) {
+              final Runtime runtime = Runtime.getRuntime();
+              shouldCleanup = (runtime.maxMemory() - runtime.totalMemory()) <= MEM_THRESHOLD;
+            }
+
             for (WeakReference<LowMemoryWatcher> instanceRef : ourInstances) {
               final LowMemoryWatcher watcher = instanceRef.get();
               if (watcher == null) {
                 toRemove.add(instanceRef);
               }
               else {
-                try {
-                  watcher.doCleanup();
-                }
-                catch (Throwable e) {
-                  LOG.info(e);
+                if (shouldCleanup) {
+                  try {
+                    watcher.doCleanup();
+                  }
+                  catch (Throwable e) {
+                    LOG.info(e);
+                  }
                 }
               }
             }

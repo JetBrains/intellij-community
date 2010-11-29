@@ -17,10 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -44,9 +41,11 @@ public class SplitLineAction extends EditorAction {
     }
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
-
       final Document document = editor.getDocument();
+      final RangeMarker rangeMarker =
+        document.createRangeMarker(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset() );
+      rangeMarker.setGreedyToLeft(false);
+      rangeMarker.setGreedyToRight(false);
       final CharSequence chars = document.getCharsSequence();
 
       int offset = editor.getCaretModel().getOffset();
@@ -65,7 +64,7 @@ public class SplitLineAction extends EditorAction {
       } else {
         getEnterHandler().execute(editor, dataContext);
 
-        editor.getCaretModel().moveToLogicalPosition(caretPosition);
+        editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
 

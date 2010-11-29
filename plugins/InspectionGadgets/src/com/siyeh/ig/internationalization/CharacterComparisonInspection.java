@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiKeyword;
@@ -84,7 +85,8 @@ public class CharacterComparisonInspection extends BaseInspection {
 
         private static boolean isCharacter(PsiExpression expression) {
             return  TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
-                    TypeUtils.expressionHasType(expression, "java.lang.Character");
+                    TypeUtils.expressionHasType(expression,
+                            CommonClassNames.JAVA_LANG_CHARACTER);
         }
     }
 }

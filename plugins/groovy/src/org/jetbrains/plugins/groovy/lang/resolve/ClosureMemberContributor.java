@@ -35,10 +35,10 @@ public abstract class ClosureMemberContributor extends NonCodeMembersContributor
                                      ResolveState state) {
     if (!(qualifierType instanceof GrClosureType)) return;
 
-    GrClosableBlock closure = (GrClosableBlock)state.get(ResolverProcessor.RESOLVE_CONTEXT);
-    if (closure == null) return;
+    final GroovyPsiElement context = state.get(ResolverProcessor.RESOLVE_CONTEXT);
+    if (!(context instanceof GrClosableBlock)) return;
 
-    processMembers(closure, processor, place, state);
+    processMembers((GrClosableBlock)context, processor, place, state);
   }
 
   protected abstract void processMembers(@NotNull GrClosableBlock closure,

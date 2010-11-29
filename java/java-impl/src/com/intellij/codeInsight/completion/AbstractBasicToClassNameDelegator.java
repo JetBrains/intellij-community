@@ -49,12 +49,11 @@ public abstract class AbstractBasicToClassNameDelegator extends CompletionContri
     final CompletionParameters classParams;
 
     final int invocationCount = parameters.getInvocationCount();
-    final int offset = parameters.getOffset();
     if (empty.get().booleanValue()) {
-      classParams = new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, invocationCount);
+      classParams = parameters.withType(CompletionType.CLASS_NAME);
     }
     else if (invocationCount > 1) {
-      classParams = new CompletionParameters(position, file, CompletionType.CLASS_NAME, offset, invocationCount - 1);
+      classParams = parameters.withType(CompletionType.CLASS_NAME).withInvocationCount(invocationCount - 1);
     } else {
       return;
     }

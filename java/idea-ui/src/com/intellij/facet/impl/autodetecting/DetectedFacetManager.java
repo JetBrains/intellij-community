@@ -21,10 +21,7 @@ import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsDialog;
-import com.intellij.facet.impl.autodetecting.model.DetectedFacetInfo;
-import com.intellij.facet.impl.autodetecting.model.FacetInfo2;
-import com.intellij.facet.impl.autodetecting.model.FacetInfoBackedByFacet;
-import com.intellij.facet.impl.autodetecting.model.ProjectFacetInfoSet;
+import com.intellij.facet.impl.autodetecting.model.*;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -327,11 +324,9 @@ public class DetectedFacetManager implements Disposable {
 
           String link = event.getDescription();
           if ("create".equals(link)) {
-            FacetInfo2<Module> underlyingInfo = detectedFacetInfo.getUnderlyingFacetInfo();
-            final Facet underlyingFacet = underlyingInfo != null ? ((FacetInfoBackedByFacet)underlyingInfo).getFacet() : null;
             new WriteAction() {
               protected void run(final Result result) {
-                createFacet(detectedFacetInfo, underlyingFacet);
+                createFacetWithUnderlyingFacets(detectedFacetInfo);
               }
             }.execute();
           }
@@ -344,6 +339,21 @@ public class DetectedFacetManager implements Disposable {
         }
       }
     }, Collections.singletonList(detectedFacetInfo));
+  }
+
+  private Facet createFacetWithUnderlyingFacets(DetectedFacetInfo<Module> detectedFacetInfo) {
+    FacetInfo2<Module> underlyingInfo = detectedFacetInfo.getUnderlyingFacetInfo();
+    final Facet underlyingFacet;
+    if (underlyingInfo instanceof FacetInfoBackedByFacet) {
+      underlyingFacet = ((FacetInfoBackedByFacet)underlyingInfo).getFacet();
+    }
+    else if (underlyingInfo instanceof DetectedFacetInfo) {
+      underlyingFacet = createFacetWithUnderlyingFacets((DetectedFacetInfo<Module>)underlyingInfo);
+    }
+    else {
+      underlyingFacet = null;
+    }
+    return createFacet(detectedFacetInfo, underlyingFacet);
   }
 
   private FacetDetectedNotification createSeveralFacetsDetectedNotification(final Set<DetectedFacetInfo<Module>> facets) {

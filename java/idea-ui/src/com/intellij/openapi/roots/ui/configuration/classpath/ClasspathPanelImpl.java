@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
+import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -89,6 +90,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     JComboBox scopeEditor = new JComboBox(new EnumComboBoxModel<DependencyScope>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
+    myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
+        @Override
+        protected String getTextFor(@NotNull final DependencyScope value) {
+          return value.getDisplayName();
+        }
+      });
+
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     new SpeedSearchBase<Table>(myEntryTable) {
@@ -187,7 +195,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), myEntryTable);
+    navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
+                                             myEntryTable);
     actionGroup.add(navigateAction);
     actionGroup.add(new MyFindUsagesAction());
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());

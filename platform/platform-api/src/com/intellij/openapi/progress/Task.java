@@ -69,6 +69,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return "<unknown>";
   }
 
+  @NotNull
   public final String getTitle() {
     return myTitle;
   }
@@ -111,6 +112,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract boolean isModal();
 
+  @NotNull
   public final Modal asModal() {
     if (isModal()) {
       return (Modal)this;
@@ -118,6 +120,7 @@ public abstract class Task implements TaskInfo, Progressive {
     throw new IllegalStateException("Not a modal task");
   }
 
+  @NotNull
   public final Backgroundable asBackgroundable() {
     if (!isModal()) {
       return (Backgroundable)this;

@@ -56,7 +56,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiLock;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
@@ -73,8 +72,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -163,7 +160,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return (IApplicationStore)super.getStateStore();
   }
 
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
+  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, @NotNull String appName) {
     super(null);
 
     getPicoContainer().registerComponentInstance(Application.class, this);
@@ -296,6 +293,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -392,6 +390,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         finally {
           Thread.interrupted(); // reset interrupted status
         }
+      }
+    });
+  }
+
+  @Override
+  public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
+    return ourThreadExecutorsService.submit(new Callable<T>() {
+      public T call() {
+        try {
+          return action.call();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
+        return null;
       }
     });
   }
@@ -495,17 +514,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public boolean runProcessWithProgressSynchronously(final Runnable process, String progressTitle, boolean canBeCanceled, Project project) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     Project project) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
   }
 
-  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull final String progressTitle,
+                                                     final boolean canBeCanceled,
+                                                     @Nullable final Project project,
                                                      final JComponent parentComponent) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, parentComponent, null);
   }
 
-  public boolean runProcessWithProgressSynchronously(final Runnable process, final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
-                                                       final JComponent parentComponent, final String cancelText) {
+  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull final String progressTitle,
+                                                     final boolean canBeCanceled,
+                                                     @Nullable final Project project,
+                                                     final JComponent parentComponent,
+                                                     final String cancelText) {
     assertIsDispatchThread();
 
     if (myExceptionalThreadWithReadAccessRunnable != null ||
@@ -581,40 +610,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     return progressIndicator.isModal() && ((ProgressIndicatorEx)progressIndicator).isModalityEntered();
-  }
-
-  public <T> List<Future<T>> invokeAllUnderReadAction(@NotNull Collection<Callable<T>> tasks, final ExecutorService executorService) throws Throwable {
-    final List<Callable<T>> newCallables = new ArrayList<Callable<T>>(tasks.size());
-    for (final Callable<T> task : tasks) {
-      Callable<T> newCallable = new Callable<T>() {
-        public T call() throws Exception {
-          boolean old = setExceptionalThreadWithReadAccessFlag(true);
-          try {
-            LOG.assertTrue(isReadAccessAllowed());
-            return task.call();
-          }
-          finally {
-            setExceptionalThreadWithReadAccessFlag(old);
-          }
-        }
-      };
-      newCallables.add(newCallable);
-    }
-    final Ref<Throwable> exception = new Ref<Throwable>();
-    List<Future<T>> result = runReadAction(new Computable<List<Future<T>>>() {
-      public List<Future<T>> compute() {
-        try {
-          return ConcurrencyUtil.invokeAll(newCallables, executorService);
-        }
-        catch (Throwable throwable) {
-          exception.set(throwable);
-          return null;
-        }
-      }
-    });
-    Throwable throwable = exception.get();
-    if (throwable != null) throw throwable;
-    return result;
   }
 
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
@@ -821,7 +816,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       });
     }
 
-    LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread()) || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
+    LOG.assertTrue(myActionsLock.isWriteLockAcquired(Thread.currentThread())
+                   || !Thread.holdsLock(PsiLock.LOCK), "Thread must not hold PsiLock while performing writeAction");
     try {
       myActionsLock.writeLock().acquire();
     }

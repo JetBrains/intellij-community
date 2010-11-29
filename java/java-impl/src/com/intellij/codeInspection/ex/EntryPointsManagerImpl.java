@@ -129,17 +129,19 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(Element element) {
     Element entryPointsElement = element.getChild("entry_points");
-    final String version = entryPointsElement.getAttributeValue(VERSION_ATTR);
-    if (!Comparing.strEqual(version, VERSION)) {
-      convert(entryPointsElement, myPersistentEntryPoints);
-    }
-    else {
-      List content = entryPointsElement.getChildren();
-      for (final Object aContent : content) {
-        Element entryElement = (Element)aContent;
-        if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
-          SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(entryElement);
-          myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
+    if (entryPointsElement != null) {
+      final String version = entryPointsElement.getAttributeValue(VERSION_ATTR);
+      if (!Comparing.strEqual(version, VERSION)) {
+        convert(entryPointsElement, myPersistentEntryPoints);
+      }
+      else {
+        List content = entryPointsElement.getChildren();
+        for (final Object aContent : content) {
+          Element entryElement = (Element)aContent;
+          if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
+            SmartRefElementPointerImpl entryPoint = new SmartRefElementPointerImpl(entryElement);
+            myPersistentEntryPoints.put(entryPoint.getFQName(), entryPoint);
+          }
         }
       }
     }
@@ -342,7 +344,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   @Override
   public void configureAnnotations() {
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by");
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by", true);
     new DialogWrapper(myProject) {
       {
         init();

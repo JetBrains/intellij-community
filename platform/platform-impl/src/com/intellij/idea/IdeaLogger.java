@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 
@@ -107,10 +108,7 @@ public class IdeaLogger extends Logger {
       throw (RuntimeException)t;
     }
 
-    String detailString = "";
-    for (String detail : details) {
-      detailString += detail + "\n";
-    }
+    String detailString = StringUtil.join(details, "\n");
 
     if (ourErrorsOccurred == null) {
       String s = message != null && message.length() > 0 ? "Error message is '" + message + "'" : "";

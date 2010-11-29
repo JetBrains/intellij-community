@@ -69,6 +69,11 @@ public class HgInitAlreadyUnderHgDialog extends DialogWrapper {
     return contentPane;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.mercurial.directory.under.hg.control";
+  }
+
   private void createUIComponents() {
     myTitlePanel = new TitlePanel(HgVcsMessages.message("hg4idea.init.already.under.hg.title"),
                                   HgVcsMessages.message("hg4idea.init.already.under.hg.description", mySelectedRoot, myParentRoot));

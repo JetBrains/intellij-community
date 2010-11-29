@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 final Project project = variable.getProject();
                 final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
                 final PsiClass javaLangObjectClass =
-                        facade.findClass("java.lang.Object",
+                        facade.findClass(CommonClassNames.JAVA_LANG_OBJECT,
                                 variable.getResolveScope());
                 weakestClasses.remove(javaLangObjectClass);
             }
@@ -320,7 +320,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 final Project project = method.getProject();
                 final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
                 final PsiClass javaLangObjectClass =
-                        facade.findClass("java.lang.Object",
+                        facade.findClass(CommonClassNames.JAVA_LANG_OBJECT,
                                 method.getResolveScope());
                 weakestClasses.remove(javaLangObjectClass);
             }

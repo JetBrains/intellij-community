@@ -77,16 +77,24 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private final XmlFile myFile;
   private final XmlToken myToken;
 
-  public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                         @NotNull final String namespacePrefix
-                                         ) {
-    this(element, namespacePrefix, null);
+  @Nullable
+  public static CreateNSDeclarationIntentionFix createFix(@NotNull final PsiElement element, @NotNull final String namespacePrefix) {
+    PsiFile file = element.getContainingFile();
+    return file instanceof XmlFile ? new CreateNSDeclarationIntentionFix(element, namespacePrefix, (XmlFile)file) : null;
   }
 
-  public CreateNSDeclarationIntentionFix(final PsiElement element, final String namespacePrefix, final XmlToken token) {
+  protected CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
+                                            @NotNull final String namespacePrefix, XmlFile containingFile) {
+    this(element, namespacePrefix, null, containingFile);
+  }
+
+  public CreateNSDeclarationIntentionFix(final PsiElement element,
+                                         final String namespacePrefix,
+                                         final XmlToken token,
+                                         XmlFile containingFile) {
     myNamespacePrefix = namespacePrefix;
     myElement = element;
-    myFile = (XmlFile)element.getContainingFile();
+    myFile = containingFile;
     myToken = token;
   }
 

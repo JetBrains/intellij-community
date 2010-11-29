@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -364,19 +365,23 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     showPoint.x -= size.width / 2;
     showPoint.y -= size.height / 2;
 
-    window.show();
+    Rectangle target = new Rectangle(showPoint, size);
+    ScreenUtil.moveRectangleToFitTheScreen(target);
+    ScreenUtil.cropRectangleToFitTheScreen(target);
 
-    window.setLocation(showPoint);
-    window.setSize(size);
 
-    container.add(content, new RelativePoint(showPoint));
+    window.setLocation(target.getLocation());
+    window.setSize(target.getSize());
+
+    window.show(false);
+
+    container.add(content, new RelativePoint(target.getLocation()));
   }
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
     DockWindow window = new DockWindow(id != null ? id : String.valueOf(myWindowIdCounter++) , myProject, container);
     window.setDimensionKey("dock-window-" + id);
     myWindows.put(container, window);
-    window.show();
     return window;
   }
 
@@ -581,7 +586,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       DockContainer container = persistentFactory.loadContainerFrom(eachContent);
       register(container);
 
-      createWindowFor(eachId, container);
+      createWindowFor(eachId, container).show();
     }
   }
 }

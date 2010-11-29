@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,27 +34,32 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
     @SuppressWarnings("PublicField")
     public boolean ignoreTrivialFinalizers = true;
 
+    @Override
     @NotNull
     public String getID(){
         return "FinalizeDoesntCallSuperFinalize";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "finalize.doesnt.call.super.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "finalize.doesnt.call.super.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
     public JComponent createOptionsPanel(){
         final MultipleCheckboxOptionsPanel optionsPanel =
                 new MultipleCheckboxOptionsPanel(this);
@@ -62,10 +67,12 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
                 "finalize.doesnt.call.super.ignore.option"),
                 "ignoreObjectSubclasses");
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.trivial.finalizers.option"), "ignoreTrivialFinalizers");
+                "ignore.trivial.finalizers.option"),
+                "ignoreTrivialFinalizers");
         return optionsPanel;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new NoExplicitFinalizeCallsVisitor();
     }
@@ -90,7 +97,7 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
                 final PsiClass superClass = containingClass.getSuperClass();
                 if(superClass != null){
                     final String superClassName = superClass.getQualifiedName();
-                    if("java.lang.Object".equals(superClassName)){
+                    if(CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)){
                         return;
                     }
                 }

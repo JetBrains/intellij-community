@@ -92,11 +92,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     final Rectangle r = getBounds();
     final Insets i = getInsets();
 
-    ARROW_ICON.paintIcon(this, g, r.width - i.right - ARROW_ICON.getIconWidth(), i.top);
+    if (getText() != null && getText().length() != 0) ARROW_ICON.paintIcon(this, g, r.width - i.right - ARROW_ICON.getIconWidth(), i.top);
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (value != null) customizeComponent((T) value, isSelected);
+    customizeComponent((T) value, isSelected);
     return this;
   }
 
@@ -151,7 +151,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   protected void customizeComponent(T value, boolean isSelected) {
     setOpaque(true);
-    setText(getTextFor(value));
+    setText(value == null ? "" : getTextFor(value));
     setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
     setForeground(isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground());
   }

@@ -43,6 +43,10 @@ public class HeadlessLafManagerImpl extends LafManager implements ApplicationCom
     return false;
   }
 
+  public boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    return true;
+  }
+
   public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
   }
 

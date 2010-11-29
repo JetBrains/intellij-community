@@ -94,6 +94,7 @@ public interface HighlightInfoType {
   HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType JAVA_KEYWORD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, SyntaxHighlighterColors.KEYWORD);
 
+  @NotNull
   HighlightSeverity getSeverity(PsiElement psiElement);
 
   TextAttributesKey getAttributesKey();
@@ -113,6 +114,7 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
+    @NotNull
     public HighlightSeverity getSeverity(PsiElement psiElement) {
       return mySeverity;
     }
@@ -167,6 +169,7 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
+    @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
                                   ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
@@ -200,6 +203,7 @@ public interface HighlightInfoType {
       mySeverityKey = severityKey;
     }
 
+    @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       HighlightDisplayLevel level = psiElement != null ? InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile().getErrorLevel(mySeverityKey,
                                                                                                                                                                    psiElement) : ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(mySeverityKey,

@@ -29,8 +29,9 @@ import java.util.List;
  */
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
-  @NonNls
-  private static final String MAILTO_PREFIX = "mailto:";
+  @NonNls private static final String MAILTO_PREFIX = "mailto:";
+  @NonNls private static final String TEL_PREFIX = "tel:";
+  @NonNls private static final String SMS_PREFIX = "sms:";
 
   public boolean createReferences(@NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(psiElement);
@@ -39,7 +40,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     }
     final TextRange range = manipulator.getRangeInElement(psiElement);
     final String s = range.substring(psiElement.getText());
-    if (s.contains("://") || s.startsWith(MAILTO_PREFIX) || s.startsWith("//")) {
+    if (s.contains("://") || s.startsWith(MAILTO_PREFIX) || s.startsWith(TEL_PREFIX) || s.startsWith(SMS_PREFIX) || s.startsWith("//")) {
       final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
       references.add(reference);
       return true;

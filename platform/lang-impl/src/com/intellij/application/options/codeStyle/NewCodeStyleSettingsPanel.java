@@ -17,6 +17,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author max
@@ -118,5 +121,12 @@ public class NewCodeStyleSettingsPanel extends JPanel {
         ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setPanelLanguage(language);
       }
     }
+  }
+
+  public Set<String> processListOptions() {
+    if (myTab instanceof OptionsContainingConfigurable) {
+      return ((OptionsContainingConfigurable) myTab).processListOptions();
+    }
+    return Collections.emptySet();
   }
 }

@@ -122,6 +122,11 @@ public class HgInitDialog extends DialogWrapper {
     return myShowDialog ? super.isOK() : mySelectedDir != null;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.mercurial.create.mercurial.repository";
+  }
+
   @Nullable
   public VirtualFile getSelectedFolder() {
     return mySelectedDir;

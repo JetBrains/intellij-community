@@ -48,7 +48,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private boolean myDisposed;
   private DumbModeAction myDumbModeAction = DumbModeAction.NOTHING;
 
-  public BackgroundableProcessIndicator(Task.Backgroundable task) {
+  public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task, task);
 
     myDumbModeAction = task.getDumbModeAction();
@@ -65,7 +65,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }
   }
 
-  public BackgroundableProcessIndicator(@Nullable final Project project, TaskInfo info, @NotNull PerformInBackgroundOption option) {
+  public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
     super(info.isCancellable(), true, project, info.getCancelText());
     if (project != null) {
       final ProjectManagerAdapter myListener = new ProjectManagerAdapter() {
@@ -106,6 +106,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return "<unknown>";
       }
 
+      @NotNull
       public String getTitle() {
         return progressTitle;
       }

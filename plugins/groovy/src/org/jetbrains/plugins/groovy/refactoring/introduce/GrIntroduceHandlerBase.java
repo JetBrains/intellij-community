@@ -100,7 +100,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       if (expression instanceof GrApplicationStatement) continue;
       if (expression instanceof GrReferenceExpression &&
-          (expression.getParent() instanceof GrMethodCall && ((GrMethodCall)expression.getParent()).isCommandExpression() ||
+          (expression.getParent() instanceof GrMethodCall && ((GrReferenceExpression)expression).resolve() instanceof PsiMethod ||
            ((GrReferenceExpression)expression).resolve() instanceof PsiClass)) {
         continue;
       }

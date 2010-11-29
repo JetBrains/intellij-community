@@ -20,6 +20,7 @@ import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -44,10 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,12 +83,67 @@ public class AndroidCompileUtil {
     });
   }
 
+  private static void collectChildrenRecursively(@NotNull VirtualFile root,
+                                                 @NotNull VirtualFile anchor,
+                                                 @NotNull Collection<VirtualFile> result) {
+    VirtualFile parent = anchor.getParent();
+    if (parent == null) {
+      return;
+    }
+    for (VirtualFile child : parent.getChildren()) {
+      if (child != anchor) {
+        result.add(child);
+      }
+    }
+    if (parent != root) {
+      collectChildrenRecursively(root, parent, result);
+    }
+  }
+
+  private static void unexcludeRootIfNeccessary(@NotNull VirtualFile root, @NotNull ModuleRootManager manager) {
+    Set<VirtualFile> excludedRoots = new HashSet<VirtualFile>(Arrays.asList(manager.getExcludeRoots()));
+    VirtualFile excludedRoot = root;
+    while (excludedRoot != null && !excludedRoots.contains(excludedRoot)) {
+      excludedRoot = excludedRoot.getParent();
+    }
+    if (excludedRoot == null) {
+      return;
+    }
+    Set<VirtualFile> rootsToExclude = new HashSet<VirtualFile>();
+    collectChildrenRecursively(excludedRoot, root, rootsToExclude);
+    final ModifiableRootModel model = manager.getModifiableModel();
+    ContentEntry contentEntry = findContentEntryForRoot(model, excludedRoot);
+    if (contentEntry != null) {
+      ExcludeFolder excludedFolder = null;
+      for (ExcludeFolder folder : contentEntry.getExcludeFolders()) {
+        if (folder.getFile() == excludedRoot) {
+          excludedFolder = folder;
+          break;
+        }
+      }
+      if (excludedFolder != null) {
+        contentEntry.removeExcludeFolder(excludedFolder);
+      }
+      for (VirtualFile rootToExclude : rootsToExclude) {
+        if (!excludedRoots.contains(rootToExclude)) {
+          contentEntry.addExcludeFolder(rootToExclude);
+        }
+      }
+    }
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        model.commit();
+      }
+    });
+  }
+
   public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
-      if (!rootFile.mkdir()) return;
+      if (!rootFile.mkdirs()) return;
       created = true;
     }
     else {
@@ -107,6 +161,7 @@ public class AndroidCompileUtil {
           root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
         }
         if (root != null) {
+          unexcludeRootIfNeccessary(root, manager);
           for (VirtualFile existingRoot : manager.getSourceRoots()) {
             if (existingRoot == root) return;
           }
@@ -122,6 +177,16 @@ public class AndroidCompileUtil {
 
   public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
     final ModifiableRootModel model = manager.getModifiableModel();
+    ContentEntry contentEntry = findContentEntryForRoot(model, root);
+    if (contentEntry == null) {
+      contentEntry = model.addContentEntry(root);
+    }
+    contentEntry.addSourceFolder(root, false);
+    model.commit();
+  }
+
+  @Nullable
+  private static ContentEntry findContentEntryForRoot(@NotNull ModifiableRootModel model, @NotNull VirtualFile root) {
     ContentEntry contentEntry = null;
     for (ContentEntry candidate : model.getContentEntries()) {
       VirtualFile contentRoot = candidate.getFile();
@@ -129,11 +194,7 @@ public class AndroidCompileUtil {
         contentEntry = candidate;
       }
     }
-    if (contentEntry == null) {
-      contentEntry = model.addContentEntry(root);
-    }
-    contentEntry.addSourceFolder(root, false);
-    model.commit();
+    return contentEntry;
   }
 
   public static void generate(final Module module, final GeneratingCompiler compiler, boolean withDependentModules) {
@@ -164,11 +225,42 @@ public class AndroidCompileUtil {
     generate(compiler, contextWrapper[0]);
   }
 
-  public static void generate(GeneratingCompiler compiler, CompileContext context) {
+  public static void generate(GeneratingCompiler compiler, final CompileContext context) {
     if (context != null) {
+
       GeneratingCompiler.GenerationItem[] items = compiler.getGenerationItems(context);
-      compiler.generate(context, items, null);
+
+      final boolean[] run = {true};
+      final VirtualFile[] files = getFilesToCheckReadonlyStatus(items);
+      if (files.length > 0) {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            run[0] = ReadonlyStatusHandler.ensureFilesWritable(context.getProject(), files);
+          }
+        }, ModalityState.defaultModalityState());
+      }
+
+      if (run[0]) {
+        compiler.generate(context, items, null);
+      }
     }
+  }
+
+  private static VirtualFile[] getFilesToCheckReadonlyStatus(GeneratingCompiler.GenerationItem[] items) {
+    List<VirtualFile> filesToCheck = new ArrayList<VirtualFile>();
+    for (GeneratingCompiler.GenerationItem item : items) {
+      if (item instanceof AndroidAptCompiler.AptGenerationItem) {
+        File generatedFile = ((AndroidAptCompiler.AptGenerationItem)item).getGeneratedFile();
+        if (generatedFile.exists()) {
+          VirtualFile generatedVFile = LocalFileSystem.getInstance().findFileByIoFile(generatedFile);
+          if (generatedVFile != null) {
+            filesToCheck.add(generatedVFile);
+          }
+        }
+      }
+    }
+    return filesToCheck.toArray(new VirtualFile[filesToCheck.size()]);
   }
 
   private static void collectModules(Module module, Set<Module> result, Module[] allModules) {

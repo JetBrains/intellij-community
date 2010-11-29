@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,7 +96,7 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     }
   }
 
-  public void saveTo(Breakpoint breakpoint, Runnable afterUpdate) {
+  public void saveTo(Breakpoint breakpoint, @NotNull Runnable afterUpdate) {
     if (breakpoint instanceof MethodBreakpoint) {
       MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
       methodBreakpoint.WATCH_ENTRY = myWatchEntryCheckBox.isSelected();

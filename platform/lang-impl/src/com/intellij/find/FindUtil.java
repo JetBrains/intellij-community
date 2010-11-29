@@ -60,7 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.FocusAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -581,7 +580,6 @@ public class FindUtil {
           HighlighterLayer.SELECTION + 1,
           selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
         MyListener listener = new MyListener(editor, segmentHighlighter);
-        editor.getContentComponent().addFocusListener(listener);
         caretModel.addCaretListener(listener);
       }
       else {
@@ -592,11 +590,11 @@ public class FindUtil {
     return result;
   }
 
-  private static class MyListener extends FocusAdapter implements CaretListener {
+  private static class MyListener implements CaretListener {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
-    private MyListener(Editor editor, RangeHighlighter segmentHighlighter) {
+    private MyListener(@NotNull Editor editor, @NotNull RangeHighlighter segmentHighlighter) {
       myEditor = editor;
       mySegmentHighlighter = segmentHighlighter;
     }
@@ -606,27 +604,20 @@ public class FindUtil {
     }
 
     private void removeAll() {
-      myEditor.getMarkupModel().removeHighlighter(mySegmentHighlighter);
-      myEditor.getContentComponent().addFocusListener(this);
       myEditor.getCaretModel().removeCaretListener(this);
+      myEditor.getMarkupModel().removeHighlighter(mySegmentHighlighter);
     }
   }
 
   private static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
-
     String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
     if (model.isGlobal()) {
       final FindModel newModel = (FindModel)model.clone();
       FindManager findManager = FindManager.getInstance(project);
       Document document = editor.getDocument();
-      FindResult result;
-      if (newModel.isForward()) {
-        result = findManager.findString(document.getCharsSequence(), 0, model, getVirtualFile(editor));
-      }
-      else {
-        result = findManager.findString(document.getCharsSequence(), document.getTextLength(), model, getVirtualFile(editor));
-      }
+      FindResult result = findManager.findString(document.getCharsSequence(),
+                                                 newModel.isForward() ? 0 : document.getTextLength(), model, getVirtualFile(editor));
       if (!result.isStringFound()) {
         result = null;
       }

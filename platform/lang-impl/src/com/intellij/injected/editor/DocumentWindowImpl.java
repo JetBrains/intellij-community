@@ -68,19 +68,20 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   private static class CachedText {
     private final String text;
-    private final long modstamp;
+    private final long modificationStamp;
 
-    private CachedText(String text, long modstamp) {
+    private CachedText(@NotNull String text, long modificationStamp) {
       this.text = text;
-      this.modstamp = modstamp;
+      this.modificationStamp = modificationStamp;
     }
 
-    public String getText() {
+    @NotNull
+    private String getText() {
       return text;
     }
 
-    public long getModstamp() {
-      return modstamp;
+    private long getModificationStamp() {
+      return modificationStamp;
     }
   }
 
@@ -146,17 +147,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public String getText() {
-    if (myCachedText != null && myCachedText.getModstamp() != myDelegate.getModificationStamp()) {
-      myCachedText = null;
+    CachedText cachedText = myCachedText;
+
+    if (cachedText == null || cachedText.getModificationStamp() != getModificationStamp()) {
+      myCachedText = cachedText = new CachedText(calcText(), getModificationStamp());
     }
 
-    if (myCachedText == null) {
-      myCachedText = new CachedText(calcText(), myDelegate.getModificationStamp());
-    }
-
-    return myCachedText.getText();
+    return cachedText.getText();
   }
 
+  @NotNull
   private String calcText() {
     StringBuilder text = new StringBuilder();
     CharSequence hostText = myDelegate.getCharsSequence();
