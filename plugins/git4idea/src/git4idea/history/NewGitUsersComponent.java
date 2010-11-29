@@ -56,6 +56,7 @@ public class NewGitUsersComponent {
 
   public void acceptUpdate(@NotNull final Collection<String> data) {
     synchronized (myLock) {
+      if (myState == null) return;
       final List<String> wasData = myState.get("");
       if (wasData == null || (! wasData.equals(data))) {
         final HashSet<String> set = new HashSet<String>(data);
@@ -75,8 +76,10 @@ public class NewGitUsersComponent {
   }
 
   public void deactivate() {
-    myState.force();
-    myState = null;
+    synchronized (myLock) {
+      myState.force();
+      myState = null;
+    }
   }
 
   private static DataExternalizer<List<String>> createExternalizer() {

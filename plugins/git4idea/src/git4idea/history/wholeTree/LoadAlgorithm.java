@@ -32,7 +32,7 @@ public class LoadAlgorithm {
   private final Project myProject;
   private final List<LoaderAndRefresher<CommitHashPlusParents>> myLoaders;
   private final List<String> myAbstractHashs;
-  private Continuation myContinuation;
+  private final Continuation myContinuation;
 
   public LoadAlgorithm(final Project project, final List<LoaderAndRefresher<CommitHashPlusParents>> loaders, final List<String> abstractHashs) {
     myProject = project;
@@ -61,6 +61,10 @@ public class LoadAlgorithm {
     for (LoaderAndRefresher loader : myLoaders) {
       loader.interrupt();
     }
+  }
+
+  public void resume() {
+    myContinuation.resume();
   }
 
   private class TryHashes extends TaskDescriptor {
@@ -134,8 +138,12 @@ public class LoadAlgorithm {
 
     @Override
     public void run(final ContinuationContext context) {
-      final boolean toContinue = myUiRefresh.flushIntoUI();
-      if (! toContinue) context.cancelEverything();
+      final StepType stepType = myUiRefresh.flushIntoUI();
+      if (StepType.STOP.equals(stepType)) {
+        context.cancelEverything();
+      } else if (StepType.PAUSE.equals(stepType)) {
+        context.suspend();
+      }
     }
   }
 

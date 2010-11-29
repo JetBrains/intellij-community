@@ -26,5 +26,7 @@ public interface Loader {
   void loadSkeleton(Mediator.Ticket ticket,
                     RootsHolder rootsHolder,
                     final Collection<String> startingPoints,
-                    final Collection<ChangesFilter.Filter> filters, String[] possibleHashes);
+                    final Collection<ChangesFilter.Filter> filters, String[] possibleHashes, LoadGrowthController loadGrowthController);
+
+  void resume();
 }
