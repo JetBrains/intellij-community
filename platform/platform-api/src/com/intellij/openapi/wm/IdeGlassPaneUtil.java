@@ -24,6 +24,7 @@ import com.intellij.util.ui.update.Activatable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class IdeGlassPaneUtil {
 
@@ -64,6 +65,15 @@ public class IdeGlassPaneUtil {
       }
     });
     Disposer.register(parent, connector);
+  }
+
+  public static boolean canBePreprocessed(MouseEvent e) {
+    Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+    if (c instanceof IdeGlassPane.TopComponent) {
+      return ((IdeGlassPane.TopComponent)c).canBePreprocessed(e);
+    }
+
+    return true;
   }
 
 }
