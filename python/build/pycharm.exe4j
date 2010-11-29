@@ -37,7 +37,7 @@
         vmParameters="&quot;-Xbootclasspath/a:${EXE4J_EXEDIR}/../lib/boot.jar&quot; &quot;-Didea.properties.file=${IDEA_PROPERTIES}&quot; -Didea.platform.prefix=Python -Didea.no.jre.check=true" 
         arguments=""
         allowVMPassthroughParameters="true"
-        minVersion="1.5"
+        minVersion="1.6"
         maxVersion=""
         preferredVM=""
         allowBetaVM="true"
