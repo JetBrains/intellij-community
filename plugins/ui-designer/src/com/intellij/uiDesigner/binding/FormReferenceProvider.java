@@ -115,11 +115,9 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
     final Project project = file.getProject();
-    final PsiFile _f = PsiFileFactory.getInstance(project).createFileFromText("a.xml", file.getText());
-
-    final XmlFile xmlFile = (XmlFile)_f;
     final XmlTag rootTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
       public XmlTag compute() {
+        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", file.getText());
         final XmlDocument document = xmlFile.getDocument();
 
         return document.getRootTag();

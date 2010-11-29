@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 public class MockApplication extends MockComponentManager implements ApplicationEx {
@@ -126,6 +127,11 @@ public class MockApplication extends MockComponentManager implements Application
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
     new Thread(action).start();
     return null; // ?
+  }
+
+  @Override
+  public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
+    return null;
   }
 
   @Override

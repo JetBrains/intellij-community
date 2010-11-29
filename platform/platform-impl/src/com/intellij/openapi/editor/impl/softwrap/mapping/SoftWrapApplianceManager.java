@@ -344,8 +344,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    * <code>'Token'</code> here stands for the number of subsequent symbols that are represented using the same font by IJ editor.
    */
   private void processNonFoldToken() {
-    int newX;
-    
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
     //for (int i = myContext.startOffset; i < myContext.endOffset; i++) {
       int offset = myContext.currentPosition.offset;
@@ -365,22 +363,37 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         continue;
       }
 
-      if (myOffset2widthInPixels.end > offset 
-          && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset)
-          && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
-      {
-        newX = myContext.currentPosition.x + myOffset2widthInPixels.data[offset - myOffset2widthInPixels.anchor];
+      if (myContext.skipToLineEnd) {
+        myContext.tryToShiftToNextLine();
+        continue;
       }
-      else {
-        newX = calculateNewX(c);
-      }
-
+      
+      int newX = offsetToX(offset, c);
       if (myContext.exceedsVisualEdge(newX) && myContext.delayedSoftWrap == null) {
         createSoftWrapIfPossible();
       }
       else {
         myContext.onNonLineFeedSymbol(c, newX);
       }
+    }
+  }
+
+  /**
+   * Allows to retrieve 'x' coordinate of the right edge of document symbol referenced by the given offset. 
+   * 
+   * @param offset    target symbol offset
+   * @param c         target symbol referenced by the given offset
+   * @return          'x' coordinate of the right edge of document symbol referenced by the given offset
+   */
+  private int offsetToX(int offset, char c) {
+    if (myOffset2widthInPixels.end > offset
+        && (myOffset2widthInPixels.anchor + myOffset2widthInPixels.end > offset)
+        && myContext.currentPosition.symbol != '\t'/*we need to recalculate tabulation width after soft wrap*/)
+    {
+      return myContext.currentPosition.x + myOffset2widthInPixels.data[offset - myOffset2widthInPixels.anchor];
+    }
+    else {
+      return calculateNewX(c);
     }
   }
   
@@ -561,7 +574,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     position.visualColumn = softWrap.getIndentInColumns();
     position.softWrapColumnDiff += softWrap.getIndentInColumns();
     
-    myContext.softWrapStartOffset = softWrap.getStart();
+    myContext.softWrapStartOffset = softWrap.getStart() + 1;
   }
 
   public void recalculateIfNecessary() {
@@ -1040,13 +1053,16 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
      * [{@link #tokenStartOffset}; {@link #skipToLineEnd} is set to <code>'true'</code> otherwise
      */
     public void tryToShiftToNextLine() {
-      for (int i = currentPosition.offset; i < tokenEndOffset; i++, currentPosition.offset++) {
+      for (int i = currentPosition.offset; i < tokenEndOffset; i++) {
         char c = text.charAt(i);
         currentPosition.offset = i;
         if (c == '\n') {
           onNewLine(); // Assuming that offset is incremented during this method call
           skipToLineEnd = false;
           return;
+        }
+        else {
+          onNonLineFeedSymbol(c, offsetToX(i, c));
         }
       }
       skipToLineEnd = true;
