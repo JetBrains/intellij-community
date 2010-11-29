@@ -21,9 +21,11 @@ import com.intellij.history.core.*;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
@@ -80,21 +82,29 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     VirtualFileManager fm = VirtualFileManagerEx.getInstance();
     fm.addVirtualFileListener(myEventDispatcher);
     fm.addVirtualFileManagerListener(myEventDispatcher);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        validateStorage();
+      }
+    });
   }
 
-  //private void validateStorage() {
-  //  if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-  //    LocalHistoryLog.LOG.info("Checking local history storage...");
-  //    try {
-  //      myVcs.getChangeListInTests().getChangesInTests();
-  //      LocalHistoryLog.LOG.info("Local history storage seems to be ok");
-  //    }
-  //    catch (Exception e) {
-  //      LocalHistoryLog.LOG.error(e);
-  //    }
-  //  }
-  //}
-  //
+  private void validateStorage() {
+    if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LocalHistoryLog.LOG.info("Checking local history storage...");
+      try {
+        long before = Clock.getTime();
+        myVcs.getChangeListInTests().getChangesInTests();
+        LocalHistoryLog.LOG.info("Local history storage seems to be ok (took " + ((Clock.getTime() - before) / 1000) + " sec)");
+      }
+      catch (Exception e) {
+        LocalHistoryLog.LOG.error(e);
+      }
+    }
+  }
+
   public File getStorageDir() {
     return new File(getSystemPath(), "LocalHistory");
   }
@@ -114,6 +124,8 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
     myChangeList.purgeObsolete(period);
+    validateStorage();
+
     myChangeList.close();
     LocalHistoryLog.LOG.info("Local history storage successfully closed.");
 

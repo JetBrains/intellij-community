@@ -104,6 +104,9 @@ public class GitLogUI implements Disposable {
   private FilterAction myFilterAction;
   private final Speedometer mySelectionSpeedometer;
 
+  private StepType myState;
+  private MoreAction myMoreAction;
+
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
     myMediator = mediator;
@@ -115,6 +118,7 @@ public class GitLogUI implements Disposable {
     mySelectionSpeedometer = new Speedometer(20, 400);
     createTableModel();
     mySearchContext = new ArrayList<String>();
+    myState = StepType.CONTINUE;
 
     myUIRefresh = new UIRefresh() {
       @Override
@@ -123,13 +127,23 @@ public class GitLogUI implements Disposable {
       }
 
       @Override
-      public void linesReloaded() {
+      public void linesReloaded(boolean drawMore) {
+        if ((! StepType.STOP.equals(myState)) && (! StepType.FINISHED.equals(myState))) {
+          myState = drawMore ? StepType.PAUSE : StepType.CONTINUE;
+        }
         fireTableRepaint();
+        updateMoreVisibility();
       }
 
       @Override
       public void acceptException(Exception e) {
         LOG.info(e);
+      }
+
+      @Override
+      public void finished() {
+        myState = StepType.FINISHED;
+        updateMoreVisibility();
       }
 
       @Override
@@ -167,6 +181,7 @@ public class GitLogUI implements Disposable {
     myTableModel.fireTableDataChanged();
     keeper.restore();
     myDataBeingAdded = false;
+    myJBTable.revalidate();
     myJBTable.repaint();
   }
 
@@ -453,6 +468,15 @@ public class GitLogUI implements Disposable {
     group.add(new MyCherryPick());
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     group.add(new MyRefreshAction());
+    myMoreAction = new MoreAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myMediator.continueLoading();
+        myState = StepType.CONTINUE;
+        updateMoreVisibility();
+      }
+    };
+    group.add(myMoreAction);
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Git log", group, true);
 
     myJBTable = new JBTable(myTableModel) {
@@ -479,7 +503,15 @@ public class GitLogUI implements Disposable {
     //myJBTable.setTableHeader(null);
     myJBTable.setShowGrid(false);
     myJBTable.setModel(myTableModel);
+
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myJBTable);
+    /*final JPanel jPanel = new JPanel(new BorderLayout());
+    jPanel.add(scrollPane, BorderLayout.CENTER);
+    JPanel buttonPanel = new JPanel(new GridBagLayout());
+    buttonPanel
+    buttonPanel.add(myMoreButton);
+    jPanel.add(buttonPanel, BorderLayout.SOUTH);*/
+
     final ComponentListener listener = new ComponentListener() {
       @Override
       public void componentResized(ComponentEvent e) {
@@ -1045,6 +1077,7 @@ public class GitLogUI implements Disposable {
   }
 
   private void reloadRequest() {
+    myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
     myDescriptionRenderer.resetIcons();
@@ -1063,6 +1096,7 @@ public class GitLogUI implements Disposable {
 
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, filters, myPreviousFilter.split("[\\s]"));
     }
+    updateMoreVisibility();
     selectionChanged();
     fireTableRepaint();
     myTableModel.fireTableRowsDeleted(0, was);
@@ -1276,6 +1310,18 @@ public class GitLogUI implements Disposable {
       super.update(e);
       final boolean enabled = getSelectedCommitsAndCheck() != null;
       e.getPresentation().setEnabled(enabled);
+    }
+  }
+
+  private void updateMoreVisibility() {
+    if (StepType.PAUSE.equals(myState)) {
+      myMoreAction.setEnabled(true);
+      myMoreAction.setVisible(true);
+    } else if (StepType.CONTINUE.equals(myState)) {
+      myMoreAction.setVisible(true);
+      myMoreAction.setEnabled(false);
+    } else {
+      myMoreAction.setVisible(false);
     }
   }
 }

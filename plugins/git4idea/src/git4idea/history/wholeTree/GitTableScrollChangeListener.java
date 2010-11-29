@@ -55,7 +55,13 @@ public class GitTableScrollChangeListener implements ChangeListener {
             myCheckSelection.run();
           }
           mySpeedometer.clear();
-          final Pair<Integer,Integer> visibleRows = TableScrollingUtil.getVisibleRows(table);
+          Pair<Integer,Integer> visibleRows = TableScrollingUtil.getVisibleRows(table);
+          if (visibleRows.getSecond() < 0) {
+            // todo check
+            // we cut the table, so leading/trailing compare number of rows, returned by model, with point and get incorrect results
+            if (visibleRows.getFirst() < 0) return; // nothing to do
+            visibleRows = new Pair<Integer, Integer>(visibleRows.getFirst(), myTableModel.getRowCount() - 1);
+          }
           int difference = visibleRows.getSecond() - visibleRows.getFirst();
           int start = Math.max(0, visibleRows.getFirst() - difference);
           int end = Math.min(myTableModel.getRowCount() - 1, visibleRows.getSecond() + difference);

@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -193,6 +194,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private boolean preprocess(final MouseEvent e, final boolean motion) {
     try {
       final MouseEvent event = convertEvent(e, myRootPane);
+
+      if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
+        return false;
+      }
+
       for (EventListener each : myMouseListeners) {
         if (motion && each instanceof MouseMotionListener) {
           fireMouseMotion((MouseMotionListener)each, event);

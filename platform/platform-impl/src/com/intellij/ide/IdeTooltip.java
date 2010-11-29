@@ -41,6 +41,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private Font myFont;
 
   private int myCalloutShift = 4;
+  private boolean myExplicitClose;
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -181,6 +182,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public void setPoint(Point point) {
     myPoint = point;
+  }
+
+  public IdeTooltip setExlicitClose(boolean explicitClose) {
+    myExplicitClose = explicitClose;
+    return this;
+  }
+
+  public boolean isExplicitClose() {
+    return myExplicitClose;
   }
 }
 

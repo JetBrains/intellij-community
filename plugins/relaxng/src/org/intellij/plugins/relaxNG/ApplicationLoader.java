@@ -64,7 +64,7 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
     registerMetaData();
 
     final FileTypeManager ftm = FileTypeManager.getInstance();
-    ftm.registerFileType(StdFileTypes.XML, RNG_EXT);
+    ftm.associateExtension(StdFileTypes.XML, RNG_EXT);
 
     installValidateXmlAction();
   }

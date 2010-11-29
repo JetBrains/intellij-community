@@ -15,13 +15,18 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
   public JBScrollPane() {
@@ -75,7 +80,7 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
-  private class MyScrollBar extends ScrollBar {
+  private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {
     public MyScrollBar(int orientation) {
       super(orientation);
     }
@@ -84,6 +89,32 @@ public class JBScrollPane extends JScrollPane {
     public void updateUI() {
       setUI(ButtonlessScrollBarUI.createNormal());
     }
+
+    @Override
+    public boolean canBePreprocessed(MouseEvent e) {
+      return JBScrollPane.canBePreprocessed(e, this);
+    }
+  }
+
+
+  public static boolean canBePreprocessed(MouseEvent e, JScrollBar bar) {
+    if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_PRESSED) {
+      ScrollBarUI ui = bar.getUI();
+      if (ui instanceof BasicScrollBarUI) {
+        BasicScrollBarUI bui = (BasicScrollBarUI)ui;
+        try {
+          Method m = BasicScrollBarUI.class.getDeclaredMethod("getThumbBounds", new Class[0]);
+          m.setAccessible(true);
+          Rectangle rect = (Rectangle)m.invoke(bui);
+          Point point = SwingUtilities.convertPoint(e.getComponent(), e.getX(), e.getY(), bar);
+          return !rect.contains(point);
+        }
+        catch (Exception e1) {
+          return true;
+        }
+      }
+    }
+    return true;
   }
 
   private static class Corner extends JPanel {

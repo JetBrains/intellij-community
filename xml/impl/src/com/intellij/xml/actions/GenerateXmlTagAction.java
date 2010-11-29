@@ -278,7 +278,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             set.retainAll(descriptors);
           }
         }
-        if (set.isEmpty()) {
+        if (set == null || set.isEmpty()) {
           return Collections.singletonList(null); // placeholder for smart completion
         }
         return new ArrayList<XmlElementDescriptor>(set);

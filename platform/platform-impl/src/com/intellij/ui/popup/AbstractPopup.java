@@ -655,7 +655,7 @@ public class AbstractPopup implements JBPopup {
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
       root.setGlassPane(glass);
 
-      final ResizeComponentListener resizeListener = new ResizeComponentListener(this);
+      final ResizeComponentListener resizeListener = new ResizeComponentListener(this, glass);
       glass.addMousePreprocessor(resizeListener, this);
       glass.addMouseMotionPreprocessor(resizeListener, this);
     }

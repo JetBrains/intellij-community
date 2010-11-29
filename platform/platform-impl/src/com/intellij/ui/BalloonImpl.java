@@ -884,6 +884,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     private CloseButton() {
       myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
         protected void execute(MouseEvent e) {
+          if (!myEnableCloseButton) return;
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -893,6 +894,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         }
       };
 
+      if (!myEnableCloseButton) {
+        setVisible(false);
+      }
     }
 
     @Override
@@ -995,15 +999,15 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     public void removeNotify() {
       super.removeNotify();
 
-      if (myLayeredPane != null) {
-        final JLayeredPane pane = myLayeredPane;
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            pane.remove(myCloseRec);
+
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myCloseRec != null && myCloseRec.getParent() != null) {
+            myCloseRec.getParent().remove(myCloseRec);
           }
-        });
-      }
+        }
+      });
     }
 
     public void setAlpha(float alpha) {

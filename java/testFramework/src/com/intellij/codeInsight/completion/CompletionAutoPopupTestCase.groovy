@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
+import com.intellij.codeInsight.CodeInsightSettings
 
 /**
  * @author peter
@@ -36,6 +37,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
                                  })
     CompletionAutoPopupHandler.ourTestingAutopopup = true
+    CodeInsightSettings.instance.FOCUS_AUTOPOPUP = CodeInsightSettings.SMART
   }
   void superSetUp() {
     super.setUp()
@@ -45,6 +47,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   }
 
   @Override protected void tearDown() {
+    CodeInsightSettings.instance.FOCUS_AUTOPOPUP = CodeInsightSettings.NEVER
     CompletionAutoPopupHandler.ourTestingAutopopup = false
     UIUtil.invokeAndWaitIfNeeded(new Runnable(){
                                  @Override

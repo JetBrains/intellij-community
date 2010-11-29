@@ -336,7 +336,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (myCurrentTooltip == null) return true;
 
     if (me != null && myCurrentTipUi != null) {
-      if (!myCurrentTooltip.canAutohideOn(new TooltipEvent(me, myCurrentTipUi.isInsideBalloon(me)))) {
+      boolean isInside = myCurrentTipUi.isInsideBalloon(me);
+      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInside));
+      boolean implicitMouseMove = me.getID() == MouseEvent.MOUSE_MOVED || me.getID() == MouseEvent.MOUSE_EXITED || me.getID() == MouseEvent.MOUSE_ENTERED;
+
+      if (!canAutoHide || (myCurrentTooltip.isExplicitClose() && implicitMouseMove)) {
         if (myHideRunnable != null) {
           myHideRunnable = null;
         }

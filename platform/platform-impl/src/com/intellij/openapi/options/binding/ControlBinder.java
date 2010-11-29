@@ -20,9 +20,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.lang.reflect.Field;
 
 /**
  * @author Dmitry Avdeev
@@ -52,7 +52,7 @@ public class ControlBinder {
     bindControl(controlAccessor, propertyName, instant);
   }
 
-  public void bindControl(ControlValueAccessor controlAccessor, String propertyName, boolean instant) {
+  public synchronized void bindControl(ControlValueAccessor controlAccessor, String propertyName, boolean instant) {
     BeanValueAccessor beanAccessor = BeanValueAccessor.createAccessor(myBean, propertyName);
     final Pair<ControlValueAccessor, BeanValueAccessor> binding = Pair.create(controlAccessor, beanAccessor);
     myBindings.add(binding);
@@ -65,7 +65,7 @@ public class ControlBinder {
     }
   }
 
-  public void reset() {
+  public synchronized void reset() {
     for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
       if (!binding.first.isEnabled()) {
         continue;
@@ -81,7 +81,7 @@ public class ControlBinder {
     }
   }
 
-  public void apply() {
+  public synchronized void apply() {
     for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
       apply(binding);
     }
@@ -101,7 +101,7 @@ public class ControlBinder {
     }
   }
 
-  public boolean isModified() {
+  public synchronized boolean isModified() {
     for (Pair<ControlValueAccessor, BeanValueAccessor> binding : myBindings) {
       if (!binding.first.isEnabled()) {
         continue;
