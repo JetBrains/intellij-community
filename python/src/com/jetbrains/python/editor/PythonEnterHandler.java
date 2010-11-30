@@ -78,6 +78,9 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     }
 
     PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+    if (isCommentOnOtherLine(doc, offset, wrappableBefore)) {
+      return Result.Continue;
+    }
     PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
     if (!(wrappableBefore instanceof PsiComment)) {
       while (wrappableBefore != null) {
@@ -105,6 +108,17 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
+  }
+
+  private static boolean isCommentOnOtherLine(Document doc, int offset, PsiElement other) {
+    if (other instanceof PsiComment) {
+      int otherLine = doc.getLineNumber(other.getTextRange().getStartOffset());
+      int thisLine = doc.getLineNumber(offset);
+      if (otherLine != thisLine) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
