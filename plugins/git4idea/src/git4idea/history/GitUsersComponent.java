@@ -101,6 +101,7 @@ public class GitUsersComponent {
   public List<String> getUsersList(final VirtualFile root) {
     final Pair<String, LowLevelAccess> pair = myAccessMap.get(root);
     if (pair == null) return null;
+    if (myState == null) return null;
     try {
       final UsersData usersData = myState.get(pair.getFirst());
       return usersData == null ? null : new ArrayList<String>(usersData.getUsers());
@@ -115,6 +116,7 @@ public class GitUsersComponent {
   private class MyRefresher implements ControlledCycle.MyCallback {
     public boolean call(final AtomicSectionsAware atomicSectionsAware) {
       atomicSectionsAware.checkShouldExit();
+      if (myState == null) return false;
       if (myIsActive) {
         try {
           final HashMap<VirtualFile, Pair<String, LowLevelAccess>> copy;
