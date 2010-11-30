@@ -11,6 +11,7 @@ import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -52,11 +53,9 @@ public class RunnerMediator {
       injectRunnerCommand(commandLine);
     }
 
-    String processUid = injectUid(commandLine);
-
     Process p = commandLine.createProcess();
 
-    return new CustomDestroyProcessHandler(p, commandLine, processUid);
+    return new CustomDestroyProcessHandler(p, commandLine);
   }
 
   public static boolean canSendSignals() {
@@ -71,19 +70,20 @@ public class RunnerMediator {
   }
 
 
-  public static void sendSigInt(String processUid) {
-    sendSignal(processUid, SIGINT);
+  public static void sendSigInt(Process process) {
+    sendSignal(process, SIGINT);
   }
 
-  public static void sendSigKill(String processUid) {
-    sendSignal(processUid, SIGKILL);
+  public static void sendSigKill(Process process) {
+    sendSignal(process, SIGKILL);
   }
 
-  public static void sendSignal(String processUid, int signal) {
+  public static void sendSignal(Process process, int signal) {
     if (C_LIB == null) {
       throw new IllegalStateException("no CLIB");
     }
     int our_pid = C_LIB.getpid();
+    int process_pid = getProcessPid(process);
 
     try {
       String[] psCmd = getCmd();
@@ -107,9 +107,12 @@ public class RunnerMediator {
 
           ProcessInfo.register(pid, parent_pid);
 
-          if (parent_pid == our_pid) {
-            if (containsMarker(s, processUid)) {
+          if (pid == process_pid) {
+            if (parent_pid == our_pid) {
               foundPid = pid;
+            }
+            else {
+              throw new IllegalStateException("process is not our child");
             }
           }
         }
@@ -118,7 +121,7 @@ public class RunnerMediator {
           ProcessInfo.killProcTree(foundPid, signal);
         }
         else {
-          throw new IllegalStateException("process not found: " + our_pid + ", uid=" + processUid);
+          throw new IllegalStateException("process not found: " + process_pid + ", idea pid =" + our_pid);
         }
 
         StringBuffer errorStr = new StringBuffer();
@@ -136,6 +139,21 @@ public class RunnerMediator {
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  private static int getProcessPid(Process proc) {
+    try {
+      Field f = proc.getClass().getDeclaredField("pid");
+      f.setAccessible(true);
+      int pid = ((Number)f.get(proc)).intValue();
+      return pid;
+    }
+    catch (NoSuchFieldException e) {
+      throw new IllegalStateException("system is not linux", e);
+    }
+    catch (IllegalAccessException e) {
+      throw new IllegalStateException("system is not linux", e);
     }
   }
 
@@ -193,15 +211,11 @@ public class RunnerMediator {
     private static final char IAC = (char)5;
     private static final char BRK = (char)3;
 
-    private final String myProcessUid;
     private final String myCommand;
 
-
     public CustomDestroyProcessHandler(@NotNull Process process,
-                                       @NotNull GeneralCommandLine commandLine,
-                                       @NotNull String processUid) {
+                                       @NotNull GeneralCommandLine commandLine) {
       super(process, commandLine.getCommandLineString());
-      myProcessUid = processUid;
       myCommand = commandLine.getExePath();
     }
 
@@ -210,7 +224,6 @@ public class RunnerMediator {
       if (!doCustomDestroy()) {
         super.destroyProcessImpl();
       }
-
     }
 
     private boolean doCustomDestroy() {
@@ -220,7 +233,7 @@ public class RunnerMediator {
           return true;
         }
         else if (canSendSignals()) {
-          sendSigKill(myProcessUid);
+          sendSigKill(getProcess());
           return true;
         }
         else {
@@ -231,7 +244,6 @@ public class RunnerMediator {
         return false;
       }
     }
-
 
     private void sendCtrlBreakThroughStream() {
       OutputStream os = getProcessInput();
@@ -268,6 +280,5 @@ public class RunnerMediator {
       }
       sendSignal(pid, signal);
     }
-
   }
 }
