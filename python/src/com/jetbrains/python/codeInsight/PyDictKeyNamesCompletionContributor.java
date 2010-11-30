@@ -1,0 +1,105 @@
+package com.jetbrains.python.codeInsight;
+
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Icons;
+import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
+
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
+/**
+ * User: catherine
+ *
+ * Complete known keys for dictionaries
+ */
+public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalCompletionContributor {
+  @Override
+  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
+    // auto-insert the obvious only case; else show other cases.
+    final LookupElement[] items = context.getItems();
+    if (items.length == 1) {
+      return AutoCompletionDecision.insertItem(items[0]);
+    }
+    return AutoCompletionDecision.SHOW_LOOKUP;
+  }
+
+  private static final FilterPattern DICT_KEY = new FilterPattern(
+    new InSequenceFilter(psiElement(PySubscriptionExpression.class))
+  );
+
+  public PyDictKeyNamesCompletionContributor() {
+    extend(
+      CompletionType.BASIC,
+      psiElement()
+        .withLanguage(PythonLanguage.getInstance())
+        .and(DICT_KEY)
+     ,
+      new CompletionProvider<CompletionParameters>() {
+        protected void addCompletions(
+          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
+        ) {
+          PsiElement original = parameters.getOriginalPosition();
+          PsiElement operand = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class).getOperand();
+          if (operand != null) {
+            PsiReference reference = operand.getReference();
+            if (reference != null) {
+              PsiElement resolvedElement = reference.resolve();
+              if (resolvedElement instanceof PyTargetExpression) {
+                PyDictLiteralExpression dict = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyDictLiteralExpression.class);
+                if (dict != null) {
+                  addDictLiteralKeys(dict, result);
+                  PsiFile file = parameters.getOriginalFile();
+                  addAdditionalKeys(file, operand, result);
+                }
+              }
+            }
+          }
+        }
+
+        private void addAdditionalKeys(PsiFile file, PsiElement operand, CompletionResultSet result) {
+          PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
+          for (PySubscriptionExpression expr : subscriptionExpressions) {
+            if (expr.getOperand().getText().equals(operand.getText())) {
+              PsiElement parent = expr.getParent();
+              if (parent instanceof PyAssignmentStatement) {
+                if (expr.equals(((PyAssignmentStatement)parent).getLeftHandSideExpression())) {
+                  PyExpression key = expr.getIndexExpression();
+                  if (key != null) {
+                    LookupElementBuilder item;
+                    item = LookupElementBuilder
+                      .create(key.getText())
+                      .setTypeText("dict key")
+                      .setIcon(Icons.PARAMETER_ICON);
+                    result.addElement(item);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        private void addDictLiteralKeys(PyDictLiteralExpression dict, CompletionResultSet result) {
+          PyKeyValueExpression[] keyValues = dict.getElements();
+          for (PyKeyValueExpression expression : keyValues) {
+            LookupElementBuilder item;
+            item = LookupElementBuilder
+              .create(expression.getKey().getText())
+              .setTypeText("dict key")
+              .setIcon(Icons.PARAMETER_ICON);
+            result.addElement(item);
+          }
+        }
+      }
+    );
+  }
+}
