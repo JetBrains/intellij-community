@@ -340,4 +340,9 @@ class A {
     myFixture.completeBasic()
     myFixture.checkResult "Zzoo l = new Zzoo<caret>"
   }
+
+  public void testNothingAfterIntegerLiteral() {
+    configure "2f<caret>"
+    assertEmpty myFixture.completeBasic()
+  }
 }
