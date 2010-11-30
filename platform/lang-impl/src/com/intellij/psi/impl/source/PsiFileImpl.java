@@ -265,7 +265,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
-      throw new AssertionError("A stub in a non-stub file '" + getVirtualFile() +"'; type: "+contentElementType+"; content:<<<\n"+
+      final VirtualFile vFile = getVirtualFile();
+      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + (vFile != null? vFile.isValid() : "null") +
+                               " type: "+contentElementType+"; content:<<<\n"+
                                StringUtil.first(getViewProvider().getContents(),200,true)+
                                "\n>>>; stubs=" + ContainerUtil.collect(stubs));
     }
