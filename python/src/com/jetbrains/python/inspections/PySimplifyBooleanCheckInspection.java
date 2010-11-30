@@ -63,8 +63,12 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       final String rightExpressionText = rightExpression.getText();
       if ("True".equals(leftExpressionText) ||
           "False".equals(leftExpressionText) ||
+          "0".equals(leftExpressionText) ||
+          "[]".equals(leftExpressionText) ||
           "True".equals(rightExpressionText) ||
-          "False".equals(rightExpressionText)) {
+          "False".equals(rightExpressionText) ||
+          "0".equals(rightExpressionText) ||
+          "[]".equals(rightExpressionText)) {
         if (PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
           registerProblem(node);
         }
