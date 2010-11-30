@@ -30,7 +30,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.PopupIcons;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,10 +154,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   private Color getItemBackground(JList list, int index, boolean isSelected) {
     final int preferredCount = myLookup.getPreferredItemsCount();
     final boolean isPreferred = index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1;
-
-    if (!myLookup.isFocused()) {
-      return new SameColor(239);
-    }
 
     if (isPreferred) {
       return isSelected ? SELECTED_BACKGROUND_COLOR : PREFERRED_BACKGROUND_COLOR;
@@ -346,13 +341,16 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
   }
 
-  private static class LookupPanel extends JPanel {
+  private class LookupPanel extends JPanel {
     public LookupPanel() {
       super(new BorderLayout());
     }
 
     public void paint(Graphics g){
       UISettings.setupAntialiasing(g);
+      if (!myLookup.isFocused()) {
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+      }
       super.paint(g);
     }
   }
