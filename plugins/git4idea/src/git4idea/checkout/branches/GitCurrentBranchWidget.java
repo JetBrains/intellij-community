@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Status bar widget which displays the current branch.
  * @author Kirill Likhodedov
  */
-public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, GitReferenceListener {
+public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, GitReferenceListener, StatusBarWidget.Multiframe {
 
   private ProjectLevelVcsManager myVcsManager;
   private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>();
@@ -48,6 +48,11 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   public GitCurrentBranchWidget(Project project) {
     super(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+  }
+
+  @Override
+  public StatusBarWidget copy() {
+    return new GitCurrentBranchWidget(myProject);
   }
 
   @NotNull
@@ -84,7 +89,8 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   @NotNull
   @Override
   public String getText() {
-    return myCurrentBranchName.get();
+    String name = myCurrentBranchName.get();
+    return name != null ? name : "";
   }
 
   @NotNull

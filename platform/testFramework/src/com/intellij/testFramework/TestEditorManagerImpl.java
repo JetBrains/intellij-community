@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -77,6 +78,11 @@ import java.util.Map;
   @Override
   public boolean isInsideChange() {
     return false;
+  }
+
+  @Override
+  public EditorsSplitters getSplittersFor(Component c) {
+    return null;
   }
 
   @Override

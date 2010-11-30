@@ -38,7 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-class DockableEditorTabbedContainer implements DockContainer.Persistent {
+public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   private EditorsSplitters mySplitters;
   private Project myProject;
