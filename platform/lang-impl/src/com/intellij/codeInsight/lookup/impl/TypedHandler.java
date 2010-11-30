@@ -72,7 +72,7 @@ public class TypedHandler implements TypedActionHandler {
             EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
           }
         });
-        lookup.setAdditionalPrefix(lookup.getAdditionalPrefix() + charTyped);
+        lookup.appendPrefix(charTyped);
 
         AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, dataContext, modificationStamp);
 
