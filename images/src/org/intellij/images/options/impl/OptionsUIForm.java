@@ -19,11 +19,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.images.ImagesBundle;
@@ -236,7 +236,7 @@ final class OptionsUIForm {
                     return LocalFileSystem.getInstance().refreshAndFindFileByPath(externalEditorPath.getText().replace('\\', '/'));
                }
             });
-            FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+            FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfo.isMac, false, false, false, false);
             fileDescriptor.setShowFileSystemRoots(true);
             fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
             fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
