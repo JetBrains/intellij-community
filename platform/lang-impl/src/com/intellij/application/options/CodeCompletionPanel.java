@@ -50,7 +50,7 @@ public class CodeCompletionPanel {
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
   private static final String[] CASE_VARIANTS = {CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER};
-  private static final String[] FOCUS_VARIANTS = {"Never", "Smart", "Always"};
+  private static final String[] FOCUS_VARIANTS = {"Never", "'Smart'", "Always"};
 
   public CodeCompletionPanel(){
    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(CASE_VARIANTS));

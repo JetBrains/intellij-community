@@ -66,11 +66,7 @@ public class GitProjectLogManager {
 
     myListener = new VcsListener() {
       public void directoryMappingChanged() {
-        new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-          public void run() {
-            recalculateWindows();
-          }
-        }.callMe();
+        invokeLaterRecalculateWindows();
       }
     };
     myCurrentBranchListener = new CurrentBranchListener() {
@@ -116,9 +112,17 @@ public class GitProjectLogManager {
   public void activate() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     myVcsManager.addVcsListener(myListener);
-    recalculateWindows();
+    invokeLaterRecalculateWindows();
     myConnection = myProject.getMessageBus().connect(myProject);
     myConnection.subscribe(CHECK_CURRENT_BRANCH, myCurrentBranchListener);
+  }
+
+  private void invokeLaterRecalculateWindows() {
+    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+      public void run() {
+        recalculateWindows();
+      }
+    }.callMe();
   }
 
   private void recalculateWindows() {

@@ -85,7 +85,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
-  public int FOCUS_AUTOPOPUP = NEVER; // NEVER, SMART or ALWAYS
+  public int FOCUS_AUTOPOPUP = SMART; // NEVER, SMART or ALWAYS
   public static final int NEVER = 1;
   public static final int SMART = 2;
   public static final int ALWAYS = 3;

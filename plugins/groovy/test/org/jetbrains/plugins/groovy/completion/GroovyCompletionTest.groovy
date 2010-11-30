@@ -340,4 +340,20 @@ class A {
     myFixture.completeBasic()
     myFixture.checkResult "Zzoo l = new Zzoo<caret>"
   }
+
+  public void testNothingAfterIntegerLiteral() {
+    configure "2f<caret>"
+    assertEmpty myFixture.completeBasic()
+  }
+
+  public void testPackagedContainingClassNameAfterStatic() {
+    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("foo/cls.groovy", """
+    package foo
+    class Zzzzzzz {
+      static Zzz<caret>
+    }
+    """).virtualFile)
+    myFixture.completeBasic()
+    assert myFixture.editor.document.text.contains("static Zzzzzzz")
+  }
 }

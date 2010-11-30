@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,6 +76,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.util.containers.CollectionFactory.hashMap;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
@@ -220,6 +218,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
       ))
     );
 
+  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
+    PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withElementType(
+      elementType().oneOf(GroovyElementTypes.mNUM_DOUBLE, GroovyElementTypes.mNUM_INT, GroovyElementTypes.mNUM_LONG, GroovyElementTypes.mNUM_FLOAT, GroovyElementTypes.mNUM_BIG_INT, GroovyElementTypes.mNUM_BIG_DECIMAL)));
+
+
   private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
     result.stopHere();
     AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
@@ -343,6 +346,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }));
       }
     });
+  }
+
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    if (AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
+      result.stopHere();
+      return;
+    }
+
+    super.fillCompletionVariants(parameters, result);
   }
 
   private static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {

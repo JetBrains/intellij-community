@@ -22,14 +22,12 @@ import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.TableCell;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -85,8 +83,43 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       }
     });
 
+    final TableModelListener modelListener = new TableModelListener() {
+      @Override
+      public void tableChanged(final TableModelEvent e) {
+        if ((e.getType() == TableModelEvent.DELETE && isEmpty())
+            || (e.getType() == TableModelEvent.INSERT && !isEmpty())) {
+          repaintViewport();
+        }
+      }
+    };
+
+    if (getModel() != null) getModel().addTableModelListener(modelListener);
+    addPropertyChangeListener("model", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        repaintViewport();
+
+        if (evt.getOldValue() instanceof TableModel) {
+          ((TableModel)evt.getOldValue()).removeTableModelListener(modelListener);
+        }
+        if (evt.getNewValue() instanceof TableModel) {
+          ((TableModel)evt.getNewValue()).addTableModelListener(modelListener);
+        }
+      }
+    });
+
+
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+  }
+
+  private void repaintViewport() {
+    if (!isDisplayable() || !isVisible()) return;
+
+    Container p = getParent();
+    if (p instanceof JBViewport) {
+      p.repaint();
+    }
   }
 
   @Override
@@ -252,7 +285,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     final Component result = super.prepareRenderer(renderer, row, column);
     final boolean selected = myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column));
     // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()){
+    if (UIUtil.isUnderGTKLookAndFeel()) {
       final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
       UIUtil.changeBackGround(this, background);
     }
