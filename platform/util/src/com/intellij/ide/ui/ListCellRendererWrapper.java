@@ -97,7 +97,4 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myToolTipText = toolTipText;
   }
 
-  public final void setText(final String text) {
-    myText = text;
-  }
 }
