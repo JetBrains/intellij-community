@@ -100,7 +100,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return findNodeByObject(myRoot, facetType);
   }
 
-  public void addFacetNode(MyNode facetTypeNode, Facet facet, FacetEditorFacadeImpl editorFacade) {
+  public void addFacetNode(@NotNull MyNode facetTypeNode, @NotNull Facet facet, @NotNull FacetEditorFacadeImpl editorFacade) {
     FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
     addNode(new FacetConfigurableNode(facetConfigurable), facetTypeNode);
   }
