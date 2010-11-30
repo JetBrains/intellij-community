@@ -62,8 +62,8 @@ public class DetailsCache {
     if (hashes.isEmpty()) return;
     synchronized (myLock) {
       mySomethingIsMissing = ! hashes.isEmpty();
-      myDetailsLoader.load(hashes);
     }
+    myDetailsLoader.load(hashes);
   }
 
   public void acceptAnswer(final Collection<GitCommit> commits, final VirtualFile root) {
@@ -72,10 +72,10 @@ public class DetailsCache {
         myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
       }
 //      if (mySomethingIsMissing) {
-        myRefresh.callMe();
         mySomethingIsMissing = false;
 //      }
     }
+    myRefresh.callMe();
   }
 
   public void rootsChanged(final Collection<VirtualFile> roots) {
@@ -83,10 +83,14 @@ public class DetailsCache {
   }
 
   public void putBranches(final VirtualFile root, final AbstractHash hash, final List<String> s) {
-    myBranches.put(new Pair<VirtualFile, AbstractHash>(root, hash), s);
+    synchronized (myLock) {
+      myBranches.put(new Pair<VirtualFile, AbstractHash>(root, hash), s);
+    }
   }
 
   public List<String> getBranches(final VirtualFile root, final AbstractHash hash) {
-    return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+    synchronized (myLock) {
+      return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
+    }
   }
 }
