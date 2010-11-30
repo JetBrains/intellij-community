@@ -856,12 +856,6 @@ public class ChooseRunConfigurationAction extends AnAction {
     protected abstract void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup);
 
     @Override
-    protected boolean isActionClick(MouseEvent e) {
-      if (e.getButton() == MouseEvent.BUTTON2 || e.isPopupTrigger() || e.getID() != MouseEvent.MOUSE_PRESSED) return false;
-      return e.getButton() == MouseEvent.BUTTON1;
-    }
-
-    @Override
     protected ListCellRenderer getListElementRenderer() {
       return new RunListElementRenderer(this);
     }

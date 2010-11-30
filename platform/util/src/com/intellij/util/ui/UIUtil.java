@@ -1016,7 +1016,11 @@ public class UIUtil {
   }
 
   public static boolean isActionClick(MouseEvent e, int effectiveType) {
-    if (isCloseClick(e) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
+    return isActionClick(e, effectiveType, false);
+  }
+
+  public static boolean isActionClick(MouseEvent e, int effectiveType, boolean allowShift) {
+    if ((!allowShift && isCloseClick(e)) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON1;
   }
 

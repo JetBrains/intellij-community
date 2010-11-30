@@ -48,7 +48,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   private int myMaxRowCount = 20;
   private boolean myAutoHandleBeforeShow;
 
-
   public ListPopupImpl(ListPopupStep aStep, int maxRowCount) {
     super(aStep);
     if (maxRowCount != -1){
@@ -368,7 +367,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   protected boolean isActionClick(MouseEvent e) {
-    return UIUtil.isActionClick(e);
+    return UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED, true);
   }
 
   private class MyMouseListener extends MouseAdapter {
