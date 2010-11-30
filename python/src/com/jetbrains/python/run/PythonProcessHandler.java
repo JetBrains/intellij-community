@@ -35,7 +35,7 @@ public class PythonProcessHandler extends ColoredProcessHandler {
               if (System.currentTimeMillis() - millis > 5000L) {
 
                 if (Messages.showYesNoDialog("Do you want to terminate the process?", "Process is not responding", null) == 0) {
-                  RunnerMediator.sendSigKill(myProcessUid);
+                  RunnerMediator.sendSigKill(getProcess());
                   return;
                 }
                 else {
