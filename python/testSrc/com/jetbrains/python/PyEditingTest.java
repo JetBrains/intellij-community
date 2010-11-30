@@ -176,4 +176,55 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     });
     return myFixture.getDocument(file).getText();
   }
+
+  private void doTypingTest(final char character) {
+    final String testName = "editing/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    doTyping(character);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private void doTyping(final char character) {
+    final int offset = myFixture.getEditor().getCaretModel().getOffset();
+    final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        myFixture.getEditor().getCaretModel().moveToOffset(offset);
+        myFixture.type(character);
+        return myFixture.getFile();
+      }
+    });
+  }
+
+  public void testFirstParamClassmethod() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamMetaClass() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamMetaNew() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamMetaSimple() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamSimpleInit() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamSimpleNew() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamSimple() {
+    doTypingTest('(');
+  }
+
+  public void testFirstParamStaticmethod() {
+    doTypingTest('(');
+  }
 }

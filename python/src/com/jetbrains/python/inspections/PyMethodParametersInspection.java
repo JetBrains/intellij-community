@@ -11,15 +11,9 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
-
-import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
-import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 
 /**
  * Looks for the 'self' or its equivalents.
@@ -50,34 +44,16 @@ public class PyMethodParametersInspection extends PyInspection {
     }
 
 
-    private static boolean among(@NotNull String what, String... variants) {
-      for (String s : variants) {
-        if (what.equals(s)) return true;
-      }
-      return false;
-    }
-
     @Override
     public void visitPyFunction(final PyFunction node) {
-      PsiElement cap = PyUtil.getConcealingParent(node);
-      if (cap instanceof PyClass) {
+      PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
+      if (flags != null) {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
-        Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
-        boolean isMetaclassMethod = false;
-        PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
-        for (PyClass ancestor_cls : ((PyClass)cap).iterateAncestors()) {
-          if (ancestor_cls == type_cls) {
-            isMetaclassMethod = true;
-            break;
-          }
-        }
         final String method_name = node.getName();
-        boolean isSpecialMetaclassMethod = isMetaclassMethod && among(method_name, PyNames.INIT, "__call__");
-        final boolean is_staticmethod = flags.contains(STATICMETHOD);
         if (params.length == 0) {
           // check for "staticmetod"
-          if (is_staticmethod) return; // no params may be fine
+          if (flags.isStaticMethod()) return; // no params may be fine
           // check actual param list
           ASTNode name_node = node.getNameNode();
           if (name_node != null) {
@@ -87,7 +63,7 @@ public class PyMethodParametersInspection extends PyInspection {
               open_paren != null && close_paren != null &&
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
-              String paramName = flags.contains(CLASSMETHOD) || isMetaclassMethod ? "cls" : "self";
+              String paramName = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
                 ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
@@ -101,20 +77,18 @@ public class PyMethodParametersInspection extends PyInspection {
             String pname = first_param.getText();
             // every dup, swap, drop, or dup+drop of "self"
             @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
-            for (String typo : mangled) {
-              if (typo.equals(pname)) {
-                registerProblem(
-                  PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyBundle.message("INSP.probably.mistyped.self"),
-                  new RenameParameterQuickFix(PyNames.CANONICAL_SELF)
-                );
-                return;
-              }
+            if (PyUtil.among(pname, mangled)) {
+              registerProblem(
+                PyUtil.sure(params[0].getNode()).getPsi(),
+                PyBundle.message("INSP.probably.mistyped.self"),
+                new RenameParameterQuickFix(PyNames.CANONICAL_SELF)
+              );
+              return;
             }
             String CLS = "cls"; // TODO: move to style settings
-            if (isMetaclassMethod && PyNames.NEW.equals(method_name)) {
+            if (flags.isMetaclassMethod() && PyNames.NEW.equals(method_name)) {
               final String[] POSSIBLE_PARAM_NAMES = {"typ", "meta"}; // TODO: move to style settings
-              if (!among(pname, POSSIBLE_PARAM_NAMES)) {
+              if (!PyUtil.among(pname, POSSIBLE_PARAM_NAMES)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
                   PyBundle.message("INSP.usually.named.$0", POSSIBLE_PARAM_NAMES[0]),
@@ -122,7 +96,7 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (flags.contains(CLASSMETHOD) || isSpecialMetaclassMethod || PyNames.NEW.equals(method_name)) {
+            else if (flags.isClassMethod() || flags.isSpecialMetaclassMethod() || PyNames.NEW.equals(method_name)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
@@ -131,8 +105,8 @@ public class PyMethodParametersInspection extends PyInspection {
                 );
               }
             }
-            else if (!is_staticmethod && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
-              if (isMetaclassMethod && CLS.equals(pname)) {
+            else if (!flags.isStaticMethod() && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
+              if (flags.isMetaclassMethod() && CLS.equals(pname)) {
                 return;   // accept either 'self' or 'cls' for all methods in metaclass
               }
               registerProblem(
@@ -143,7 +117,7 @@ public class PyMethodParametersInspection extends PyInspection {
             }
           }
           else { // the unusual case of a method with first tuple param
-            if (!is_staticmethod) {
+            if (!flags.isStaticMethod()) {
               registerProblem(plist, PyBundle.message("INSP.first.param.must.not.be.tuple"));
             }
           }
