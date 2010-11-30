@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -20,6 +21,8 @@ import java.util.*;
  * @author traff
  */
 public class RunnerMediator {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
+
   private static final int SIGINT = 2;
   private static final int SIGKILL = 9;
   private static final String UID_KEY_NAME = "PROCESSUUID";
@@ -241,6 +244,7 @@ public class RunnerMediator {
         }
       }
       catch (Exception e) {
+        LOG.error("Couldn't terminate the process", e);
         return false;
       }
     }
