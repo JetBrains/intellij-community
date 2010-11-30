@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author nik
@@ -30,5 +30,5 @@ public abstract class ArtifactValidationUtil {
     return ServiceManager.getService(project, ArtifactValidationUtil.class);
   }
 
-  public abstract Set<Artifact> getSelfIncludingArtifacts();
+  public abstract Map<Artifact, String> getArtifactToSelfIncludingNameMap();
 }
