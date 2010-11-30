@@ -11,6 +11,7 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
@@ -88,6 +89,18 @@ public class ArtifactsTestUtil {
       protected void run(final Result result) {
         final ModifiableArtifactModel model = ArtifactManager.getInstance(project).createModifiableModel();
         model.getOrCreateModifiableArtifact(findArtifact(project, artifactName)).setOutputPath(outputPath);
+        model.commit();
+      }
+    }.execute();
+  }
+
+  public static void addArtifactToLayout(final Project project, final Artifact parent, final Artifact toAdd) {
+    new WriteAction() {
+      @Override
+      protected void run(final Result result) {
+        final ModifiableArtifactModel model = ArtifactManager.getInstance(project).createModifiableModel();
+        final PackagingElement<?> artifactElement = PackagingElementFactory.getInstance().createArtifactElement(toAdd, project);
+        model.getOrCreateModifiableArtifact(parent).getRootElement().addOrFindChild(artifactElement);
         model.commit();
       }
     }.execute();

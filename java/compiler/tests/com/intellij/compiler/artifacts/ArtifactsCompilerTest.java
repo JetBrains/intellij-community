@@ -3,12 +3,16 @@ package com.intellij.compiler.artifacts;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -243,5 +247,35 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().archive("a.jar")
                            .file("ResultPrinter.class")
                            .file("TestRunner.class"));
+  }
+
+  public void testSelfIncludingArtifact() throws Exception {
+    final Artifact a = addArtifact("a", root());
+    ArtifactsTestUtil.addArtifactToLayout(myProject, a, a);
+    assertCompilationFailed(a);
+  }
+
+  public void testCircularInclusion() throws Exception {
+    final Artifact a = addArtifact("a", root());
+    final Artifact b = addArtifact("b", root());
+    ArtifactsTestUtil.addArtifactToLayout(myProject, a, b);
+    ArtifactsTestUtil.addArtifactToLayout(myProject, b, a);
+    assertCompilationFailed(a);
+    assertCompilationFailed(b);
+  }
+
+  public void testArtifactContainingSelfIncludingArtifact() throws Exception {
+    Artifact c = addArtifact("c", root());
+    final Artifact a = addArtifact("a", root().artifact(c));
+    ArtifactsTestUtil.addArtifactToLayout(myProject, a, a);
+    final Artifact b = addArtifact("b", root().artifact(a));
+
+    compile(c);
+    assertCompilationFailed(b);
+    assertCompilationFailed(a);
+  }
+
+  private void assertCompilationFailed(Artifact a) throws Exception {
+    compile(ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(a)), CompilerFilter.ALL, false, true);
   }
 }

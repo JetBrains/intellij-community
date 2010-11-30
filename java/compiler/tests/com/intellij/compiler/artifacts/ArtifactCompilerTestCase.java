@@ -66,6 +66,13 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   protected CompilationLog compile(final CompileScope scope,
                                    final CompilerFilter filter,
                                    final boolean forceCompile) throws Exception {
+    return compile(scope, filter, forceCompile, false);
+  }
+
+  protected CompilationLog compile(final CompileScope scope,
+                                   final CompilerFilter filter,
+                                   final boolean forceCompile,
+                                   final boolean errorsExpected) throws Exception {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -81,7 +88,10 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
               if (aborted) {
                 fail("compilation aborted");
               }
-              if (errors > 0) {
+              if (errorsExpected && errors == 0) {
+                fail("compilation finished without errors");
+              }
+              else if (!errorsExpected && errors > 0) {
                 fail("compilation finished with errors: " + Arrays.toString(compileContext.getMessages(CompilerMessageCategory.ERROR)));
               }
               result.set(new CompilationLog(CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete()));
