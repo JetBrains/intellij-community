@@ -345,7 +345,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static void completeReference(CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {
+  private static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {
     PsiElement position = parameters.getPosition();
 
     final InheritorsHolder inheritors = new InheritorsHolder(position, result);
@@ -393,11 +393,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
+        final boolean autopopup = parameters.getInvocationCount() == 0;
         //skip default groovy methods
         if (!secondCompletionInvoked &&
             object instanceof GrGdkMethod &&
             GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
-          showInfo();
+          if (!autopopup) {
+            showInfo();
+          }
           return;
         }
 
@@ -406,14 +409,18 @@ public class GroovyCompletionContributor extends CompletionContributor {
             object instanceof PsiMethod &&
             GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
           if (!checkForIterator((PsiMethod)object)) {
-            showInfo();
+            if (!autopopup) {
+              showInfo();
+            }
             return;
           }
         }
 
         //skip accessors if there is no get, set, is prefix
         if (skipAccessors && object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
-          showInfo();
+          if (!autopopup) {
+            showInfo();
+          }
           return;
         }
 
