@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.Patches;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -29,6 +28,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.LicenseeInfoProvider;
@@ -100,7 +100,8 @@ public class AboutAction extends AnAction implements DumbAware {
     });
 
     final long showTime = System.currentTimeMillis();
-    final long delta = Patches.APPLE_BUG_ID_3716865 ? 100 : 0;
+    //final long delta = Patches.APPLE_BUG_ID_3716865 ? 100 : 0;
+    final long delta = 100; //reproducible on Windows too
 
     dialog.addWindowFocusListener(new WindowFocusListener() {
       public void windowGainedFocus(WindowEvent e) {
@@ -110,6 +111,8 @@ public class AboutAction extends AnAction implements DumbAware {
         long eventTime = System.currentTimeMillis();
         if (eventTime - showTime > delta && e.getOppositeWindow() != e.getWindow()) {
           dialog.dispose();
+        } else {
+          IdeFocusManager.getGlobalInstance().requestFocus(dialog, true);
         }
       }
     });

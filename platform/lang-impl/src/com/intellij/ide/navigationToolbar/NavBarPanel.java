@@ -468,6 +468,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
       }
     });
+
+    myUpdateQueue.flush();
   }
 
   private void shiftFocus(int direction) {

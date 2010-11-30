@@ -1,46 +1,68 @@
 package com.intellij.facet.frameworks;
 
-import com.intellij.facet.frameworks.actions.GetAllVersionsAction;
 import com.intellij.facet.frameworks.actions.GetVersionInfoAction;
 import com.intellij.facet.frameworks.beans.DownloadJar;
 import com.intellij.facet.frameworks.beans.Version;
 import com.intellij.facet.frameworks.beans.Versions;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.apache.commons.codec.binary.Hex;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 public class LibrariesDownloadAssistant {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.LibrariesDownloadAssistant");
 
   private LibrariesDownloadAssistant() {
   }
 
-  // for local files
+  @Nullable
+  public static Version[] getVersions(@NotNull String groupId, @NotNull URL... localUrls) {
+    final Version[] versions = getDownloadServiceVersions(groupId);
+    return versions == null ? getVersions(localUrls) : versions;
+  }
+
+  @Nullable
+  public static Version[] getDownloadServiceVersions(@NotNull String id) {
+    final URL url = createVersionsUrl(id);
+    if (url == null) return null;
+    final Versions allVersions = deserialize(url);
+    return allVersions == null ? null : allVersions.getVersions();
+  }
+
+  @Nullable
+  private static URL createVersionsUrl(@NotNull String id) {
+    final String serviceUrl = LibrariesDownloadConnectionService.getInstance().getServiceUrl();
+    if (StringUtil.isNotEmpty(serviceUrl)) {
+      try {
+        return new URL(serviceUrl + "/" + id + "/");
+      }
+      catch (MalformedURLException e) {
+        LOG.error(e);
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   public static Version[] getVersions(@NotNull URL... urls) {
     Set<Version> versions = new HashSet<Version>();
     for (URL url : urls) {
-      final Versions allVersions = XmlSerializer.deserialize(url, Versions.class);
+      final Versions allVersions = deserialize(url);
       if (allVersions != null) {
         final Version[] vers = allVersions.getVersions();
         if (vers != null) {
@@ -53,14 +75,20 @@ public class LibrariesDownloadAssistant {
   }
 
   @Nullable
-  public static Version[] getVersions(@NotNull String id) {
-    final URL url = GetAllVersionsAction.create(id).getUrl();
-
+  private static Versions deserialize(@Nullable URL url) {
     if (url == null) return null;
 
-    final Versions allVersions = XmlSerializer.deserialize(url, Versions.class);
-
-    return allVersions == null ? null : allVersions.getVersions();
+    Versions allVersions = null;
+    try {
+      allVersions = XmlSerializer.deserialize(url, Versions.class);
+    }
+    catch (XmlSerializationException e) {
+      final Throwable cause = e.getCause();
+      if (!(cause instanceof IOException)) {
+        LOG.error(e);
+      }
+    }
+    return allVersions;
   }
 
   @Nullable
@@ -70,7 +98,7 @@ public class LibrariesDownloadAssistant {
 
     final Versions allVersions = XmlSerializer.deserialize(url, Versions.class);
 
-    if(allVersions == null) return null;
+    if (allVersions == null) return null;
 
     final Version[] versions = allVersions.getVersions();
 

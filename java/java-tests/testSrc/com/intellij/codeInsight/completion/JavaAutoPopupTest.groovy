@@ -15,7 +15,11 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.command.CommandProcessor
 
  /**
  * @author peter
@@ -239,6 +243,67 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     type 'PJCR'
     assertOrderedEquals myFixture.lookupElementStrings, 'PsiJavaCodeReferenceElement', 'PsiJavaCodeReferenceElementImpl'
 
+  }
+
+  public void testQuickSelectAfterReuse() {
+    myFixture.configureByText("a.java", """
+    class A { Iterable iterable;
+      { <caret> }
+    }
+    """)
+    type 'ite'
+    ApplicationManager.application.invokeAndWait({
+                                                   myFixture.type 'r'
+                                                   lookup.markReused()
+                                                   lookup.currentItem = lookup.items[0]
+                                                   CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
+
+                                                 } as Runnable, ModalityState.NON_MODAL)
+    myFixture.checkResult """
+    class A { Iterable iterable;
+      { iterable<caret> }
+    }
+    """
+  }
+
+  public void testQuickSelectAfterReuseAndBackspace() {
+    myFixture.configureByText("a.java", """
+    class A { Iterable iterable;
+      { <caret> }
+    }
+    """)
+    type 'ite'
+    ApplicationManager.application.invokeAndWait({
+                                                   myFixture.type 'r'
+                                                   lookup.markReused()
+                                                   myFixture.type '\b\b'
+                                                   lookup.currentItem = lookup.items[0]
+                                                   CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
+
+                                                 } as Runnable, ModalityState.NON_MODAL)
+    myFixture.checkResult """
+    class A { Iterable iterable;
+      { iterable<caret> }
+    }
+    """
+  }
+
+  public void testQuickSelectLiveTemplate() {
+    myFixture.configureByText("a.java", """
+    class A {
+      { <caret> }
+    }
+    """)
+    type 'th'
+    ApplicationManager.application.invokeAndWait({
+                                                   myFixture.type 'r'
+                                                   myFixture.type '\t'
+                                                 } as Runnable, ModalityState.NON_MODAL)
+    myFixture.checkResult """
+    class A {
+      { throw new <caret> }
+    }
+    """
   }
 
 }

@@ -261,6 +261,28 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return myAdditionalPrefix;
   }
 
+  public void appendPrefix(char c) {
+    checkReused();
+    setAdditionalPrefix(myAdditionalPrefix + c);
+  }
+
+  public boolean truncatePrefix() {
+    final int len = myAdditionalPrefix.length();
+    if (len == 0) return false;
+
+    markSelectionTouched();
+
+    myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
+    myInitialPrefix = null;
+    myFrozenItems.clear();
+    if (!myReused) {
+      refreshUi();
+    }
+
+    return true;
+  }
+
+  @Deprecated
   public void setAdditionalPrefix(final String additionalPrefix) {
     myAdditionalPrefix = additionalPrefix;
     myInitialPrefix = null;
@@ -273,11 +295,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    if (myReused) {
-      myFrozenItems.clear();
-      myModel.collectGarbage();
-      myReused = false;
-    }
+    checkReused();
 
     final Pair<LinkedHashSet<LookupElement>,List<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
     final LinkedHashSet<LookupElement> items = snapshot.first;
@@ -321,6 +339,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       else {
         ListScrollingUtil.selectItem(myList, 0);
       }
+    }
+  }
+
+  private void checkReused() {
+    if (myReused) {
+      myAdditionalPrefix = "";
+      myFrozenItems.clear();
+      myModel.collectGarbage();
+      myReused = false;
     }
   }
 
@@ -994,7 +1021,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myReused = true;
     myModel.clearItems();
     setAdvertisementText(null);
-    myAdditionalPrefix = "";
     myPreselectedItem = null;
   }
 

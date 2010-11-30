@@ -273,7 +273,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     collectPropertiesFileVariants(file, prefix, result);
   }
 
-  protected void collectPropertiesFileVariants(PropertiesFile file, String prefix, List<Object> result) {
+  protected void collectPropertiesFileVariants(@Nullable PropertiesFile file, String prefix, List<Object> result) {
+    if (file == null) return;
+
     for (Property each : file.getProperties()) {
       String name = each.getKey();
       if (prefix != null) name = prefix + name;

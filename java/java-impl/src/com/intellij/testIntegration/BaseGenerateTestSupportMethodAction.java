@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -149,6 +150,8 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
 
     private void doGenerate(final Editor editor, final PsiFile file, final PsiClass targetClass, final TestFramework framework) {
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) return;
+
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
