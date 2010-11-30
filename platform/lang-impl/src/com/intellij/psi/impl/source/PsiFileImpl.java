@@ -911,13 +911,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     catch (BindingFailedException e) {
       String message = e.getMessage();
-      if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-        message = new StringBuilder(message)
-          .append("\n=== AST ===\n").append(DebugUtil.treeToString(fileRoot, true))
-          .append("=== stub tree ===\n").append(DebugUtil.stubTreeToString(rootStub))
-          .append("=== text===\n").append(getText())
-          .append("\n======").toString();
-      }
+      //if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      //  message = new StringBuilder(message)
+      //    .append("\n=== AST ===\n").append(DebugUtil.treeToString(fileRoot, true))
+      //    .append("=== stub tree ===\n").append(DebugUtil.stubTreeToString(rootStub))
+      //    .append("=== text===\n").append(getText())
+      //    .append("\n======").toString();
+      //}
       assert false : message;
     }
   }
