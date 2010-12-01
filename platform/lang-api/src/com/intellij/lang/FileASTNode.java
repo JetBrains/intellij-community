@@ -26,4 +26,6 @@ import org.jetbrains.annotations.NotNull;
 public interface FileASTNode extends ASTNode {
   @NotNull
   CharTable getCharTable();
+
+  boolean isParsed();
 }
