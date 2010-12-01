@@ -327,27 +327,6 @@ public class GitHandlerUtil {
       super(handler, operationName, showErrors);
     }
 
-    /**
-     * Error indicators for the line
-     */
-    @NonNls private static final String[] ERROR_INDICATORS =
-      {"ERROR:", "error", "FATAL:", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull",
-        "cannot rebase:"};
-
-    /**
-     * Check if the line is an error line
-     *
-     * @param text a line to check
-     * @return true if the error line
-     */
-    protected static boolean isErrorLine(String text) {
-      for (String prefix : ERROR_INDICATORS) {
-        if (text.startsWith(prefix)) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
   /**
@@ -393,4 +372,27 @@ public class GitHandlerUtil {
       }
     }
   }
+  /**
+   * Error indicators for the line
+   */
+  @NonNls private static final String[] ERROR_INDICATORS =
+    {"ERROR:", "error", "FATAL:", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull",
+      "cannot rebase:"};
+
+  /**
+   * Check if the line is an error line
+   *
+   * @param text a line to check
+   * @return true if the error line
+   */
+  protected static boolean isErrorLine(String text) {
+    for (String prefix : ERROR_INDICATORS) {
+      if (text.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
 }
