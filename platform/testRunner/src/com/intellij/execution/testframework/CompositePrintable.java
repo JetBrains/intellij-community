@@ -21,9 +21,11 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,25 +35,18 @@ public class CompositePrintable implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
 
   protected final List<Printable> myNestedPrintables = new ArrayList<Printable>();
-  private PrintablesWrapper myWrapper;
+  private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
 
   public void flush() {
-    if (myWrapper == null) {
-      myWrapper = new PrintablesWrapper();
-    }
-    if (myWrapper != null) {
-      synchronized (myNestedPrintables) {
-        myWrapper.flash(myNestedPrintables);
-        clear();
-      }
+    synchronized (myNestedPrintables) {
+      myWrapper.flush(myNestedPrintables);
+      clear();
     }
   }
 
   public void printOn(final Printer printer) {
-    if (myWrapper != null) {
-      myWrapper.printOn(printer);
-    }
+    myWrapper.printOn(printer);
     synchronized (myNestedPrintables) {
       for (int i = 0; i < myNestedPrintables.size(); i++) {
         if (i == getExceptionMark() && i > 0) printer.mark();
@@ -82,9 +77,7 @@ public class CompositePrintable implements Printable, Disposable {
   @Override
   public void dispose() {
     clear();
-    if (myWrapper != null) {
-      myWrapper.dispose();
-    }
+    myWrapper.dispose();
   }
 
   public int getExceptionMark() {
@@ -100,132 +93,182 @@ public class CompositePrintable implements Printable, Disposable {
   private class PrintablesWrapper {
 
     @NonNls private static final String HYPERLINK = "hyperlink";
-    private DataInputStream myReader;
+
     private ConsoleViewContentType myLastSelected;
+    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     private File myFile;
+    private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
 
-    public void flash(List<Printable> printables) {
-      if (printables.isEmpty()) return;
+    @Nullable
+    private synchronized File getFile() {
       if (myFile == null) {
         try {
-          myFile = FileUtil.createTempFile("frst", "scd");
+          final File tempFile = FileUtil.createTempFile("frst", "scd");
+          if (tempFile.exists()) {
+            myFile = tempFile;
+            return myFile;
+          }
         }
         catch (IOException e) {
-          return;
+          LOG.error(e);
+          return null;
         }
       }
-      final DataOutputStream fileWriter;
-      try {
-        fileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile, true)));
+      return myFile;
+    }
 
+    public synchronized void dispose() {
+      if (myFile != null) FileUtil.delete(myFile);
+    }
+
+    public void flush(final List<Printable> printables) {
+      if (printables.isEmpty()) return;
+      final ArrayList<Printable> currentPrintables = new ArrayList<Printable>(printables);
+      //move out from AWT thread
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          for (final Printable printable : currentPrintables) {
+            printable.printOn(myPrinter);
+          }
+          myPrinter.close();
+        }
+      }, 10);
+    }
+
+    public void printOn(final Printer console) {
+      final File file = getFile();
+      if (file == null) return;
+      final MyFileContentPrinter printer = new MyFileContentPrinter();
+      if (console instanceof MyFlushToFilePrinter) {
+        //parent test need to load child file content to flush itself which is already done in alarm thread
+        //output stream is closed sync in flush() so invoke later would result in unclosed stream
+        printer.printFileContent(console, file);
+      } else {
+        //move out from AWT thread
+        myAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            printer.printFileContent(console, file);
+          }
+        }, 10);
       }
-      catch (FileNotFoundException e) {
-        LOG.error(e);
-        return;
+    }
+
+    private class MyFlushToFilePrinter implements Printer {
+      //all access is performed from alarm thread
+      private DataOutputStream myFileWriter;
+
+      public DataOutputStream getFileWriter() {
+        if (myFileWriter == null) {
+          try {
+            final File file = getFile();
+            LOG.assertTrue(file != null);
+            myFileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, true)));
+          }
+          catch (FileNotFoundException e) {
+            LOG.error(e);
+            return null;
+          }
+        }
+        return myFileWriter;
       }
-      try {
-        for (final Printable printable : printables) {
-          printable.printOn(new Printer() {
-            @Override
-            public void print(String text, ConsoleViewContentType contentType) {
-              try {
-                IOUtil.writeString(contentType.toString() + text, fileWriter);
-              }
-              catch (IOException e) {
-                LOG.error(e);
+
+      public void close() {
+        if (myFileWriter != null) {
+          try {
+            myFileWriter.close();
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          myFileWriter = null;
+        }
+      }
+
+      @Override
+      public void print(String text, ConsoleViewContentType contentType) {
+        try {
+          IOUtil.writeString(contentType.toString() + text, getFileWriter());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+
+      @Override
+      public void printHyperlink(String text, HyperlinkInfo info) {
+        if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
+          final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
+          try {
+            DataOutputStream fileWriter = getFileWriter();
+            IOUtil.writeString(HYPERLINK, fileWriter);
+            IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
+            IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
+            IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+        else {
+          print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+      }
+
+      @Override
+      public void onNewAvailable(@NotNull Printable printable) {}
+
+      @Override
+      public void mark() {}
+    }
+
+    private class MyFileContentPrinter {
+
+      public void printFileContent(Printer printer, File file) {
+        DataInputStream reader = null;
+        try {
+          reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+          int lineNum = 0;
+          while (reader.available() > 0) {
+            if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
+            final String line = IOUtil.readString(reader);
+            boolean printed = false;
+            for (ConsoleViewContentType contentType : ConsoleViewContentType.OUTPUT_TYPES) {
+              final String prefix = contentType.toString();
+              if (line.startsWith(prefix)) {
+                printer.print(line.substring(prefix.length()), contentType);
+                myLastSelected = contentType;
+                printed = true;
+                break;
               }
             }
-
-            @Override
-            public void onNewAvailable(@NotNull Printable printable11) {
-            }
-
-            @Override
-            public void printHyperlink(String text, HyperlinkInfo info) {
-              if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
-                final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
-                try {
-                  IOUtil.writeString(HYPERLINK, fileWriter);
-                  IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
-                  IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
-                  IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
-                }
-                catch (IOException e) {
-                  LOG.error(e);
-                }
+            if (!printed) {
+              if (line.startsWith(HYPERLINK)) {
+                new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader)).printOn(printer);
               }
               else {
-                print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+                printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
               }
             }
-
-            @Override
-            public void mark() {
-            }
-          });
-        }
-      }
-      finally {
-        try {
-          fileWriter.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
-
-    public void printOn(Printer console) {
-      if (myFile == null || !myFile.exists()) return;
-      try {
-        myReader = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
-        int lineNum = 0;
-        while (myReader.available() > 0) {
-          if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) console.mark();
-          final String line = IOUtil.readString(myReader);
-          if (!isApplicable(console, line, ConsoleViewContentType.ERROR_OUTPUT)) {
-            if (!isApplicable(console, line, ConsoleViewContentType.SYSTEM_OUTPUT)) {
-              if (!isApplicable(console, line, ConsoleViewContentType.NORMAL_OUTPUT)) {
-                if (line.startsWith(HYPERLINK)) {
-                  new DiffHyperlink(IOUtil.readString(myReader), IOUtil.readString(myReader), IOUtil.readString(myReader)).printOn(console);
-                }
-                else {
-                  console.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
-                }
-              }
-            }
-          }
-          lineNum++;
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-      finally {
-        try {
-          if (myReader != null) {
-            myReader.close();
+            lineNum++;
           }
         }
         catch (IOException e) {
           LOG.error(e);
         }
+        finally {
+          try {
+            if (reader != null) {
+              reader.close();
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
       }
-    }
-
-    private boolean isApplicable(Printer console, String line, ConsoleViewContentType contentType) {
-      final String prefix = contentType.toString();
-      if (line.startsWith(prefix)) {
-        console.print(line.substring(prefix.length()), contentType);
-        myLastSelected = contentType;
-        return true;
-      }
-      return false;
-    }
-
-    public void dispose() {
-      if (myFile != null) FileUtil.delete(myFile);
     }
   }
 }

@@ -295,6 +295,7 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
+        unboundOutputRoot.flush();
         IJSwingUtilities.invoke(new Runnable() {
           public void run() {
             packetsReceiver.checkTerminated();
