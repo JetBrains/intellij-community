@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EditorBasedWidget extends FileEditorManagerAdapter implements StatusBarWidget {
 
   protected StatusBar myStatusBar;
-  protected Project myProject;
+  private Project myProject;
 
   protected MessageBusConnection myConnection;
 
@@ -45,15 +45,14 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
   }
 
-  protected EditorBasedWidget() {
-  }
-
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
     Editor result = null;
 
-    DockContainer c = DockManager.getInstance(myProject).getContainerFor(myStatusBar.getComponent());
+    if (project == null) return null;
+
+    DockContainer c = DockManager.getInstance(project).getContainerFor(myStatusBar.getComponent());
     EditorsSplitters splitters = null;
     if (c instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)c).getSplitters();
@@ -95,16 +94,9 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   }
 
 
-  @NotNull
+  @Nullable
   protected final Project getProject() {
-    if (myProject != null) return myProject;
-
-    if (myStatusBar != null && myStatusBar.getFrame() != null) {
-      return myStatusBar.getFrame().getProject();
-    } else {
-      assert false : "Cannot find project (unititialized status bar widget?)";
-      return null;
-    }
+    return myProject;
   }
 
   @Override

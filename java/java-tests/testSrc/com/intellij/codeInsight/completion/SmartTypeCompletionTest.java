@@ -971,7 +971,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     getLookup().setCurrentItem(ContainerUtil.find(myItems, new Condition<LookupElement>() {
       @Override
       public boolean value(final LookupElement lookupItem) {
-        return "Fubar.Bar".equals(lookupItem.getLookupString());
+        return "Bar.Fubar.Bar".equals(lookupItem.getLookupString());
       }
     }));
     select('\n');

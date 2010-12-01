@@ -36,6 +36,10 @@ import java.awt.event.MouseEvent;
  */
 public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation {
 
+  public InsertOverwritePanel(Project project) {
+    super(project);
+  }
+
   @NotNull
   public String ID() {
     return "InsertOverwrite";
@@ -47,7 +51,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
 
   @Override
   public StatusBarWidget copy() {
-    return new InsertOverwritePanel();
+    return new InsertOverwritePanel(getProject());
   }
 
 

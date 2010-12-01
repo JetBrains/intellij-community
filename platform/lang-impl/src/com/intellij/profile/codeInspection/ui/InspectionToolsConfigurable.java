@@ -374,6 +374,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myPanels.clear();
     if (mySelectionAlarm != null) {
       Disposer.dispose(mySelectionAlarm);
+      mySelectionAlarm = null;
     }
   }
 
