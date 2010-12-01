@@ -18,7 +18,10 @@ package com.intellij.ide.ui;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -236,17 +239,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
+    final String lowercaseProductName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     if (SystemInfo.isMac) {
       UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
       LOG.assertTrue(laf != null);
       return laf;
     }
-    else if (SystemInfo.isLinux && ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
-      UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
-      LOG.assertTrue(laf != null);
-      return laf;
-    }
-    if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
+    if ("Rubymine".equals(lowercaseProductName) || "Pycharm".equals(lowercaseProductName)) {
       final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
       if ("gnome".equals(desktop)) {
         UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
