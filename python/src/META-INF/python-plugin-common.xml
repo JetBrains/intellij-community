@@ -32,6 +32,7 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyLiteralSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
