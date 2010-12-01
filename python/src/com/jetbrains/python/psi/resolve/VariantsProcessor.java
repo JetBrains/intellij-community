@@ -36,7 +36,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
     myContext = context;
   }
 
-  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodeFilter, final Condition<String> nameFilter) {
+  public VariantsProcessor(PsiElement context, @Nullable final Condition<PsiElement> nodeFilter, @Nullable final Condition<String> nameFilter) {
     myContext = context;
     myNodeFilter = nodeFilter;
     myNameFilter = nameFilter;
