@@ -454,6 +454,10 @@ class RunConfigurable extends BaseConfigurable {
     setModified(false);
   }
 
+  public Configurable getSelectedConfigurable() {
+    return mySelectedConfigurable;
+  }
+
   public void apply() throws ConfigurationException {
     final RunManagerImpl manager = getRunManager();
     final ConfigurationType[] configurationTypes = manager.getConfigurationFactories();

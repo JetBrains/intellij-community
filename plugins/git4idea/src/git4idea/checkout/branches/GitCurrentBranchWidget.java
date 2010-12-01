@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, GitReferenceListener, StatusBarWidget.Multiframe {
 
   private ProjectLevelVcsManager myVcsManager;
-  private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>();
+  private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>("");
   private static final Logger LOG = Logger.getInstance(GitCurrentBranchWidget.class.getName());
 
   public GitCurrentBranchWidget(Project project) {

@@ -86,7 +86,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
       String[] bold = html ? new String[]{"<b>", "</b>"} : new String[]{"", ""};
       String valueSuffix = "";
       if (e instanceof XmlTag) {
-        valueSuffix = ": " + bold[0] + ((XmlTag)e).getValue().getText() + bold[1]; 
+        valueSuffix = ": " + bold[0] + ((XmlTag)e).getValue().getTrimmedText() + bold[1];
       }
       return type + br + name + valueSuffix;
     }
