@@ -25,8 +25,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 
 import java.util.List;
 
-@Tag("jar")
-public class DownloadJar {
+@Tag("item")
+public class ArtifactItem {
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
@@ -36,10 +36,7 @@ public class DownloadJar {
   public String myName;
 
   @Attribute("url")
-  public String myDownloadUrl;
-
-  @Attribute("presentation")
-  public String myPresentation;
+  public String myUrl;
 
   @Attribute("md5")
   public String myMD5;
@@ -48,12 +45,8 @@ public class DownloadJar {
     return myName;
   }
 
-  public String getDownloadUrl() {
-    return myDownloadUrl;
-  }
-
-  public String getPresentation() {
-    return myPresentation;
+  public String getUrl() {
+    return myUrl;
   }
 
   public String getMD5() {

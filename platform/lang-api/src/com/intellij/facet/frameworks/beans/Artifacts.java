@@ -3,13 +3,13 @@ package com.intellij.facet.frameworks.beans;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 
-public class Versions {
+public class Artifacts {
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
-  public Version[] myVersions;
+  public Artifact[] myVersions;
 
-  public Version[] getVersions() {
+  public Artifact[] getArtifacts() {
     return myVersions;
   }
 }
