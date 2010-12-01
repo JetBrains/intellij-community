@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.codeStyle.HelperFactory;
 import com.intellij.psi.impl.source.codeStyle.JavaHelperFactory;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
+import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
@@ -584,7 +585,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     private static boolean isClassOwner(final PsiElement element) {
-      return element instanceof PsiClassOwner && !(element instanceof XmlFile);
+      return element instanceof PsiClassOwner && !(element instanceof XmlFile) || element instanceof JspDirective;
     }
 
     private static boolean containsClassesInside(final PsiElement element) {
