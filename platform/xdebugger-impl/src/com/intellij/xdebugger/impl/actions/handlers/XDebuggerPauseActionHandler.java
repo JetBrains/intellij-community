@@ -34,7 +34,7 @@ public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   @Override
   public boolean isHidden(@NotNull Project project, AnActionEvent event) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    return session != null && !((XDebugSessionImpl)session).isPauseActionSupported();
+    return session == null || !((XDebugSessionImpl)session).isPauseActionSupported();
   }
 
   protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {

@@ -542,11 +542,17 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertProxyPresentation("MyRubyTest1.testFirst", "/some/path/on/my/comp", "MyRubyTest1.testFirst");
 
     //Spec example
-    assertProxyPresentation("should be beautifull", "World", "should be beautifull");
+    assertProxyPresentation("should be beautiful", "World", "should be beautiful");
+    assertProxyPresentation("<no name>", "World", "");
 
     //Common example
     assertProxyPresentation("some phrase", "Begin of", "Begin of some phrase");
 
+    //Name with extra white spaces
+    assertProxyPresentation("several variants: 1. Do first 2. Do 2nd 3. Do 3d", "I have ", "several variants: 1. Do first\n     2. Do 2nd\n     3. Do 3d");
+    assertProxyPresentation("several variants: 1. Do first 2. Do 2nd 3. Do 3d", "I have ", "I have several variants: 1. Do first\n     2. Do 2nd\n     3. Do 3d");
+    assertProxyPresentation("several variants: 1. Do first 2. Do 2nd", "I have", "several variants: 1. Do first\t2. Do 2nd");
+    assertProxyPresentation("several variants: 1. Do first", "I have", "several variants: 1. Do           first");
 
     //Bound examples
     assertEquals("suite without parent",

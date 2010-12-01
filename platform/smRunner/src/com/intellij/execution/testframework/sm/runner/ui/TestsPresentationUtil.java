@@ -60,6 +60,8 @@ public class TestsPresentationUtil {
   public static final SimpleTextAttributes TERMINATED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.ORANGE);
   @NonNls private static final String RESULTS_NO_TESTS = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.results.no.tests");
+  @NonNls private static final String NO_NAME_TEST = SMTestsRunnerBundle.message(
+      "sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
   @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
   @NonNls static final String DEFAULT_TESTS_CATEGORY = "Tests";
 
@@ -190,19 +192,30 @@ public class TestsPresentationUtil {
     final SMTestProxy parent = testProxy.getParent();
     final String name = testProxy.getName();
 
+    String presentationCandidate = name;
     if (parent != null) {
       final String parentName = parent.getName();
       if (name.startsWith(parentName)) {
-        final String presentationCandidate = name.substring(parentName.length());
+        presentationCandidate = name.substring(parentName.length());
+
+        // remove "." separator
         if (presentationCandidate.startsWith(".")) {
-          return presentationCandidate.substring(1).trim();
+          presentationCandidate = presentationCandidate.substring(1);
         }
-        return presentationCandidate.trim();
       }
     }
 
-    return name.trim();
+    // trim
+    presentationCandidate = presentationCandidate.trim();
 
+    // remove extra spaces
+    presentationCandidate = presentationCandidate.replaceAll("\\s+", " ");
+
+    if (StringUtil.isEmpty(presentationCandidate)) {
+      return NO_NAME_TEST;
+    }
+
+    return presentationCandidate;
   }
 
   @Nullable

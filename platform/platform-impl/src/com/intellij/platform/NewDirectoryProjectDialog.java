@@ -81,27 +81,11 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         }
       };
     myLocationField.addActionListener(listener);
-    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        myModifyingLocation = true;
-        String path = myLocationField.getText().trim();
-        if (path.endsWith(File.separator)) {
-          path = path.substring(0, path.length() - File.separator.length());
-        }
-        int ind = path.lastIndexOf(File.separator);
-        if (ind != -1) {
-          String projectName = path.substring(ind + 1, path.length());
-          if (!myProjectNameTextField.getText().trim().isEmpty()) {
-            myBaseDir = path.substring(0, ind);
-          }
-          if (!projectName.equals(myProjectNameTextField.getText())) {
-            if (!myModifyingProjectName) {
-              myProjectNameTextField.setText(projectName);
-            }
-          }
-        }
-        myModifyingLocation = false;
+
+    myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        File f = new File(myLocationField.getText());
+        myLocationField.setText(new File(f.getParent(), myProjectNameTextField.getText()).getPath());
       }
     });
 

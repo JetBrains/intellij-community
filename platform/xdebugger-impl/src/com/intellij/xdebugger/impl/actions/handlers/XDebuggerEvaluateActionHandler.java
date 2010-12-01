@@ -25,7 +25,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
-import com.intellij.xdebugger.impl.evaluate.EvaluationDialogMode;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +50,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     if (expression == null) {
       expression = "";
     }
-    final EvaluationDialogMode mode = expression.indexOf('\n') == -1 ? EvaluationDialogMode.EXPRESSION : EvaluationDialogMode.CODE_FRAGMENT;
-    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, mode,
-                                                         stackFrame.getSourcePosition());
+    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression,
+                                                                           stackFrame.getSourcePosition());
     dialog.show();
   }
 

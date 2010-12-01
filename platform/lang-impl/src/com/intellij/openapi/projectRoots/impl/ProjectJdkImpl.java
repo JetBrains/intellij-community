@@ -120,7 +120,12 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
       mySdkType = getSdkTypeByName(sdkTypeName);
     }
     final Element version = element.getChild(ELEMENT_VERSION);
-    setVersionString((version != null) ? version.getAttributeValue(ATTRIBUTE_VALUE) : null);
+
+    // set version if it was cached (defined)
+    // otherwise it will be null && undefined
+    if (version != null) {
+      setVersionString(version.getAttributeValue(ATTRIBUTE_VALUE));
+    }
 
     if (element.getAttribute(ELEMENT_VERSION) == null || !"2".equals(element.getAttributeValue(ELEMENT_VERSION))) {
       myRootContainer.startChange();

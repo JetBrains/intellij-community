@@ -468,3 +468,4 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 }
+

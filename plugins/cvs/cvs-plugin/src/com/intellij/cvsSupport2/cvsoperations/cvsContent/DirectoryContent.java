@@ -55,6 +55,18 @@ public class DirectoryContent {
     return convertToSortedCollection(myModules);
   }
 
+  Collection<String> getSubDirectoriesRaw() {
+    return mySubDirectories;
+  }
+
+  Collection<String> getFilesRaw() {
+    return myFiles;
+  }
+
+  Collection<String> getSubModulesRaw() {
+    return myModules;
+  }
+
   private static Collection<String> convertToSortedCollection(Collection<String> collection) {
     ArrayList<String> result = new ArrayList<String>(collection);
     Collections.sort(result, new Comparator<String>() {

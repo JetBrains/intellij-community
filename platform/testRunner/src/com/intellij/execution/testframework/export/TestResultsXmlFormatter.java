@@ -34,6 +34,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class TestResultsXmlFormatter {
@@ -87,7 +88,7 @@ public class TestResultsXmlFormatter {
     Map<String, String> runAttrs = new HashMap<String, String>();
     runAttrs.put(ATTR_NAME, myRuntimeConfiguration.getName());
     String footerText = ExecutionBundle.message("export.test.results.footer", ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                DateFormatUtil.formatDateTime(new Date()));
+                                                new SimpleDateFormat().format(new Date()));
     runAttrs.put(ATTR_FOORTER_TEXT, footerText);
     Integer duration = myTestRoot.getDuration();
     if (duration != null) {

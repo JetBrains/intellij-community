@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.Consumer;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.*;
 
@@ -240,12 +241,15 @@ final class OptionsUIForm {
             fileDescriptor.setShowFileSystemRoots(true);
             fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
             fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
-            VirtualFile[] virtualFiles = FileChooser.chooseFiles(externalEditorPath, fileDescriptor, previous);
-
-            if (virtualFiles.length > 0) {
-                String path = virtualFiles[0].getPath();
-                externalEditorPath.setText(path);
-            }
+            FileChooser.chooseFilesWithSlideEffect(fileDescriptor, null, previous, new Consumer<VirtualFile[]>() {
+              @Override
+              public void consume(VirtualFile[] virtualFiles) {
+                if (virtualFiles != null && virtualFiles.length > 0) {
+                  String path = virtualFiles[0].getPath();
+                  externalEditorPath.setText(path);
+                }
+              }
+            });
         }
     }
 }

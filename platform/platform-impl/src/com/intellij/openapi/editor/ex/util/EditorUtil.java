@@ -569,6 +569,12 @@ public class EditorUtil {
     }
     return new Pair<LogicalPosition, LogicalPosition>(lineStart, nextLineStart);
   }
+
+  public static void scrollToTheEnd(final Editor editor) {
+    editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+    editor.getSelectionModel().removeSelection();
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
 }
 
 
