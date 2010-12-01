@@ -60,6 +60,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
       if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+        item = item.setTailText(((PyFunction) item.getObject()).getParameterList().getText());
       }
       else if (item.getObject() instanceof PyClass) {
         item = item.setInsertHandler(PyClassInsertHandler.INSTANCE);
