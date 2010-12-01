@@ -25,7 +25,7 @@
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="java-tests" />
+    <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="platform-api" />
   </component>
   <component name="copyright">
