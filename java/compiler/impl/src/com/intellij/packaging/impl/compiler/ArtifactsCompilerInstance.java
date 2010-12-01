@@ -128,13 +128,15 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     myBuilderContext = new ArtifactsProcessingItemsBuilderContext(myContext);
     final Artifact artifact = target.getArtifact();
 
-    final Set<Artifact> selfIncludingArtifacts = new ReadAction<Set<Artifact>>() {
-      protected void run(final Result<Set<Artifact>> result) {
-        result.setResult(ArtifactValidationUtil.getInstance(getProject()).getSelfIncludingArtifacts());
+    final Map<Artifact, String> selfIncludingArtifacts = new ReadAction<Map<Artifact, String>>() {
+      protected void run(final Result<Map<Artifact, String>> result) {
+        result.setResult(ArtifactValidationUtil.getInstance(getProject()).getArtifactToSelfIncludingNameMap());
       }
     }.execute().getResultObject();
-    if (selfIncludingArtifacts.contains(artifact)) {
-      myContext.addMessage(CompilerMessageCategory.ERROR, "Artifact '" + artifact.getName() + "' includes itself in the output layout", null, -1, -1);
+    final String selfIncludingName = selfIncludingArtifacts.get(artifact);
+    if (selfIncludingName != null) {
+      String name = selfIncludingName.equals(artifact.getName()) ? "it" : "'" + selfIncludingName + "' artifact";
+      myContext.addMessage(CompilerMessageCategory.ERROR, "Cannot build '" + artifact.getName() + "' artifact: " + name + " includes itself in the output layout", null, -1, -1);
       return Collections.emptyList();
     }
 

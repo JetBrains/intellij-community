@@ -25,6 +25,7 @@ import com.intellij.util.containers.Convertor;
 import git4idea.GitBranch;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -33,8 +34,7 @@ import java.util.*;
  */
 public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlusParents> {
   private final static int ourTestCount = 5;
-  private final static int ourPreload = 100;
-  private static final int ourPackSize = 3000;
+  private final static int ourPreload = (! parameterCheck(Integer.getInteger("git.log.preload.size"))) ? 100 : Integer.getInteger("git.log.preload.size");
 
   private final Collection<String> myStartingPoints;
   private final Mediator.Ticket myTicket;
@@ -42,7 +42,6 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
   private final Project myProject;
-  private volatile boolean myInterrupted;
   private final Getter<Boolean> myProgressAnalog;
   private BufferedListConsumer<CommitHashPlusParents> myBufferConsumer;
   private Consumer<List<CommitHashPlusParents>> myRealConsumer;
@@ -53,26 +52,39 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private RepeatingLoadConsumer<CommitHashPlusParents> myRepeatingLoadConsumer;
   private LowLevelAccessImpl myLowLevelAccess;
   private SymbolicRefs mySymbolicRefs;
+  private final LoadGrowthController.ID myId;
+  // state
+  @NotNull
+  private volatile StepType myStepType;
+
+  private static boolean parameterCheck(final Integer i) {
+    return i != null && i > 0;
+  }
 
   public LoaderAndRefresherImpl(final Mediator.Ticket ticket,
                                 Collection<ChangesFilter.Filter> filters,
                                 Mediator mediator,
                                 Collection<String> startingPoints,
-                                DetailsCache detailsCache, Project project, MyRootHolder rootHolder, final UsersIndex usersIndex) {
+                                DetailsCache detailsCache,
+                                Project project,
+                                MyRootHolder rootHolder,
+                                final UsersIndex usersIndex,
+                                final LoadGrowthController.ID id) {
     myRootHolder = rootHolder;
     myUsersIndex = usersIndex;
+    myId = id;
     myLoadParents = filters == null || filters.isEmpty();
     myTicket = ticket;
     myFilters = filters;
     myMediator = mediator;
     myStartingPoints = startingPoints;
     myDetailsCache = detailsCache;
+    myStepType = StepType.CONTINUE;
     myProject = project;
-    myInterrupted = false;
     myProgressAnalog = new Getter<Boolean>() {
       @Override
       public Boolean get() {
-        return myInterrupted;
+        return StepType.STOP.equals(myStepType);
       }
     };
     myLowLevelAccess = new LowLevelAccessImpl(myProject, myRootHolder.getRoot());
@@ -80,6 +92,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     myRealConsumer = new Consumer<List<CommitHashPlusParents>>() {
       @Override
       public void consume(final List<CommitHashPlusParents> list) {
+        if (isInterrupted()) return;
         final List<CommitI> buffer = new ArrayList<CommitI>();
         final List<List<AbstractHash>> parents = myLoadParents ? new ArrayList<List<AbstractHash>>() : null;
         for (CommitHashPlusParents commitHashPlusParents : list) {
@@ -92,8 +105,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
           }
         }
 
-        if(! myMediator.appendResult(myTicket, buffer, parents)) {
-          myInterrupted = true;
+        StepType stepType = myMediator.appendResult(myTicket, buffer, parents, id);
+        if (! StepType.FINISHED.equals(myStepType)) {
+          myStepType = stepType;
         }
       }
     };
@@ -102,29 +116,32 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   }
 
   public void interrupt() {
-    myInterrupted = true;
+    myStepType = StepType.STOP;
   }
 
   public boolean isInterrupted() {
-    return myInterrupted;
+    return StepType.STOP.equals(myStepType);
   }
 
   @Override
-  public boolean flushIntoUI() {
+  public StepType flushIntoUI() {
     myBufferConsumer.flush();
-    return ! myInterrupted;
+    if (StepType.FINISHED.equals(myStepType)) {
+      myMediator.oneFinished();
+    }
+    return myStepType;
   }
 
   @Override
   public LoadAlgorithm.Result<CommitHashPlusParents> load(final LoadAlgorithm.LoadType loadType, long continuation) {
-    if (myInterrupted) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
+    if (isInterrupted()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
     initSymbRefs();
     if (! myStartingPoints.isEmpty()) {
       if (! checkStartingPoints()) return new LoadAlgorithm.Result<CommitHashPlusParents>(true, 0, myRepeatingLoadConsumer.getLast());
     }
 
     myRepeatingLoadConsumer.reset();
-    int count = ourPackSize;
+    int count = MediatorImpl.ourManyLoadedStep;
     boolean shouldFull = true;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
       count = ourTestCount;
@@ -145,6 +162,8 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       isOver = lastParents == null || lastParents.isEmpty() || (myRepeatingLoadConsumer.getTotalRecordsInPack() < count);
 
       if (isOver) {
+        myId.finished();
+        myStepType = StepType.FINISHED;
         break;
       }
       if (myRepeatingLoadConsumer.sincePoint() == 0) {
@@ -155,6 +174,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       }
     }
     final long end = System.currentTimeMillis();
+    if (! isOver && (myRepeatingLoadConsumer.getLast() != null)) {
+      myId.registerTime(myRepeatingLoadConsumer.getLast().getTime());
+    }
 
     return new LoadAlgorithm.Result<CommitHashPlusParents>(isOver, end - start, myRepeatingLoadConsumer.getLast());
   }
@@ -245,7 +267,11 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
       }
     }
     if (! result.isEmpty()) {
-      myMediator.appendResult(myTicket, result, parents);
+      final StepType stepType = myMediator.appendResult(myTicket, result, parents, myId);
+      // here we react only on "stop", not on "pause"
+      if (StepType.STOP.equals(stepType)) {
+        myStepType = StepType.STOP;
+      }
     }
   }
 

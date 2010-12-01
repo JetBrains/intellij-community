@@ -306,7 +306,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       try {
         if (myErrorStripeRenderer != null) {
-          myErrorStripeRenderer.paint(this, g, new Rectangle(3, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
         }
       }
       finally {
@@ -350,7 +350,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      int shift = isMirrored() ? -6 : 6;
+      int shift = isMirrored() ? -9 : 9;
       g.translate(shift, 0);
       super.paintThumb(g, c, thumbBounds);
       g.translate(-shift, 0);
@@ -358,12 +358,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int adjustThumbWidth(int width) {
-      return width - 1;
+      return width - 2;
     }
 
     @Override
     protected int getThickness() {
-      return super.getThickness() + 4;
+      return super.getThickness() + 7;
     }
 
     @Override
@@ -507,12 +507,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           Color color,
                           boolean drawTopDecoration,
                           boolean drawBottomDecoration) {
-      int x = isMirrored() ? 2 : 4;
+      int x = isMirrored() ? 3 : 5;
       int paintWidth = width;
       if (thinErrorStripeMark) {
         paintWidth /= 2;
         paintWidth += 1;
-        x = isMirrored() ? width : 0;
+        x = isMirrored() ? width + 2 : 0;
       }
       if (color == null) return;
       g.setColor(color);

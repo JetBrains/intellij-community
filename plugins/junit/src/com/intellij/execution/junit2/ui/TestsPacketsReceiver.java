@@ -244,7 +244,6 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     }
 
     static void complete(TestProxy testProxy) {
-      testProxy.flush();
       final int magnitude = testProxy.getState().getMagnitude();
 
       TestProxy parent = testProxy.getParent();
@@ -300,7 +299,6 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
       state.setMagitude(myInstanceMagnitude);
       state.initializeFrom(reader);
       testProxy.setState(state);
-      complete(testProxy);
     }
 
     public void setMagnitude(final int magnitude) {

@@ -153,7 +153,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   private Color getItemBackground(JList list, int index, boolean isSelected) {
     final int preferredCount = myLookup.getPreferredItemsCount();
-    if (index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1) {
+    final boolean isPreferred = index <= preferredCount - 1 && preferredCount < list.getModel().getSize() - 1;
+
+    if (isPreferred) {
       return isSelected ? SELECTED_BACKGROUND_COLOR : PREFERRED_BACKGROUND_COLOR;
     }
     return isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
@@ -339,13 +341,16 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
   }
 
-  private static class LookupPanel extends JPanel {
+  private class LookupPanel extends JPanel {
     public LookupPanel() {
       super(new BorderLayout());
     }
 
     public void paint(Graphics g){
       UISettings.setupAntialiasing(g);
+      if (!myLookup.isFocused()) {
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
+      }
       super.paint(g);
     }
   }

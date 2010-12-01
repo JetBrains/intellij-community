@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -291,4 +292,8 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     }
   }
 
+  @NotNull
+  protected String getHelpId() {
+    return "webservices.GenerateInstanceDocumentFromSchema";
+  }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarilyQualifiedStaticallyImportedElementInspection
         extends BaseInspection {
+
     @Nls
     @NotNull
     @Override
@@ -87,7 +88,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             final PsiElement qualifier = reference.getQualifier();
-            if (qualifier == null) {
+            if (!(qualifier instanceof PsiReferenceExpression)) {
                 return;
             }
             final PsiElement parent = reference.getParent();
@@ -102,6 +103,12 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
                 return;
             }
             final PsiMember member = (PsiMember) target;
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifier;
+            final PsiElement qualifierTarget = referenceExpression.resolve();
+            if (!(qualifier instanceof PsiClass)) {
+                return;
+            }
             if (ImportUtils.isStaticallyImported(member, reference)) {
                 registerError(qualifier, member);
             }

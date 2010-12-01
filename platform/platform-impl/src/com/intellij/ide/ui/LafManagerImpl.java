@@ -18,7 +18,10 @@ package com.intellij.ide.ui;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +42,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -55,6 +59,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -230,27 +235,30 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   /**
    * @return default LookAndFeelInfo for the running OS. For Win32 and
-   *         Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
-   *         RubyMine uses Native L&F for linux as well
+   * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
+   * RubyMine uses Native L&F for linux as well
    */
   private UIManager.LookAndFeelInfo getDefaultLaf() {
+    final String lowercaseProductName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     if (SystemInfo.isMac) {
       UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
       LOG.assertTrue(laf != null);
       return laf;
     }
-    else if (SystemInfo.isLinux && ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Rubymine")) {
-      UIManager.LookAndFeelInfo laf = findLaf(UIManager.getSystemLookAndFeelClassName());
-      LOG.assertTrue(laf != null);
-      return laf;
+    if ("Rubymine".equals(lowercaseProductName) || "Pycharm".equals(lowercaseProductName)) {
+      final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
+      if ("gnome".equals(desktop)) {
+        UIManager.LookAndFeelInfo laf=findLaf(UIManager.getSystemLookAndFeelClassName());
+        LOG.assertTrue(laf!=null);
+        return laf;
+      }
     }
-    else {
-      String defaultLafName = StartupUtil.getDefaultLAF();
-      if (defaultLafName != null) {
-        UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
-        if (defaultLaf != null) {
-          return defaultLaf;
-        }
+    // Default
+    final String defaultLafName = StartupUtil.getDefaultLAF();
+    if (defaultLafName != null) {
+      UIManager.LookAndFeelInfo defaultLaf = findLaf(defaultLafName);
+      if (defaultLaf != null) {
+        return defaultLaf;
       }
       UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASSNAME);
       if (ideaLaf != null) {

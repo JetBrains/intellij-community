@@ -232,6 +232,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       presentation.setItemText(methodName);
     }
 
+    final String qname = myContainingClass.getQualifiedName();
+    String location = StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
+
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);
 
@@ -241,9 +244,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
                                                        PsiFormatUtil.SHOW_PARAMETERS,
                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
     if (myShouldImportStatic && StringUtil.isNotEmpty(className)) {
-      presentation.setTailText(params + " in " + className);
+      presentation.setTailText(params + " in " + className + location);
     } else {
-      presentation.setTailText(params);
+      presentation.setTailText(params + location);
     }
 
     final PsiType type = myMethod.getReturnType();

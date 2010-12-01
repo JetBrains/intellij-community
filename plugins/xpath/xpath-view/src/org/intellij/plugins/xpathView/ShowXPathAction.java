@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -24,19 +25,31 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 
 public class ShowXPathAction extends XPathAction {
     public void update(AnActionEvent event) {
@@ -96,21 +109,28 @@ public class ShowXPathAction extends XPathAction {
 
         final JTextField label = new JTextField(path);
         label.setPreferredSize(new Dimension(label.getPreferredSize().width + new JLabel("M").getPreferredSize().width, label.getPreferredSize().height));
+        label.setOpaque(false);
         label.setEditable(false);
         label.setBorder(null);
         label.setHorizontalAlignment(JTextField.CENTER);
         label.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
-        final JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, new Color(128, 128, 128)),
-                BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-
+        final JPanel p = new NonOpaquePanel(new BorderLayout());
         final JLabel l = new JLabel("XPath:");
         p.add(l, BorderLayout.WEST);
         p.add(label, BorderLayout.CENTER);
 
-        final LightweightHint hint = new LightweightHint(p) {
+
+        InplaceButton copy = new InplaceButton(ActionsBundle.message("action.EditorCopy.text"), IconLoader.getIcon("/actions/copy.png"), new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(path), EmptyClipboardOwner.INSTANCE);
+          }
+        });
+
+        p.add(copy, BorderLayout.EAST);
+
+      final LightweightHint hint = new LightweightHint(p) {
             public void hide() {
                 super.hide();
                 HighlighterUtil.removeHighlighter(editor, h);
@@ -118,7 +138,8 @@ public class ShowXPathAction extends XPathAction {
         };
 
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
-        SwingUtilities.convertPointToScreen(point, editor.getContentComponent());
-        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false);
+        point.y += editor.getLineHeight() / 2;
+        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false,
+                                                         new HintHint(editor, point).setAwtTooltip(true).setContentActive(true).setExplicitClose(true));
     }
 }

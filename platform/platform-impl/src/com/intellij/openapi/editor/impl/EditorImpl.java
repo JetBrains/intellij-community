@@ -59,6 +59,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBScrollBar;
@@ -3685,7 +3686,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  class MyScrollBar extends JBScrollBar {
+  class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
 
@@ -3696,6 +3697,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     void setPersistentUI(ScrollBarUI ui) {
       myPersistentUI = ui;
       setUI(ui);
+    }
+
+    @Override
+    public boolean canBePreprocessed(MouseEvent e) {
+      return JBScrollPane.canBePreprocessed(e, this);
     }
 
     @Override

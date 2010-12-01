@@ -15,6 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.BigArray;
 import com.intellij.openapi.vcs.GroupingMerger;
 import com.intellij.openapi.vcs.changes.committed.DateChangeListGroupingStrategy;
@@ -44,6 +45,7 @@ public class BigTableTableModel extends AbstractTableModel {
   private RootsHolder myRootsHolder;
   @Nullable
   private StepList<CommitI> myLines;
+  private int myCutCount;
   private DetailsCache myCache;
   private Runnable myInit;
   private final DateChangeListGroupingStrategy myStrategy;
@@ -53,6 +55,7 @@ public class BigTableTableModel extends AbstractTableModel {
     myInit = init;
     myStrategy = new DateChangeListGroupingStrategy();
     myLines = new BigArray<CommitI>(10);
+    myCutCount = -1;
   }
 
   public ColumnInfo getColumnInfo(final int column) {
@@ -69,12 +72,19 @@ public class BigTableTableModel extends AbstractTableModel {
     return myColumns.size();
   }
 
+  int getTrueCount() {
+    return myLines == null ? 0 : myLines.getSize();
+  }
+
   @Override
   public int getRowCount() {
     if (myInit != null) {
       final Runnable init = myInit;
       myInit = null;
       init.run();
+    }
+    if (myCutCount > 0) {
+      return myCutCount;
     }
     return myLines == null ? 0 : myLines.getSize();
   }
@@ -117,11 +127,18 @@ public class BigTableTableModel extends AbstractTableModel {
   public void clear() {
     myNavigation = null;
     myLines = new BigArray<CommitI>(10);
+    myCutCount = -1;
+  }
+
+  public void cutAt(final int lastShownItemIdx) {
+    myCutCount = lastShownItemIdx + 1;
+  }
+
+  public void restore() {
+    myCutCount = -1;
   }
 
   public void appendData(final List<CommitI> lines, final List<List<AbstractHash>> treeNavigation) {
-    //hardcodedDatesGrouping(lines);
-    // todo mind decoration! and sorting
     myStrategy.beforeStart();
     new GroupingMerger<CommitI, String>() {
       @Override
@@ -151,9 +168,15 @@ public class BigTableTableModel extends AbstractTableModel {
     public int compare(CommitI o1, CommitI o2) {
       long result = o1.getTime() - o2.getTime();
       if (result == 0) {
+        if (Comparing.equal(o1.getHash(), o2.getHash())) return 0;
+
         final Integer rep1 = o1.selectRepository(SelectorList.getInstance());
         final Integer rep2 = o2.selectRepository(SelectorList.getInstance());
         result = rep1 - rep2;
+
+        if (result == 0) {
+          return -1;  // actually, they are still not equal -> keep order
+        }
       }
       // descending
       return result == 0 ? 0 : (result < 0 ? 1 : -1);

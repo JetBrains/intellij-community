@@ -32,6 +32,8 @@ public abstract class ProjectFacetManager {
     return ServiceManager.getService(project, ProjectFacetManager.class);
   }
 
+  public abstract boolean hasFacets(@NotNull FacetTypeId<?> typeId);
+
   public abstract <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules);
 
   public abstract <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId);

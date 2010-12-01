@@ -77,6 +77,9 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
       presentation.setItemText(methodName);
     }
 
+    final String qname = myContainingClass.getQualifiedName();
+    String location = StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
+
     final String params = myMergedOverloads
                           ? "(...)"
                           : myMember instanceof PsiMethod
@@ -85,9 +88,9 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
                                                          PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
                             : "";
     if (Boolean.TRUE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
-      presentation.setTailText(params + " in " + className);
+      presentation.setTailText(params + " in " + className + location);
     } else {
-      presentation.setTailText(params);
+      presentation.setTailText(params + location);
     }
 
     final PsiType type = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField) myMember).getType();

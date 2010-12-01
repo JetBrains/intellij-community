@@ -19,10 +19,8 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionService;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
@@ -40,10 +38,6 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      System.out.println("backspace");
-    }
-
     lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
@@ -51,20 +45,13 @@ public class BackspaceHandler extends EditorActionHandler {
       }
     });
 
-    final String prefix = lookup.getAdditionalPrefix();
-    if (prefix.length() > 0) {
-      lookup.markSelectionTouched();
-      lookup.setAdditionalPrefix(prefix.substring(0, prefix.length() - 1));
+    if (lookup.truncatePrefix()) {
       return;
     }
 
     if (lookup.getLookupStart() < editor.getCaretModel().getOffset()) {
       final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
       if (process instanceof CompletionProgressIndicator) {
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("restaring");
-        }
-
         ((CompletionProgressIndicator)process).scheduleRestart();
         return;
       }

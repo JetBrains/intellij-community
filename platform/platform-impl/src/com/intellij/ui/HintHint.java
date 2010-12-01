@@ -43,6 +43,7 @@ public class HintHint {
   private Color myBorderColor;
   private Font myFont;
   private int myCalloutShift;
+  private boolean myExplicitClose;
 
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
@@ -132,6 +133,10 @@ public class HintHint {
     return myContentActive;
   }
 
+  public boolean isExplicitClose() {
+    return myExplicitClose;
+  }
+
   public HintHint setContentActive(boolean active) {
     myContentActive = active;
     return this;
@@ -208,6 +213,11 @@ public class HintHint {
 
   public HintHint setCalloutShift(int calloutShift) {
     myCalloutShift = calloutShift;
+    return this;
+  }
+
+  public HintHint setExplicitClose(boolean explicitClose) {
+    myExplicitClose = explicitClose;
     return this;
   }
 }

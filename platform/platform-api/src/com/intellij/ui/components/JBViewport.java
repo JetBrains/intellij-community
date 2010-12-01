@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 
@@ -31,7 +32,7 @@ public class JBViewport extends JViewport {
       @Override
       public void componentAdded(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof ComponentWithEmptyText) {
+        if (child instanceof JBTable) {
           myEmptyText = ((ComponentWithEmptyText)child).getEmptyText();
           myEmptyText.attachTo(JBViewport.this);
         }
@@ -40,7 +41,7 @@ public class JBViewport extends JViewport {
       @Override
       public void componentRemoved(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof ComponentWithEmptyText) {
+        if (child instanceof JBTable) {
           ((ComponentWithEmptyText)child).getEmptyText().attachTo(child);
           myEmptyText = null;
         }

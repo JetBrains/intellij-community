@@ -122,7 +122,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         }
         return false;
       }
-    });
+    }, project);
     panelForFolderChooser.setLayout(new BorderLayout());
     panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
     pathsChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));

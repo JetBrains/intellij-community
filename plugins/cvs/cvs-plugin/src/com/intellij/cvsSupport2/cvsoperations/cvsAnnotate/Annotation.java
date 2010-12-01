@@ -29,7 +29,7 @@ import java.util.Locale;
  */
 public class Annotation {
   private final String myRevision;
-  private final String myUser;
+  private String myUser;
   private final Date myDate;
 
   @NonNls private static final String DATE_FORMAT_STRING = "dd-MMM-yy";
@@ -69,5 +69,9 @@ public class Annotation {
     int index = message.indexOf(CONTENT_SEPARATOR);
     if (index < 0) return "";
     return message.substring(index + CONTENT_SEPARATOR.length(), message.length()).replaceAll("\r", "");
+  }
+
+  public void setUser(String user) {
+    myUser = user;
   }
 }

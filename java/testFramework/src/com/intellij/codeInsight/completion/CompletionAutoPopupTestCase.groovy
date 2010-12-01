@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 
-/**
+ /**
  * @author peter
  */
 abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {

@@ -53,11 +53,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
@@ -218,6 +217,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private boolean shouldFocusLookup(CompletionParameters parameters) {
     if (!autopopup) {
       return true;
+    }
+
+    switch (CodeInsightSettings.getInstance().FOCUS_AUTOPOPUP) {
+      case CodeInsightSettings.ALWAYS: return true;
+      case CodeInsightSettings.NEVER: return false;
     }
 
     final Language language = PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
@@ -671,18 +675,19 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return false;
   }
 
-  public static final Key<SoftReference<PsiFile>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
+  public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document
         && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      final SoftReference<PsiFile> reference = file.getUserData(FILE_COPY_KEY);
+      final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);
       if (reference != null) {
-        final PsiFile copy = reference.get();
-        if (copy != null && copy.isValid() && copy.getClass().equals(file.getClass())) {
-          final Document document = copy.getViewProvider().getDocument();
+        final Pair<PsiFile, Document> pair = reference.get();
+        if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
+          final PsiFile copy = pair.first;
+          final Document document = pair.second;
           assert document != null;
           final String oldDocumentText = document.getText();
           final String oldCopyText = copy.getText();
@@ -726,7 +731,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     final PsiFile copy = (PsiFile)file.copy();
-    file.putUserData(FILE_COPY_KEY, new SoftReference<PsiFile>(copy));
+    final Document document = copy.getViewProvider().getDocument();
+    assert document != null;
+    file.putUserData(FILE_COPY_KEY, new SoftReference<Pair<PsiFile,Document>>(Pair.create(copy, document)));
     return copy;
   }
 

@@ -77,9 +77,10 @@ public class InplaceButton extends JComponent implements ActiveComponent {
 
     setIcons(source);
 
-    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    //setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     setToolTipText(source.getTooltip());
     setOpaque(false);
+    setHoveringEnabled(true);
   }
 
   public void setMouseDeadzone(final TimedDeadzone.Length deadZone) {

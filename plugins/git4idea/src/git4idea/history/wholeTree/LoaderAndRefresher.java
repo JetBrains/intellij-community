@@ -20,8 +20,7 @@ import java.util.List;
 public interface LoaderAndRefresher<T> {
   void loadByHashesAside(final List<String> hashes);
   LoadAlgorithm.Result<T> load(final LoadAlgorithm.LoadType loadType, long continuation);
-  // false -> canceled
-  boolean flushIntoUI();
+  StepType flushIntoUI();
   void interrupt();
   boolean isInterrupted();
 }

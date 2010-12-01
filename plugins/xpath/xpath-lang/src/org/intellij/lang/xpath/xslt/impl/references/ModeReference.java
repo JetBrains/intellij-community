@@ -16,6 +16,7 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -206,7 +207,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         public boolean matches(XmlTag element) {
             final String s = element.getAttributeValue("mode");
             return myMode != null &&
-                    s != null && s.indexOf("IntellijIdeaRulezzz") == -1 &&
+                    s != null && s.indexOf(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED) == -1 &&
                     super.matches(element);
         }
 

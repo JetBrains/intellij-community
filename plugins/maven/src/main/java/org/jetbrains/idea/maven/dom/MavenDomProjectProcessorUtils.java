@@ -457,7 +457,7 @@ public class MavenDomProjectProcessorUtils {
     for (MavenDomProfile each : profilesDom.getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
       if (idTag == null) continue;
-      if (activePropfiles != null && !activePropfiles.contains(idTag.getValue().getText())) continue;
+      if (activePropfiles != null && !activePropfiles.contains(idTag.getValue().getTrimmedText())) continue;
 
       if (processProfile(each, processor, f)) return true;
     }

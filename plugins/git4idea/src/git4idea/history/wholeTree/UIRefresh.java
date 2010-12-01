@@ -21,10 +21,11 @@ import git4idea.history.browser.SymbolicRefs;
 */
 public interface UIRefresh {
   @CalledInAwt
-  void linesReloaded();
+  void linesReloaded(boolean drawMore);
   @CalledInAwt
   void detailsLoaded();
   void acceptException(final Exception e);
+  void finished();
 
   void reportSymbolicRefs(VirtualFile root, SymbolicRefs symbolicRefs);
 }
