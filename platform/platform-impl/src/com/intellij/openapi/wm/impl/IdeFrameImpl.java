@@ -301,7 +301,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     InsertOverwritePanel insertOverwritePanel = null;
     if (!SystemInfo.isMac) {
-      insertOverwritePanel = new InsertOverwritePanel();
+      insertOverwritePanel = new InsertOverwritePanel(project);
       statusBar.addWidget(insertOverwritePanel, "after Encoding");
       statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
     } else {
