@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,16 +24,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * Complete known keys for dictionaries
  */
 public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalCompletionContributor {
-  @Override
-  public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
-    // auto-insert the obvious only case; else show other cases.
-    final LookupElement[] items = context.getItems();
-    if (items.length == 1) {
-      return AutoCompletionDecision.insertItem(items[0]);
-    }
-    return AutoCompletionDecision.SHOW_LOOKUP;
-  }
-
   private static final FilterPattern DICT_KEY = new FilterPattern(
     new InSequenceFilter(psiElement(PySubscriptionExpression.class))
   );
