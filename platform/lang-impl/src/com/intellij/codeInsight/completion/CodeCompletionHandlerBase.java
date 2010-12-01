@@ -56,7 +56,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
@@ -219,7 +218,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return true;
     }
 
-    switch (CodeInsightSettings.getInstance().FOCUS_AUTOPOPUP) {
+    switch (CodeInsightSettings.getInstance().AUTOPOPUP_FOCUS_POLICY) {
       case CodeInsightSettings.ALWAYS: return true;
       case CodeInsightSettings.NEVER: return false;
     }
