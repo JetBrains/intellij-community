@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -88,8 +89,11 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
   private static CompletionResultSet createResult(PsiElement original, CompletionResultSet result) {
     PsiElement prevElement = original.getPrevSibling();
     if (prevElement != null) {
-      if (prevElement.getNode().getElementType() != PyTokenTypes.LBRACKET)
-        return result.withPrefixMatcher(findPrefix(prevElement));
+      ASTNode prevNode = prevElement.getNode();
+      if (prevNode != null) {
+        if (prevNode.getElementType() != PyTokenTypes.LBRACKET)
+          return result.withPrefixMatcher(findPrefix(prevElement));
+      }
     }
     PsiElement parentElement = original.getParent();
     if (parentElement != null) {

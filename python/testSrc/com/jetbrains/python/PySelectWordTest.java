@@ -23,6 +23,14 @@ public class PySelectWordTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testList() {   // PY-1686
+    doTest();
+  }
+
+  public void testComma() {   // PY-1378  
+    doTest();
+  }
+
   private void doTest() {
     @NonNls final String path = "selectWord/" + getTestName(true);
     myFixture.copyDirectoryToProject(path, path);
