@@ -399,4 +399,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public void sendFlush() {
     _restart(0);
   }
+
+  public boolean isFlushing() {
+    return myFlushing;
+  }
 }

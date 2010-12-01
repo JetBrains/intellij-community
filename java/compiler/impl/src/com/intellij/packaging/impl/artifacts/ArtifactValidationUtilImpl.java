@@ -24,50 +24,115 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
   private final Project myProject;
-  private CachedValue<Set<Artifact>> mySelfIncludingArtifacts;
+  private CachedValue<Map<Artifact, String>> myArtifactToSelfIncludingName;
 
   public ArtifactValidationUtilImpl(Project project) {
     myProject = project;
   }
 
   @Override
-  public Set<Artifact> getSelfIncludingArtifacts() {
-    if (mySelfIncludingArtifacts == null) {
-      mySelfIncludingArtifacts = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Set<Artifact>>() {
-        public Result<Set<Artifact>> compute() {
-          return Result.create(computeSelfIncludingArtifacts(), ArtifactManager.getInstance(myProject).getModificationTracker());
+  public Map<Artifact, String> getArtifactToSelfIncludingNameMap() {
+    if (myArtifactToSelfIncludingName == null) {
+      myArtifactToSelfIncludingName = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Map<Artifact, String>>() {
+        public Result<Map<Artifact, String>> compute() {
+          return Result.create(computeArtifactToSelfIncludingNameMap(), ArtifactManager.getInstance(myProject).getModificationTracker());
         }
       }, false);
     }
-    return mySelfIncludingArtifacts.getValue();
+    return myArtifactToSelfIncludingName.getValue();
   }
 
-  private Set<Artifact> computeSelfIncludingArtifacts() {
+  private Map<Artifact, String> computeArtifactToSelfIncludingNameMap() {
+    final Map<Artifact, String> result = new HashMap<Artifact, String>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
-    Set<Artifact> result = new HashSet<Artifact>();
-    final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
-    for (final Artifact artifact : artifactManager.getSortedArtifacts()) {
-      if (!ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE,
-                                                 new PackagingElementProcessor<ArtifactPackagingElement>() {
-                                                   @Override
-                                                   public boolean process(@NotNull ArtifactPackagingElement element,
-                                                                          @NotNull PackagingElementPath path) {
-                                                     return !artifact.equals(element.findArtifact(context));
-                                                   }
-                                                 }, context, true)) {
-        result.add(artifact);
+    final GraphGenerator<Artifact> graph = GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(artifactManager)));
+    for (Artifact artifact : graph.getNodes()) {
+      final Iterator<Artifact> in = graph.getIn(artifact);
+      while (in.hasNext()) {
+        Artifact next = in.next();
+        if (next.equals(artifact)) {
+          result.put(artifact, artifact.getName());
+          break;
+        }
       }
     }
+
+    final DFSTBuilder<Artifact> builder = new DFSTBuilder<Artifact>(graph);
+    builder.buildDFST();
+    if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
+
+    final TIntArrayList sccs = builder.getSCCs();
+    sccs.forEach(new TIntProcedure() {
+      int myTNumber = 0;
+      public boolean execute(int size) {
+        if (size > 1) {
+          for (int j = 0; j < size; j++) {
+            final Artifact artifact = builder.getNodeByTNumber(myTNumber + j);
+            result.put(artifact, artifact.getName());
+          }
+        }
+        myTNumber += size;
+        return true;
+      }
+    });
+
+    for (int i = 0; i < graph.getNodes().size(); i++) {
+      final Artifact artifact = builder.getNodeByTNumber(i);
+      if (!result.containsKey(artifact)) {
+        final Iterator<Artifact> in = graph.getIn(artifact);
+        while (in.hasNext()) {
+          final String name = result.get(in.next());
+          if (name != null) {
+            result.put(artifact, name);
+          }
+        }
+      }
+    }
+
     return result;
   }
+
+  private class ArtifactsGraph implements GraphGenerator.SemiGraph<Artifact> {
+    private final ArtifactManager myArtifactManager;
+
+    public ArtifactsGraph(ArtifactManager artifactManager) {
+      myArtifactManager = artifactManager;
+    }
+
+    @Override
+    public Collection<Artifact> getNodes() {
+      return Arrays.asList(myArtifactManager.getSortedArtifacts());
+    }
+
+    @Override
+    public Iterator<Artifact> getIn(Artifact n) {
+      final Set<Artifact> included = new LinkedHashSet<Artifact>();
+      final PackagingElementResolvingContext context = myArtifactManager.getResolvingContext();
+      ArtifactUtil.processPackagingElements(n, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new PackagingElementProcessor<ArtifactPackagingElement>() {
+        @Override
+        public boolean process(@NotNull ArtifactPackagingElement element,
+                               @NotNull PackagingElementPath path) {
+          ContainerUtil.addIfNotNull(included, element.findArtifact(context));
+          return true;
+        }
+      }, context, false);
+      return included.iterator();
+    }
+  }
+
 }

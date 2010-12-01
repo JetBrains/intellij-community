@@ -140,9 +140,10 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
 
     @Nullable
     public String convert(final VirtualFilePointer pointer) {
+      if (pointer == null) return null;
       final String path = pointer.getPresentableUrl();
       final ByteContent byteContent = myLabel.getByteContent(FileUtil.toSystemIndependentName(path));
-      if (byteContent.isDirectory() || byteContent.getBytes() == null) {
+      if (byteContent == null || byteContent.isDirectory() || byteContent.getBytes() == null) {
         return null;
       }
       final VirtualFile vf = pointer.getFile();

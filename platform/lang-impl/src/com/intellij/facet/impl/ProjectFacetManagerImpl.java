@@ -70,6 +70,16 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   }
 
   @Override
+  public boolean hasFacets(@NotNull FacetTypeId<?> typeId) {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      if (!FacetManager.getInstance(module).getFacetsByType(typeId).isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
     final List<F> result = new ArrayList<F>();
     for (Module module : modules) {

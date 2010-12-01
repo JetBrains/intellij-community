@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CustomMatcherModel {
   /**
-   * Allows to implement custom matcher for matching itemps from ChooseByName popup
+   * Allows to implement custom matcher for matching items from ChooseByName popup
    * with user pattern
    * @param popupItem Item from list
    * @param userPattern Pattern defined by user in Choose by name popup

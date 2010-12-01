@@ -66,9 +66,9 @@ public class GetDirectoriesListViaUpdateOperation extends LocalPathIndifferentOp
     tmp.messageSent(message);
     final DirectoryContent tmpContent = tmp.getDirectoryContent();
     final DirectoryContent mainContent = myDirectoryContentListener.getDirectoryContent();
-    if (mainContent.getFiles().containsAll(tmpContent.getFiles()) &&
-        mainContent.getSubDirectories().containsAll(tmpContent.getSubDirectories()) &&
-        mainContent.getSubModules().containsAll(tmpContent.getSubModules())) {
+    if (mainContent.getFilesRaw().containsAll(tmpContent.getFilesRaw()) &&
+        mainContent.getSubDirectoriesRaw().containsAll(tmpContent.getSubDirectoriesRaw()) &&
+        mainContent.getSubModulesRaw().containsAll(tmpContent.getSubModulesRaw())) {
     } else {
       myDirectoryContentListener.getDirectoryContent().copyDataFrom(tmpContent);
       if (myStepByStepListener != null) {

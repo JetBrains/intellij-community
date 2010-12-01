@@ -17,15 +17,17 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.docking.DockContainer;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,15 +51,33 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-    if (project != null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      Editor editor = manager.getSelectedTextEditor();
-      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent()) == myStatusBar) {
-        return editor;
+    Editor result = null;
+
+    DockContainer c = DockManager.getInstance(myProject).getContainerFor(myStatusBar.getComponent());
+    EditorsSplitters splitters = null;
+    if (c instanceof DockableEditorTabbedContainer) {
+      splitters = ((DockableEditorTabbedContainer)c).getSplitters();
+    }
+
+    if (splitters != null && splitters.getCurrentWindow() != null) {
+      EditorWithProviderComposite editor = splitters.getCurrentWindow().getSelectedEditor();
+      if (editor != null) {
+        FileEditor fileEditor = editor.getSelectedEditorWithProvider().getFirst();
+        if (fileEditor instanceof TextEditor) {
+          result = ((TextEditor)fileEditor).getEditor();
+        }
       }
     }
 
-    return null;
+    if (result == null) {
+      final FileEditorManager manager = FileEditorManager.getInstance(project);
+      Editor editor = manager.getSelectedTextEditor();
+      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent()) == myStatusBar) {
+        result = editor;
+      }
+    }
+
+    return result;
   }
 
 

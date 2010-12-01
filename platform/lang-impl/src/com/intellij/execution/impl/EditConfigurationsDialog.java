@@ -17,14 +17,28 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor {
+  private Configurable mySelectedConfigurable;
 
   public EditConfigurationsDialog(final Project project) {
     super(project, new RunConfigurable(project));
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
+  }
+
+  @Override
+  protected void doOKAction() {
+    final Configurable configurable = getConfigurable();
+    mySelectedConfigurable = ((RunConfigurable)configurable).getSelectedConfigurable();
+
+    super.doOKAction();
+  }
+
+  public Configurable getSelectedConfigurable() {
+    return mySelectedConfigurable;
   }
 
   protected String getDimensionServiceKey() {

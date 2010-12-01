@@ -21,6 +21,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
   public String NAME;
@@ -50,6 +51,11 @@ public class EnvironmentVariable implements JDOMExternalizable, Cloneable {
 
   public String getValue() {
     return VALUE;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return null;
   }
 
   public boolean getIsPredefined() {

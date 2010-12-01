@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface MacFileChooserDialog extends FileChooserDialog {
   DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_ENABLED = DataKey.create("native.mac.file.chooser.enabled");
+  DataKey<Boolean> NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED = DataKey.create("native.mac.file.chooser.show.hidden.files.enabled");
 
   void chooseWithSheet(@Nullable VirtualFile toSelect, @Nullable Project project, @NotNull final MacFileChooserCallback callback);
 

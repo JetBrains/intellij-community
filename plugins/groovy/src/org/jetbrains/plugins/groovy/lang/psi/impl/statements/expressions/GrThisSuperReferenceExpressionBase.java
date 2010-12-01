@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,8 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
 
   @Override
   public TextRange getRangeInElement() {
-    return new TextRange(0, getTextLength());
+    final PsiElement token = findNotNullChildByType(TokenSet.create(GroovyElementTypes.kTHIS, GroovyElementTypes.kSUPER));
+    return TextRange.from(token.getStartOffsetInParent(), token.getTextLength());
   }
 
   @Override

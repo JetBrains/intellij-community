@@ -350,7 +350,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-      int shift = isMirrored() ? -8 : 8;
+      int shift = isMirrored() ? -9 : 9;
       g.translate(shift, 0);
       super.paintThumb(g, c, thumbBounds);
       g.translate(-shift, 0);
@@ -363,7 +363,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThickness() {
-      return super.getThickness() + 6;
+      return super.getThickness() + 7;
     }
 
     @Override

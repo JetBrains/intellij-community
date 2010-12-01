@@ -33,6 +33,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.components.JBScrollPane;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,7 +133,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myComponentPlace.add(myEditor.getComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
     myComponentPlace.doLayout();
     myWholePanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
-    return myWholePanel;
+    final JBScrollPane scrollPane = new JBScrollPane(myWholePanel);
+    scrollPane.setBorder(null);
+    return scrollPane;
   }
 
   public void updateBeforeRunTaskPanel(@NotNull Key<? extends BeforeRunTask> key) {

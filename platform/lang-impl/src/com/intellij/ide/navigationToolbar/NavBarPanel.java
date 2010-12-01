@@ -398,8 +398,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     });
   }
 
-  private void queueAfterAll(final Runnable runnable) {
-    myUpdateQueue.queue(new AfterModel(new Object(), 4) {
+  private void queueAfterAll(final Runnable runnable, Object identity) {
+    myUpdateQueue.queue(new AfterModel(identity, 4) {
       @Override
       protected void _run() {
         runnable.run();
@@ -468,6 +468,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
       }
     });
+
+    myUpdateQueue.flush();
   }
 
   private void shiftFocus(int direction) {
@@ -628,7 +630,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       public void run() {
         scrollSelectionToVisible();
       }
-    });
+    }, "scrollToVisible");
   }
 
   private Window getWindow() {
@@ -832,8 +834,13 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     queueModelUpdateForObject(object);
     queueRebuildUi();
 
-    queueRevalidate(new Runnable() {
+    queueAfterAll(new Runnable() {
       public void run() {
+        int index = myModel.indexOf(object);
+        if (index >= 0) {
+          myModel.setSelectedIndex(index);
+        }
+
         if (myModel.hasChildren(object)) {
           restorePopup();
         }
@@ -841,7 +848,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           doubleClick(object);
         }
       }
-    });
+    }, "navigateInside");
   }
 
   private void rightClick(final int index) {
@@ -1085,7 +1092,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
             }
           }
         }
-      });
+      }, "requestFocus");
     }
   }
 
@@ -1138,7 +1145,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
         }
         selectTail();
       }
-    });
+    }, "showHint");
   }
 
   private AsyncResult<RelativePoint> getHintContainerShowPoint() {

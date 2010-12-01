@@ -206,7 +206,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void setFocusLookupWhenDone(boolean focusLookup) {
     myFocusLookupWhenDone = focusLookup;
-    if (!focusLookup) {
+    if (!focusLookup && isAutopopupCompletion()) {
       myLookup.setAdvertisementText("Press " + CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) + " to choose the first suggestion");
     }
   }
@@ -398,15 +398,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       myLookup.show();
-      //todo remove these assertions before X release
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.assertTrue(myLookup.isVisible());
-      }
     }
     myLookup.refreshUi();
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myLookup.isVisible()) {
-      LOG.assertTrue(myLookup.isVisible(), "really?: myShown=" + myShownLookup + "; lookup.shown=" + myLookup.isShown());
-    }
+    LOG.assertTrue(myLookup.isShown());
     hideAutopopupIfMeaningless();
   }
 

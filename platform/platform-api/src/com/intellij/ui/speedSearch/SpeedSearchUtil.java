@@ -60,7 +60,7 @@ public final class SpeedSearchUtil {
           if (group != null) searchTerms.add(Pair.create(group, start));
         }
 
-        appendFragmentsStrict(text, searchTerms, Font.PLAIN, attributes.getFgColor(),
+        appendFragmentsStrict(text, searchTerms, attributes.getStyle(), attributes.getFgColor(),
                               selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), simpleColoredComponent);
       }
       else {

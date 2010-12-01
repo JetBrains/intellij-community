@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
-import gnu.trove.*;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
