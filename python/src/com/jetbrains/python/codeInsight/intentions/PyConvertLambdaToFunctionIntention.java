@@ -1,6 +1,10 @@
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,46 +54,36 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       if (parent instanceof PyAssignmentStatement) {
         name = ((PyAssignmentStatement)parent).getLeftHandSideExpression().getText();
       }
-      else {
-        Application application = ApplicationManager.getApplication();
-        if (application != null && !application.isUnitTestMode()) {
-          name = Messages.showInputDialog(project, "Enter new function name",
-                                        "New function name", Messages.getQuestionIcon());
-          if (name == null) return;
-        }
-      }
+
       if (name.isEmpty()) return;
       PyExpression body = lambdaExpression.getBody();
-      PyParameter[] parameters = lambdaExpression.getParameterList().getParameters();
-      StringBuilder stringBuilder = new StringBuilder();
-      stringBuilder.append("def ");
-      stringBuilder.append(name);
-      stringBuilder.append("(");
-      int size = parameters.length;
-      for (int i = 0; i != size; ++i) {
-        PyParameter parameter = parameters[i];
-        stringBuilder.append(parameter.getName());
-        if ( i != size - 1)
-          stringBuilder.append(",");
+      PyFunctionBuilder functionBuilder = new PyFunctionBuilder(name);
+      for (PyParameter param : lambdaExpression.getParameterList().getParameters()) {
+        functionBuilder.parameter(param.getText());
       }
-      stringBuilder.append("):\n  return ");
-      stringBuilder.append(body.getText());
-
-      PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(lambdaExpression),
-                                                            PyFunction.class, stringBuilder.toString());
-
+      functionBuilder.statement("return " + body.getText());
+      PyFunction function = functionBuilder.buildFunction(project);
       PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
       if (statement != null) {
         PsiElement parentOfStatement = statement.getParent();
         if (parentOfStatement != null)
-          parentOfStatement.addBefore(function, statement);
+          function = (PyFunction)parentOfStatement.addBefore(function, statement);
       }
       if (parent instanceof PyAssignmentStatement) {
         parent.delete();
       }
       else {
-        lambdaExpression.replace(elementGenerator.createFromText(LanguageLevel.forElement(lambdaExpression), PyExpression.class,
-                                                               name));
+        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class, PyClass.class, PyFile.class);
+        final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parentScope);
+        PsiElement functionName = function.getNameIdentifier();
+        functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
+        lambdaExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(lambdaExpression);
+
+        ((TemplateBuilderImpl)builder).replaceElement(functionName, name, name, false);
+        ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, name, true);
+        int textOffSet = functionName.getTextOffset();
+        editor.getCaretModel().moveToOffset(textOffSet);
+        builder.run();
       }
     }
   }

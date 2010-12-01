@@ -575,6 +575,10 @@ public class PyCallExpressionHelper {
               slots.remove(n_par);
             }
           }
+          else if (n_par == tuple_par) {
+            mapped_params_count = tuple_length; // we found *param for our *arg, consider it fully mapped
+            break;
+          }
           cnt += 1;
           mapped_params_count += 1;
         }

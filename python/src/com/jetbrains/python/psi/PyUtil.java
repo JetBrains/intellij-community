@@ -678,6 +678,18 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @param what thing to search for
+   * @param variants things to search among
+   * @return true iff what.equals() one of the variants.
+   */
+  public static <T> boolean among(@NotNull T what, T... variants) {
+    for (T s : variants) {
+      if (what.equals(s)) return true;
+    }
+    return false;
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 
@@ -715,6 +727,67 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  public static class MethodFlags {
+
+    private boolean myIsStaticMethod;
+    private boolean myIsMetaclassMethod;
+    private boolean myIsSpecialMetaclassMethod;
+    private boolean myIsClassMethod;
+
+    /**
+     * @return true iff the method belongs to a metaclass (an ancestor of 'type').
+     */
+    public boolean isMetaclassMethod() {
+      return myIsMetaclassMethod;
+    }
+
+    /**
+     * @return iff isMetaclassMethod and the method is either __init__ or __call__.
+     */
+    public boolean isSpecialMetaclassMethod() {
+      return myIsSpecialMetaclassMethod;
+    }
+
+    public boolean isStaticMethod() {
+      return myIsStaticMethod;
+    }
+
+    public boolean isClassMethod() {
+      return myIsClassMethod;
+    }
+
+    private MethodFlags(boolean isClassMethod, boolean isStaticMethod, boolean isMetaclassMethod, boolean isSpecialMetaclassMethod) {
+      myIsClassMethod = isClassMethod;
+      myIsStaticMethod = isStaticMethod;
+      myIsMetaclassMethod = isMetaclassMethod;
+      myIsSpecialMetaclassMethod = isSpecialMetaclassMethod;
+    }
+
+    /**
+     * @param node a function
+     * @return a new flags object, or null if the function is not a method
+     */
+    @Nullable
+    public static MethodFlags of(@NotNull PyFunction node) {
+      PyClass cls = node.getContainingClass();
+      if (cls != null) {
+        Set<PyFunction.Flag> flags = detectDecorationsAndWrappersOf(node);
+        boolean isMetaclassMethod = false;
+        PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
+        for (PyClass ancestor_cls : cls.iterateAncestors()) {
+          if (ancestor_cls == type_cls) {
+            isMetaclassMethod = true;
+            break;
+          }
+        }
+        final String method_name = node.getName();
+        boolean isSpecialMetaclassMethod = isMetaclassMethod && method_name != null && among(method_name, PyNames.INIT, "__call__");
+        return new MethodFlags(flags.contains(CLASSMETHOD), flags.contains(STATICMETHOD), isMetaclassMethod, isSpecialMetaclassMethod);
+      }
+      return null;
+    }
   }
 }
 

@@ -133,7 +133,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitPyStarImportElement(node);
       myAllImports.add(node);
     }
-    
+
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
@@ -204,7 +204,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
             }
           }
-          actions.add(new UnresolvedRefCreateFunctionQuickFix(refex));
+          PyCallExpression callExpression = PsiTreeUtil.getParentOfType(ref_element, PyCallExpression.class);
+          if (callExpression != null)
+            actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, refex));
         }
         // unqualified:
         // may be module's
