@@ -26,7 +26,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -156,8 +155,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     return null;
   }
-
-
 
   public VirtualFile getVirtualFile() {
     return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
@@ -902,30 +899,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final PsiFileImpl file = this;
 
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
-    final StubElement<?> rootStub = stubs.next();  // skip file root stub
+    stubs.next();  // skip file root stub
     final FileElement fileRoot = file.getTreeElement();
     assert fileRoot != null;
 
-    try {
-      bindStubs(fileRoot, stubs, ((IStubFileElementType)getContentElementType()).getBuilder());
-    }
-    catch (BindingFailedException e) {
-      String message = e.getMessage();
-      //if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-      //  message = new StringBuilder(message)
-      //    .append("\n=== AST ===\n").append(DebugUtil.treeToString(fileRoot, true))
-      //    .append("=== stub tree ===\n").append(DebugUtil.stubTreeToString(rootStub))
-      //    .append("=== text===\n").append(getText())
-      //    .append("\n======").toString();
-      //}
-      assert false : message;
-    }
-  }
-
-  private static class BindingFailedException extends RuntimeException {
-    private BindingFailedException(final String message) {
-      super(message);
-    }
+    bindStubs(fileRoot, stubs, ((IStubFileElementType)getContentElementType()).getBuilder());
   }
 
   private void bindStubs(final ASTNode tree, final Iterator<StubElement<?>> stubs, final StubBuilder builder) {
@@ -935,7 +913,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       final StubElement stub = stubs.next();
       if (stub.getStubType() != tree.getElementType()) {
         rebuildStub();
-        throw new BindingFailedException("Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + tree.getElementType());
+        assert false : "Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + tree.getElementType();
       }
 
       //noinspection unchecked
