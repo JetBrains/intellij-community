@@ -23,7 +23,7 @@ public class InternalInspectionToolsProvider implements InspectionToolProvider {
   public static final String GROUP_NAME = "IDEA Platform Inspections";
   private static final Class[] CLASSES = new Class[] {
     UndesirableClassUsageInspection.class,
-    GtkPreferredJComboBoxRendererInspection_.class
+    GtkPreferredJComboBoxRendererInspection.class
   };
 
   @Override
