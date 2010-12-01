@@ -18,6 +18,7 @@ package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -25,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public interface FlyweightCapableTreeStructure<T> {
   @NotNull
   T getRoot();
+
+  @Nullable
+  T getParent(@NotNull T node);
 
   @NotNull
   T prepareForGetChildren(@NotNull T node);

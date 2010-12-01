@@ -64,24 +64,29 @@ public class DiffTreeTest extends TestCase {
 
     @Override
     @NotNull
-    public Node prepareForGetChildren(@NotNull final Node node) {
-      return node;
-    }
-
-    @Override
-    @NotNull
     public Node getRoot() {
       return myRoot;
     }
 
     @Override
-    public void disposeChildren(final Node[] nodes, final int count) {
+    public Node getParent(@NotNull final Node node) {
+      return null;
+    }
+
+    @Override
+    @NotNull
+    public Node prepareForGetChildren(@NotNull final Node node) {
+      return node;
     }
 
     @Override
     public int getChildren(@NotNull final Node node, @NotNull final Ref<Node[]> into) {
       into.set(node.getChildren());
       return into.get().length;
+    }
+
+    @Override
+    public void disposeChildren(final Node[] nodes, final int count) {
     }
   }
 

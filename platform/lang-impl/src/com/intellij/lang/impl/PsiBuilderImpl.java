@@ -271,10 +271,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myLexemeIndex = 0;
       myParent = myNext = null;
     }
-
-    public LighterASTNode getParent() {
-      return myParent;
-    }
   }
 
   private static class StartMarker extends ProductionMarker implements Marker {
@@ -458,10 +454,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
 
       return myHC;
-    }
-
-    public LighterASTNode getParent() {
-      throw new UnsupportedOperationException("Not implemented for leaf nodes.");
     }
 
     public int getEndOffset() {
@@ -1266,9 +1258,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     @Override
+    public LighterASTNode getParent(@NotNull final LighterASTNode node) {
+      if (node instanceof StartMarker) {
+        return ((StartMarker)node).myParent;
+      }
+      throw new UnsupportedOperationException("Unknown node type: " + node);
+    }
+
+    @Override
     @NotNull
-    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode o) {
-      return o;
+    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode node) {
+      return node;
     }
 
     private int count;

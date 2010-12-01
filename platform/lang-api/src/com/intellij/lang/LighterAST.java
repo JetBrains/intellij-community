@@ -20,6 +20,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,11 @@ public class LighterAST {
   @NotNull
   public LighterASTNode getRoot() {
     return myTreeStructure.getRoot();
+  }
+
+  @Nullable
+  public LighterASTNode getParent(@NotNull final LighterASTNode node) {
+    return myTreeStructure.getParent(node);
   }
 
   @NotNull
