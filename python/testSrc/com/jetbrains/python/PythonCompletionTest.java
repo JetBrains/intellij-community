@@ -235,7 +235,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
   }
+
+  public void testSuperMethod() {  // PY-170
+    doTest();
+  }
 }
-
-
-

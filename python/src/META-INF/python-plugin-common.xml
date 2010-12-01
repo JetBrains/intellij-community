@@ -34,6 +34,7 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
 
