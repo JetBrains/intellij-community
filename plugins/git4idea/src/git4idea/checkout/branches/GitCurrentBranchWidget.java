@@ -52,7 +52,7 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
 
   @Override
   public StatusBarWidget copy() {
-    return new GitCurrentBranchWidget(myProject);
+    return new GitCurrentBranchWidget(getProject());
   }
 
   @NotNull
@@ -133,7 +133,7 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
         if (root != null) {
           GitBranch currentBranch = null;
           try {
-            currentBranch = GitBranch.current(myProject, root);
+            currentBranch = GitBranch.current(getProject(), root);
           } catch (VcsException e) {
             LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
             // doing nothing - null will be set to myCurrentBranchName
