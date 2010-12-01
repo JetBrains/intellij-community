@@ -102,12 +102,12 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
           final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
           try {
             final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(myFile, revisionNumber);
-            targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
-            final CommittedChangeList cl = pair.getFirst();
-            if (cl == null) {
+            if (pair == null || pair.getFirst() == null) {
               VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
               return;
             }
+            targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
+            final CommittedChangeList cl = pair.getFirst();
             changes.addAll(cl.getChanges());
             Collections.sort(changes, ChangesComparator.getInstance());
           }
