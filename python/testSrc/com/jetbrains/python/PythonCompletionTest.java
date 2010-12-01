@@ -222,6 +222,14 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile(dirname + "importedModule.after.py");
   }
 
+  public void testDictKeys() {  // PY-2245
+    final String testName = "completion/" + getTestName(true) + ".py";
+    myFixture.configureByFile(testName);
+    final LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(1, elements.length);
+    assertEquals("'123'", elements [0].getLookupString());
+  }
+
   public void testNoParensForDecorator() {  // PY-2210
     doTest();
   }

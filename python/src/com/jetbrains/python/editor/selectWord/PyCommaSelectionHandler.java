@@ -34,6 +34,12 @@ public class PyCommaSelectionHandler implements ExtendWordSelectionHandler {
     return Collections.emptyList();
   }
 
+  /**
+   * adds previous comma and whitespace to result text range
+   * @param e is current element
+   * @param cursorOffset is current cursor offset
+   * @return result selection textRange
+   */
   private static List<TextRange> addPreviousComma(PsiElement e, int cursorOffset) {
     PsiElement prevSibling = e.getPrevSibling();
     TextRange textRange = e.getTextRange();
@@ -72,6 +78,12 @@ public class PyCommaSelectionHandler implements ExtendWordSelectionHandler {
     return Collections.emptyList();
   }
 
+  /**
+   * add next comma and whitespace to selection
+   * @param e is crrent element
+   * @param cursorOffset is current cursor offset
+   * @return result selection TextRange
+   */
   private static List<TextRange> addNextComma(PsiElement e, int cursorOffset) {
     PsiElement nextCommaSibling = e.getNextSibling();
     if (nextCommaSibling != null) {
