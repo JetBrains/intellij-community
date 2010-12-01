@@ -56,6 +56,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
   private final AbstractVcs myVcs;
   private final VirtualFile myFile;
   private int currentLine;
+  private boolean myEnabled;
 
   ShowDiffFromAnnotation(final UpToDateLineNumberProvider lineNumberProvider,
                          final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
@@ -66,6 +67,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
     myVcs = vcs;
     myFile = file;
     currentLine = -1;
+    myEnabled = ProjectLevelVcsManager.getInstance(vcs.getProject()).getVcsFor(myFile) != null;
   }
 
   @Override
@@ -75,7 +77,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(getActualLineNumber() >= 0);
+    e.getPresentation().setVisible(myEnabled && getActualLineNumber() >= 0);
   }
 
   private int getActualLineNumber() {
