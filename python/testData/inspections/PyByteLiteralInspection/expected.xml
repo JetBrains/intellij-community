@@ -3,6 +3,6 @@
   <problem>
     <file>test.py</file>
     <line>1</line>
-    <description>Byte literal contains characters &gt; 127</description>
+    <description>Byte literal contains characters &gt; 255</description>
   </problem>
 </problems>
