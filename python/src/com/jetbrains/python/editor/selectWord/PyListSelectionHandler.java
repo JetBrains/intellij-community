@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * User: catherine
  *
- * Handler to select list literal expression
+ * Handler to select list contents without parentheses 
  */
 public class PyListSelectionHandler implements ExtendWordSelectionHandler {
   @Override
