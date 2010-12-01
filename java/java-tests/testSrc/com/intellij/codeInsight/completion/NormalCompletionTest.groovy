@@ -731,6 +731,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
+  public void testQualifyInnerMembers() throws Throwable {
+    configure()
+    selectItem myItems[0]
+    checkResult()
+  }
+
   public void testSuggestExpectedTypeMembers() throws Throwable {
     configure()
     selectItem myItems[0]
