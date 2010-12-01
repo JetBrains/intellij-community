@@ -9,6 +9,9 @@ from generator3 import *
 
 M = ModuleRedeclarator
 
+import sys
+IS_CLI = sys.platform == 'cli'
+
 class TestRestoreFuncByDocComment(unittest.TestCase):
   """
   Tries to restore function signatures by doc strings.
@@ -18,152 +21,152 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
     self.m = ModuleRedeclarator(None, None)
 
   def testTrivial(self):
-    result, note = self.m.parseFuncDoc("blah f(a, b, c) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, b, c) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, b, c)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testTrivialNested(self):
-    result, note = self.m.parseFuncDoc("blah f(a, (b, c), d) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, (b, c), d) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, (b, c), d)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testWithDefault(self):
-    result, note = self.m.parseFuncDoc("blah f(a, b, c=1) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, b, c=1) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, b, c=1)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testNestedWithDefault(self):
-    result, note = self.m.parseFuncDoc("blah f(a, (b1, b2), c=1) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, (b1, b2), c=1) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, (b1, b2), c=1)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testAbstractDefault(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah f(a, b=obscuredefault) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(a, b=obscuredefault) ololo', "f", "f", None)
     self.assertEquals(result, "f(a, b=None)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testWithReserved(self):
-    result, note = self.m.parseFuncDoc("blah f(class, object, def) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(class, object, def) ololo", "f", "f", None)
     self.assertEquals(result, "f(p_class, p_object, p_def)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testWithReservedOpt(self):
-    result, note = self.m.parseFuncDoc("blah f(foo, bar[, def]) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(foo, bar[, def]) ololo", "f", "f", None)
     self.assertEquals(result, "f(foo, bar, p_def=None)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testPseudoNested(self):
-    result, note = self.m.parseFuncDoc("blah f(a, (b1, b2, ...)) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, (b1, b2, ...)) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, b_tuple)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testImportLike(self):
     # __import__
-    result, note = self.m.parseFuncDoc("blah f(name, globals={}, locals={}, fromlist=[], level=-1) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(name, globals={}, locals={}, fromlist=[], level=-1) ololo", "f", "f", None)
     self.assertEquals(result, "f(name, globals={}, locals={}, fromlist=[], level=-1)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testOptionalBracket(self):
     # reduce
-    result, note = self.m.parseFuncDoc("blah f(function, sequence[, initial]) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(function, sequence[, initial]) ololo", "f", "f", None)
     self.assertEquals(result, "f(function, sequence, initial=None)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testWithMore(self):
-    result, note = self.m.parseFuncDoc("blah f(foo [, bar1, bar2, ...]) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(foo [, bar1, bar2, ...]) ololo", "f", "f", None)
     self.assertEquals(result, "f(foo, *bar)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testNestedOptionals(self):
-    result, note = self.m.parseFuncDoc("blah f(foo [, bar1 [, bar2]]) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(foo [, bar1 [, bar2]]) ololo", "f", "f", None)
     self.assertEquals(result, "f(foo, bar1=None, bar2=None)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testInnerTuple(self):
-    result, note = self.m.parseFuncDoc("blah load_module(name, file, filename, (suffix, mode, type)) ololo", "load_module", "load_module", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah load_module(name, file, filename, (suffix, mode, type)) ololo", "load_module", "load_module", None)
     self.assertEquals(result, "load_module(name, file, filename, (suffix, mode, type))")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testIncorrectInnerTuple(self):
-    result, note = self.m.parseFuncDoc("blah f(a, (b=1, c=2)) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(a, (b=1, c=2)) ololo", "f", "f", None)
     self.assertEquals(result, "f(a, p_b)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testNestedOnly(self):
-    result, note = self.m.parseFuncDoc("blah f((foo, bar, baz)) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f((foo, bar, baz)) ololo", "f", "f", None)
     self.assertEquals(result, "f((foo, bar, baz))")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testTwoPseudoNested(self):
-    result, note = self.m.parseFuncDoc("blah f((a1, a2, ...), (b1, b2,..)) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f((a1, a2, ...), (b1, b2,..)) ololo", "f", "f", None)
     self.assertEquals(result, "f(a_tuple, b_tuple)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testTwoPseudoNestedWithLead(self):
-    result, note = self.m.parseFuncDoc("blah f(x, (a1, a2, ...), (b1, b2,..)) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(x, (a1, a2, ...), (b1, b2,..)) ololo", "f", "f", None)
     self.assertEquals(result, "f(x, a_tuple, b_tuple)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testPseudoNestedRange(self):
-    result, note = self.m.parseFuncDoc("blah f((a1, ..., an), b) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f((a1, ..., an), b) ololo", "f", "f", None)
     self.assertEquals(result, "f(a_tuple, b)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testIncorrectList(self):
-    result, note = self.m.parseFuncDoc("blah f(x, y, 3, $) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(x, y, 3, $) ololo", "f", "f", None)
     self.assertEquals(result, "f(x, y, *args, **kwargs)")
     self.assertEquals(note, M.SIG_DOC_UNRELIABLY)
 
   def testIncorrectStarredList(self):
-    result, note = self.m.parseFuncDoc("blah f(x, *y, 3, $) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(x, *y, 3, $) ololo", "f", "f", None)
     self.assertEquals(result, "f(x, *y, **kwargs)")
     self.assertEquals(note, M.SIG_DOC_UNRELIABLY)
 
   def testClashingNames(self):
-    result, note = self.m.parseFuncDoc("blah f(x, y, (x, y), z) ololo", "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(x, y, (x, y), z) ololo", "f", "f", None)
     self.assertEquals(result, "f(x, y, (x_1, y_1), z)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testQuotedParam(self):
     # like __delattr__
-    result, note = self.m.parseFuncDoc("blah getattr('name') ololo", "getattr", "getattr", None)
+    result, ret_sig, note = self.m.parseFuncDoc("blah getattr('name') ololo", "getattr", "getattr", None)
     self.assertEquals(result, "getattr(name)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testQuotedParam2(self):
     # like __delattr__, too
-    result, note = self.m.parseFuncDoc('blah getattr("name") ololo', "getattr", "getattr", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah getattr("name") ololo', "getattr", "getattr", None)
     self.assertEquals(result, "getattr(name)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testOptionalTripleDot(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah f(foo, ...) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(foo, ...) ololo', "f", "f", None)
     self.assertEquals(result, "f(foo, *more)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testUnderscoredName(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah f(foo_one, _bar_two) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(foo_one, _bar_two) ololo', "f", "f", None)
     self.assertEquals(result, "f(foo_one, _bar_two)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testDashedName(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah f(something-else, for-a-change) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(something-else, for-a-change) ololo', "f", "f", None)
     self.assertEquals(result, "f(something_else, for_a_change)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testSpacedDefault(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah f(a, b = 1) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(a, b = 1) ololo', "f", "f", None)
     self.assertEquals(result, "f(a, b=1)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testSpacedName(self):
     # like new(S, ...)
-    result, note = self.m.parseFuncDoc('blah femme(skirt or pants) ololo', "femme", "femme", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah femme(skirt or pants) ololo', "femme", "femme", None)
     self.assertEquals(result, "femme(skirt_or_pants)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
@@ -175,12 +178,12 @@ class TestRestoreMethodByDocComment(unittest.TestCase):
     self.m = ModuleRedeclarator(None, None)
 
   def testPlainMethod(self):
-    result, note = self.m.parseFuncDoc("blah f(self, foo, bar) ololo", "f", "f", "SomeClass")
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(self, foo, bar) ololo", "f", "f", "SomeClass")
     self.assertEquals(result, "f(self, foo, bar)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testInsertSelf(self):
-    result, note = self.m.parseFuncDoc("blah f(foo, bar) ololo", "f", "f", "SomeClass")
+    result, ret_sig, note = self.m.parseFuncDoc("blah f(foo, bar) ololo", "f", "f", "SomeClass")
     self.assertEquals(result, "f(self, foo, bar)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
@@ -192,38 +195,62 @@ class TestAnnotatedParameters(unittest.TestCase):
     self.m = ModuleRedeclarator(None, None)
 
   def testMixed(self):
-    result, note = self.m.parseFuncDoc('blah f(i: int, foo) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(i: int, foo) ololo', "f", "f", None)
     self.assertEquals(result, "f(i, foo)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testNested(self):
-    result, note = self.m.parseFuncDoc('blah f(i: int, (foo: bar, boo: Decimal)) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(i: int, (foo: bar, boo: Decimal)) ololo', "f", "f", None)
     self.assertEquals(result, "f(i, (foo, boo))")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
   def testSpaced(self):
-    result, note = self.m.parseFuncDoc('blah f(i: int, j :int, k : int) ololo', "f", "f", None)
+    result, ret_sig, note = self.m.parseFuncDoc('blah f(i: int, j :int, k : int) ololo', "f", "f", None)
     self.assertEquals(result, "f(i, j, k)")
     self.assertEquals(note, M.SIG_DOC_NOTE)
 
 
-class TestInspect(unittest.TestCase):
-  "See that inspect actually works if needed"
-  def setUp(self):
-    self.m = ModuleRedeclarator(None, None)
+if not IS_CLI:
+  class TestInspect(unittest.TestCase):
+    "See that inspect actually works if needed"
+    def setUp(self):
+      self.m = ModuleRedeclarator(None, None)
+
+    def testSimple(self):
+      def target(a,b,c=1, *d, **e):
+        pass
+      result = self.m.restoreByInspect(target)
+      self.assertEquals(result, "(a, b, c=1, *d, **e)")
+
+    def testNested(self):
+      def target(a, (b, c), d, e=1):
+        pass
+      result = self.m.restoreByInspect(target)
+      self.assertEquals(result, "(a, (b, c), d, e=1)")
     
-  def testSimple(self):
-    def target(a,b,c=1, *d, **e):
-      pass
-    result = self.m.restoreByInspect(target)
-    self.assertEquals(result, "(a, b, c=1, *d, **e)")
-    
-  def testNested(self):
-    def target(a, (b, c), d, e=1):
-      pass
-    result = self.m.restoreByInspect(target)
-    self.assertEquals(result, "(a, (b, c), d, e=1)")
-    
+
+class _DiffPrintingTestCase(unittest.TestCase):
+  def assertEquals(self, etalon, specimen, msg=None):
+    if type(etalon) == str and type(specimen) == str and etalon != specimen:
+      print("%s" % "\n")
+      # print side by side
+      ei = iter(etalon.split("\n"))
+      si = iter(specimen.split("\n"))
+      for el in ei:
+        sl = si.next() # if si ends before ei, this op will correctly break the loop
+        if el != sl:
+          print("!%s" % el)
+          print("?%s" % sl)
+        else:
+          print(">%s" % sl)
+      # one of the iters might not end yet
+      for el in ei:
+        print("!%s" % el)
+      for sl in si:
+        print("?%s" % sl)
+      raise self.failureException(msg)
+    else:
+      self.failUnlessEqual(etalon, specimen, msg)
 
 
 class TestSpecialCases(unittest.TestCase):
@@ -255,9 +282,57 @@ class TestSpecialCases(unittest.TestCase):
 
   def testFilter(self):
     self._testBuiltinFuncName("filter", "(function_or_none, sequence)")
-    
 
-class TestDataOutput(unittest.TestCase):
+if not IS_CLI:
+  class TestNonDictClasses(_DiffPrintingTestCase):
+    "Tests classes that don't have a __dict__"
+
+    def setUp(self):
+      from StringIO import StringIO
+      self.out = StringIO()
+      self.m = ModuleRedeclarator(None, self.out, 4)
+
+    def checkRedoClass(self, p_class, expected):
+      self.out.seek(0)
+      self.out.truncate()
+      self.m.redoClass(p_class, p_class.__name__, 0)
+      self.out.seek(0)
+      result = "".join(self.out.readlines()).strip()
+      self.assertEquals(expected, result)
+
+    def testOne(self):
+      class One(object):
+        "Doc of One"
+        __slots__ = ('A', 'B', 'foo')
+        A = 1
+        B = "boo"
+        def foo(self, x):
+          "blah foo(x) -> int"
+          return x+1
+      expected = "\n".join((
+        "class One(object):",
+        '    """ Doc of One """',
+        '    def foo(self, x): # real signature unknown; restored from __doc__',
+        '        """ blah foo(x) -> int """',
+        '        return 0',
+        "",
+        "    def __init__(self, *args, **kwargs): # real signature unknown",
+        "        pass",
+        '',
+        '    A = 1',
+        "    B = 'boo'",
+        "    __slots__ = (",
+        "        'A',",
+        "        'B',",
+        "        'foo',",
+        "    )",
+      ))
+      self.checkRedoClass(One, expected)
+
+
+
+
+class TestDataOutput(_DiffPrintingTestCase):
   "Tests for sanity of output of data members"
 
   def setUp(self):
@@ -302,6 +377,55 @@ class TestDataOutput(unittest.TestCase):
         "]"
       ))
       self.checkFmtValue(data, expected)
+
+if not IS_CLI:
+
+  class TestReturnTypes(unittest.TestCase):
+    "Tests for sanity of output of data members"
+
+    def setUp(self):
+      self.m = ModuleRedeclarator(None, None, 4)
+
+    def checkRestoreFunction(self, doc, expected):
+      spec, ret_literal, note = self.m.parseFuncDoc(doc, "foo", "foo", None)
+      self.assertEqual(expected, ret_literal, "%r != %r; spec=%r, note=%r" % (expected, ret_literal, spec, note))
+      pass
+
+    def testSimpleArrowInt(self):
+      doc = "This is foo(bar) -> int"
+      self.checkRestoreFunction(doc, "0")
+
+    def testSimpleArrowList(self):
+      doc = "This is foo(bar) -> list"
+      self.checkRestoreFunction(doc, "[]")
+
+    def testArrowListOf(self):
+      doc = "This is foo(bar) -> list of int"
+      self.checkRestoreFunction(doc, "[]")
+
+#    def testArrowTupleOf(self):
+#      doc = "This is foo(bar) -> (a, b,..)"
+#      self.checkRestoreFunction(doc, "()")
+
+    def testSimplePrefixInt(self):
+      doc = "This is int foo(bar)"
+      self.checkRestoreFunction(doc, "0")
+
+    def testSimplePrefixObject(self):
+      doc = "Makes an instance: object foo(bar)"
+      self.checkRestoreFunction(doc, "object()")
+
+    def testSimpleArrowFile(self):
+      doc = "Opens a file: foo(bar) -> file"
+      self.checkRestoreFunction(doc, "file('/dev/null')")
+
+    def testUnrelatedPrefix(self):
+      doc = """
+        Consumes a list of int
+        foo(bar)
+      """
+      self.checkRestoreFunction(doc, None)
+
 
 ###
 if __name__ == '__main__':
