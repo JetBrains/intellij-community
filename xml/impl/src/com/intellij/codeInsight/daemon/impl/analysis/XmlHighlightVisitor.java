@@ -28,7 +28,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
-import com.intellij.idea.LoggerFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -38,7 +37,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
@@ -69,8 +67,7 @@ import java.util.StringTokenizer;
  * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, Validator.ValidationHost {
-  private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
-    "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
+  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
   private static final UserDataCache<Boolean, PsiElement, Object> DO_NOT_VALIDATE =
     new UserDataCache<Boolean, PsiElement, Object>("do not validate") {
     @Override
