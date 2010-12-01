@@ -59,7 +59,7 @@ public class MavenPropertyResolver {
     Collection<String> activePropfiles = project.getActivatedProfilesIds();
     for (MavenDomProfile each : projectDom.getProfiles().getProfiles()) {
       XmlTag idTag = each.getId().getXmlTag();
-      if (idTag == null || !activePropfiles.contains(idTag.getValue().getText())) continue;
+      if (idTag == null || !activePropfiles.contains(idTag.getValue().getTrimmedText())) continue;
       collectPropertiesFromDOM(each.getProperties(), result);
     }
 
@@ -70,7 +70,7 @@ public class MavenPropertyResolver {
     XmlTag propsTag = props.getXmlTag();
     if (propsTag != null) {
       for (XmlTag each : propsTag.getSubTags()) {
-        result.setProperty(each.getName(), each.getValue().getText());
+        result.setProperty(each.getName(), each.getValue().getTrimmedText());
       }
     }
   }

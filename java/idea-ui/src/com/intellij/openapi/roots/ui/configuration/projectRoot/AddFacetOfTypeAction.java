@@ -20,6 +20,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
+import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
@@ -130,7 +131,8 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(myFacetStructureConfigurable.myContext.getModules().length > 0 && getSelectedType() != null);
+    final FacetType type = getSelectedType();
+    e.getPresentation().setEnabled(myFacetStructureConfigurable.myContext.getModules().length > 0 && type != null && !(type instanceof InvalidFacetType));
   }
 
   @Nullable

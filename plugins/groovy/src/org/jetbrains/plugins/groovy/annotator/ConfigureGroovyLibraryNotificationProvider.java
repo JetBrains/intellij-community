@@ -19,6 +19,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -69,18 +71,26 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
 
   @Override
   public EditorNotificationPanel createNotificationPanel(VirtualFile file) {
-    if (!supportedFileTypes.contains(file.getFileType())) return null;
+    try {
+      if (!supportedFileTypes.contains(file.getFileType())) return null;
 
-    final Module module = ModuleUtil.findModuleForFile(file, myProject);
-    if (module == null) return null;
+      final Module module = ModuleUtil.findModuleForFile(file, myProject);
+      if (module == null) return null;
 
-    for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
-      if (configNotification.hasFrameworkStructure(module)) {
-        if (!configNotification.hasFrameworkLibrary(module)) {
-          return configNotification.createConfigureNotificationPanel(module);
+      for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
+        if (configNotification.hasFrameworkStructure(module)) {
+          if (!configNotification.hasFrameworkLibrary(module)) {
+            return configNotification.createConfigureNotificationPanel(module);
+          }
+          return null;
         }
-        return null;
       }
+    }
+    catch (ProcessCanceledException ignored) {
+
+    }
+    catch (IndexNotReadyException ignored) {
+
     }
 
     return null;

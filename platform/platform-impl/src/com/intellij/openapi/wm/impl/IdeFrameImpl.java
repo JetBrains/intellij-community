@@ -329,6 +329,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (myRootPane != null) {
       myRootPane = null;
     }
+
+    FocusTrackback.release(this);
+
     super.dispose();
   }
 

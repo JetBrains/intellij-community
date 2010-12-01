@@ -85,6 +85,12 @@ public class NonAtomicOperationOnVolatileFieldInspection
         @Override
         public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
+            final IElementType tokenType = expression.getOperationTokenType();
+            if (JavaTokenType.PLUS.equals(tokenType) ||
+                    JavaTokenType.MINUS.equals(tokenType) ||
+                    JavaTokenType.EXCL.equals(tokenType)) {
+                return;
+            }
             final PsiExpression operand = expression.getOperand();
             if (operand == null) {
                 return;

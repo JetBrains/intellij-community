@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.completion;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +34,7 @@ import javax.xml.namespace.QName;
 import java.util.*;
 
 public class CompletionLists {
-    public static final String INTELLIJ_IDEA_RULEZ = "IntellijIdeaRulezzz";
+    public static final String INTELLIJ_IDEA_RULEZ = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
     private CompletionLists() {
     }

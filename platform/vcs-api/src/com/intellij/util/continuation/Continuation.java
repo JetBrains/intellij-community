@@ -60,6 +60,10 @@ public class Continuation {
     pingRunnerInCorrectThread();
   }
 
+  public void resume() {
+    myGeneralRunner.ping();
+  }
+
   private void pingRunnerInCorrectThread() {
     if (! ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {

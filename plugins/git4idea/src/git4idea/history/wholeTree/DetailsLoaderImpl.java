@@ -17,18 +17,14 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
-import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.LowLevelAccess;
-import git4idea.history.browser.LowLevelAccessImpl;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.browser.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,6 +132,27 @@ public class DetailsLoaderImpl implements DetailsLoader {
       final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(myVirtualFile);
       if (holder == null) return;
       final Collection<AbstractHash> hashes = holder.get(ourLoadSize);
+      try {
+        loadDetails(hashes);
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+        for (AbstractHash hash : hashes) {
+          try {
+            loadDetails(Collections.singletonList(hash));
+          }
+          catch (VcsException e1) {
+            LOG.info(e1);
+            myDetailsCache.acceptAnswer(Collections.singletonList(createNotLoadedCommit(hash)), myAccess.getRoot());
+          }
+        }
+      }
+      if (holder.haveData()) {
+        myQueue.run(this);
+      }
+    }
+
+    private void loadDetails(Collection<AbstractHash> hashes) throws VcsException {
       final List<String> converted = new ArrayList<String>();
       for (final AbstractHash hash : hashes) {
         if (myDetailsCache.convert(myVirtualFile, hash) == null) {
@@ -143,21 +160,30 @@ public class DetailsLoaderImpl implements DetailsLoader {
         }
       }
       if (! hashes.isEmpty()) {
-        try {
           final Collection<GitCommit> result = myAccess.getCommitDetails(converted, myRefs.get(myAccess.getRoot()));
           if (result != null && (! result.isEmpty())) {
             myDetailsCache.acceptAnswer(result, myAccess.getRoot());
+            for (GitCommit gitCommit : result) {
+              converted.remove(gitCommit.getShortHash().getString());
+            }
           }
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-          // suppress here. further : todo put fictive details!!!!!!!!!
-          // todo to dont repeat load infinitely
-        }
+          if (! converted.isEmpty()) {
+            // todo this is bad
+            final Collection<GitCommit> error = new ArrayList<GitCommit>();
+            for (String s : converted) {
+              error.add(createNotLoadedCommit(AbstractHash.create(s)));
+            }
+            myDetailsCache.acceptAnswer(error, myAccess.getRoot());
+          }
       }
-      if (holder.haveData()) {
-        myQueue.run(this);
-      }
+    }
+
+    private GitCommit createNotLoadedCommit(AbstractHash shortHash) {
+      final String notKnown = "Can not load";
+      return new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0),
+                              "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
+                              notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
+                              Collections.<Change>emptyList(), 0);
     }
   }
 }

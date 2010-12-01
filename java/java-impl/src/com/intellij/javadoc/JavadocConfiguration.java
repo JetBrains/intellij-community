@@ -38,13 +38,14 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -56,9 +57,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
@@ -256,8 +255,6 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
         parameters.add("@" + sourcepathTempFile.getCanonicalPath());
         final PrintWriter writer = new PrintWriter(new FileWriter(sourcepathTempFile));
         try {
-          writer.println("-sourcepath");
-          writer.println(GeneralCommandLine.quote(OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString()));
           final Collection<String> packages = new HashSet<String>();
           final Collection<String> sources = new HashSet<String>();
           final Runnable findRunnable = new Runnable() {
@@ -271,8 +268,17 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           if (packages.size() + sources.size() == 0) {
             throw new CantRunException(JavadocBundle.message("javadoc.generate.no.classes.in.selected.packages.error"));
           }
-          writer.println(StringUtil.join(packages, " "));
-          writer.println(StringUtil.join(sources, " "));
+          for (String aPackage : packages) {
+            writer.println(aPackage);
+          }
+          for (String source : sources) {
+            writer.println(source);
+          }
+          writer.println("-sourcepath");
+          final PathsList pathsList = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList();
+          for (String path : pathsList.getPathList()) {
+            writer.println(GeneralCommandLine.quote(FileUtil.toSystemIndependentName(path)));
+          }
         }
         finally {
           writer.close();
@@ -319,11 +325,12 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
-        if (containsPackagePrefix(module, javaFile.getPackageName())) {
-          mySourceFiles.add(PathUtil.getLocalPath(javaFile.getVirtualFile()));
+        final String packageName = javaFile.getPackageName();
+        if (containsPackagePrefix(module, packageName) || packageName.length() == 0) {
+          mySourceFiles.add(GeneralCommandLine.quote(FileUtil.toSystemIndependentName(fileOrDir.getPath())));
         }
         else {
-          myPackages.add(javaFile.getPackageName());
+          myPackages.add(packageName);
         }
       }
     }

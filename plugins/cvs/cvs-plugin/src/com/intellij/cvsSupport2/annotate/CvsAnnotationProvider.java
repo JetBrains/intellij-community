@@ -23,6 +23,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -50,10 +51,13 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
                                CvsOperationExecutorCallback.EMPTY);
     if (executor.getResult().hasNoErrors()) {
-      final CvsHistoryProvider historyProvider = (CvsHistoryProvider) CvsVcs2.getInstance(myProject).getVcsHistoryProvider();
+      final CvsVcs2 cvsVcs2 = CvsVcs2.getInstance(myProject);
+      final CvsHistoryProvider historyProvider = (CvsHistoryProvider) cvsVcs2.getVcsHistoryProvider();
       final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
       final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
-      return new CvsFileAnnotation(operation.getContent(), operation.getLineAnnotations(), revisions, file);
+      final Annotation[] lineAnnotations = operation.getLineAnnotations();
+      CvsVcs2.adjustAnnotation(revisions, lineAnnotations);
+      return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, file);
     } else {
       throw executor.getFirstError();
     }

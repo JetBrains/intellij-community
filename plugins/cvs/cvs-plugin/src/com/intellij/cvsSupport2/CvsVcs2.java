@@ -365,14 +365,17 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
     if (executor.getResult().hasNoErrors()) {
       final List<VcsFileRevision> revisions;
+      final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
       if (hasLocalFile) {
         final CvsHistoryProvider historyProvider = (CvsHistoryProvider)getVcsHistoryProvider();
         final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(cvsVirtualFile);
         revisions = historyProvider.createRevisions(filePath);
+        // in annotation cvs returns only 8 symbols of username
+        // try to find usernames in history and use them
+        adjustAnnotation(revisions, lineAnnotations);
       }
       else {
         // imitation
-        final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
         revisions = new ArrayList<VcsFileRevision>();
         final Set<String> usedRevisions = new HashSet<String>();
         for (Annotation annotation : lineAnnotations) {
@@ -382,12 +385,27 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
           }
         }
       }
-      return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), revisions, cvsVirtualFile);
+      return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile);
     }
     else {
       throw executor.getResult().composeError();
     }
 
+  }
+
+  public static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {
+    if (revisions != null) {
+      final Map<VcsRevisionNumber, String> usersMap = new HashMap<VcsRevisionNumber, String>();
+      for (VcsFileRevision vcsFileRevision : revisions) {
+        usersMap.put(vcsFileRevision.getRevisionNumber(), vcsFileRevision.getAuthor());
+      }
+      for (Annotation lineAnnotation : lineAnnotations) {
+        final String name = usersMap.get(new CvsRevisionNumber(lineAnnotation.getRevision()));
+        if (name != null) {
+          lineAnnotation.setUser(name);
+        }
+      }
+    }
   }
 
   public DiffProvider getDiffProvider() {

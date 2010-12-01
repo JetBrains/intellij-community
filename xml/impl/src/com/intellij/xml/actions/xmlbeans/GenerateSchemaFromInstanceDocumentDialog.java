@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -214,5 +215,10 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("result.schema.file.name.is.empty.validation.problem");
     }
     return null;
+  }
+
+  @NotNull
+  protected String getHelpId() {
+    return "webservices.GenerateSchemaFromInstanceDocument";
   }
 }

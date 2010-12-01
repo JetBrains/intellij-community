@@ -364,7 +364,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       }
 
       if (myContext.skipToLineEnd) {
-        myContext.tryToShiftToNextLine();
+        myContext.skipToLineEnd = false; // Assuming that this flag is set if no soft wrap is registered during processing the call below
+        createSoftWrapIfPossible();
         continue;
       }
       
@@ -410,6 +411,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       myContext.tryToShiftToNextLine();
       return;
     }
+    
+    myContext.skipToLineEnd = false;
+    
     notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     int actualSoftWrapOffset = softWrap.getStart();
 

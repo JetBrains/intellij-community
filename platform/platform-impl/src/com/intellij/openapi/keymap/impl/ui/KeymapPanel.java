@@ -20,6 +20,7 @@ import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -51,6 +52,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -140,7 +142,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
     myKeymapList = new ComboBox(myKeymapListModel);
     myKeymapList.setEditor(new MyEditor());
-    myKeymapList.setRenderer(new MyKeymapRenderer());
+    myKeymapList.setRenderer(new MyKeymapRenderer(myKeymapList.getRenderer()));
     JLabel keymapLabel = new JLabel(KeyMapBundle.message("keymaps.border.factory.title"));
     keymapLabel.setLabelFor(myKeymapList);
     panel.add(keymapLabel, new GridBagConstraints(0,0, 1, 1, 0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0));
@@ -864,6 +866,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     processCurrentKeymapChanged();
   }
 
+  @NotNull
   public String getId() {
     return "preferences.keymap";
   }
@@ -912,19 +915,24 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     return "<html><body>" + (myFilterComponent != null ? SearchUtil.markup(description, myFilterComponent.getFilter()) : description) + "</body></html>";
   }
 
-  private static final class MyKeymapRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      Keymap keymap = (Keymap)value;
+  private static final class MyKeymapRenderer extends ListCellRendererWrapper<Keymap> {
+    public MyKeymapRenderer(final ListCellRenderer listCellRenderer) {
+      super(listCellRenderer);
+    }
+
+    @Override
+    public void customize(JList list, Keymap keymap, int index, boolean selected, boolean hasFocus) {
       if (keymap != null) {
         String name = keymap.getPresentableName();
-        if(name == null) {
+        if (name == null) {
           name = KeyMapBundle.message("keymap.noname.presentable.name");
         }
-        append(name, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      } 
+        setText(name);
+      }
     }
   }
 
+  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private static final class ShortcutListRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

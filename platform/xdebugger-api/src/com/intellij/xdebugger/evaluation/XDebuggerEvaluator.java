@@ -76,6 +76,15 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
+   * If this method returns {@code true} 'Code Fragment Mode' button will be shown in 'Evaluate' dialog allowing user to execute a set of
+   * statements
+   * @return {@code true} if debugger supports evaluation of code fragments (statements)
+   */
+  public boolean isCodeFragmentEvaluationSupported() {
+    return true;
+  }
+
+  /**
    * Return text range of expression which can be evaluated.
    *
    * @param project  project

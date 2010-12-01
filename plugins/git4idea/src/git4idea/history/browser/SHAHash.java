@@ -15,16 +15,28 @@
  */
 package git4idea.history.browser;
 
+import git4idea.history.wholeTree.AbstractHash;
+
 public class SHAHash {
   private final String myValue;
 
   public SHAHash(final String value) {
+    this(value, true);
+  }
+
+  private SHAHash(final String value, final boolean check) {
     myValue = value;
-    assert myValue.length() == 40 : myValue;
+    if (check) {
+      assert myValue.length() == 40 : myValue;
+    }
   }
 
   public String getValue() {
     return myValue;
+  }
+
+  public static SHAHash emulate(final AbstractHash abstractHash) {
+    return new SHAHash(abstractHash.getString(), false);
   }
 
   @Override

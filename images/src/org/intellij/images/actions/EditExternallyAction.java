@@ -72,7 +72,15 @@ public final class EditExternallyAction extends AnAction {
         executablePath = FileUtil.toSystemDependentName(executablePath);
         File executable = new File(executablePath);
         GeneralCommandLine commandLine = new GeneralCommandLine();
-        commandLine.setExePath(executable.exists() ? executable.getAbsolutePath() : executablePath);
+        final String path = executable.exists() ? executable.getAbsolutePath() : executablePath;
+        if (SystemInfo.isMac) {
+          commandLine.setExePath("open");
+          commandLine.addParameter("-a");
+          commandLine.addParameter(path);
+        } else {
+          commandLine.setExePath(path);
+        }
+
         ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
         for (VirtualFile file : files) {
           if (file.isInLocalFileSystem() && typeManager.isImage(file)) {

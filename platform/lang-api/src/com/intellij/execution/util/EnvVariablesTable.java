@@ -25,6 +25,8 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +36,9 @@ public class EnvVariablesTable extends Observable {
   private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
   private final JPanel myPanel = new JPanel(new BorderLayout());
 
-  private final ColumnInfo NAME = new ColumnInfo<EnvironmentVariable, String>("Name") {
+  private final ColumnInfo NAME = new EnvVariableColumnInfoBase("Name") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getName();
-    }
-
-    public Class getColumnClass() {
-      return String.class;
     }
 
     public boolean isCellEditable(EnvironmentVariable environmentVariable) {
@@ -56,13 +54,9 @@ public class EnvVariablesTable extends Observable {
     }
   };
 
-  private final ColumnInfo VALUE = new ColumnInfo<EnvironmentVariable, String>("Value") {
+  private final ColumnInfo VALUE = new EnvVariableColumnInfoBase("Value") {
     public String valueOf(EnvironmentVariable environmentVariable) {
       return environmentVariable.getValue();
-    }
-
-    public Class getColumnClass() {
-      return String.class;
     }
 
     public boolean isCellEditable(EnvironmentVariable environmentVariable) {
@@ -205,4 +199,27 @@ public class EnvVariablesTable extends Observable {
     }
   }
 
+  private static abstract class EnvVariableColumnInfoBase extends ColumnInfo<EnvironmentVariable, String> {
+    private DefaultTableCellRenderer myRenderer;
+
+    private EnvVariableColumnInfoBase(String name) {
+      super(name);
+    }
+
+    public Class getColumnClass() {
+      return String.class;
+    }
+
+    @Override
+    public TableCellRenderer getRenderer(EnvironmentVariable environmentVariable) {
+      if (myRenderer == null) {
+        myRenderer = new DefaultTableCellRenderer();
+      }
+      if (environmentVariable != null) {
+        myRenderer.setText(valueOf(environmentVariable));
+        myRenderer.setToolTipText(environmentVariable.getDescription());
+      }
+      return myRenderer;
+    }
+  }
 }

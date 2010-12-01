@@ -46,7 +46,8 @@ public class MavenServicesManager implements PersistentStateComponent<Element> {
     if (!configured.isEmpty()) return configured.toArray(new String[configured.size()]);
     return new String[]{
       "http://oss.sonatype.org/service/local/",
-      "http://repo.jfrog.org/artifactory/api/"
+      "http://repo.jfrog.org/artifactory/api/",
+      "https://repository.jboss.org/nexus/service/local/"
     };
   }
 

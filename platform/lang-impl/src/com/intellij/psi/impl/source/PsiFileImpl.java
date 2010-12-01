@@ -265,7 +265,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void switchFromStubToAST(final ASTNode root, final Iterator<StubElement<?>> stubs) {
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
-      throw new AssertionError("A stub in a non-stub file '" + getVirtualFile() +"'; type: "+contentElementType+"; content:<<<\n"+
+      final VirtualFile vFile = getVirtualFile();
+      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + (vFile != null? vFile.isValid() : "null") +
+                               " type: "+contentElementType+"; content:<<<\n"+
                                StringUtil.first(getViewProvider().getContents(),200,true)+
                                "\n>>>; stubs=" + ContainerUtil.collect(stubs));
     }
@@ -601,6 +603,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     StubTree stubHolder = StubTree.readOrBuild(getProject(), vFile);
     if (stubHolder == null) return null;
+    
+    final IElementType contentElementType = getContentElementType();
+    if (!(contentElementType instanceof IStubFileElementType)) {
+      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() +
+                               " type: "+contentElementType+"; content:<<<\n"+
+                               StringUtil.first(getViewProvider().getContents(),200,true)+
+                               "\n>>>; stubs=" + stubHolder.getPlainList());
+    }
 
     synchronized (myStubLock) {
       if (getTreeElementNoLock() != null) return null;
@@ -901,13 +911,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
     catch (BindingFailedException e) {
       String message = e.getMessage();
-      if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-        message = new StringBuilder(message)
-          .append("\n=== AST ===\n").append(DebugUtil.treeToString(fileRoot, true))
-          .append("=== stub tree ===\n").append(DebugUtil.stubTreeToString(rootStub))
-          .append("=== text===\n").append(getText())
-          .append("\n======").toString();
-      }
+      //if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      //  message = new StringBuilder(message)
+      //    .append("\n=== AST ===\n").append(DebugUtil.treeToString(fileRoot, true))
+      //    .append("=== stub tree ===\n").append(DebugUtil.stubTreeToString(rootStub))
+      //    .append("=== text===\n").append(getText())
+      //    .append("\n======").toString();
+      //}
       assert false : message;
     }
   }

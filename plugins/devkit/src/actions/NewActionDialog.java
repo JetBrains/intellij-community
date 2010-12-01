@@ -325,6 +325,11 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
       return myKeyStroke;
     }
   }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.new.action.dialog";
+  }
 }
 
 

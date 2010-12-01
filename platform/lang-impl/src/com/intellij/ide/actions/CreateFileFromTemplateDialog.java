@@ -84,7 +84,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return new BuilderImpl(dialog, project);
   }
 
-  protected static class BuilderImpl implements Builder {
+  private static class BuilderImpl implements Builder {
 
     private final CreateFileFromTemplateDialog myDialog;
     private final Project myProject;

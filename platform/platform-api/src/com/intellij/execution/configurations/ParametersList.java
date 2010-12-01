@@ -98,6 +98,12 @@ public class ParametersList implements Cloneable{
   }
 
   public ParamsGroup addParamsGroupAt(final int index,
+                                      @NotNull final ParamsGroup group) {
+    myGroups.add(index, group);
+    return group;
+  }
+
+  public ParamsGroup addParamsGroupAt(final int index,
                                       @NotNull final String groupId) {
     final ParamsGroup group = new ParamsGroup(groupId);
     myGroups.add(index, group);
