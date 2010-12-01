@@ -12,6 +12,8 @@ import com.intellij.util.Icons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -61,11 +63,49 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
                   PsiFile file = parameters.getOriginalFile();
                   addAdditionalKeys(file, operand, result);
                 }
+                PyCallExpression dictConstructor = PsiTreeUtil.getNextSiblingOfType(resolvedElement, PyCallExpression.class);
+                if (dictConstructor != null) {
+                  addDictConstructorKeys(dictConstructor, result);
+                  PsiFile file = parameters.getOriginalFile();
+                  addAdditionalKeys(file, operand, result);
+                }
               }
             }
           }
         }
 
+        /**
+         * add keys to completion result from dict constructor
+         */
+        private void addDictConstructorKeys(PyCallExpression dictConstructor, CompletionResultSet result) {
+          String name = dictConstructor.getCallee().getText();
+          if ("dict".equals(name)) {
+            PyType type = dictConstructor.getType(TypeEvalContext.fast());
+            if (type != null) {
+              if (type.isBuiltin()) {
+                PyExpression[] argumentList = dictConstructor.getArgumentList().getArguments();
+                for (PyExpression argument : argumentList) {
+                  if (argument instanceof PyKeywordArgument) {
+                    LookupElementBuilder item;
+                    item = LookupElementBuilder
+                      .create("'" + ((PyKeywordArgument)argument).getKeyword() + "'")
+                      .setTypeText("dict key")
+                      .setIcon(Icons.PARAMETER_ICON);
+                    result.addElement(item);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        /**
+         * add keys from assignment statements
+         * For instance, dictionary['b']=b
+         * @param file to get additional keys
+         * @param operand is operand of origin element
+         * @param result is completion result set
+         */
         private void addAdditionalKeys(PsiFile file, PsiElement operand, CompletionResultSet result) {
           PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
           for (PySubscriptionExpression expr : subscriptionExpressions) {
@@ -88,6 +128,9 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
           }
         }
 
+        /**
+         * add keys from dict literal expression
+         */
         private void addDictLiteralKeys(PyDictLiteralExpression dict, CompletionResultSet result) {
           PyKeyValueExpression[] keyValues = dict.getElements();
           for (PyKeyValueExpression expression : keyValues) {
