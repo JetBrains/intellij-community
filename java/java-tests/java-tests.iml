@@ -21,6 +21,9 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="IntelliLang-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="junit" scope="TEST" />
+    <orderEntry type="module" module-name="testng" scope="TEST" />
+    <orderEntry type="module" module-name="ui-designer" scope="TEST" />
   </component>
 </module>
 
