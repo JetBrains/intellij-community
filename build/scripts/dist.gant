@@ -1,5 +1,5 @@
 import org.jetbrains.jps.Jps
-import static org.jetbrains.jps.idea.IdeaProjectLoader.*
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 includeTool << Jps
@@ -170,7 +170,7 @@ private def layoutMac(Map args, String home, Paths paths) {
     replacefilter(token: "@@jdk_req@@", value: args.jdk_req)
   }
 
-  def root = isEap() ? "${version}-${args.buildNumber}.app" : "IntelliJ IDEA ${version} CE.app"
+  def root = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
 
   def macZipPath = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   ant.zip(zipfile: macZipPath) {
