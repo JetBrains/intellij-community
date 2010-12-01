@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GtkPreferredJComboBoxRendererInspection extends InternalInspection {
+public class GtkPreferredJComboBoxRendererInspection_ extends InternalInspection {
   private static final String RENDERER_CLASS_NAME = DefaultListCellRenderer.class.getName();
   private static final String MESSAGE = "Please use ListCellRendererWrapper instead to prevent artifacts under GTK+ Look and Feel.";
 
