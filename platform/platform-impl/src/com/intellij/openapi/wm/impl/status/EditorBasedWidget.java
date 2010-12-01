@@ -53,6 +53,8 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     final Project project = getProject();
     Editor result = null;
 
+    if (project == null) return null;
+
     DockContainer c = DockManager.getInstance(myProject).getContainerFor(myStatusBar.getComponent());
     EditorsSplitters splitters = null;
     if (c instanceof DockableEditorTabbedContainer) {
@@ -95,14 +97,13 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   }
 
 
-  @NotNull
+  @Nullable
   protected final Project getProject() {
     if (myProject != null) return myProject;
 
     if (myStatusBar != null && myStatusBar.getFrame() != null) {
       return myStatusBar.getFrame().getProject();
     } else {
-      assert false : "Cannot find project (unititialized status bar widget?)";
       return null;
     }
   }
