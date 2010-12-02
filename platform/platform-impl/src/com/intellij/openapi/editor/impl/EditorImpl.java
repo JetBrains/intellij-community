@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -501,8 +502,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
-    if (myScheme instanceof MyColorSchemeDelegate) {
-      ((MyColorSchemeDelegate)myScheme).updateGlobalScheme();
+
+    final EditorColorsScheme scheme =
+      myScheme instanceof DelegateColorScheme? ((DelegateColorScheme)myScheme).getDelegate() : myScheme;
+    if (scheme instanceof MyColorSchemeDelegate) {
+      ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
     }
     myHighlighter.setColorScheme(myScheme);
 

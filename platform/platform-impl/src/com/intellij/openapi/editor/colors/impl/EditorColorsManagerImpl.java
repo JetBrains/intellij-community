@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
@@ -31,6 +32,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
+import com.intellij.util.EventDispatcher;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -46,8 +48,7 @@ import java.util.*;
 public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
-  private final Collection<EditorColorsListener> myListeners = new ArrayList<EditorColorsListener>();
-
+  private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
 
   @NonNls private static final String NODE_NAME = "global_color_scheme";
   @NonNls private static final String SCHEME_NODE_NAME = "scheme";
@@ -283,10 +284,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   private void fireChanges(EditorColorsScheme scheme) {
-    EditorColorsListener[] colorsListeners = myListeners.toArray(new EditorColorsListener[myListeners.size()]);
-    for (EditorColorsListener colorsListener : colorsListeners) {
-      colorsListener.globalSchemeChange(scheme);
-    }
+    myListeners.getMulticaster().globalSchemeChange(scheme);
   }
 
   // -------------------------------------------------------------------------
@@ -312,11 +310,15 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
 
   public void addEditorColorsListener(EditorColorsListener listener) {
-    myListeners.add(listener);
+    myListeners.addListener(listener);
+  }
+
+  public void addEditorColorsListener(EditorColorsListener listener, Disposable disposable) {
+    myListeners.addListener(listener, disposable);
   }
 
   public void removeEditorColorsListener(EditorColorsListener listener) {
-    myListeners.remove(listener);
+    myListeners.removeListener(listener);
   }
 
   public void setUseOnlyMonospacedFonts(boolean b) {
