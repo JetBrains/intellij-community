@@ -27,23 +27,28 @@ import org.jetbrains.annotations.NotNull;
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
 
-  public ASTStructure(@NotNull ASTNode root) {
+  public ASTStructure(@NotNull final ASTNode root) {
     myRoot = root;
   }
 
-  @NotNull
-  public ASTNode prepareForGetChildren(@NotNull final ASTNode astNode) {
-    return astNode;
-  }
-
+  @Override
   @NotNull
   public ASTNode getRoot() {
     return myRoot;
   }
 
-  public void disposeChildren(final ASTNode[] nodes, final int count) {
+  @Override
+  public ASTNode getParent(@NotNull final ASTNode node) {
+    return node.getTreeParent();
   }
 
+  @Override
+  @NotNull
+  public ASTNode prepareForGetChildren(@NotNull final ASTNode astNode) {
+    return astNode;
+  }
+
+  @Override
   public int getChildren(@NotNull final ASTNode astNode, @NotNull final Ref<ASTNode[]> into) {
     ASTNode child = astNode.getFirstChildNode();
     if (child == null) return 0;
@@ -67,5 +72,9 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
     }
 
     return count;
+  }
+
+  @Override
+  public void disposeChildren(final ASTNode[] nodes, final int count) {
   }
 }

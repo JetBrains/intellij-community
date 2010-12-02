@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -103,15 +104,13 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(false);
 
-    myModulesBox.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, final Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final Module module = (Module) value;
+    myModulesBox.setRenderer(new ListCellRendererWrapper<Module>(myModulesBox.getRenderer()) {
+      @Override
+      public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
         if (module != null) {
           setIcon(module.getModuleType().getNodeIcon(false));
           setText(module.getName());
         }
-        return this;
       }
     });
 

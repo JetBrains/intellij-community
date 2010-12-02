@@ -20,7 +20,10 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.Nullable;
 
 public interface LighterLazyParseableNode extends LighterASTNode {
-  @Nullable PsiFile getContainingFile();
+  @Nullable
+  PsiFile getContainingFile();
+
   CharTable getCharTable();
+
   CharSequence getText();
 }

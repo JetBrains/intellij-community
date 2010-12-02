@@ -15,12 +15,12 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.JavaFileStubBuilder;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
-import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -313,7 +313,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   private static void doTest(final String source, final String tree) {
     final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
-    final LazyParseableElement fileNode = (LazyParseableElement)file.getNode();
+    final FileASTNode fileNode = file.getNode();
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());
 
@@ -327,16 +327,25 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     t2 = (System.nanoTime() - t2)/1000;
     assertTrue(fileNode.isParsed());
 
+    long t3 = System.nanoTime();
+    final StubElement lighterTree2 = NEW_BUILDER.buildStubTree(file);  // build over AST
+    t3 = (System.nanoTime() - t3)/1000;
+
+    long t4 = System.nanoTime();
+    OLD_BUILDER.buildStubTree(file);
+    t4 = (System.nanoTime() - t4)/1000;
+
     final String lightStr = DebugUtil.stubTreeToString(lighterTree);
     final String originalStr = DebugUtil.stubTreeToString(originalTree);
+    final String lightStr2 = DebugUtil.stubTreeToString(lighterTree2);
     if (tree != null) {
-      final String msg = "light=" + t1 + "mks, heavy=" + t2 + "mks, gain=" + (100 * (t2 - t1) / t2) + "%";
-      //assertTrue("Expected to be faster: " + msg, 3*t1/2 <= t2);  // doesn't work on build server
-      System.out.println(msg);
+      System.out.println("light=" + t1 + "mks, heavy=" + t2 + "mks, gain=" + (100 * (t2 - t1) / t2) + "%");
+      System.out.println("light(2nd)=" + t3 + "mks, heavy(2nd)=" + t4 + "mks, overhead=" + (100 * (t3 - t4) / t4) + "%");
 
       assertEquals("wrong test data", tree, originalStr);
       if (!"".equals(tree)) {
         assertEquals("light tree differs", tree, lightStr);
+        assertEquals("light tree (2nd) differs", tree, lightStr2);
       }
     }
     else {
