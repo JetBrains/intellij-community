@@ -48,6 +48,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -187,11 +188,12 @@ public class Switcher extends AnAction implements DumbAware {
                                                       boolean selected,
                                                       boolean hasFocus) {
           final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-          if (list == mouseMoveSrc && index == mouseMoveListIndex && !selected) {
-            renderer.setBackground(ON_MOUSE_OVER_BG_COLOR);
+          if (selected){
+            return renderer;
           }
+          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ?  ON_MOUSE_OVER_BG_COLOR : Color.WHITE;
+          UIUtil.changeBackGround(renderer, bgColor);
           return renderer;
-
         }
       });
       toolwindows.addKeyListener(this);
@@ -254,9 +256,11 @@ public class Switcher extends AnAction implements DumbAware {
                                                       boolean selected,
                                                       boolean hasFocus) {
           final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-          if (list == mouseMoveSrc && index == mouseMoveListIndex && !selected) {
-            renderer.setBackground(ON_MOUSE_OVER_BG_COLOR);
+          if (selected){
+            return renderer;
           }
+          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ?  ON_MOUSE_OVER_BG_COLOR : Color.WHITE;
+          UIUtil.changeBackGround(renderer, bgColor);
           return renderer;
         }
       });
