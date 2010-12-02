@@ -136,7 +136,7 @@ public class CompositePrintable implements Printable, Disposable {
           }
           myPrinter.close();
         }
-      }, 10);
+      }, 0);
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
@@ -154,7 +154,7 @@ public class CompositePrintable implements Printable, Disposable {
           public void run() {
             printer.printFileContent(console, file, printables);
           }
-        }, 10);
+        }, 0);
       }
     }
 
