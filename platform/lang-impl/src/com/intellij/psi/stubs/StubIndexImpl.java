@@ -70,7 +70,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   private StubIndexState myPreviouslyRegistered;
 
-  public StubIndexImpl() throws IOException {
+  public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
     final StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
     boolean needRebuild = false;
     for (StubIndexExtension extension : extensions) {
