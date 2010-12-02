@@ -104,7 +104,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
           final Module module = moduleOrderEntry.getModule();
           if (module != null) {
-            if (myOrderEnumerator.addCustomOutput(moduleOrderEntry, result)) {
+            if (myRootType == OrderRootType.CLASSES && myOrderEnumerator.addCustomOutput(moduleOrderEntry, result)) {
               return true;
             }
             collectModuleRoots(myOrderEnumerator.getRootModel(module), result);
@@ -138,7 +138,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
           final Module module = moduleOrderEntry.getModule();
           if (module != null) {
-            if (myOrderEnumerator.addCustomOutputUrls(moduleOrderEntry, result)) {
+            if (myRootType == OrderRootType.CLASSES && myOrderEnumerator.addCustomOutputUrls(moduleOrderEntry, result)) {
               return true;
             }
             collectModuleRootsUrls(myOrderEnumerator.getRootModel(module), result);
