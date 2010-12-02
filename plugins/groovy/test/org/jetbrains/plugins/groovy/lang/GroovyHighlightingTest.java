@@ -284,5 +284,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
+  public void testSOEInFieldDeclarations() {doTest();}
+
   public void testRawAssignmentInClosureVariable() {doTest(new GroovyAssignabilityCheckInspection());}
 }
