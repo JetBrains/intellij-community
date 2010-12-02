@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module MavenProjectsManager.isMavenModule="true" relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/atlassian/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="tasks-api" />
+    <orderEntry type="module" module-name="tasks-core" />
+    <orderEntry type="library" name="http-client-3.1" level="project" />
+  </component>
+</module>
+

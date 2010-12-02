@@ -1,0 +1,3 @@
+JIRA 3.6.2: http://bugs.strategoxt.org
+JIRA 3.13.4: http://jira.atlassian.com
+http://code.coldspringframework.org/

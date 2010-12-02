@@ -1,0 +1,7 @@
+<idea-plugin version="2">
+  <extensions defaultExtensionNs="com.intellij.tasks">
+
+    <contextProvider implementation="com.intellij.tasks.context.java.BreakpointsContextProvider"/>
+  </extensions>
+
+</idea-plugin>
