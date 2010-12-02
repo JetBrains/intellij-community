@@ -41,7 +41,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   public PydevConsoleExecuteActionHandler(LanguageConsoleViewImpl consoleView,
                                           ProcessHandler myProcessHandler,
                                           ConsoleCommunication consoleCommunication) {
-    super(myProcessHandler);
+    super(myProcessHandler, false);
     myConsoleView = consoleView;
     myConsoleCommunication = consoleCommunication;
     myIndentHelper = HelperFactory.createHelper(PythonFileType.INSTANCE, consoleView.getConsole().getProject());
