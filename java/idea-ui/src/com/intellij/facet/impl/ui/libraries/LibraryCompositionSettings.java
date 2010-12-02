@@ -17,7 +17,6 @@ package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryDownloadDescription;
@@ -26,7 +25,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +39,7 @@ import java.util.Map;
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
   private final String myBaseDirectoryPath;
-  private LibrariesContainer.LibraryLevel myNewLibraryLevel = LibrariesContainer.LibraryLevel.PROJECT;
+  private LibrariesContainer.LibraryLevel myNewLibraryLevel;
   private NewLibraryEditor myNewLibraryEditor;
   private Library mySelectedLibrary;
   private boolean myDownloadLibraries;
@@ -51,6 +49,7 @@ public class LibraryCompositionSettings implements Disposable {
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
                                     final @NotNull String baseDirectoryFiles) {
     myLibraryDescription = libraryDescription;
+    myNewLibraryLevel = libraryDescription.getDefaultLevel();
     myBaseDirectoryPath = baseDirectoryFiles;
     final LibraryDownloadDescription downloadDescription = myLibraryDescription.getDownloadDescription();
     if (downloadDescription != null) {
