@@ -67,6 +67,9 @@ public class DFAEngine<E> {
     final long startTime = System.nanoTime();
 
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
+      // Check if canceled
+      ProgressManager.checkCanceled();
+
       // Check time limit only in EDT
       if (!ApplicationManager.getApplication().isUnitTestMode() && 
           ApplicationManager.getApplication().isDispatchThread() &&
