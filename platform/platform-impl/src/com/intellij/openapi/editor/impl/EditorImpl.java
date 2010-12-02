@@ -2628,20 +2628,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getLineHeight() {
-    if (myLineHeight != -1) return myLineHeight;
-
     assertReadAccess();
-
-    FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
-    myLineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
-    if (myLineHeight == 0) {
-      myLineHeight = fontMetrics.getHeight();
-      if (myLineHeight == 0) {
-        myLineHeight = 12;
+    int lineHeight = myLineHeight;
+    if (lineHeight == -1) {
+      FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
+      lineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
+      if (lineHeight == 0) {
+        lineHeight = fontMetrics.getHeight();
+        if (lineHeight == 0) {
+          lineHeight = 12;
+        }
       }
+      myLineHeight = lineHeight;
     }
-
-    return myLineHeight;
+    return lineHeight;
   }
 
   int getDescent() {
@@ -2743,7 +2743,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertReadAccess();
     assertIsDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -2921,10 +2920,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
+    assertReadAccess();
     if (softWrapAware) {
       return mySoftWrapModel.visualToLogicalPosition(visiblePos);
     }
-    assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
     int line = visiblePos.line;
@@ -3874,7 +3873,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditorComponent);
   }
   private static void assertReadAccess() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
   public void setVerticalScrollbarOrientation(int type) {
