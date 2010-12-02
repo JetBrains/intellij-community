@@ -102,11 +102,11 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
     final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       for (DebuggerSupport support : XDebuggerSupport.getDebuggerSupports()) {
-        if (getHandler(support).isHidden(project, event)) {
-          return true;
+        if (!getHandler(support).isHidden(project, event)) {
+          return false;
         }
       }
     }
-    return false;
+    return true;
   }
 }

@@ -111,6 +111,12 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }
 
+  @NotNull
+  @Override
+  public GroovyResolveResult advancedResolve() {
+    return resolveConstructorGenerics();
+  }
+
   @Nullable
   public PsiClass getDelegatedClass() {
     GrTypeDefinition typeDefinition = getEnclosingClass();

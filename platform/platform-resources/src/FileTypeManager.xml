@@ -178,7 +178,7 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp" description="C/C++ files" name="C++" icon="/fileTypes/custom.png">
+    <filetype binary="false" default_extension="cpp" extensions="c;cpp;h;hpp;cc" description="C/C++ files" name="C++" icon="/fileTypes/custom.png">
       <highlighting>
         <options>
           <option name="LINE_COMMENT" value="//"/>

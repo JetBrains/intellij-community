@@ -77,6 +77,8 @@ public class DefaultHighlighter {
   @NonNls
   static final String CLASS_REFERENCE_ID = "Class";
 
+  @NonNls
+  static final String MAP_KEY_ID = "Map key";
 
   @NonNls
   static final String UNRESOLVED_ACCESS_ID = "Unresolved reference access";
@@ -164,8 +166,15 @@ public class DefaultHighlighter {
     LITERAL_CONVERSION_ATTRIBUTES.setForegroundColor(Color.BLUE);
     LITERAL_CONVERSION_ATTRIBUTES.setFontType(Font.BOLD);
   }
+
+  public static final TextAttributes MAP_KEY_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+  static {
+    MAP_KEY_ATTRIBUTES.setForegroundColor(new Color(0, 128, 0));
+  }
   public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
   public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey.createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);
+
+  public static TextAttributesKey MAP_KEY = TextAttributesKey.createTextAttributesKey(MAP_KEY_ID, MAP_KEY_ATTRIBUTES);
 
   private DefaultHighlighter() {
   }

@@ -29,6 +29,11 @@ public class PauseActionHandler extends DebuggerActionHandler {
     (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession().pause();
   }
 
+  @Override
+  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+    return DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession() == null;
+  }
+
   public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
     return debuggerSession != null && !debuggerSession.getProcess().isPausePressed() &&

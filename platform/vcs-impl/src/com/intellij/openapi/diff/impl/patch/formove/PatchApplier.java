@@ -129,7 +129,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       if (ApplyPatchStatus.FAILURE.equals(result)) return result;
     }
-    result = ApplyPatchStatus.and(result, ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
+    result = ApplyPatchStatus.and(result, ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
       public ApplyPatchStatus compute() {
         final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {

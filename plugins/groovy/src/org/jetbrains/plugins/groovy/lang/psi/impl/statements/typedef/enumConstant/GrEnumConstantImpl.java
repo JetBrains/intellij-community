@@ -194,6 +194,12 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   }
 
   @NotNull
+  @Override
+  public GroovyResolveResult advancedResolve() {
+    return resolveConstructorGenerics();
+  }
+
+  @NotNull
   public String getCanonicalText() {
     return getText(); //todo
   }

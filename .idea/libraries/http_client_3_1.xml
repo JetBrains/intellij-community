@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="http-client-3.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/plugins/tasks/tasks-core/lib/commons-httpclient-3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/tasks/tasks-core/lib/commons-logging-1.1.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/plugins/tasks/tasks-core/lib/commons-httpclient-3.1-src.zip!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

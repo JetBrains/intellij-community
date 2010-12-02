@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/src/main/java"/>
+      <root url="jar://$PROJECT_DIR$/lib/src/microba-src.zip!/src/main/java" />
     </SOURCES>
   </library>
 </component>

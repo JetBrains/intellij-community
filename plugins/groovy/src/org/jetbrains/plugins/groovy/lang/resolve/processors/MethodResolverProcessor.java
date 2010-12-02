@@ -215,7 +215,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
       if (method != null) rType = method.getReturnType();
     }
-    else if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression)parent).getRValue())) {
+    else if (parent instanceof GrAssignmentExpression && myPlace.getParent().equals(((GrAssignmentExpression)parent).getRValue())) {
       rType = ((GrAssignmentExpression)parent).getLValue().getType();
     }
     else if (parent instanceof GrVariable) {

@@ -192,6 +192,8 @@ def layoutFull(String home, String targetDirectory) {
         fileset(dir: "$home/plugins/git4idea/lib", excludes: "**/trilead-ssh2-src.zip")
       }
 
+      layoutPlugin("github")
+
       layoutPlugin("svn4idea") {
         fileset(dir: "$home/plugins/svn4idea/lib", excludes: "**/svnkitsrc.zip")
       }
@@ -304,6 +306,17 @@ def layoutFull(String home, String targetDirectory) {
         }
       }
 
+      dir("tasks") {
+        dir("lib") {
+          jar("tasks-api.jar") { module("tasks-api") }
+          jar("tasks-core.jar") { module("tasks-core") }
+          jar("jira-connector.jar") { module("jira-connector") }
+          jar("tasks-java.jar") { moduleOptional("tasks-java") }
+          fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
+            include(name: "**/*.jar")
+          }
+        }
+      }
     }
   }
 

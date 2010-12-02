@@ -71,6 +71,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
       new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
       new AttributesDescriptor(DefaultHighlighter.CLASS_REFERENCE_ID, DefaultHighlighter.CLASS_REFERENCE),
+      new AttributesDescriptor(DefaultHighlighter.MAP_KEY_ID, DefaultHighlighter.MAP_KEY),
     };
 
   @NotNull
@@ -97,7 +98,11 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "  def <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
-           "  static def foo(int i) { return [i, i, <instfield>property</instfield>] }\n" +
+           "  static def foo(int i) {\n" +
+           "    <classref>Map</classref> map = [key:1, b:2]\n" +
+           "    print map.<mapkey>key</mapkey>\n" +
+           "    return [i, i, <instfield>property</instfield>]\n" +
+           "  }\n" +
            "  static def <statfield>panel</statfield> = new <classref>JPanel</classref>()\n" +
            "}\n" +
            "\n" +
@@ -122,7 +127,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
     map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
-
+    map.put("mapkey", DefaultHighlighter.MAP_KEY);
     return map;
   }
 }
