@@ -504,7 +504,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     public void setTransparrent(boolean transparrent) {
       if (transparrent) {
         WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
-        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 1f);
+        WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0.5f);
       } else {
         WindowManagerEx.getInstanceEx().setAlphaModeEnabled(getFrame(), true);
         WindowManagerEx.getInstanceEx().setAlphaModeRatio(getFrame(), 0f);

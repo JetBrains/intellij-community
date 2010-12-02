@@ -287,6 +287,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     return myTabs.isEmptyVisible();
   }
 
+  public JBTabs getTabs() {
+    return myTabs;
+  }
+
   private class MyQueryable implements Queryable {
 
     private final TabInfo myTab;
