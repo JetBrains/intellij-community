@@ -509,13 +509,16 @@ public class AndroidUtils {
     return depFacets;
   }
 
-  public static Set<AndroidFacet> getAllAndroidDependencies(Module module, boolean androidLibrariesOnly) {
-    Set<AndroidFacet> result = new HashSet<AndroidFacet>();
-    collectAllAndroidDependencies(module, androidLibrariesOnly, result);
+  public static List<AndroidFacet> getAllAndroidDependencies(Module module, boolean androidLibrariesOnly) {
+    List<AndroidFacet> result = new ArrayList<AndroidFacet>();
+    collectAllAndroidDependencies(module, androidLibrariesOnly, result, new HashSet<AndroidFacet>());
     return result;
   }
 
-  private static void collectAllAndroidDependencies(Module module, boolean androidLibrariesOnly, Set<AndroidFacet> result) {
+  private static void collectAllAndroidDependencies(Module module,
+                                                    boolean androidLibrariesOnly,
+                                                    List<AndroidFacet> result,
+                                                    Set<AndroidFacet> visited) {
     for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (orderEntry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -524,8 +527,9 @@ public class AndroidUtils {
           if (depModule != null) {
             AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
             if (depFacet != null && (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT)) {
-              if (result.add(depFacet)) {
-                collectAllAndroidDependencies(depModule, androidLibrariesOnly, result);
+              if (visited.add(depFacet)) {
+                collectAllAndroidDependencies(depModule, androidLibrariesOnly, result, visited);
+                result.add(0, depFacet);
               }
             }
           }

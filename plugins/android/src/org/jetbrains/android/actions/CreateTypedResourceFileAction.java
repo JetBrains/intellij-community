@@ -17,14 +17,6 @@
 package org.jetbrains.android.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionProgressIndicator;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -131,11 +123,11 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
             CaretModel caretModel = editor.getCaretModel();
             caretModel.moveToOffset(rootTag.getTextOffset() + 1);
             XmlTagInplaceRenamer.rename(editor, rootTag);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            /*ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 invokeCompletion(project, editor, file);
               }
-            });
+            });*/
           }
         }
       }
@@ -143,7 +135,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
     return new PsiElement[]{createdElement};
   }
 
-  private void invokeCompletion(Project project, final Editor editor, XmlFile file) {
+ /* private void invokeCompletion(Project project, final Editor editor, XmlFile file) {
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, file, 1);
     CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
     if (indicator != null) {
@@ -171,7 +163,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
       });
     }
   }
-
+*/
   @Override
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
