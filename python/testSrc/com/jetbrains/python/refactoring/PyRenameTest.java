@@ -49,6 +49,10 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     doTest("bar");
   }
 
+  public void testUpdateAll() {  // PY-986
+    doTest("bar");
+  }
+
   private void doTest(final String newName) {
     myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
     myFixture.renameElementAtCaret(newName);

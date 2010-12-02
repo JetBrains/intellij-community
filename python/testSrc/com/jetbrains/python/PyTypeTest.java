@@ -131,6 +131,29 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("ImportError", type.getName());
   }
 
+  public void testTypeAnno() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      PyClassType type = (PyClassType) doTest("def foo(x: str) -> list: expr = x");
+      assertEquals("str", type.getName());
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
+  public void testReturnTypeAnno() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      PyClassType type = (PyClassType) doTest("def foo(x) -> list: return x\n" +
+                                              "expr = foo(None)");
+      assertEquals("list", type.getName());
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
   private PyType doTest(final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
