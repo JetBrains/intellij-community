@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,9 +38,19 @@ public class ArtifactErrorPanel {
   private JButton myFixButton;
   private JLabel myErrorLabel;
   private List<ArtifactProblemQuickFix> myCurrentQuickFixes;
+  private String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
     myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+    new UiNotifyConnector(myMainPanel, new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        if (myErrorText != null) {
+          myErrorLabel.setText(myErrorText);
+          myErrorText = null;
+        }
+      }
+    });
     myFixButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (!myCurrentQuickFixes.isEmpty()) {
@@ -73,7 +85,13 @@ public class ArtifactErrorPanel {
 
   public void showError(@NotNull String message, @NotNull List<ArtifactProblemQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
-    myErrorLabel.setText("<html>" + message + "</html>");
+    final String errorText = "<html>" + message + "</html>";
+    if (myErrorLabel.isShowing()) {
+      myErrorLabel.setText(errorText);
+    }
+    else {
+      myErrorText = errorText;
+    }
     myMainPanel.setVisible(true);
     myCurrentQuickFixes = quickFixes;
     myFixButton.setVisible(!quickFixes.isEmpty());
@@ -83,6 +101,7 @@ public class ArtifactErrorPanel {
   }
 
   public void clearError() {
+    myErrorText = null;
     myMainPanel.setVisible(false);
     myErrorLabel.setVisible(false);
     myFixButton.setVisible(false);

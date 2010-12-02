@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -616,13 +617,30 @@ public class PsiUtil {
   }
 
   public static boolean isRawMethodCall(GrMethodCallExpression call) {
-    final GroovyResolveResult[] resolveResults = call.getCallVariants(null);
-    if (resolveResults.length == 0) return false;
-    final PsiElement element = resolveResults[0].getElement();
+    final GroovyResolveResult result = call.advancedResolve();
+    final PsiElement element = result.getElement();
+    if (element == null) return false;
     if (element instanceof PsiMethod) {
       PsiType returnType = getSmartReturnType((PsiMethod)element);
-      return isRawType(returnType, resolveResults[0].getSubstitutor());
+      final GrExpression expression = call.getInvokedExpression();
+      if (expression instanceof GrReferenceExpression && expression.getUserData(GrReferenceExpressionImpl.IS_RESOLVED_TO_GETTER) != null) {
+        if (returnType instanceof GrClosureType) {
+          final GrClosureSignature signature = ((GrClosureType)returnType).getSignature();
+          return isRawType(signature.getReturnType(), signature.getSubstitutor());
+        }
+      }
+      else {
+        return isRawType(returnType, result.getSubstitutor());
+      }
     }
+    if (element instanceof PsiVariable) {
+      final PsiType type = call.getInvokedExpression().getType();
+      if (type instanceof GrClosureType) {
+        final GrClosureSignature signature = ((GrClosureType)type).getSignature();
+        return isRawType(signature.getReturnType(), signature.getSubstitutor());
+      }
+    }
+
     return false;
   }
 

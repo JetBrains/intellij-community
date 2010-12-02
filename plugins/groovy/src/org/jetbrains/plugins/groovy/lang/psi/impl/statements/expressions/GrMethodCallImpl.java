@@ -75,6 +75,17 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return null;
   }
 
+  @NotNull
+  @Override
+  public GroovyResolveResult advancedResolve() {
+    final GrExpression methodExpr = getInvokedExpression();
+    if (methodExpr instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression) methodExpr).advancedResolve();
+    }
+
+    return GroovyResolveResult.EMPTY_RESULT;
+  }
+
   public PsiType getType() {
     return GroovyPsiManager.getInstance(getProject()).getType(this, METHOD_CALL_TYPES_CALCULATOR);
   }

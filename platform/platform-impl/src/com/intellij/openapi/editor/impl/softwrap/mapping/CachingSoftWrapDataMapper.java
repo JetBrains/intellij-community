@@ -58,7 +58,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   
   /** Caches information for the document visual line starts sorted in ascending order. */
   private final List<CacheEntry>               myCache                               = new ArrayList<CacheEntry>();
-  private final DelayedRemovalMap<FoldingData> myFoldData                            = new DelayedRemovalMap<FoldingData>();
   private final CacheEntry                     mySearchKey                           = new CacheEntry(0, null, null, null);
   private final List<CacheEntry>               myAffectedByUpdateCacheEntries        = new ArrayList<CacheEntry>();
   private final List<CacheEntry>               myNotAffectedByUpdateTailCacheEntries = new ArrayList<CacheEntry>();
@@ -78,8 +77,8 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myStorage = storage;
     myRepresentationHelper = representationHelper;
 
-    myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, myCache, myFoldData, representationHelper);
-    myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, myCache, myFoldData, representationHelper);
+    myOffsetToLogicalStrategy = new OffsetToLogicalCalculationStrategy(editor, storage, myCache, representationHelper);
+    myVisualToLogicalStrategy = new VisualToLogicalCalculationStrategy(editor, storage, myCache, representationHelper);
   }
 
   @NotNull
@@ -250,7 +249,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
   @Override
   public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int x, int visualLine) {
-    myFoldData.put(foldRegion.getStartOffset(), new FoldingData(foldRegion, x, myRepresentationHelper, myEditor));
+    CacheEntry cacheEntry = getCacheEntryForVisualLine(visualLine, false);
+    if (cacheEntry == null) {
+      return;
+    }
+    cacheEntry.store(new FoldingData(foldRegion, x, myRepresentationHelper, myEditor), foldRegion.getStartOffset());
   }
 
   @Override
@@ -358,7 +361,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
-    myFoldData.markForDeletion(event.getOldStartOffset(), event.getOldEndOffset());
     myBeforeChangeState.updateByDocumentOffsets(event.getOldStartOffset(), event.getOldEndOffset(), event.getOldLogicalLinesDiff());
     if (!myBeforeChangeState.cacheShouldBeUpdated) {
       if (DEBUG_SOFT_WRAP_PROCESSING) {
@@ -424,7 +426,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     }
 
     int exactOffsetsDiff = event.getExactOffsetsDiff();
-    myFoldData.deleteMarked();
     if (normal) {
       myAfterChangeState.updateByDocumentOffsets(event.getNewStartOffset(), event.getNewEndOffset(), event.getNewLogicalLinesDiff());
       myCache.addAll(myNotAffectedByUpdateTailCacheEntries);

@@ -32,6 +32,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 
 public class OrderEntryCellAppearanceUtils {
@@ -77,9 +78,13 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static CellAppearance forLibrary(Library library) {
+    return forLibrary(library, false);
+  }
+
+  public static CellAppearance forLibrary(Library library, final boolean hasInvalidRoots) {
     String name = library.getName();
     if (name != null) {
-      return SimpleTextCellAppearance.normal(name, Icons.LIBRARY_ICON);
+      return normalOrRedWaved(name, Icons.LIBRARY_ICON, hasInvalidRoots);
     }
     String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
@@ -94,6 +99,13 @@ public class OrderEntryCellAppearanceUtils {
     }
     int startIndex = Math.min(url.lastIndexOf('/') + 1, url.length() - 1);
     return SimpleTextCellAppearance.normal(url.substring(startIndex), Icons.LIBRARY_ICON);
+  }
+
+  public static CellAppearance normalOrRedWaved(String text, final Icon icon, boolean waved) {
+    if (waved) {
+      return new SimpleTextCellAppearance(text, icon, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null, Color.RED));
+    }
+    return SimpleTextCellAppearance.normal(text, icon);
   }
 
   public static Icon sourceFolderIcon(boolean testSource) {

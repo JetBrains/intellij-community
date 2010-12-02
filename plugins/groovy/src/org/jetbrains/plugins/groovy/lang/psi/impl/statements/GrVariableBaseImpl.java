@@ -55,6 +55,8 @@ import javax.swing.*;
 public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBaseElementImpl<T> implements GrVariable {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
 
+  private final ThreadLocal<Boolean> isInferringType = new ThreadLocal<Boolean>();
+
   public GrVariableBaseImpl(ASTNode node) {
     super(node);
   }
@@ -156,8 +158,10 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
       }
     }
 
-    if (initializer != null) {
+    if (initializer != null && isInferringType.get() == null) {
+      isInferringType.set(Boolean.TRUE);
       PsiType initializerType = initializer.getType(); // WARNING may give rise to SOE
+      isInferringType.set(null);
       if (initializerType != null) {
         if (declaredType != null && initializerType instanceof PsiClassType) {
           final PsiClass declaredClass = ((PsiClassType)declaredType).resolve();

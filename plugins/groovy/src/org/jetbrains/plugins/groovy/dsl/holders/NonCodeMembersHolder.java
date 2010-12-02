@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 
 import java.util.ArrayList;
@@ -57,7 +58,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     for (Map prop : data) {
       final PsiType type = convertToPsiType(String.valueOf(prop.get("type")), place);
       final String name = String.valueOf(prop.get("name"));
-      final LightMethodBuilder method = new LightMethodBuilder(manager, name).
+      final LightMethodBuilder method = new LightMethodBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, name).
         addModifier(PsiModifier.PUBLIC).
         setReturnType(type);
       final Object params = prop.get("params");

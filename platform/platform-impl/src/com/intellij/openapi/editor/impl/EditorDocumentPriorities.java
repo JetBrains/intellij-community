@@ -26,13 +26,13 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
  */
 public class EditorDocumentPriorities {
 
-  public static final int SOFT_WRAP_MODEL = 40;
-
   /**
    * Assuming that range marker listeners work only with document offsets and don't perform document dimension mappings like
    * {@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc.
    */
-  public static final int RANGE_MARKER = 60;
+  public static final int RANGE_MARKER = 40;
+
+  public static final int SOFT_WRAP_MODEL = 60;
   public static final int FOLD_MODEL = 80;
   public static final int LEXER_EDITOR = 100;
   public static final int CARET_MODEL = 120;

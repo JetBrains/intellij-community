@@ -129,6 +129,10 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return result;
   }
 
+  public TIntObjectHashMap<FoldingData> getFoldingData() {
+    return myFoldingData;
+  }
+  
   public void store(FoldRegion foldRegion, int startX) {
     store(new FoldingData(foldRegion, startX, myRepresentationHelper, myEditor), foldRegion.getStartOffset());
   }

@@ -63,12 +63,11 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     CUSTOM
   }
 
-  private final List<SoftWrapAwareDocumentParsingListener> myListeners = new ArrayList<SoftWrapAwareDocumentParsingListener>();
-  private final List<IncrementalCacheUpdateEvent> myCacheUpdateEvents = new ArrayList<IncrementalCacheUpdateEvent>();
-
-  private final ProcessingContext myContext              = new ProcessingContext();
-  private final FontTypesStorage  myOffset2fontType      = new FontTypesStorage();
-  private final WidthsStorage     myOffset2widthInPixels = new WidthsStorage();
+  private final List<SoftWrapAwareDocumentParsingListener> myListeners            = new ArrayList<SoftWrapAwareDocumentParsingListener>();
+  private final CacheUpdateEventsStorage                   myEventsStorage        = new CacheUpdateEventsStorage();
+  private final ProcessingContext                          myContext              = new ProcessingContext();
+  private final FontTypesStorage                           myOffset2fontType      = new FontTypesStorage();
+  private final WidthsStorage                              myOffset2widthInPixels = new WidthsStorage();
 
   private final SoftWrapsStorage               myStorage;
   private final EditorEx                       myEditor;
@@ -97,30 +96,27 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myWidthProvider = new DefaultVisibleAreaWidthProvider(editor);
   }
 
-  public void registerSoftWrapIfNecessary(@NotNull Rectangle clip, int startOffset) {
-    //TODO den    perform full soft wraps recalculation at background thread, calculate soft wraps only for the target
-    //TODO den    visible clip at EDT
+  public void registerSoftWrapIfNecessary() {
     recalculateIfNecessary();
   }
 
   public void release() {
-    myCacheUpdateEvents.clear();
-    myCacheUpdateEvents.add(new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+    myEventsStorage.release();
+    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument()));
     myLineWrapPositionStrategy = null;
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void recalculateSoftWraps() {
-    if (myVisibleAreaWidth <= 0 || myCacheUpdateEvents.isEmpty()) {
+    if (myVisibleAreaWidth <= 0 || myEventsStorage.getEvents().isEmpty()) {
       return;
     }
 
     myLastDocumentStamp = myEditor.getDocument().getModificationStamp();
     // There is a possible case that new dirty regions are encountered during processing, hence, we iterate on regions snapshot here.
-    List<IncrementalCacheUpdateEvent> events = new ArrayList<IncrementalCacheUpdateEvent>(myCacheUpdateEvents);
-    myCacheUpdateEvents.clear();
+    List<IncrementalCacheUpdateEvent> events = new ArrayList<IncrementalCacheUpdateEvent>(myEventsStorage.getEvents());
+    myEventsStorage.release();
     myInProgress = true;
-    //TODO den think about sorting and merging dirty ranges here.
     try {
       for (IncrementalCacheUpdateEvent event : events) {
         recalculateSoftWraps(event);
@@ -173,6 +169,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     start = myEditor.logicalPositionToOffset(logical);
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
+    myContext.tokenStartOffset = start;
     IterationState iterationState = new IterationState(myEditor, start, false);
     TextAttributes attributes = iterationState.getMergedAttributes();
     myContext.fontType = attributes.getFontType();
@@ -302,17 +299,18 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   private boolean processOutOfDateFoldRegion(FoldRegion foldRegion, IncrementalCacheUpdateEvent event) {
 
     Document document = myEditor.getDocument();
-    int line = document.getLineNumber(normalizedOffset(foldRegion.getStartOffset(), document));
-    int startLineOffset = document.getLineStartOffset(line);
-    IncrementalCacheUpdateEvent newEvent = new IncrementalCacheUpdateEvent(document, startLineOffset, myContext.rangeEndOffset);
+    
+    // Update to the bottom of the document because it looks that fold model is in inconsistent state now and there is a possible
+    // case that offsets of the trailing fold regions should be updated as well.
+    IncrementalCacheUpdateEvent newEvent = new IncrementalCacheUpdateEvent(document);
 
     // We assume here that fold model is processed after soft wrap (as it needs to perform document dimensions mapping).
     // So, there is a possible case that user performed modifications at particular fold region but fold model is not updated yet
     // and IterationState returns valid fold region. Hence, we introduce a dedicated check here.
-    if (event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() <= event.getOldExactEndOffset() 
-        && foldRegion.getEndOffset() > event.getOldExactStartOffset()) 
+    if ((event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
+        && foldRegion.getEndOffset() > event.getOldExactStartOffset()) || myContext.tokenStartOffset != foldRegion.getStartOffset()) 
     {
-      myCacheUpdateEvents.add(newEvent);
+      myEventsStorage.add(document, newEvent);
       return true;
     }
     
@@ -321,20 +319,20 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return false;
     }
     // There is a possible case that user just removed text that contained fold region and fold model is not updated yet
-    myCacheUpdateEvents.add(newEvent);
+    myEventsStorage.add(document, newEvent);
     return true;
   }
 
-  private static int normalizedOffset(int offset, Document document) {
-    int textLength = document.getTextLength();
-    if (offset > document.getTextLength()) {
-      offset = textLength - 1;
-    }
-    if (offset < 0) {
-      return 0;
-    }
-    return offset;
-  }
+  //private static int normalizedOffset(int offset, Document document) {
+  //  int textLength = document.getTextLength();
+  //  if (offset > document.getTextLength()) {
+  //    offset = textLength - 1;
+  //  }
+  //  if (offset < 0) {
+  //    return 0;
+  //  }
+  //  return offset;
+  //}
   
   /**
    * Encapsulates logic of processing target non-fold region token defined by the {@link #myContext current processing context}
@@ -616,8 +614,8 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     }
 
     // Drop information about processed lines then.
-    myCacheUpdateEvents.clear();
-    myCacheUpdateEvents.add(new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+    myEventsStorage.release();
+    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument()));
     myStorage.removeAll();
     myVisibleAreaWidth = currentVisibleAreaWidth;
     recalculateSoftWraps();
@@ -727,7 +725,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxxx On fold region state change. Exact offsets: %d-%d, recalculation offsets: %d-%d",
     //                                            region.getStartOffset(), region.getEndOffset(), startOffset, endOffset));
-    myCacheUpdateEvents.add(new IncrementalCacheUpdateEvent(document, startOffset, endOffset));
+    myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, startOffset, endOffset));
   }
 
   @Override
@@ -738,7 +736,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
-    myCacheUpdateEvents.add(new IncrementalCacheUpdateEvent(event));
+    myEventsStorage.add(event.getDocument(), new IncrementalCacheUpdateEvent(event));
   }
 
   @Override

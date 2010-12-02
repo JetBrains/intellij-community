@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -645,10 +646,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item.handleInsert(context1);
         PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
-        if (context1.shouldAddCompletionChar() &&
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-          TailType.insertChar(editor, context1.getTailOffset(), completionChar);
+
+        final int tailOffset = context1.getTailOffset();
+        if (tailOffset >= 0) {
+          if (context1.shouldAddCompletionChar() &&
+              completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
+              completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+            TailType.insertChar(editor, tailOffset, completionChar);
+          }
+        }
+        else {
+          LOG.error("tailOffset<0 after inserting " + item + " of " + item.getClass());
         }
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }

@@ -233,7 +233,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     final String qname = myContainingClass.getQualifiedName();
-    String location = StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
+    String location = !myCanImportStatic || StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);

@@ -44,8 +44,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -536,16 +538,47 @@ public class ResolveUtil {
     return false;
   }
 
-  public static boolean isInWithContext(GroovyPsiElement context) {
-    if (context instanceof GrExpression) {
-      final PsiElement parent = context.getParent();
-      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getQualifier() == context) {
+  public static boolean isInWithContext(GroovyResolveResult resolveResult) {
+    return isInWithContext(resolveResult.getCurrentFileResolveContext());
+  }
+
+  public static boolean isInWithContext(GroovyPsiElement resolveContext) {
+    if (resolveContext instanceof GrExpression) {
+      final PsiElement parent = resolveContext.getParent();
+      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getQualifier() == resolveContext) {
         final PsiElement pparent = parent.getParent();
         if (pparent instanceof GrMethodCall) {
           final PsiMethod method = ((GrMethodCall)pparent).resolveMethod();
           if (method instanceof GrGdkMethod && "with".equals(method.getName())) {
             return true;
           }
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean referenceIsKeyOfMap(GrReferenceExpression ref) {
+    final GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) {
+      return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    }
+
+    PsiElement place = ref;
+    while (true) {
+      final GrClosableBlock closure =
+        PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, GrMethod.class, GroovyFile.class, GrTypeDefinitionBody.class);
+      if (closure == null) break;
+      place = closure;
+      final PsiElement clParent = closure.getParent();
+      if (!(clParent instanceof GrMethodCall)) continue; //todo it may also be an argument list
+      final GrExpression expression = ((GrMethodCall)clParent).getInvokedExpression();
+      if (expression instanceof GrReferenceExpression &&
+          "with".equals(((GrReferenceExpression)expression).getReferenceName()) &&
+          ((GrReferenceExpression)expression).resolve() instanceof GrGdkMethod) {
+        final GrExpression withQualifier = ((GrReferenceExpression)expression).getQualifierExpression();
+        if (withQualifier != null) {
+          return InheritanceUtil.isInheritor(withQualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
         }
       }
     }

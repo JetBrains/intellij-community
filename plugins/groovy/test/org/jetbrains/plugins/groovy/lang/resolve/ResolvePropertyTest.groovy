@@ -608,4 +608,12 @@ set<caret>Foo(2)
   public void testCommandExpressions() {
     assertInstanceOf resolve("A.groovy"), GrField
   }
+
+  public void testMetaClassIsNotResolvedWithMapQualifier() {
+    assertNull resolve("A.groovy")
+  }
+
+  public void testMetaClassIsResolvesWithMapQualifier() {
+    assertInstanceOf resolve("A.groovy"), PsiMethod
+  }
 }

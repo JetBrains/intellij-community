@@ -19,6 +19,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
@@ -37,6 +38,7 @@ public class CompositePrintable implements Printable, Disposable {
   protected final List<Printable> myNestedPrintables = new ArrayList<Printable>();
   private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
+  private int myCurrentSize = 0;
 
   public void flush() {
     synchronized (myNestedPrintables) {
@@ -46,13 +48,11 @@ public class CompositePrintable implements Printable, Disposable {
   }
 
   public void printOn(final Printer printer) {
-    myWrapper.printOn(printer);
+    final ArrayList<Printable> printables;
     synchronized (myNestedPrintables) {
-      for (int i = 0; i < myNestedPrintables.size(); i++) {
-        if (i == getExceptionMark() && i > 0) printer.mark();
-        myNestedPrintables.get(i).printOn(printer);
-      }
+      printables = new ArrayList<Printable>(myNestedPrintables);
     }
+    myWrapper.printOn(printer, printables);
   }
 
   public void addLast(@NotNull final Printable printable) {
@@ -66,12 +66,15 @@ public class CompositePrintable implements Printable, Disposable {
 
   protected void clear() {
     synchronized (myNestedPrintables) {
+      myCurrentSize += myNestedPrintables.size();
       myNestedPrintables.clear();
     }
   }
 
   public int getCurrentSize() {
-    return myNestedPrintables.size();
+    synchronized (myNestedPrintables) {
+      return myCurrentSize + myNestedPrintables.size();
+    }
   }
 
   @Override
@@ -95,7 +98,7 @@ public class CompositePrintable implements Printable, Disposable {
     @NonNls private static final String HYPERLINK = "hyperlink";
 
     private ConsoleViewContentType myLastSelected;
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
     private File myFile;
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
@@ -134,25 +137,25 @@ public class CompositePrintable implements Printable, Disposable {
           }
           myPrinter.close();
         }
-      }, 10);
+      }, 10, ModalityState.NON_MODAL);
     }
 
-    public void printOn(final Printer console) {
+    public void printOn(final Printer console, final List<Printable> printables) {
       final File file = getFile();
       if (file == null) return;
       final MyFileContentPrinter printer = new MyFileContentPrinter();
       if (console instanceof MyFlushToFilePrinter) {
         //parent test need to load child file content to flush itself which is already done in alarm thread
         //output stream is closed sync in flush() so invoke later would result in unclosed stream
-        printer.printFileContent(console, file);
+        printer.printFileContent(console, file, printables);
       } else {
         //move out from AWT thread
         myAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
-            printer.printFileContent(console, file);
+            printer.printFileContent(console, file, printables);
           }
-        }, 10);
+        }, 10, ModalityState.NON_MODAL);
       }
     }
 
@@ -168,7 +171,7 @@ public class CompositePrintable implements Printable, Disposable {
             myFileWriter = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file, true)));
           }
           catch (FileNotFoundException e) {
-            LOG.error(e);
+            LOG.info(e);
             return null;
           }
         }
@@ -179,6 +182,9 @@ public class CompositePrintable implements Printable, Disposable {
         if (myFileWriter != null) {
           try {
             myFileWriter.close();
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
           }
           catch (IOException e) {
             LOG.error(e);
@@ -191,6 +197,9 @@ public class CompositePrintable implements Printable, Disposable {
       public void print(String text, ConsoleViewContentType contentType) {
         try {
           IOUtil.writeString(contentType.toString() + text, getFileWriter());
+        }
+        catch (FileNotFoundException e) {
+          LOG.info(e);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -207,6 +216,9 @@ public class CompositePrintable implements Printable, Disposable {
             IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
             IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
             IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
           }
           catch (IOException e) {
             LOG.error(e);
@@ -226,7 +238,7 @@ public class CompositePrintable implements Printable, Disposable {
 
     private class MyFileContentPrinter {
 
-      public void printFileContent(Printer printer, File file) {
+      public void printFileContent(Printer printer, File file, List<Printable> nestedPrintables) {
         DataInputStream reader = null;
         try {
           reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
@@ -254,6 +266,15 @@ public class CompositePrintable implements Printable, Disposable {
             }
             lineNum++;
           }
+
+          for (int i = 0; i < nestedPrintables.size(); i++) {
+            if (i == getExceptionMark() && i > 0) printer.mark();
+            nestedPrintables.get(i).printOn(printer);
+          }
+
+        }
+        catch (FileNotFoundException e) {
+          LOG.info(e);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -263,6 +284,9 @@ public class CompositePrintable implements Printable, Disposable {
             if (reader != null) {
               reader.close();
             }
+          }
+          catch (FileNotFoundException e) {
+            LOG.info(e);
           }
           catch (IOException e) {
             LOG.error(e);

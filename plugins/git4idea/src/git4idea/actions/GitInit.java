@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -50,9 +51,9 @@ public class GitInit extends DumbAwareAction {
    * {@inheritDoc}
    */
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
-      return;
+      project = ProjectManager.getInstance().getDefaultProject();
     }
     FileChooserDescriptor fcd = new FileChooserDescriptor(false, true, false, false, false, false);
     fcd.setShowFileSystemRoots(true);
@@ -82,16 +83,18 @@ public class GitInit extends DumbAwareAction {
       GitUIUtil.showOperationErrors(project, h.errors(), "git init");
       return;
     }
+    if (project.isDefault()) return;
     int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
                                       Messages.getQuestionIcon());
     if (rc != 0) {
       return;
     }
     final String path = root.equals(baseDir) ? "" : root.getPath();
-    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
+    final Project finalProject = project;
+    GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(finalProject, GitBundle.getString("common.refreshing")) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        refreshAndConfigureVcsMappings(project, root, path);
+        refreshAndConfigureVcsMappings(finalProject, root, path);
       }
     });
   }
@@ -128,7 +131,10 @@ public class GitInit extends DumbAwareAction {
    */
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     Presentation presentation = e.getPresentation();
     if (project == null) {
       presentation.setEnabled(false);

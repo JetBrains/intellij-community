@@ -49,4 +49,7 @@ public interface GrCall extends GroovyPsiElement {
 
   @Nullable
   PsiMethod resolveMethod();
+
+  @NotNull
+  GroovyResolveResult advancedResolve();
 }
