@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -167,7 +168,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @Nullable
   private PsiFileSystemItem doResolve(FileIncludeInfo info, PsiFile context) {
-    PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", info.path);
+    PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", StdFileTypes.PLAIN_TEXT, info.path);
     psiFile.setOriginalFile(context);
     return new FileReferenceSet(psiFile) {
       @Override
