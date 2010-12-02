@@ -17,7 +17,6 @@ package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +27,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -55,8 +53,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (Extensions.getExtensions(TestFramework.EXTENSION_NAME).length == 0) return false;
-
     if (!isAvailableForElement(element)) return false;
 
     PsiClass psiClass = getContainingClass(element);
@@ -73,6 +69,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   public static boolean isAvailableForElement(PsiElement element) {
+    if (Extensions.getExtensions(TestFramework.EXTENSION_NAME).length == 0) return false;
+
     if (element == null) return false;
     
     PsiClass psiClass = getContainingClass(element);
