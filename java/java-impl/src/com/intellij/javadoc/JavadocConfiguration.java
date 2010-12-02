@@ -44,9 +44,11 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.util.Function;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -277,9 +279,13 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
           }
           writer.println("-sourcepath");
           final PathsList pathsList = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutLibraries().getSourcePathsList();
-          for (String path : pathsList.getPathList()) {
-            writer.println(GeneralCommandLine.quote(FileUtil.toSystemIndependentName(path)));
-          }
+          final String sourcePath = StringUtil.join(pathsList.getPathList(), new Function<String, String>() {
+            @Override
+            public String fun(String path) {
+              return FileUtil.toSystemIndependentName(path);
+            }
+          }, File.pathSeparator);
+          writer.println(GeneralCommandLine.quote(sourcePath));
         }
         finally {
           writer.close();
