@@ -544,11 +544,11 @@ def layoutWin(String target) {
     dir("bin") {
       fileset(dir: "$home/bin") {
         include(name: "yjpagent.dll")
-        include(name: "runnerw.exe")
       }
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
         exclude(name: "idea.bat")
+        include(name: "runnerw.exe")
         
       }
       fileset(dir: "$home/python/build") {

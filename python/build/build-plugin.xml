@@ -159,8 +159,6 @@
       <fileset dir="${plugin.home}/helpers" includes="**/*.py"/>
     </copy>
 
-    <copy todir="${plugindir}" file="${plugin.home}/../bin/runnerw.exe"/>
-
     <zip basedir="${zipdir}" destfile="${output}/${zipname}"/>
   </target>
 
