@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertToIfIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new AssertStatementPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    @Override
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
-        assert assertStatement != null;
         final PsiExpression condition = assertStatement.getAssertCondition();
         final PsiExpression description =
                 assertStatement.getAssertDescription();
-
         final String negatedConditionString =
                 BoolUtils.getNegatedExpressionText(condition);
         @NonNls final String newStatement;
         if (description == null) {
             newStatement = "if(" + negatedConditionString +
-                    "){ throw new IllegalArgumentException();}";
+                    "){ throw new java.lang.AssertionError();}";
         } else {
             newStatement = "if(" + negatedConditionString +
-                    "){ throw new IllegalArgumentException(" +
+                    "){ throw new java.lang.AssertionError(" +
                     description.getText() + ");}";
         }
         replaceStatement(newStatement, assertStatement);
