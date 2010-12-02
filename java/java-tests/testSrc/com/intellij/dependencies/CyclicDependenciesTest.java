@@ -4,7 +4,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;

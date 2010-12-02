@@ -68,6 +68,7 @@ public class SharedPsiElementImplUtil {
         LOG.error(element);
       }
       for (TextRange range : ReferenceRange.getRanges(reference)) {
+        assert range != null : reference;
         if (range.containsOffset(offset)) {
           outReferences.add(reference);
         }

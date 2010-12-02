@@ -21,7 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
  * @author traff
  */
 public class RunnerMediatorManager {
-
   public static RunnerMediatorManager getInstance() {
     return ServiceManager.getService(RunnerMediatorManager.class);
   }

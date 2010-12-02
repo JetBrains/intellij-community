@@ -111,7 +111,7 @@ public class CodeCompletionPanel {
     }
     myCaseSensitiveCombo.setSelectedItem(value);
 
-    myFocusLookup.setSelectedIndex(Math.min(Math.max(codeInsightSettings.FOCUS_AUTOPOPUP - 1, 0), FOCUS_VARIANTS.length - 1));
+    myFocusLookup.setSelectedIndex(Math.min(Math.max(codeInsightSettings.AUTOPOPUP_FOCUS_POLICY - 1, 0), FOCUS_VARIANTS.length - 1));
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
@@ -140,7 +140,7 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
     codeInsightSettings.COMPLETION_CASE_SENSITIVE = getCaseSensitiveValue();
-    codeInsightSettings.FOCUS_AUTOPOPUP = getFocusLookupValue();
+    codeInsightSettings.AUTOPOPUP_FOCUS_POLICY = getFocusLookupValue();
 
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
@@ -168,7 +168,7 @@ public class CodeCompletionPanel {
     boolean isModified = false;
 
     isModified |= (getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE);
-    isModified |= (getFocusLookupValue() != codeInsightSettings.FOCUS_AUTOPOPUP);
+    isModified |= (getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY);
 
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
