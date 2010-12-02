@@ -1,6 +1,6 @@
 def foo={x, y->}
 
-print foo.call<warning descr="'call' in 'groovy.lang.Closure' cannot be applied to '(java.lang.Integer)'">(1)</warning>
+print foo.call<warning descr="'call' in 'groovy.lang.Closure<java.lang.Object>' cannot be applied to '(java.lang.Integer)'">(1)</warning>
 
 def bar={3}
 print bar.call()

@@ -43,7 +43,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
       final VirtualFile groovyJar =
-        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_7LibraryName()+"!/");
+        JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_8LibraryName()+"!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }
@@ -173,7 +173,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testThisInStaticContext() throws Throwable {doTest();}
   public void testLocalVariableInStaticContext() throws Exception {doTest();}
-  
 
   public void testModifiersInPackageAndImportStatements() throws Throwable {
     myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/"+getTestName(false)+".groovy");
@@ -194,7 +193,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testGstringAssignableToString() throws Exception{doTest();} 
+  public void testGstringAssignableToString() throws Exception {doTest();}
   public void testGstringAssignableToStringInClosureParameter() throws Exception{doTest();}
   public void testEverythingAssignableToString() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
@@ -235,7 +234,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testIndexPropertyAccess() throws Exception {doTest();}
 
   public void testPropertyAndFieldDeclaration() throws Exception {doTest();}
-  
+
   public void testGenericsMethodUsage() throws Exception {doTest();}
 
   public void testWildcardInExtendsList() throws Exception {doTest();}
@@ -282,4 +281,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testMapNotAcceptedAsStringParameter()  {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testBuiltInTypeInstantiation() {doTest();}
+
+  public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
+
+  public void testRawAssignmentInClosureVariable() {doTest(new GroovyAssignabilityCheckInspection());}
 }
