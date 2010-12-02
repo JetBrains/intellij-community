@@ -65,12 +65,13 @@ def loadModulesFromFolderUsingPattern(folder, pattern):
   ''' loads modules from folder ,
       check if module name matches given pattern'''
   modules = loadModulesFromFolderRec(folder)
-  result = []
-  prog = re.compile(pattern)
+  prog_list = [re.compile(pat.strip()) for pat in pattern.split(',')]
+  result = []  
 
   for module in modules:
-    if prog.match(module.__name__):
-      result.append(module)
+    for prog in prog_list:
+      if prog.match(module.__name__):
+        result.append(module)
   return result
 
 if __name__ == "__main__":

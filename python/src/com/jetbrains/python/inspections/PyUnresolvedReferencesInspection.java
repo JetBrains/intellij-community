@@ -123,6 +123,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void visitPyImportElement(PyImportElement node) {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
+      PsiFile file = node.getContainingFile();
+      String fileNameWithExt = file.getName();
+      String fileName = fileNameWithExt.substring(0, fileNameWithExt.length() - 3);
+      if (fromImport == null && fileName.equals(node.getText())) {
+        registerProblem(node, "Import resolves to its containing file.");
+      }
       if (fromImport == null || !fromImport.isFromFuture()) {
         myAllImports.add(node);
       }

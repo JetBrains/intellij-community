@@ -61,12 +61,13 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     if (parentFunction != null ) {
       PsiFile file = myElement.getContainingFile();
       function = (PyFunction)file.addBefore(function, parentFunction);
-    }
-    PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
-    if (statement != null) {
-      PsiElement parent = statement.getParent();
-      if (parent != null)
-        function = (PyFunction)parent.addBefore(function, statement);
+    } else {
+      PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
+      if (statement != null) {
+        PsiElement parent = statement.getParent();
+        if (parent != null)
+          function = (PyFunction)parent.addBefore(function, statement);
+      }
     }
     function = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
