@@ -37,8 +37,8 @@ public class PyByteLiteralInspection extends PyInspection {
         int length = value.length();
         for (int i = 0; i < length; ++i) {
           char c = value.charAt(i);
-          if (((int) c) > 127) {
-            registerProblem(node, "Byte literal contains characters > 127");
+          if (((int) c) > 255) {
+            registerProblem(node, "Byte literal contains characters > 255");
           }
         }
       }

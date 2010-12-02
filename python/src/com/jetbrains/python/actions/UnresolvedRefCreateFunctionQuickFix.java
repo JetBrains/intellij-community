@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -56,7 +57,11 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
       }
     }
     PyFunction function = functionBuilder.buildFunction(project);
-  
+    PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
+    if (parentFunction != null ) {
+      PsiFile file = myElement.getContainingFile();
+      function = (PyFunction)file.addBefore(function, parentFunction);
+    }
     PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
     if (statement != null) {
       PsiElement parent = statement.getParent();
