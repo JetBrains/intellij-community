@@ -63,7 +63,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
 
               for (VirtualFile depSourceRoot : srcRoots) {
                 if (depSourceRoot != genSrcRoot) {
-                  collectCompilableFiles(module, context, depSourceRoot, result);
+                  collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, result);
                 }
               }
             }
@@ -76,11 +76,12 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
   }
 
   private static void collectCompilableFiles(final Module module,
+                                             final Module depModule,
                                              final CompileContext context,
                                              @NotNull final VirtualFile sourceRoot,
                                              final Map<String, MyItem> relativePath2GenItem) {
 
-    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(depModule).getFileIndex();
 
     fileIndex.iterateContentUnderDirectory(sourceRoot, new ContentIterator() {
       @Override
