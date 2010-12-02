@@ -19,6 +19,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
@@ -128,7 +129,7 @@ public class CompositePrintable implements Printable, Disposable {
       if (printables.isEmpty()) return;
       final ArrayList<Printable> currentPrintables = new ArrayList<Printable>(printables);
       //move out from AWT thread
-      myAlarm.addRequest(new Runnable() {
+      final Runnable request = new Runnable() {
         @Override
         public void run() {
           for (final Printable printable : currentPrintables) {
@@ -136,14 +137,19 @@ public class CompositePrintable implements Printable, Disposable {
           }
           myPrinter.close();
         }
-      }, 0);
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        request.run();
+      } else {
+        myAlarm.addRequest(request, 0);
+      }
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
       final File file = getFile();
       if (file == null) return;
       final MyFileContentPrinter printer = new MyFileContentPrinter();
-      if (console instanceof MyFlushToFilePrinter) {
+      if (console instanceof MyFlushToFilePrinter || ApplicationManager.getApplication().isUnitTestMode()) {
         //parent test need to load child file content to flush itself which is already done in alarm thread
         //output stream is closed sync in flush() so invoke later would result in unclosed stream
         printer.printFileContent(console, file, printables);
