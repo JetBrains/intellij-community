@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -107,6 +108,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
           final Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
 
           if (project == null || project.isDisposed() || projectAndGoal == null) return;
+
+          FileDocumentManager.getInstance().saveAllDocuments();
 
           targetDone.down();
           new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
