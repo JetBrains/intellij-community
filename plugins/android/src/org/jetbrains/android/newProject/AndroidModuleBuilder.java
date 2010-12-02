@@ -108,7 +108,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
-                  createProject(contentRoot, sourceRoot, facet);
+                  createProject(project, contentRoot, sourceRoot, facet);
                 }
               });
             }
@@ -118,11 +118,17 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     }
   }
 
-  private void createProject(VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
+  private void createProject(Project project, VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
     if (myProjectType == ProjectType.APPLICATION) {
       createDirectoryStructure(contentRoot, sourceRoot, facet);
     }
     else {
+      // todo: after X release
+      /*if (myProjectType == ProjectType.LIBRARY) {
+        ExcludedEntriesConfiguration configuration =
+          ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+        configuration.addExcludeEntryDescription(new ExcludeEntryDescription(contentRoot, true, false, project));
+      }*/
       createProjectByAndroidTool(contentRoot, sourceRoot, facet);
     }
   }

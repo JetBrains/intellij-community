@@ -1554,4 +1554,19 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
       }
     });
   }
+
+  public EditorsSplitters getSplittersFor(Component c) {
+    EditorsSplitters splitters = null;
+    DockContainer dockContainer = DockManager.getInstance(getProject()).getContainerFor(c);
+    if (dockContainer instanceof DockableEditorTabbedContainer) {
+      splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
+    }
+
+    if (splitters == null) {
+      splitters = getMainSplitters();
+    }
+
+    return splitters;
+  }
+
 }

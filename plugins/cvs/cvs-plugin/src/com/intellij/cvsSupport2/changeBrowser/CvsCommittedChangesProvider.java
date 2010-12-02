@@ -137,6 +137,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     // todo implement in proper way
     final FilePathImpl filePath = new FilePathImpl(file);
     CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) getLocationFor(filePath);
+    if (cvsLocation == null) return null;
     final String module = cvsLocation.getModuleName();
     final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
     if (connectionSettings.isOffline()) {

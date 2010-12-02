@@ -2351,8 +2351,8 @@ public class CompileDriver {
     if (!affectedOutputPaths.isEmpty()) {
       final StringBuilder paths = new StringBuilder();
       for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
-        if (paths.length() < 0) {
-          paths.append("\n");
+        if (paths.length() > 0) {
+          paths.append(",\n");
         }
         paths.append(affectedOutputPath.getPath().replace('/', File.separatorChar));
       }

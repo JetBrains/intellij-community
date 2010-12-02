@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -34,6 +35,9 @@ public class HgInit extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     myProject = e.getData(PlatformDataKeys.PROJECT);
+    if (myProject == null) {
+      myProject = ProjectManager.getInstance().getDefaultProject();
+    }
 
     // provide window to select the root directory
     final HgInitDialog hgInitDialog = new HgInitDialog(myProject);
@@ -71,7 +75,7 @@ public class HgInit extends DumbAwareAction {
     }
 
     // update vcs directory mappings if new repository was created inside the current project directory
-    if (myProject != null && myProject.getBaseDir() != null && VfsUtil.isAncestor(myProject.getBaseDir(), mapRoot, false)) {
+    if (myProject != null && (! myProject.isDefault()) && myProject.getBaseDir() != null && VfsUtil.isAncestor(myProject.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -101,7 +105,10 @@ public class HgInit extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
@@ -113,7 +120,7 @@ public class HgInit extends DumbAwareAction {
                                               HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.title" : "hg4idea.init.error.title"),
                                               HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.description" : "hg4idea.init.error.description", 
                                                                     selectedRoot.getPresentableUrl()),
-                                              succeeded ? NotificationType.INFORMATION : NotificationType.ERROR), myProject);
+                                              succeeded ? NotificationType.INFORMATION : NotificationType.ERROR), myProject.isDefault() ? null : myProject);
     return succeeded;
   }
   

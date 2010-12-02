@@ -465,7 +465,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
                                    "; old file text=" + oldText);
         }
 
-        throw new AssertionError("commitDocument left PSI inconsistent");
+        throw new AssertionError("commitDocument left PSI inconsistent: " + file);
       }
     }
     finally {

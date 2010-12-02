@@ -439,6 +439,10 @@ public class NavBarModel {
     return myModel.get(index);
   }
 
+  public int indexOf(Object value) {
+    return myModel.indexOf(value);
+  }
+
   public void setSelectedIndex(final int selectedIndex) {
     if (mySelectedIndex != selectedIndex) {
       mySelectedIndex = selectedIndex;

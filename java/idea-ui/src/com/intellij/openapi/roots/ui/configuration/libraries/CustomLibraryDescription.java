@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,4 +38,9 @@ public abstract class CustomLibraryDescription {
 
   @Nullable
   public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory);
+
+  @NotNull
+  public LibrariesContainer.LibraryLevel getDefaultLevel() {
+    return LibrariesContainer.LibraryLevel.PROJECT;
+  }
 }

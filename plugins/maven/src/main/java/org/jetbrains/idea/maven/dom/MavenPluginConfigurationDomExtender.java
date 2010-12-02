@@ -109,7 +109,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     for (XmlTag each : config.getSubTags()) {
       if (!name.equals(each.getName())) continue;
       data.defaultValue = each.getAttributeValue("default-value");
-      data.expression = each.getValue().getText();
+      data.expression = each.getValue().getTrimmedText();
     }
   }
 

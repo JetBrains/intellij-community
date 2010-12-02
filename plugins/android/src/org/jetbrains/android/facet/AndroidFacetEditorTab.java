@@ -16,9 +16,13 @@
 package org.jetbrains.android.facet;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -62,10 +66,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -468,6 +469,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration.ADD_ANDROID_LIBRARY = myAddAndroidLibrary.isSelected();
 
     if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
+      // todo: after X release
+      /*if (myIsLibraryProjectCheckbox.isSelected()) {
+        excludeAllContentRootsFromCompilation(myContext.getModule());
+      }
+      else {
+        includeAllContentRootsToCompilation(myContext.getModule());
+      }*/
       runApt = true;
     }
 
@@ -544,6 +552,33 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
         }
       });
+    }
+  }
+
+  private static void excludeAllContentRootsFromCompilation(@NotNull Module module) {
+    Project project = module.getProject();
+    ExcludedEntriesConfiguration configuration =
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      configuration.addExcludeEntryDescription(new ExcludeEntryDescription(contentRoot, true, false, project));
+    }
+  }
+
+  private static void includeAllContentRootsToCompilation(@NotNull Module module) {
+    Project project = module.getProject();
+
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    Set<VirtualFile> contentRootSet = new HashSet<VirtualFile>(Arrays.asList(contentRoots));
+
+    ExcludedEntriesConfiguration configuration =
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
+    ExcludeEntryDescription[] descriptions = configuration.getExcludeEntryDescriptions();
+    configuration.removeAllExcludeEntryDescriptions();
+    for (ExcludeEntryDescription description : descriptions) {
+      VirtualFile file = description.getVirtualFile();
+      if (file != null && !contentRootSet.contains(file)) {
+        configuration.addExcludeEntryDescription(description);
+      }
     }
   }
 

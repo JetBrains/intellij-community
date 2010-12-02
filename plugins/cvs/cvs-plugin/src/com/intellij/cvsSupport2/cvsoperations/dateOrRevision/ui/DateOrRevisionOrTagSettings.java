@@ -127,7 +127,9 @@ public class DateOrRevisionOrTagSettings {
   }
 
   private String getDateString() {
-    return CVS_FORMAT.format(myDatePicker.getDate());
+    final Date date = myDatePicker.getDate();
+    if (date == null) return EMPTY_DATE;
+    return CVS_FORMAT.format(date);
   }
 
   private void refreshEnabling() {

@@ -16,9 +16,8 @@
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +100,9 @@ public class ControlFlowUtil {
 
   public static int findInstructionNumberByElement(final Instruction[] flow, final PsiElement element){
     for (int i=0;i<flow.length;i++) {
+      // Check if canceled
+      ProgressManager.checkCanceled();
+
       if (element == flow[i].getElement()){
         return i;
       }
@@ -119,6 +121,9 @@ public class ControlFlowUtil {
     stack.push(start);
 
     while (!stack.isEmpty()) {
+      // Check if canceled
+      ProgressManager.checkCanceled();
+
       final int num = stack.pop();
       if (num == length - 1){
         continue;
@@ -147,6 +152,9 @@ public class ControlFlowUtil {
 
     stack.push(startInstruction);
     while (!stack.isEmpty()) {
+      // Check if canceled
+      ProgressManager.checkCanceled();
+
       final int num = stack.pop();
       if (visited[num]){
         continue;

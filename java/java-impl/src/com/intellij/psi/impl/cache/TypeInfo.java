@@ -158,7 +158,7 @@ public class TypeInfo {
           return NULL;  // constructor
         }
         else if (element.getTokenType() == JavaElementType.FIELD) {
-          final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, element.getParent(), JavaElementType.FIELD);
+          final List<LighterASTNode> fields = LightTreeUtil.getChildrenOfType(tree, tree.getParent(element), JavaElementType.FIELD);
           final int idx = fields.indexOf(element);
           for (int i = idx - 1; i >= 0 && typeElement == null; i--) {  // int i, j
             typeElement = LightTreeUtil.firstChildOfType(tree, fields.get(i), JavaElementType.TYPE);
@@ -297,7 +297,7 @@ public class TypeInfo {
     String text = typeInfo.text.getString();
     StringBuilder buf = new StringBuilder(text.length());
     for (PsiAnnotationStub stub : typeInfo.myAnnotationStubs) {
-      buf.append(stub.getText()+" ");
+      buf.append(stub.getText()).append(" ");
     }
     buf.append(text);
     final int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;

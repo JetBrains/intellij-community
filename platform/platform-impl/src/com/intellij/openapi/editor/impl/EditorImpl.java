@@ -1456,7 +1456,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     borderEffect.paintHighlighters(docMarkup.getAllHighlighters());
     borderEffect.paintHighlighters(getMarkupModel().getAllHighlighters());
     paintCaretCursor(g);
-
+    
     paintComposedTextDecoration((Graphics2D)g);
   }
 
@@ -1672,9 +1672,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
+    myLastBackgroundPosition = null;
+    myLastBackgroundColor = null;
+    
     boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     int start = logicalPositionToOffset(logicalPosition);
-    getSoftWrapModel().registerSoftWrapsIfNecessary(clip, start);
+    getSoftWrapModel().registerSoftWrapsIfNecessary();
 
     // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
     // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
@@ -1682,8 +1685,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     TIntHashSet softWrapsToSkip = new TIntHashSet();
     SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
     if (softWrap != null) {
-      position.x = softWrap.getIndentInPixels();
       softWrapsToSkip.add(softWrap.getStart());
+      if (position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
+        // There is a possible case that target clip points to soft wrap-introduced visual line and that it's an active
+        // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
+        // virtual space then.
+        Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+        drawBackground(g, caretRowColor, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+      }
+      position.x = softWrap.getIndentInPixels();
     }
 
     IterationState iterationState = new IterationState(this, start, paintSelection());
@@ -1693,9 +1703,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (lIterator.atEnd()) {
       return;
     }
-
-    myLastBackgroundPosition = null;
-    myLastBackgroundColor = null;
 
     TextAttributes attributes = iterationState.getMergedAttributes();
     Color backColor = getBackgroundColor(attributes);
@@ -1842,7 +1849,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
-                                          int fontType, Color defaultBackground, Rectangle clip, TIntHashSet processSoftWrap,
+                                          int fontType, Color defaultBackground, Rectangle clip, TIntHashSet softWrapsToSkip,
                                           boolean[] caretRowPainted)
   {
     int startToUse = start;
@@ -1856,7 +1863,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     List<? extends SoftWrap> softWraps = getSoftWrapModel().getSoftWrapsForRange(start, softWrapRetrievalEndOffset);
     for (SoftWrap softWrap : softWraps) {
       int softWrapStart = softWrap.getStart();
-      if (processSoftWrap.contains(softWrapStart)) {
+      if (softWrapsToSkip.contains(softWrapStart)) {
         continue;
       }
       if (startToUse < softWrapStart) {
@@ -2628,20 +2635,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getLineHeight() {
-    if (myLineHeight != -1) return myLineHeight;
-
     assertReadAccess();
-
-    FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
-    myLineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
-    if (myLineHeight == 0) {
-      myLineHeight = fontMetrics.getHeight();
-      if (myLineHeight == 0) {
-        myLineHeight = 12;
+    int lineHeight = myLineHeight;
+    if (lineHeight == -1) {
+      FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
+      lineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
+      if (lineHeight == 0) {
+        lineHeight = fontMetrics.getHeight();
+        if (lineHeight == 0) {
+          lineHeight = 12;
+        }
       }
+      myLineHeight = lineHeight;
     }
-
-    return myLineHeight;
+    return lineHeight;
   }
 
   int getDescent() {
@@ -2743,7 +2750,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertReadAccess();
     assertIsDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -2921,10 +2927,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware) {
+    assertReadAccess();
     if (softWrapAware) {
       return mySoftWrapModel.visualToLogicalPosition(visiblePos);
     }
-    assertReadAccess();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
     int line = visiblePos.line;
@@ -3874,7 +3880,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(myEditorComponent);
   }
   private static void assertReadAccess() {
-    ApplicationManagerEx.getApplicationEx().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
   public void setVerticalScrollbarOrientation(int type) {

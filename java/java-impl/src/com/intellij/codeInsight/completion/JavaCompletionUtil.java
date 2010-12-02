@@ -766,10 +766,23 @@ public class JavaCompletionUtil {
   public static LookupItem qualify(final LookupItem ret) {
     if (!(ret instanceof JavaMethodCallElement)) {
       final PsiMember completionElement = (PsiMember)ret.getObject();
-      final PsiClass containingClass = completionElement.getContainingClass();
-      if (containingClass != null) {
+      String prefix = "";
+      PsiClass containingClass = completionElement.getContainingClass();
+      while (containingClass != null) {
         final String className = containingClass.getName();
-        ret.setLookupString(className + "." + ret.getLookupString());
+        if (className == null) {
+          break;
+        }
+
+        prefix = className + "." + prefix;
+        final PsiElement parent = containingClass.getParent();
+        if (!(parent instanceof PsiClass)) {
+          break;
+        }
+        containingClass = (PsiClass)parent;
+      }
+      if (StringUtil.isNotEmpty(prefix)) {
+        ret.setLookupString(prefix + ret.getLookupString());
       }
     }
     return ret.forceQualify();

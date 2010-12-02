@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -53,8 +54,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
 
-  public XDebuggerEvaluationDialog(@NotNull XDebugSession session, final @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XDebuggerEvaluator evaluator,
-                          @NotNull String text, EvaluationDialogMode mode, final XSourcePosition sourcePosition) {
+  public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
+                                   final @NotNull XDebuggerEditorsProvider editorsProvider,
+                                   @NotNull XDebuggerEvaluator evaluator,
+                                   @NotNull String text,
+                                   final XSourcePosition sourcePosition) {
     super(session.getProject(), true);
     mySession = session;
     myEditorsProvider = editorsProvider;
@@ -83,6 +87,15 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
 
+    EvaluationDialogMode mode = EvaluationDialogMode.EXPRESSION;
+    if (text.indexOf('\n') != -1) {
+      if (myEvaluator.isCodeFragmentEvaluationSupported()) {
+        mode = EvaluationDialogMode.CODE_FRAGMENT;
+      }
+      else {
+        text = StringUtil.replace(text, "\n", " ");
+      }
+    }
     switchToMode(mode, text);
     init();
   }
@@ -93,7 +106,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   protected Action[] createActions() {
-    return new Action[] {getOKAction(), mySwitchModeAction, getCancelAction()};
+    if (myEvaluator.isCodeFragmentEvaluationSupported()) {
+      return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
+    }
+    return super.createActions();
   }
 
   @Override

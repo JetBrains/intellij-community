@@ -113,7 +113,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final PluginId pluginId = descriptor.getPluginId();
       myDependentToRequiredListMap.remove(pluginId);
       final Boolean enabled = myEnabled.get(pluginId);
-      if (enabled != null && enabled.booleanValue()) {
+      if (enabled == null || enabled.booleanValue()) {
         PluginManager.checkDependants(descriptor, new Function<PluginId, IdeaPluginDescriptor>() {
           @Nullable
           public IdeaPluginDescriptor fun(final PluginId pluginId) {
@@ -215,8 +215,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     public Boolean valueOf(IdeaPluginDescriptorImpl ideaPluginDescriptor) {
-      final Boolean enabled = myEnabled.get(ideaPluginDescriptor.getPluginId());
-      return enabled != null && enabled.booleanValue();
+      return myEnabled.get(ideaPluginDescriptor.getPluginId());
     }
 
     public boolean isCellEditable(final IdeaPluginDescriptorImpl ideaPluginDescriptor) {
@@ -232,11 +231,22 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
 
     public TableCellRenderer getRenderer(final IdeaPluginDescriptorImpl ideaPluginDescriptor) {
-      return new BooleanTableCellRenderer();
+      return new BooleanTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+                                                       Object value,
+                                                       boolean isSelected,
+                                                       boolean hasFocus,
+                                                       int row,
+                                                       int column) {
+          return super.getTableCellRendererComponent(table, value == null ? Boolean.TRUE : value, isSelected, hasFocus, row, column);
+        }
+      };
     }
 
-    public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, final Boolean value) {
-      myEnabled.put(ideaPluginDescriptor.getPluginId(), value);
+    public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, Boolean value) {
+      final PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
+      myEnabled.put(currentPluginId, myEnabled.get(currentPluginId) == null ? Boolean.FALSE : value);
       updatePluginDependencies();
       if (value.booleanValue()) {
         final Set<PluginId> deps = new HashSet<PluginId>();
@@ -366,7 +376,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         if (required != null && required.size() > 0) {
           cellRenderer.setForeground(Color.RED);
 
-          final StringBuilder s = new StringBuilder("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
+          final StringBuilder s = new StringBuilder();
+          if (myEnabled.get(pluginId) == null) {
+            s.append("Plugin was not loaded.\n");
+          }
+          s.append("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
           s.append(StringUtil.join(required, new Function<PluginId, String>() {
             @Override
             public String fun(final PluginId id) {

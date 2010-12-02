@@ -1,7 +1,7 @@
 public class X {
   void f(Object foo) {
-     if(foo==null){
-        throw new IllegalArgumentException("Argument is null");
+     if (foo==null) {
+        throw new AssertionError("Argument is null");
      }
   }
 }

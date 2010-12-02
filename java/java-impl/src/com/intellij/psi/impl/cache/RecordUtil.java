@@ -167,8 +167,8 @@ public class RecordUtil {
   }
 
   private static boolean hasModifierProperty(final LighterAST tree, final LighterASTNode modList, final IElementType type, final StubElement parent) {
-    final LighterASTNode modListOwner = modList.getParent();
-    if (modListOwner.getTokenType() == parent.getStubType()) {
+    final LighterASTNode modListOwner = tree.getParent(modList);
+    if (modListOwner != null && modListOwner.getTokenType() == parent.getStubType()) {
       final StubElement grandParent = parent.getParentStub();
       if (parent instanceof PsiClassStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {

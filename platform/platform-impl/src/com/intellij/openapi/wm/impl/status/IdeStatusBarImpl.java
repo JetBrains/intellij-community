@@ -35,6 +35,8 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -247,10 +249,15 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void dispose() {
-    final Iterator<WidgetBean> iterator = myWidgetMap.values().iterator();
-    //noinspection WhileLoopReplaceableByForEach
-    while (iterator.hasNext()) {
-      Disposer.dispose(iterator.next().widget);
+    final List<StatusBarWidget> widgets = ContainerUtil.map(myWidgetMap.values(),
+                                                            new Function<WidgetBean, StatusBarWidget>() {
+                                                              @Override
+                                                              public StatusBarWidget fun(final WidgetBean bean) {
+                                                                return bean.widget;
+                                                              }
+                                                            });
+    for (final StatusBarWidget widget : widgets) {
+      Disposer.dispose(widget);
     }
 
     myWidgetMap.clear();
