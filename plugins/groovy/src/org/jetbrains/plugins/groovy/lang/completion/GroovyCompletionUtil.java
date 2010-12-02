@@ -45,6 +45,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -274,7 +275,7 @@ public class GroovyCompletionUtil {
   private static PsiMethod generateMethodInCategory(GroovyResolveResult result) {
     final PsiElement element = result.getElement();
     assert element instanceof PsiMethod;
-    final LightMethodBuilder builder = new LightMethodBuilder(element.getManager(), ((PsiMethod)element).getName());
+    final LightMethodBuilder builder = new LightMethodBuilder(element.getManager(), GroovyFileType.GROOVY_LANGUAGE, ((PsiMethod)element).getName());
     final PsiParameter[] params = ((PsiMethod)element).getParameterList().getParameters();
     for (int i = 1; i < params.length; i++) {
       builder.addParameter(params[i]);

@@ -16,8 +16,11 @@
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,11 +45,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
- * @author ilyas
+ * @author ilyas, peter
  */
 public class AntTasksProvider {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gant.AntTasksProvider");
   public static final boolean antAvailable;
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Key<CachedValue<Map<String, Class>>> ANT_OBJECTS = Key.create("antObjects");
@@ -112,16 +117,44 @@ public class AntTasksProvider {
             urls.add(VfsUtil.convertToURL(PathUtil.getLocalFile(jar).getUrl()));
           }
           final ClassLoader loader = new UrlClassLoader(urls, null, false, false, true);
-          final ReflectedProject antProject = ReflectedProject.getProject(loader);
+          Future<ReflectedProject> future =  ApplicationManager.getApplication().executeOnPooledThread(new Callable<ReflectedProject>() {
+            @Override
+            public ReflectedProject call() throws Exception {
+              try {
+                return ReflectedProject.getProject(loader);
+              }
+              catch (Exception e) {
+                LOG.error(e);
+                return null;
+              }
+            }
+          });
+
+          ReflectedProject antProject = null;
+          while (true) {
+            try {
+              antProject = future.get(100, TimeUnit.MILLISECONDS);
+              break;
+            }
+            catch (TimeoutException ignore) {
+            }
+            catch (Exception e) {
+              LOG.error(e);
+              break;
+            }
+            ProgressManager.checkCanceled();
+          }
 
           final Map<String, Class> result = new HashMap<String, Class>();
-          final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
-          if (taskDefinitions != null) {
-            result.putAll(taskDefinitions);
-          }
-          final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
-          if (dataTypeDefinitions != null) {
-            result.putAll(dataTypeDefinitions);
+          if (antProject != null) {
+            final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+            if (taskDefinitions != null) {
+              result.putAll(taskDefinitions);
+            }
+            final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+            if (dataTypeDefinitions != null) {
+              result.putAll(dataTypeDefinitions);
+            }
           }
           return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
         }

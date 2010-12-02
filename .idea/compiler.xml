@@ -26,7 +26,7 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="JavacSettings">
-    <option name="MAXIMUM_HEAP_SIZE" value="200" />
+    <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>
 

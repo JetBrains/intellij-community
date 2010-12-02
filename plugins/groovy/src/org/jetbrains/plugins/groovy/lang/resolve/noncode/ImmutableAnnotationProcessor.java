@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.inspections.GroovyImmutableAnnotationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -43,13 +44,13 @@ public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
     PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null || modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) == null) return;
 
-    final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass);
+    final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
     for (PsiField field : psiClass.getFields()) {
       fieldsConstructor.addParameter(field.getName(), field.getType());
     }
     if (!processor.execute(fieldsConstructor, ResolveState.initial())) return;
 
-    final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass);
+    final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
     processor.execute(defaultConstructor, ResolveState.initial());
   }
 }

@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process;
-
-import com.intellij.openapi.components.ServiceManager;
+package com.intellij.tasks;
 
 /**
- * @author traff
+ * @author Dmitry Avdeev
  */
-public class RunnerMediatorManager {
-  public static RunnerMediatorManager getInstance() {
-    return ServiceManager.getService(RunnerMediatorManager.class);
-  }
+public enum TaskState {
 
-  public String getRunnerPath() {
-    return "runnerw.exe";
-  }
+  SUBMITTED,
+  OPEN,
+  IN_PROGRESS,
+  REOPENED,
+  RESOLVED,
+
+  OTHER
+
 }

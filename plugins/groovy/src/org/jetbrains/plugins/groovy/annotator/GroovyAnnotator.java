@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -171,7 +172,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
     for (GroovyResolveResult result : results) {
@@ -204,6 +205,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else {
       GrExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null && isDeclarationAssignment(referenceExpression)) return;
+
+      // If it is reference to map.key we shouldn't highlight key unresolved
+      if (!(parent instanceof GrCall) && ResolveUtil.referenceIsKeyOfMap(referenceExpression)) {
+        PsiElement refNameElement = referenceExpression.getReferenceNameElement();
+        PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
+        Annotation annotation = myHolder.createInfoAnnotation(elt, null);
+        annotation.setTextAttributes(DefaultHighlighter.MAP_KEY);
+        return;
+      }
+
 
       if (parent instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)parent).getReferenceName())) {
         checkSingleResolvedElement(myHolder, referenceExpression, resolveResult, false);
@@ -748,6 +759,18 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     checkDuplicateMethod(methods.toArray(new GrMethod[methods.size()]), myHolder);
+  }
+
+  @Override
+  public void visitAnnotation(GrAnnotation annotation) {
+    super.visitAnnotation(annotation);
+    final GrCodeReferenceElement ref = annotation.getClassReference();
+    final PsiElement resolved = ref.resolve();
+
+    assert resolved == null || resolved instanceof PsiClass;
+    if (resolved != null && !((PsiClass)resolved).isAnnotationType()) {
+      myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", ((PsiClass)resolved).getQualifiedName()));
+    }
   }
 
   @Override
