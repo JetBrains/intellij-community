@@ -561,7 +561,7 @@ def layoutWin(String target) {
 }
 
 def layoutUnix(String target) {
-  ant.copy(file: "$home/pycharm/build/pycharm.sh", todir: "$target/bin")
+  ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
   ant.replace(file: "$target/bin/pycharm.sh") {
     replacefilter(token: "@@isEap@@", value: isEap())
   }
