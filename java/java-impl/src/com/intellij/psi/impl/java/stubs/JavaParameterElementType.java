@@ -91,7 +91,8 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
 
   @Override
   public boolean shouldCreateStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
-    return node.getParent().getTokenType() == JavaElementType.PARAMETER_LIST;
+    final LighterASTNode parent = tree.getParent(node);
+    return parent != null && parent.getTokenType() == JavaElementType.PARAMETER_LIST;
   }
 
   public void indexStub(final PsiParameterStub stub, final IndexSink sink) {

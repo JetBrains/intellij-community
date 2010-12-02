@@ -155,7 +155,7 @@ public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiC
     }
 
     if (isAnonymous) {
-      final LighterASTNode parent = node.getParent();
+      final LighterASTNode parent = tree.getParent(node);
       if (parent != null && parent.getTokenType() == JavaElementType.NEW_EXPRESSION) {
         isInQualifiedNew = (LightTreeUtil.firstChildOfType(tree, parent, JavaTokenType.DOT) != null);
       }

@@ -272,7 +272,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       final VirtualFile correspondingContent = entry.getValue();
       final String expectedModuleName = contentRootToModuleNameMap.get(correspondingContent);
 
-      for (VirtualFile candidateContent = srcRoot; !candidateContent.equals(correspondingContent); candidateContent = candidateContent.getParent()) {
+      for (VirtualFile candidateContent = srcRoot; candidateContent != null && !candidateContent.equals(correspondingContent); candidateContent = candidateContent.getParent()) {
         final String moduleName = contentRootToModuleNameMap.get(candidateContent);
         if (moduleName != null && !moduleName.equals(expectedModuleName)) {
           throw new ConfigurationException(
