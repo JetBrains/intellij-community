@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,6 +149,10 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
      }
      else {
        myAdditionalData = null;
+     }
+
+     if (!StringUtil.isEmpty(myHomePath)) {
+       LocalFileSystem.getInstance().refreshAndFindFileByPath(myHomePath);
      }
   }
 
