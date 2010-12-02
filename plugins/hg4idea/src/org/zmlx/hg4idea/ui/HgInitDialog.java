@@ -58,7 +58,7 @@ public class HgInitDialog extends DialogWrapper {
     super(project);
     myProject = project;
     // a file chooser instead of dialog will be shown immediately if there is no current project or if current project is already an hg root
-    myShowDialog = (myProject != null && !HgUtil.isHgRoot(myProject.getBaseDir()));
+    myShowDialog = (myProject != null && (! myProject.isDefault()) && !HgUtil.isHgRoot(myProject.getBaseDir()));
 
     myFileDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
@@ -77,7 +77,7 @@ public class HgInitDialog extends DialogWrapper {
   protected void init() {
     super.init();
     setTitle(HgVcsMessages.message("hg4idea.init.dialog.title"));
-    if (myProject != null) {
+    if (myProject != null && (! myProject.isDefault())) {
       mySelectedDir = myProject.getBaseDir();
     }
 
