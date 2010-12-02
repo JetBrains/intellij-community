@@ -158,12 +158,12 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
               }
               IAndroidTarget target = configuration.getAndroidTarget();
               if (target != null) {
-                Set<String> excludedFiles = new HashSet<String>();
-                collectClassFilesInLibraryModules(facet, excludedFiles);
+                //Set<String> excludedFiles = new HashSet<String>();
+                //collectClassFilesInLibraryModules(facet, excludedFiles);
 
                 outputDir = getOutputDirectoryForDex(module);
 
-                items.add(new DexItem(module, outputDir, target, files, excludedFiles));
+                items.add(new DexItem(module, outputDir, target, files, Collections.<String>emptySet()));
               }
             }
           }
@@ -182,7 +182,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private static void collectClassFilesInLibraryModules(AndroidFacet facet, Collection<String> result) {
+  /*private static void collectClassFilesInLibraryModules(AndroidFacet facet, Collection<String> result) {
     HashSet<AndroidFacet> visited = new HashSet<AndroidFacet>();
     visited.add(facet);
     HashSet<String> packages = new HashSet<String>();
@@ -192,7 +192,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), false)) {
       collectRClassFiles(depFacet, result, visited, packages);
     }
-  }
+  }*/
 
   private static void collectRClassFiles(AndroidFacet facet,
                                          Collection<String> result,

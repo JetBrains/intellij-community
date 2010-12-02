@@ -171,6 +171,10 @@ public class AndroidRootUtil {
           }
           else if (entry instanceof ModuleOrderEntry) {
             Module module = ((ModuleOrderEntry)entry).getModule();
+            AndroidFacet facet = AndroidFacet.getInstance(module);
+            if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
+              continue;
+            }
             CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
             if (extension != null) {
               VirtualFile classDir = extension.getCompilerOutputPath();
