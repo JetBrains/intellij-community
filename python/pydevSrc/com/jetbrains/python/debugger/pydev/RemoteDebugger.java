@@ -291,6 +291,18 @@ public class RemoteDebugger {
     execute(command);
   }
 
+  public void close() {
+    if (!myServerSocket.isClosed()) {
+      try {
+        myServerSocket.close();
+      }
+      catch (IOException e) {
+        //skip
+      }
+    }
+    disconnect();
+  }
+
 
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;
@@ -426,5 +438,4 @@ public class RemoteDebugger {
       }
     }
   }
-
 }

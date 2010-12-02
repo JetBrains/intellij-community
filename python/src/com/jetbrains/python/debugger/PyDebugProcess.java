@@ -2,7 +2,9 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -19,7 +22,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
-import com.jetbrains.python.debugger.local.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.pydev.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +40,9 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: bundle messages
 // todo: pydevd supports module reloading - look for a way to use the feature
 // todo: smart step into
-public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
+public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
 
-  private final PyPositionConverter myPositionConverter = new PyLocalPositionConverter();
+  private final PyPositionConverter myPositionConverter;
   private final RemoteDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
@@ -54,10 +56,20 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
   private final Map<String, List<PyDebugValue>> myStackFrameCache = Maps.newHashMap();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
 
-  protected PyDebugProcess(@NotNull XDebugSession session,
-                           final ServerSocket serverSocket,
-                           final ExecutionConsole executionConsole,
-                           final ProcessHandler processHandler) {
+  private boolean myClosing = false;
+
+  public PyDebugProcess(@NotNull XDebugSession session,
+                        @NotNull final ServerSocket serverSocket,
+                        @NotNull final ExecutionConsole executionConsole,
+                        @Nullable final ProcessHandler processHandler) {
+    this(session, serverSocket, executionConsole, processHandler, new PyLocalPositionConverter());
+  }
+
+
+  public PyDebugProcess(@NotNull XDebugSession session,
+                        @NotNull final ServerSocket serverSocket,
+                        @NotNull final ExecutionConsole executionConsole,
+                        @Nullable final ProcessHandler processHandler, @NotNull PyPositionConverter positionConverter) {
     super(session);
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
@@ -65,6 +77,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myEditorsProvider = new PyDebuggerEditorsProvider();
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
+    if (myProcessHandler != null) {
+      myProcessHandler.addProcessListener(this);
+    }
+    myPositionConverter = positionConverter;
   }
 
   @Override
@@ -109,11 +125,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
         }
         catch (final Exception e) {
           myProcessHandler.destroyProcess();
-          invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), "Connecting to debugger");
-            }
-          });
+          if (!myClosing) {
+            invokeLater(new Runnable() {
+              public void run() {
+                Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), "Connecting to debugger");
+              }
+            });
+          }
         }
       }
     });
@@ -121,7 +139,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
 
   private void handshake() throws PyDebuggerException {
     final String remoteVersion = myDebugger.handshake();
-    ((ConsoleView)myExecutionConsole).print("Connected to pydevd (version " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole("Connected to pydevd (version " + remoteVersion + ")\n");
+  }
+
+  protected void printToConsole(String text) {
+    ((ConsoleView)myExecutionConsole).print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   private void registerBreakpoints() {
@@ -285,7 +307,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (myDebugger.isConnected()) {
       final ExceptionBreakpointCommand command =
-        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException(), new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(breakpoint.getProperties().isNotifyAlways(), breakpoint.getProperties().isNotifyOnTerminate()));
+        ExceptionBreakpointCommand.addExceptionBreakpointCommand(myDebugger, breakpoint.getProperties().getException(),
+                                                                 new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
+                                                                   breakpoint.getProperties().isNotifyAlways(),
+                                                                   breakpoint.getProperties().isNotifyOnTerminate()));
       myDebugger.execute(command);
     }
   }
@@ -361,5 +386,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess {
       return command.getCompletions();
     }
     return null;
+  }
+
+  @Override
+  public void startNotified(ProcessEvent event) {
+  }
+
+  @Override
+  public void processTerminated(ProcessEvent event) {
+
+  }
+
+  @Override
+  public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+    myClosing = true;
+    myDebugger.close();
+  }
+
+  @Override
+  public void onTextAvailable(ProcessEvent event, Key outputType) {
   }
 }
