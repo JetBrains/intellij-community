@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -129,6 +131,7 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+    public static final int MAX_FILES = 10;
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
     final JList toolwindows;
@@ -140,6 +143,7 @@ public class Switcher extends AnAction implements DumbAware {
     final Project project;
     final Map<VirtualFile, FileEditor> files2editors;
 
+    @SuppressWarnings({"ManualArrayToCollectionCopy"})
     SwitcherPanel(Project project) {
       super(new BorderLayout(0, 0));
       this.project = project;
@@ -229,15 +233,25 @@ public class Switcher extends AnAction implements DumbAware {
       for (FileEditor editor : allEditors) {
         files2editors.put(((FileEditorManagerImpl)editorManager).getFile(editor), editor);
       }
-      final VirtualFile[] recentFiles = EditorHistoryManager.getInstance(project).getFiles();
       final ArrayList<VirtualFile> openFiles = new ArrayList<VirtualFile>();
-      for (VirtualFile recentFile : recentFiles) {
-        openFiles.add(0, recentFile);
+      final ArrayList<VirtualFile> editorFiles = new ArrayList<VirtualFile>();
+      for (EditorsSplitters splitters : ((FileEditorManagerImpl)editorManager).getAllSplitters()) {
+        editorFiles.addAll(Arrays.asList(splitters.getOpenFiles()));
       }
-      final ArrayList<VirtualFile> tmp = new ArrayList<VirtualFile>(files2editors.keySet());
-      tmp.removeAll(openFiles);
-      for (VirtualFile virtualFile : tmp) {
-        openFiles.add(0, virtualFile);
+      if (editorFiles.size() < 2) {
+        final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
+        final int len = Math.min(toolwindows.getModel().getSize(), Math.max(editorFiles.size(), recentFiles.length));
+        for (int i = 0; i < len; i++) {
+          openFiles.add(recentFiles[i]);
+        }
+      } else {
+        try {
+          ContainerUtil.sort(editorFiles, new RecentFilesComparator(project));
+        } catch (Exception e) {// IndexNotReadyException
+        }
+        for (int i = 0; i < Math.min(MAX_FILES, editorFiles.size()); i++) {
+          openFiles.add(editorFiles.get(i));
+        }
       }
 
       final DefaultListModel filesModel = new DefaultListModel();
@@ -543,15 +557,15 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private class ToolWindowComparator implements Comparator<ToolWindow> {
-      private List<String> exceptions;
+      private List<String> windows;
 
       public ToolWindowComparator(String... exceptions) {
-        this.exceptions = Arrays.asList(exceptions);
+        this.windows = Arrays.asList(exceptions);
       }
       public int compare(ToolWindow o1, ToolWindow o2) {
         final String n1 = ids.get(o1);
         final String n2 = ids.get(o2);
-        for (String exception : exceptions) {
+        for (String exception : windows) {
           if (n1.equals(exception)) return -1;
           if (n2.equals(exception)) return 1;
         }
