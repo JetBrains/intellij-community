@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -85,10 +86,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
            getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).findClassOrPackageAtFirst();
   }
 
+  private boolean checkForMapKey() {
+    final GrExpression qualifier = getQualifierExpression();
+    if (qualifier == null) return false;
+    if (qualifier instanceof GrReferenceExpression) { //key in 'java.util.Map.key' is not access to map, it is access to static property of field
+      final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+      if (resolved instanceof PsiClass) return false;
+    }
+
+    return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+  }
+
   public GroovyResolveResult[] resolveTypeOrProperty() {
     String name = getReferenceName();
 
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+    if (checkForMapKey()) return GroovyResolveResult.EMPTY_ARRAY;
 
     EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
                                            ? ResolverProcessor.RESOLVE_KINDS_CLASS_PACKAGE
