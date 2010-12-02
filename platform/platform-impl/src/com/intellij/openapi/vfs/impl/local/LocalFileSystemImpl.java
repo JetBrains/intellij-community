@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -390,6 +391,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !filesToSynchronize.isEmpty()) {
+      for (VirtualFile file : filesToSynchronize) {
+        if (file instanceof NewVirtualFile && file.getFileSystem() instanceof LocalFileSystem) {
+          ((NewVirtualFile)file).markDirtyRecursively();
+        }
+      }
       refreshFiles(filesToSynchronize, toWatchRecursively, true);
     }
 
