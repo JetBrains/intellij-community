@@ -33,10 +33,9 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   private VisualPosition myTargetVisual;
 
   VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
-                                     @NotNull DelayedRemovalMap<FoldingData> foldData,
                                      @NotNull EditorTextRepresentationHelper representationHelper) 
   {
-    super(editor, storage, cache, foldData, representationHelper);
+    super(editor, storage, cache, representationHelper);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
