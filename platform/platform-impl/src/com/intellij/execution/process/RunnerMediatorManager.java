@@ -20,10 +20,12 @@ import com.intellij.openapi.components.ServiceManager;
 /**
  * @author traff
  */
-public abstract class RunnerMediatorManager {
+public class RunnerMediatorManager {
   public static RunnerMediatorManager getInstance() {
     return ServiceManager.getService(RunnerMediatorManager.class);
   }
 
-  public abstract String getRunnerPath();
+  public String getRunnerPath() {
+    return "runnerw.exe";
+  }
 }

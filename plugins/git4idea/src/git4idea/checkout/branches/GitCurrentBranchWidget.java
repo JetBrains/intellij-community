@@ -39,15 +39,20 @@ import java.util.concurrent.atomic.AtomicReference;
  * Status bar widget which displays the current branch.
  * @author Kirill Likhodedov
  */
-public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, GitReferenceListener {
+public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, GitReferenceListener, StatusBarWidget.Multiframe {
 
   private ProjectLevelVcsManager myVcsManager;
-  private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>();
+  private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>("");
   private static final Logger LOG = Logger.getInstance(GitCurrentBranchWidget.class.getName());
 
   public GitCurrentBranchWidget(Project project) {
     super(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+  }
+
+  @Override
+  public StatusBarWidget copy() {
+    return new GitCurrentBranchWidget(getProject());
   }
 
   @NotNull
@@ -84,7 +89,8 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   @NotNull
   @Override
   public String getText() {
-    return myCurrentBranchName.get();
+    String name = myCurrentBranchName.get();
+    return name != null ? name : "";
   }
 
   @NotNull
@@ -127,7 +133,7 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
         if (root != null) {
           GitBranch currentBranch = null;
           try {
-            currentBranch = GitBranch.current(myProject, root);
+            currentBranch = GitBranch.current(getProject(), root);
           } catch (VcsException e) {
             LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
             // doing nothing - null will be set to myCurrentBranchName

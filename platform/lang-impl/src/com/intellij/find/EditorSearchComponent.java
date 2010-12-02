@@ -51,6 +51,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,6 +72,7 @@ import java.util.regex.Pattern;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JLabel myMatchInfoLabel;
+  private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
   private final Editor myEditor;
   private final JTextField mySearchField;
@@ -85,6 +88,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   private boolean myOkToSearch = false;
   private boolean myHasMatches = false;
+  private int myMatchesLimit = 100;
   private final JCheckBox myCbRegexp;
   private final JCheckBox myCbWholeWords;
   private final JCheckBox myCbInComments;
@@ -236,6 +240,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     myMatchInfoLabel = new JLabel();
     setSmallerFontAndOpaque(myMatchInfoLabel);
 
+    myClickToHighlightLabel = new LinkLabel("Click to highlight", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        myMatchesLimit = Integer.MAX_VALUE;
+        updateResults(true);
+      }
+    });
+    setSmallerFontAndOpaque(myClickToHighlightLabel);
+    myClickToHighlightLabel.setVisible(false);
+
     JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), JLabel.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -245,11 +259,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     closeLabel.setToolTipText("Close search bar (Escape)");
 
-    tailPanel.add(myMatchInfoLabel, BorderLayout.CENTER);
+    JPanel labelsPanel = new NonOpaquePanel(new FlowLayout());
+
+    labelsPanel.add(myMatchInfoLabel);
+    labelsPanel.add(myClickToHighlightLabel);
+    tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
+        myMatchesLimit = 100;
         updateResults(true);
       }
     });
@@ -399,6 +418,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     if (text.length() == 0) {
       setRegularBackground();
       myMatchInfoLabel.setText("");
+      myClickToHighlightLabel.setVisible(false);
       myOkToSearch = false;
     }
     else {
@@ -418,6 +438,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         catch (Exception e) {
           myOkToSearch = false;
           setNotFoundBackground();
+          myClickToHighlightLabel.setVisible(false);
           myMatchInfoLabel.setText("Incorrect regular expression");
           boldMatchInfo();
           return;
@@ -441,7 +462,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         offset = result.getEndOffset();
         results.add(result);
 
-        if (results.size() > 100) break;
+        if (results.size() > myMatchesLimit) break;
       }
 
       if (allowedToChangedEditorSelection) {
@@ -456,7 +477,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       final int count = results.size();
-      if (count <= 100) {
+      if (count <= myMatchesLimit) {
+        myClickToHighlightLabel.setVisible(false);
         highlightResults(text, results);
 
         if (count > 0) {
@@ -476,6 +498,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       else {
         setRegularBackground();
         myMatchInfoLabel.setText("More than 100 matches");
+        myClickToHighlightLabel.setVisible(true);
         boldMatchInfo();
       }
 

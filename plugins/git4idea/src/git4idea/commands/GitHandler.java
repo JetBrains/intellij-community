@@ -16,6 +16,7 @@
 package git4idea.commands;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -38,7 +39,15 @@ import org.jetbrains.git4idea.ssh.GitSSHService;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A handler for git commands
@@ -50,7 +59,7 @@ public abstract class GitHandler {
 
   private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>(); // Error codes that are ignored for the handler
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
-  private static final Logger log = Logger.getInstance(GitHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
   final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   Process myProcess;
@@ -375,8 +384,8 @@ public abstract class GitHandler {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
       }
-      if (log.isDebugEnabled()) {
-        log.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
       }
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
@@ -598,5 +607,120 @@ public abstract class GitHandler {
    */
   public boolean isLargeCommandLine() {
     return myCommandLine.getCommandLineString().length() > GitFileUtils.FILE_PATH_LIMIT;
+  }
+
+  public void runInCurrentThread(Runnable postStartAction) {
+        final GitVcs vcs = GitVcs.getInstance(myProject);
+    if (vcs == null) { return; }
+
+    boolean suspendable = false;
+    switch (myCommand.lockingPolicy()) {
+      case META:
+        // do nothing no locks are taken for metadata
+        break;
+      case READ:
+        vcs.getCommandLock().readLock().lock();
+        break;
+      case WRITE_SUSPENDABLE:
+        suspendable = true;
+        //noinspection fallthrough
+      case WRITE:
+        vcs.getCommandLock().writeLock().lock();
+        break;
+    }
+    try {
+      if (suspendable) {
+        final Object EXIT = new Object();
+        final Object SUSPEND = new Object();
+        final Object RESUME = new Object();
+        final LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
+        Runnable suspend = new Runnable() {
+          public void run() {
+            queue.add(SUSPEND);
+          }
+        };
+        Runnable resume = new Runnable() {
+          public void run() {
+            queue.add(RESUME);
+          }
+        };
+        setSuspendResume(suspend, resume);
+        start();
+        if (isStarted()) {
+          if (postStartAction != null) {
+            postStartAction.run();
+          }
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              waitFor();
+              queue.add(EXIT);
+            }
+          });
+          boolean suspended = false;
+          while (true) {
+            Object action;
+            while (true) {
+              try {
+                action = queue.take();
+                break;
+              }
+              catch (InterruptedException e) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("queue.take() is interrupted", e);
+                }
+              }
+            }
+            if (action == EXIT) {
+              if (suspended) {
+                LOG.error("Exiting while RW lock is suspended (reacquiring W-lock command)");
+                vcs.getCommandLock().writeLock().lock();
+              }
+              break;
+            }
+            else if (action == SUSPEND) {
+              if (suspended) {
+                LOG.error("Suspending suspended W-lock (ignoring command)");
+              }
+              else {
+                vcs.getCommandLock().writeLock().unlock();
+                suspended = true;
+              }
+            }
+            else if (action == RESUME) {
+              if (!suspended) {
+                LOG.error("Resuming not suspended W-lock (ignoring command)");
+              }
+              else {
+                vcs.getCommandLock().writeLock().lock();
+                suspended = false;
+              }
+            }
+          }
+        }
+      }
+      else {
+        start();
+        if (isStarted()) {
+          if (postStartAction != null) {
+            postStartAction.run();
+          }
+          waitFor();
+        }
+      }
+    }
+    finally {
+      switch (myCommand.lockingPolicy()) {
+        case META:
+          // do nothing no locks are taken for metadata
+          break;
+        case READ:
+          vcs.getCommandLock().readLock().unlock();
+          break;
+        case WRITE_SUSPENDABLE:
+        case WRITE:
+          vcs.getCommandLock().writeLock().unlock();
+          break;
+      }
+    }
   }
 }

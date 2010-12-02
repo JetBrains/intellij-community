@@ -356,4 +356,11 @@ class A {
     myFixture.completeBasic()
     assert myFixture.editor.document.text.contains("static Zzzzzzz")
   }
+
+  public void testEatingThisReference() {
+    configure "def x = []; x.<caret> this"
+    myFixture.completeBasic()
+    myFixture.type 'ad\t'
+    myFixture.checkResult "def x = []; x.add(<caret>) this"
+  }
 }
