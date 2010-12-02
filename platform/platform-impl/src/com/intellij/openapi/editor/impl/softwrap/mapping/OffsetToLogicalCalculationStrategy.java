@@ -32,10 +32,9 @@ class OffsetToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   private int myTargetOffset;
 
   OffsetToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache,
-                                     @NotNull DelayedRemovalMap<FoldingData> foldData,
                                      @NotNull EditorTextRepresentationHelper representationHelper) 
   {
-    super(editor, storage, cache, foldData, representationHelper);
+    super(editor, storage, cache, representationHelper);
   }
 
   public void init(final int targetOffset, final List<CacheEntry> cache) {

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -44,6 +47,14 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
 
     final Library library = myEntry.getLibrary();
     if (library == null) return null;
+
+    final String name = library.getName();
+    if (name != null) {
+      final List<String> invalidUrls = ((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES);
+      if (!invalidUrls.isEmpty()) {
+        return ProjectBundle.message("project.roots.tooltip.library.misconfigured", name);
+      }
+    }
 
     final List<String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
     if (descriptions.isEmpty()) return null;

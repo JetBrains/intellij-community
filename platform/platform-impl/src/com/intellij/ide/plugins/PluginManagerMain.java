@@ -486,6 +486,13 @@ public class PluginManagerMain implements Disposable {
     for (IdeaPluginDescriptor descriptor : myFilter.getFilteredInstalled()) {
       if (((IdeaPluginDescriptorImpl)descriptor).isEnabled() != installedPluginsModel.isEnabled(descriptor.getPluginId())) return true;
     }
+    final List<String> disabledPlugins = PluginManager.getDisabledPlugins();
+    for (Map.Entry<PluginId, Boolean> entry : installedPluginsModel.getEnabledMap().entrySet()) {
+      final Boolean enabled = entry.getValue();
+      if (enabled != null && !enabled.booleanValue() && !disabledPlugins.contains(entry.getKey().toString())){
+        return true;
+      }
+    }
     return false;
   }
 

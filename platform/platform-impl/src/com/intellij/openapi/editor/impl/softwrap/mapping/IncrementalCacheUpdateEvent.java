@@ -71,7 +71,7 @@ class IncrementalCacheUpdateEvent {
   }
 
   /**
-   * Creates new <code>IncrementalCacheUpdateEvent</code> object that is configured exact document region with
+   * Creates new <code>IncrementalCacheUpdateEvent</code> object that is configured for exact document region with
    * the given offsets.
    * 
    * @param document          document which text should be re-parsed

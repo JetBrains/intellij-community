@@ -32,11 +32,10 @@ class LogicalToVisualMappingStrategy extends AbstractMappingStrategy<VisualPosit
   private LogicalPosition myTargetLogical;
 
   LogicalToVisualMappingStrategy(@NotNull LogicalPosition logical, @NotNull Editor editor, @NotNull SoftWrapsStorage storage,
-                                 @NotNull EditorTextRepresentationHelper representationHelper, @NotNull List<CacheEntry> cache,
-                                 @NotNull DelayedRemovalMap<FoldingData> foldData)
+                                 @NotNull EditorTextRepresentationHelper representationHelper, @NotNull List<CacheEntry> cache)
     throws IllegalStateException
   {
-    super(editor, storage, cache, foldData, representationHelper);
+    super(editor, storage, cache, representationHelper);
     myTargetLogical = logical;
   }
 

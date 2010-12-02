@@ -17,12 +17,13 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
-import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 
 import javax.swing.*;
 
@@ -47,13 +48,14 @@ public class ProjectStructureDialogCellAppearanceUtils {
 
   public static CellAppearance forLibrary(Library library, StructureConfigurableContext context) {
     final Icon icon = LibraryPresentationManager.getInstance().getCustomIcon(library, context);
+    final boolean invalid = !((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES).isEmpty();
     if (icon != null) {
       final String name = library.getName();
       if (name != null) {
-        return SimpleTextCellAppearance.normal(name, icon);
+        return OrderEntryCellAppearanceUtils.normalOrRedWaved(name, icon, invalid);
       }
     }
-    return OrderEntryCellAppearanceUtils.forLibrary(library);
+    return OrderEntryCellAppearanceUtils.forLibrary(library, invalid);
   }
 
 }
