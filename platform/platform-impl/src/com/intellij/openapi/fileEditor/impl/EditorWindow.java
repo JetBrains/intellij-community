@@ -317,6 +317,10 @@ public class EditorWindow {
     return myTabbedPane != null ? myTabbedPane.isEmptyVisible() : getFiles().length == 0;
   }
 
+  public Dimension getSize() {
+    return myPanel.getSize();
+  }
+
   protected static class TComp extends JPanel implements DataProvider{
     final EditorWithProviderComposite myEditor;
 

@@ -535,6 +535,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       private DockableEditorTabbedContainer myContainer;
       private Presentation myPresentation;
       private EditorWindow myEditorWindow;
+      private Dimension myPreferredSize;
 
 
       public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
@@ -543,6 +544,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
         myPresentation = presentation;
         myContainer = new DockableEditorTabbedContainer(myProject, myDockManager);
         myEditorWindow = window;
+        myPreferredSize = myEditorWindow.getSize();
       }
 
       @Override
@@ -557,7 +559,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(myImg.getWidth(null), myImg.getHeight(null));
+        return myPreferredSize;
       }
 
       @Override

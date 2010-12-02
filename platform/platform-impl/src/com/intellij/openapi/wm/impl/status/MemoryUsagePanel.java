@@ -181,7 +181,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(getPreferredWidth(), Integer.MAX_VALUE);
+    return new Dimension(getPreferredWidth(), isVisible() && getParent() != null ? getParent().getSize().height : super.getPreferredSize().height);
   }
 
   @Override

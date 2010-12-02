@@ -358,7 +358,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     DockContainer container = getFactory(content.getDockContainerType()).createContainer();
     register(container);
 
-    DockWindow window = createWindowFor(null, container);
+    final DockWindow window = createWindowFor(null, container);
 
     Dimension size = content.getPreferredSize();
     Point showPoint = point.getScreenPoint();
@@ -371,11 +371,19 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
 
     window.setLocation(target.getLocation());
-    window.setSize(target.getSize());
+    window.myDockContentUiContainer.setPreferredSize(target.getSize());
 
     window.show(false);
+    window.getFrame().pack();
 
     container.add(content, new RelativePoint(target.getLocation()));
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        window.myUiContainer.setPreferredSize(null);
+      }
+    });
   }
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
@@ -393,6 +401,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     private VerticalBox myNorthPanel = new VerticalBox();
     private Map<String, IdeRootPaneNorthExtension> myNorthExtensions = new LinkedHashMap<String, IdeRootPaneNorthExtension>();
 
+    private NonOpaquePanel myUiContainer;
+    private NonOpaquePanel myDockContentUiContainer;
+
     private DockWindow(String id, Project project, DockContainer container) {
       super(project);
       myId = id;
@@ -401,17 +412,19 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
       setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
 
-      NonOpaquePanel comp = new NonOpaquePanel(new BorderLayout());
+      myUiContainer = new NonOpaquePanel(new BorderLayout());
 
       NonOpaquePanel center = new NonOpaquePanel(new BorderLayout(0, 2));
       center.add(myNorthPanel, BorderLayout.NORTH);
-      center.add(myContainer.getComponent(), BorderLayout.CENTER);
 
-      comp.add(center, BorderLayout.CENTER);
+      myDockContentUiContainer = new NonOpaquePanel(new BorderLayout());
+      myDockContentUiContainer.add(myContainer.getComponent(), BorderLayout.CENTER);
+      center.add(myDockContentUiContainer, BorderLayout.CENTER);
 
-      comp.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+      myUiContainer.add(center, BorderLayout.CENTER);
+      myUiContainer.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
 
-      setComponent(comp);
+      setComponent(myUiContainer);
       addDisposable(container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
