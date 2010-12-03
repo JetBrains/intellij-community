@@ -64,7 +64,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
   private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
-  private final List<FoldingListener> myFoldListeners = new ArrayList<FoldingListener>();
+  private final List<FoldingListener>  myFoldListeners     = new ArrayList<FoldingListener>();
 
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
@@ -220,18 +220,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * Callback method that is expected to be invoked before editor painting.
    * <p/>
    * It's primary purpose is to recalculate soft wraps at least for the painted area if necessary.
-   *
-   * @param clip            clip that is being painted
-   * @param startOffset     start offset of the editor's document from which repainting starts
    */
-  public void registerSoftWrapsIfNecessary(@NotNull Rectangle clip, int startOffset) {
+  public void registerSoftWrapsIfNecessary() {
     if (!isSoftWrappingEnabled()) {
       return;
     }
 
     myActive++;
     try {
-      myApplianceManager.registerSoftWrapIfNecessary(clip, startOffset);
+      myApplianceManager.registerSoftWrapIfNecessary();
     }
     finally {
       myActive--;

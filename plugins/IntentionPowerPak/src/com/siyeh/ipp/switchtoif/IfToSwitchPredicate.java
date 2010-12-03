@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,11 @@ class IfToSwitchPredicate implements PsiElementPredicate{
         if(token.getTokenType() != JavaTokenType.IF_KEYWORD){
             return false;
         }
-        if(!(element.getParent() instanceof PsiIfStatement)){
+        final PsiElement parent = element.getParent();
+        if(!(parent instanceof PsiIfStatement)){
             return false;
         }
-        final PsiIfStatement statement = (PsiIfStatement) element.getParent();
+        final PsiIfStatement statement = (PsiIfStatement) parent;
         if(ErrorUtil.containsError(statement)){
             return false;
         }

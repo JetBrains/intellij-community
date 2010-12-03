@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -356,6 +355,70 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(beforePositionAfterSoftWrap, myEditor.offsetToVisualPosition(offsetAfterSoftWrap));
   }
   
+  public void testInsertNewStringAndTypeOnItBeforeFoldRegion() throws IOException {
+    // There was incorrect processing of fold regions when document change was performed right before them.
+    String text =
+      "/**\n" +
+      " * comment\n" +
+      " */\n" +
+      "class Test {\n" +
+      "}";
+    init(700, text);
+    String placeholder = "/**...*/";
+    addCollapsedFoldRegion(0, text.indexOf("class") - 1, placeholder);
+    
+    myEditor.getCaretModel().moveToOffset(0);
+    type("\n");
+    myEditor.getCaretModel().moveToOffset(0);
+    type("import");
+    
+    // Check that fold region info is still correct.
+    int foldStartOffset = myEditor.getDocument().getText().indexOf("/**");
+    int foldEndOffset = myEditor.getDocument().getText().indexOf("class") - 1;
+    assertEquals(new VisualPosition(1, 0), myEditor.offsetToVisualPosition(foldStartOffset));
+    assertEquals(new VisualPosition(1, 0), myEditor.offsetToVisualPosition((foldStartOffset + foldEndOffset) / 2));
+    assertEquals(new VisualPosition(1, placeholder.length()), myEditor.offsetToVisualPosition(foldEndOffset));
+  }
+  
+  public void testUpdateFoldRegionDataOnTextRemoveBeforeIt() throws IOException {
+    String text =
+      "1\n" +
+      "/**\n" +
+      " * comment\n" +
+      " */\n" +
+      "class Test {\n" +
+      "}";
+    init(700, text);
+    String placeholder = "/**...*/";
+    addCollapsedFoldRegion(2, text.indexOf("class") - 1, placeholder);
+    
+    myEditor.getCaretModel().moveToOffset(0);
+    delete();
+    assertEquals(new VisualPosition(1, placeholder.length()), myEditor.offsetToVisualPosition(text.indexOf("class") - 2));
+  }
+  
+  public void testRemoveCollapsedFoldRegionThatStartsLogicalLine() throws IOException {
+    // There was a problem that soft wraps cache updated on document modification didn't contain information about removed
+    // fold region but fold model still provided cached information about it.
+    String text =
+      "package org;\n" +
+      "\n" +
+      "@SuppressWarnings(\"all\")\n" +
+      "class Test {\n" +
+      "}";
+    
+    init(700, text);
+    int startOffset = text.indexOf("@");
+    int endOffset = text.indexOf("class") - 1;
+    addCollapsedFoldRegion(startOffset, endOffset, "xxx");
+    
+    // Delete collapsed fold region that starts logical line.
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    delete();
+    
+    assertEquals(startOffset, myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(2, 0))));
+  }
+  
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {
@@ -377,7 +440,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
         return visibleWidth;
       }
     });
-    applianceManager.registerSoftWrapIfNecessary(new Rectangle(visibleWidth, visibleWidth * 2), 0);
+    applianceManager.registerSoftWrapIfNecessary();
   }
 
   private static SoftWrapModelEx getSoftWrapModel() {

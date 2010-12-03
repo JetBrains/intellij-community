@@ -62,7 +62,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
         final JLabel label = (JLabel)component;
         label.setIcon(myIcon);
         if (myText != null) label.setText(myText);
-        if (myToolTipText != null) label.setToolTipText(myToolTipText);
+        label.setToolTipText(myToolTipText);
       }
       return component;
     }

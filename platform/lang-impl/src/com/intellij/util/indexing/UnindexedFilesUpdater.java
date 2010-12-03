@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -30,6 +31,7 @@ import java.util.List;
  *         Date: Jan 29, 2008
  */
 public class UnindexedFilesUpdater implements CacheUpdater {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
   private final FileBasedIndex myIndex;
   private final Project myProject;
 
@@ -43,6 +45,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   public VirtualFile[] queryNeededFiles() {
+    LOG.info("Unindexed files update started");
     CollectingContentIterator finder = myIndex.createContentIterator();
     FileBasedIndex.iterateIndexableFiles(finder, myProject);
     List<VirtualFile> files = finder.getFiles();
@@ -55,8 +58,10 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   public void updatingDone() {
+    LOG.info("Unindexed files update done");
   }
 
   public void canceled() {
+    LOG.info("Unindexed files update canceled");
   }
 }

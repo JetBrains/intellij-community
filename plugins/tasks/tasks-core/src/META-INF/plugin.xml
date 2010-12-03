@@ -1,0 +1,112 @@
+<idea-plugin version="2">
+  <id>com.intellij.tasks</id>
+  <name>Task Management</name>
+
+  <description>Enables task and context management</description>
+
+  <version>1.0</version>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
+  <!--fake dependency for Web IDE-->
+  <depends>com.intellij.modules.xml</depends>
+  <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.tasks.TaskManager</interface-class>
+      <implementation-class>com.intellij.tasks.impl.TaskManagerImpl</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+
+  </project-components>
+
+  <actions>
+
+    <group id="task.actions" text="_Task" popup="true">
+      <action id="tasks.activate" class="com.intellij.tasks.actions.OpenTaskAction" text="_Open...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
+      </action>
+      <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
+      </action>
+      <separator/>
+      <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
+      <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
+      </action>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace..."/>
+    </group>
+
+    <group id="working.context" text="_Context" popup="true">
+      <action id="context.save" class="com.intellij.tasks.actions.context.SaveContextAction" text="_Save...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift S"/>
+      </action>
+      <action id="context.load" class="com.intellij.tasks.actions.context.LoadContextAction" text="_Load...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift L"/>
+      </action>
+      <action id="context.clear" class="com.intellij.tasks.actions.context.ClearContextAction" text="_Clear">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift X"/>
+      </action>
+    </group>
+
+    <group id="tasks.and.contexts" text="Tasks menu">
+      <reference ref="task.actions"/>
+      <reference ref="working.context"/>
+      <separator/>
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+
+    <group id="tasks.toolbar.group" text="Tasks toolbar">
+      <separator/>
+      <action id="tasks.switch.toolbar" class="com.intellij.tasks.actions.SwitchTaskCombo" text="Switch Task">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
+      </action>
+      <add-to-group group-id="MainToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+    </group>
+
+    <action id="tasks.trackContext" class="com.intellij.tasks.actions.AssociateWithTaskAction"
+            text="Associate with _Task"
+            description="Reload context (e.g. open editors) when changelist is set active">
+
+      <add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.SetDefault" anchor="after"/>
+    </action>
+
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
+    <extensionPoint area="IDEA_PROJECT" name="contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
+    <projectConfigurable instance="com.intellij.tasks.config.TaskConfigurable"/>
+
+    <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
+
+    <completion.contributor language="TEXT" implementationClass="com.intellij.tasks.impl.TaskCompletionContributor"/>
+
+    <projectService serviceInterface="com.intellij.tasks.impl.TaskProjectConfiguration"
+                    serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
+    <projectService serviceInterface="com.intellij.tasks.context.WorkingContextManager"
+                    serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
+    <applicationService serviceInterface="com.intellij.tasks.config.RecentTaskRepositories"
+                    serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
+
+    <!--context providers-->
+    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
+
+    <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.github.GitHubRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
+    <!--<tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>-->
+  </extensions>
+
+</idea-plugin>

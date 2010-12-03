@@ -19,6 +19,7 @@ package com.intellij.openapi.ui;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -85,6 +86,10 @@ public class StripeTable extends Table {
 
   public static JScrollPane createScrollPane(JTable table) {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    // Fix GTK background
+    if (UIUtil.isUnderGTKLookAndFeel()) {
+      scrollPane.setBackground(UIUtil.getTreeTextBackground());
+    }
     scrollPane.setViewport(new StripedViewport(table));
     scrollPane.getViewport().setView(table);
     scrollPane.setBorder(UIManager.getBorder("Table.scrollPaneBorder"));

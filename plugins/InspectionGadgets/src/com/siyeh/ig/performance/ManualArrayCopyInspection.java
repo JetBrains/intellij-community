@@ -133,9 +133,15 @@ public class ManualArrayCopyInspection extends BaseInspection {
                 return null;
             }
             final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-            final String lengthText = buildLengthText(limit, variable,
-                    decrement ^ (JavaTokenType.LE.equals(tokenType) ||
-                            JavaTokenType.GE.equals(tokenType)));
+            final String lengthText;
+            final PsiExpression initializer = variable.getInitializer();
+            if (decrement) {
+                lengthText = buildLengthText(initializer, limit, false);
+            } else {
+                lengthText = buildLengthText(limit, initializer,
+                        JavaTokenType.LE.equals(tokenType) ||
+                                JavaTokenType.GE.equals(tokenType));
+            }
             if (lengthText == null) {
                 return null;
             }
@@ -160,7 +166,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             if (decrement) {
                 limitExpression = limit;
             } else {
-                limitExpression = variable.getInitializer();
+                limitExpression = initializer;
             }
             final String fromOffsetText =
                     buildOffsetText(strippedRhsIndexExpression, variable,
@@ -282,50 +288,46 @@ public class ManualArrayCopyInspection extends BaseInspection {
         }
 
         @NonNls @Nullable
-        private String buildLengthText(PsiExpression expression,
-                                       PsiVariable variable,
-                                       boolean plusOne) {
-            if (decrement) {
-                final PsiExpression initializer =
-                        ParenthesesUtils.stripParentheses(
-                                variable.getInitializer());
-                if (initializer == null) {
-                    return null;
-                }
-                final String initializerText =
-                        buildExpressionText(initializer, true, false);
-                if (ExpressionUtils.isZero(expression)) {
-                    return initializerText;
-                }
-                final String expressionText =
-                        buildExpressionText(expression, plusOne, true);
-                return initializerText + '-' + expressionText;
-            } else {
-                expression = ParenthesesUtils.stripParentheses(expression);
-                if (expression == null) {
-                    return null;
-                }
-                final String expressionText =
-                        buildExpressionText(expression, plusOne, false);
-                final PsiExpression initializer =
-                        ParenthesesUtils.stripParentheses(
-                                variable.getInitializer());
-                if (initializer == null) {
-                    return expressionText;
-                }
-                if (ExpressionUtils.isZero(initializer)) {
-                    return expressionText;
-                }
-                final int precedence =
-                        ParenthesesUtils.getPrecedence(initializer);
-                final String initializerText;
-                if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-                    initializerText = '(' + initializer.getText() + ')';
-                } else {
-                    initializerText = initializer.getText();
-                }
-                return expressionText + '-' + initializerText;
+        private static String buildLengthText(PsiExpression max,
+                                              PsiExpression min,
+                                              boolean plusOne) {
+            max = ParenthesesUtils.stripParentheses(max);
+            if (max == null) {
+                return null;
             }
+            min = ParenthesesUtils.stripParentheses(min);
+            if (min == null) {
+                return buildExpressionText(max, plusOne, false);
+            }
+            final Object constant =
+                    ExpressionUtils.computeConstantExpression(min);
+            if (constant instanceof Number) {
+                final Number minNumber = (Number) constant;
+                final int minValue;
+                if (plusOne) {
+                    minValue = minNumber.intValue() - 1;
+                } else {
+                    minValue = minNumber.intValue();
+                }
+                final String maxText =
+                        buildExpressionText(max, false, false);
+                if (minValue > 0) {
+                    return maxText + '-' + minValue;
+                } else if (minValue == 0) {
+                    return maxText;
+                } else {
+                    return maxText + '+' + -minValue;
+                }
+            }
+            final int precedence = ParenthesesUtils.getPrecedence(min);
+            final String minText;
+            if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+                minText = '(' + min.getText() + ')';
+            } else {
+                minText = min.getText();
+            }
+            final String maxText = buildExpressionText(max, plusOne, false);
+            return maxText + '-' + minText;
         }
 
         private static String buildExpressionText(PsiExpression expression,

@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -148,5 +149,11 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         provider.fillLibrary(path, editor);
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public LibrariesContainer.LibraryLevel getDefaultLevel() {
+    return LibrariesContainer.LibraryLevel.GLOBAL;
   }
 }

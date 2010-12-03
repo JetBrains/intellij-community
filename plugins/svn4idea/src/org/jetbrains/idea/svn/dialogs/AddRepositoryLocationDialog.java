@@ -113,6 +113,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(mainPanel, new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                   new Insets(0,0,0,0), 0,0));
+    wrapper.setPreferredSize(new Dimension(400, 70));
     return wrapper;
   }
 
@@ -126,7 +127,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
       return false;
     }
     try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(inputString);
+      final SVNURL svnurl = SVNURL.parseURIDecoded(inputString.trim());
       return svnurl != null;
     } catch (SVNException e) {
       //
@@ -136,7 +137,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    mySelected = myComboField.getText();
+    mySelected = myComboField.getText().trim();
     super.doOKAction();
   }
 

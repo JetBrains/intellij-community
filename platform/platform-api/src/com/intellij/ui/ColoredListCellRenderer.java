@@ -22,9 +22,10 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
+ * <strong>NOTE:</strong> causes UI defects (particularly under GTK+ and Nimbus LAFs) when used for combo boxes.
+ * Consider using {@link com.intellij.ui.HtmlListCellRenderer} instead.
+ *
  * @author Vladimir Kondratyev
- * @deprecated Causes UI defects (particularly under GTK+ and Nimbus LAFs).
- *             Consider using {@link com.intellij.ui.HtmlListCellRenderer} instead.
  */
 public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
   protected boolean mySelected;

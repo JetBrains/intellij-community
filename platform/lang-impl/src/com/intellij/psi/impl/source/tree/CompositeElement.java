@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +29,7 @@ import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -76,24 +78,34 @@ public class CompositeElement extends TreeElement {
   }
 
   public void subtreeChanged() {
-    CompositeElement compositeElement = this;
-    while(compositeElement != null) {
-      compositeElement.clearCaches();
-      if (!(compositeElement instanceof PsiElement)) {
-        final PsiElement psi = compositeElement.getPsi();
-        if (psi instanceof ASTDelegatePsiElement) {
-          ((ASTDelegatePsiElement)psi).subtreeChanged();
+    synchronized (PsiLock.LOCK) {
+      CompositeElement compositeElement = this;
+      while(compositeElement != null) {
+        compositeElement.clearCaches();
+        if (!(compositeElement instanceof PsiElement)) {
+          final PsiElement psi = compositeElement.getPsi();
+          if (psi instanceof ASTDelegatePsiElement) {
+            ((ASTDelegatePsiElement)psi).subtreeChanged();
+          }
+          else if (psi instanceof PsiFile) {
+            ((PsiFile)psi).subtreeChanged();
+          }
         }
-        else if (psi instanceof PsiFile) {
-          ((PsiFile)psi).subtreeChanged();
-        }
+
+        compositeElement = compositeElement.getTreeParent();
       }
-  
-      compositeElement = compositeElement.getTreeParent();
     }
   }
 
   public void clearCaches() {
+    if (DebugUtil.CHECK) {
+      PsiElement wrapper = myWrapper;
+      LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed() ||
+                     Thread.holdsLock(PsiLock.LOCK) ||
+                     wrapper != null && !wrapper.isPhysical() ||
+                     TreeUtil.getFileElement(this).getElementType() == TokenType.DUMMY_HOLDER
+      );
+    }
     super.clearCaches();
     myCachedLength = NOT_CACHED;
 
@@ -170,7 +182,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public int getNotCachedLength() {
-    final int[] result = new int[]{0};
+    final int[] result = {0};
 
     acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
@@ -233,9 +245,7 @@ public class CompositeElement extends TreeElement {
     if (findChildByRole(roleCandidate) == child) {
       return roleCandidate;
     }
-    else {
-      return 0; //ChildRole.NONE;
-    }
+    return 0; //ChildRole.NONE;
   }
 
   public ASTNode[] getChildren(TokenSet filter) {
@@ -365,8 +375,13 @@ public class CompositeElement extends TreeElement {
       if (cachedLength >= 0) return cachedLength;
 
       ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
-
-      walkCachingLength();
+      try {
+        walkCachingLength();
+      }
+      catch (AssertionError e) {
+        myCachedLength = NOT_CACHED;
+        LOG.error("===\n"+PerformanceWatcher.dumpThreadsToString()+"\n===\n", e);
+      }
       return myCachedLength;
     }
   }
@@ -390,13 +405,18 @@ public class CompositeElement extends TreeElement {
   }
 
   private void walkCachingLength() {
+    if (myCachedLength != NOT_CACHED) {
+      throw new AssertionError("Before walking: cached="+myCachedLength);
+    }
     TreeElement cur = this;
 
     while (cur != null) {
       cur = next(cur, cur.getCachedLength() == NOT_CACHED);
     }
 
-    LOG.assertTrue(myCachedLength >= 0, myCachedLength);
+    if (myCachedLength < 0) {
+      throw new AssertionError("After walking: cached="+myCachedLength);
+    }
   }
 
   @Nullable

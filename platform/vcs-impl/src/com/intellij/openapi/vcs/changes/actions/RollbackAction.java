@@ -52,52 +52,26 @@ import java.util.List;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
-    final boolean isEnabled = isEnabled(e);
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    e.getPresentation().setVisible(project != null && ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0);
+    final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+    e.getPresentation().setVisible(visible);
+    if (! visible) return;
+
+    final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
+    final boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING));
     e.getPresentation().setEnabled(isEnabled);
     if (isEnabled) {
-      VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null) {
-        for(VirtualFile file: files) {
-          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-          if (vcs != null) {
-            final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-            if (rollbackEnvironment != null) {
-              e.getPresentation().setText(rollbackEnvironment.getRollbackOperationName());
-            }
-          }
+      final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+      for (AbstractVcs vcs : vcss) {
+        final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+        if (rollbackEnvironment != null) {
+          e.getPresentation().setText(rollbackEnvironment.getRollbackOperationName());
+          return;
         }
       }
     }
-  }
-
-  private static boolean isEnabled(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null || project.isDisposed()) {
-      return false;
-    }
-    if (hasChanges(project, e)) return true;
-
-    List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
-    if (missingFiles != null && !missingFiles.isEmpty()) {
-      return true;
-    }
-    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
-    if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
-      return true;
-    }
-    return false;
-  }
-
-  private static boolean hasChanges(final Project project, final AnActionEvent e) {
-    final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
-    if (helper.isChangesSet()) {
-      final Change[] changes = helper.getChanges();
-      return (changes != null) && (changes.length > 0);
-    }
-
-    return SelectedFilesHelper.hasChangedSelectedFiles(project, e);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -106,21 +80,20 @@ public class RollbackAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
+
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       new RollbackDeletionAction().actionPerformed(e);
     }
-    else {
-      List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
-      if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
-        rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
-      }
-      else {
-        Change[] changes = getChanges(project, e);
-        if (changes != null) {
-          RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
-        }
-      }
+
+    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
+    if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
+      rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
+    }
+
+    Change[] changes = getChanges(project, e);
+    if (changes != null) {
+      RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
     }
   }
 

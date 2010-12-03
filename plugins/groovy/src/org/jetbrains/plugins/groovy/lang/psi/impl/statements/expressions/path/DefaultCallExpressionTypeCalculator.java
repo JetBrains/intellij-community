@@ -54,9 +54,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
           PsiMethod method = (PsiMethod) resolved;
           if (refExpr.getUserData(GrReferenceExpressionImpl.IS_RESOLVED_TO_GETTER) != null) {
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);
-            if (propertyType instanceof GrClosureType) {
-              returnType = ((GrClosureType)propertyType).getSignature().getReturnType();
-            }
+            returnType = checkForClosure(propertyType);
           } else {
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
@@ -66,9 +64,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         } else if (resolved instanceof GrVariable) {
           PsiType refType = refExpr.getType();
           final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
-          if (type instanceof GrClosureType) {
-            returnType = ((GrClosureType) type).getSignature().getReturnType();
-          }
+          returnType = checkForClosure(type);
         }
         if (returnType == null) return null;
         returnType = resolveResult.getSubstitutor().substitute(returnType);
@@ -89,6 +85,32 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     }
 
     return null;
+  }
+
+  @Nullable
+  private static PsiType checkForClosure(PsiType type) {
+    PsiType returnType = type;
+    if (type instanceof GrClosureType) {
+      returnType = ((GrClosureType) type).getSignature().getReturnType();
+    }
+    else if (isPsiClassTypeToClosure(type)) {
+      assert type instanceof PsiClassType;
+      final PsiType[] parameters = ((PsiClassType)type).getParameters();
+      if (parameters.length == 1) {
+        returnType = parameters[0];
+      }
+    }
+    return returnType;
+  }
+
+
+  private static boolean isPsiClassTypeToClosure(PsiType type) {
+    if (!(type instanceof PsiClassType)) return false;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null) return false;
+
+    return GrClosableBlock.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 
   @Nullable

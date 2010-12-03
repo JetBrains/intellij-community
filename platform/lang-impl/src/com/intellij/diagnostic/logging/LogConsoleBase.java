@@ -506,7 +506,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
               }
             }
             catch (IOException e) {
-              LOG.error(e);
+              LOG.info(e);
+              addMessage("I/O Error" + (e.getMessage() != null ? ": " + e.getMessage() : ""));
             }
           }
           myAlarm.addRequest(this, 100);

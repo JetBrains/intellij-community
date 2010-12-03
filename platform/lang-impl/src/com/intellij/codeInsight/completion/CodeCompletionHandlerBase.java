@@ -53,7 +53,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -129,7 +131,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
 
       if (repeated) {
-        time = indicator.getParameters().getInvocationCount() + 1;
+        time = Math.max(indicator.getParameters().getInvocationCount() + 1, 2);
         indicator.restorePrefix();
       } else {
         indicator.closeAndFinish(false);
@@ -645,10 +647,17 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         item.handleInsert(context1);
         PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
-        if (context1.shouldAddCompletionChar() &&
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-          TailType.insertChar(editor, context1.getTailOffset(), completionChar);
+
+        final int tailOffset = context1.getTailOffset();
+        if (tailOffset >= 0) {
+          if (context1.shouldAddCompletionChar() &&
+              completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
+              completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+            TailType.insertChar(editor, tailOffset, completionChar);
+          }
+        }
+        else {
+          LOG.error("tailOffset<0 after inserting " + item + " of " + item.getClass());
         }
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }

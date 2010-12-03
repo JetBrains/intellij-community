@@ -33,10 +33,9 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
   private VisualPosition myTargetVisual;
 
   VisualToLogicalCalculationStrategy(@NotNull Editor editor, @NotNull SoftWrapsStorage storage, @NotNull List<CacheEntry> cache, 
-                                     @NotNull DelayedRemovalMap<FoldingData> foldData,
                                      @NotNull EditorTextRepresentationHelper representationHelper) 
   {
-    super(editor, storage, cache, foldData, representationHelper);
+    super(editor, storage, cache, representationHelper);
   }
 
   public void init(@NotNull final VisualPosition targetVisual, @NotNull final List<CacheEntry> cache) {
@@ -104,8 +103,15 @@ class VisualToLogicalCalculationStrategy extends AbstractMappingStrategy<Logical
     }
 
     CacheEntry cacheEntry = myCache.get(i);
+    if (cacheEntry.visualLine < myTargetVisual.line) {
+      return null;
+    }
+    
     // Return eagerly if target visual position remains between current context position and the one defined by the given offset.
-    if (offset < cacheEntry.startOffset || (position.visualColumn + offset - position.offset >= myTargetVisual.column)) {
+
+    if (offset < cacheEntry.startOffset || myTargetVisual.line < cacheEntry.visualLine 
+        || (position.visualColumn + offset - position.offset >= myTargetVisual.column)) 
+    {
       int linesDiff = myTargetVisual.line - position.visualLine;
       if (linesDiff > 0) {
         position.logicalColumn = myTargetVisual.column;

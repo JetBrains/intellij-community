@@ -44,7 +44,6 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected final EditorTextRepresentationHelper myRepresentationHelper;
   protected final SoftWrapsStorage myStorage;
   protected final List<CacheEntry> myCache;
-  private final DelayedRemovalMap<FoldingData> myFoldData;
 
   private EditorPosition myInitialPosition;
   private CacheEntry myTargetEntry;
@@ -53,13 +52,11 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   AbstractMappingStrategy(@NotNull Editor editor,
                           @NotNull SoftWrapsStorage storage,
                           @NotNull List<CacheEntry> cache,
-                          @NotNull DelayedRemovalMap<FoldingData> foldData,
                           @NotNull EditorTextRepresentationHelper representationHelper)
   {
     myEditor = editor;
     myStorage = storage;
     myCache = cache;
-    myFoldData = foldData;
     myRepresentationHelper = representationHelper;
   }
 
@@ -110,7 +107,13 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
   @Nullable
   protected FoldingData getFoldRegionData(FoldRegion foldRegion) {
-    return myFoldData.get(foldRegion.getStartOffset());
+    int i = MappingUtil.getCacheEntryIndexForOffset(foldRegion.getStartOffset(), myEditor.getDocument(), myCache);
+    if (i < 0 || i >= myCache.size()) {
+      return null;
+    }
+
+    CacheEntry cacheEntry = myCache.get(i);
+    return cacheEntry.getFoldingData().get(foldRegion.getStartOffset());
   }
 
   @Override

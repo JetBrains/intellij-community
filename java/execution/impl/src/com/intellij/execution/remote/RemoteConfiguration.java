@@ -28,6 +28,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -40,7 +41,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
+public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements
+                                                                                              RunConfigurationWithSuppressedDefaultRunAction {
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
@@ -94,5 +96,5 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return getAllModules();
   }
 
-  
+
 }
