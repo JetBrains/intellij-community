@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**
@@ -77,7 +79,7 @@ public class FileContentQueue {
   private void put(VirtualFile file) throws InterruptedException {
     FileContent content = new FileContent(file);
 
-    if (file.isValid()) {
+    if (file.isValid() && !file.isDirectory()) {
       if (!doLoadContent(content)) {
         content.setEmptyContent();
       }
