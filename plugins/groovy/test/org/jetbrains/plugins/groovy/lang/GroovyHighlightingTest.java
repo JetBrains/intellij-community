@@ -287,4 +287,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testSOEInFieldDeclarations() {doTest();}
 
   public void testWrongAnnotation() {doTest();}
+
+  public void testAmbiguousMethods() {
+    myFixture.copyFileToProject(getTestName(false)+".java");
+    doTest();
+  }
 }
