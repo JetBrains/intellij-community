@@ -307,7 +307,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     // We assume here that fold model is processed after soft wrap (as it needs to perform document dimensions mapping).
     // So, there is a possible case that user performed modifications at particular fold region but fold model is not updated yet
     // and IterationState returns valid fold region. Hence, we introduce a dedicated check here.
-    if ((event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
+    if (!foldRegion.isValid() || (event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
         && foldRegion.getEndOffset() > event.getOldExactStartOffset()) || myContext.tokenStartOffset != foldRegion.getStartOffset()) 
     {
       myEventsStorage.add(document, newEvent);
