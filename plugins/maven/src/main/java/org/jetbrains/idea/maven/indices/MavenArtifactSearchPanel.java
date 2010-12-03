@@ -24,7 +24,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -70,6 +69,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private void initComponents(String initialText) {
     mySearchField = new JTextField(initialText);
     myResultList = new Tree();
+    myResultList.getEmptyText().setText("Loading...");
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
@@ -90,34 +90,19 @@ public class MavenArtifactSearchPanel extends JPanel {
       }
     });
 
-    mySearchField.addKeyListener(new KeyAdapter() {
+    myResultList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        final Object action = getAction(e, myResultList);
-        if ("selectNext".equals(action)) {
-          TreeUtil.moveDown(myResultList);
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && myResultList.getLastSelectedPathComponent() != null) {
+          myListener.itemSelected();
+          e.consume();
         }
-        else if ("selectPrevious".equals(action)) {
-          TreeUtil.moveUp(myResultList);
-        }
-        else if ("scrollUpChangeSelection".equals(action)) {
-          TreeUtil.movePageUp(myResultList);
-        }
-        else if ("scrollDownChangeSelection".equals(action)) {
-          TreeUtil.movePageDown(myResultList);
-        }
-      }
-
-      private Object getAction(final KeyEvent e, final JComponent comp) {
-        final KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers());
-        return comp.getInputMap().get(stroke);
       }
     });
 
     myResultList.setRootVisible(false);
     myResultList.setShowsRootHandles(true);
     myResultList.setModel(null);
-    myResultList.setFocusable(false);
     myResultList.setCellRenderer(myClassMode ? new MyClassCellRenderer() : new MyArtifactCellRenderer());
 
     myResultList.addMouseListener(new MouseAdapter() {
@@ -126,12 +111,9 @@ public class MavenArtifactSearchPanel extends JPanel {
         if (e.getClickCount() == 2) {
           Object sel = myResultList.getLastSelectedPathComponent();
           if (sel != null && myResultList.getModel().isLeaf(sel)) {
-            myListener.doubleClicked();
+            myListener.itemSelected();
+            e.consume();
           }
-        }
-
-        if (!mySearchField.hasFocus()) {
-          mySearchField.requestFocus();
         }
       }
     });
@@ -139,6 +121,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   public void scheduleSearch() {
     myListener.canSelectStateChanged(this, false);
+    myResultList.setPaintBusy(true);
 
     // evaluate text value in the swing thread
     final String text = mySearchField.getText();
@@ -163,9 +146,11 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
+        if (!myResultList.isShowing()) return;
+        myResultList.getEmptyText().setText("No results");
         myResultList.setModel(model);
         myResultList.setSelectionRow(0);
+        myResultList.setPaintBusy(false);
       }
     });
   }
@@ -300,7 +285,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   public interface Listener {
-    void doubleClicked();
+    void itemSelected();
 
     void canSelectStateChanged(MavenArtifactSearchPanel from, boolean canSelect);
   }

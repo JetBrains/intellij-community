@@ -63,6 +63,44 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
   }
 
+  public void testIgnoringOfflineSetting() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    File sources = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar");
+    File javadoc = new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar");
+
+    assertFalse(sources.exists());
+    assertFalse(javadoc.exists());
+
+    getMavenGeneralSettings().setWorkOffline(false);
+    myProjectsManager.getEmbeddersManager().reset(); // to recognize change
+    downloadArtifacts();
+
+    assertTrue(sources.exists());
+    assertTrue(javadoc.exists());
+
+    FileUtil.delete(sources);
+    FileUtil.delete(javadoc);
+
+    getMavenGeneralSettings().setWorkOffline(true);
+    myProjectsManager.getEmbeddersManager().reset(); // to recognize change
+
+    downloadArtifacts();
+
+    assertTrue(sources.exists());
+    assertTrue(javadoc.exists());
+  }
+
   public void testDownloadingSpecificDependency() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

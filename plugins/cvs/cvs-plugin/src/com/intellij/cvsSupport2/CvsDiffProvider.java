@@ -116,8 +116,11 @@ public class CvsDiffProvider implements DiffProvider{
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(parent, name);
     if (entry == null) return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
 
-    return new ItemLatestState(new CvsRevisionNumber(
-      new StickyHeadGetter.MyStickyBranchHeadGetter(entry.getRevision()).getHead(parent, name)), (! entry.isRemoved()), false);
+    final String stickyHead = new StickyHeadGetter.MyStickyBranchHeadGetter(entry.getRevision()).getHead(parent, name);
+    if (stickyHead == null) {
+      return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
+    }
+    return new ItemLatestState(new CvsRevisionNumber(stickyHead), (! entry.isRemoved()), false);
   }
 
   @Nullable

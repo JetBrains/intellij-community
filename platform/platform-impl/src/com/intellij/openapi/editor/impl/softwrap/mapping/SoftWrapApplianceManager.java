@@ -307,7 +307,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     // We assume here that fold model is processed after soft wrap (as it needs to perform document dimensions mapping).
     // So, there is a possible case that user performed modifications at particular fold region but fold model is not updated yet
     // and IterationState returns valid fold region. Hence, we introduce a dedicated check here.
-    if ((event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
+    if (!foldRegion.isValid() || (event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
         && foldRegion.getEndOffset() > event.getOldExactStartOffset()) || myContext.tokenStartOffset != foldRegion.getStartOffset()) 
     {
       myEventsStorage.add(document, newEvent);
@@ -552,7 +552,15 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    *                          <code>'-1'</code> otherwise
    */
   private int calculateBackwardSpaceOffsetIfPossible(int minOffset, int preferredOffset) {
-    for (int i = preferredOffset - 1; i >= minOffset; i--) {
+    // There is a possible case that we have a long line that contains many non-white space symbols eligible for performing
+    // soft wrap that are preceded by white space symbol. We don't want to create soft wrap that is located so far from the
+    // preferred position then, hence, we check white space symbol existence not more than specific number of symbols back.
+    int maxTrackBackSymbolsNumber = 10;
+    int minOffsetToUse = minOffset;
+    if (preferredOffset - minOffset > maxTrackBackSymbolsNumber) {
+      minOffsetToUse = preferredOffset - maxTrackBackSymbolsNumber;
+    }
+    for (int i = preferredOffset - 1; i >= minOffsetToUse; i--) {
       char c = myContext.text.charAt(i);
       if (c == ' ') {
         return i + 1;

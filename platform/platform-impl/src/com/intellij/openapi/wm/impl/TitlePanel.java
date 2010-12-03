@@ -98,6 +98,7 @@ public class TitlePanel extends JPanel {
 
       Icon separator = active ? mySeparatorActive : mySeparatorInactive;
       separator.paintIcon(this, g, sideRec.x, sideRec.y);
+      separator.paintIcon(this, g, sideRec.x, sideRec.y + 1);
 
     } else {
       g2d.fillRect(0, STRUT, getWidth(), getHeight());
@@ -106,7 +107,7 @@ public class TitlePanel extends JPanel {
 
   public void addButtons(final JComponent buttons, JComponent sideButtons) {
     mySideButtons = sideButtons;
-    mySideButtons.setBorder(new EmptyBorder(0, 6, 0, 6));
+    mySideButtons.setBorder(new EmptyBorder(0, 6, 3, 6));
 
     final JPanel allButtons = new JPanel(new BorderLayout());
     allButtons.setOpaque(false);

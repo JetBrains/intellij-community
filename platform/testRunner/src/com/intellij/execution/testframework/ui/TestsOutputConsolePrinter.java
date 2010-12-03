@@ -108,6 +108,10 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
   }
 
+  public boolean isCurrent(CompositePrintable printable) {
+    return myCurrentTest == printable || (isRoot() && myUnboundOutputRoot != null);
+  }
+
   private boolean isRoot() {
     return myCurrentTest.getParent() == myUnboundOutputRoot;
   }

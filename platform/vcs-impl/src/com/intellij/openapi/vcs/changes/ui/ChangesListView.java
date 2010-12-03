@@ -200,8 +200,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
     else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles());
-    }
-    else if (key == HELP_ID_DATA_KEY) {
+    } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
+      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, haveLocallyDeleted());
+    } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
+      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, haveLocallyModified());
+    } else if (key == HELP_ID_DATA_KEY) {
       sink.put(HELP_ID_DATA_KEY, ourHelpId);
     }
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
@@ -245,16 +248,25 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return new ArrayList<VirtualFile>(files);
   }
 
-  private List<FilePath> getSelectedMissingFiles() {
-    List<FilePath> files = new ArrayList<FilePath>();
+  private List<FilePath> getSelectedFilePaths(final Object tag) {
+    Set<FilePath> files = new HashSet<FilePath>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
-        ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-        files.addAll(node.getAllFilePathsUnder());
+        if (path.getPathCount() > 1) {
+          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
+          if (tag == null || firstNode.getUserObject() == tag) {
+            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            files.addAll(node.getAllFilePathsUnder());
+          }
+        }
       }
     }
-    return files;
+    return new ArrayList<FilePath>(files);
+  }
+
+  private List<FilePath> getSelectedMissingFiles() {
+    return getSelectedFilePaths(TreeModelBuilder.LOCALLY_DELETED_NODE);
   }
 
   protected VirtualFile[] getSelectedFiles() {
@@ -273,6 +285,29 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     files.addAll(getSelectedVirtualFiles(null));
 
     return VfsUtil.toVirtualFileArray(files);
+  }
+
+  protected boolean haveSelectedFileType(final Object tag) {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        if (path.getPathCount() > 1) {
+          ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
+          if ((tag == null || firstNode.getUserObject() == tag) && path.getPathCount() > 2) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean haveLocallyDeleted() {
+    return haveSelectedFileType(TreeModelBuilder.LOCALLY_DELETED_NODE);
+  }
+
+  public boolean haveLocallyModified() {
+    return haveSelectedFileType(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
   }
 
   private Change[] getLeadSelection() {

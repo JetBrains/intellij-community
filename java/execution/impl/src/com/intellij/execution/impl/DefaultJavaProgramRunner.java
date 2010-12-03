@@ -24,7 +24,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -50,7 +49,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
            profile instanceof ModuleRunProfile &&
-           !(profile instanceof RemoteConfiguration);
+           !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }
 
   public JDOMExternalizable createConfigurationData(ConfigurationInfoProvider settingsProvider) {

@@ -645,7 +645,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);
-      if (lastToken.contentType == contentType) {
+      if (lastToken.contentType == contentType && info == lastToken.getHyperlinkInfo()) {
         lastToken.endOffset += length; // optimization
         return;
       }

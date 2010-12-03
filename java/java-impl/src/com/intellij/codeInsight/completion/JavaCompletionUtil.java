@@ -930,7 +930,7 @@ public class JavaCompletionUtil {
 
 
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean needRightParenth = shouldInsertRParenth(context.getCompletionChar(), tailType, hasParams);
+    final boolean needRightParenth = tailType != TailType.SMART_COMPLETION && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
 
     if (needLeftParenth) {
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
@@ -948,6 +948,10 @@ public class JavaCompletionUtil {
     }
 
     if (tailType == TailType.SEMICOLON) {
+      if (!needRightParenth) {
+        return;
+      }
+
       PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
       if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(file.findElementAt(context.getTailOffset() - 1))) {
         return;
@@ -957,19 +961,6 @@ public class JavaCompletionUtil {
     if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
       tailType.processTail(editor, context.getTailOffset());
     }
-  }
-
-  public static boolean shouldInsertRParenth(char completionChar, TailType tailType, boolean hasParams) {
-    if (tailType == TailType.SMART_COMPLETION) {
-      return false;
-    }
-
-    if (completionChar == '(' && !hasParams) {
-      //it's highly probable that the user will type ')' next and it may not be overwritten if the flag is off
-      return CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
-    }
-
-    return true;
   }
 
   @NotNull
