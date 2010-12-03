@@ -123,11 +123,6 @@ public class HectorComponent extends JPanel {
     else {
       layoutHorizontal(panel);
     }
-    // Under GTK L&F JSlider shows value
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      final Dimension size = panel.getSize();
-      panel.setSize(size.width, size.height + 20);
-    }
     gc.gridx = 0;
     gc.gridy = 2;
     gc.weighty = 1.0;
