@@ -27,7 +27,7 @@ import java.util.List;
 @Tag("YouTrack")
 public class YouTrackRepository extends BaseRepositoryImpl {
 
-  private String myDefaultSearch = "for: me sort by: updated";
+  private String myDefaultSearch = "for: me sort by: updated #Unresolved";
 
   /** for serialization */
   @SuppressWarnings({"UnusedDeclaration"})
