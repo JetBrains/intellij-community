@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -124,8 +125,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
       PsiFile file = node.getContainingFile();
-      String fileNameWithExt = file.getName();
-      String fileName = fileNameWithExt.substring(0, fileNameWithExt.length() - 3);
+      String fileName = FileUtil.getNameWithoutExtension(file.getName());
       if (fromImport == null && fileName.equals(node.getText())) {
         registerProblem(node, "Import resolves to its containing file.");
       }
