@@ -5118,10 +5118,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 x = softWrap.getIndentInPixels();
               }
             }
-            if (line + 1 >= lineCount) {
-              myLineWidths.set(line, Math.max(x, maxPreviousSoftWrappedWidth));
-              break;
-            }
 
             FoldRegion collapsed = state.getCurrentFold();
             if (collapsed != null) {
