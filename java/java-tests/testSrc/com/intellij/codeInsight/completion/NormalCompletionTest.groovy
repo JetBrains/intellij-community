@@ -880,4 +880,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue 'new' in strings
   }
 
+  public void testImportAsterisk() {
+    myFixture.configureByText "a.java", "import java.lang.<caret>"
+    myFixture.completeBasic()
+    myFixture.type '*\n'
+    myFixture.checkResult "import java.lang.*<caret>"
+  }
+
 }

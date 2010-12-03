@@ -372,4 +372,19 @@ class A {
     myFixture.type 'ad\t'
     myFixture.checkResult "def x = []; x.add(<caret>) this"
   }
+
+  public void testImportAsterisk() {
+    myFixture.configureByText "a.groovy", "import java.lang.<caret>"
+    myFixture.completeBasic()
+    myFixture.type '*\n'
+    myFixture.checkResult "import java.lang.*<caret>"
+  }
+
+  public void testNoDotsInImport() {
+    myFixture.configureByText "a.groovy", "import java.<caret>"
+    myFixture.completeBasic()
+    myFixture.type 'lan\n'
+    myFixture.checkResult "import java.lang<caret>"
+  }
+
 }
