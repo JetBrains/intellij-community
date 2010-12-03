@@ -18,14 +18,19 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author oleg
  */
-public abstract class ScrollToTheEndToolbarAction extends AnAction {
-  public ScrollToTheEndToolbarAction() {
+public class ScrollToTheEndToolbarAction extends AnAction {
+  private final Editor myEditor;
+
+  public ScrollToTheEndToolbarAction(Editor editor) {
     super();
+    myEditor = editor;
     final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");
     getTemplatePresentation().setDescription(message);
     getTemplatePresentation().setText(message);
@@ -33,5 +38,7 @@ public abstract class ScrollToTheEndToolbarAction extends AnAction {
   }
 
   @Override
-  public abstract void actionPerformed(AnActionEvent e);
+  public void actionPerformed(AnActionEvent e) {
+    EditorUtil.scrollToTheEnd(myEditor);
+  }
 }

@@ -1709,12 +1709,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     };
-    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        EditorUtil.scrollToTheEnd(myEditor);
-      }
-    };
+    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);
 
     //Initializing custom actions
     final AnAction[] consoleActions = new AnAction[4 + customActions.size()];
