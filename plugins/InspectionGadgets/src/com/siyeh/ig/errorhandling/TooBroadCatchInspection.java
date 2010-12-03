@@ -204,11 +204,6 @@ public class TooBroadCatchInspection extends BaseInspection {
                     continue;
                 }
                 final PsiType typeCaught = parameter.getType();
-                if (onlyWarnOnRootExceptions) {
-                    if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
-                        continue;
-                    }
-                }
                 if (exceptionsThrown.contains(typeCaught)) {
                     exceptionsCaught.add(typeCaught);
                 }
@@ -218,6 +213,11 @@ public class TooBroadCatchInspection extends BaseInspection {
                         typeCaught.isAssignableFrom(typeThrown)) {
                         exceptionsCaught.add(typeThrown);
                         typesMasked.add(typeThrown);
+                    }
+                }
+                if (onlyWarnOnRootExceptions) {
+                    if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
+                        continue;
                     }
                 }
                 if (!typesMasked.isEmpty()) {

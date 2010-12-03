@@ -88,6 +88,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
+  private long myStampShown = 0;
   private boolean myShown = false;
   private boolean myDisposed = false;
   private boolean myHidden = false;
@@ -596,6 +597,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     LOG.assertTrue(!myDisposed, disposeTrace);
     LOG.assertTrue(!myShown);
     myShown = true;
+    myStampShown = System.currentTimeMillis();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -606,6 +608,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     hintManager.showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false);
 
     getComponent().getRootPane().getLayeredPane().add(myIconPanel, 42, 0);
+  }
+
+  public boolean mayBeNoticed() {
+    return myStampShown > 0 && System.currentTimeMillis() - myStampShown > 300;
   }
 
   private void addListeners() {

@@ -200,6 +200,24 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public String toString() {
       return contentType + "[" + startOffset + ";" + endOffset + "]";
     }
+
+    @Nullable
+    public HyperlinkInfo getHyperlinkInfo() {
+      return null;
+    }
+  }
+
+  private static class HyperlinkTokenInfo extends TokenInfo {
+    private HyperlinkInfo myHyperlinkInfo;
+
+    HyperlinkTokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset, HyperlinkInfo hyperlinkInfo) {
+      super(contentType, startOffset, endOffset);
+      myHyperlinkInfo = hyperlinkInfo;
+    }
+
+    public HyperlinkInfo getHyperlinkInfo() {
+      return myHyperlinkInfo;
+    }
   }
 
   private final Project myProject;
@@ -476,20 +494,24 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void print(String s, final ConsoleViewContentType contentType) {
+    printHyperlink(s, contentType, null);
+  }
+
+  private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
     synchronized (LOCK) {
       int numberOfSymbolsToProceed = s.length();
       if (contentType != ConsoleViewContentType.USER_INPUT) {
         numberOfSymbolsToProceed = trimDeferredOutputIfNecessary(s.length());
       }
-      
+
       if (numberOfSymbolsToProceed <= 0) {
         return;
       }
-      
+
       if (numberOfSymbolsToProceed < s.length()) {
         s = s.substring(s.length() - numberOfSymbolsToProceed);
       }
-      
+
       myDeferredTypes.add(contentType);
 
       s = StringUtil.convertLineSeparators(s);
@@ -499,7 +521,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myDeferredUserInput.append(s);
       }
 
-      addToken(s.length(), contentType, myDeferredTokens);
+      addToken(s.length(), info, contentType, myDeferredTokens);
 
       if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
         if (contentType == ConsoleViewContentType.USER_INPUT) {
@@ -592,7 +614,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!myDeferredTokens.isEmpty()) {
       TokenInfo tokenInfo = myDeferredTokens.get(0);
       if (tokenInfo.startOffset > 0) {
-        myDeferredTokens.add(0, new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
+        final HyperlinkInfo hyperlinkInfo = tokenInfo.getHyperlinkInfo();
+        myDeferredTokens.add(0, hyperlinkInfo != null ? new HyperlinkTokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo)
+                                                      : new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
         myDeferredTypes.add(ConsoleViewContentType.USER_INPUT);
       }
     }
@@ -610,14 +634,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
     myContentSize+=length;
-    addToken(length, contentType);
+    addToken(length, null, contentType);
   }
 
-  private void addToken(int length, ConsoleViewContentType contentType) {
-    addToken(length, contentType, myTokens);
+  private void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType) {
+    addToken(length, info, contentType, myTokens);
   }
 
-  private static void addToken(int length, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
+  private static void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);
@@ -630,7 +654,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
-    tokens.add(new TokenInfo(contentType, startOffset, startOffset + length));
+    tokens.add(info != null ? new HyperlinkTokenInfo(contentType, startOffset, startOffset + length, info)
+                            : new TokenInfo(contentType, startOffset, startOffset + length));
   }
 
   private ModalityState getStateForUpdate() {
@@ -659,6 +684,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final String text;
     final Collection<ConsoleViewContentType> contentTypes;
+    int deferredTokensSize;
     synchronized (LOCK) {
       if (myOutputPaused) return;
       if (myDeferredOutput.length() == 0) return;
@@ -667,8 +693,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       text = myDeferredOutput.substring(0, myDeferredOutput.length());
       contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myDeferredTypes));
       for (TokenInfo deferredToken : myDeferredTokens) {
-        addToken(deferredToken.getLength(), deferredToken.contentType);
+        addToken(deferredToken.getLength(), deferredToken.getHyperlinkInfo(), deferredToken.contentType);
       }
+      deferredTokensSize = myDeferredTokens.size();
       myDeferredTokens.clear();
       myDeferredTypes.clear();
       if (USE_CYCLIC_BUFFER) {
@@ -692,6 +719,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     }, null, DocCommandGroupId.noneGroupId(document));
+    synchronized (LOCK) {
+      for (int i = myTokens.size() - 1; i >=0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
+        TokenInfo token = myTokens.get(i);
+        final HyperlinkInfo info = token.getHyperlinkInfo();
+        if (info != null) {
+          addHyperlink(token.startOffset, token.endOffset, null, info, getHyperlinkAttributes());
+        }
+      }
+    }
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
@@ -769,10 +805,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void printHyperlink(final String hyperlinkText, final HyperlinkInfo info) {
     if (myEditor == null) return;
-    print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT);
-    flushDeferredText();
-    final int textLength = myEditor.getDocument().getTextLength();
-    addHyperlink(textLength - hyperlinkText.length(), textLength, null, info, getHyperlinkAttributes());
+    printHyperlink(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
   }
 
   public static TextAttributes getHyperlinkAttributes() {
@@ -977,7 +1010,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     group.add(new CopyAction());
     group.addSeparator();
     final ActionManager actionManager = ActionManager.getInstance();
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU));
+    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN,
+                                                                     (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU));
     menu.getComponent().show(component, x, y);
   }
 

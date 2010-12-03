@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -367,7 +366,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
 
     final int invocationCount = parameters.getInvocationCount();
-    final boolean secondCompletionInvoked = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION ? invocationCount > 0 : invocationCount > 1;
+    final boolean secondCompletionInvoked = invocationCount > 1;
 
     final String prefix = result.getPrefixMatcher().getPrefix();
     final boolean skipAccessors = !secondCompletionInvoked && !prefix.startsWith(GET_PREFIX) &&

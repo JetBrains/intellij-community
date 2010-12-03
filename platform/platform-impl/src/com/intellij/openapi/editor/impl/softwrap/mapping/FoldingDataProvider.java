@@ -85,7 +85,7 @@ public class FoldingDataProvider extends AbstractDataProvider<SoftWrapDataProvid
       }
 
       myIndex = i;
-      break;
+      return;
     }
     myIndex = start;
   }

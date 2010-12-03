@@ -311,7 +311,7 @@ def layoutFull(String home, String targetDirectory) {
           jar("tasks-api.jar") { module("tasks-api") }
           jar("tasks-core.jar") { module("tasks-core") }
           jar("jira-connector.jar") { module("jira-connector") }
-          jar("tasks-java.jar") { moduleOptional("tasks-java") }
+          jar("tasks-java.jar") { module("tasks-java") }
           fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
             include(name: "**/*.jar")
           }

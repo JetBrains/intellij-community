@@ -94,5 +94,5 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return getAllModules();
   }
 
-  
+
 }
