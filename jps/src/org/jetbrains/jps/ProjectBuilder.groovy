@@ -7,8 +7,9 @@ import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
+import org.jetbrains.ether.Reporter
 
- /**
+/**
  * @author max
  */
 class ProjectBuilder {
@@ -70,8 +71,8 @@ class ProjectBuilder {
     buildAllModules(true)
   }
 
-  public def buildSelected (Collection<Module> modules, boolean tests) {
-    buildModules (modules, tests)
+  public def buildSelected(Collection<Module> modules, boolean tests) {
+    buildModules(modules, tests)
   }
 
   public def buildProduction() {
@@ -84,12 +85,12 @@ class ProjectBuilder {
     listeners*.onBuildFinished(project)
   }
 
-  private def clearChunks (Collection<Module> modules) {
+  private def clearChunks(Collection<Module> modules) {
     getChunks(true).getChunkList().each {
-          if (!modules.intersect(it.modules).isEmpty()) {
-            clearChunk(it)
-          }
-        }
+      if (!modules.intersect(it.modules).isEmpty()) {
+        clearChunk(it)
+      }
+    }
   }
 
   private def buildModules(Collection<Module> modules, boolean includeTests) {
@@ -146,7 +147,7 @@ class ProjectBuilder {
     buildModules(dependencies, includeTests)
   }
 
-  private def clearChunk (ModuleChunk chunk) {
+  private def clearChunk(ModuleChunk chunk) {
     if (!project.dryRun) {
       project.stage("Cleaning module ${chunk.name}")
       chunk.modules.each {project.cleanModule it}
@@ -194,6 +195,10 @@ class ProjectBuilder {
   }
 
   private def compile(ModuleChunk chunk, boolean tests) {
+    if (chunk.toString().startsWith("ModuleChunk")) {
+      final String x = "";
+    }
+
     List<String> chunkSources = filterNonExistingFiles(tests ? chunk.testRoots : chunk.sourceRoots, true)
     if (chunkSources.isEmpty()) return
 
@@ -202,21 +207,21 @@ class ProjectBuilder {
       List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
-          sourceRoots: chunkSources,
-          excludes: chunk.excludes,
-          classpath: chunkClasspath,
-          moduleDependenciesSourceRoots: chunkDependenciesSourceRoots,
+              sourceRoots: chunkSources,
+              excludes: chunk.excludes,
+              classpath: chunkClasspath,
+              moduleDependenciesSourceRoots: chunkDependenciesSourceRoots,
       )
       if (arrangeModuleCyclesOutputs) {
         chunk.modules.each {
           List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
-                sourceRoots: sourceRoots,
-                excludes: it.excludes,
-                classpath: chunkClasspath,
-                targetFolder: createOutputFolder(it.name, it, tests),
-                moduleDependenciesSourceRoots: chunkDependenciesSourceRoots
+                    sourceRoots: sourceRoots,
+                    excludes: it.excludes,
+                    classpath: chunkClasspath,
+                    targetFolder: createOutputFolder(it.name, it, tests),
+                    moduleDependenciesSourceRoots: chunkDependenciesSourceRoots
             )
             states[state] = new ModuleChunk(it)
           }
@@ -234,15 +239,27 @@ class ProjectBuilder {
       }
 
       listeners*.onCompilationStarted(chunk)
-      builders().each {ModuleBuilder builder ->
-        listeners*.onModuleBuilderStarted(builder, chunk)
-        if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
-          ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, project)
+
+      try {
+        builders().each {ModuleBuilder builder ->
+          listeners*.onModuleBuilderStarted(builder, chunk)
+          if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
+            ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, project)
+          }
+          states.keySet().each {
+            builder.processModule(it, states[it], project)
+          }
+          listeners*.onModuleBuilderFinished(builder, chunk)
         }
-        states.keySet().each {
-          builder.processModule(it, states[it], project)
+      }
+      catch (Exception e) {
+        final String reason = e.toString();
+
+        chunk.modules.each {
+          Reporter.reportBuildFailure (it, tests, reason)
         }
-        listeners*.onModuleBuilderFinished(builder, chunk)
+
+        throw e;
       }
 
       states.keySet().each {
@@ -257,6 +274,7 @@ class ProjectBuilder {
     }
 
     chunk.modules.each {
+      Reporter.reportBuildSuccess (it, tests)
       project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
   }
@@ -355,7 +373,7 @@ class ProjectBuilder {
   private def collectPathTransitively(Object chunkOrModule, boolean collectSources, ClasspathKind classpathKind, Set<String> set, Set<Object> processed) {
     if (processed.contains(chunkOrModule)) return
     processed << chunkOrModule
-    
+
     chunkOrModule.getClasspath(classpathKind).each {
       if (it instanceof Module) {
         collectPathTransitively(it, collectSources, classpathKind, set, processed)

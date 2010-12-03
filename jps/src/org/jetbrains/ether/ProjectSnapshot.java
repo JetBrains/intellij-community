@@ -68,22 +68,6 @@ public class ProjectSnapshot {
     }
 
     public boolean structureChanged (final ProjectSnapshot p) {
-        /*
-        try {
-            Writer fo1 = new BufferedWriter(new FileWriter("/home/db/tmp/1.history"));
-            Writer fo2 = new BufferedWriter(new FileWriter("/home/db/tmp/2.history"));
-
-            fo1.write(p.myProjectStructure);
-            fo2.write(myProjectStructure);
-
-            fo1.close();
-            fo2.close();
-        }
-        catch (IOException e) {
-
-        }
-        */
-
         return ! p.myProjectStructure.equals(myProjectStructure);
     }
 }

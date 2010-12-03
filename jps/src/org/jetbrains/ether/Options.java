@@ -165,7 +165,7 @@ public class Options {
                                     callback.update(myKey, SWITCH);
                                     break;
                                 case MANDATORY:
-                                    callback.report("option \"" + arg + "\" requires an argument, discarding");
+                                    callback.report("option \"" + arg + "\" requires an argument, discarding.");
                             }
                 };
 
@@ -181,7 +181,7 @@ public class Options {
                 switch (myArgumentSpecifier) {
                     case MANDATORY:
                         if (prm == null)
-                            callback.report("option \"" + arg + "\" requires an argument, discarding");
+                            callback.report("option \"" + arg + "\" requires an argument, discarding.");
                         else
                             callback.update(myKey, new Value (prm));
                         break;
@@ -190,7 +190,7 @@ public class Options {
                         if (prm == null)
                             callback.update(myKey, SWITCH);
                         else
-                            callback.report("option \"" + arg + "\" does not take an argument, omitting");
+                            callback.report("option \"" + arg + "\" does not take an argument, omitting.");
                         break;
 
                     case OPTIONAL:
@@ -239,7 +239,7 @@ public class Options {
                recognized |= myDescriptors[i].proceed(cursor, cb);
 
             if (!recognized) {
-                cb.report("unrecognized option \"" + cursor.look() + "\" omitted");
+                cb.report("unrecognized option \"" + cursor.look() + "\" omitted.");
                 cursor.shift();
             }
         }

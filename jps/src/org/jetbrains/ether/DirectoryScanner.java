@@ -89,11 +89,14 @@ public class DirectoryScanner {
             }
 
             if (alternative.length() > 0) {
-                if (buf.length() > 0) {
-                    buf.append("|(");
-                    buf.append(alternative);
-                    buf.append(')');
-                }
+                alternative.append(".*");
+
+                if (buf.length() > 0)
+                    buf.append("|");
+
+                buf.append("(");
+                buf.append(alternative);
+                buf.append(')');
             }
         }
 
@@ -102,9 +105,10 @@ public class DirectoryScanner {
 
             return new FileFilter() {
                 public boolean accept (File f) {
-                    final Matcher m = patt.matcher(f.getName());
+                    final Matcher m = patt.matcher(f.getAbsolutePath());
+                    final boolean ok = !m.matches();
 
-                    return !m.matches();
+                    return ok;
                 }
             };
         }

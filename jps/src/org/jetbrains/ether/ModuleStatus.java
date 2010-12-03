@@ -50,7 +50,13 @@ public class ModuleStatus {
             System.err.println("Error converting string \"" + s + "\" to ModuleStatus");
     }
 
-    public boolean isOutdated(){
-        return (myOutputStamp <= mySourceStamp) || (myTestOutputStamp <= myTestSourceStamp);
+    private static boolean wiseCompare (long input, long output) {
+        final boolean result = (input > 0 && output == Long.MAX_VALUE) || (output <= input);
+        return result;
+    }
+
+    public boolean isOutdated(boolean tests) {
+        final boolean result = wiseCompare(mySourceStamp, myOutputStamp) || (tests && wiseCompare(myTestSourceStamp, myTestOutputStamp));
+        return result;
     }
 }

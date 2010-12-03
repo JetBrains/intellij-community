@@ -14,7 +14,15 @@
     <orderEntry type="library" name="Javac2" level="project" />
     <orderEntry type="module" module-name="antlayout" />
     <orderEntry type="library" scope="TEST" name="JUnit" level="project" />
-    <orderEntry type="library" exported="" name="Gant" level="application" />
+    <orderEntry type="module-library">
+      <library name="Gant">
+        <CLASSES>
+          <root url="jar:///usr/share/groovy/lib/gant-1.8.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

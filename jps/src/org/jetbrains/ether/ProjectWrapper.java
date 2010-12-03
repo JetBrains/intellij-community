@@ -1,5 +1,6 @@
 package org.jetbrains.ether;
 
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.codehaus.gant.GantBinding;
 import org.jetbrains.jps.ClasspathItem;
 import org.jetbrains.jps.Module;
@@ -17,7 +18,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ProjectWrapper {
-    // Home direcroty
+    // Home directory
     private static final String myHomeDir = System.getProperty("user.home");
 
     // JPS directory
@@ -113,7 +114,8 @@ public class ProjectWrapper {
         if (m == null) {
             System.out.println("No module \"" + module + "\" found in project \"");
         } else {
-            System.out.println("Module " + m.myName + " " + (m.isOutdated() ? "is outdated" : "is up-to-date"));
+            System.out.println("Module " + m.myName + " " + (m.isOutdated(false) ? "is outdated" : "is up-to-date"));
+            System.out.println("Module " + m.myName + " tests " + (m.isOutdated(true) ? "are outdated" : "are up-to-date"));
         }
     }
 
@@ -140,7 +142,8 @@ public class ProjectWrapper {
 
         if (moduleReport) {
             for (ModuleStatus mh : myPresent.myModuleHistories.values()) {
-                System.out.println("   module " + mh.myName + " " + (mh.isOutdated() ? "is outdated" : "is up-to-date"));
+                System.out.println("   module " + mh.myName + " " + (mh.isOutdated(false) ? "is outdated" : "is up-to-date"));
+                System.out.println("   module " + mh.myName + " tests " + (mh.isOutdated(true) ? "are outdated" : "are up-to-date"));
             }
         }
     }
@@ -167,7 +170,7 @@ public class ProjectWrapper {
         final List<Module> modules = new ArrayList<Module>();
 
         for (Map.Entry<String, ModuleStatus> entry : myPresent.myModuleHistories.entrySet()) {
-            if (entry.getValue().isOutdated())
+            if (entry.getValue().isOutdated(tests))
                 modules.add(myProject.getModules().get(entry.getKey()));
         }
 
@@ -186,25 +189,37 @@ public class ProjectWrapper {
 
     private void makeModules(final List<Module> initial, final boolean tests) {
         final Set<Module> modules = new HashSet<Module>();
+        final Map<Module, Set<Module>> reversedDependencies = new HashMap<Module, Set<Module>> ();
+
+        for (Module m : myProject.getModules().values()) {
+            for (Module.ModuleDependency mdep : m.getDependencies()) {
+                final ClasspathItem cpi = mdep.getItem();
+
+                if (cpi instanceof Module) {
+                    Set<Module> sm = reversedDependencies.get(cpi);
+
+                    if (sm == null) {
+                        sm = new HashSet<Module> ();
+                        reversedDependencies.put((Module) cpi, sm);
+                    }
+
+                    sm.add(m);
+                }
+            }
+        }
 
         new Object() {
-            public void run(final List<Module> initial) {
+            public void run(final Collection<Module> initial) {
+                if (initial == null)
+                    return;
+
                 for (Module module : initial) {
                     if (modules.contains(module))
-                        return;
+                        continue;
 
                     modules.add(module);
 
-                    final List<Module> successors = new ArrayList<Module>();
-
-                    for (Module.ModuleDependency dep : module.getDependencies()) {
-                        final ClasspathItem cpi = dep.getItem();
-
-                        if (cpi instanceof Module) {
-                            successors.add((Module) cpi);
-                        }
-                    }
-                    run(successors);
+                    run(reversedDependencies.get(module));
                 }
             }
         }.run(initial);
@@ -230,7 +245,7 @@ public class ProjectWrapper {
         }
 
         final ModuleStatus h = myPresent.myModuleHistories.get(modName);
-        if (h != null && !h.isOutdated() && !force) {
+        if (h != null && !h.isOutdated(tests) && !force) {
             System.out.println("Module \"" + modName + "\" in project \"" + myRoot + "\" is up-to-date.");
             return;
         }
