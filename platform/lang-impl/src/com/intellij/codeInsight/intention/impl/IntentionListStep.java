@@ -356,7 +356,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   public ListSeparator getSeparatorAbove(final IntentionActionWithTextCaching value) {
     List<IntentionActionWithTextCaching> values = getValues();
     int index = values.indexOf(value);
-    if (index == 0) return null;
+    if (index <= 0) return null;
     IntentionActionWithTextCaching prev = values.get(index - 1);
 
     if (getGroup(value) != getGroup(prev)) {
