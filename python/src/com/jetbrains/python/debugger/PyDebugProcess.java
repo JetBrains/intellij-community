@@ -394,12 +394,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void processTerminated(ProcessEvent event) {
-    myClosing = true;
-    myDebugger.close();
   }
 
   @Override
   public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+    myClosing = true;
+    myDebugger.close();
   }
 
   @Override
