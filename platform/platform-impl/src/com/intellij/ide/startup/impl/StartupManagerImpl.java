@@ -110,6 +110,8 @@ public class StartupManagerImpl extends StartupManagerEx {
           runActivities(myStartupActivities);
 
           myStartupActivitiesRunning = false;
+
+          startCacheUpdate();
           myStartupActivitiesPassed = true;
         }
         finally {
@@ -144,9 +146,9 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  public void startCacheUpdate() {
+  private void startCacheUpdate() {
     try {
-      DumbServiceImpl.getInstance(myProject).queueCacheUpdateInDumbMode(myCacheUpdaters);
+      DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myCacheUpdaters);
     }
     catch (ProcessCanceledException e) {
       throw e;
