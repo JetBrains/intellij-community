@@ -14,7 +14,8 @@
         </constraints>
         <properties>
           <font/>
-          <text value="Name*"/>
+          <labelFor value="27135"/>
+          <text value="&amp;Name*"/>
         </properties>
       </component>
       <vspacer id="4df42">
@@ -40,7 +41,8 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Target*"/>
+          <labelFor value="7af81"/>
+          <text value="&amp;Target*"/>
         </properties>
       </component>
       <component id="670f4" class="javax.swing.JLabel">
@@ -48,7 +50,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Skin"/>
+          <labelFor value="b17b9"/>
+          <text value="&amp;Skin"/>
         </properties>
       </component>
       <component id="7af81" class="javax.swing.JComboBox" binding="myTargetBox">
