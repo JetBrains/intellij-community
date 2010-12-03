@@ -17,6 +17,7 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -248,7 +249,7 @@ public class CompositePrintable implements Printable, Disposable {
         try {
           reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
           int lineNum = 0;
-          while (reader.available() > 0) {
+          while (reader.available() > 0 && !wasPrintableChanged(printer)) {
             if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
             final String line = IOUtil.readString(reader);
             boolean printed = false;
@@ -297,6 +298,10 @@ public class CompositePrintable implements Printable, Disposable {
             LOG.error(e);
           }
         }
+      }
+
+      private boolean wasPrintableChanged(Printer printer) {
+        return printer instanceof TestsOutputConsolePrinter && !((TestsOutputConsolePrinter)printer).isCurrent(CompositePrintable.this);
       }
     }
   }
