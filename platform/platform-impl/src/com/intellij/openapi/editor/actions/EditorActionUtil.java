@@ -267,34 +267,43 @@ public class EditorActionUtil {
 
   private static void moveCaretToStartOfSoftWrappedLine(Editor editor, VisualPosition currentVisual, int softWrappedLines) {
     CaretModel caretModel = editor.getCaretModel();
-    int line = currentVisual.line;
-
-    // We use default column value as '1' below in assumption that we work with soft-wrapped line and don't want to put cursor
-    // before 'after soft wrap' drawing.
-    int column = 1;
-
-    if (currentVisual.column <= 1) {
-      line--;
-      softWrappedLines--;
-      // There is a possible case that caret is located at the start of the second visual line of soft-wrapped line.
-      // Hence, it should be moved to the start of the previous visual line which anchor column is not '1'
-      // (after soft wrap drawing) but '0'.
-      int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, line);
-      if (softWrappedLines <= 0) {
-        column = nonSpaceColumn >= 0 ? nonSpaceColumn : 0;
+    LogicalPosition startLineLogical = editor.visualToLogicalPosition(new VisualPosition(currentVisual.line, 0));
+    int startLineOffset = editor.logicalPositionToOffset(startLineLogical);
+    SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+    SoftWrap softWrap = softWrapModel.getSoftWrap(startLineOffset);
+    if (softWrap == null) {
+      // Don't expect to be here.
+      int column = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
+      int columnToMove = column;
+      if (currentVisual.column <= column && currentVisual.column > 0) {
+        columnToMove = 0;
       }
-      else {
-        column = nonSpaceColumn >= 1 ? nonSpaceColumn : 1;
-      }
+      caretModel.moveToVisualPosition(new VisualPosition(currentVisual.line, columnToMove));
+      return;
+    }
+
+    if (currentVisual.column > softWrap.getIndentInColumns()) {
+      caretModel.moveToOffset(softWrap.getStart());
+    }
+    else if (currentVisual.column > 0) {
+      caretModel.moveToVisualPosition(new VisualPosition(currentVisual.line, 0));
     }
     else {
-      int nonSpaceColumn = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
-      if (nonSpaceColumn > 1 /* current visual line is not empty */ && nonSpaceColumn < currentVisual.column) {
-        column = nonSpaceColumn;
+      // We assume that caret is already located at zero visual column of soft-wrapped line if control flow reaches this place.
+      int newVisualCaretLine = currentVisual.line - 1;
+      int newVisualCaretColumn = -1;
+      if (softWrappedLines > 1) {
+        int offset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(newVisualCaretLine, 0)));
+        SoftWrap prevLineSoftWrap = softWrapModel.getSoftWrap(offset);
+        if (prevLineSoftWrap != null) {
+          newVisualCaretColumn = prevLineSoftWrap.getIndentInColumns();
+        }
       }
+      if (newVisualCaretColumn < 0) {
+        newVisualCaretColumn = findFirstNonSpaceColumnOnTheLine(editor, newVisualCaretLine);
+      }
+      caretModel.moveToVisualPosition(new VisualPosition(newVisualCaretLine, newVisualCaretColumn));
     }
-
-    caretModel.moveToVisualPosition(new VisualPosition(line, column));
   }
 
   private static int findSmartIndentColumn(Editor editor, int visualLine) {
