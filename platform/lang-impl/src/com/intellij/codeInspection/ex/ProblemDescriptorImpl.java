@@ -196,6 +196,8 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   }
 
   public void dispose() {
+    QuickFix[] fixes = getFixes();
+    if (fixes != null && fixes.length != 0) return;
     ((SmartPointerEx)myStartSmartPointer).dispose();
     if (myEndSmartPointer != null) ((SmartPointerEx)myEndSmartPointer).dispose();
   }
