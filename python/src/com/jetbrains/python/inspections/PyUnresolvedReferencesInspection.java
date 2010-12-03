@@ -209,6 +209,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
               }
             }
+            for (PyFunction method : containedClass.getMethods()) {
+              Property property = method.getProperty();
+              if (property != null) {
+                actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+              }
+            }
           }
           PyCallExpression callExpression = PsiTreeUtil.getParentOfType(ref_element, PyCallExpression.class);
           if (callExpression != null)
