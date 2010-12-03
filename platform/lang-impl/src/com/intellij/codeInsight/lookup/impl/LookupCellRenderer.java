@@ -348,7 +348,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     public void paint(Graphics g){
       UISettings.setupAntialiasing(g);
-      if (!myLookup.isFocused()) {
+      if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
       }
       super.paint(g);
