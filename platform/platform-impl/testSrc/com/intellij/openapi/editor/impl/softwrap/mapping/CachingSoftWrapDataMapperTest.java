@@ -351,6 +351,27 @@ public class CachingSoftWrapDataMapperTest {
   }
 
   @Test
+  public void consecutiveFoldRegions() {
+    String document = 
+      "package org;\n" +
+      "\n" +
+      "import <FOLD>java.util.List;\n" +
+      "import java.util.ArrayList;\n" +
+      "import java.util.LinkedList;</FOLD>\n" +
+      "<FOLD>/**\n" +
+      " * @author Vasiliy\n" +
+      " */</FOLD>\n" +
+      "public class Test {\n" +
+      "    <FOLD>/**\n" +
+      "     * Method-level javadoc\n" +
+      "     */</FOLD>\n" +
+      "     public void test() {\n" +
+      "     }" +
+      "}";
+    test(document);
+  }
+
+  @Test
   public void tabSymbolsBeforeSoftWrap() {
     String document =
       "class Test\t\t{<WRAP>\n" +
@@ -519,8 +540,6 @@ public class CachingSoftWrapDataMapperTest {
       // We don't to perform the check for the data that points to soft wrap location here. The reason is that it shares offset
       // with the first document symbol after soft wrap, hence, examination always fails.
       if (!data.virtualSpace && !data.insideTab && !equals(data.logical, actualLogicalByOffset)) {
-        //TODO den remove
-        myMapper.offsetToLogicalPosition(data.offset);
         throw new AssertionError(
           String.format("Detected unmatched logical position by offset. Expected: '%s', actual: '%s'. Calculation was performed "
                         + "against offset: '%d' and soft wrap-unaware logical: '%s'",
