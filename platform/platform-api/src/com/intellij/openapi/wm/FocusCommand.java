@@ -145,5 +145,8 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
       return myToFocus == null || SwingUtilities.getWindowAncestor(myToFocus) == null;
     }
 
+    public Component getComponent() {
+      return myToFocus;
+    }
   }
 }

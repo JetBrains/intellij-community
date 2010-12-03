@@ -213,12 +213,6 @@ public class EditorsSplitters extends JPanel {
       if (comp != null) {
         removeAll();
         add(comp, BorderLayout.CENTER);
-        final EditorComposite lastSelected = getManager().getLastSelected();
-        if(lastSelected != null)  {
-          getManager().openFileImpl3(myCurrentWindow, lastSelected.getFile(), true, null, true);
-          //lastSelected.getComponent().requestFocus();
-          //ToolWindowManager.getInstance(getManager().myProject).activateEditorComponent();
-        }
         mySplittersElement = null;
       }
       // clear empty splitters
@@ -286,7 +280,7 @@ public class EditorsSplitters extends JPanel {
               currentFile = entry.myFile;
             }
             if (isCurrent) {
-              setCurrentWindow(window, false);
+              setCurrentWindow(window, true);
             }
           }
         }

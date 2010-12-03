@@ -239,12 +239,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   public void showNotify() {
     if (!myWasEverShown) {
       myWasEverShown = true;
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          getSplitters().openFiles();
-        }
-      });
+      getSplitters().openFiles();
     }
   }
 
