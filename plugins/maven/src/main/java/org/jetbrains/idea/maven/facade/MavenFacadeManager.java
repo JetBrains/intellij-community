@@ -258,12 +258,16 @@ public class MavenFacadeManager extends RemoteObjectWrapper<MavenFacade> {
     return Pair.create(classpath, libDir);
   }
 
-  public MavenEmbedderWrapper createEmbedder(final Project project) {
+  public MavenEmbedderWrapper createEmbedder(final Project project, final boolean alwaysOnline) {
     return new MavenEmbedderWrapper(this) {
       @NotNull
       @Override
       protected MavenFacadeEmbedder create() throws RemoteException {
-        final MavenFacadeSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
+        MavenFacadeSettings settings = convertSettings(MavenProjectsManager.getInstance(project).getGeneralSettings());
+        if (alwaysOnline && settings.isOffline()) {
+          settings = settings.clone();
+          settings.setOffline(false);
+        }
         return MavenFacadeManager.this.getOrCreateWrappee().createEmbedder(settings);
       }
     };

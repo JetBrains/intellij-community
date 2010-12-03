@@ -395,6 +395,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return false;
     }
 
+    startupManager.startCacheUpdate();
     startupManager.runPostStartupActivities();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
