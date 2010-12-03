@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class VcsDirectoryMapping {
+  public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
   private String myDirectory;
   // for reliable comparison
   private String mySystemIdependentPath;

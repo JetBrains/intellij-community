@@ -57,6 +57,7 @@ public class AndroidPlatformChooser implements Disposable {
   private JPanel myComboBoxWrapper;
   private JButton myViewClasspathButton;
   private JButton myRefreshButton;
+  private JLabel myAndroidPlatformLabel;
   private final Project myProject;
 
   private AndroidPlatform myOldPlatform;
@@ -68,6 +69,7 @@ public class AndroidPlatformChooser implements Disposable {
     myPlatformsComboBox = new AndroidPlatformsComboBox(myLibraryManager.getModel(), myLibraryManager.getLibraryModels());
     myComboBoxWrapper.setLayout(new BorderLayout(1, 1));
     myComboBoxWrapper.add(myPlatformsComboBox);
+    myAndroidPlatformLabel.setLabelFor(myPlatformsComboBox);
     myNewButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         createNewPlatform();

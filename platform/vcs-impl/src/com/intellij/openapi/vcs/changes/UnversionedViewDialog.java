@@ -119,6 +119,13 @@ public class UnversionedViewDialog extends DialogWrapper {
     final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
     actions.add(collapseAction);
     actions.add(new ToggleShowFlattenAction());
+    actions.add(new ScheduleForAdditionAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        refreshView();
+      }
+    });
     actions.add(new MoveChangesToAnotherListAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -143,13 +150,6 @@ public class UnversionedViewDialog extends DialogWrapper {
     };
     actions.add(deleteUnversionedFilesAction);
     deleteUnversionedFilesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
-    actions.add(new ScheduleForAdditionAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
-      }
-    });
     actions.add(new IgnoreUnversionedAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {

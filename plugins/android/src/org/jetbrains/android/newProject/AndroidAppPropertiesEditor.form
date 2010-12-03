@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="b529a"/>
-              <text value="A&amp;pplication name"/>
+              <text value="Appl&amp;ication name:"/>
             </properties>
           </component>
           <component id="b529a" class="javax.swing.JTextField" binding="myApplicationNameField">
@@ -41,7 +41,7 @@
             </constraints>
             <properties>
               <labelFor value="6fadd"/>
-              <text value="Pa&amp;ckage name*"/>
+              <text value="Pa&amp;ckage name*:"/>
             </properties>
           </component>
           <component id="6fadd" class="javax.swing.JTextField" binding="myPackageNameField">
@@ -60,7 +60,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Crea&amp;te &quot;Hello, World!&quot; project"/>
+              <text value="Create &quot;&amp;Hello, World!&quot; project"/>
             </properties>
           </component>
           <grid id="f0788" binding="myActivtiyPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -80,7 +80,7 @@
                 <properties>
                   <enabled value="true"/>
                   <labelFor value="eff8"/>
-                  <text value="Act&amp;ivity name"/>
+                  <text value="Activit&amp;y name"/>
                 </properties>
               </component>
               <component id="eff8" class="javax.swing.JTextField" binding="myActivityNameField">
