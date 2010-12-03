@@ -134,25 +134,20 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
         return;
       }
     } else {
-      int tailOffset = context.getTailOffset();
-      if (mySpaceBeforeParentheses) {
-        tailOffset = TailType.insertChar(editor, tailOffset, ' ');
-      }
-      tailOffset = TailType.insertChar(editor, tailOffset, '(');
-      if (mySpaceBetweenParentheses) {
-        tailOffset = TailType.insertChar(editor, tailOffset, ' ');
-      }
+      document.insertString(context.getTailOffset(), getSpace(mySpaceBeforeParentheses) + "(" + getSpace(mySpaceBetweenParentheses));
+      editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
 
     if (!myInsertRightParenthesis) return;
 
-    int tailOffset = context.getTailOffset();
-    int caret = tailOffset;
-    if (mySpaceBetweenParentheses) {
-      tailOffset = TailType.insertChar(editor, tailOffset, ' ');
+    document.insertString(context.getTailOffset(), getSpace(mySpaceBetweenParentheses) + ")");
+    if (!putCaretInside) {
+      editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
-    document.insertString(tailOffset, ")");
-    editor.getCaretModel().moveToOffset(putCaretInside ? caret : context.getTailOffset());
+  }
+
+  private static String getSpace(boolean needSpace) {
+    return needSpace ? " " : "";
   }
 
   @Nullable
