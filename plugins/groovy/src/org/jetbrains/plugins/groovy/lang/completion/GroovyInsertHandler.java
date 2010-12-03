@@ -33,14 +33,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Arrays;
@@ -101,18 +99,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
       docManager.commitDocument(document);
       PsiFile psiFile = docManager.getPsiFile(document);
-      if (method instanceof GrMethod &&
-          method.getParameterList().getParametersCount() > 0 &&
-          method.getContainingClass() instanceof GroovyScriptClass &&
-          isExpressionStatement(psiFile, context.getStartOffset())) {
-        return;
-      }
-      if (isExpressionStatement(psiFile, context.getStartOffset()) &&
-          (PsiType.VOID.equals(PsiUtil.getSmartReturnType(method)) ||
-           method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) &&
-          '(' != context.getCompletionChar() &&
-          parameters.length > 0) {
-        TailType.insertChar(editor, offset, ' ');
+      if (method.getParameterList().getParametersCount() > 0 && isExpressionStatement(psiFile, context.getStartOffset())) {
         return;
       }
 
@@ -161,7 +148,10 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     if (elementAt == null) return false;
     GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
     if (expr == null) return false;
-    return expr.getParent() instanceof GrControlFlowOwner;
+    final PsiElement parent = expr.getParent();
+    if (parent instanceof GrControlFlowOwner) return true;
+    if (parent instanceof GrExpression || parent instanceof GrArgumentList) return false;
+    return true;
   }
 
   private static void handleOverwrite(final int offset, final Document document) {
