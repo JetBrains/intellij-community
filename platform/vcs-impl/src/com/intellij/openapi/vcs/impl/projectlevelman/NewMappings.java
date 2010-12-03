@@ -68,11 +68,15 @@ public class NewMappings {
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
     myActiveVcses = new AbstractVcs[0];
 
-    final ArrayList<VcsDirectoryMapping> listStr = new ArrayList<VcsDirectoryMapping>();
-    final VcsDirectoryMapping mapping = new VcsDirectoryMapping("", "");
-    listStr.add(mapping);
-    myVcsToPaths.put("", listStr);
-    mySortedMappings = new VcsDirectoryMapping[] {mapping};
+    if (! myProject.isDefault()) {
+      final ArrayList<VcsDirectoryMapping> listStr = new ArrayList<VcsDirectoryMapping>();
+      final VcsDirectoryMapping mapping = new VcsDirectoryMapping("", "");
+      listStr.add(mapping);
+      myVcsToPaths.put("", listStr);
+      mySortedMappings = new VcsDirectoryMapping[] {mapping};
+    } else {
+      mySortedMappings = VcsDirectoryMapping.EMPTY_ARRAY;
+    }
     myActivated = false;
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, new DumbAwareRunnable() {
@@ -297,7 +301,7 @@ public class NewMappings {
       public void run() {
         myVcsToPaths.clear();
         myActiveVcses = new AbstractVcs[0];
-        mySortedMappings = new VcsDirectoryMapping[0];
+        mySortedMappings = VcsDirectoryMapping.EMPTY_ARRAY;
       }
     });
     myFileWatchRequestsManager.ping();
