@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.MacFileChooserDialogImpl;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class FileChooserFactoryImpl extends FileChooserFactory {
-  public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
+  public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, @Nullable Project project) {
     final Object macNativeFileChooser = descriptor.getUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED.getName());
     if (SystemInfo.isMac && macNativeFileChooser instanceof Boolean && ((Boolean)macNativeFileChooser).booleanValue()) {
       return new MacFileChooserDialogImpl(descriptor, project);
