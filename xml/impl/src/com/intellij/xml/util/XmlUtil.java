@@ -48,6 +48,7 @@ import com.intellij.patterns.StringPattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.filters.position.FilterPattern;
@@ -558,6 +559,16 @@ public class XmlUtil {
       }
     }
     return null;
+  }
+
+  public static void reformatTagStart(XmlTag tag) {
+    ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+    if (child == null) {
+      CodeStyleManager.getInstance(tag.getProject()).reformat(tag);
+    }
+    else {
+      CodeStyleManager.getInstance(tag.getProject()).reformatRange(tag, tag.getTextRange().getStartOffset(), child.getTextRange().getEndOffset());
+    }
   }
 
   private static class XmlElementProcessor {

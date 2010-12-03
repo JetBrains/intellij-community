@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -267,7 +266,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       manager.commitDocument(document);
       XmlTag tag = pointer.getElement();
       assert tag != null;
-      CodeStyleManager.getInstance(project).reformat(tag);
+      XmlUtil.reformatTagStart(tag);
     }
 
     protected void doRemove(Project project, XmlAttribute attribute, XmlTag parent) {
