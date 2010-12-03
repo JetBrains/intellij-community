@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -82,6 +83,10 @@ public class GitBinaryHandler extends GitHandler {
     super(project, vcsRoot, command);
   }
 
+  @Override
+  protected Process startProcess() throws ExecutionException {
+    return myCommandLine.createProcess();
+  }
 
   /**
    * {@inheritDoc}
@@ -132,7 +137,7 @@ public class GitBinaryHandler extends GitHandler {
    * {@inheritDoc}
    */
   @Override
-  protected void destroyProcess() {
+  public void destroyProcess() {
     myProcess.destroy();
   }
 
