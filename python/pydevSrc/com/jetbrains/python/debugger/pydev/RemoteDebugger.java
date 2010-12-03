@@ -5,13 +5,11 @@
  */
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.debugger.IPyDebugProcess;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyThreadInfo;
+import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -268,6 +266,10 @@ public class RemoteDebugger {
       os.write('\n');
       os.flush();
     }
+    catch (SocketException se) {
+      LOG.error(se);
+      disconnect();
+    }
     catch (IOException e) {
       LOG.error(e);
     }
@@ -338,6 +340,9 @@ public class RemoteDebugger {
         if (AbstractThreadCommand.isThreadCommand(frame.getCommand())) {
           processThreadEvent(frame);
         }
+        else if (AbstractCommand.isWriteToConsole(frame.getCommand())) {
+          writeToConsole(parseIoEvent(frame));
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -390,6 +395,10 @@ public class RemoteDebugger {
       }
     }
 
+    private PyIo parseIoEvent(ProtocolFrame frame) throws PyDebuggerException {
+      return ProtocolParser.parseIo(frame.getPayload());
+    }
+
     private PyThreadInfo parseThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
@@ -401,6 +410,17 @@ public class RemoteDebugger {
       catch (IOException ignore) {
       }
     }
+  }
+
+  private void writeToConsole(PyIo io) {
+    ConsoleViewContentType contentType;
+    if (io.getCtx() == 2) {
+      contentType = ConsoleViewContentType.ERROR_OUTPUT;
+    }
+    else {
+      contentType = ConsoleViewContentType.NORMAL_OUTPUT;
+    }
+    myDebugProcess.printToConsole(io.getText(), contentType);
   }
 
 

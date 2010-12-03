@@ -11,6 +11,9 @@ class IORedirector:
                 r.write(s)
             except:
                 pass
+
+    def flush(self):
+        pass
     
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
@@ -28,4 +31,5 @@ class IOBuf:
     
     def write(self, s):
         self.buflist.append(s)
+
         
