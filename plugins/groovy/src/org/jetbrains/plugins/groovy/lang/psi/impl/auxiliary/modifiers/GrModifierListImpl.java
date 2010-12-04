@@ -148,7 +148,7 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
     if (parent instanceof GrTypeDefinition) {
       if (modifier.equals(GrModifier.STATIC)) {
         final PsiClass containingClass = ((GrTypeDefinition)parent).getContainingClass();
-        return containingClass == null || containingClass.isInterface();
+        return containingClass != null && containingClass.isInterface();
       }
       if (modifier.equals(GrModifier.ABSTRACT)) {
         return ((GrTypeDefinition)parent).isInterface();
