@@ -4,9 +4,6 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.compiler.impl.CompileDriver;
-import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
-
 public class ClassPropertiesTest extends CompilerTestCase {
   public ClassPropertiesTest() {
     super("classProperties");
@@ -14,21 +11,21 @@ public class ClassPropertiesTest extends CompilerTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    if ("removeExtends".equals(getTestName(true))) {
-      System.out.println("================BEGIN removeExtends====================");
-      CompileDriver.ourDebugMode = true;
-      TranslatingCompilerFilesMonitor.ourDebugMode = true;
-    }
+    //if ("removeExtends".equals(getTestName(true))) {
+    //  System.out.println("================BEGIN removeExtends====================");
+    //  CompileDriver.ourDebugMode = true;
+    //  TranslatingCompilerFilesMonitor.ourDebugMode = true;
+    //}
     super.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    if ("removeExtends".equals(getTestName(true))) {
-      System.out.println("================END removeExtends====================");
-    }
-    CompileDriver.ourDebugMode = false;
-    TranslatingCompilerFilesMonitor.ourDebugMode = false;
+    //if ("removeExtends".equals(getTestName(true))) {
+    //  System.out.println("================END removeExtends====================");
+    //}
+    //CompileDriver.ourDebugMode = false;
+    //TranslatingCompilerFilesMonitor.ourDebugMode = false;
     super.tearDown();
   }
 
