@@ -5,12 +5,8 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,7 +43,6 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (lambdaExpression != null) {
       String name = "function";
       PsiElement parent = lambdaExpression.getParent();

@@ -73,4 +73,7 @@ extends
    */
   @Nullable
   Property getProperty();
+
+  @Nullable
+  PyAnnotation getAnnotation();
 }

@@ -39,7 +39,14 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
       return "function";
     }
     if (element instanceof PyClass) return "class";
-    if (element instanceof PyReferenceExpression || element instanceof PyTargetExpression) return "variable";
+    if (element instanceof PyReferenceExpression) return "variable";
+    if (element instanceof PyTargetExpression) {
+      final PyImportElement importElement = PsiTreeUtil.getParentOfType(element, PyImportElement.class);
+      if (importElement != null && importElement.getAsNameElement() == element) {
+        return "imported module alias";
+      }
+      return "variable";
+    }
     return "";
   }
 

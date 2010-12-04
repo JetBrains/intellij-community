@@ -74,7 +74,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ColoredProcessHandler processHandler = startProcess(patchers);
+    final ProcessHandler processHandler = startProcess(patchers);
     final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler, executor);
 
     List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
@@ -104,7 +104,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  protected ColoredProcessHandler startProcess() throws ExecutionException {
+  protected ProcessHandler startProcess() throws ExecutionException {
     return startProcess(null);
   }
 
@@ -115,10 +115,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return handler of the started process
    * @throws ExecutionException
    */
-  protected ColoredProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
+  protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
-    final ColoredProcessHandler processHandler = doCreateProcess(commandLine);
+    final ProcessHandler processHandler = doCreateProcess(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -133,7 +133,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return commandLine;
   }
 
-  protected ColoredProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
+  protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     return PythonProcessHandler.createProcessHandler(commandLine);
   }
 

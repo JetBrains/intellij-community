@@ -23,7 +23,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference");
+    return PyBundle.message("QFIX.unresolved.reference", myElement.getText());
   }
 
   @NotNull

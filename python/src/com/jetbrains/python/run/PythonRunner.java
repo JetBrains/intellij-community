@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonRunner extends DefaultProgramRunner {
 
   @NotNull
-  public String getRunnerId() {                                                   
+  public String getRunnerId() {
     return "PythonRunner";
   }
 
@@ -35,8 +35,7 @@ public class PythonRunner extends DefaultProgramRunner {
     RunProfileState state,
     RunContentDescriptor contentToReuse,
     ExecutionEnvironment env
-  ) throws ExecutionException
-  {
+  ) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
@@ -44,7 +43,9 @@ public class PythonRunner extends DefaultProgramRunner {
     if (state instanceof PythonCommandLineState && profile instanceof CommandLinePatcher) {
       executionResult = ((PythonCommandLineState)state).execute(executor, (CommandLinePatcher)profile);
     }
-    else executionResult = state.execute(executor, this);
+    else {
+      executionResult = state.execute(executor, this);
+    }
     if (executionResult == null) return null;
 
     final RunContentBuilder contentBuilder = new RunContentBuilder(project, this, executor);

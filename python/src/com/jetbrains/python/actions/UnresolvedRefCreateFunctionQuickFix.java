@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -56,12 +57,17 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
       }
     }
     PyFunction function = functionBuilder.buildFunction(project);
-  
-    PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
-    if (statement != null) {
-      PsiElement parent = statement.getParent();
-      if (parent != null)
-        function = (PyFunction)parent.addBefore(function, statement);
+    PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
+    if (parentFunction != null ) {
+      PsiFile file = myElement.getContainingFile();
+      function = (PyFunction)file.addBefore(function, parentFunction);
+    } else {
+      PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
+      if (statement != null) {
+        PsiElement parent = statement.getParent();
+        if (parent != null)
+          function = (PyFunction)parent.addBefore(function, statement);
+      }
     }
     function = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(function);

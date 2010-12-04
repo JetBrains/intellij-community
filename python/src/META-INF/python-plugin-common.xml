@@ -32,8 +32,12 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyLiteralSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression" implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
 
@@ -58,6 +62,7 @@
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.run.remote.PyRemoteDebugRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -79,6 +84,8 @@
 
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
+
+    <configurationType implementation="com.jetbrains.python.run.remote.PyRemoteDebugConfigurationType"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
@@ -221,6 +228,8 @@
     <problemFileHighlightFilter implementation="com.jetbrains.python.codeInsight.PyProblemFileHighlightFilter"/>
 
     <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
+
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>

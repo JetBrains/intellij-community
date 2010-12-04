@@ -19,7 +19,6 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.console.PydevLanguageConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
@@ -86,7 +85,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     return session.getRunContentDescriptor();
   }
 
-  private static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
+  protected static void createConsoleCommunicationAndSetupActions(@NotNull final Project project,
                                                                 @NotNull final ExecutionResult result,
                                                                 @NotNull PyDebugProcess debugProcess) {
     ExecutionConsole console = result.getExecutionConsole();

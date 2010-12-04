@@ -36,7 +36,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
     myContext = context;
   }
 
-  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodeFilter, final Condition<String> nameFilter) {
+  public VariantsProcessor(PsiElement context, @Nullable final Condition<PsiElement> nodeFilter, @Nullable final Condition<String> nameFilter) {
     myContext = context;
     myNodeFilter = nodeFilter;
     myNameFilter = nameFilter;
@@ -60,6 +60,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
       if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+        item = item.setTailText(((PyFunction) item.getObject()).getParameterList().getText());
       }
       else if (item.getObject() instanceof PyClass) {
         item = item.setInsertHandler(PyClassInsertHandler.INSTANCE);

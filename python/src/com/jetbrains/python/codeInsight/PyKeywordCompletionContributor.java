@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -608,17 +609,13 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     );
   }
 
-  // FIXME: conditions must be severely reworked
-
   private void addExprElse() {
     extend(
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
-      .and(INSIDE_EXPR_AFTER_IF)
-      .andNot(IN_IMPORT_STMT) // expressions there are not logical anyway
-        //.andNot(IN_PARAM_LIST)
-      .andNot(IN_DEFINITION)
-      .andNot(AFTER_QUALIFIER)
+      .afterLeafSkipping(psiElement().whitespace(),
+                         psiElement().inside(psiElement(PyConditionalExpression.class))
+                           .and(psiElement().afterLeaf("if")))
       ,
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(@NotNull final CompletionParameters parameters,
@@ -647,7 +644,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     addImportInFrom();
     addPy3kLiterals();
     //addExprIf();
-    //addExprElse();
+    addExprElse();
   }
 
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {

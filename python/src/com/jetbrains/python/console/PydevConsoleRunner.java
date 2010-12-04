@@ -22,6 +22,7 @@ import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import com.jetbrains.python.sdk.JythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
