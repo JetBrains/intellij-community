@@ -363,4 +363,13 @@ class A {
     myFixture.type 'ad\t'
     myFixture.checkResult "def x = []; x.add(<caret>) this"
   }
+
+  public void testDontAddStaticImportSecondTime() {
+    configure """import static java.lang.String.format
+form<caret>"""
+
+    myFixture.completeBasic()
+    myFixture.checkResult """import static java.lang.String.format
+format<caret>"""
+  }
 }
