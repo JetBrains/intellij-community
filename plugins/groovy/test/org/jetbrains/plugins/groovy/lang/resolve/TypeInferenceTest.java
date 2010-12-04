@@ -152,4 +152,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testTypeOfGroupBy() {
     assertTypeEquals("java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>", "A.groovy");
   }
+
+  public void testConditionalExpressionWithNumericTypes() {
+    assertTypeEquals("java.math.BigDecimal", "A.groovy");
+  }
 }
