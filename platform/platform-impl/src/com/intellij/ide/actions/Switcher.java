@@ -533,7 +533,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     void navigate() {
-      myPopup.cancel();
+      myPopup.closeOk(null);
       final Object value = getSelectedList().getSelectedValue();
       if (value instanceof ToolWindow) {
         ((ToolWindow)value).activate(null, true, true);

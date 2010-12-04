@@ -91,22 +91,41 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public RelativeRectangle getAcceptArea() {
-    return new RelativeRectangle(mySplitters);
+    JRootPane root = mySplitters.getRootPane();
+    return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }
 
   @Override
   public boolean canAccept(DockableContent content, RelativePoint point) {
+    return getTabsAt(content, point) != null;
+  }
+
+  private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
     if (content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor) {
       EditorTabbedContainer.MyDragOutDelegate.DockableEditor editor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
 
       JBTabs targetTabs = mySplitters.getTabsAt(point);
       if (targetTabs != null) {
-        EditorWindow targetWindow = EditorWindow.DATA_KEY.getData(targetTabs.getDataProvider());
-        if (targetWindow != editor.getEditorWindow()) return true;
+        return targetTabs;
+      } else {
+        EditorWindow wnd = mySplitters.getCurrentWindow();
+        if (wnd != null) {
+          EditorTabbedContainer tabs = wnd.getTabbedPane();
+          if (tabs != null) {
+            return tabs.getTabs();
+          }
+        } else {
+          EditorWindow[] windows = mySplitters.getWindows();
+          for (EditorWindow each : windows) {
+            if (each.getTabbedPane() != null && each.getTabbedPane().getTabs() != null) {
+              return each.getTabbedPane().getTabs();
+            }
+          }
+        }
       }
     }
 
-    return false;
+    return null;
   }
 
   @Override
@@ -139,7 +158,8 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public Image processDropOver(DockableContent content, RelativePoint point) {
-    JBTabs current = mySplitters.getTabsAt(point);
+    JBTabs current = getTabsAt(content, point);
+
     if (myCurrentOver != null && myCurrentOver != current) {
       resetDropOver(content);
     }
@@ -219,12 +239,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   public void showNotify() {
     if (!myWasEverShown) {
       myWasEverShown = true;
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          getSplitters().openFiles();
-        }
-      });
+      getSplitters().openFiles();
     }
   }
 

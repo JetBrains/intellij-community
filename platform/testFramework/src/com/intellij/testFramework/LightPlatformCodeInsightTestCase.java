@@ -47,6 +47,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -468,13 +469,23 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
   protected static void backspace() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+    doAction(IdeActions.ACTION_EDITOR_BACKSPACE);
   }
   protected static void delete() {
+    doAction(IdeActions.ACTION_EDITOR_DELETE);
+  }
+
+  protected static void home() {
+    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+  }
+
+  protected static void end() {
+    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+  }
+  
+  private static void doAction(@NotNull String actionId) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE);
+    EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
   }
 

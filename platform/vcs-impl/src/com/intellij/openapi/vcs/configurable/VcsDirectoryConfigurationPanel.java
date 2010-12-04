@@ -130,9 +130,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private JButton myEditButton;
   private JButton myRemoveButton;
   private final Map<String, VcsDescriptor> myAllVcss;
+  private final boolean myIsDisabled;
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
+    myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
     myAllVcss = new HashMap<String, VcsDescriptor>();
@@ -168,6 +170,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     });
     initPanel();
     updateButtons();
+    if (myIsDisabled) {
+      myDirectoryMappingTable.setEnabled(false);
+      myAddButton.setEnabled(false);
+    }
   }
 
   private void initializeModel() {
@@ -181,8 +187,8 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   private void updateButtons() {
     final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-    myEditButton.setEnabled(hasSelection);
-    myRemoveButton.setEnabled(hasSelection);
+    myEditButton.setEnabled((! myIsDisabled) && hasSelection);
+    myRemoveButton.setEnabled((! myIsDisabled) && hasSelection);
   }
 
   public static DefaultComboBoxModel buildVcsWrappersModel(final Project project) {

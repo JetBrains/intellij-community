@@ -198,6 +198,10 @@ public class LayoutCodeDialog extends DialogWrapper {
     return myRbSelectedText.isSelected();
   }
 
+  public boolean isProcessWholeFile() {
+    return myRbFile.isSelected();
+  }
+  
   public boolean isProcessDirectory() {
     return myRbDirectory.isSelected();
   }

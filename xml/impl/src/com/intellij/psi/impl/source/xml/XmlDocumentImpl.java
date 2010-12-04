@@ -97,7 +97,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlProlog prolog = myProlog;
 
     if (prolog == null) {
-      synchronized (this) {
+      synchronized (PsiLock.LOCK) {
         prolog = myProlog;
         if (prolog == null) {
           prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
@@ -113,7 +113,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlTag rootTag = myRootTag;
 
     if (rootTag == null) {
-      synchronized (this) {
+      synchronized (PsiLock.LOCK) {
         rootTag = myRootTag;
         if (rootTag == null) {
           rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);

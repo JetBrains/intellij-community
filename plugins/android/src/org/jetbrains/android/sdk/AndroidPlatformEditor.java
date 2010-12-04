@@ -50,6 +50,7 @@ public class AndroidPlatformEditor extends DialogWrapper {
   private JComboBox myTargetCombo;
   private JPanel myLibraryEditorWrapper;
   private JTextField myNameField;
+  private JLabel mySdkPathLabel;
 
   private final Library myLibrary;
   private final Library.ModifiableModel myLibraryModel;
@@ -84,6 +85,7 @@ public class AndroidPlatformEditor extends DialogWrapper {
                                @NotNull AndroidPlatform platform,
                                @NotNull Library.ModifiableModel libraryModel) {
     super(parent, true);
+    mySdkPathLabel.setLabelFor(mySdkPathField);
     setTitle(AndroidBundle.message("edit.platform.dialog.title", platform.getName()));
     myLibraryModel = libraryModel;
     myLibrary = platform.getLibrary();

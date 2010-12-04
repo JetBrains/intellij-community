@@ -414,12 +414,24 @@ public abstract class ChangesTreeList<T> extends JPanel {
       return changes;
     }
     else {
-      List<T> changes = new ArrayList<T>();
+      final List<T> changes = new ArrayList<T>();
+      final Set<Integer> checkSet = new HashSet<Integer>();
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths != null) {
         for (TreePath path : paths) {
-          ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-          changes.addAll(getSelectedObjects(node));
+          final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+          final List<T> objects = getSelectedObjects(node);
+          for (T object : objects) {
+            final int hash = object.hashCode();
+            if (! checkSet.contains(hash)) {
+              changes.add(object);
+              checkSet.add(hash);
+            } else {
+              if (! changes.contains(object)) {
+                changes.add(object);
+              }
+            }
+          }
         }
       }
 

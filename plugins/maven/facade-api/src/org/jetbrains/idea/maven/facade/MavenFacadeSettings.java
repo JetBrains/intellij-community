@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 
-public class MavenFacadeSettings implements Serializable {
+public class MavenFacadeSettings implements Serializable, Cloneable {
   public enum UpdatePolicy {
     ALWAYS_UPDATE, DO_NOT_UPDATE
   }
@@ -103,5 +103,15 @@ public class MavenFacadeSettings implements Serializable {
 
   public void setSnapshotUpdatePolicy(@NotNull UpdatePolicy snapshotUpdatePolicy) {
     mySnapshotUpdatePolicy = snapshotUpdatePolicy;
+  }
+
+  @Override
+  public MavenFacadeSettings clone() {
+    try {
+      return (MavenFacadeSettings)super.clone();
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

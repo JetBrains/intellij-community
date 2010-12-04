@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,6 +42,7 @@ public abstract class EditorColorsManager {
 
   public abstract void addEditorColorsListener(EditorColorsListener listener);
   public abstract void removeEditorColorsListener(EditorColorsListener listener);
+  public abstract void addEditorColorsListener(EditorColorsListener listener, Disposable disposable);
 
   public abstract boolean isUseOnlyMonospacedFonts();
   public abstract void setUseOnlyMonospacedFonts(boolean b);

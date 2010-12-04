@@ -36,7 +36,7 @@ abstract class ContentLayout {
   static final Color TAB_BG_PASSIVE_WND_TO = new Color(165, 157, 149);
 
   static final int TAB_ARC = 2;
-  static final int TAB_SHIFT = 3;
+  static final int TAB_SHIFT = 2;
 
   ToolWindowContentUi myUi;
 

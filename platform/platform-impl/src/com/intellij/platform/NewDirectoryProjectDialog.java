@@ -30,9 +30,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,11 +79,27 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         }
       };
     myLocationField.addActionListener(listener);
-
-    myProjectNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        File f = new File(myLocationField.getText());
-        myLocationField.setText(new File(f.getParent(), myProjectNameTextField.getText()).getPath());
+    myLocationField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myModifyingLocation = true;
+        String path = myLocationField.getText().trim();
+        if (path.endsWith(File.separator)) {
+          path = path.substring(0, path.length() - File.separator.length());
+        }
+        int ind = path.lastIndexOf(File.separator);
+        if (ind != -1) {
+          String projectName = path.substring(ind + 1, path.length());
+          if (!myProjectNameTextField.getText().trim().isEmpty()) {
+            myBaseDir = path.substring(0, ind);
+          }
+          if (!projectName.equals(myProjectNameTextField.getText())) {
+            if (!myModifyingProjectName) {
+              myProjectNameTextField.setText(projectName);
+            }
+          }
+        }
+        myModifyingLocation = false;
       }
     });
 

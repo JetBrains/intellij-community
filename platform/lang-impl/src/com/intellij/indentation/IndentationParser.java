@@ -5,9 +5,8 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Stack;
 
 /**
  * @author oleg

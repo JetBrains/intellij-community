@@ -126,6 +126,9 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
     if (version != null) {
       setVersionString(version.getAttributeValue(ATTRIBUTE_VALUE));
     }
+    else {
+      myVersionDefined = false;
+    }
 
     if (element.getAttribute(ELEMENT_VERSION) == null || !"2".equals(element.getAttributeValue(ELEMENT_VERSION))) {
       myRootContainer.startChange();

@@ -279,10 +279,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet result) {
         final PsiElement reference = parameters.getPosition().getParent();
         if (reference instanceof GrReferenceElement) {
+          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
+            result.addElement(LookupElementBuilder.create("*"));
+          }
+
           completeReference(parameters, result, (GrReferenceElement)reference);
         }
       }
     });
+
 
     //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {

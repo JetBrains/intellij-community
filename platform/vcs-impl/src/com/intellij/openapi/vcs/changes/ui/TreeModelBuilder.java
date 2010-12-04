@@ -42,6 +42,7 @@ import java.util.*;
  */
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
+  public static final String LOCALLY_DELETED_NODE = VcsBundle.message("changes.nodetitle.locally.deleted.files");
 
   private final Project myProject;
   private final boolean showFlatten;
@@ -169,7 +170,7 @@ public class TreeModelBuilder {
 
     if (!locallyDeletedFiles.isEmpty()) {
       resetGrouping();
-      ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, VcsBundle.message("changes.nodetitle.locally.deleted.files"));
+      ChangesBrowserNode locallyDeletedNode = ChangesBrowserNode.create(myProject, LOCALLY_DELETED_NODE);
       model.insertNodeInto(locallyDeletedNode, root, root.getChildCount());
       buildLocallyDeletedPaths(locallyDeletedFiles, locallyDeletedNode);
     }

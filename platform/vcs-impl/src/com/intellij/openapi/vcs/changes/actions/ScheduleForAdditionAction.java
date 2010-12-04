@@ -40,13 +40,13 @@ import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public ScheduleForAdditionAction() {
-    super("Add to VCS", "Add to VCS", IconLoader.getIcon("/actions/include.png"));
+    super("Add to VCS", "Add to VCS", IconLoader.getIcon("/vcs/addToVcs.png"));
   }
 
   public void update(AnActionEvent e) {
     final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && (getUnversionedFiles(e) != null);
     e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    //e.getPresentation().setVisible(enabled);
   }
 
   public void actionPerformed(AnActionEvent e) {

@@ -147,6 +147,19 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     addRunConfiguration(facet);
   }
 
+  @NotNull
+  private static String getAntProjectName(@NotNull String moduleName) {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < moduleName.length(); i++) {
+      char c = moduleName.charAt(i);
+      if (!(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || Character.isDigit(c))) {
+        c = '_';
+      }
+      result.append(c);
+    }
+    return result.toString();
+  }
+
   private boolean createProjectByAndroidTool(final VirtualFile contentRoot,
                                              final VirtualFile sourceRoot,
                                              final AndroidFacet facet) {
@@ -182,7 +195,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
 
       commandLine.addParameters("--name");
-      commandLine.addParameter(module.getName());
+      commandLine.addParameter(getAntProjectName(module.getName()));
 
       commandLine.addParameters("--path");
       commandLine.addParameter(FileUtil.toSystemDependentName(contentRoot.getPath()));

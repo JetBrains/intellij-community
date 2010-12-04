@@ -31,9 +31,11 @@ import java.io.File;
 public class AndroidTestPropertiesEditor {
   private JPanel myContentPanel;
   private AndroidModulesComboBox myModulesCombo;
+  private JLabel myModulesLabel;
 
   public AndroidTestPropertiesEditor(@NotNull Project project) {
     myModulesCombo.init(project);
+    myModulesLabel.setLabelFor(myModulesCombo);
   }
 
   public Module getModule() {

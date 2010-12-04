@@ -18,7 +18,6 @@ package com.intellij.ui.mac;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.MacFileChooserDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,7 +105,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       final Object showHiddenFiles = myChooserDescriptor.getUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_SHOW_HIDDEN_FILES_ENABLED.getName());
       if (Registry.is("ide.mac.filechooser.showhidden.files")
-          || (showHiddenFiles instanceof Boolean && ((Boolean)showHiddenFiles).booleanValue())) {
+          || Boolean.TRUE.equals(showHiddenFiles)) {
         if (Foundation.isClassRespondsToSelector(Foundation.getClass("NSOpenPanel"), Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
         }

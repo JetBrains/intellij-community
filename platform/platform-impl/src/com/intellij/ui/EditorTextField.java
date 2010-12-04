@@ -374,24 +374,17 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
     final EditorColorsScheme colorsScheme = editor.getColorsScheme();
     colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-    if (!isEnabled()) {
-      editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
-        @Override
-        public Color getColor(ColorKey key) {
-          return super.getColor(key);
+    editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
+      @Override
+      public TextAttributes getAttributes(TextAttributesKey key) {
+        final TextAttributes attributes = super.getAttributes(key);
+        if (!isEnabled()) {
+          return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
         }
 
-        @Override
-        public TextAttributes getAttributes(TextAttributesKey key) {
-          final TextAttributes attributes = super.getAttributes(key);
-          if (!isEnabled()) {
-            return new TextAttributes(UIUtil.getInactiveTextColor(), attributes.getBackgroundColor(), attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-          }
-
-          return attributes;
-        }
-      });
-    }
+        return attributes;
+      }
+    });
 
     // color scheme settings:
     setupEditorFont(editor);

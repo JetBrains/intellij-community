@@ -50,11 +50,13 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   private JPasswordField myKeystorePasswordField;
   private JPasswordField myConfirmKeystorePasswordField;
   private JLabel myConfirmKeystorePasswordLabel;
+  private JLabel myKeystoreLocationLabel;
 
   private final ExportSignedPackageWizard myWizard;
 
   public KeystoreStep(ExportSignedPackageWizard wizard) {
     myWizard = wizard;
+    myKeystoreLocationLabel.setLabelFor(myKeystoreLocationField);
     final String defaultLocation = PropertiesComponent.getInstance().getValue(DEFAULT_KEYSTORE_LOCATION);
     final SaveFileListener newKeystoreLocationListener = new SaveFileListener(myContentPanel, myKeystoreLocationField,
                                                                               AndroidBundle.message(
