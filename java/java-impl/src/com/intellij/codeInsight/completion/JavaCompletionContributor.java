@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -85,6 +86,8 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
     psiElement().afterLeaf(psiElement().withElementType(
       elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
+  private static final PsiJavaElementPattern.Capture<PsiElement> IMPORT_REFERENCE =
+    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
 
   @Nullable 
   private static ElementFilter getReferenceFilter(PsiElement position) {
@@ -186,6 +189,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     final InheritorsHolder inheritors = new InheritorsHolder(position, result);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, result.getPrefixMatcher(), inheritors);
+    }
+
+    if (IMPORT_REFERENCE.accepts(position)) {
+      result.addElement(LookupElementBuilder.create("*"));
     }
 
     addReferenceVariants(parameters, result, inheritors);

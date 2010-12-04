@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.LinkedHashSet;
@@ -34,7 +35,7 @@ public class GutterIconTooltipHelper {
   private GutterIconTooltipHelper() {
   }
 
-  public static String composeText(PsiElement[] elements, String start, final String pattern) {
+  public static String composeText(@NotNull PsiElement[] elements, String start, final String pattern) {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(start);
@@ -47,7 +48,8 @@ public class GutterIconTooltipHelper {
       }
       else if (element instanceof PsiMethod) {
         String methodName = ((PsiMethod)element).getName();
-        String className = ClassPresentationUtil.getNameForClass(((PsiMethod)element).getContainingClass(), true);
+        PsiClass aClass = ((PsiMethod)element).getContainingClass();
+        String className = aClass == null ? "" : ClassPresentationUtil.getNameForClass(aClass, true);
         descr = MessageFormat.format(pattern, methodName, className);
       }
       else if (element instanceof PsiFile) {

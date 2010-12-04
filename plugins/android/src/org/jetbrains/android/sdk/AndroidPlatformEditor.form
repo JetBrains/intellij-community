@@ -8,12 +8,12 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="6e7fc" class="javax.swing.JLabel">
+      <component id="6e7fc" class="javax.swing.JLabel" binding="mySdkPathLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="SDK Path:"/>
+          <text value="&amp;SDK Path:"/>
         </properties>
       </component>
       <vspacer id="aa915">
@@ -26,7 +26,8 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Build Target:"/>
+          <labelFor value="96773"/>
+          <text value="&amp;Build Target:"/>
         </properties>
       </component>
       <component id="96773" class="javax.swing.JComboBox" binding="myTargetCombo">
@@ -57,7 +58,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Name"/>
+          <labelFor value="7ad1b"/>
+          <text value="&amp;Name"/>
         </properties>
       </component>
       <component id="7ad1b" class="javax.swing.JTextField" binding="myNameField">

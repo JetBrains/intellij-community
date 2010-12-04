@@ -290,12 +290,7 @@ public class SdkConfigurationUtil {
       showSuggestedHomesPopup(project, sdkType, existingSdks, suggestedSdkHomes, popupOwner, callback);
     }
     else {
-      createSdk(project, existingSdks, new Consumer<Sdk>() {
-        @Override
-        public void consume(Sdk sdk) {
-          callback.consume(sdk);
-        }
-      }, sdkType);
+      createSdk(project, existingSdks, callback, sdkType);
     }
   }
 
@@ -318,12 +313,7 @@ public class SdkConfigurationUtil {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              createSdk(project, existingSdks, new Consumer<Sdk>() {
-                @Override
-                public void consume(Sdk sdk) {
-                  callback.consume(sdk);
-                }
-              },  sdkType);
+              createSdk(project, existingSdks, callback, sdkType);
             }
           }, ModalityState.current());
         }

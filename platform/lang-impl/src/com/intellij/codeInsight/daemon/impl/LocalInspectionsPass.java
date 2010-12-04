@@ -384,6 +384,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return highlights;
   }
 
+  @Nullable
   private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                     @NotNull HighlightInfoType highlightInfoType,
                                                     @NotNull String message,
@@ -548,7 +549,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       return;
     }
     // todo we got to separate our "internal" prefixes/suffixes from user-defined ones
-    // todo in the latter case the erors should be highlighted, otherwise not
+    // todo in the latter case the errors should be highlighted, otherwise not
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
     for (TextRange editable : editables) {
       TextRange hostRange = ((DocumentWindow)documentRange).injectedToHost(editable);
@@ -589,13 +590,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip);
-    registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
+    if (highlightInfo != null) {
+      registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
+    }
     return highlightInfo;
   }
 
   private static void registerQuickFixes(final LocalInspectionTool tool,
                                          final ProblemDescriptor descriptor,
-                                         final HighlightInfo highlightInfo,
+                                         @NotNull HighlightInfo highlightInfo,
                                          final Set<TextRange> emptyActionRegistered) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     boolean needEmptyAction = true;

@@ -142,7 +142,7 @@ class TabContentLayout extends ContentLayout {
     ContentManager manager = myUi.myManager;
     LayoutData data = new LayoutData(myUi);
 
-    data.eachX = 0;
+    data.eachX = 2;
     data.eachY = TitlePanel.STRUT;
 
     myIdLabel.setBounds(data.eachX, data.eachY, myIdLabel.getPreferredSize().width, bounds.height);

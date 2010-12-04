@@ -138,6 +138,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
+    boolean processWholeFile = false;
     if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
@@ -146,6 +147,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = !dialog.isDoNotAskMe();
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();
+      processWholeFile = dialog.isProcessWholeFile();
       if (dialog.isProcessDirectory()){
         if (optimizeImports) {
           new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
@@ -158,7 +160,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     final TextRange range;
-    if (editor != null && editor.getSelectionModel().hasSelection()){
+    if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
       range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
     }
     else{

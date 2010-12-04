@@ -24,10 +24,7 @@ import java.awt.*;
  * @author Eugene Belyaev
  */
 public class OpaquePanel extends JPanel {
-
-
   private boolean myOpaqueActive = true;
-  private String myKey;
 
   public OpaquePanel() {
     this(null, null);
@@ -46,24 +43,17 @@ public class OpaquePanel extends JPanel {
     setBackground(color);
   }
 
-  public OpaquePanel setKey(String key) {
-    myKey = key;
-    return this;
-  }
-
   protected void paintComponent(Graphics g) {
     if (myOpaqueActive) {
-      // Fix for GTK+L&F: IDEA-60485 Wrong Navbar background under GTK L&F
-      final Color bg;
-      if (myKey != null) {
-        bg = "List.background".equals(myKey) && UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIManager.getColor(myKey);
-      } else {
-        bg = getBackground();
-      }
+      final Color bg = getBackgroundColor();
       g.setColor(bg);
       final Dimension size = getSize();
       g.fillRect(0, 0, size.width, size.height);
     }
+  }
+
+  protected Color getBackgroundColor() {
+    return getBackground();
   }
 
   public boolean isOpaqueActive() {
@@ -76,22 +66,24 @@ public class OpaquePanel extends JPanel {
 
   public static class List extends OpaquePanel {
     public List() {
-      setKey("List.background");
     }
 
     public List(LayoutManager layout) {
       super(layout);
-      setKey("List.background");
     }
 
     public List(Color color) {
       super(color);
-      setKey("List.background");
     }
 
     public List(LayoutManager layoutManager, Color color) {
       super(layoutManager, color);
-      setKey("List.background");
+    }
+
+    @Override
+    protected Color getBackgroundColor() {
+    // Fix for GTK+L&F: IDEA-60485 Wrong Navbar background under GTK L&F
+      return UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIManager.getColor("List.background");
     }
   }
 }

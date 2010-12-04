@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -48,6 +49,7 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.AccessController;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -407,6 +409,10 @@ public class UIUtil {
 
   public static Color getTableForeground() {
     return UIManager.getColor("Table.foreground");
+  }
+
+  public static Color getTableGridColor() {
+    return UIManager.getColor("Table.gridColor");
   }
 
   public static Color getListBackground() {
@@ -1406,6 +1412,27 @@ public class UIUtil {
     final Color oldBackGround = component.getBackground();
     if (background == null || !background.equals(oldBackGround)){
       component.setBackground(background);
+    }
+  }
+
+  public static void initDefaultLAF(String productName) {
+    if (SystemInfo.isWindowsVista || SystemInfo.isWindows7 || SystemInfo.isMac) {
+      try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      }
+      catch (Exception ignored) {
+      }
+    }
+    else if ("Rubymine".equals(productName) || "Pycharm".equals(productName)) {
+      try {
+        final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
+        if ("gnome".equals(desktop)) {
+          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+      }
+      catch (Exception e) {
+        // Ignore
+      }
     }
   }
 

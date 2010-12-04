@@ -162,7 +162,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           return;
         }
 
-        Component focusOwner = async ? fm.getFocusOwner() : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        Component focusOwner = fm.getFocusOwner();
+        if (focusOwner == null && !async) {
+          focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        }
+
+        if (focusOwner == null && !async) {
+          focusOwner = fm.getLastFocusedFor(fm.getLastFocusedFrame());
+        }
+
         DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
         if (container == null && !async) {
           focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
@@ -1275,7 +1283,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   EditorComposite getLastSelected() {
-    final EditorWindow currentWindow = getSplitters().getCurrentWindow();
+    final EditorWindow currentWindow = getActiveSplitters(true).getResult().getCurrentWindow();
     if (currentWindow != null) {
       return currentWindow.getSelectedEditor();
     }

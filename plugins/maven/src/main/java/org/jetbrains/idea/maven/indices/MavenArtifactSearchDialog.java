@@ -67,9 +67,10 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
 
   private void initComponents(Project project, String initialText, boolean classMode) {
     myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    myTabbedPane.setFocusable(false);
 
     MavenArtifactSearchPanel.Listener l = new MavenArtifactSearchPanel.Listener() {
-      public void doubleClicked() {
+      public void itemSelected() {
         clickDefaultButton();
       }
 

@@ -663,7 +663,7 @@ public class DynamicToolWindowWrapper {
 //          if (name.length() <= begin) return;
       final String first = name.substring(0, begin);
       append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
+      final TextAttributes textAttributes = new TextAttributes();
       textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
       append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
       append(name.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);

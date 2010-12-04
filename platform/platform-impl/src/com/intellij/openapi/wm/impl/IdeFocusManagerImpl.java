@@ -104,6 +104,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
+  public IdeFrame getLastFocusedFrame() {
+    return getGlobalInstance().getLastFocusedFrame();
+  }
+
+  @Override
   public void toFront(JComponent c) {
     getGlobalInstance().toFront(c);
   }

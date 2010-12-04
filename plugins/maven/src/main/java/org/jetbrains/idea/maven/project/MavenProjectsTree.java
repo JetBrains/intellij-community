@@ -1063,16 +1063,13 @@ public class MavenProjectsTree {
                         });
   }
 
-  /**
-   * @return list of unresolved artifacts
-   */
-  public MavenArtifactDownloader.DownloadResult downloadArtifacts(@NotNull Collection<MavenProject> projects,
-                                                                  @Nullable Collection<MavenArtifact> artifacts,
-                                                                  boolean downloadSources,
-                                                                  boolean downloadDocs,
-                                                                  @NotNull MavenEmbeddersManager embeddersManager,
-                                                                  @NotNull MavenConsole console,
-                                                                  @NotNull MavenProgressIndicator process)
+  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Collection<MavenProject> projects,
+                                                                           @Nullable Collection<MavenArtifact> artifacts,
+                                                                           boolean downloadSources,
+                                                                           boolean downloadDocs,
+                                                                           @NotNull MavenEmbeddersManager embeddersManager,
+                                                                           @NotNull MavenConsole console,
+                                                                           @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
@@ -1096,7 +1093,7 @@ public class MavenProjectsTree {
                                                @NotNull MavenEmbeddersManager embeddersManager,
                                                @NotNull MavenConsole console,
                                                @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
     embedder.customizeForResolve(console, process);
 
     try {

@@ -397,6 +397,131 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(new VisualPosition(1, placeholder.length()), myEditor.offsetToVisualPosition(text.indexOf("class") - 2));
   }
   
+  public void testRemoveCollapsedFoldRegionThatStartsLogicalLine() throws IOException {
+    // There was a problem that soft wraps cache updated on document modification didn't contain information about removed
+    // fold region but fold model still provided cached information about it.
+    String text =
+      "package org;\n" +
+      "\n" +
+      "@SuppressWarnings(\"all\")\n" +
+      "class Test {\n" +
+      "}";
+    
+    init(700, text);
+    int startOffset = text.indexOf("@");
+    int endOffset = text.indexOf("class") - 1;
+    addCollapsedFoldRegion(startOffset, endOffset, "xxx");
+    
+    // Delete collapsed fold region that starts logical line.
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    delete();
+    
+    assertEquals(startOffset, myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(2, 0))));
+  }
+  
+  public void testHomeProcessing() throws IOException {
+    String text = 
+      "class Test {\n" +
+      "    public String s = \"this is a long string literal that is expected to be soft-wrapped into multiple visual lines\";\n" +
+      "}";
+    
+    init(250, text);
+    myEditor.getCaretModel().moveToOffset(text.indexOf("}") - 1);
+
+    List<? extends SoftWrap> softWraps = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(!softWraps.isEmpty());
+
+    CaretModel caretModel = myEditor.getCaretModel();
+    int expectedVisualLine = caretModel.getVisualPosition().line;
+    while (!softWraps.isEmpty()) {
+      SoftWrap softWrap = softWraps.get(softWraps.size() - 1);
+      int caretOffsetBefore = caretModel.getOffset();
+      
+      home();
+      
+      // Expecting the caret to be moved at the nearest soft wrap start offset.
+      int caretOffset = caretModel.getOffset();
+      assertTrue(caretOffset < caretOffsetBefore);
+      assertEquals(softWrap.getStart(), caretOffset);
+      assertEquals(new VisualPosition(expectedVisualLine, softWrap.getIndentInColumns()), caretModel.getVisualPosition());
+      
+      // Expected that caret is moved to visual line start when it's located on soft wrap start offset at the moment.
+      home();
+      assertEquals(softWrap.getStart(), caretModel.getOffset());
+      assertEquals(new VisualPosition(expectedVisualLine, 0), caretModel.getVisualPosition());
+      
+      softWraps.remove(softWraps.size() - 1);
+      expectedVisualLine--;
+    }
+    
+    // Expecting caret to be located on the first non-white space symbol of non-soft wrapped line.
+    home();
+    assertEquals(text.indexOf("public"), caretModel.getOffset());
+    assertEquals(new VisualPosition(expectedVisualLine, text.indexOf("public") - text.indexOf("{\n") - 2), caretModel.getVisualPosition());
+  }
+
+  public void testEndProcessing() throws IOException {
+    String text =
+      "class Test {\n" +
+      "    public String s = \"this is a long string literal that is expected to be soft-wrapped into multiple visual lines\";   \n" +
+      "}";
+
+    init(250, text);
+    myEditor.getCaretModel().moveToOffset(text.indexOf("\n") + 1);
+
+    List<? extends SoftWrap> softWraps = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    assertTrue(!softWraps.isEmpty());
+
+    CaretModel caretModel = myEditor.getCaretModel();
+    int expectedVisualLine = caretModel.getVisualPosition().line;
+    while (!softWraps.isEmpty()) {
+      SoftWrap softWrap = softWraps.get(0);
+      int caretOffsetBefore = caretModel.getOffset();
+
+      end();
+
+      // Expecting the caret to be moved at the last non-white space symbol on the current visual line.
+      int caretOffset = caretModel.getOffset();
+      assertTrue(caretOffset > caretOffsetBefore);
+      assertFalse(caretOffset > softWrap.getStart());
+      if (caretOffset < softWrap.getStart()) {
+        // There is a possible case that there are white space symbols between caret position applied on 'end' processing and
+        // soft wrap. Let's check that and emulate one more 'end' typing in order to move caret right before soft wrap.
+        for (int i = caretOffset; i < softWrap.getStart(); i++) {
+          char c = text.charAt(i);
+          assertTrue(c == ' ' || c == '\t');
+        }
+        caretOffsetBefore = caretOffset;
+        end();
+        caretOffset = caretModel.getOffset();
+        assertTrue(caretOffset > caretOffsetBefore);
+      }
+      
+      assertEquals(softWrap.getStart(), caretOffset);
+      assertEquals(
+        new VisualPosition(expectedVisualLine, myEditor.offsetToVisualPosition(softWrap.getStart() - 1).column + 1),
+        caretModel.getVisualPosition()
+      );
+      
+      softWraps.remove(0);
+      expectedVisualLine++;
+    }
+    
+    // Check that caret is placed on a last non-white space symbol on current logical line.
+    end();
+    int lastNonWhiteSpaceSymbolOffset = text.indexOf("\";") + 2;
+    assertEquals(lastNonWhiteSpaceSymbolOffset, caretModel.getOffset());
+    assertEquals(myEditor.offsetToVisualPosition(lastNonWhiteSpaceSymbolOffset), caretModel.getVisualPosition());
+    assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
+    
+    // Check that caret is place to the very end of the logical line.
+    end();
+    int lastSymbolOffset = myEditor.getDocument().getLineEndOffset(caretModel.getLogicalPosition().line);
+    assertEquals(lastSymbolOffset, caretModel.getOffset());
+    assertEquals(myEditor.offsetToVisualPosition(lastSymbolOffset), caretModel.getVisualPosition());
+    assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
+  }
+  
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {

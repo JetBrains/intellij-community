@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -645,7 +646,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int startOffset = 0;
     if (!tokens.isEmpty()) {
       final TokenInfo lastToken = tokens.get(tokens.size() - 1);
-      if (lastToken.contentType == contentType) {
+      if (lastToken.contentType == contentType && info == lastToken.getHyperlinkInfo()) {
         lastToken.endOffset += length; // optimization
         return;
       }
@@ -893,8 +894,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
 
-    final EditorColorsScheme scheme = editor.getColorsScheme();
-    editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
+    final DelegateColorScheme scheme = new DelegateColorScheme(editor.getColorsScheme()) {
+      @Override
+      public Color getDefaultBackground() {
+        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
+        return color == null? super.getDefaultBackground() : color;
+      }
+    };
+    editor.setColorsScheme(scheme);
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
 
@@ -1709,12 +1716,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
     };
-    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        EditorUtil.scrollToTheEnd(myEditor);
-      }
-    };
+    final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);
 
     //Initializing custom actions
     final AnAction[] consoleActions = new AnAction[4 + customActions.size()];

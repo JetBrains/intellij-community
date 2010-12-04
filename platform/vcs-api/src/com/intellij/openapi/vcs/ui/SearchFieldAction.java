@@ -50,6 +50,11 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
         myField.addCurrentTextToHistory();
         actionPerformed(null);
       }
+
+      @Override
+      protected void onFieldCleared() {
+        actionPerformed(null);
+      }
     };
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);

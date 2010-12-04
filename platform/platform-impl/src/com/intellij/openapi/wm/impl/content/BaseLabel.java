@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
@@ -25,13 +26,13 @@ import java.awt.*;
 
 class BaseLabel extends JLabel {
 
-  protected static final int TAB_SHIFT = 2;
+  protected static final int TAB_SHIFT = 1;
 
   protected ToolWindowContentUi myUi;
 
   private Color myActiveFg;
   private Color myPassiveFg;
-  private final boolean myBold;
+  private boolean myBold;
 
   public BaseLabel(ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
@@ -48,8 +49,13 @@ class BaseLabel extends JLabel {
   }
 
   private void updateFont() {
+    Font f = UIUtil.getLabelFont();
+    Font baseFont = f.deriveFont(f.getStyle(), f.getSize() - (SystemInfo.isMac ? 2 : 1));
     if (myBold) {
-      setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+      setFont(baseFont.deriveFont(Font.BOLD));
+    }
+    else {
+      setFont(baseFont);
     }
   }
 
@@ -88,6 +94,9 @@ class BaseLabel extends JLabel {
       } else {
         setIcon(null);
       }
+
+      myBold = isSelected;
+      updateFont();
     }
   }
 

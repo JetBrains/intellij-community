@@ -33,14 +33,7 @@ public class FoldingDataProvider extends AbstractDataProvider<SoftWrapDataProvid
     super(SoftWrapDataProviderKeys.COLLAPSED_FOLDING);
     myFoldRegions = foldRegions;
 
-    if (foldRegions == null) {
-      return;
-    }
-    for (; myIndex < myFoldRegions.length; myIndex++) {
-      if (!myFoldRegions[myIndex].isExpanded()) {
-        break;
-      }
-    }
+    scrollToInterested();
   }
 
   @Override
@@ -53,18 +46,27 @@ public class FoldingDataProvider extends AbstractDataProvider<SoftWrapDataProvid
 
   @Override
   public boolean next() {
-    if (myFoldRegions == null) {
-      return false;
-    }
-
-    while (++myIndex < myFoldRegions.length) {
-      if (!myFoldRegions[myIndex].isExpanded()) {
-        return true;
-      }
-    }
-    return false;
+    ++myIndex;
+    scrollToInterested();
+    return doGetData() != null;
   }
 
+  /**
+   * Expands {@link #myIndex target index} in order to point to valid collapsed fold region if necessary.
+   */
+  private void scrollToInterested() {
+    if (myFoldRegions == null) {
+      return;
+    }
+
+    for (; myIndex < myFoldRegions.length; myIndex++) {
+      FoldRegion foldRegion = myFoldRegions[myIndex];
+      if (!foldRegion.isExpanded() && foldRegion.isValid()) {
+        break;
+      }
+    }
+  }
+  
   @Override
   public void advance(int sortingKey) {
     // We inline binary search here because profiling indicates that as a performance boost.
@@ -85,9 +87,11 @@ public class FoldingDataProvider extends AbstractDataProvider<SoftWrapDataProvid
       }
 
       myIndex = i;
-      break;
+      scrollToInterested();
+      return;
     }
     myIndex = start;
+    scrollToInterested();
   }
 
   @Override

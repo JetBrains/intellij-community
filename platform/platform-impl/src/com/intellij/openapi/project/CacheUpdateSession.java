@@ -90,7 +90,7 @@ public class CacheUpdateSession {
 
   public void processFile(FileContent content) {
     VirtualFile file = content.getVirtualFile();
-    boolean isValid = file.isValid();
+    boolean isValid = file.isValid() && !file.isDirectory();
 
     while (true) {
       Pair<CacheUpdater, Collection<VirtualFile>> pair = getPair(file);

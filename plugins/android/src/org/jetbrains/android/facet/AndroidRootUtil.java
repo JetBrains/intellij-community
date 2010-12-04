@@ -171,6 +171,9 @@ public class AndroidRootUtil {
           }
           else if (entry instanceof ModuleOrderEntry) {
             Module module = ((ModuleOrderEntry)entry).getModule();
+            if (module == null) {
+              continue;
+            }
             AndroidFacet facet = AndroidFacet.getInstance(module);
             if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
               continue;

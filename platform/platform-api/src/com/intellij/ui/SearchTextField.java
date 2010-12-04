@@ -120,6 +120,7 @@ public class SearchTextField extends JPanel {
       myClearFieldLabel.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
           myTextField.setText("");
+          onFieldCleared();
         }
       });
 
@@ -144,6 +145,9 @@ public class SearchTextField extends JPanel {
         clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
       }
     }
+  }
+
+  protected void onFieldCleared() {
   }
 
   protected void onFocusLost() {

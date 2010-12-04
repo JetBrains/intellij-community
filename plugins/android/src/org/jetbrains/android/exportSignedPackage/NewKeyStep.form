@@ -13,7 +13,8 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/AndroidBundle" key="android.export.package.key.alias.label"/>
+          <labelFor value="dadf7"/>
+          <text resource-bundle="messages/AndroidBundle" key="android.export.package.new.key.alias.label"/>
         </properties>
       </component>
       <vspacer id="b7c0">
@@ -34,7 +35,8 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/AndroidBundle" key="android.password.label"/>
+          <labelFor value="e4b4b"/>
+          <text resource-bundle="messages/AndroidBundle" key="android.key.password.label"/>
         </properties>
       </component>
       <component id="e4b4b" class="javax.swing.JPasswordField" binding="myKeyPasswordField">
@@ -50,6 +52,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <labelFor value="9448c"/>
           <text resource-bundle="messages/AndroidBundle" key="android.export.package.key.validity.label"/>
         </properties>
       </component>
@@ -75,6 +78,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="3cdd"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.key.certificate.name.label"/>
             </properties>
           </component>
@@ -91,6 +95,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="de2d1"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.organization.unit.label"/>
             </properties>
           </component>
@@ -107,6 +112,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="df6ed"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.city.label"/>
             </properties>
           </component>
@@ -123,6 +129,7 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="a2fcf"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.state.label"/>
             </properties>
           </component>
@@ -139,6 +146,7 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="2c7ab"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.country.code.label"/>
             </properties>
           </component>
@@ -155,6 +163,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <labelFor value="c081d"/>
               <text resource-bundle="messages/AndroidBundle" key="android.export.package.organization.label"/>
             </properties>
           </component>
@@ -173,6 +182,7 @@
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <labelFor value="42439"/>
           <text resource-bundle="messages/AndroidBundle" key="android.confirm.password.label"/>
         </properties>
       </component>

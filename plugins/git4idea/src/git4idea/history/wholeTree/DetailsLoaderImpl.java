@@ -46,7 +46,8 @@ public class DetailsLoaderImpl implements DetailsLoader {
   private final Project myProject;
   private final Map<VirtualFile, SymbolicRefs> myRefs;
   private long myRefsReloadTick;
-  private RefsLoader myRefsLoader;
+
+  private final Object myLock;
 
   public DetailsLoaderImpl(Project project) {
     myQueue = new BackgroundTaskQueue(project, "Git log details");
@@ -55,39 +56,45 @@ public class DetailsLoaderImpl implements DetailsLoader {
     myAccesses = new HashMap<VirtualFile, LowLevelAccess>();
     myRefs = new HashMap<VirtualFile, SymbolicRefs>();
     myRefsReloadTick = 0;
+    myLock = new Object();
     scheduleRefs();
   }
 
   private void scheduleRefs() {
-    myRefsLoader = new RefsLoader(myProject);
-    myQueue.run(myRefsLoader);
+    myQueue.run(new RefsLoader(myProject));
   }
 
   public void setDetailsCache(DetailsCache detailsCache) {
-    myDetailsCache = detailsCache;
+    synchronized (myLock) {
+      myDetailsCache = detailsCache;
+    }
   }
 
   public void setRoots(final Collection<VirtualFile> roots) {
-    myLoadIdsGatherer.clear();
-    myAccesses.clear();
-    for (VirtualFile root : roots) {
-      myLoadIdsGatherer.put(root, new CommitIdsHolder<AbstractHash>());
-      myAccesses.put(root, new LowLevelAccessImpl(myProject, root));
+    synchronized (myLock) {
+      myLoadIdsGatherer.clear();
+      myAccesses.clear();
+      for (VirtualFile root : roots) {
+        myLoadIdsGatherer.put(root, new CommitIdsHolder<AbstractHash>());
+        myAccesses.put(root, new LowLevelAccessImpl(myProject, root));
+      }
+      myRefsReloadTick = 0;
     }
-    myRefsReloadTick = 0;
   }
 
   @Override
   public void load(MultiMap<VirtualFile,AbstractHash> hashes) {
     final long now = System.currentTimeMillis();
-    if (now - myRefsReloadTick >= ourRefsReload) {
-      scheduleRefs();
-    }
-    myRefsReloadTick = now;
-    for (VirtualFile root : hashes.keySet()) {
-      final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(root);
-      holder.add(hashes.get(root));
-      myQueue.run(new Worker(myProject, root, myAccesses.get(root), myDetailsCache, myQueue));
+    synchronized (myLock) {
+      if (now - myRefsReloadTick >= ourRefsReload) {
+        scheduleRefs();
+      }
+      myRefsReloadTick = now;
+      for (VirtualFile root : hashes.keySet()) {
+        final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(root);
+        holder.add(hashes.get(root));
+        myQueue.run(new Worker(myProject, root, myAccesses.get(root), myDetailsCache, myQueue));
+      }
     }
   }
 
@@ -98,13 +105,15 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      for (VirtualFile file : myAccesses.keySet()) {
-        final LowLevelAccess access = myAccesses.get(file);
-        try {
-          myRefs.put(file, access.getRefs());
-        }
-        catch (VcsException e) {
-          LOG.info(e);
+      synchronized (myLock) {
+        for (VirtualFile file : myAccesses.keySet()) {
+          final LowLevelAccess access = myAccesses.get(file);
+          try {
+            myRefs.put(file, access.getRefs());
+          }
+          catch (VcsException e) {
+            LOG.info(e);
+          }
         }
       }
     }
@@ -129,17 +138,22 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      final CommitIdsHolder<AbstractHash> holder = myLoadIdsGatherer.get(myVirtualFile);
+      final CommitIdsHolder<AbstractHash> holder;
+      final SymbolicRefs refs;
+      synchronized (myLock) {
+        holder = myLoadIdsGatherer.get(myVirtualFile);
+        refs = myRefs.get(myAccess.getRoot());
+      }
       if (holder == null) return;
       final Collection<AbstractHash> hashes = holder.get(ourLoadSize);
       try {
-        loadDetails(hashes);
+        loadDetails(hashes, refs);
       }
       catch (VcsException e) {
         LOG.info(e);
         for (AbstractHash hash : hashes) {
           try {
-            loadDetails(Collections.singletonList(hash));
+            loadDetails(Collections.singletonList(hash), refs);
           }
           catch (VcsException e1) {
             LOG.info(e1);
@@ -152,7 +166,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
       }
     }
 
-    private void loadDetails(Collection<AbstractHash> hashes) throws VcsException {
+    private void loadDetails(Collection<AbstractHash> hashes, SymbolicRefs refs) throws VcsException {
       final List<String> converted = new ArrayList<String>();
       for (final AbstractHash hash : hashes) {
         if (myDetailsCache.convert(myVirtualFile, hash) == null) {
@@ -160,7 +174,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
         }
       }
       if (! hashes.isEmpty()) {
-          final Collection<GitCommit> result = myAccess.getCommitDetails(converted, myRefs.get(myAccess.getRoot()));
+          final Collection<GitCommit> result = myAccess.getCommitDetails(converted, refs);
           if (result != null && (! result.isEmpty())) {
             myDetailsCache.acceptAnswer(result, myAccess.getRoot());
             for (GitCommit gitCommit : result) {

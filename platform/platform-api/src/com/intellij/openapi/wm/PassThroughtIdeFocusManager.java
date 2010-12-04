@@ -103,6 +103,11 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public IdeFrame getLastFocusedFrame() {
+    return null;
+  }
+
+  @Override
   public void toFront(JComponent c) {
   }
 
