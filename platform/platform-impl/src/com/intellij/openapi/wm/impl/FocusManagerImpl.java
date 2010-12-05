@@ -40,6 +40,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -92,6 +94,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private Map<Integer, Integer> myModalityCount2FlushCount = new HashMap<Integer, Integer>();
 
+  private IdeFrame myLastFocusedFrame;
+
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
@@ -128,6 +132,19 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }, this);
 
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getNewValue() instanceof IdeFrame) {
+          myLastFocusedFrame = (IdeFrame)evt.getNewValue();
+        }
+      }
+    });
+  }
+
+  @Override
+  public IdeFrame getLastFocusedFrame() {
+    return myLastFocusedFrame;
   }
 
   @NotNull

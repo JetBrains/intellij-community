@@ -22,9 +22,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -104,16 +106,51 @@ public class GroovyCompletionContributor extends CompletionContributor {
     @Override
     public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
       GroovyInsertHandler.INSTANCE.handleInsert(context, item);
+      final PsiMember member = item.getObject();
       final PsiClass containingClass = item.getContainingClass();
       PsiDocumentManager.getInstance(containingClass.getProject()).commitDocument(context.getDocument());
-      final GrReferenceExpression ref = PsiTreeUtil
-        .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
-      if (ref != null && ref.getQualifier() == null) {
+      final GrReferenceExpression ref = PsiTreeUtil.
+        findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GrReferenceExpression.class, false);
+
+      if (ref != null &&
+          ref.getQualifier() == null &&
+          !importAlreadyExists(member, ((GroovyFile)context.getFile()), ref) &&
+          !PsiManager.getInstance(context.getProject()).areElementsEquivalent(ref.resolve(), member)) {
         ref.bindToElementViaStaticImport(containingClass);
       }
 
     }
   };
+
+  private static boolean importAlreadyExists(final PsiMember member, final GroovyFile file, final PsiElement place) {
+    final PsiManager manager = PsiManager.getInstance(file.getProject());
+    PsiScopeProcessor processor = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(PsiElement element, ResolveState state) {
+        return !manager.areElementsEquivalent(element, member);
+      }
+
+      @Override
+      public <T> T getHint(Key<T> hintKey) {
+        return null;
+      }
+
+      @Override
+      public void handleEvent(Event event, Object associated) {
+      }
+    };
+
+    boolean skipStaticImports = member instanceof PsiClass;
+    final GrImportStatement[] imports = file.getImportStatements();
+    final ResolveState initial = ResolveState.initial();
+    for (GrImportStatement anImport : imports) {
+      if (skipStaticImports == anImport.isStatic()) continue;
+      if (!anImport.processDeclarations(processor, initial, null, place)) return true;
+    }
+    return false;
+  }
+
+
   private static final InsertHandler<JavaGlobalMemberLookupElement> QUALIFIED_METHOD_INSERT_HANDLER = new InsertHandler<JavaGlobalMemberLookupElement>() {
     @Override
     public void handleInsert(InsertionContext context, JavaGlobalMemberLookupElement item) {
@@ -242,10 +279,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     @NotNull final CompletionResultSet result) {
         final PsiElement reference = parameters.getPosition().getParent();
         if (reference instanceof GrReferenceElement) {
+          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
+            result.addElement(LookupElementBuilder.create("*"));
+          }
+
           completeReference(parameters, result, (GrReferenceElement)reference);
         }
       }
     });
+
 
     //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {

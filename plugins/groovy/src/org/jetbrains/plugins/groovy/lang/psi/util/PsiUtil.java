@@ -441,6 +441,10 @@ public class PsiUtil {
             place = place.getParent();
           }
           if (place == null || place instanceof PsiFile || place == stopAt) return true;
+          if (place instanceof GrTypeDefinition) {
+            return !(((GrTypeDefinition)place).hasModifierProperty(GrModifier.STATIC) ||
+                     ((GrTypeDefinition)place).getContainingClass() == null);
+          }
           return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
         }
       }

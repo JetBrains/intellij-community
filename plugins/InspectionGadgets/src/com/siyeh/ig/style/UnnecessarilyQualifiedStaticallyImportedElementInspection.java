@@ -35,7 +35,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
     @Override
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "unnecesarily.qualified.statically.imported.element.display.name");
+                "unnecessarily.qualified.statically.imported.element.display.name");
     }
 
     @NotNull
@@ -43,7 +43,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
     protected String buildErrorString(Object... infos) {
         final PsiMember member = (PsiMember) infos[0];
         return InspectionGadgetsBundle.message(
-                "unnecesarily.qualified.statically.imported.element.problem.descriptor",
+                "unnecessarily.qualified.statically.imported.element.problem.descriptor",
                 member.getName());
     }
 
@@ -58,7 +58,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "unnecesarily.qualified.statically.imported.element.quickfix");
+                    "unnecessarily.qualified.statically.imported.element.quickfix");
         }
 
         @Override
@@ -95,7 +95,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
             if (parent instanceof PsiReferenceExpression) {
                 return;
             }
-            if (parent instanceof PsiImportStatement) {
+            if (parent instanceof PsiImportStatementBase) {
                 return;
             }
             final PsiElement target = reference.resolve();
@@ -106,12 +106,13 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) qualifier;
             final PsiElement qualifierTarget = referenceExpression.resolve();
-            if (!(qualifier instanceof PsiClass)) {
+            if (!(qualifierTarget instanceof PsiClass)) {
                 return;
             }
-            if (ImportUtils.isStaticallyImported(member, reference)) {
-                registerError(qualifier, member);
+            if (!ImportUtils.isStaticallyImported(member, reference)) {
+                return;
             }
+            registerError(qualifier, member);
         }
     }
 }

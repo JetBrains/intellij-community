@@ -411,6 +411,10 @@ public class UIUtil {
     return UIManager.getColor("Table.foreground");
   }
 
+  public static Color getTableGridColor() {
+    return UIManager.getColor("Table.gridColor");
+  }
+
   public static Color getListBackground() {
     // Fixes most of the GTK+ L&F glitches
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");

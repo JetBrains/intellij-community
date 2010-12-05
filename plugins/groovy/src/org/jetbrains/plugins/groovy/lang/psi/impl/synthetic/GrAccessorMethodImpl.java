@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.*;
+import com.intellij.psi.impl.light.LightModifierList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -37,7 +39,18 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
   private final boolean myIsSetter;
 
   public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
-    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE, name);
+    super(property.getManager(), GroovyFileType.GROOVY_LANGUAGE, name,
+          new LightParameterListBuilder(property.getManager(), GroovyFileType.GROOVY_LANGUAGE),
+          new LightModifierList(property.getManager()) {
+            @Override
+            public String getText() {
+              final String[] modifiers = getModifiers();
+              if (modifiers.length == 0) return "";
+              if (modifiers.length == 1) return modifiers[0];
+
+              return StringUtil.join(modifiers, " ");
+            }
+          });
     myProperty = property;
     myIsSetter = isSetter;
 

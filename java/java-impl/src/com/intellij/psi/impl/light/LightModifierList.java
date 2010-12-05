@@ -94,4 +94,8 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return "PsiModifierList";
   }
 
+  public String[] getModifiers() {
+    return myModifiers.toArray(new String[myModifiers.size()]);
+  }
+
 }

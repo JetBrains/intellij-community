@@ -82,6 +82,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
       final Window owner = myComponent != null ? SwingUtilities.getWindowAncestor(myComponent) : null;
       if(owner==null){
+        myDoneCallback.setRejected();
         return;
       }
 

@@ -38,6 +38,10 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate = delegate;
   }
 
+  public EditorColorsScheme getDelegate() {
+    return myDelegate;
+  }
+
   @Override
   public void setName(String name) {
     myDelegate.setName(name);

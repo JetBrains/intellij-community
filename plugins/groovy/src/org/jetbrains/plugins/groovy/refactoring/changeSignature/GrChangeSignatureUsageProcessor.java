@@ -502,9 +502,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
-      if (argumentList instanceof GrCommandArgumentList &&
-          argumentList.getAllArguments().length == 0 &&
-          (call == null || call.getClosureArguments().length == 0)) {
+      if (argumentList.getText().trim().length() == 0 && (call == null || call.getClosureArguments().length == 0)) {
         argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
       }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);

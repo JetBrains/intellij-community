@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -66,6 +67,15 @@ public class TypesUtil {
     final GrExpression rop = binaryExpression.getRightOperand();
     PsiType rType = rop == null ? null : rop.getType();
     if (lType == null || rType == null) return null;
+    final PsiType result =
+      getLeastUpperBoundForNumericType(lType, rType, binaryExpression.getProject());
+    if (result != null) return result;
+
+    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
+  }
+
+  @Nullable
+  private static PsiType getLeastUpperBoundForNumericType(@NotNull PsiType lType, @NotNull PsiType rType, Project project) {
     String lCanonical = lType.getCanonicalText();
     String rCanonical = rType.getCanonicalText();
     if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
@@ -73,12 +83,14 @@ public class TypesUtil {
       int rRank = TYPE_TO_RANK.get(rCanonical);
       int resultRank = Math.max(lRank, rRank);
       String qName = RANK_TO_TYPE.get(resultRank);
-      GlobalSearchScope scope = binaryExpression.getResolveScope();
       if (qName == null) return null;
-      return JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory().createTypeByFQClassName(qName, scope);
+      assert lType instanceof PsiClassType;
+      assert rType instanceof PsiClassType;
+      //lType.getResolveScope()!=null && rType.getResolveScope()!=null
+      return JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(qName, lType.getResolveScope().intersectWith(
+        rType.getResolveScope()));
     }
-
-    return getOverloadedOperatorType(lType, binaryExpression.getOperationTokenType(), binaryExpression, new PsiType[]{rType});
+    return null;
   }
 
   @Nullable
@@ -450,7 +462,8 @@ public class TypesUtil {
              CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
       return type1;
     }
-
+    final PsiType result = getLeastUpperBoundForNumericType(type1, type2, manager.getProject());
+    if (result != null) return result;
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }
 

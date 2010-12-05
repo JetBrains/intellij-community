@@ -350,8 +350,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
     PsiManager manager = method1.getManager();
     for (int i = 0; i < params2.length; i++) {
-      PsiType type1 = substitutor1.substitute(params1[i].getType());
-      PsiType type2 = substitutor2.substitute(params2[i].getType());
+      final PsiType ptype1 = params1[i].getType();
+      final PsiType ptype2 = params2[i].getType();
+      PsiType type1 = substitutor1.substitute(ptype1);
+      PsiType type2 = substitutor2.substitute(ptype2);
 
       if (argTypes != null && argTypes.length > i) {
         PsiType argType = argTypes[i];
@@ -364,7 +366,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         }
       }
 
-      if (!typesAgree(manager, scope, type1, type2)) return false;
+      if (!typesAgree(manager, scope, TypeConversionUtil.erasure(ptype1), TypeConversionUtil.erasure(ptype2))) return false;
     }
 
     return true;

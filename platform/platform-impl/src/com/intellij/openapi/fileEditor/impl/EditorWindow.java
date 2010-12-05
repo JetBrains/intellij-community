@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -315,6 +316,14 @@ public class EditorWindow {
 
   public boolean isEmptyVisible() {
     return myTabbedPane != null ? myTabbedPane.isEmptyVisible() : getFiles().length == 0;
+  }
+
+  public Dimension getSize() {
+    return myPanel.getSize();
+  }
+
+  public EditorTabbedContainer getTabbedPane() {
+    return myTabbedPane;
   }
 
   protected static class TComp extends JPanel implements DataProvider{

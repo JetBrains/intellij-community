@@ -58,11 +58,6 @@ public class StatusBarUI extends ComponentUI {
   }
 
   @Override
-  public Dimension getPreferredSize(JComponent c) {
-    return getMaximumSize(c);
-  }
-
-  @Override
   public Dimension getMinimumSize(JComponent c) {
     return MIN_SIZE; // TODO
   }

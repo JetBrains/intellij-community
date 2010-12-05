@@ -97,12 +97,11 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
         public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
-            final PsiElement parent = reference.getParent();
-            if (parent instanceof PsiImportStatement) {
-                return;
-            }
             final PsiElement qualifier = reference.getQualifier();
             if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+                return;
+            }
+            if (isInImportOrPackage(reference)) {
                 return;
             }
             final PsiJavaCodeReferenceElement referenceElement =
@@ -155,6 +154,18 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
                 return true;
             }
             return manager.areElementsEquivalent(target, referencedClass);
+        }
+
+        private static boolean isInImportOrPackage(PsiElement element) {
+            while (element instanceof PsiJavaCodeReferenceElement) {
+                element = element.getParent();
+                if (element instanceof PsiImportStatementBase ||
+                        element instanceof PsiPackageStatement ||
+                        element instanceof PsiImportStaticReferenceElement) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

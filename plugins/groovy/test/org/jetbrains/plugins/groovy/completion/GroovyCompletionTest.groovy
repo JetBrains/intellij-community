@@ -224,79 +224,92 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testCompletionNamedArgument1() {
-    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  { m(arg111: 1, arg<caret>: 2,   arg333: 3) }
 }
 """)
-    LookupElement[] lookupElements = myFixture.completeBasic()
-    assertNull(lookupElements)
+    myFixture.completeBasic()
 
-    myFixture.type('!')
-    assertEquals """
+    myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: 1, arg222: !2,   arg333: 3) }
+ { m(arg111: 1, arg222: <caret>2,   arg333: 3) }
 }
-""", getFileText(file)
+"""
   }
 
   public void testCompletionNamedArgument2() {
-    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  { m arg111: 1, arg<caret>: 2,   arg333: 3 }
 }
 """)
-    LookupElement[] lookupElements = myFixture.completeBasic()
-    assertNull(lookupElements)
+    myFixture.completeBasic()
 
-    myFixture.type('!')
-    assertEquals """
+    myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m arg111: 1, arg222: !2,   arg333: 3 }
+ { m arg111: 1, arg222: <caret>2,   arg333: 3 }
 }
-""", getFileText(file)
+"""
   }
 
   public void testCompletionNamedArgument3() {
-    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  { m arg1<caret> }
 }
 """)
-    LookupElement[] lookupElements = myFixture.completeBasic()
-    assertNull(lookupElements)
+    myFixture.completeBasic()
 
-    myFixture.type('!')
-    assertEquals """
+    myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m arg111: ! }
+ { m arg111: <caret> }
 }
-""", getFileText(file)
+"""
   }
 
   public void testCompletionNamedArgument4() {
-    def file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  { m (arg1<caret> zzz) }
 }
 """)
-    LookupElement[] lookupElements = myFixture.completeBasic()
-    assertNull(lookupElements)
+    myFixture.completeBasic()
 
-    myFixture.type('!')
-    assertEquals """
+    myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m (arg111: !, zzz) }
+ { m (arg111: <caret>, zzz) }
 }
-""", getFileText(file)
+"""
+  }
+
+  public void testCompletionNamedArgument5() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m (arg1<caret>, {
+      out << "asdasdas"
+ } ) }
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult("""
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ { m (arg111: <caret>, {
+      out << "asdasdas"
+ } ) }
+}
+""")
   }
 
   public void testSpreadOperator() {
@@ -314,11 +327,7 @@ class A {
     assertEquals """class MyCategory {
   static def plus(MyCategory t, MyCategory) {
   }
-}""", getFileText(file)
-  }
-
-  def getFileText(PsiFile file) {
-    return PsiDocumentManager.getInstance(project).getDocument(file).text
+}""", file.text
   }
 
   void configure(String text) {
@@ -363,4 +372,28 @@ class A {
     myFixture.type 'ad\t'
     myFixture.checkResult "def x = []; x.add(<caret>) this"
   }
+
+  public void testDontAddStaticImportSecondTime() {
+    configure """import static java.lang.String.format
+form<caret>"""
+
+    myFixture.completeBasic()
+    myFixture.checkResult """import static java.lang.String.format
+format<caret>"""
+  }
+  
+  public void testImportAsterisk() {
+    myFixture.configureByText "a.groovy", "import java.lang.<caret>"
+    myFixture.completeBasic()
+    myFixture.type '*\n'
+    myFixture.checkResult "import java.lang.*<caret>"
+  }
+
+  public void testNoDotsInImport() {
+    myFixture.configureByText "a.groovy", "import java.<caret>"
+    myFixture.completeBasic()
+    myFixture.type 'lan\n'
+    myFixture.checkResult "import java.lang<caret>"
+  }
+  
 }

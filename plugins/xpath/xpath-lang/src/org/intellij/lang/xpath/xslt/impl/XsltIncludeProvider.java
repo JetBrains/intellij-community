@@ -21,12 +21,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
+import java.io.CharArrayReader;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -43,7 +47,8 @@ public class XsltIncludeProvider extends FileIncludeProvider {
 
   @NotNull
   public FileIncludeInfo[] getIncludeInfos(FileContent content) {
-
+    CharSequence contentAsText = content.getContentAsText();
+    if (CharArrayUtil.indexOf(contentAsText, XsltSupport.XSLT_NS, 0) == -1) return FileIncludeInfo.EMPTY;
     final ArrayList<FileIncludeInfo> infos = new ArrayList<FileIncludeInfo>();
     NanoXmlUtil.IXMLBuilderAdapter builder = new NanoXmlUtil.IXMLBuilderAdapter() {
 
@@ -74,7 +79,8 @@ public class XsltIncludeProvider extends FileIncludeProvider {
         isInclude = false;
       }
     };
-    NanoXmlUtil.parse(new ByteArrayInputStream(content.getContent()), builder);
+
+    NanoXmlUtil.parse(new CharSequenceReader(contentAsText), builder);
     return infos.toArray(new FileIncludeInfo[infos.size()]);
   }
 }
