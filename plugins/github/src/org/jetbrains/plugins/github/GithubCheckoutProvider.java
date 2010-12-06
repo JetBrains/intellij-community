@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +27,20 @@ public class GithubCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
     final GithubSettings settings = GithubSettings.getInstance();
-    if (!GithubUtil.testConnection(settings.getLogin(), settings.getPassword())){
+    final boolean validCredentials;
+    try {
+      validCredentials = GithubUtil.accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          return GithubUtil.testConnection(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (GithubUtil.CancelledException e) {
+      return;
+    }
+    if (!validCredentials){
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
       if (!dialog.isOK()) {
@@ -33,7 +48,19 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       }
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
-    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword());
+    final List<RepositoryInfo> availableRepos;
+    try {
+      availableRepos = GithubUtil.accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
+        @Override
+        public List<RepositoryInfo> compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
+          return GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (GithubUtil.CancelledException e) {
+      return;
+    }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
       @Override
       public int compare(final RepositoryInfo r1, final RepositoryInfo r2) {
