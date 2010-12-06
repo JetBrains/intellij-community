@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public class ScriptingLibraryTable {
 
   private ArrayList<LibraryModel> myLibraryModels = new ArrayList<LibraryModel>();
   private HashSet<VirtualFile> myCompactFilesCache;
+  private HashMap<String,VirtualFile> myFileNameCache;
 
   public ScriptingLibraryTable(@NotNull LibraryTable libraryTable, LibraryType libraryType) {
     for (Library library : libraryTable.getLibraries()) {
@@ -62,9 +64,26 @@ public class ScriptingLibraryTable {
     }
     return myCompactFilesCache.contains(file);
   }
+  
+  @Nullable
+  public VirtualFile getMatchingFile(String fileName) {
+    if (myFileNameCache == null) {
+      myFileNameCache = new HashMap<String,VirtualFile>();
+      for (LibraryModel libModel : myLibraryModels) {
+        VirtualFile file = libModel.getMatchingFile(fileName);
+        if (file != null) {
+          myFileNameCache.put(fileName, file);
+          return file;
+        }
+      }
+      return null;
+    }
+    return myFileNameCache.get(fileName);
+  }
 
   public void invalidateCache() {
     myCompactFilesCache = null;
+    myFileNameCache = null;
   }
 
   @Nullable
@@ -159,6 +178,17 @@ public class ScriptingLibraryTable {
 
     public boolean containsFile(VirtualFile file) {
       return mySourceFiles.contains(file) || myCompactFiles.contains(file);
+    }
+    
+    @Nullable
+    public VirtualFile getMatchingFile(String fileName) {
+      for (VirtualFile sourceFile : mySourceFiles) {
+        if (sourceFile.getName().equals(fileName)) return sourceFile;
+      }
+      for (VirtualFile compactFile : myCompactFiles) {
+        if (compactFile.getName().equals(fileName)) return compactFile;
+      }
+      return null;
     }
 
     public boolean isEmpty() {
