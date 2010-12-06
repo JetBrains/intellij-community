@@ -25,8 +25,11 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.Date;
@@ -90,18 +93,19 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   public void renderChangeList(JComponent tree, CommittedChangeList changeList) {
     final Container parent = tree.getParent();
-    int parentWidth = parent == null ? 100 : parent.getWidth() - 74;
+    final int rowX = getRowX(myTree, 2);
+    int availableWidth = parent == null ? 100 : parent.getWidth() - rowX;
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
-    int size = 0;
-    if (myDateWidth > 0 && (fontMetrics.getFont().getSize() == myFontSize)) {
-      size += myDateWidth;
-    } else {
-      myDateWidth = fontMetrics.stringWidth("Yesterday 00:00 ");
+    int dateCommitterSize = 0;
+    if (myDateWidth <= 0 || (fontMetrics.getFont().getSize() != myFontSize)) {
+      myDateWidth = Math.max(fontMetrics.stringWidth(", Yesterday 00:00 PM "), fontMetrics.stringWidth(", 00/00/00 00:00 PM "));
+      myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(new Date(2000, 11, 31))));
       myFontSize = fontMetrics.getFont().getSize();
     }
-    size += boldMetrics.stringWidth(changeList.getCommitterName());
+    dateCommitterSize += myDateWidth;
+    dateCommitterSize += boldMetrics.stringWidth(changeList.getCommitterName());
 
     final Pair<String, Boolean> descriptionInfo = getDescriptionOfChangeList(changeList.getName().trim());
     boolean truncated = descriptionInfo.getSecond().booleanValue();
@@ -114,7 +118,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    int descMaxWidth = parentWidth - size - 8;
+    int descMaxWidth = availableWidth - dateCommitterSize - 8;
     boolean partial = (changeList instanceof ReceivedChangeList) && ((ReceivedChangeList)changeList).isPartial();
     if (partial) {
       final String partialMarker = VcsBundle.message("committed.changes.partial.list") + " ";
@@ -138,7 +142,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
     if (description.length() == 0 && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      appendAlign(parentWidth - size);
+      appendAlign(availableWidth - dateCommitterSize - numberWidth);
     }
     else if (descMaxWidth < 0) {
       myRenderer.appendTextWithLinks(description);
@@ -151,7 +155,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
         subString += s;
       }
       final int partWidth = fontMetrics.stringWidth(subString);
-      appendAlign(descMaxWidth - partWidth);
+      appendAlign(descMaxWidth - partWidth - numberWidth);
     }
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
@@ -163,7 +167,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       // align value is for the latest added piece
-      appendAlign(descMaxWidth - addWidth);
+      appendAlign(descMaxWidth - addWidth - numberWidth);
     }
 
     append(changeList.getCommitterName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -187,5 +191,18 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
 
   public Dimension getPreferredSize() {
     return new Dimension(2000, super.getPreferredSize().height);
+  }
+
+  public static int getRowX(JTree tree, int depth) {
+    final TreeUI ui = tree.getUI();
+    if (ui instanceof BasicTreeUI) {
+      final BasicTreeUI treeUI = ((BasicTreeUI)ui);
+      return (treeUI.getLeftChildIndent() + treeUI.getRightChildIndent()) * depth;
+    }
+
+    final int leftIndent = UIUtil.getTreeLeftChildIndent();
+    final int rightIndent = UIUtil.getTreeRightChildIndent();
+
+    return (leftIndent + rightIndent) * depth;
   }
 }
