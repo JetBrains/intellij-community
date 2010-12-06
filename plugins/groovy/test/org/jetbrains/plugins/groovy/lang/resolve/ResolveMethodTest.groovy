@@ -624,6 +624,12 @@ class Zoo {
 
   public void testSpreadOperatorNotList() {
     assertInstanceOf resolve("A.groovy"), GrMethod
+  }
 
+  public void testMethodChosenCorrect() {
+    final PsiElement resolved = resolve("A.groovy")
+    assertInstanceOf resolved, GrMethod.class
+
+    assertEquals "map", resolved.parameterList.parameters[0].name
   }
 }

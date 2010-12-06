@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane class="com.intellij.ui.components.JBScrollPane" id="8eaf6">
+      <scrollpane id="8eaf6" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="1" column="0" row-span="5" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -28,7 +28,8 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Existing Android Virtual Devices:"/>
+          <labelFor value="8eaf6"/>
+          <text value="&amp;Existing Android Virtual Devices:"/>
         </properties>
       </component>
       <component id="24c3" class="javax.swing.JButton" binding="myCreateButton">
@@ -36,7 +37,7 @@
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Create"/>
+          <text value="&amp;Create"/>
         </properties>
       </component>
       <vspacer id="e2c2c">
@@ -49,7 +50,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Remove"/>
+          <text value="&amp;Remove"/>
         </properties>
       </component>
       <component id="90656" class="javax.swing.JButton" binding="myRefreshButton" default-binding="true">
@@ -57,7 +58,7 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Refresh"/>
+          <text value="Re&amp;fresh"/>
         </properties>
       </component>
       <component id="eb4de" class="javax.swing.JButton" binding="myStartAvdManagerButton">
@@ -65,7 +66,7 @@
           <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Android SDK Manager"/>
+          <text value="&amp;Android SDK Manager"/>
         </properties>
       </component>
     </children>

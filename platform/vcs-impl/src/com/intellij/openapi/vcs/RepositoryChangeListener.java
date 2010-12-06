@@ -48,7 +48,7 @@ public class RepositoryChangeListener extends VirtualFileAdapter implements VcsL
   private final String[] myRelativePathsToListen;
   private final AtomicBoolean myInternalChangeInProgress = new AtomicBoolean();
   private final AtomicLong myInternalChangeEndTime = new AtomicLong();
-  private final MessageBusConnection myConnection;
+  private MessageBusConnection myConnection;
 
   /**
    * @param relativePathsToListen Paths to files (directories are not supported yet) which are to be listened.
@@ -57,11 +57,11 @@ public class RepositoryChangeListener extends VirtualFileAdapter implements VcsL
   public RepositoryChangeListener(Project project, String... relativePathsToListen) {
     myProject = project;
     myRelativePathsToListen = relativePathsToListen;
-    myConnection = myProject.getMessageBus().connect();
   }
 
   public void activate() {
     loadRepoFilesForAllMappings(myRelativePathsToListen);
+    myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     VirtualFileManager.getInstance().addVirtualFileListener(this);
   }

@@ -41,7 +41,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         final PsiLiteralExpression literalExpression =
                 (PsiLiteralExpression) infos[0];
-        final String replacementString = literalExpression.getText() + 'L';
+        final String replacementString = buildReplacementString(literalExpression);
         return InspectionGadgetsBundle.message(
                 "int.literal.may.be.long.literal.problem.descriptor",
                 replacementString);
@@ -51,8 +51,15 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiLiteralExpression literalExpression =
                 (PsiLiteralExpression) infos[0];
-        final String replacementString = literalExpression.getText() + 'L';
+        final String replacementString = buildReplacementString(literalExpression);
         return new IntLiteralMayBeLongLiteralFix(replacementString);
+    }
+
+    private static String buildReplacementString(final PsiLiteralExpression literalExpression) {
+        final PsiElement parent = literalExpression.getParent();
+        final String originalText = parent instanceof PsiPrefixExpression ?
+                                    parent.getText() : literalExpression.getText();
+        return originalText + 'L';
     }
 
     private static class IntLiteralMayBeLongLiteralFix
@@ -99,7 +106,10 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
             if (PsiType.INT != type) {
                 return;
             }
-            final PsiElement parent = expression.getParent();
+            PsiElement parent = expression.getParent();
+            if (parent instanceof PsiPrefixExpression) {
+                parent = parent.getParent();
+            }
             if (!(parent instanceof PsiTypeCastExpression)) {
                 return;
             }

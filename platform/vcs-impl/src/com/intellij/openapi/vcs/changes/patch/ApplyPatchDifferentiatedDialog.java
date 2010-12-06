@@ -136,7 +136,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     };
 
-    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<String>() {
+    myChangeListChooser = new ChangeListChooserPanel(project, new Consumer<String>() {
       public void consume(final String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage);
@@ -145,7 +145,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
-    myChangeListChooser.init(project);
+    myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);

@@ -15,12 +15,12 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -39,17 +39,8 @@ public class MainImpl {
     StartupUtil.isHeadless = Main.isHeadless(args);
     boolean isNewConfigFolder = PathManager.ensureConfigFolderExists(true);
     if (!StartupUtil.isHeadless && isNewConfigFolder) {
-      try {
-        if (SystemInfo.isWindowsVista || SystemInfo.isWindows7 || SystemInfo.isMac) {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-      }
-      catch (Exception e) {
-        // ignore
-      }
-      if (ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Idea")) {
-        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
-      }
+      UIUtil.initDefaultLAF("Idea");
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
     }
 
     if (!StartupUtil.checkStartupPossible(args)) {   // It uses config folder!

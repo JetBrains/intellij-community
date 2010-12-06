@@ -260,10 +260,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (defaultLaf != null) {
         return defaultLaf;
       }
-      UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASSNAME);
-      if (ideaLaf != null) {
-        return ideaLaf;
-      }
+    }
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(IDEA_LAF_CLASSNAME);
+    if (ideaLaf != null) {
+      return ideaLaf;
     }
     throw new IllegalStateException("No default look&feel found");
   }

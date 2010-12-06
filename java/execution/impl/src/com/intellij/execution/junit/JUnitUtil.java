@@ -211,7 +211,7 @@ public class JUnitUtil {
   }
 
   @Nullable
-  protected static PsiMethod findFirstTestMethod(PsiClass clazz) {
+  public static PsiMethod findFirstTestMethod(PsiClass clazz) {
     PsiMethod testMethod = null;
     for (PsiMethod method : clazz.getMethods()) {
       if (isTestMethod(MethodLocation.elementInClass(method, clazz)) || isSuiteMethod(method)) {

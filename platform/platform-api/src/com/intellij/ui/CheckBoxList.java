@@ -21,18 +21,18 @@ public class CheckBoxList extends JBList {
   private CheckBoxListListener checkBoxListListener;
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
-    this(new CheckBoxListModel(), checkBoxListListener);
+    this(new DefaultListModel(), checkBoxListListener);
   }
-  public CheckBoxList(final CheckBoxListModel dataModel, final CheckBoxListListener checkBoxListListener) {
+  public CheckBoxList(final DefaultListModel dataModel, final CheckBoxListListener checkBoxListListener) {
     this(dataModel);
     setCheckBoxListListener(checkBoxListListener);
   }
 
   public CheckBoxList() {
-    this(new CheckBoxListModel());
+    this(new DefaultListModel());
   }
 
-  public CheckBoxList(final CheckBoxListModel dataModel) {
+  public CheckBoxList(final DefaultListModel dataModel) {
     super();
     setModel(dataModel);
     setCellRenderer(new CellRenderer());
@@ -75,10 +75,6 @@ public class CheckBoxList extends JBList {
     });
   }
 
-  public CheckBoxListModel getCBModel() {
-    return (CheckBoxListModel)getModel();
-  }
-
   public boolean isItemSelected(int index) {
     return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
   }
@@ -88,8 +84,11 @@ public class CheckBoxList extends JBList {
     checkbox.setSelected(value);
     repaint();
 
-    final CheckBoxListModel model = getCBModel();
-    model.fireContentsChanged(model, index, index);
+    // fire change notification in case if we've already initialized model
+    final ListModel model = getModel();
+    if (model instanceof DefaultListModel) {
+      ((DefaultListModel)model).setElementAt(getModel().getElementAt(index), index);
+    }
 
     if (checkBoxListListener != null) {
       checkBoxListListener.checkBoxSelectionChanged(index, value);
@@ -136,12 +135,5 @@ public class CheckBoxList extends JBList {
 
   protected Color getForeground(final boolean isSelected, final JCheckBox checkbox) {
     return isSelected ? getSelectionForeground() : getForeground();
-  }
-
-  public static class CheckBoxListModel extends DefaultListModel {
-    @Override
-    protected void fireContentsChanged(Object source, int index0, int index1) {
-      super.fireContentsChanged(source, index0, index1);
-    }
   }
 }

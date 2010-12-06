@@ -28,12 +28,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
 
-  private final int myStartOffset;
-  private final int myEndOffset;
+  private final int     myStartOffset;
+  private final int     myEndOffset;
+  private final boolean myValid;
 
   public MockFoldRegion(int startOffset, int endOffset) {
+    this(startOffset, endOffset, true);
+  }
+
+  public MockFoldRegion(int startOffset, int endOffset, boolean valid) {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
+    myValid = valid;
   }
 
   @Override
@@ -79,7 +85,7 @@ public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
 
   @Override
   public boolean isValid() {
-    return true;
+    return myValid;
   }
 
   @Override

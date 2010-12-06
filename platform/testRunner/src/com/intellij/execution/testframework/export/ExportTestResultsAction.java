@@ -181,7 +181,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
                   outputFile.getParentFile().mkdirs();
                   final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outputFile.getParentFile());
                   if (parent == null || !parent.isValid()) {
-                    error.set(ExecutionBundle.message("failed.to.create.output.file: ''" + outputFile.getPath() + "''"));
+                    error.set(ExecutionBundle.message("failed.to.create.output.file", outputFile.getPath()));
                     return null;
                   }
 

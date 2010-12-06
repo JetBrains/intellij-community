@@ -58,6 +58,7 @@ import java.security.cert.X509Certificate;
 class ApkStep extends ExportSignedPackageWizardStep {
   private TextFieldWithBrowseButton myApkPathField;
   private JPanel myContentPanel;
+  private JLabel myApkPathLabel;
 
   private final ExportSignedPackageWizard myWizard;
   private boolean myInited;
@@ -74,6 +75,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
 
   public ApkStep(ExportSignedPackageWizard wizard) {
     myWizard = wizard;
+    myApkPathLabel.setLabelFor(myApkPathField);
     myApkPathField.getButton().addActionListener(
       new SaveFileListener(myContentPanel, myApkPathField, AndroidBundle.message("android.extract.package.choose.dest.apk")) {
         @Override

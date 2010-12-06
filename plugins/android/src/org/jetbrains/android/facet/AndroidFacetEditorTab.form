@@ -26,7 +26,7 @@
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Add Android library"/>
+          <text value="Add Android librar&amp;y"/>
         </properties>
       </component>
       <component id="4c7ae" class="javax.swing.JButton" binding="myResetPathsButton">
@@ -68,12 +68,12 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="9a8e6" class="javax.swing.JLabel">
+              <component id="9a8e6" class="javax.swing.JLabel" binding="myManifestFileLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Manifest file"/>
+                  <text value="&amp;Manifest file:"/>
                 </properties>
               </component>
               <component id="d7c3b" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myManifestFileField">
@@ -82,12 +82,12 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="5234a" class="javax.swing.JLabel">
+              <component id="5234a" class="javax.swing.JLabel" binding="myResFolderLabel">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Resources directory"/>
+                  <text value="Re&amp;sources directory:"/>
                 </properties>
               </component>
               <component id="4892c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myResFolderField">
@@ -96,12 +96,12 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="ee2a5" class="javax.swing.JLabel">
+              <component id="ee2a5" class="javax.swing.JLabel" binding="myAssetsFolderLabel">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Assets directory"/>
+                  <text value="Asse&amp;ts directory:"/>
                 </properties>
               </component>
               <component id="1ec49" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myAssetsFolderField">
@@ -110,12 +110,12 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="561f8" class="javax.swing.JLabel">
+              <component id="561f8" class="javax.swing.JLabel" binding="myNativeLibsFolderLabel">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Native libs directory"/>
+                  <text value="Native &amp;libs directory:"/>
                 </properties>
               </component>
               <component id="ba86e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myNativeLibsFolder">
@@ -251,12 +251,12 @@
                 <properties/>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <children>
-                  <component id="1d0b4" class="javax.swing.JLabel">
+                  <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Destination directory:"/>
+                      <text value="&amp;Destination directory:"/>
                     </properties>
                   </component>
                   <component id="d9360" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myAidlGenPathField">
@@ -291,7 +291,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="2b9e0" class="javax.swing.JLabel">
+                      <component id="2b9e0" class="javax.swing.JLabel" binding="myRGenPathLabel">
                         <constraints>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>

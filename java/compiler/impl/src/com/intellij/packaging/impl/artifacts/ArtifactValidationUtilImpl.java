@@ -24,7 +24,6 @@ import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -39,17 +38,17 @@ import java.util.*;
  */
 public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
   private final Project myProject;
-  private CachedValue<Map<Artifact, String>> myArtifactToSelfIncludingName;
+  private CachedValue<Map<String, String>> myArtifactToSelfIncludingName;
 
   public ArtifactValidationUtilImpl(Project project) {
     myProject = project;
   }
 
   @Override
-  public Map<Artifact, String> getArtifactToSelfIncludingNameMap() {
+  public Map<String, String> getArtifactToSelfIncludingNameMap() {
     if (myArtifactToSelfIncludingName == null) {
-      myArtifactToSelfIncludingName = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Map<Artifact, String>>() {
-        public Result<Map<Artifact, String>> compute() {
+      myArtifactToSelfIncludingName = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Map<String, String>>() {
+        public Result<Map<String, String>> compute() {
           return Result.create(computeArtifactToSelfIncludingNameMap(), ArtifactManager.getInstance(myProject).getModificationTracker());
         }
       }, false);
@@ -57,22 +56,22 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
     return myArtifactToSelfIncludingName.getValue();
   }
 
-  private Map<Artifact, String> computeArtifactToSelfIncludingNameMap() {
-    final Map<Artifact, String> result = new HashMap<Artifact, String>();
+  private Map<String, String> computeArtifactToSelfIncludingNameMap() {
+    final Map<String, String> result = new HashMap<String, String>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
-    final GraphGenerator<Artifact> graph = GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(artifactManager)));
-    for (Artifact artifact : graph.getNodes()) {
-      final Iterator<Artifact> in = graph.getIn(artifact);
+    final GraphGenerator<String> graph = GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(artifactManager)));
+    for (String artifactName : graph.getNodes()) {
+      final Iterator<String> in = graph.getIn(artifactName);
       while (in.hasNext()) {
-        Artifact next = in.next();
-        if (next.equals(artifact)) {
-          result.put(artifact, artifact.getName());
+        String next = in.next();
+        if (next.equals(artifactName)) {
+          result.put(artifactName, artifactName);
           break;
         }
       }
     }
 
-    final DFSTBuilder<Artifact> builder = new DFSTBuilder<Artifact>(graph);
+    final DFSTBuilder<String> builder = new DFSTBuilder<String>(graph);
     builder.buildDFST();
     if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
 
@@ -82,8 +81,8 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
       public boolean execute(int size) {
         if (size > 1) {
           for (int j = 0; j < size; j++) {
-            final Artifact artifact = builder.getNodeByTNumber(myTNumber + j);
-            result.put(artifact, artifact.getName());
+            final String artifactName = builder.getNodeByTNumber(myTNumber + j);
+            result.put(artifactName, artifactName);
           }
         }
         myTNumber += size;
@@ -92,13 +91,13 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
     });
 
     for (int i = 0; i < graph.getNodes().size(); i++) {
-      final Artifact artifact = builder.getNodeByTNumber(i);
-      if (!result.containsKey(artifact)) {
-        final Iterator<Artifact> in = graph.getIn(artifact);
+      final String artifactName = builder.getNodeByTNumber(i);
+      if (!result.containsKey(artifactName)) {
+        final Iterator<String> in = graph.getIn(artifactName);
         while (in.hasNext()) {
           final String name = result.get(in.next());
           if (name != null) {
-            result.put(artifact, name);
+            result.put(artifactName, name);
           }
         }
       }
@@ -107,30 +106,41 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
     return result;
   }
 
-  private class ArtifactsGraph implements GraphGenerator.SemiGraph<Artifact> {
+  private class ArtifactsGraph implements GraphGenerator.SemiGraph<String> {
     private final ArtifactManager myArtifactManager;
+    private final Set<String> myArtifactNames;
 
     public ArtifactsGraph(ArtifactManager artifactManager) {
       myArtifactManager = artifactManager;
+      myArtifactNames = new LinkedHashSet<String>();
+      for (Artifact artifact : myArtifactManager.getSortedArtifacts()) {
+        myArtifactNames.add(artifact.getName());
+      }
     }
 
     @Override
-    public Collection<Artifact> getNodes() {
-      return Arrays.asList(myArtifactManager.getSortedArtifacts());
+    public Collection<String> getNodes() {
+      return myArtifactNames;
     }
 
     @Override
-    public Iterator<Artifact> getIn(Artifact n) {
-      final Set<Artifact> included = new LinkedHashSet<Artifact>();
+    public Iterator<String> getIn(String name) {
+      final Set<String> included = new LinkedHashSet<String>();
       final PackagingElementResolvingContext context = myArtifactManager.getResolvingContext();
-      ArtifactUtil.processPackagingElements(n, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new PackagingElementProcessor<ArtifactPackagingElement>() {
-        @Override
-        public boolean process(@NotNull ArtifactPackagingElement element,
-                               @NotNull PackagingElementPath path) {
-          ContainerUtil.addIfNotNull(included, element.findArtifact(context));
-          return true;
-        }
-      }, context, false);
+      final Artifact artifact = context.getArtifactModel().findArtifact(name);
+      if (artifact != null) {
+        ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new PackagingElementProcessor<ArtifactPackagingElement>() {
+          @Override
+          public boolean process(@NotNull ArtifactPackagingElement element,
+                                 @NotNull PackagingElementPath path) {
+            final String artifactName = element.getArtifactName();
+            if (myArtifactNames.contains(artifactName)) {
+              included.add(artifactName);
+            }
+            return true;
+          }
+        }, context, false);
+      }
       return included.iterator();
     }
   }

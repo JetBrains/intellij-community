@@ -30,11 +30,15 @@
         </constraints>
         <properties/>
       </component>
-      <nested-form id="8eefe" form-file="com/intellij/openapi/vcs/changes/ui/EditChangelistPanel.form" binding="myNewListPanel" custom-create="true">
+      <component id="54fed" class="com.intellij.openapi.vcs.changes.ui.NewEditChangelistPanel" binding="myNewListPanel" custom-create="true">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="3" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="3" use-parent-layout="false">
+            <minimum-size width="300" height="150"/>
+            <preferred-size width="300" height="150"/>
+          </grid>
         </constraints>
-      </nested-form>
+        <properties/>
+      </component>
     </children>
   </grid>
   <buttonGroups>

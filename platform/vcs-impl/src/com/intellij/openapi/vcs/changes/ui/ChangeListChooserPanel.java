@@ -20,13 +20,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,14 +44,13 @@ public class ChangeListChooserPanel extends JPanel {
   private JRadioButton myRbExisting;
   private JRadioButton myRbNew;
   private JComboBox myExistingListsCombo;
-  private EditChangelistPanel myNewListPanel;
-  @Nullable private final ChangeListEditHandler myHandler;
+  private NewEditChangelistPanel myNewListPanel;
   private final Consumer<String> myOkEnabledListener;
   private Project myProject;
 
-  public ChangeListChooserPanel(@Nullable final ChangeListEditHandler handler, @NotNull final Consumer<String> okEnabledListener) {
+  public ChangeListChooserPanel(final Project project, @NotNull final Consumer<String> okEnabledListener) {
     super(new BorderLayout());
-    myHandler = handler;
+    myProject = project;
     myOkEnabledListener = okEnabledListener;
     add(myPanel, BorderLayout.CENTER);
 
@@ -62,11 +61,9 @@ public class ChangeListChooserPanel extends JPanel {
     });
   }
 
-  public void init(final Project project) {
-    myProject = project;
-
+  public void init() {
     myExistingListsCombo.setRenderer(new HtmlListCellRenderer(myExistingListsCombo.getRenderer()) {
-      private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(project, this);
+      private final IssueLinkRenderer myLinkRenderer = new IssueLinkRenderer(myProject, this);
 
       @Override
       protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -77,7 +74,7 @@ public class ChangeListChooserPanel extends JPanel {
         }
       }
     });
-    myNewListPanel.init(project, null);
+    myNewListPanel.init(null);
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
@@ -96,12 +93,12 @@ public class ChangeListChooserPanel extends JPanel {
   private void updateEnabledItems() {
     if (myRbExisting.isSelected()) {
       myExistingListsCombo.setEnabled(true);
-      myNewListPanel.setEnabled(false);
+      UIUtil.setEnabled(myNewListPanel, false, true);
       myExistingListsCombo.requestFocus();
     }
     else {
       myExistingListsCombo.setEnabled(false);
-      myNewListPanel.setEnabled(true);
+      UIUtil.setEnabled(myNewListPanel, true, true);
       myNewListPanel.requestFocus();
     }
     if (myProject != null) {
@@ -161,7 +158,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   private void createUIComponents() {
-    myNewListPanel = new EditChangelistPanel(myHandler) {
+    myNewListPanel = new NewEditChangelistPanel(myProject) {
 
       @Override
       protected void nameChanged(String errorMessage) {

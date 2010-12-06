@@ -502,7 +502,8 @@ public class PluginManagerMain implements Disposable {
     setRequireShutdown(true);
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
-      pluginDescriptor.setEnabled(((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue());
+      final Boolean enabled = (Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn());
+      pluginDescriptor.setEnabled(enabled != null && enabled.booleanValue());
     }
     for (IdeaPluginDescriptor descriptor : myFilter.getFilteredInstalled()) {
       ((IdeaPluginDescriptorImpl)descriptor).setEnabled(installedPluginsModel.isEnabled(descriptor.getPluginId()));

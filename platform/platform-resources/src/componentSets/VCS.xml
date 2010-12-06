@@ -25,6 +25,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
+      <skipForDefaultProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>

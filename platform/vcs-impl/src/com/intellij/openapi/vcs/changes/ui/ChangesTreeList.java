@@ -152,19 +152,20 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList.setCellRenderer(new MyListCellRenderer());
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+    if (myShowCheckboxes) {
+      registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          includeSelection();
+        }
 
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        includeSelection();
-      }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-    registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        excludeSelection();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          excludeSelection();
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
 
     myList.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -285,37 +286,39 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
         int listSelection = 0;
         int scrollRow = 0;
-        if (myIncludedChanges.size() > 0) {
-          int count = 0;
-          for (T change : changes) {
-            if (myIncludedChanges.contains(change)) {
-              listSelection = count;
-              break;
+
+        if (myShowCheckboxes) {
+          if (myIncludedChanges.size() > 0) {
+            int count = 0;
+            for (T change : changes) {
+              if (myIncludedChanges.contains(change)) {
+                listSelection = count;
+                break;
+              }
+              count++;
             }
-            count++;
-          }
 
-          ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-          Enumeration enumeration = root.depthFirstEnumeration();
+            ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+            Enumeration enumeration = root.depthFirstEnumeration();
 
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            final CheckboxTree.NodeState state = getNodeStatus(node);
-            if (node != root && state == CheckboxTree.NodeState.CLEAR) {
-              myTree.collapsePath(new TreePath(node.getPath()));
+            while (enumeration.hasMoreElements()) {
+              ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+              final CheckboxTree.NodeState state = getNodeStatus(node);
+              if (node != root && state == CheckboxTree.NodeState.CLEAR) {
+                myTree.collapsePath(new TreePath(node.getPath()));
+              }
+            }
+
+            enumeration = root.depthFirstEnumeration();
+            while (enumeration.hasMoreElements()) {
+              ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+              final CheckboxTree.NodeState state = getNodeStatus(node);
+              if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
+                scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+                break;
+              }
             }
           }
-
-          enumeration = root.depthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            final CheckboxTree.NodeState state = getNodeStatus(node);
-            if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-              scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
-              break;
-            }
-          }
-
         }
         if (changes.size() > 0) {
           myList.setSelectedIndex(listSelection);
@@ -414,12 +417,24 @@ public abstract class ChangesTreeList<T> extends JPanel {
       return changes;
     }
     else {
-      List<T> changes = new ArrayList<T>();
+      final List<T> changes = new ArrayList<T>();
+      final Set<Integer> checkSet = new HashSet<Integer>();
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths != null) {
         for (TreePath path : paths) {
-          ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-          changes.addAll(getSelectedObjects(node));
+          final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+          final List<T> objects = getSelectedObjects(node);
+          for (T object : objects) {
+            final int hash = object.hashCode();
+            if (! checkSet.contains(hash)) {
+              changes.add(object);
+              checkSet.add(hash);
+            } else {
+              if (! changes.contains(object)) {
+                changes.add(object);
+              }
+            }
+          }
         }
       }
 

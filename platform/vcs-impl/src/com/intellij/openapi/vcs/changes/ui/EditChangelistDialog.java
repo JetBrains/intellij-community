@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +30,7 @@ import javax.swing.*;
  * @author max
  */
 public class EditChangelistDialog extends DialogWrapper {
-  private final EditChangelistPanel myPanel;
+  private final NewEditChangelistPanel myPanel;
   private final Project myProject;
   private final LocalChangeList myList;
 
@@ -39,7 +38,7 @@ public class EditChangelistDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myList = list;
-    myPanel = new EditChangelistPanel(((LocalChangeListImpl) list).getEditHandler()) {
+    myPanel = new NewEditChangelistPanel(project) {
       @Override
       protected void nameChanged(String errorMessage) {
         setOKActionEnabled(errorMessage == null);
@@ -48,7 +47,7 @@ public class EditChangelistDialog extends DialogWrapper {
     };
     myPanel.setName(list.getName());
     myPanel.setDescription(list.getComment());
-    myPanel.init(project, list);
+    myPanel.init(list);
     myPanel.getMakeActiveCheckBox().setSelected(myList.isDefault());
     myPanel.getMakeActiveCheckBox().setEnabled(!myList.isDefault());
     setTitle(VcsBundle.message("changes.dialog.editchangelist.title"));

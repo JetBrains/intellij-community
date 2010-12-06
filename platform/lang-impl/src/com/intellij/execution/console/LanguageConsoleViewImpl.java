@@ -30,7 +30,7 @@ public class LanguageConsoleViewImpl extends ConsoleViewImpl {
   protected LanguageConsoleImpl myConsole;
 
   public LanguageConsoleViewImpl(final Project project, String title, final Language language) {
-    this(project, new LanguageConsoleImpl(project, title, language, true));
+    this(project, new LanguageConsoleImpl(project, title, language));
   }
 
   protected LanguageConsoleViewImpl(final Project project, final LanguageConsoleImpl console) {

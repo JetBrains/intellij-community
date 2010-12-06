@@ -33,6 +33,8 @@ public class MavenEmbeddersManager {
   public static final Key FOR_DEPENDENCIES_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_DEPENDENCIES_RESOLVE");
   public static final Key FOR_PLUGINS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_PLUGINS_RESOLVE");
   public static final Key FOR_FOLDERS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_FOLDERS_RESOLVE");
+
+  // will always regardless to 'work offline' setting
   public static final Key FOR_DOWNLOAD = Key.create(MavenEmbeddersManager.class + ".FOR_DOWNLOAD");
   public static final Key FOR_POST_PROCESSING = Key.create(MavenEmbeddersManager.class + ".FOR_POST_PROCESSING");
 
@@ -63,14 +65,16 @@ public class MavenEmbeddersManager {
   @NotNull
   public synchronized MavenEmbedderWrapper getEmbedder(Key kind) {
     MavenEmbedderWrapper result = myPool.get(kind);
+    boolean alwaysOnline = kind == FOR_DOWNLOAD;
+
     if (result == null) {
-      result = MavenFacadeManager.getInstance().createEmbedder(myProject);
+      result = MavenFacadeManager.getInstance().createEmbedder(myProject, alwaysOnline);
       myPool.put(kind, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + kind + " is already used");
-      return MavenFacadeManager.getInstance().createEmbedder(myProject);
+      return MavenFacadeManager.getInstance().createEmbedder(myProject, alwaysOnline);
     }
 
     myEmbeddersInUse.add(result);

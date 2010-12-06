@@ -476,7 +476,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the AST node instance.
    */
-  @Nullable
   ASTNode getNode();
 
   /**

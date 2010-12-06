@@ -27,6 +27,7 @@ public class FileIncludeInfo {
   public final String path;
   public final int offset;
   public final boolean runtimeOnly;
+  public static final FileIncludeInfo[] EMPTY = new FileIncludeInfo[0];
 
   public FileIncludeInfo(@NotNull String fileName, @NotNull String path, int offset, boolean runtimeOnly) {
     this.fileName = fileName;

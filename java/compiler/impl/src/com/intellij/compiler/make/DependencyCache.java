@@ -46,22 +46,23 @@ import java.util.*;
 public class DependencyCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.make.DependencyCache");
 
-  private Cache myCache;
-  private Cache myNewClassesCache;
+  private volatile Cache myCache;
+  private volatile Cache myNewClassesCache;
 
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName();
-  private TIntHashSet myToUpdate = new TIntHashSet(); // qName strings to be updated.
+  private final TIntHashSet myToUpdate = new TIntHashSet(); // qName strings to be updated.
   private final TIntHashSet myTraverseRoots = new TIntHashSet(); // Dependencies are calculated from these clasess
   private final TIntHashSet myClassesWithSourceRemoved = new TIntHashSet();
   private final TIntHashSet myPreviouslyRemoteClasses = new TIntHashSet(); // classes that were Remote, but became non-Remote for some reason
   private final TIntHashSet myMarkedInfos = new TIntHashSet(); // classes to be recompiled
   private final Set<VirtualFile> myMarkedFiles = new HashSet<VirtualFile>();
   
-  private DependencyCacheNavigator myCacheNavigator;
-  private SymbolTable mySymbolTable;
+  private volatile DependencyCacheNavigator myCacheNavigator;
+  private volatile SymbolTable mySymbolTable;
   private final String mySymbolTableFilePath;
   private final String myStoreDirectoryPath;
-  @NonNls private static final String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
+  @NonNls 
+  private static final String SYMBOLTABLE_FILE_NAME = "symboltable.dat";
 
   public DependencyCache(@NonNls String storeDirectoryPath) {
     myStoreDirectoryPath = storeDirectoryPath;
@@ -225,7 +226,7 @@ public class DependencyCache {
     for (final int qName : myClassesWithSourceRemoved.toArray()) {
       cache.removeClass(qName);
     }
-    myToUpdate = new TIntHashSet();
+    myToUpdate.clear();
 
     //pause();
   }

@@ -252,15 +252,29 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
 
       if (parent instanceof GrCall) {
-        if (resolved == null && results.length > 0) {
-          resolved = results[0].getElement();
-          resolveResult = results[0];
+        if (resolved != null ) {
+          if (resolved instanceof PsiMethod) {
+              checkMethodApplicability(resolveResult, referenceExpression);
+            }
+            else {
+              checkClosureApplicability(resolveResult, referenceExpression.getType(), referenceExpression);
+            }
         }
-        if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
-          checkMethodApplicability(resolveResult, referenceExpression);
-        }
-        else {
-          checkClosureApplicability(resolveResult, referenceExpression.getType(), referenceExpression);
+        else if (results.length > 0) {
+          for (GroovyResolveResult result : results) {
+            resolved = result.getElement();
+            if (resolved instanceof PsiMethod) {
+              if (!checkMethodApplicability(result, referenceExpression)) return;
+            }
+            else {
+              if (!checkClosureApplicability(result, referenceExpression.getType(), referenceExpression)) return;
+            }
+          }
+
+          String message = GroovyBundle.message("method.call.is.ambiguous");
+          PsiElement elementToHighlight = PsiUtil.getArgumentsList(referenceExpression);
+          if (elementToHighlight == null) elementToHighlight = referenceExpression;
+          registerError(elementToHighlight, message);
         }
       }
     }
@@ -287,23 +301,22 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       registerError(elementToHighlight, message);
     }
 
-    private void checkClosureApplicability(GroovyResolveResult resolveResult,
-                                           PsiType type,
-                                           GroovyPsiElement place) {
+    private boolean checkClosureApplicability(GroovyResolveResult resolveResult, PsiType type, GroovyPsiElement place) {
       final PsiElement element = resolveResult.getElement();
-      if (!(element instanceof GrVariable)) return;
-      if (!(type instanceof GrClosureType)) return;
+      if (!(element instanceof GrVariable)) return true;
+      if (!(type instanceof GrClosureType)) return true;
       final GrVariable variable = (GrVariable)element;
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
-      if (argumentTypes == null) return;
+      if (argumentTypes == null) return true;
 
-      if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return;
+      if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return true;
 
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
       PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
       if (elementToHighlight == null) elementToHighlight = place;
       registerError(elementToHighlight, message);
+      return false;
     }
 
     private static String buildArgTypesList(PsiType[] argTypes) {
@@ -320,9 +333,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return builder.toString();
     }
 
-    private void checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place) {
+    private boolean checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place) {
       final PsiElement element = methodResolveResult.getElement();
-      if (!(element instanceof PsiMethod)) return;
+      if (!(element instanceof PsiMethod)) return true;
 
       final PsiMethod method = (PsiMethod)element;
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
@@ -333,7 +346,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           if (type instanceof GrClosureType) {
             if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) {
               highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
-              return;
+              return false;
             }
           }
         }
@@ -348,7 +361,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             final PsiType returnType = PsiUtil.getSmartReturnType(method);
             if (returnType instanceof GrClosureType) {
               if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), place)) {
-                return;
+                return true;
               }
             }
           }
@@ -358,13 +371,15 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
               .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
             if (TypesUtil.isAssignable(closureType, returnType, place)) {
-              return;
+              return true;
             }
           }
         }
 
         highlightInapplicableMethodUsage(methodResolveResult, place, method, argumentTypes);
+        return false;
       }
+      return true;
     }
   }
 

@@ -333,6 +333,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testMethodNoPairBrace() throws Exception {
+    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+
+    try {
+      doTest '\n'
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+    }
+  }
+
   public void testExcessSpaceInTypeCast() throws Throwable {
    configureByFile(getTestName(false) + ".java");
    selectItem(myItems[0]);
@@ -348,6 +360,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAtUnderClass() throws Throwable {
+    doTest();
+  }
+
+  public void testMethodParenthesesSpaces() throws Throwable {
+    final settings = CodeStyleSettingsManager.getSettings(getProject())
+    settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    doTest();
+  }
+
+  public void testMethodParenthesesSpacesArgs() throws Throwable {
+    final settings = CodeStyleSettingsManager.getSettings(getProject())
+    settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     doTest();
   }
 
@@ -691,6 +717,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult();
   }
 
+  private void doTest(String finishChar) throws Exception {
+    configure()
+    type finishChar
+    checkResult();
+  }
+
   private void doAntiTest() throws Exception {
     configure()
     checkResultByFile(getTestName(false) + ".java");
@@ -846,6 +878,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.completeBasic()
     final def strings = myFixture.lookupElementStrings
     assertTrue 'new' in strings
+  }
+
+  public void testImportAsterisk() {
+    myFixture.configureByText "a.java", "import java.lang.<caret>"
+    myFixture.completeBasic()
+    myFixture.type '*\n'
+    myFixture.checkResult "import java.lang.*<caret>"
   }
 
 }

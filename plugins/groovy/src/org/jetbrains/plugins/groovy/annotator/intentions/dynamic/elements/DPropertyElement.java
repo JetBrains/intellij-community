@@ -53,7 +53,7 @@ public class DPropertyElement extends DItemElement {
     int modifiers = (isStatic != null && isStatic.booleanValue()) ? ModifierFlags.STATIC_MASK : 0;
 
     String type = getType();
-    if (type == null) {
+    if (type == null || type.trim().length() == 0) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName, new LightModifierList(manager, modifiers), null) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -89,14 +90,14 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   @NotNull
   @Override
   public String getText() {
-    String name = myCurrentBranchName.get();
-    return name != null ? name : "";
+    final String text = myCurrentBranchName.get();
+    return StringUtil.isEmpty(text) ? "" : "Git: " + text;
   }
 
   @NotNull
   @Override
   public String getMaxPossibleText() {
-    return "abcdefghijkl";
+    return "Git: abcdefghij";
   }
 
   @Override

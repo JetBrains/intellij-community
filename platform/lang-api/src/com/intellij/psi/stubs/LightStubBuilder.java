@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 
 
 public class LightStubBuilder implements StubBuilder {

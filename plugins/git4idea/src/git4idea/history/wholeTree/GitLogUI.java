@@ -12,9 +12,6 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.LayoutViewOptions;
-import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -44,10 +41,8 @@ import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -81,7 +76,7 @@ public class GitLogUI implements Disposable {
   private BigTableTableModel myTableModel;
   private DetailsCache myDetailsCache;
   private final Mediator myMediator;
-  private RunnerLayoutUi myUi;
+  private Splitter mySplitter;
   private GitTableScrollChangeListener myMyChangeListener;
   private List<VirtualFile> myRootsUnderVcs;
   private final Map<VirtualFile, SymbolicRefs> myRefs;
@@ -250,29 +245,16 @@ public class GitLogUI implements Disposable {
   }
 
   public void createMe() {
-    // todo think of disposable parent
-    myUi = RunnerLayoutUi.Factory.getInstance(myProject).create("Git log", "Git log", "", this);
-    //myUi.getDefaults().initTabDefaults(0, "Git log", null);
-    myUi.getDefaults().initFocusContent("log1120", LayoutViewOptions.STARTUP);
-
-    //myUi.getOptions().setTopToolbar(group, "Git log");
-
-    myUi.getOptions().setMoveToGridActionEnabled(true);
-    myUi.getOptions().setMinimizeActionEnabled(false);
+    mySplitter = new Splitter(false, 0.7f);
+    mySplitter.setDividerWidth(4);
 
     final JPanel wrapper = createMainTable();
-    final Content content = myUi.createContent("log1120", wrapper, "Commits list", IconLoader.getIcon("/icons/gitlogtree.png"), null);
-    myUi.addContent(content, 0, PlaceInGrid.center, false);
-    content.setCloseable(false);
-    content.setPinned(true);
+    mySplitter.setFirstComponent(wrapper);
 
     final JComponent component = createRepositoryBrowserDetails();
-    final Content repoContent = myUi.createContent("Commit details11210", component, "Changed files", Icons.FILE_ICON, null);
-    myUi.addContent(repoContent, 0, PlaceInGrid.right, false);
-    repoContent.setCloseable(false);
-    repoContent.setPinned(true);
+    mySplitter.setSecondComponent(component);
 
-    Disposer.register(content, new Disposable() {
+    Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         if (myMyChangeListener != null) {
@@ -647,7 +629,7 @@ public class GitLogUI implements Disposable {
   }
 
   public JComponent getPanel() {
-    return myUi.getComponent();
+    return mySplitter;
   }
 
   public void rootsChanged(List<VirtualFile> rootsUnderVcs) {

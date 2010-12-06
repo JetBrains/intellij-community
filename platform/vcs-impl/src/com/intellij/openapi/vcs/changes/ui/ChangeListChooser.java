@@ -52,14 +52,14 @@ public class ChangeListChooser extends DialogWrapper {
       }
     }
 
-    myPanel = new ChangeListChooserPanel(null, new Consumer<String>() {
+    myPanel = new ChangeListChooserPanel(myProject, new Consumer<String>() {
       public void consume(final String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage);
       }
     });
 
-    myPanel.init(project);
+    myPanel.init();
     myPanel.setChangeLists(changelists);
     myPanel.setDefaultSelection(defaultSelection);
 

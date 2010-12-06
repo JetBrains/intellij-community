@@ -26,6 +26,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -101,22 +103,29 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private Editor myFullEditor;
   private ActionGroup myFullEditorActions;
-  private final boolean myDoSaveErrorsToHistory;
 
-  public LanguageConsoleImpl(final Project project, String title, final Language language, final boolean doSaveErrorsToHistory) {
+  public LanguageConsoleImpl(final Project project, String title, final Language language) {
     myProject = project;
     myTitle = title;
-    myDoSaveErrorsToHistory = doSaveErrorsToHistory;
     installEditorFactoryListener();
     final EditorFactory editorFactory = EditorFactory.getInstance();
     myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", StdFileTypes.PLAIN_TEXT, "");
     myEditorDocument = editorFactory.createDocument("");
     setLanguage(language);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
-    myConsoleEditor.setBackgroundColor(myConsoleEditor.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
+
     myCurrentEditor = myConsoleEditor;
     myHistoryViewer = (EditorEx)editorFactory.createViewer(((EditorFactoryImpl)editorFactory).createDocument(true), myProject);
-    myHistoryViewer.setBackgroundColor(myHistoryViewer.getColorsScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
+    final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
+    final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
+      @Override
+      public Color getDefaultBackground() {
+        final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
+        return color == null ? super.getDefaultBackground() : color;
+      }
+    };
+    myConsoleEditor.setColorsScheme(scheme);
+    myHistoryViewer.setColorsScheme(scheme);
     myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
     myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
     setupComponents();
@@ -328,12 +337,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     queueUiUpdate(scrollToEnd);
   }
 
-  public String addCurrentToHistory(final TextRange textRange, final boolean erase) {
+  public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
     final Ref<String> ref = Ref.create("");
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        ref.set(addTextRangeToHistory(textRange, myConsoleEditor));
+        ref.set(addTextRangeToHistory(textRange, myConsoleEditor, preserveMarkup));
         if (erase) {
           myConsoleEditor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
@@ -354,7 +363,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
 
-  private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor) {
+  private String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final DocumentImpl history = (DocumentImpl)myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     appendToHistoryDocument(history, myPrompt);
@@ -381,7 +390,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
       iterator.advance();
     }
-    if (myDoSaveErrorsToHistory) {
+    if (preserveMarkup) {
       duplicateHighlighters(markupModel, consoleEditor.getDocument().getMarkupModel(myProject), offset, textRange);
       duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
     }

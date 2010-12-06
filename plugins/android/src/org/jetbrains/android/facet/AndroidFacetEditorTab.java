@@ -104,6 +104,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JLabel myApkPathLabel;
   private JRadioButton myRunProcessResourcesRadio;
   private JRadioButton myCompileResourcesByIdeRadio;
+  private JLabel myManifestFileLabel;
+  private JLabel myResFolderLabel;
+  private JLabel myAssetsFolderLabel;
+  private JLabel myNativeLibsFolderLabel;
+  private JLabel myAidlGenPathLabel;
+  private JLabel myRGenPathLabel;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -112,6 +118,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myConfiguration = androidFacetConfiguration;
     myContext = context;
     myPlatformChooserWrapper.add(myPlatformChooser.getComponent());
+
+    myManifestFileLabel.setLabelFor(myManifestFileField);
+    myResFolderLabel.setLabelFor(myResFolderField);
+    myAssetsFolderLabel.setLabelFor(myAssetsFolderField);
+    myNativeLibsFolderLabel.setLabelFor(myNativeLibsFolder);
+    myAidlGenPathLabel.setLabelFor(myAidlGenPathField);
+    myRGenPathLabel.setLabelFor(myRGenPathField);
 
     AndroidFacet facet = (AndroidFacet)myContext.getFacet();
 

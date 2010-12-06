@@ -484,26 +484,18 @@ public class Cache {
   }
 
   public void wipe() {
-    myDependencies.dispose();
-    myQNameToReferencedClassesMap.dispose();
-    myQNameToSubclassesMap.dispose();
     try {
-      myQNameToClassInfoMap.close();
+      dispose();
     }
-    catch (IOException e) {
-      LOG.info(e);
+    catch (CacheCorruptedException ignored) {
     }
-    try {
-      myRemoteQNames.close();
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    final File[] files = new File(myStorePath).listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (!file.isDirectory()) {
-          FileUtil.delete(file);
+    finally {
+      final File[] files = new File(myStorePath).listFiles();
+      if (files != null) {
+        for (File file : files) {
+          if (!file.isDirectory()) {
+            FileUtil.delete(file);
+          }
         }
       }
     }

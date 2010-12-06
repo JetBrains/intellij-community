@@ -41,11 +41,14 @@ abstract class GotoBookmarkActionBase extends BaseCodeInsightAction implements C
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
       final Bookmark bookmark = getBookmarkToGo(project, editor);
       if (bookmark == null) return;
-      if (bookmark.getLine() >= editor.getDocument().getLineCount()) return;
-      LogicalPosition pos = new LogicalPosition(bookmark.getLine(), 0);
+      int line = bookmark.getLine();
+      if (line >= editor.getDocument().getLineCount()) return;
+      if (line < 0) line = 0;
+
+      LogicalPosition pos = new LogicalPosition(line, 0);
       editor.getSelectionModel().removeSelection();
       editor.getCaretModel().moveToLogicalPosition(pos);
-      editor.getScrollingModel().scrollTo(new LogicalPosition(bookmark.getLine(), 0), ScrollType.CENTER);
+      editor.getScrollingModel().scrollTo(new LogicalPosition(line, 0), ScrollType.CENTER);
     }
   }
 

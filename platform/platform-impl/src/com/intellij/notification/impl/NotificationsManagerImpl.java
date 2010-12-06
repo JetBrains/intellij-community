@@ -154,6 +154,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   private static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
