@@ -91,6 +91,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   @NotNull
   private volatile String[] myTargetDeviceSerialNumbers;
 
+  private volatile IDevice myTargetDevice = null;
+
   private volatile String myAvdName;
   private volatile boolean myDebugMode;
 
@@ -274,12 +276,21 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
     }, true);
     boolean exactlyCompatible = false;
+    IDevice targetDevice = null;
     for (IDevice device : devices) {
       Boolean compatible = isMyCompatibleDevice(device);
-      if (!exactlyCompatible && (compatible == null || compatible.booleanValue())) {
+      if (targetDevice == null ||
+          (targetDevice.isEmulator() && !device.isEmulator()) ||
+          (targetDevice.isEmulator() == device.isEmulator() && !exactlyCompatible)) {
         exactlyCompatible = compatible != null;
-        myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
+        targetDevice = device;
       }
+    }
+    if (targetDevice != null) {
+      // it may be, device doesn't have proper serial number
+      myTargetDevice = targetDevice;
+
+      myTargetDeviceSerialNumbers = new String[]{targetDevice.getSerialNumber()};
     }
   }
 
@@ -413,6 +424,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   }
 
   private Boolean isMyCompatibleDevice(@NotNull IDevice device) {
+    if (myTargetDevice != null) {
+      return device == myTargetDevice;
+    }
     if (myTargetDeviceSerialNumbers.length > 0) {
       return ArrayUtil.find(myTargetDeviceSerialNumbers, device.getSerialNumber()) >= 0;
     }
@@ -464,13 +478,23 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
   @Nullable
   private AndroidDebugBridge.IDeviceChangeListener prepareAndStartAppWhenDeviceIsOnline() throws AdbNotRespondingException {
     if (myTargetDeviceSerialNumbers.length > 0) {
-      for (String serialNumber : myTargetDeviceSerialNumbers) {
-        IDevice targetDevice = getDeviceBySerialNumber(serialNumber);
-        if (targetDevice != null && targetDevice.isOnline()) {
-          if (!prepareAndStartApp(targetDevice) && !myStopped) {
+      if (myTargetDevice != null) {
+        if (myTargetDevice.isOnline()) {
+          if (!prepareAndStartApp(myTargetDevice) && !myStopped) {
             myStopped = true;
             getProcessHandler().destroyProcess();
-            break;
+          }
+        }
+      }
+      else {
+        for (String serialNumber : myTargetDeviceSerialNumbers) {
+          IDevice targetDevice = getDeviceBySerialNumber(serialNumber);
+          if (targetDevice != null && targetDevice.isOnline()) {
+            if (!prepareAndStartApp(targetDevice) && !myStopped) {
+              myStopped = true;
+              getProcessHandler().destroyProcess();
+              break;
+            }
           }
         }
       }
