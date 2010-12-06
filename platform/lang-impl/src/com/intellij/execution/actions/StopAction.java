@@ -17,20 +17,33 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.KillableProcess;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+  public static final Icon KILL_PROCESS_ICON = IconLoader.getIcon("/debugger/killProcess.png");
+
   public void actionPerformed(final AnActionEvent e) {
     final ProcessHandler processHandler = getProcessHandler(e);
     if(processHandler == null) return;
+
+    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      ((KillableProcess)processHandler).killProcess();
+      return;
+    }
+
     if(processHandler.detachIsDefault()) {
       processHandler.detachProcess();
     } else {
@@ -40,8 +53,24 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
   public void update(final AnActionEvent e) {
     final ProcessHandler processHandler = getProcessHandler(e);
-    boolean enable = processHandler != null && !processHandler.isProcessTerminating() && !processHandler.isProcessTerminated();
-    e.getPresentation().setEnabled(enable);
+    final Presentation presentation = e.getPresentation();
+
+    boolean enable = false;
+    Icon icon = getTemplatePresentation().getIcon();
+    String description = getTemplatePresentation().getDescription();
+    if (processHandler != null && !processHandler.isProcessTerminated()) {
+      if (!processHandler.isProcessTerminating()) {
+        enable = true;
+      }
+      else if (processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess()) {
+        enable = true;
+        icon = KILL_PROCESS_ICON;
+        description = "Kill process";
+      }
+    }
+    presentation.setEnabled(enable);
+    presentation.setIcon(icon);
+    presentation.setDescription(description);
   }
 
   @Nullable
