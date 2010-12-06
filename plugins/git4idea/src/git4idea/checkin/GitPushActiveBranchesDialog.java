@@ -42,7 +42,11 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
@@ -50,7 +54,11 @@ import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTree;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -58,11 +66,18 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -216,31 +231,46 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private void rebaseAndPush() {
     final Task.Backgroundable rebaseAndPushTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
       public void run(@NotNull ProgressIndicator indicator) {
-        List<VcsException> exceptions = new ArrayList<VcsException>(1);
-        do {
+        List<VcsException> exceptions = new ArrayList<VcsException>();
+        for (int i = 0; i < 3; i++) {
           final RebaseInfo rebaseInfo = collectRebaseInfo();
+
+          if (rebaseInfo.reorderedCommits.isEmpty()) { // if we have to reorder commits, rebase must pre
+            final Collection<Root> rootsToPush = getRootsToPush(); // collect roots from the dialog
+            exceptions = executePushCommand(rootsToPush);
+            if (exceptions.isEmpty() && !rootsToPush.isEmpty()) { // if nothing to push, execute rebase anyway
+              int commitsNum = 0;
+              for (Root root : rootsToPush) {
+                commitsNum += root.commits.size();
+                Set<String> unchecked = rebaseInfo.uncheckedCommits.get(root.root);
+                if (unchecked != null) {
+                  commitsNum -= unchecked.size();
+                }
+              }
+              GitUIUtil.notifySuccess(myProject, "Pushed successfully",
+                                      "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".");
+              return;
+            }
+            exceptions.clear();
+          }
 
           final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, true); // fetch
           if (!exceptions.isEmpty()) {
-            notifyExceptionWhenClosed("Failed to fetch.", exceptions);
+            notifyException("Failed to fetch", exceptions);
             return;
           }
           updateTree(roots, rebaseInfo.uncheckedCommits);
 
-          executeRebase(exceptions, rebaseInfo);
-          if (!exceptions.isEmpty()) {
-            notifyExceptionWhenClosed("Failed to rebase.", exceptions);
-            return;
+          if (isRebaseNeeded()) {
+            executeRebase(exceptions, rebaseInfo);
+            if (!exceptions.isEmpty()) {
+              notifyException("Failed to rebase", exceptions);
+              return;
+            }
+            GitUtil.refreshFiles(myProject, rebaseInfo.roots);
           }
-          GitUtil.refreshFiles(myProject, rebaseInfo.roots);
-        } while (isRebaseNeeded());
-
-        final Collection<Root> rootsToPush = getRootsToPush(); // collect roots from the dialog
-        exceptions = executePushCommand(rootsToPush);
-        if (!exceptions.isEmpty()) {
-          notifyExceptionWhenClosed("Failed to push", exceptions);
-          return;
         }
+        notifyException("Failed to push", exceptions);
       }
     };
     myVcs.runInBackground(rebaseAndPushTask);
@@ -249,7 +279,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   /**
    * Notifies about errors during background rebase & push tasks.
    */
-  private void notifyExceptionWhenClosed(String title, Collection<VcsException> exceptions) {
+  private void notifyException(String title, Collection<VcsException> exceptions) {
     final String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
       @Override public String fun(VcsException e) {
         return e.getLocalizedMessage();
