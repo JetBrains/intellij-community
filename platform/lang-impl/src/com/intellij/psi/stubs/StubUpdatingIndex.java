@@ -370,19 +370,25 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     public void clear() throws StorageException {
-      final StubIndexImpl stubIndex = getStubIndex();
+      final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
       try {
-        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-          stubIndex.getWriteLock(key).lock();
+        if (stubIndex != null) {
+          for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
+            stubIndex.getWriteLock(key).lock();
+          }
         }
         getWriteLock().lock();
-        stubIndex.clearAllIndices();
+        if (stubIndex != null) {
+          stubIndex.clearAllIndices();
+        }
         super.clear();
       }
       finally {
         getWriteLock().unlock();
-        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
-          stubIndex.getWriteLock(key).unlock();
+        if (stubIndex != null) {
+          for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
+            stubIndex.getWriteLock(key).unlock();
+          }
         }
       }
     }
