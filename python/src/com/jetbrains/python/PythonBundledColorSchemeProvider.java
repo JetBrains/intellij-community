@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider;
 
 /**
@@ -16,6 +17,7 @@ public class PythonBundledColorSchemeProvider implements BundledColorSchemesProv
 
   @Override
   public String[] getBundledSchemesRelativePaths() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     return PATHS;
   }
 
