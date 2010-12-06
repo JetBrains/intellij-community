@@ -78,6 +78,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       return;
     }
 
+    // All the preliminary work is already done, go and clone the selected repository!
     final RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
     final String selectedPath = checkoutDialog.getSelectedPath();
     final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);

@@ -90,7 +90,7 @@ public class GithubUtil {
       final List<RepositoryInfo> result = new ArrayList<RepositoryInfo>();
       for (int i = 0; i < repositories.size(); i++) {
         final Element repo = (Element)repositories.get(i);
-        result.add(new RepositoryInfo(repo.getChildText("name"), repo.getChildText("description"), repo.getChildText("url")));
+        result.add(new RepositoryInfo(repo.getChildText("name"), repo.getChildText("owner")));
       }
       return result;
     }
