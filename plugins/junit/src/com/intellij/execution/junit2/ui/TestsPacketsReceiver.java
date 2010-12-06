@@ -25,31 +25,36 @@ import com.intellij.execution.junit2.info.ClassBasedInfo;
 import com.intellij.execution.junit2.info.DisplayTestInfoExtractor;
 import com.intellij.execution.junit2.segments.InputObjectRegistry;
 import com.intellij.execution.junit2.segments.ObjectReader;
+import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.junit2.states.*;
 import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitListenersNotifier;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class TestsPacketsReceiver implements PacketProcessor, Disposable {
+public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
 
   public static final Map<Integer, StateChanger> STATE_CLASSES = new HashMap<Integer, StateChanger>();
   private Map<String, TestProxy> myKnownDynamicParents;
+  private TestProxy myUnboundOutput;
 
   static {
     mapClass(PoolOfTestStates.RUNNING_INDEX, new RunningStateSetter());
@@ -74,16 +79,11 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
   private final JUnitConsoleProperties myConsoleProperties;
 
 
-  public TestsPacketsReceiver(final JUnitTreeConsoleView consoleView) {
+  public TestsPacketsReceiver(final JUnitTreeConsoleView consoleView, TestProxy unboundOutput) {
+    myUnboundOutput = unboundOutput;
     myObjectRegistry = new InputObjectRegistry();
     myConsoleProperties = (JUnitConsoleProperties)consoleView.getProperties();
     Disposer.register(consoleView, this);
-  }
-
-  public Set<TestProxy> getCurrentTests() {
-    synchronized (myCurrentTests) {
-      return new HashSet<TestProxy>(myCurrentTests);
-    }
   }
 
   public void processPacket(final String packet) {
@@ -110,6 +110,18 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     }
   }
 
+  @Override
+  public void processOutput(Printable printable) {
+    synchronized (myCurrentTests) {
+      if (myCurrentTests.isEmpty()) {
+        myUnboundOutput.addLast(printable);
+      } else {
+        for (TestProxy currentTest : myCurrentTests) {
+          currentTest.addLast(printable);
+        }
+      }
+    }
+  }
 
   public void notifyStart(TestProxy root) {
     myModel = new JUnitRunningModel(root, myConsoleProperties);
