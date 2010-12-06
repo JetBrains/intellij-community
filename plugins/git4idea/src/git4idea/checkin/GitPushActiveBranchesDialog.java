@@ -197,7 +197,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       return;
     }
     final GitPushActiveBranchesDialog d = new GitPushActiveBranchesDialog(project, vcsRoots, emptyRoots);
-    d.refreshTree(true, null); // start initial fetch
+    d.refreshTree(true, null, false); // start initial fetch
     d.show();
     if (d.isOK()) {
       d.rebaseAndPush();
@@ -501,17 +501,26 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    *
    * @param fetchData if true, the current state is fetched from remote
    * @param unchecked the map from vcs root to commit identifiers that should be unchecked
+   * @param initial   set this true if refreshTree is called for the first time - during the dialog construction.
+   *                  the difference is that commit checkboxes should be checked only during the initial refresh - others should respect
+   *                  user who could uncheck some commits.
    */
-  private void refreshTree(final boolean fetchData, final Map<VirtualFile, Set<String>> unchecked) {
+  private void refreshTree(final boolean fetchData, final Map<VirtualFile, Set<String>> unchecked, final boolean updateTree) {
     myCommitTree.setPaintBusy(true);
     loadRootsInBackground(fetchData, new PushActiveBranchRunnable(){
       @Override
       void run(List<Root> roots) {
-        updateTree(roots, unchecked);
+        if (updateTree) {
+          updateTree(roots, unchecked);
+        }
         updateUI();
         myCommitTree.setPaintBusy(false);
       }
     });
+  }
+
+  private void refreshTree(boolean fetchData, Map<VirtualFile, Set<String>> unchecked) {
+    refreshTree(fetchData, unchecked, true);
   }
 
   /**
