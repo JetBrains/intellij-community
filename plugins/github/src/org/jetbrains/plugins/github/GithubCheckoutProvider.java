@@ -2,6 +2,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -55,11 +56,15 @@ public class GithubCheckoutProvider implements CheckoutProvider {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword());
+          return GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword(), false);
         }
       });
     }
     catch (GithubUtil.CancelledException e) {
+      return;
+    }
+    if (availableRepos.isEmpty()){
+      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.", "Cannot clone");
       return;
     }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
