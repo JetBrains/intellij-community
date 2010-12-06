@@ -75,10 +75,6 @@ public class CheckBoxList extends JBList {
     });
   }
 
-  public DefaultListModel getModel() {
-    return (DefaultListModel)super.getModel();
-  }
-
   public boolean isItemSelected(int index) {
     return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
   }
@@ -88,8 +84,11 @@ public class CheckBoxList extends JBList {
     checkbox.setSelected(value);
     repaint();
 
-    // fire change notification
-    getModel().setElementAt(getModel().getElementAt(index), index);
+    // fire change notification in case if we've already initialized model
+    final ListModel model = getModel();
+    if (model instanceof DefaultListModel) {
+      ((DefaultListModel)model).setElementAt(getModel().getElementAt(index), index);
+    }
 
     if (checkBoxListListener != null) {
       checkBoxListListener.checkBoxSelectionChanged(index, value);
