@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.Icons;
@@ -44,7 +45,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionMenuItem extends JMenuItem {
+public class ActionMenuItem extends JMenuItem implements IdeGlassPane.TopComponent {
   private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
@@ -330,5 +331,10 @@ public class ActionMenuItem extends JMenuItem {
         }
       }
     }
+  }
+
+  @Override
+  public boolean canBePreprocessed(MouseEvent e) {
+    return false;
   }
 }
