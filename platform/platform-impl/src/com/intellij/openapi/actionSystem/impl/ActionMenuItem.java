@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.Icons;

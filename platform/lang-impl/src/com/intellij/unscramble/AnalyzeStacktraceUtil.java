@@ -62,9 +62,6 @@ public class AnalyzeStacktraceUtil {
   public static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
     consoleView.clear();
     consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
-    if (consoleView instanceof ConsoleViewImpl) {
-      ((ConsoleViewImpl)consoleView).foldImmediately();
-    }
     consoleView.scrollTo(0);
   }
 

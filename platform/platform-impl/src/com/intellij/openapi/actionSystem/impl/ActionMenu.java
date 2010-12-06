@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
@@ -34,6 +35,7 @@ import javax.swing.event.MenuListener;
 import javax.swing.plaf.MenuItemUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 

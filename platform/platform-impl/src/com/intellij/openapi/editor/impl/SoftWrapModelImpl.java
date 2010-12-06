@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,14 +64,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
-  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
-  private final List<FoldingListener>  myFoldListeners     = new ArrayList<FoldingListener>();
+  private final List<DocumentListener>         myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<FoldingListener>          myFoldListeners     = new ArrayList<FoldingListener>();
 
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
   private final SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
+  private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
@@ -108,9 +110,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
     myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
+    myVisualSizeManager = new SoftWrapAwareVisualSizeManager(painter);
 
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
+    applianceManager.addListener(myVisualSizeManager);
   }
 
   /**
@@ -465,6 +469,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     return myStorage.addSoftWrapChangeListener(listener);
   }
 
+  public boolean addVisualSizeChangeListener(@NotNull VisualSizeChangeListener listener) {
+    return myVisualSizeManager.addVisualSizeChangeListener(listener);
+  }
+  
   @Override
   public int getPriority() {
     return EditorDocumentPriorities.SOFT_WRAP_MODEL;

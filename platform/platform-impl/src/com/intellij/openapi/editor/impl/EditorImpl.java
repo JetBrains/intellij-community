@@ -76,6 +76,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -346,14 +347,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void softWrapAdded(@NotNull SoftWrap softWrap) {
         mySoftWrapsChanged = true;
-        int softWrapLine = myDocument.getLineNumber(softWrap.getStart());
-        mySizeContainer.update(softWrapLine, softWrapLine, softWrapLine);
       }
 
       @Override
       public void softWrapsRemoved() {
         mySoftWrapsChanged = true;
-        mySizeContainer.reset();
+      }
+    });
+    
+    mySoftWrapModel.addVisualSizeChangeListener(new VisualSizeChangeListener() {
+      @Override
+      public void onLineWidthsChange(int startLine, int oldEndLine, int newEndLine, @NotNull TIntIntHashMap lineWidths) {
+        mySizeContainer.update(startLine, newEndLine, oldEndLine);
+        for (int i = startLine; i <= newEndLine; i++) {
+          if (lineWidths.contains(i)) {
+            int width = lineWidths.get(i);
+            if (width >= 0) {
+              mySizeContainer.updateLineWidthIfNecessary(i, width);
+            }
+          }
+        }
       }
     });
 
@@ -1299,7 +1312,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
       myCaretUpdateVShift = pos.y - visibleArea.y;
     }
-    mySizeContainer.beforeChange(e);
+    
+    // We assume that size container is already notified with the visual line widths during soft wraps processing
+    if (!mySoftWrapModel.isSoftWrappingEnabled()) {
+      mySizeContainer.beforeChange(e);
+    }
   }
 
   private void changedUpdate(DocumentEvent e) {
@@ -1308,7 +1325,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
 
-    mySizeContainer.changedUpdate(e);
+    // We assume that size container is already notified with the visual line widths during soft wraps processing
+    if (!mySoftWrapModel.isSoftWrappingEnabled()) {
+      mySizeContainer.changedUpdate(e);
+    }
     validateSize();
 
     int startLine = calcLogicalLineNumber(e.getOffset());
@@ -5024,6 +5044,44 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myOldEndLine = offsetToLogicalPosition(e.getOffset() + e.getOldLength()).line;
     }
 
+    /**
+     * Notifies current size container about document content change.
+     * <p/>
+     * Every change is assumed to be identified by three characteristics - start, ole end and new end lines.
+     * <b>Example:</b>
+     * <pre>
+     * <ol>
+     *   <li>
+     *      Consider that we have the following document initially:
+     *      <pre>
+     *        line 1
+     *        line 2
+     *        line 3
+     *      </pre>
+     *   </li>
+     *   <li>
+     *      Let's assume that the user selected the last two lines and typed 'new line' (that effectively removed selected text).
+     *      Current document state:
+     *      <pre>
+     *        line 1
+     *        new line
+     *      </pre>
+     *   </li>
+     *   <li>
+     *      Current method is expected to be called with the following parameters:
+     *          <ul>
+     *            <li><b>startLine</b> is 1'</li>
+     *            <li><b>oldEndLine</b> is 2'</li>
+     *            <li><b>newEndLine</b> is 1'</li>
+     *          </ul>
+     *   </li>
+     * </ol>
+     </pre>
+     * 
+     * @param startLine     logical line that contains changed fragment start offset
+     * @param newEndLine    logical line that contains changed fragment end
+     * @param oldEndLine    logical line that contained changed fragment end
+     */
     public synchronized void update(int startLine, int newEndLine, int oldEndLine) {
       final int lineWidthSize = myLineWidths.size();
       if (lineWidthSize == 0 || myDocument.getTextLength() <= 0) {
@@ -5051,9 +5109,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    /**
+     * Notifies current container about visual width change of the target logical line.
+     * <p/>
+     * Please note that there is a possible case that particular logical line is represented in more than one visual lines,
+     * hence, this method may be called multiple times with the same logical line argument but different with values. Current
+     * container is expected to store max of the given values then.
+     * 
+     * @param logicalLine     logical line which visual width is changed
+     * @param widthInPixels   visual width of the given logical line
+     */
+    public synchronized void updateLineWidthIfNecessary(int logicalLine, int widthInPixels) {
+      if (logicalLine < myLineWidths.size()) {
+        int currentWidth = myLineWidths.get(logicalLine);
+        if (widthInPixels > currentWidth) {
+          myLineWidths.set(logicalLine, widthInPixels);
+        }
+        if (widthInPixels > myMaxWidth) {
+          myMaxWidth = widthInPixels;
+        }
+      }
+    }
+
     public synchronized void changedUpdate(DocumentEvent e) {
-      int startLine = e.getOldLength() == 0 ? myOldEndLine : offsetToLogicalPosition(e.getOffset()).line;
-      int newEndLine = e.getNewLength() == 0 ? startLine : offsetToLogicalPosition(e.getOffset() + e.getNewLength()).line;
+      int startLine = e.getOldLength() == 0 ? myOldEndLine : myDocument.getLineNumber(e.getOffset());
+      int newEndLine = e.getNewLength() == 0 ? startLine : myDocument.getLineNumber(e.getOffset() + e.getNewLength());
       int oldEndLine = myOldEndLine;
 
       update(startLine, newEndLine, oldEndLine);
@@ -5257,7 +5337,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     protected void processMouseWheelEvent(MouseWheelEvent e) {
       if (mySettings.isWheelFontChangeEnabled()) {
         if (isChangeFontSize(e)) {
-          setFontSize(myScheme.getEditorFontSize() + e.getWheelRotation());
+          setFontSize(myScheme.getEditorFontSize() - e.getWheelRotation());
           return;
         }
       }

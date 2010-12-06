@@ -91,8 +91,8 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     // a hack to create editor inside field
     // todo: denis zhdanov
-    setName("a");
-    setName("");
+    setChangeListName("a");
+    setChangeListName("");
   }
 
   public JCheckBox getMakeActiveCheckBox() {
@@ -119,7 +119,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
-    String name = getName();
+    String name = getChangeListName();
     if (name == null || name.trim().length() == 0) {
       nameChanged("Cannot create new changelist with empty name.");
     } else if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
@@ -135,11 +135,11 @@ public abstract class NewEditChangelistPanel extends JPanel {
     }
   }
 
-  public void setName(String s) {
+  public void setChangeListName(String s) {
     myNameTextField.setText(s);
   }
 
-  public String getName() {
+  public String getChangeListName() {
     return myNameTextField.getText();
   }
 

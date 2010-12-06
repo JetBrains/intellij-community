@@ -285,7 +285,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         return e.getLocalizedMessage();
       }
     }, "<br/>");
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, content, NotificationType.ERROR),
+    Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.ERROR),
                              NotificationDisplayType.STICKY_BALLOON, myProject);
   }
 

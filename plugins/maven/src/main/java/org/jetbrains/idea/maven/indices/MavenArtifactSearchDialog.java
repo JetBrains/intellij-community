@@ -69,7 +69,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
     myTabbedPane.setFocusable(false);
 
-    MavenArtifactSearchPanel.Listener l = new MavenArtifactSearchPanel.Listener() {
+    MavenArtifactSearchPanel.Listener listener = new MavenArtifactSearchPanel.Listener() {
       public void itemSelected() {
         clickDefaultButton();
       }
@@ -80,8 +80,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
       }
     };
 
-    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, l,getDisposable());
-    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, l,getDisposable());
+    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, listener, this);
+    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, listener, this);
 
     myTabbedPane.addTab("Search for artifact", myArtifactsPanel);
     myTabbedPane.addTab("Search for class", myClassesPanel);
@@ -92,7 +92,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane.setMnemonicAt(1, KeyEvent.VK_C);
     myTabbedPane.setDisplayedMnemonicIndexAt(1, myTabbedPane.getTitleAt(1).indexOf("class"));
 
-    myTabbedPane.setPreferredSize(new Dimension(600, 400));
+    myTabbedPane.setPreferredSize(new Dimension(900, 600));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {

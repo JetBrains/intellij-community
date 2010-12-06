@@ -26,7 +26,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RemoteDifferenceStrategy;
+import com.intellij.openapi.vcs.RepositoryChangeListener;
+import com.intellij.openapi.vcs.TreeDiffProvider;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -57,7 +67,11 @@ import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.branches.GitCurrentBranchWidget;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.config.*;
+import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVcsConfigurable;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersion;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
@@ -67,7 +81,14 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.*;
+import git4idea.vfs.GitConfigListener;
+import git4idea.vfs.GitConfigTracker;
+import git4idea.vfs.GitIgnoreTracker;
+import git4idea.vfs.GitReferenceListener;
+import git4idea.vfs.GitReferenceTracker;
+import git4idea.vfs.GitRootTracker;
+import git4idea.vfs.GitRootsListener;
+import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +105,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final String NOTIFICATION_GROUP_ID = "Git";
+  public static final String IMPORTANT_ERROR_NOTIFICATION = "Git Important Errors";
   public static final String NAME = "Git"; // Vcs name
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());

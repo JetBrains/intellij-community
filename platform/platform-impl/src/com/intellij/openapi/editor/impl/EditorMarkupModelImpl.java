@@ -290,6 +290,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final Dimension STRIPE_BUTTON_PREFERRED_SIZE = new Dimension(PREFERRED_WIDTH, ERROR_ICON_HEIGHT + 4);
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
+      setFocusable(false);
     }
 
     @Override
