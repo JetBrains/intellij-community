@@ -112,19 +112,19 @@ public class BackwardDependenciesStorage implements Flushable, Disposable {
     }
   }
 
-  public void addClassReferencer(Integer qName, int referencerQName) {
+  public synchronized void addClassReferencer(Integer qName, int referencerQName) {
     myCache.get(qName).addReferencer(new ReferencerItem(referencerQName));
   }
 
-  public void addFieldReferencer(Integer qName, int referencerQName, int fieldName) {
+  public synchronized void addFieldReferencer(Integer qName, int referencerQName, int fieldName) {
     myCache.get(qName).addReferencer(new FieldReferencerItem(referencerQName, fieldName));
   }
 
-  public void addMethodReferencer(Integer qName, int referencerQName, int methodName, int descriptor) {
+  public synchronized void addMethodReferencer(Integer qName, int referencerQName, int methodName, int descriptor) {
     myCache.get(qName).addReferencer(new MethodReferencerItem(referencerQName, methodName, descriptor));
   }
 
-  public Dependency[] getDependencies(Integer classQName) throws CacheCorruptedException {
+  public synchronized Dependency[] getDependencies(Integer classQName) throws CacheCorruptedException {
     try {
       if (!myMap.containsMapping(classQName)) {
         return Dependency.EMPTY_ARRAY;
