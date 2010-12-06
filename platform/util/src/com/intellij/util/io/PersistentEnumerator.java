@@ -141,9 +141,29 @@ public class PersistentEnumerator<Data> implements Forceable {
 
     synchronized (ourLock) {
       if (myStorage.length() == 0) {
-        markDirty(true);
-        putMetaData(0);
-        allocVector(FIRST_VECTOR);
+        try {
+          markDirty(true);
+          putMetaData(0);
+          allocVector(FIRST_VECTOR);
+        }
+        catch (RuntimeException e) {
+          LOG.info(e);
+          myStorage.close();
+          if (e.getCause() instanceof IOException) {
+            throw (IOException)e.getCause();
+          }
+          throw e;
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          myStorage.close();
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e);
+          myStorage.close();
+          throw new CorruptedException(file);
+        }
       }
       else {
         int sign;
