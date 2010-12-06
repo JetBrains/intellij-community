@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.util.PatchedSoftReference;
@@ -33,7 +34,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   private PatchedSoftReference<PsiAnnotationMemberValue> myCachedDefaultValue = null;
 
   public PsiAnnotationMethodImpl(final PsiMethodStub stub) {
-    super(stub);
+    super(stub, JavaStubElementTypes.ANNOTATION_METHOD);
   }
 
   public PsiAnnotationMethodImpl(final ASTNode node) {
