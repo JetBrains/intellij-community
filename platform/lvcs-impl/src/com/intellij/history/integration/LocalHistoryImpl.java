@@ -123,6 +123,9 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     fm.removeVirtualFileManagerListener(myEventDispatcher);
     CommandProcessor.getInstance().removeCommandListener(myEventDispatcher);
 
+
+    validateStorage();
+    LocalHistoryLog.LOG.info("Purging local history...");
     myChangeList.purgeObsolete(period);
     validateStorage();
 
@@ -178,6 +181,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     };
   }
 
+  @Nullable
   @Override
   public byte[] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;

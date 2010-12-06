@@ -63,12 +63,9 @@
           <caretAspectRatio class="java.lang.Float" value="0.04"/>
         </clientProperties>
       </component>
-      <vspacer id="f3776">
+      <vspacer id="9b306">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
-            <minimum-size width="-1" height="27"/>
-            <preferred-size width="-1" height="27"/>
-          </grid>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
     </children>

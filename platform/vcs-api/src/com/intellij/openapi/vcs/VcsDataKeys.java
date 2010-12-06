@@ -49,6 +49,7 @@ public interface VcsDataKeys {
   @NonNls DataKey<Boolean> HAVE_MODIFIED_WITHOUT_EDITING = DataKey.create("ChangeListView.HaveModifiedWithoutEditing");
   @NonNls DataKey<Boolean> HAVE_LOCALLY_DELETED = DataKey.create("ChangeListView.HaveLocallyDeleted");
   DataKey<Change[]> SELECTED_CHANGES = DataKey.create("ChangeListView.SelectedChange");
+  DataKey<Boolean> HAVE_SELECTED_CHANGES = DataKey.create("ChangeListView.HaveSelectedChanges");
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
   DataKey<ChangeRequestChain> DIFF_REQUEST_CHAIN = DataKey.create("diffRequestChain");
   DataKey<String> UPDATE_VIEW_SELECTED_PATH = DataKey.create("AbstractCommonUpdateAction.UpdateViewSelectedPath");

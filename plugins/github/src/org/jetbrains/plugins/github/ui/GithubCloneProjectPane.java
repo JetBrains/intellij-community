@@ -34,9 +34,7 @@ public class GithubCloneProjectPane {
     mySelectRepositoryComboBox.setRenderer(new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()){
       @Override
       public void customize(final JList list, final RepositoryInfo value, final int index, final boolean selected, final boolean cellHasFocus) {
-        if (value != null) {
-          setText(value.getName());
-        }
+        setText(value.getOwner() + "/" + value.getName());
       }
     });
     mySelectRepositoryComboBox.addItemListener(new ItemListener() {

@@ -65,22 +65,24 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     "javax.persistence.GeneratedValue"
   };
 
-  private Collection<String> ADDITIONAL_ANNOS = null;
-  private ExtensionPointListener<EntryPoint> myExtensionPointListener;
+  // null means uninitialized
+  private volatile List<String> ADDITIONAL_ANNOS;
 
   public Collection<String> getAdditionalAnnotations() {
-    if (ADDITIONAL_ANNOS == null) {
-      ADDITIONAL_ANNOS = new ArrayList<String>();
-      Collections.addAll(ADDITIONAL_ANNOS, STANDARD_ANNOS);
+    List<String> annos = ADDITIONAL_ANNOS;
+    if (annos == null) {
+      annos = new ArrayList<String>();
+      Collections.addAll(annos, STANDARD_ANNOS);
       final EntryPoint[] extensions = Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL, null);
       for (EntryPoint extension : extensions) {
         final String[] ignoredAnnotations = extension.getIgnoreAnnotations();
         if (ignoredAnnotations != null) {
-          ContainerUtil.addAll(ADDITIONAL_ANNOS, ignoredAnnotations);
+          ContainerUtil.addAll(annos, ignoredAnnotations);
         }
       }
+      ADDITIONAL_ANNOS = annos = Collections.unmodifiableList(annos);
     }
-    return ADDITIONAL_ANNOS;
+    return annos;
   }
   public JDOMExternalizableStringList ADDITIONAL_ANNOTATIONS = new JDOMExternalizableStringList();
   private final Map<String, SmartRefElementPointer> myPersistentEntryPoints;
@@ -243,7 +245,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
         ((RefElementImpl)newEntryPoint).setEntry(true);
         ((RefElementImpl)newEntryPoint).setPermanentEntry(true);
         if (entry.isPersistent()) { //do save entry points
-          final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(newEntryPoint.getElement().getProject());
+          final EntryPointsManagerImpl entryPointsManager = getInstance(newEntryPoint.getElement().getProject());
           if (this != entryPointsManager) {
             entryPointsManager.addEntryPoint(newEntryPoint, true);
           }
@@ -281,7 +283,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
     if (anEntryPoint.isPermanentEntry() && anEntryPoint.isValid()) {
       final Project project = anEntryPoint.getElement().getProject();
-      final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
+      final EntryPointsManagerImpl entryPointsManager = getInstance(project);
       if (this != entryPointsManager) {
         entryPointsManager.removeEntryPoint(anEntryPoint);
       }
@@ -373,12 +375,12 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
           int spaceIdx = fqName.indexOf(' ');
           int lastDotIdx = fqName.lastIndexOf('.');
-          boolean notype = false;
 
           int parenIndex = fqName.indexOf('(');
 
           while (lastDotIdx > parenIndex) lastDotIdx = fqName.lastIndexOf('.', lastDotIdx - 1);
 
+          boolean notype = false;
           if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx || spaceIdx > parenIndex) {
             notype = true;
           }

@@ -39,6 +39,7 @@ public abstract class LocalHistory {
 
   public abstract Label putUserLabel(Project p, @NotNull String name);
 
+  @Nullable
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
   public abstract boolean isUnderControl(VirtualFile f);
