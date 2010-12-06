@@ -148,7 +148,7 @@ public class ActionsTree {
       }
     });
 
-    myTree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myComponent = ScrollPaneFactory.createScrollPane(myTree);
   }
