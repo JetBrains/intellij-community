@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightClassReference;
 import org.jetbrains.annotations.NotNull;
@@ -27,13 +28,12 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   private PsiClassType myCachedBaseType = null;
 
   public PsiEnumConstantInitializerImpl(final PsiClassStub stub) {
-    super(stub);
+    super(stub, JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
   public PsiEnumConstantInitializerImpl(final ASTNode node) {
     super(node);
   }
-
 
   protected Object clone() {
     PsiEnumConstantInitializerImpl clone = (PsiEnumConstantInitializerImpl)super.clone();
@@ -55,7 +55,6 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   public boolean isInQualifiedNew() {
     return false;
   }
-
 
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {

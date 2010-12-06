@@ -31,7 +31,6 @@ import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightMethod;
@@ -73,7 +72,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @NonNls private static final String VALUE_OF_METHOD = "valueOf";
 
   public PsiClassImpl(final PsiClassStub stub) {
-    this(stub, typeForClass(stub.isAnonymous(), stub.isEnumConstantInitializer()));
+    this(stub, JavaStubElementTypes.CLASS);
   }
 
   protected PsiClassImpl(final PsiClassStub stub, final IStubElementType type) {
@@ -82,12 +81,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   public PsiClassImpl(final ASTNode node) {
     super(node);
-  }
-
-  public static JavaClassElementType typeForClass(final boolean anonymous, final boolean enumConst) {
-    return enumConst
-           ? JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER
-           : anonymous ? JavaStubElementTypes.ANONYMOUS_CLASS : JavaStubElementTypes.CLASS;
   }
 
   public void subtreeChanged() {

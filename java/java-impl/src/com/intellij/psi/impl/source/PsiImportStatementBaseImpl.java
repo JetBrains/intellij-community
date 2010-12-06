@@ -19,9 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.stubs.IStubElementType;
 
 /**
  * @author dsl
@@ -29,8 +29,8 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiImportStatementStub> implements PsiImportStatementBase{
   public static final PsiImportStatementBaseImpl[] EMPTY_ARRAY = new PsiImportStatementBaseImpl[0];
 
-  protected PsiImportStatementBaseImpl(final PsiImportStatementStub stub) {
-    super(stub, stub.isStatic() ? JavaStubElementTypes.IMPORT_STATIC_STATEMENT : JavaStubElementTypes.IMPORT_STATEMENT);
+  protected PsiImportStatementBaseImpl(final PsiImportStatementStub stub, final IStubElementType type) {
+    super(stub, type);
   }
 
   protected PsiImportStatementBaseImpl(final ASTNode node) {
