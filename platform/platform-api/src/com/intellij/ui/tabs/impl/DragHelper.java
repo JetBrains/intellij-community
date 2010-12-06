@@ -83,6 +83,8 @@ class DragHelper extends MouseDragHelper {
 
     if (isDragJustStarted()) {
       final TabLabel label = findLabel(startPointScreen);
+      if (label == null) return;
+
       final Rectangle labelBounds = label.getBounds();
 
       myHoldDelta = new Dimension(startPointScreen.x - labelBounds.x, startPointScreen.y - labelBounds.y);
@@ -94,6 +96,8 @@ class DragHelper extends MouseDragHelper {
       myDragOriginalRec.y -= myHoldDelta.height;
     }
     else {
+      if (myDragRec == null) return;
+
       final Point toPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), myTabs);
 
       myDragRec.x = toPoint.x;
