@@ -45,7 +45,7 @@ public class EditChangelistDialog extends DialogWrapper {
         setErrorText(errorMessage);
       }
     };
-    myPanel.setName(list.getName());
+    myPanel.setChangeListName(list.getName());
     myPanel.setDescription(list.getComment());
     myPanel.init(list);
     myPanel.getMakeActiveCheckBox().setSelected(myList.isDefault());
@@ -62,17 +62,17 @@ public class EditChangelistDialog extends DialogWrapper {
     String oldName = myList.getName();
     String oldComment = myList.getComment();
 
-    if (!Comparing.equal(oldName, myPanel.getName()) && ChangeListManager.getInstance(myProject).findChangeList(myPanel.getName()) != null) {
+    if (!Comparing.equal(oldName, myPanel.getChangeListName()) && ChangeListManager.getInstance(myProject).findChangeList(myPanel.getChangeListName()) != null) {
       Messages.showErrorDialog(myPanel.getContent(),
-                               VcsBundle.message("changes.dialog.editchangelist.error.already.exists", myPanel.getName()),
+                               VcsBundle.message("changes.dialog.editchangelist.error.already.exists", myPanel.getChangeListName()),
                                VcsBundle.message("changes.dialog.editchangelist.title"));
       return;
     }
 
-    if (!Comparing.equal(oldName, myPanel.getName(), true) || !Comparing.equal(oldComment, myPanel.getDescription(), true)) {
+    if (!Comparing.equal(oldName, myPanel.getChangeListName(), true) || !Comparing.equal(oldComment, myPanel.getDescription(), true)) {
       final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
 
-      final String newName = myPanel.getName();
+      final String newName = myPanel.getChangeListName();
       if (! myList.getName().equals(newName)) {
         clManager.editName(myList.getName(), newName);
       }

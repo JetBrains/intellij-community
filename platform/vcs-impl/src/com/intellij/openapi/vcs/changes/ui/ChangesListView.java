@@ -204,6 +204,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, haveLocallyDeleted());
     } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
       sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, haveLocallyModified());
+    } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
+      sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
     } else if (key == HELP_ID_DATA_KEY) {
       sink.put(HELP_ID_DATA_KEY, ourHelpId);
     }
@@ -308,6 +310,24 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
   public boolean haveLocallyModified() {
     return haveSelectedFileType(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+  }
+
+  private Boolean haveSelectedChanges() {
+    final TreePath[] paths = getSelectionPaths();
+    if (paths == null) return false;
+
+    for (TreePath path : paths) {
+      ChangesBrowserNode node = (ChangesBrowserNode) path.getLastPathComponent();
+      if (node instanceof ChangesBrowserChangeNode) {
+        return true;
+      } else if (node instanceof ChangesBrowserChangeListNode) {
+        final ChangesBrowserChangeListNode changeListNode = (ChangesBrowserChangeListNode)node;
+        if (changeListNode.getChildCount() > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private Change[] getLeadSelection() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +49,7 @@ class BaseLabel extends JLabel {
 
   private void updateFont() {
     Font f = UIUtil.getLabelFont();
-    Font baseFont = f.deriveFont(f.getStyle(), f.getSize() - (SystemInfo.isMac ? 2 : 1));
+    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
     if (myBold) {
       setFont(baseFont.deriveFont(Font.BOLD));
     }

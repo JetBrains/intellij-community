@@ -53,7 +53,7 @@ public class NewChangelistDialog extends DialogWrapper {
   }
 
   public String getName() {
-    return myPanel.getName();
+    return myPanel.getChangeListName();
   }
 
   public String getDescription() {

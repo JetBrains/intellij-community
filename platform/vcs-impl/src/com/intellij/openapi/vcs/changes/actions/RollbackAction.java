@@ -60,7 +60,8 @@ public class RollbackAction extends AnAction implements DumbAware {
     final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
     boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING));
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES));
     if (! isEnabled) {
       final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
