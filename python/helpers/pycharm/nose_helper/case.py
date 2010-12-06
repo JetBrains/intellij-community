@@ -93,7 +93,7 @@ class FunctionTestCase(TestBase):
           self.suite.location = ""
         else:
           self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
-           self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
+          self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
 
     def _context(self):
         return resolve_name(self.test.__module__)
