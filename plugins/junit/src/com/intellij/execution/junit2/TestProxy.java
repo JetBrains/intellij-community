@@ -57,18 +57,17 @@ public class TestProxy extends AbstractTestProxy {
     return getInfo().getComment() + "." + getInfo().getName();
   }
 
-  public void printOn(final Printer printer) {
-    super.printOn(printer);
-    myState.printOn(printer);
-  }
-
   public TestState getState() {
     return myState;
   }
 
   public void setState(final TestState state) {
     if (myState != state) {
-      fireOnNewPrintable(state);
+      if (state.isFinal()) {
+        addLast(state);
+      } else {
+        fireOnNewPrintable(state);
+      }
       if (myState != null) {
         state.merge(myState);
       }

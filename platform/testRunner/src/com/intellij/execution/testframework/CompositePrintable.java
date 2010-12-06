@@ -40,11 +40,25 @@ public class CompositePrintable implements Printable, Disposable {
   private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
   private int myCurrentSize = 0;
+  private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public void flush() {
     synchronized (myNestedPrintables) {
       myWrapper.flush(myNestedPrintables);
       clear();
+    }
+  }
+
+  public void invokeInAlarm(Runnable runnable) {
+    invokeInAlarm(runnable, !ApplicationManager.getApplication().isDispatchThread() ||
+                            ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  public void invokeInAlarm(Runnable runnable, final boolean sync) {
+    if (sync) {
+      runnable.run();
+    } else {
+      myAlarm.addRequest(runnable, 0);
     }
   }
 
@@ -99,7 +113,6 @@ public class CompositePrintable implements Printable, Disposable {
     @NonNls private static final String HYPERLINK = "hyperlink";
 
     private ConsoleViewContentType myLastSelected;
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     private File myFile;
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
@@ -139,30 +152,20 @@ public class CompositePrintable implements Printable, Disposable {
           myPrinter.close();
         }
       };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        request.run();
-      } else {
-        myAlarm.addRequest(request, 0);
-      }
+      invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
       final File file = getFile();
       if (file == null) return;
-      final MyFileContentPrinter printer = new MyFileContentPrinter();
-      if (console instanceof MyFlushToFilePrinter || ApplicationManager.getApplication().isUnitTestMode()) {
-        //parent test need to load child file content to flush itself which is already done in alarm thread
-        //output stream is closed sync in flush() so invoke later would result in unclosed stream
-        printer.printFileContent(console, file, printables);
-      } else {
-        //move out from AWT thread
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            printer.printFileContent(console, file, printables);
-          }
-        }, 0);
-      }
+      final Runnable request = new Runnable() {
+        @Override
+        public void run() {
+          final MyFileContentPrinter printer = new MyFileContentPrinter();
+          printer.printFileContent(console, file, printables);
+        }
+      };
+      invokeInAlarm(request);
     }
 
     private class MyFlushToFilePrinter implements Printer {
