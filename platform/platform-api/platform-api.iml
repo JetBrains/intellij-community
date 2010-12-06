@@ -22,7 +22,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/IDEA/community/lib/automaton.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
