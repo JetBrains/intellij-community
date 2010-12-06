@@ -118,11 +118,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   public boolean isCurrent(CompositePrintable printable) {
-    return myCurrentTest == printable || (isRoot() && myUnboundOutputRoot != null);
+    return myCurrentTest == printable || isRoot();
   }
 
   private boolean isRoot() {
-    return myCurrentTest.getParent() == myUnboundOutputRoot;
+    return myCurrentTest != null && myCurrentTest.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {
