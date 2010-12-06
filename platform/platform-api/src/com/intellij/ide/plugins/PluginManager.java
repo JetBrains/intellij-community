@@ -760,7 +760,7 @@ public class PluginManager {
             ourBuildNumber = BuildNumber.fromString(new String(FileUtil.loadFileText(buildTxtFile)).trim());
           }
           else {
-            ourBuildNumber = BuildNumber.fromString("98.SNAPSHOT");
+            ourBuildNumber = BuildNumber.fromString("99.SNAPSHOT");
           }
         }
         catch (IOException e) {
