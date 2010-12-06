@@ -1,4 +1,4 @@
-import AddFunctionToModule # ourselves
+import <warning descr="Import resolves to its containing file.">AddFunctionToModule</warning> # ourselves
 
 # do something
 
