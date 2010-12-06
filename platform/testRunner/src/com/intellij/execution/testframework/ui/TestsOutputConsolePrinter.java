@@ -100,14 +100,21 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.clear();
       }
     };
+    final Runnable scrollRunnable = new Runnable() {
+      @Override
+      public void run() {
+        scrollToBeginning();
+      }
+    };
     if (isRoot() && myUnboundOutputRoot != null) {
       myUnboundOutputRoot.invokeInAlarm(clearRunnable);
       myUnboundOutputRoot.printOn(this);
+      myUnboundOutputRoot.invokeInAlarm(scrollRunnable);
     } else {
       myCurrentTest.invokeInAlarm(clearRunnable);
       myCurrentTest.printOn(this);
+      myCurrentTest.invokeInAlarm(scrollRunnable);
     }
-    scrollToBeginning();
   }
 
   public boolean isCurrent(CompositePrintable printable) {
