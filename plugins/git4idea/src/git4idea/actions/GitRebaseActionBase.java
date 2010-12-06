@@ -56,7 +56,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
     affectedRoots.add(root);
     try {
       service.configureHandler(h, editor.getHandlerNo());
-      GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine());
+      GitHandlerUtil.doSynchronously(h, GitBundle.getString("rebasing.title"), h.printableCommandLine(), false);
     }
     finally {
       editor.close();

@@ -370,15 +370,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void scrollTo(final int offset) {
-    assertIsDispatchThread();
-    flushDeferredText(false);
-    if (myEditor == null) return;
-    int moveOffset = offset;
-    if (USE_CYCLIC_BUFFER && moveOffset >= myEditor.getDocument().getTextLength()) {
-      moveOffset = 0;
-    }
-    myEditor.getCaretModel().moveToOffset(moveOffset);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final Runnable scrollRunnable = new Runnable() {
+      public void run() {
+        flushDeferredText(false);
+        if (myEditor == null) return;
+        int moveOffset = offset;
+        if (USE_CYCLIC_BUFFER && moveOffset >= myEditor.getDocument().getTextLength()) {
+          moveOffset = 0;
+        }
+        myEditor.getCaretModel().moveToOffset(moveOffset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
+    };
+    myFlushAlarm.addRequest(scrollRunnable, 0, getStateForUpdate());
   }
 
   private static void assertIsDispatchThread() {
@@ -414,7 +418,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             performWhenNoDeferredOutput(runnable);
           }
         },
-        100
+        100,
+        ModalityState.stateForComponent(this)
       );
     }
   }
