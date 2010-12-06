@@ -83,7 +83,11 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final String selectedPath = checkoutDialog.getSelectedPath();
     final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);
     final String projectName = checkoutDialog.getProjectName();
-    final String checkoutUrl = "git@github.com:" + settings.getLogin() + "/" + selectedRepository.getName() + ".git";
+    final String repositoryName = selectedRepository.getName();
+    final String repositoryOwner = selectedRepository.getOwner();
+    final String checkoutUrl = settings.getLogin().equals(repositoryOwner)
+                               ? "git@github.com:" + repositoryOwner + "/" + repositoryName + ".git"
+                               : "https://github.com/" + repositoryOwner + "/" + repositoryName + ".git";
     GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "master", selectedPath);
   }
 
