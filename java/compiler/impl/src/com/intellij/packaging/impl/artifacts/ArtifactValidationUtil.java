@@ -17,7 +17,6 @@ package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -30,5 +29,5 @@ public abstract class ArtifactValidationUtil {
     return ServiceManager.getService(project, ArtifactValidationUtil.class);
   }
 
-  public abstract Map<Artifact, String> getArtifactToSelfIncludingNameMap();
+  public abstract Map<String, String> getArtifactToSelfIncludingNameMap();
 }
