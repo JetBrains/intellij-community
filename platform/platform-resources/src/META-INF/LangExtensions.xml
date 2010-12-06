@@ -453,6 +453,7 @@
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
+  <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable"/>

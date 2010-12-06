@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -33,6 +32,7 @@ import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EnumSet;
 
 public abstract class NewEditChangelistPanel extends JPanel {
   private EditorTextField myNameTextField;
@@ -41,7 +41,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
   private JCheckBox myMakeActiveCheckBox;
 
   private Consumer<LocalChangeList> myConsumer;
-  private boolean myNameNotPatched;
   private final Project myProject;
 
   public NewEditChangelistPanel(final Project project) {
@@ -49,7 +48,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
     myProject = project;
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                                    new Insets(1, 1, 1, 1), 0, 0);
-    myNameNotPatched = true;
 
     final JLabel nameLabel = new JLabel(VcsBundle.message("edit.changelist.name"));
     add(nameLabel, gb);
@@ -92,6 +90,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     setMinimumSize(new Dimension(300, 150));
 
     // a hack to create editor inside field
+    // todo: denis zhdanov
     setName("a");
     setName("");
   }
@@ -120,13 +119,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
-    if (myNameNotPatched) {
-      final EditorEx editor = (EditorEx)myNameTextField.getEditor();
-      if (editor != null) {
-        editor.setHorizontalScrollbarVisible(false);
-        myNameNotPatched = false;
-      }
-    }
     String name = getName();
     if (name == null || name.trim().length() == 0) {
       nameChanged("Cannot create new changelist with empty name.");
@@ -176,16 +168,15 @@ public abstract class NewEditChangelistPanel extends JPanel {
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
+    final EnumSet<EditorCustomization.Feature> features = EnumSet.of(EditorCustomization.Feature.SPELL_CHECK);
     if (defaultLines == 1) {
-      editorField = service.getEditorField(
-        FileTypes.PLAIN_TEXT.getLanguage(), project, EditorCustomization.Feature.SPELL_CHECK);
+      features.add(EditorCustomization.Feature.NO_HORIZONTAL_SCROLLBAR);
     } else {
-      editorField = service.getEditorField(
-        FileTypes.PLAIN_TEXT.getLanguage(), project, EditorCustomization.Feature.SOFT_WRAP, EditorCustomization.Feature.SPELL_CHECK
-      );
+      features.add(EditorCustomization.Feature.SOFT_WRAP);
     }
+    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features.toArray(new EditorCustomization.Feature[features.size()]));
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
-    editorField.getComponent().setMinimumSize(new Dimension(100, height));
+    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
     return editorField;
   }
 }
