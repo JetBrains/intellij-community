@@ -19,7 +19,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Dmitry Avdeev
@@ -46,7 +48,9 @@ public class TaskCompletionContributor extends CompletionContributor {
       String text = parameters.getOriginalFile().getText();
       int i = text.lastIndexOf(' ', parameters.getOffset() - 1) + 1;
       final String prefix = text.substring(i, parameters.getOffset());
-
+      if (parameters.getInvocationCount() == 0) {                         // is autopopup
+        return;
+      }
       result = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));
 
       final TaskSearchSupport searchSupport = new TaskSearchSupport(file.getProject(), false);
