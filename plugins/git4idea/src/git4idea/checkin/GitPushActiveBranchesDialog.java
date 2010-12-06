@@ -16,6 +16,7 @@
 package git4idea.checkin;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -246,7 +247,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   }
 
   /**
-   * Notifies about error, when 'rebase and push' task is executed, i.e. when the dialog is closed.
+   * Notifies about errors during background rebase & push tasks.
    */
   private void notifyExceptionWhenClosed(String title, Collection<VcsException> exceptions) {
     final String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
@@ -254,7 +255,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         return e.getLocalizedMessage();
       }
     }, "<br/>");
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, content, NotificationType.ERROR), myProject);
+    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, content, NotificationType.ERROR),
+                             NotificationDisplayType.STICKY_BALLOON, myProject);
   }
 
   /**
