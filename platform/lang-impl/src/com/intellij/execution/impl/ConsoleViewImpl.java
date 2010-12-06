@@ -1784,7 +1784,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return;
       }
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - consoleView.myDeferredOutput.length() - consoleView.myDeferredUserInput.length();
       if (offset > info.endOffset) {
         startOffset = info.endOffset;
       }
@@ -1835,7 +1835,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       if (consoleView.myDeferredUserInput.length() == 0) return;
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - consoleView.myDeferredOutput.length() - consoleView.myDeferredUserInput.length();
 
       startOffset = getStartOffset(start, info, deferredOffset);
       endOffset = getEndOffset(end, info);
@@ -1883,7 +1883,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
       if (consoleView.myDeferredUserInput.length() == 0) return;
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - consoleView.myDeferredOutput.length() - consoleView.myDeferredUserInput.length();
       startOffset = getStartOffset(offset, info, deferredOffset);
       endOffset = getEndOffset(offset + length, info);
       if (startOffset == -1 ||
