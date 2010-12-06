@@ -21,6 +21,7 @@ public abstract class AbstractCommand {
   public static final int EVALUATE = 113;
   public static final int GET_FRAME = 114;
   public static final int EXECUTE = 115;
+  public static final int WRITE_TO_CONSOLE = 116;
   public static final int CHANGE_VARIABLE = 117;
   public static final int GET_COMPLETIONS = 120;
   public static final int CONSOLE_EXEC = 121;
@@ -73,6 +74,10 @@ public abstract class AbstractCommand {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }
+  }
+
+  public static boolean isWriteToConsole(final int command) {
+    return command == WRITE_TO_CONSOLE;
   }
 
   protected static class Payload {

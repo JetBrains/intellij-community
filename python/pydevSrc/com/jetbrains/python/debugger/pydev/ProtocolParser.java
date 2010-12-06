@@ -14,7 +14,8 @@ import java.util.List;
 
 public class ProtocolParser {
 
-  private ProtocolParser() { }
+  private ProtocolParser() {
+  }
 
   public static String decode(final String value) throws PyDebuggerException {
     try {
@@ -27,6 +28,17 @@ public class ProtocolParser {
 
   public static String encodeExpression(final String expression) {
     return StringUtil.replace(expression, "\n", "@LINE@");
+  }
+
+  public static PyIo parseIo(final String text) throws PyDebuggerException {
+    final XppReader reader = openReader(text, true);
+    reader.moveDown();
+    if (!"io".equals(reader.getNodeName())) {
+      throw new PyDebuggerException("Expected <io>, found " + reader.getNodeName());
+    }
+    final String s = readString(reader, "s", "");
+    final int ctx = readInt(reader, "ctx", 1);
+    return new PyIo(s, ctx);
   }
 
   @NotNull
@@ -58,10 +70,10 @@ public class ProtocolParser {
   @NotNull
   public static String getThreadId(@NotNull String payload) {
     return payload.split("\t")[0];
-  } 
+  }
 
   private static PyStackFrameInfo parseFrame(final XppReader reader, final String threadId, final PyPositionConverter positionConverter)
-      throws PyDebuggerException {
+    throws PyDebuggerException {
     if (!"frame".equals(reader.getNodeName())) {
       throw new PyDebuggerException("Expected <frame>, found " + reader.getNodeName());
     }
@@ -168,5 +180,4 @@ public class ProtocolParser {
     }
     return value;
   }
-
 }

@@ -56,7 +56,8 @@
 
     <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
 
-    
+    <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
+
     <!-- Run/Debug -->
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>

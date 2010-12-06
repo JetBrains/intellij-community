@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
+
 import java.util.List;
 
 /**
@@ -19,4 +21,6 @@ public interface IPyDebugProcess {
   void threadResumed(PyThreadInfo thread);
 
   PyDebugValue evaluate(String expression, boolean exec, boolean doTrunc) throws PyDebuggerException;
+
+  void printToConsole(String text, ConsoleViewContentType contentType);
 }

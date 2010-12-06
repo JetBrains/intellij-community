@@ -10,7 +10,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
  */
 public class PydevLanguageConsole extends LanguageConsoleImpl {
   public PydevLanguageConsole(final Project project, final String title) {
-    super(project, title, PythonLanguage.getInstance(), false);
+    super(project, title, PythonLanguage.getInstance());
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PydevCompletionAutopopupBlockingHandler.REPL_KEY, new Object());
   }

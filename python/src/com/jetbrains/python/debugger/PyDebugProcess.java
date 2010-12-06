@@ -139,11 +139,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private void handshake() throws PyDebuggerException {
     final String remoteVersion = myDebugger.handshake();
-    printToConsole("Connected to pydevd (version " + remoteVersion + ")\n");
+    printToConsole("Connected to pydevd (version " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
-  protected void printToConsole(String text) {
-    ((ConsoleView)myExecutionConsole).print(text, ConsoleViewContentType.SYSTEM_OUTPUT);
+  public void printToConsole(String text, ConsoleViewContentType contentType) {
+    ((ConsoleView)myExecutionConsole).print(text, contentType);
   }
 
   private void registerBreakpoints() {
@@ -394,7 +394,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void processTerminated(ProcessEvent event) {
-
   }
 
   @Override

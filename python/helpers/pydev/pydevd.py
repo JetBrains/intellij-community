@@ -87,6 +87,7 @@ if IS_PY3K:
 connected = False
 bufferStdOutToServer = False
 bufferStdErrToServer = False
+remote = False
 
 PyDBUseLocks = True
 
@@ -599,7 +600,9 @@ class PyDB:
                 elif cmd_id == CMD_CONSOLE_EXEC:
                     #command to exec expression in console, in case expression is only partially valid 'False' is returned
                     #text is: thread\tstackframe\tLOCAL\texpression
+
                     thread_id, frame_id, scope, expression = text.split('\t', 3)
+
                     int_cmd = InternalConsoleExec(seq, thread_id, frame_id, expression)
                     self.postInternalCommand(int_cmd, thread_id)
 
@@ -997,11 +1000,14 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
     @param suspend: whether a breakpoint should be emulated as soon as this function is called. 
     @param trace_only_current_thread: determines if only the current thread will be traced or all future threads will also have the tracing enabled.
     '''
-    
+
+    global remote
     global connected
     global bufferStdOutToServer
     global bufferStdErrToServer
-    
+
+    remote = True
+
     if not connected :
         connected = True  
         bufferStdOutToServer = stdoutToServer
