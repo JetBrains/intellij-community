@@ -366,6 +366,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myDeferredUserInput = new StringBuffer();
       myDeferredTokens.clear();
     }
+    myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
   }
 
