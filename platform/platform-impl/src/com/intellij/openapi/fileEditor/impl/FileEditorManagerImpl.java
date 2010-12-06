@@ -730,8 +730,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       focusManager.doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
-          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-            .fileOpened(FileEditorManagerImpl.this, file);
+          if (isFileOpen(file)) {
+            getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+              .fileOpened(FileEditorManagerImpl.this, file);
+          }
         }
       });
 
