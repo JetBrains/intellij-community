@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.TabbedPaneWrapper;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.model.MavenId;
 
@@ -24,13 +25,12 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
   private MavenId myResult;
 
-  private JTabbedPane myTabbedPane;
+  private TabbedPaneWrapper myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
@@ -66,8 +66,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   private void initComponents(Project project, String initialText, boolean classMode) {
-    myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    myTabbedPane.setFocusable(false);
+    myTabbedPane = new TabbedPaneWrapper(project);
 
     MavenArtifactSearchPanel.Listener listener = new MavenArtifactSearchPanel.Listener() {
       public void itemSelected() {
@@ -87,12 +86,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     myTabbedPane.addTab("Search for class", myClassesPanel);
     myTabbedPane.setSelectedIndex(classMode ? 1 : 0);
 
-    myTabbedPane.setMnemonicAt(0, KeyEvent.VK_A);
-    myTabbedPane.setDisplayedMnemonicIndexAt(0, myTabbedPane.getTitleAt(0).indexOf("artifact"));
-    myTabbedPane.setMnemonicAt(1, KeyEvent.VK_C);
-    myTabbedPane.setDisplayedMnemonicIndexAt(1, myTabbedPane.getTitleAt(1).indexOf("class"));
-
-    myTabbedPane.setPreferredSize(new Dimension(900, 600));
+    myTabbedPane.getComponent().setPreferredSize(new Dimension(900, 600));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -117,7 +111,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return myTabbedPane;
+    return myTabbedPane.getComponent();
   }
 
   @Override
