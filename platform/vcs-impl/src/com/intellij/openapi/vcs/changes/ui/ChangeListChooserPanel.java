@@ -87,7 +87,7 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setDefaultName(String name) {
-    myNewListPanel.setName(name);
+    myNewListPanel.setChangeListName(name);
   }
 
   private void updateEnabledItems() {
@@ -110,7 +110,7 @@ public class ChangeListChooserPanel extends JPanel {
   public LocalChangeList getSelectedList(Project project) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     if (myRbNew.isSelected()) {
-      String newText = myNewListPanel.getName();
+      String newText = myNewListPanel.getChangeListName();
       if (manager.findChangeList(newText) != null) {
         Messages.showErrorDialog(project,
                                  VcsBundle.message("changes.newchangelist.warning.already.exists.text", newText),
@@ -123,7 +123,7 @@ public class ChangeListChooserPanel extends JPanel {
       return (LocalChangeList)myExistingListsCombo.getSelectedItem();
     }
     else {
-      LocalChangeList changeList = manager.addChangeList(myNewListPanel.getName(), myNewListPanel.getDescription());
+      LocalChangeList changeList = manager.addChangeList(myNewListPanel.getChangeListName(), myNewListPanel.getDescription());
       myNewListPanel.changelistCreatedOrChanged(changeList);
       if (myNewListPanel.getMakeActiveCheckBox().isSelected()) {
         manager.setDefaultChangeList(changeList);
