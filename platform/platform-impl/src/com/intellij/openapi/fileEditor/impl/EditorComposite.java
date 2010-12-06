@@ -245,6 +245,8 @@ public abstract class EditorComposite implements Disposable {
    * track focus movement inside the myEditor.
    */
   public JComponent getPreferredFocusedComponent(){
+    if (mySelectedEditor == null) return null;
+
     final Component component = myFocusWatcher.getFocusedComponent();
     if(!(component instanceof JComponent) || !component.isShowing() || !component.isEnabled() || !component.isFocusable()){
       return getSelectedEditor().getPreferredFocusedComponent();
