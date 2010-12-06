@@ -5,6 +5,7 @@
  */
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +42,8 @@ public class RemoteDebugger {
   private final Map<String, PyThreadInfo> myThreads = new ConcurrentHashMap<String, PyThreadInfo>();
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
+
+  private final List<RemoteDebuggerCloseListener> myCloseListeners = Lists.newArrayList();
 
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
@@ -267,8 +270,8 @@ public class RemoteDebugger {
       os.flush();
     }
     catch (SocketException se) {
-      LOG.error(se);
       disconnect();
+      fireCloseEvent();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -303,6 +306,7 @@ public class RemoteDebugger {
       }
     }
     disconnect();
+    fireCloseEvent();
   }
 
 
@@ -322,7 +326,7 @@ public class RemoteDebugger {
         }
       }
       catch (SocketException ignore) {
-        // disconnected
+        fireCloseEvent();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -456,6 +460,20 @@ public class RemoteDebugger {
       if (threadVars != null) {
         threadVars.clear();
       }
+    }
+  }
+
+  public void addCloseListener(RemoteDebuggerCloseListener listener) {
+    myCloseListeners.add(listener);
+  }
+
+  public void remoteCloseListener(RemoteDebuggerCloseListener listener) {
+    myCloseListeners.remove(listener);
+  }
+
+  private void fireCloseEvent() {
+    for (RemoteDebuggerCloseListener listener: myCloseListeners) {
+      listener.closed();
     }
   }
 }

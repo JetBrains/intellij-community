@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 
