@@ -170,15 +170,11 @@ public class CompositeElement extends TreeElement {
 
   @NotNull
   public String getText() {
-    char[] buffer = new char[getTextLength()];
-    AstBufferUtil.toBuffer(this, buffer, 0);
-    return new String(buffer);
+    return new String(textToCharArray());
   }
 
   public CharSequence getChars() {
-    char[] buffer = new char[getTextLength()];
-    AstBufferUtil.toBuffer(this, buffer, 0);
-    return new CharArrayCharSequence(buffer); 
+    return new CharArrayCharSequence(textToCharArray());
   }
 
   public int getNotCachedLength() {
@@ -220,7 +216,7 @@ public class CompositeElement extends TreeElement {
     return curOffset;
   }
 
-
+  @Nullable
   public final PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
