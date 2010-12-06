@@ -45,7 +45,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionMenuItem extends JMenuItem implements IdeGlassPane.TopComponent {
+public class ActionMenuItem extends JMenuItem {
   private static final Icon ourCheckedIcon = new SizedIcon(Icons.CHECK_ICON, 18, 18);
   private static final Icon ourUncheckedIcon = EmptyIcon.ICON_18;
 
@@ -331,10 +331,5 @@ public class ActionMenuItem extends JMenuItem implements IdeGlassPane.TopCompone
         }
       }
     }
-  }
-
-  @Override
-  public boolean canBePreprocessed(MouseEvent e) {
-    return false;
   }
 }
