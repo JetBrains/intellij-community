@@ -190,7 +190,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   /**
    * Checks if the library file is applicable to the given source file being edited. If the file has
-   * assigned libraries neither for itself nor for any of its parent directories, returns true. Parent directory
+   * assigned libraries neither for itself nor for any of its parent directories, returns false. Parent directory
    * settings are added to source file settings: if a library file is applicable to a directory, it is also
    * applicable to any of source files under that directory.
    *
@@ -199,19 +199,17 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
    * @return        True if applicable, false otherwise.
    */
   public boolean isApplicable(VirtualFile libFile, VirtualFile srcFile) {
-    return isApplicable(libFile, srcFile, false);
+    if (!myLibraryManager.isLibraryFile(libFile)) return true;
+    return isRecursivelyApplicable(libFile, srcFile);
   }
-
-  private boolean isApplicable(VirtualFile libFile, VirtualFile srcFile, boolean specFound) {
-    if (srcFile == null) return !specFound;
+  
+  private boolean isRecursivelyApplicable(VirtualFile libFile, VirtualFile srcFile) {
+    if (srcFile == null) return false;
     ScriptingLibraryTable.LibraryModel libraryModel = getMapping(srcFile);
-    if (libraryModel == null || libraryModel.isEmpty()) {
-      return isApplicable(libFile, srcFile.getParent(), specFound);
-    }
-    if (libraryModel.containsFile(libFile)) {
+    if (libraryModel != null && libraryModel.containsFile(libFile)) {
       return true;
     }
-    return isApplicable(libFile, srcFile.getParent(), true);
+    return isApplicable(libFile, srcFile.getParent());
   }
 
 

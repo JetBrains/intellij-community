@@ -225,4 +225,9 @@ public class ScriptingLibraryManager {
     return myLibTable.getMatchingFile(fileName);
   }
 
+  public boolean isLibraryFile(VirtualFile file) {
+    ensureModel();
+    assert myLibTable != null;
+    return myLibTable.isLibraryFile(file);
+  }
 }

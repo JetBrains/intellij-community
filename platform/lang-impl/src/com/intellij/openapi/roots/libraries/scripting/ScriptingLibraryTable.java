@@ -55,6 +55,13 @@ public class ScriptingLibraryTable {
     }
   }
 
+  public boolean isLibraryFile(VirtualFile file) {
+    for (LibraryModel libraryModel : myLibraryModels) {
+      if (libraryModel.containsFile(file)) return true;
+    }
+    return false;
+  }
+
   public boolean isCompactFile(VirtualFile file) {
     if (myCompactFilesCache == null) {
       myCompactFilesCache = new HashSet<VirtualFile>();
