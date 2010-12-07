@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbAware;
 
+import java.awt.event.KeyEvent;
+
 abstract class DiffWalkerAction extends AnAction implements DumbAware {
   protected DiffWalkerAction() {
     setEnabledInModalContext(true);
@@ -47,7 +49,9 @@ abstract class DiffWalkerAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     if (side == null) {
       presentation.setEnabled(false);
-    } else presentation.setEnabled(getLineNumberToGo(side) >= 0);
+    } else {
+      presentation.setEnabled(getLineNumberToGo(side) >= 0 || event.getInputEvent() instanceof KeyEvent);
+    }
   }
 
   protected abstract int getLineNumberToGo(FocusDiffSide side);
