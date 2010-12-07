@@ -43,43 +43,44 @@ public class SplitterTest extends TestCase{
     splitter.setHonorComponentsMinimumSize(true);
 
 
-    splitter.setSize(new Dimension(500, 500));
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setSize(new Dimension(300, 300));
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setProportion(.1f);
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    //assertTrue(Math.abs(splitter.getProportion() - jPanel1.getMinimumSize().height / (splitter.getSize().height - splitter.getDividerWidth())) < .00001);
-
-    splitter.setProportion(.9f);
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setSize(new Dimension(100, 100));
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setProportion(.1f);
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setSize(new Dimension(10, 10));
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setSize(new Dimension(100, 100));
-    splitter.doLayout();
-    checkBounds(splitter);
-
-    splitter.setSize(new Dimension(150, 150));
-    splitter.doLayout();
-    checkBounds(splitter);
+    // disabled since honoring min size is rather confusing, reasonable min size is hardcoded instead
+    //splitter.setSize(new Dimension(500, 500));
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setSize(new Dimension(300, 300));
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setProportion(.1f);
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    ////assertTrue(Math.abs(splitter.getProportion() - jPanel1.getMinimumSize().height / (splitter.getSize().height - splitter.getDividerWidth())) < .00001);
+    //
+    //splitter.setProportion(.9f);
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setSize(new Dimension(100, 100));
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setProportion(.1f);
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setSize(new Dimension(10, 10));
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setSize(new Dimension(100, 100));
+    //splitter.doLayout();
+    //checkBounds(splitter);
+    //
+    //splitter.setSize(new Dimension(150, 150));
+    //splitter.doLayout();
+    //checkBounds(splitter);
   }
 
 

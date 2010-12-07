@@ -91,11 +91,11 @@ public class ResetAgent {
         //remove field's static initialization
         return new MethodAdapter(mw) {
           @Override
-          public void visitFieldInsn(int opCode, String s, String name, String s2) {
+          public void visitFieldInsn(int opCode, String s, String name, String desc) {
             if (name.startsWith(timStampFieldStart) && opCode == Opcodes.PUTSTATIC) {
-              super.visitInsn(Opcodes.POP);
+              visitInsn(Type.LONG_TYPE.getDescriptor().equals(desc) ? Opcodes.POP2 : Opcodes.POP);
             } else {
-              super.visitFieldInsn(opCode, s, name, s2);
+              super.visitFieldInsn(opCode, s, name, desc);
             }
           }
         };

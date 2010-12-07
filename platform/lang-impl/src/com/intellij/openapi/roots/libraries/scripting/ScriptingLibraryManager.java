@@ -217,5 +217,17 @@ public class ScriptingLibraryManager {
     assert myLibTable != null;
     return myLibTable.isCompactFile(file);
   }
+  
+  @Nullable
+  public VirtualFile getMatchingFile(String fileName) {
+    ensureModel();
+    assert myLibTable != null;
+    return myLibTable.getMatchingFile(fileName);
+  }
 
+  public boolean isLibraryFile(VirtualFile file) {
+    ensureModel();
+    assert myLibTable != null;
+    return myLibTable.isLibraryFile(file);
+  }
 }

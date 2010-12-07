@@ -172,18 +172,19 @@ public class Splitter extends JPanel {
   }
 
   public void doLayout() {
-    final int width = getWidth();
-    final int height = getHeight();
+    final double width = getWidth();
+    final double height = getHeight();
+
     if (!isNull(myFirstComponent) && myFirstComponent.isVisible() && !isNull(mySecondComponent) && mySecondComponent.isVisible()) {
       // both first and second components are visible
       Rectangle firstRect = new Rectangle();
       Rectangle dividerRect = new Rectangle();
       Rectangle secondRect = new Rectangle();
 
-      final int componentSize = getOrientation() ? height : width;
-      int dividerWidth = getDividerWidth();
-      int firstCompontSize;
-      int secondComponentSize;
+      final double componentSize = getOrientation() ? height : width;
+      double dividerWidth = getDividerWidth();
+      double firstCompontSize;
+      double secondComponentSize;
 
       if (componentSize <= dividerWidth) {
         firstCompontSize = 0;
@@ -191,15 +192,18 @@ public class Splitter extends JPanel {
         dividerWidth = componentSize;
       }
       else {
-        firstCompontSize = (int)(myProportion * (float)(componentSize - dividerWidth));
+        firstCompontSize = myProportion * (float)(componentSize - dividerWidth);
         secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
 
         if (isHonorMinimumSize()) {
-          final int firstMinSize = getOrientation() ? myFirstComponent.getMinimumSize().height : myFirstComponent.getMinimumSize().width;
-          final int secondMinSize = getOrientation() ? mySecondComponent.getMinimumSize().height : mySecondComponent.getMinimumSize().width;
+          double minWidth = 75;
+          double minHeight = 45;
+
+          final double firstMinSize = getOrientation() ? minHeight : minWidth;
+          final double secondMinSize = getOrientation() ? minHeight : minWidth;
 
           if (firstCompontSize + secondComponentSize <= firstMinSize + secondMinSize) {
-            float propotion = firstMinSize / (firstMinSize + (float)secondMinSize);
+            double propotion = firstMinSize / (firstMinSize + secondMinSize);
             firstCompontSize = (int)(propotion * (float)(componentSize - dividerWidth));
             secondComponentSize = getOrientation() ? height - firstCompontSize - dividerWidth : width - firstCompontSize - dividerWidth;
           }
@@ -219,14 +223,14 @@ public class Splitter extends JPanel {
       }
 
       if (getOrientation()) {
-        firstRect.setBounds(0, 0, width, firstCompontSize);
-        dividerRect.setBounds(0, firstCompontSize, width, dividerWidth);
-        secondRect.setBounds(0, firstCompontSize + dividerWidth, width, secondComponentSize);
+        firstRect.setBounds(0, 0, (int)width, (int)firstCompontSize);
+        dividerRect.setBounds(0, (int)firstCompontSize, (int)width, (int)dividerWidth);
+        secondRect.setBounds(0, (int)(firstCompontSize + dividerWidth), (int)width, (int)secondComponentSize);
       }
       else {
-        firstRect.setBounds(0, 0, firstCompontSize, height);
-        dividerRect.setBounds(firstCompontSize, 0, dividerWidth, height);
-        secondRect.setBounds(firstCompontSize + dividerWidth, 0, secondComponentSize, height);
+        firstRect.setBounds(0, 0, (int)firstCompontSize, (int)height);
+        dividerRect.setBounds((int)firstCompontSize, 0, (int)dividerWidth, (int)height);
+        secondRect.setBounds((int)(firstCompontSize + dividerWidth), 0, (int)secondComponentSize, (int)height);
       }
       myDivider.setVisible(true);
       myFirstComponent.setBounds(firstRect);
@@ -238,13 +242,13 @@ public class Splitter extends JPanel {
     else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
-      myFirstComponent.setBounds(0, 0, width, height);
+      myFirstComponent.setBounds(0, 0, (int)width, (int)height);
       myFirstComponent.validate();
     }
     else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
-      mySecondComponent.setBounds(0, 0, width, height);
+      mySecondComponent.setBounds(0, 0, (int)width, (int)height);
       mySecondComponent.validate();
     }
     else { // both components are null or invisible

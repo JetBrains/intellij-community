@@ -77,6 +77,7 @@ public class EditorNotifications extends AbstractProjectComponent {
   public void updateNotifications(final VirtualFile file) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         FileEditor[] editors = myFileEditorManager.getAllEditors(file);
         for (FileEditor editor : editors) {
           for (Provider<?> provider : PROVIDERS.getValue()) {
