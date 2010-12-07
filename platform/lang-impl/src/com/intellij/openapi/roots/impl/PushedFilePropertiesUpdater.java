@@ -20,7 +20,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -57,9 +56,11 @@ public class PushedFilePropertiesUpdater {
       }
     });
 
-    ((StartupManagerEx)StartupManager.getInstance(project)).registerPreStartupActivity(new Runnable() {
+    StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
       public void run() {
+        long l = System.currentTimeMillis();
         pushAll(myPushers);
+        LOG.info("File properties pushed in " + (System.currentTimeMillis() - l) + " ms");
 
         final MessageBusConnection connection = bus.connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -85,7 +86,7 @@ public class PushedFilePropertiesUpdater {
           @Override
           public void fileMoved(final VirtualFileMoveEvent event) {
             final VirtualFile file = event.getFile();
-            final FilePropertyPusher[] pushers = file.isDirectory()? myPushers : myFilePushers;
+            final FilePropertyPusher[] pushers = file.isDirectory() ? myPushers : myFilePushers;
             for (FilePropertyPusher pusher : pushers) {
               file.putUserData(pusher.getFileDataKey(), null);
             }
