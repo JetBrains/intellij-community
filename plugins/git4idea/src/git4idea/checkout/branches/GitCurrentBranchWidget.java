@@ -15,10 +15,11 @@
  */
 package git4idea.checkout.branches;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -115,39 +116,47 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
       public void consume(MouseEvent mouseEvent) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            update();
-          }
-        });
+          update();
       }
     };
   }
 
   private void update() {
-    String currentBranchName = null;
     final VirtualFile file = getSelectedFile();
-    if (file != null) {
-      AbstractVcs vcs = myVcsManager.getVcsFor(file);
-      if (vcs != null && vcs instanceof GitVcs) {
-        VirtualFile root = myVcsManager.getVcsRootFor(file);
-        if (root != null) {
-          GitBranch currentBranch = null;
-          try {
-            currentBranch = GitBranch.current(getProject(), root);
-          } catch (VcsException e) {
-            LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
-            // doing nothing - null will be set to myCurrentBranchName
+    final Project project = getProject();
+    Task.Backgroundable task = new Task.Backgroundable(project, "") {
+      @Override
+      public void run(ProgressIndicator indicator) {
+        String currentBranchName = null;
+        if (file != null) {
+          AbstractVcs vcs = myVcsManager.getVcsFor(file);
+          if (vcs != null && vcs instanceof GitVcs) {
+            VirtualFile root = myVcsManager.getVcsRootFor(file);
+            if (root != null) {
+              GitBranch currentBranch = null;
+              try {
+                currentBranch = GitBranch.current(project, root);
+              }
+              catch (VcsException e) {
+                LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
+                // doing nothing - null will be set to myCurrentBranchName
+              }
+              currentBranchName = currentBranch != null ? currentBranch.getName() : null;
+            }
           }
-          currentBranchName = currentBranch != null ? currentBranch.getName() : null;
         }
+        if (currentBranchName == null) {
+          currentBranchName = "";
+        }
+        myCurrentBranchName.set(currentBranchName);
+        myStatusBar.updateWidget(ID());
       }
+    };
+    if (project == null) {
+      task.queue();
+    } else {
+      GitVcs.getInstance(project).runInBackground(task);
     }
-    if (currentBranchName == null) {
-      currentBranchName = "";
-    }
-    myCurrentBranchName.set(currentBranchName);
-    myStatusBar.updateWidget(ID());
   }
 
 }
