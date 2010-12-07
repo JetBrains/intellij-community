@@ -152,6 +152,9 @@ public class AnnotationUtilEx {
         }
       }
     }
+    else if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
+      return false;
+    }
     else if (parent instanceof PsiReturnStatement) {
       final PsiMethod m = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
       if (m != null) {
