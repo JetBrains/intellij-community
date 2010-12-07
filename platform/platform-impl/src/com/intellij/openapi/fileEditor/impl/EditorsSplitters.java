@@ -67,7 +67,7 @@ public class EditorsSplitters extends JPanel {
   private VirtualFile myCurrentFile;
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
-  private int myInsideChange = 0;
+  int myInsideChange = 0;
   private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
@@ -498,6 +498,19 @@ public class EditorsSplitters extends JPanel {
       }
     }
     return true;
+  }
+
+  public VirtualFile findNextFile(final VirtualFile file) {
+    final EditorWindow[] windows = getWindows(); // TODO: use current file as base
+    for (int i = 0; i != windows.length; ++i) {
+      final VirtualFile[] files = windows[i].getFiles();
+      for (final VirtualFile fileAt : files) {
+        if (fileAt != file) {
+          return fileAt;
+        }
+      }
+    }
+    return null;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
