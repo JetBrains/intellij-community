@@ -482,6 +482,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void end() {
     doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
+
+  protected static void copy() {
+    doAction(IdeActions.ACTION_EDITOR_COPY);
+  }
+
+  protected static void paste() {
+    doAction(IdeActions.ACTION_EDITOR_PASTE);
+  }
   
   private static void doAction(@NotNull String actionId) {
     EditorActionManager actionManager = EditorActionManager.getInstance();

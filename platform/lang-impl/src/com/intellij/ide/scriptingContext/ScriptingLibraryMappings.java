@@ -51,6 +51,32 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     myLibraryManager.reset();
   }
 
+  /**
+   * Creates an association between a virtual file and a library specified by name.
+   * @param file    The file to associate the library with.
+   * @param libName The library name.
+   */
+  public void associate(VirtualFile file, String libName) {
+    ScriptingLibraryTable.LibraryModel libraryModel = myLibraryManager.getLibraryByName(libName);
+    if (libraryModel == null) return;
+    ScriptingLibraryTable.LibraryModel container = getImmediateMapping(file);
+    if (container == null || !(container instanceof CompoundLibrary)) {
+      container = new CompoundLibrary();
+    }
+    if (!((CompoundLibrary)container).containsLibrary(libName)) {
+      ((CompoundLibrary)container).toggleLibrary(libraryModel);
+      setMapping(file, container);
+    }
+  }
+  
+  public boolean isAssociatedWith(VirtualFile file, String libName) {
+    ScriptingLibraryTable.LibraryModel libraryModel = myLibraryManager.getLibraryByName(libName);
+    if (libraryModel == null) return false;
+    ScriptingLibraryTable.LibraryModel container = getImmediateMapping(file);
+    if (container == null) return false;
+    return ((CompoundLibrary)container).containsLibrary(libName);
+  }
+
   @NotNull
   @Override
   protected String getValueAttribute() {
