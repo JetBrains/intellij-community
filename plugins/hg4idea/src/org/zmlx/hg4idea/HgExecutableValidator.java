@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.util.ExecutableValidator;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 
@@ -21,7 +22,7 @@ public class HgExecutableValidator extends ExecutableValidator {
   private final HgVcs myVcs;
 
   public HgExecutableValidator(Project project) {
-    super(project, HgVcs.NOTIFICATION_GROUP_ID, HgVcs.getInstance(project).getConfigurable());
+    super(project, HgVcs.NOTIFICATION_GROUP_ID);
     myVcs = HgVcs.getInstance(project);
     setMessagesAndTitles(HgVcsMessages.message("hg4idea.executable.notification.title"),
                          HgVcsMessages.message("hg4idea.executable.notification.description"),
@@ -35,6 +36,11 @@ public class HgExecutableValidator extends ExecutableValidator {
   @Override
   protected String getCurrentExecutable() {
     return myVcs.getHgExecutable();
+  }
+
+  @Override
+  protected Configurable getConfigurable(Project project) {
+    return myVcs == null ? null : myVcs.getConfigurable();
   }
 
   @Override

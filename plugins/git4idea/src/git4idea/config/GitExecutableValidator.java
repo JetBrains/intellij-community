@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecutableValidator;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -35,7 +36,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   private GitVcs myVcs;
 
   public GitExecutableValidator(Project project) {
-    super(project, GitVcs.NOTIFICATION_GROUP_ID, GitVcs.getInstance(project).getConfigurable());
+    super(project, GitVcs.NOTIFICATION_GROUP_ID);
     myVcs = GitVcs.getInstance(project);
     setMessagesAndTitles(GitBundle.message("git.executable.notification.title"),
                          GitBundle.message("git.executable.notification.description"),
@@ -49,6 +50,11 @@ public class GitExecutableValidator extends ExecutableValidator {
   @Override
   protected String getCurrentExecutable() {
     return myVcs.getAppSettings().getPathToGit();
+  }
+
+  @Override
+  protected Configurable getConfigurable(Project project) {
+    return myVcs == null ? null : myVcs.getConfigurable();
   }
 
   @Override
