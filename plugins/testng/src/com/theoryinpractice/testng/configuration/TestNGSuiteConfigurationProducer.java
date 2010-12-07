@@ -58,6 +58,7 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
     configuration.getPersistantData().SUITE_NAME = virtualFile.getPath();
     configuration.getPersistantData().TEST_OBJECT = TestType.SUITE.getType();
     configuration.restoreOriginalModule(originalModule);
+    configuration.setGeneratedName();
     settings.setName(configuration.getName());
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
     return settings;
