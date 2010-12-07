@@ -61,8 +61,8 @@ public class Splash extends JDialog {
       if (provider != null) {
         final String licensedToMessage = provider.getLicensedToMessage();
         final String licenseRestrictionsMessage = provider.getLicenseRestrictionsMessage();
-        g.drawString(licensedToMessage, x + 20, y + height - 52);
-        g.drawString(licenseRestrictionsMessage, x + 20, y + height - 32);
+        g.drawString(licensedToMessage, x + 21, y + height - 49);
+        g.drawString(licenseRestrictionsMessage, x + 21, y + height - 33);
       }
       config.restore();
       return true;
