@@ -127,6 +127,8 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
     Task.Backgroundable task = new Task.Backgroundable(project, "") {
       @Override
       public void run(ProgressIndicator indicator) {
+        if (isDisposed()) return;
+
         String currentBranchName = null;
         if (file != null) {
           AbstractVcs vcs = myVcsManager.getVcsFor(file);
