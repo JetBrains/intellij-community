@@ -146,21 +146,6 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
         }
       });
     }
-    else if (component instanceof JCheckBox) {
-      final ActionListener checkBoxListener = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          listener.stateChanged(new ChangeEvent(component));
-        }
-      };
-      ((JCheckBox)component).addActionListener(checkBoxListener);
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          ((JCheckBox)component).removeActionListener(checkBoxListener);
-        }
-      });
-    }
     else {
       throw new UnsupportedOperationException("editor control of type " + component.getClass().getName() + " is not supported");
     }
