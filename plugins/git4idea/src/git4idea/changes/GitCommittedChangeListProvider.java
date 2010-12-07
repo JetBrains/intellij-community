@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
@@ -39,6 +40,8 @@ import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +49,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * The provider for committed change lists
@@ -234,37 +234,27 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   @Override
   public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
     final FilePathImpl filePath = new FilePathImpl(file);
-    final GitRepositoryLocation l = (GitRepositoryLocation) getLocationFor(filePath);
-    final VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
-    if (root == null) {
-      throw new VcsException("The repository does not exists anymore: " + l.getRoot());
-    }
 
-    final CommittedChangeList[] result = new CommittedChangeList[1];
-    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
-      public void consume(final GitSimpleHandler h) {
-        h.addParameters("-n1");
-        h.addParameters("-M");
-        h.addParameters(number.asString());
-      }
-    }, new Consumer<CommittedChangeList>() {
-      @Override
-      public void consume(final CommittedChangeList committedChangeList) {
-        result[0] = committedChangeList;
-      }
-    }, false);
-    
-    final Collection<Change> changes = result[0].getChanges();
+    final List<GitCommit> gitCommits =
+      GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));
+    if (gitCommits == null || gitCommits.size() != 1) return null;
+    final GitCommit gitCommit = gitCommits.get(0);
+    final CommittedChangeList commit = new CommittedChangeListImpl(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
+                                                                   gitCommit.getDescription(), gitCommit.getCommitter(),
+                                                                   GitChangeUtils.longForSHAHash(gitCommit.getHash().getValue()),
+                                                                   gitCommit.getDate(), gitCommit.getChanges());
+
+    final Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {
-      return new Pair<CommittedChangeList, FilePath>(result[0], changes.iterator().next().getAfterRevision().getFile());
+      return new Pair<CommittedChangeList, FilePath>(commit, changes.iterator().next().getAfterRevision().getFile());
     }
     for (Change change : changes) {
       if (change.getAfterRevision() != null && filePath.getIOFile().equals(change.getAfterRevision().getFile().getIOFile())) {
-        return new Pair<CommittedChangeList, FilePath>(result[0], filePath);
+        return new Pair<CommittedChangeList, FilePath>(commit, filePath);
       }
     }
-    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, root, number.asString() + "^..");
-    return new Pair<CommittedChangeList, FilePath>(result[0], ((GitFileRevision) history.get(history.size() - 1)).getPath());
+    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, null, number.asString() + "^..");
+    return new Pair<CommittedChangeList, FilePath>(commit, ((GitFileRevision) history.get(history.size() - 1)).getPath());
   }
 
   public int getFormatVersion() {
