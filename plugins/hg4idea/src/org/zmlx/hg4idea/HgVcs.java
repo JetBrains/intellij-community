@@ -25,7 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryChangeListener;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -44,7 +48,12 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.provider.*;
+import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
+import org.zmlx.hg4idea.provider.HgChangeProvider;
+import org.zmlx.hg4idea.provider.HgDiffProvider;
+import org.zmlx.hg4idea.provider.HgHistoryProvider;
+import org.zmlx.hg4idea.provider.HgMergeProvider;
+import org.zmlx.hg4idea.provider.HgRollbackEnvironment;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
@@ -52,7 +61,7 @@ import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
 import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -104,6 +113,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private RepositoryChangeListener myDirStateChangeListener;
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
+  private final Object myExecutableValidatorLock = new Object();
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
@@ -278,9 +288,8 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public void activate() {
     // validate hg executable on start
-    myExecutableValidator = new HgExecutableValidator(myProject);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
+      getExecutableValidator().checkExecutableAndShowDialogIfNeeded();
     }
     started = true;
 
@@ -399,7 +408,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
 
-  public synchronized HgExecutableValidator getExecutableValidator() {
-    return myExecutableValidator;
+  public HgExecutableValidator getExecutableValidator() {
+    synchronized (myExecutableValidatorLock) {
+      if (myExecutableValidator == null) {
+        myExecutableValidator = new HgExecutableValidator(myProject);
+      }
+      return myExecutableValidator;
+    }
   }
 }
