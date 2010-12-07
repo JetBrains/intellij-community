@@ -938,17 +938,32 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    return getSplitters().getOpenFiles();
+    HashSet<VirtualFile> openFiles = new HashSet<VirtualFile>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      openFiles.addAll(Arrays.asList(each.getOpenFiles()));
+    }
+
+    return openFiles.toArray(new VirtualFile[openFiles.size()]);
   }
 
   @NotNull
   public VirtualFile[] getSelectedFiles() {
-    return getSplitters().getSelectedFiles();
+    HashSet<VirtualFile> selectedFiles = new HashSet<VirtualFile>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
+    }
+
+    return selectedFiles.toArray(new VirtualFile[selectedFiles.size()]);
   }
 
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    return getSplitters().getSelectedEditors();
+    HashSet<FileEditor> selectedEditors = new HashSet<FileEditor>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      selectedEditors.addAll(Arrays.asList(each.getSelectedEditors()));
+    }
+
+    return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);
   }
 
   public EditorsSplitters getSplitters() {
