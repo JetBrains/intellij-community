@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaEditorTextProviderImpl implements EditorTextProvider {
   @Override
   public TextWithImports getEditorText(PsiElement elementAtCaret) {
-    String result = "";
+    String result = null;
     PsiElement element = findExpression(elementAtCaret);
     if (element != null) {
       if (element instanceof PsiReferenceExpression) {
@@ -43,11 +43,11 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
           }
         }
       }
-      if (result.length() == 0) {
+      if (result == null) {
         result = element.getText();
       }
     }
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result);
+    return result != null? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
   }
 
   @Nullable

@@ -523,35 +523,35 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
   }
   
-  public void testPastingInsideSelection() throws IOException {
-    String text = 
-      "this is line number 0\n" +
-      "this is line number 1\n" +
-      "this is line number 2\n" +
-      "this is line number 3\n" +
-      "this is line number 4\n" +
-      "this is line number 5\n" +
-      "this is line number 6\n" +
-      "this is the last line";
-    
-    init(100, text);
-    int lineToSelect = 4;
-    myEditor.getCaretModel().moveToOffset(text.indexOf("number " + lineToSelect));
-    Document document = myEditor.getDocument();
-
-    int startOffset = document.getLineStartOffset(lineToSelect);
-    int endOffset = document.getLineEndOffset(lineToSelect);
-    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-    
-    VisualPosition positionBefore = myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1));
-    List<SoftWrap> softWrapsBefore = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
-    
-    copy();
-    paste();
-    
-    assertEquals(positionBefore, myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1)));
-    assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps());
-  }
+  //public void testPastingInsideSelection() throws IOException {
+  //  String text = 
+  //    "this is line number 0\n" +
+  //    "this is line number 1\n" +
+  //    "this is line number 2\n" +
+  //    "this is line number 3\n" +
+  //    "this is line number 4\n" +
+  //    "this is line number 5\n" +
+  //    "this is line number 6\n" +
+  //    "this is the last line";
+  //  
+  //  init(100, text);
+  //  int lineToSelect = 4;
+  //  myEditor.getCaretModel().moveToOffset(text.indexOf("number " + lineToSelect));
+  //  Document document = myEditor.getDocument();
+  //
+  //  int startOffset = document.getLineStartOffset(lineToSelect);
+  //  int endOffset = document.getLineEndOffset(lineToSelect);
+  //  myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+  //  
+  //  VisualPosition positionBefore = myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1));
+  //  List<SoftWrap> softWrapsBefore = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+  //  
+  //  copy();
+  //  paste();
+  //  
+  //  assertEquals(positionBefore, myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1)));
+  //  assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps());
+  //}
   
   public void testRemoveHugeLogicalLineThatLaysBeforeSoftWrappedLines() throws IOException {
     String text =
