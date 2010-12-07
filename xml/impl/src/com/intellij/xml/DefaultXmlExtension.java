@@ -227,7 +227,7 @@ public class DefaultXmlExtension extends XmlExtension {
         }
       }
     }
-    CodeStyleManager.getInstance(project).reformat(rootTag);
+    XmlUtil.reformatTagStart(rootTag);
     
     if (namespace.length() == 0) {
       final XmlAttribute xmlAttribute = rootTag.getAttribute(qname);
