@@ -24,6 +24,7 @@ import gnu.trove.TIntProcedure;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -520,6 +521,67 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(lastSymbolOffset, caretModel.getOffset());
     assertEquals(myEditor.offsetToVisualPosition(lastSymbolOffset), caretModel.getVisualPosition());
     assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
+  }
+  
+  public void testPastingInsideSelection() throws IOException {
+    String text = 
+      "this is line number 0\n" +
+      "this is line number 1\n" +
+      "this is line number 2\n" +
+      "this is line number 3\n" +
+      "this is line number 4\n" +
+      "this is line number 5\n" +
+      "this is line number 6\n" +
+      "this is the last line";
+    
+    init(100, text);
+    int lineToSelect = 4;
+    myEditor.getCaretModel().moveToOffset(text.indexOf("number " + lineToSelect));
+    Document document = myEditor.getDocument();
+
+    int startOffset = document.getLineStartOffset(lineToSelect);
+    int endOffset = document.getLineEndOffset(lineToSelect);
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    
+    VisualPosition positionBefore = myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1));
+    List<SoftWrap> softWrapsBefore = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    
+    copy();
+    paste();
+    
+    assertEquals(positionBefore, myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1)));
+    assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps());
+  }
+  
+  public void testRemoveHugeLogicalLineThatLaysBeforeSoftWrappedLines() throws IOException {
+    String text =
+      "short line\n" +
+      "this is a long line that is expected to be soft wrapped into more than one or even two visual lines\n" +
+      "1. just a line that is long enough to be soft wrapped\n" +
+      "2. just a line that is long enough to be soft wrapped\n" +
+      "3. just a line that is long enough to be soft wrapped\n" +
+      "4. just a line that is long enough to be soft wrapped";
+    
+    init(100, text);
+    Document document = myEditor.getDocument();
+    int start = document.getLineStartOffset(1);
+    int end = document.getLineEndOffset(1) + 1;
+    int visualLinesToRemove = getSoftWrapModel().getSoftWrapsForLine(1).size() + 1;
+    
+    List<VisualPosition> positionsBefore = new ArrayList<VisualPosition>();
+    for (int i = end; i < text.length(); i++) {
+      positionsBefore.add(myEditor.offsetToVisualPosition(i));
+    }
+    Collections.reverse(positionsBefore);
+
+    myEditor.getSelectionModel().setSelection(start, end);
+    delete();
+    
+    // Check that all remembered positions are just shifted to expected number of visual lines.
+    for (int i = start; i < document.getTextLength(); i++) {
+      VisualPosition position = positionsBefore.remove(positionsBefore.size() - 1);
+      assertEquals(new VisualPosition(position.line - visualLinesToRemove, position.column), myEditor.offsetToVisualPosition(i));
+    }
   }
   
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
