@@ -32,13 +32,47 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.Animator;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.PositionTracker;
+import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.Tree;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JTree;
+import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.AWTEvent;
+import java.awt.AlphaComposite;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -1198,5 +1232,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   @Override
   public boolean wasFadedOut() {
     return myFadedOut;
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return myDisposed;
   }
 }
