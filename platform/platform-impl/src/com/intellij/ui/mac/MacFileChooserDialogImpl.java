@@ -51,6 +51,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
   private static final Callback SHOULD_SHOW_FILENAME_CALLBACK = new Callback() {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
+        if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
         return virtualFile != null && (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
@@ -59,6 +60,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
   private static final Callback IS_VALID_FILENAME_CALLBACK = new Callback() {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
+        if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
         return virtualFile != null && (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
@@ -115,7 +117,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       Object directory = null;
       Object file = null;
-      final String toSelectPath = toSelect.intValue() == 0 ? null : Foundation.toStringViaUTF8(toSelect);
+      final String toSelectPath = toSelect == null || toSelect.intValue() == 0 ? null : Foundation.toStringViaUTF8(toSelect);
       final VirtualFile toSelectFile = toSelectPath == null ? null : LocalFileSystem.getInstance().findFileByPath(toSelectPath);
       if (toSelectFile != null) {
        if (toSelectFile.isDirectory()) {
@@ -148,11 +150,13 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
             if (0 == window.intValue()) break;
 
             final ID windowTitle = invoke(window, "title");
-            final String titleString = Foundation.toStringViaUTF8(windowTitle);
-            if (titleString.equals(activeWindowTitle)) {
-              if (1 == invoke(window, "isVisible").intValue()) {
-                focusedWindow = window;
-                break;
+            if (windowTitle != null && windowTitle.intValue() != 0) {
+              final String titleString = Foundation.toStringViaUTF8(windowTitle);
+              if (titleString.equals(activeWindowTitle)) {
+                if (1 == invoke(window, "isVisible").intValue()) {
+                  focusedWindow = window;
+                  break;
+                }
               }
             }
           }
@@ -186,7 +190,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       while (true) {
         final ID filename = invoke(enumerator, "nextObject");
-        if (0 == filename.intValue()) break;
+        if (filename == null || 0 == filename.intValue()) break;
 
         String s = Foundation.toStringViaUTF8(filename);
         if (s != null) {

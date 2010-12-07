@@ -18,6 +18,7 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides text in the editor for Evaluate expression action
@@ -26,5 +27,6 @@ import com.intellij.psi.PsiElement;
 public interface EditorTextProvider {
   LanguageExtension<EditorTextProvider> EP = new LanguageExtension<EditorTextProvider>("com.intellij.debuggerEditorTextProvider");
 
+  @Nullable
   TextWithImports getEditorText(PsiElement elementAtCaret);
 }
