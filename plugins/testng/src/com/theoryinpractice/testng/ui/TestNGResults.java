@@ -166,11 +166,16 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       sb.append("Running: ");
     }
     else {
+      if (failed.size() > 0) sb.append("Failed: ").append(failed.size()).append("   ");
       sb.append("Done: ");
     }
     sb.append(count).append(" of ").append(total);
-    if (failed.size() > 0) sb.append("   Failed: ").append(failed.size()).append(' ');
-    if (end != 0) {
+    if (end == 0) {
+      if (failed.size() > 0) {
+        sb.append("   Failed: ").append(failed.size());
+      }
+    }
+    else {
       final long time = end - start;
       sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s").append(")  ");
     }
