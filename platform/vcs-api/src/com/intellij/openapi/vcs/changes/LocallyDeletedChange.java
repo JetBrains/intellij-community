@@ -64,4 +64,8 @@ public class LocallyDeletedChange {
   public String getDescription() {
     return null;
   }
+
+  public String toString() {
+    return myPath.getPath();
+  }
 }
