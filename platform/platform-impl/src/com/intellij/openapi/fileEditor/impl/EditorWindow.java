@@ -130,9 +130,11 @@ public class EditorWindow {
 
   public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
-    editorManager.runChange(new Runnable() {
-      public void run() {
+    editorManager.runChange(new FileEditorManagerChange() {
+      public void run(EditorsSplitters splitters) {
         try {
+          if (myOwner != splitters) return;
+
           final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
           if (editors.isEmpty()) return;
           final EditorWithProviderComposite editor = findFileComposite(file);
