@@ -115,14 +115,21 @@ def zipSources() {
 def buildDebuggerEgg(paths, buildName) {
   def eggDir = "$paths.sandbox/pycharm-debug"
   def egg = "$paths.sandbox/pycharm-debug.egg"
+
   project.stage("building $egg")
 
   ant.delete(dir: eggDir)
   ant.mkdir(dir: eggDir)
-  ant.copy(todir: eggDir) {
+  ant.mkdir(dir:"$eggDir/pydev")
+  ant.copy(todir: "$eggDir/pydev") {
     fileset(dir: "$home/python/helpers/pydev")
+  }
+  ant.mkdir(dir:"$eggDir/EGG-INFO")
+
+  ant.copy(todir: "$eggDir/EGG-INFO") {
     fileset(dir: "$home/python/resources/debugger-egg/EGG-INFO")
   }
+
   ant.replace(file: "$eggDir/EGG-INFO/PKG-INFO") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
