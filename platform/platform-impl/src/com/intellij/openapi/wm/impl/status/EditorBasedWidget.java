@@ -38,6 +38,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   private Project myProject;
 
   protected MessageBusConnection myConnection;
+  private boolean myDisposed;
 
   protected EditorBasedWidget(Project project) {
     myProject = project;
@@ -106,11 +107,17 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
 
   @Override
   public void dispose() {
+    myDisposed = true;
+
     myStatusBar = null;
     if (myConnection != null) {
       myConnection.disconnect();
       myConnection = null;
     }
     myProject = null;
+  }
+
+  protected final boolean isDisposed() {
+    return myDisposed;
   }
 }

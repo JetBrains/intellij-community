@@ -635,11 +635,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         }
         ThreeComponentsSplitter.this.doLayout();
       } else if (MouseEvent.MOUSE_MOVED == e.getID()) {
-        if (isInside(e.getPoint())) {
-          myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
-          e.consume();
-        } else {
-          myGlassPane.setCursor(null, myListener);
+        if (myGlassPane != null) {
+          if (isInside(e.getPoint())) {
+            myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
+            e.consume();
+          } else {
+            myGlassPane.setCursor(null, myListener);
+          }
         }
       }
 

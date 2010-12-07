@@ -46,6 +46,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
@@ -168,25 +169,30 @@ public class MavenProjectsManagerWatcher {
 
     File parentFile = settingsFile.getParentFile();
     if (parentFile != null) {
-      myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(getNormalizedPath(parentFile), false));
+      String path = getNormalizedPath(parentFile);
+      if (path != null) {
+        myWatchedRoots.add(LocalFileSystem.getInstance().addRootToWatch(path, false));
+      }
     }
 
-    String url = VfsUtil.pathToUrl(getNormalizedPath(settingsFile));
-    mySettingsFilesPointers
-      .add(VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
-        public void beforeValidityChanged(VirtualFilePointer[] pointers) {
-        }
+    String path = getNormalizedPath(settingsFile);
+    if (path != null) {
+      String url = VfsUtil.pathToUrl(path);
+      mySettingsFilesPointers.add(
+        VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
+          public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+          }
 
-        public void validityChanged(VirtualFilePointer[] pointers) {
-        }
-      }));
+          public void validityChanged(VirtualFilePointer[] pointers) {
+          }
+        }));
+    }
   }
 
+  @Nullable
   private static String getNormalizedPath(@NotNull File settingsFile) {
     String canonized = PathUtil.getCanonicalPath(settingsFile.getAbsolutePath());
-    // todo hook for IDEADEV-40110
-    assert canonized != null : "cannot normalize path for: " + settingsFile;
-    return FileUtil.toSystemIndependentName(canonized);
+    return canonized == null ? null : FileUtil.toSystemIndependentName(canonized);
   }
 
   public synchronized void stop() {

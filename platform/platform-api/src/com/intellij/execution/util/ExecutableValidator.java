@@ -43,7 +43,6 @@ public abstract class ExecutableValidator {
   private Notification myNotification;
   protected final Project myProject;
   private final String myNotificationGroupId;
-  private Configurable myConfigurable;
 
   private String myNotificationErrorTitle = "Executable not valid";
   private String myNotificationErrorDescription = "You haven't configured a valid executable. <a href=''>Fix</a>";
@@ -53,10 +52,9 @@ public abstract class ExecutableValidator {
   private String myFileChooserTitle = "Executable";
   private String myFileChooserDescription = "Specify the full path to the executable";
 
-  public ExecutableValidator(Project project, String notificationGroupId, @Nullable Configurable settingsConfigurable) {
+  public ExecutableValidator(Project project, String notificationGroupId) {
     myProject = project;
     myNotificationGroupId = notificationGroupId;
-    myConfigurable = settingsConfigurable;
   }
 
   /**
@@ -92,6 +90,16 @@ public abstract class ExecutableValidator {
    * @param executable
    */
   protected void saveCurrentExecutable(String executable) {
+  }
+
+  /**
+   * Returns the configurable page for the vcs containing settings for executable.
+   * This configurable will be opened if user presses "Fix" on the notification about invalid executable.
+   * May return null - in this case the settings dialog won't be displayed.
+   */
+  @Nullable
+  protected Configurable getConfigurable(Project project) {
+    return null;
   }
 
   /**
@@ -160,7 +168,7 @@ public abstract class ExecutableValidator {
           myNotification.expire();
         }
         myNotification = newNotification;
-        Notifications.Bus.notify(myNotification, myProject);
+        Notifications.Bus.notify(myNotification, myProject.isDefault() ? null : myProject);
       }
     });
   }
@@ -173,8 +181,9 @@ public abstract class ExecutableValidator {
    * Parameters are the same as in {@link com.intellij.notification.NotificationListener#hyperlinkUpdate(com.intellij.notification.Notification, javax.swing.event.HyperlinkEvent)}
    */
   protected void notificationHyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-    if (myConfigurable != null) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myConfigurable);
+    Configurable configurable = getConfigurable(myProject);
+    if (configurable != null) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable);
       if (isExecutableValid(getCurrentExecutable())) {
         notification.expire();
       }

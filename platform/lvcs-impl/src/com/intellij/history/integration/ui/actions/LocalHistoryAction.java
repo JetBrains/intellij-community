@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
@@ -39,7 +40,10 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     }
     p.setVisible(true);
     p.setText(getText(e), true);
-    p.setEnabled(isEnabled(getVcs(), getGateway(), getFile(e), e));
+
+    LocalHistoryFacade vcs = getVcs();
+    IdeaGateway gateway = getGateway();
+    p.setEnabled(vcs != null && gateway != null && isEnabled(vcs, gateway, getFile(e), e));
   }
 
   protected String getText(AnActionEvent e) {
@@ -58,6 +62,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     return LocalHistoryImpl.getInstanceImpl().getGateway();
   }
 
+  @Nullable
   protected VirtualFile getFile(AnActionEvent e) {
     VirtualFile[] ff = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (ff == null || ff.length == 0) return null;
