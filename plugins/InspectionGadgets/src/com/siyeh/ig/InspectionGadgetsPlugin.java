@@ -1028,6 +1028,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ConfusingFloatingPointLiteralInspection.class);
         m_inspectionClasses.add(ConstantMathCallInspection.class);
         m_inspectionClasses.add(DivideByZeroInspection.class);
+        m_inspectionClasses.add(DoubleLiteralMayBeFloatLiteralInspection.class);
         m_inspectionClasses.add(FloatingPointEqualityInspection.class);
         m_inspectionClasses.add(ImplicitNumericConversionInspection.class);
         m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
