@@ -48,6 +48,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   private EditorPosition myInitialPosition;
   private CacheEntry myTargetEntry;
   private T myEagerMatch;
+  private int myLastEntryOffset;
 
   AbstractMappingStrategy(@NotNull Editor editor,
                           @NotNull SoftWrapsStorage storage,
@@ -93,6 +94,9 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     myEagerMatch = null;
     myTargetEntry = null;
     myInitialPosition = null;
+    if (!myCache.isEmpty()) {
+      myLastEntryOffset = myCache.get(myCache.size() - 1).endOffset;
+    }
   }
   
   protected void setInitialPosition(@NotNull EditorPosition position) {
@@ -118,13 +122,17 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
 
   @Override
   public T advance(EditorPosition position, int offset) {
+    Document document = myEditor.getDocument();
+    if (offset >= myLastEntryOffset || offset >= document.getTextLength()) {
+      return build(position);
+    }
+    
     T result = buildIfExceeds(position, offset);
     if (result != null) {
       return result;
     }
 
     // Update context state and continue processing.
-    Document document = myEditor.getDocument();
     int linesDiff = document.getLineNumber(offset) - position.logicalLine;
     position.logicalLine += linesDiff;
     position.visualLine += linesDiff;

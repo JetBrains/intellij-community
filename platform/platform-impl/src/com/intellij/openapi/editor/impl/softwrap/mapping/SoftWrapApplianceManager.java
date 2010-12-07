@@ -137,7 +137,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     notifyListenersOnCacheUpdateStart(event);
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxxxxxx Listeners notification on start is complete in " + (System.currentTimeMillis() - start) + " ms");
     
-    myStorage.removeInRange(event.getOldStartOffset(), event.getOldEndOffset());
     boolean normalCompletion = true;
     try {
       //start = System.currentTimeMillis();
