@@ -362,6 +362,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
     myBeforeChangeState.updateByDocumentOffsets(event.getOldStartOffset(), event.getOldEndOffset(), event.getOldLogicalLinesDiff());
+    myStorage.removeInRange(event.getOldStartOffset(), event.getOldEndOffset());
+
+    // Advance offsets of all soft wraps that lay beyond the changed document region.
+    advanceSoftWrapOffsets(event.getExactOffsetsDiff(), event.getOldEndOffset());
+    
     if (!myBeforeChangeState.cacheShouldBeUpdated) {
       if (DEBUG_SOFT_WRAP_PROCESSING) {
         log(String.format("xxxxxxxxxxxx CachingSoftWrapDataMapper.onRecalculationStart(): performing eager return"));
@@ -437,7 +442,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
       myAfterChangeState.foldedLines = 0;
       myCache.addAll(myNotAffectedByUpdateTailCacheEntries);
     }
-    applyStateChange(exactOffsetsDiff, event.getNewEndOffset());
+    applyStateChange(exactOffsetsDiff);
     
     myAffectedByUpdateCacheEntries.clear();
     myNotAffectedByUpdateTailCacheEntries.clear();
@@ -497,6 +502,32 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
   }
 
   /**
+   * Applies given offsets diff to all soft wraps that lay after the given offset
+   * 
+   * @param offsetsDiff   offset diff to apply to the target soft wraps
+   * @param offset        offset to use for filtering soft wraps to advance. All soft wraps which offsets are strictly greater
+   *                      than the given one should be advanced
+   */
+  private void advanceSoftWrapOffsets(int offsetsDiff, int offset) {
+    if (offsetsDiff == 0) {
+      return;
+    }
+
+    int softWrapIndex = myStorage.getSoftWrapIndex(offset);
+    if (softWrapIndex >= 0) {
+      softWrapIndex++; // We want to process only soft wraps which offsets strictly more than the given one.
+    }
+    else {
+      softWrapIndex = -softWrapIndex - 1;
+    }
+
+    List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
+    for (int i = softWrapIndex; i < softWraps.size(); i++) {
+      softWraps.get(i).advance(offsetsDiff);
+    }
+  }
+
+  /**
    * Is assumed to be called for updating {@link #myCache document dimensions cache} entries that lay after document position identified
    * by {@link #myAfterChangeState} in order to apply to them diff between {@link #myBeforeChangeState} and {@link #myAfterChangeState}.
    * <p/>
@@ -511,20 +542,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
    * </ol>
    </pre>
    */
-  private void applyStateChange(int offsetsDiff, int endOffset) {
-    // Update offsets for soft wraps that lay beyond the changed region.
-    if (offsetsDiff != 0 && endOffset < myEditor.getDocument().getTextLength()) {
-      int softWrapIndex = myStorage.getSoftWrapIndex(endOffset);
-      if (softWrapIndex < 0) {
-        softWrapIndex = -softWrapIndex - 1;
-      }
-
-      List<SoftWrapImpl> softWraps = myStorage.getSoftWraps();
-      for (int i = softWrapIndex; i < softWraps.size(); i++) {
-        softWraps.get(i).advance(offsetsDiff);
-      }
-    }
-    
+  private void applyStateChange(int offsetsDiff) {
     if (myNotAffectedByUpdateTailCacheEntries.isEmpty()) {
       return;
     }
