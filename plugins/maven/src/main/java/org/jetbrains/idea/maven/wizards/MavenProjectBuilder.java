@@ -54,11 +54,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     private List<String> mySelectedProfiles = new ArrayList<String>();
 
     private MavenProjectsTree myMavenProjectTree;
+    private List<MavenProject> mySelectedProjects;
 
     private boolean myOpenModulesConfigurator;
   }
 
-  private Parameters myParamaters;
+  private Parameters myParameters;
 
   public String getName() {
     return ProjectBundle.message("maven.name");
@@ -69,7 +70,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public void cleanup() {
-    myParamaters = null;
+    myParameters = null;
     super.cleanup();
   }
 
@@ -79,10 +80,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   private Parameters getParameters() {
-    if (myParamaters == null) {
-      myParamaters = new Parameters();
+    if (myParameters == null) {
+      myParameters = new Parameters();
     }
-    return myParamaters;
+    return myParameters;
   }
 
   @Override
@@ -101,8 +102,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     settings.importingSettings = getImportingSettings();
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-    List<VirtualFile> files = getParameters().myMavenProjectTree.getRootProjectsFiles();
-    manager.addManagedFilesWithProfiles(files, getSelectedProfiles());
+    manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), getSelectedProfiles());
     manager.waitForReadingCompletion();
 
     boolean isFromUI = model != null;
@@ -196,7 +196,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     MavenProjectsTree tree = new MavenProjectsTree();
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
     tree.updateAll(false, getGeneralSettings(), process);
+
     getParameters().myMavenProjectTree = tree;
+    getParameters().mySelectedProjects = tree.getRootProjects();
   }
 
   public List<MavenProject> getList() {
@@ -204,10 +206,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   public void setList(List<MavenProject> projects) {
+    getParameters().mySelectedProjects = projects;
   }
 
-  public boolean isMarked(final MavenProject element) {
-    return true;
+  public boolean isMarked(MavenProject element) {
+    return getParameters().mySelectedProjects.contains(element);
   }
 
   public boolean isOpenProjectSettingsAfter() {
