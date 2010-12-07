@@ -534,6 +534,7 @@ public class FileUtil {
       return true;
     }
     catch (IOException e) {
+      LOG.info(e);
       return false;
     }
   }

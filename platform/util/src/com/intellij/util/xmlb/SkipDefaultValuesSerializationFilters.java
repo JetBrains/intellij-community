@@ -27,6 +27,9 @@ public class SkipDefaultValuesSerializationFilters implements SerializationFilte
   private final Map<Class, Object> myDefaultBeans = new HashMap<Class, Object>();
 
   public boolean accepts(final Accessor accessor, final Object bean) {
+    if (bean == null) {
+      return true;
+    }
     Object defaultBean = getDefaultBean(bean);
 
     final Object defValue = accessor.read(defaultBean);

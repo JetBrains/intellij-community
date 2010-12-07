@@ -2,7 +2,9 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,11 +56,15 @@ public class GithubCheckoutProvider implements CheckoutProvider {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword());
+          return GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword(), false);
         }
       });
     }
     catch (GithubUtil.CancelledException e) {
+      return;
+    }
+    if (availableRepos.isEmpty()){
+      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.", "Cannot clone");
       return;
     }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
@@ -68,11 +74,20 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       }
     });
     final GithubCloneProjectDialog checkoutDialog = new GithubCloneProjectDialog(project, availableRepos);
-    // Change default directory to ~/work if exists
-    final File work = new File(System.getProperty("user.home"), "work");
-    if (work.exists() && work.isDirectory()){
-      checkoutDialog.setSelectedPath(work.getPath());
+    // Configure folder to select project to
+    String clonePath = settings.getClonePath();
+    final String homePath = System.getProperty("user.home");
+    if (StringUtil.isEmpty(clonePath)) {
+      clonePath = homePath;
     }
+    else {
+      final File file = new File(clonePath);
+      if (!file.exists() || !file.isDirectory()){
+        clonePath = homePath;
+      }
+    }
+    settings.setClonePath(clonePath);
+    checkoutDialog.setSelectedPath(clonePath);
     checkoutDialog.show();
     if (!checkoutDialog.isOK()) {
       return;

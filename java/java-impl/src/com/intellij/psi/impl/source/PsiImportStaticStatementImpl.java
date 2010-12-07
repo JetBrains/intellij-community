@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   };
 
   public PsiImportStaticStatementImpl(final PsiImportStatementStub stub) {
-    super(stub);
+    super(stub, JavaStubElementTypes.IMPORT_STATIC_STATEMENT);
   }
 
   public PsiImportStaticStatementImpl(final ASTNode node) {

@@ -18,6 +18,7 @@ package com.intellij.lang.ant.dom;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.validation.AntInspection;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,7 +99,7 @@ public class AntResolveInspection extends AntInspection {
       if (processed != null && processed.contains(ref)) {
         continue;
       }
-      if (ref.resolve() == null) {
+      if (!isResolvable(ref)) {
         holder.createProblem(domElement, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, antDomRef.getUnresolvedMessagePattern(), ref.getRangeInElement() /*todo add quickfixes*/);
         if (ref instanceof AntDomFileReference) {
           if (processed == null) {
@@ -115,5 +116,13 @@ public class AntResolveInspection extends AntInspection {
     }
   }
 
-
+  private static boolean isResolvable(PsiReference ref) {
+    if (ref.resolve() != null) {
+      return true;
+    }
+    if (ref instanceof PsiPolyVariantReference) {
+      return ((PsiPolyVariantReference)ref).multiResolve(false).length > 0;
+    }
+    return false;
+  }
 }

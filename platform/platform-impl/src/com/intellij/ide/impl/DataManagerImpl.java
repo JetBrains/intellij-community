@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.StringSetSpinAllocator;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.WeakValueHashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +299,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final WeakReference<Component> myRef;
-    private WeakHashMap<Key, Object> mySavedData;
+    private WeakValueHashMap<Key, Object> mySavedData;
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -375,9 +375,9 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       getOrCreateMap().put(key, value);
     }
 
-    private WeakHashMap<Key, Object> getOrCreateMap() {
+    private WeakValueHashMap<Key, Object> getOrCreateMap() {
       if (mySavedData == null) {
-        mySavedData = new WeakHashMap<Key, Object>();
+        mySavedData = new WeakValueHashMap<Key, Object>();
       }
       return mySavedData;
     }

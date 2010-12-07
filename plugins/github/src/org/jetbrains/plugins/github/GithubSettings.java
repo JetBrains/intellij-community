@@ -25,21 +25,24 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String PASSWORD = "Password";
+  private static final String CLONE_PATH = "ClonePath";
 
   private String myLogin;
   private String myPassword;
+  private String myClonePath;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
 
   public Element getState() {
-    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword)) {
+    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && StringUtil.isEmpty(myClonePath)) {
       return null;
     }
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, myLogin);
     element.setAttribute(PASSWORD, getEncodedPassword());
+    element.setAttribute(CLONE_PATH, myClonePath);
     return element;
   }
 
@@ -60,6 +63,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setEncodedPassword(element.getAttributeValue(PASSWORD));
+      setClonePath(element.getAttributeValue(CLONE_PATH));
     }
     catch (Exception e) {
       // ignore
@@ -80,5 +84,13 @@ public class GithubSettings implements PersistentStateComponent<Element> {
 
   public void setPassword(final String password) {
     myPassword = password;
+  }
+
+  public String getClonePath() {
+    return myClonePath;
+  }
+
+  public void setClonePath(String clonePath) {
+    myClonePath = clonePath;
   }
 }

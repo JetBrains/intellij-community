@@ -28,7 +28,7 @@ public class PsiChangeTrackerTest extends IdeaTestCase {
     final VirtualFile testRoot = getTestRoot();
     final VirtualFile child = testRoot.findChild("PsiChangesTest.java");
     assert child != null : "Can't find PsiChangesTest.java";
-    final PsiFile original = this.getPsiManager().findFile(child);
+    final PsiFile original = getPsiManager().findFile(child);
     assert original != null : "Can't create PsiFile from VirtualFile " + child.getName();
     myOriginalFile = original;
 
