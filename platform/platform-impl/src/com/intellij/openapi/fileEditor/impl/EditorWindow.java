@@ -132,11 +132,9 @@ public class EditorWindow {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
       public void run(EditorsSplitters splitters) {
+        final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
+        if (editors.isEmpty()) return;
         try {
-          if (myOwner != splitters) return;
-
-          final List<EditorWithProviderComposite> editors = myOwner.findEditorComposites(file);
-          if (editors.isEmpty()) return;
           final EditorWithProviderComposite editor = findFileComposite(file);
 
           final FileEditorManagerListener.Before beforePublisher =
