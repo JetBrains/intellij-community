@@ -103,6 +103,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
                                                               "\nOrigin 2: " + path2, null, -1, -1);
             return false;
           }
+          relativePath2GenItem.put(relativePath, new MyItem(module, fileOrDir, relativePath));
         }
         return true;
       }

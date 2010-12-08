@@ -35,7 +35,7 @@ public class DifferenceFilter<T> implements DefaultJDOMExternalizer.JDOMFilter {
       Object parentValue = field.get(myParentSettings);
       return !Comparing.equal(thisValue, parentValue);
     }
-    catch (IllegalAccessException e) {
+    catch (Throwable e) {
       return true;
     }
   }
