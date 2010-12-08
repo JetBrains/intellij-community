@@ -24,13 +24,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.LicenseeInfoProvider;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
@@ -182,7 +182,7 @@ public class AboutAction extends AnAction implements DumbAware {
       setOpaque(false);
       //col = new Color(0xfa, 0xfa, 0xfa, 200);
       col = Color.white;
-      linkCol = Color.blue;
+      linkCol = ApplicationInfoImpl.getInstanceEx().getLogoTextColor();
       setBackground(col);
       ApplicationInfoEx ideInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       Calendar cal = ideInfo.getBuildDate();
@@ -249,8 +249,7 @@ public class AboutAction extends AnAction implements DumbAware {
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
       Graphics2D g2 = (Graphics2D)g;
-      GraphicsConfig config = new GraphicsConfig(g2);
-      config.setAntialiasing(true);
+      UIUtil.applyRenderingHints(g);
 
       Font labelFont = UIUtil.getLabelFont();
       for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
@@ -269,8 +268,6 @@ public class AboutAction extends AnAction implements DumbAware {
         catch (TextRenderer.OverflowException ignore) {
         }
       }
-
-      config.restore();
     }
 
     public class TextRenderer {
