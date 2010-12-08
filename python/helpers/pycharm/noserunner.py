@@ -1,4 +1,4 @@
-import sys
+import sys, traceback
 from tcmessages import TeamcityServiceMessages
 from utrunner import debug
 from tcunittest import strclass
@@ -8,7 +8,7 @@ try:
   from nose.core import TestProgram
   from nose.plugins.base import Plugin
 except:
-  print "Please, install nosetests"
+  raise NameError("Please, install nosetests")
 
 class TeamcityPlugin(Plugin):
   enabled = True
@@ -62,13 +62,17 @@ class TeamcityPlugin(Plugin):
     self.messages.testFinished(self.getTestName(test), duration=int(duration))
 
   def addFailure(self, test, err):
-    self.messages.testFailed(self.getTestName(test))
+    err = self.formatErr(err)
+    self.messages.testFailed(self.getTestName(test),
+                             message='Failure', details=err)
 
   def addSkip(self, test):
     self.messages.testIgnored(self.getTestName(test))
 
   def addError(self, test, err):
-    self.messages.testFailed(self.getTestName(test))
+    err = self.formatErr(err)
+    self.messages.testFailed(self.getTestName(test),
+                             message='Error', details=err)
 
   def finalize(self, result):
     if self.current_suite:
@@ -90,6 +94,10 @@ class TeamcityPlugin(Plugin):
       location = "python_uttestid://" + str(test.id())
 
     return (location, suite_location)
+
+  def formatErr(self, err):
+    exctype, value, tb = err
+    return ''.join(traceback.format_exception(exctype, value, tb))
 
 def process_args():
   tests = []

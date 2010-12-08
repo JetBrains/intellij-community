@@ -170,6 +170,7 @@ class MethodTestCase(TestBase):
         
         self.suite = TestBase.Suite()
         self.suite.__module__, self.suite.__name__ = self.__get_module()
+
         if sys.version.find("IronPython") != -1:
           # Iron Python doesn't fully support imp
           self.suite.abs_location = ""
