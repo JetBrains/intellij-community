@@ -196,7 +196,7 @@ public class CompositeElement extends TreeElement {
   @NotNull
   public char[] textToCharArray() {
     char[] buffer = new char[getTextLength()];
-    AstBufferUtil.toBuffer(this, buffer, 0);
+    walkCopyingText(buffer);
     return buffer;
   }
 
@@ -404,10 +404,10 @@ public class CompositeElement extends TreeElement {
     if (myCachedLength != NOT_CACHED) {
       throw new AssertionError("Before walking: cached="+myCachedLength);
     }
-    TreeElement cur = this;
 
+    TreeElement cur = this;
     while (cur != null) {
-      cur = next(cur, cur.getCachedLength() == NOT_CACHED);
+      cur = next(cur, cur.getCachedLength() == NOT_CACHED, true);
     }
 
     if (myCachedLength < 0) {
@@ -415,8 +415,23 @@ public class CompositeElement extends TreeElement {
     }
   }
 
+  private void walkCopyingText(char[] buffer) {
+    if (TreeUtil.isCollapsedChameleon(this)) {
+      AstBufferUtil.toBuffer(this, buffer, 0);
+      return;
+    }
+
+    int offset = 0;
+    TreeElement cur = this;
+    while ((cur = next(cur, cur instanceof CompositeElement && !TreeUtil.isCollapsedChameleon(cur), false)) != null) {
+      if (cur instanceof LeafElement || TreeUtil.isCollapsedChameleon(cur)) {
+        offset = AstBufferUtil.toBuffer(cur, buffer, offset);
+      }
+    }
+  }
+
   @Nullable
-  private TreeElement next(TreeElement cur, boolean down) {
+  private TreeElement next(TreeElement cur, boolean down, boolean update) {
     if (down) {
       CompositeElement composite = (CompositeElement)cur; // It's a composite or we won't be going down
       TreeElement child = composite.firstChild;
@@ -425,15 +440,19 @@ public class CompositeElement extends TreeElement {
         return child;
       }
 
-      composite.myCachedLength = 0;
+      if (update) {
+        composite.myCachedLength = 0;
+      }
     }
 
     // up
     while (cur != this) {
       CompositeElement parent = cur.getTreeParent();
       int curLength = cur.getCachedLength();
-      LOG.assertTrue(curLength != NOT_CACHED, cur);
-      parent.myCachedLength -= curLength;
+      if (update) {
+        LOG.assertTrue(curLength != NOT_CACHED, cur);
+        parent.myCachedLength -= curLength;
+      }
 
       TreeElement next = cur.getTreeNext();
       if (next != null) {
@@ -442,14 +461,15 @@ public class CompositeElement extends TreeElement {
       }
 
       LOG.assertTrue(parent.lastChild == cur, parent);
-      parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
+      if (update) {
+        parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
+      }
 
       cur = parent;
     }
 
     return null;
   }
-
 
   public TreeElement getFirstChildNode() {
     return firstChild;
