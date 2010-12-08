@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -148,12 +147,12 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
     final String className = getClassName();
     if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-      throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid extracted class name");
+      throw new ConfigurationException("\'" + className + "\' is invalid extracted class name");
     }
 
     final String packageName = getPackageName();
     if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)){
-      throw new ConfigurationException("\'" + StringUtil.last(packageName, 10, true) + "\' is invalid extracted class package name");
+      throw new ConfigurationException("\'" + packageName + "\' is invalid extracted class package name");
     }
   }
 
