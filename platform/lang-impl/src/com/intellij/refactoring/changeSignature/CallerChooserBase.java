@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -65,16 +64,18 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private Editor myCallerEditor;
   private Editor myCalleeEditor;
   private boolean myInitDone;
+  private final String myFileName;
 
   protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
-  public CallerChooserBase(M method, Project project, String title, Tree previousTree, Consumer<Set<M>> callback) {
+  public CallerChooserBase(M method, Project project, String title, Tree previousTree, String fileName, Consumer<Set<M>> callback) {
     super(true);
     myMethod = method;
     myProject = project;
     myTree = previousTree;
+    myFileName = fileName;
     myCallback = callback;
     setTitle(title);
     init();
@@ -204,7 +205,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument("");
     final Editor editor = editorFactory.createViewer(document, myProject);
-    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, StdFileTypes.JAVA));
+    ((EditorEx)editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, myFileName));
     return editor;
   }
 
