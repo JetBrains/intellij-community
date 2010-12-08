@@ -19,7 +19,6 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.SegmentedStream;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -65,6 +64,7 @@ public class SegmentedInputStream extends InputStream {
       if (nextByte != SegmentedStream.SPECIAL_SYMBOL) break;
       final Integer packetRead = readControlSequence();
       if (packetRead != null) break;
+      if (available() == 0) return -1;
     }
     return nextByte;
   }
