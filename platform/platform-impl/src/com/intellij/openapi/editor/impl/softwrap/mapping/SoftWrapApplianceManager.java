@@ -80,7 +80,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   private boolean myCustomIndentUsedLastTime;
   private int myCustomIndentValueUsedLastTime;
   private int myVisibleAreaWidth;
-  private long myLastDocumentStamp;
   private boolean myInProgress;
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
@@ -100,9 +99,13 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     recalculateIfNecessary();
   }
 
-  public void release() {
+  public void reset() {
     myEventsStorage.release();
     myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+  }
+  
+  public void release() {
+    myEventsStorage.release();
     myLineWrapPositionStrategy = null;
   }
 
@@ -112,7 +115,6 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return;
     }
 
-    myLastDocumentStamp = myEditor.getDocument().getModificationStamp();
     // There is a possible case that new dirty regions are encountered during processing, hence, we iterate on regions snapshot here.
     List<IncrementalCacheUpdateEvent> events = new ArrayList<IncrementalCacheUpdateEvent>(myEventsStorage.getEvents());
     myEventsStorage.release();
@@ -586,18 +588,12 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     myContext.softWrapStartOffset = softWrap.getStart() + 1;
   }
 
-  public void recalculateIfNecessary() {
-    recalculateIfNecessary(myEditor.getDocument().getModificationStamp());
-  }
-
   /**
    * There is a possible case that we need to reparse the whole document (e.g. visible area width is changed or user-defined
    * soft wrap indent is changed etc). This method encapsulates that logic, i.e. it checks if necessary conditions are satisfied
    * and updates internal state as necessary.
-   *
-   * @param documentStamp     document modification stamp to use if document was changed while soft wrapping was off
    */
-  public void recalculateIfNecessary(long documentStamp) {
+  public void recalculateIfNecessary() {
     if (myInProgress) {
       return;
     }
@@ -615,14 +611,13 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     // Check if we need to recalculate soft wraps due to visible area width change.
     int currentVisibleAreaWidth = myWidthProvider.getVisibleAreaWidth();
-    if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth && documentStamp == myLastDocumentStamp) {
+    if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
       recalculateSoftWraps(); // Recalculate existing dirty regions if any.
       return;
     }
 
     // Drop information about processed lines then.
-    myEventsStorage.release();
-    myEventsStorage.add(myEditor.getDocument(), new IncrementalCacheUpdateEvent(myEditor.getDocument()));
+    reset();
     myStorage.removeAll();
     myVisibleAreaWidth = currentVisibleAreaWidth;
     recalculateSoftWraps();
@@ -748,7 +743,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    recalculateIfNecessary(event.getOldTimeStamp());
+    recalculateIfNecessary();
   }
 
   /**
