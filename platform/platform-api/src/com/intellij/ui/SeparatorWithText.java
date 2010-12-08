@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -82,13 +81,9 @@ public class SeparatorWithText extends JComponent {
       g.drawLine(0, lineY, lineX, lineY);
       g.drawLine(lineX + fontWidth, lineY, getWidth() - 1, lineY);
 
-      final GraphicsConfig config = new GraphicsConfig(g);
-      config.setAntialiasing(true);
-
+      UIUtil.applyRenderingHints(g);
       g.setColor(GroupedElementsRenderer.POPUP_SEPARATOR_TEXT_FOREGROUND);
       g.drawString(myCaption, lineX + HGAP, baseline);
-
-      config.restore();
     }
     else {
       g.drawLine(0, VGAP, getWidth() - 1, VGAP);
