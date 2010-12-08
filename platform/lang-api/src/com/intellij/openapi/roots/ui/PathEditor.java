@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.projectRoots.ui;
+package com.intellij.openapi.roots.ui;
 
 import com.google.common.collect.Lists;
 import com.intellij.ide.DataManager;
@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -85,7 +85,7 @@ public class PathEditor {
     myDisplayName = displayName;
     myOrderRootType = orderRootType;
     myDescriptor = descriptor;
-    myDescriptor.putUserData(FileChooserDialogImpl.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
+    myDescriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myModel = createListModel();
   }
 

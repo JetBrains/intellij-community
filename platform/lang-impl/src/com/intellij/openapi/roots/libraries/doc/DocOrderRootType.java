@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileChooser;
+package com.intellij.openapi.roots.libraries.doc;
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.PersistentOrderRootType;
 
-public interface FileChooserDialog {
-  DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = DataKey.create("PREFER_LAST_OVER_TO_SELECT");
+public class DocOrderRootType extends PersistentOrderRootType {
   
-  @NotNull
-  VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
+  private DocOrderRootType() {
+    super("DOCUMENTATION", "docPath", "doc-paths", "docPathEntry");
+  }
+
+  public static OrderRootType getInstance() {
+    return getOrderRootType(DocOrderRootType.class);
+  }
+
+  public boolean collectFromDependentModules() {
+    return true;
+  }
 }

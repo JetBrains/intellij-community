@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.roots.libraries.doc;
 
-/*
- * User: anna
- * Date: 26-Dec-2007
- */
-package com.intellij.openapi.roots.ui.configuration.libraryEditor;
-
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.PathEditor;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
-public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
+/**
+ * @author Rustam Vishnyakov
+ */
+public class DocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+  private static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
 
+  @Nullable
   public PathEditor createPathEditor(Sdk sdk) {
-    return new PathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
-      @Override
-      protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
-        return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);
-      }
-    };
+    return null;
   }
 
   @Override
@@ -52,6 +42,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public String getNodeText() {
-    return ProjectBundle.message("library.sources.node");
+    return ProjectBundle.message("library.docs.node");
   }
+
 }
