@@ -596,7 +596,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     init(fileText);
     myEditor.getSettings().setUseSoftWraps(true);
     SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
-    model.refreshSettings();
+    model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
     applianceManager.setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
