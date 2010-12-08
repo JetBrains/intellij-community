@@ -137,8 +137,12 @@ public class GithubRebaseAction extends DumbAwareAction {
       return;
     }
 
+    final String parent = repositoryInfo.getParent();
+    assert parent != null;
+    final String parentRepoString = "http://github.com/" + parent;
+
     BasicAction.saveAll();
-    int i = Messages.showYesNoDialog(project, "Perform rebase?", "Github Rebase", Messages.getQuestionIcon());
+    int i = Messages.showYesNoDialog(project, "Perform rebase relative to '" + parentRepoString + "'?", "Github Rebase", Messages.getQuestionIcon());
     if (i != Messages.OK){
       return;
     }

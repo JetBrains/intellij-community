@@ -24,4 +24,8 @@ public class RepositoryInfo {
   public boolean isFork() {
     return Boolean.valueOf(myRepository.getChildText("fork"));
   }
+
+  public String getParent() {
+    return myRepository.getChildText("parent");
+  }
 }
