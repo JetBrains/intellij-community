@@ -1,4 +1,4 @@
-package com.jetbrains.python.testing.doctest;
+package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -19,22 +19,29 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  */
-public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguration
-    implements AbstractPythonRunConfigurationParams, PythonDocTestRunConfigurationParams {
+public class PythonNoseTestRunConfiguration extends AbstractPythonRunConfiguration
+    implements AbstractPythonRunConfigurationParams, PythonNoseTestRunConfigurationParams {
   private String myClassName = "";
   private String myScriptName = "";
   private String myMethodName = "";
   private String myFolderName = "";
-  private String myPattern = ""; // pattern for modules in folder to match against
+  private String myParams = ""; // parameters for nosetests
   private TestType myTestType = TestType.TEST_SCRIPT;
 
-  protected PythonDocTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+  protected PythonNoseTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
   }
 
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonDocTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonNoseTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
   }
+
+  public enum TestType {
+    TEST_FOLDER,
+    TEST_SCRIPT,
+    TEST_CLASS,
+    TEST_METHOD,
+    TEST_FUNCTION,}
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
@@ -43,7 +50,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
     myClassName = JDOMExternalizerUtil.readField(element, "CLASS_NAME");
     myMethodName = JDOMExternalizerUtil.readField(element, "METHOD_NAME");
     myFolderName = JDOMExternalizerUtil.readField(element, "FOLDER_NAME");
-    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
+    myParams = JDOMExternalizerUtil.readField(element, "PARAMS");
 
     try {
       myTestType = TestType.valueOf(JDOMExternalizerUtil.readField(element, "TEST_TYPE"));
@@ -61,12 +68,12 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
     JDOMExternalizerUtil.writeField(element, "CLASS_NAME", myClassName);
     JDOMExternalizerUtil.writeField(element, "METHOD_NAME", myMethodName);
     JDOMExternalizerUtil.writeField(element, "FOLDER_NAME", myFolderName);
-    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
+    JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
     JDOMExternalizerUtil.writeField(element, "TEST_TYPE", myTestType.toString());
   }
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PythonDocTestRunConfigurationEditor(getProject(), this);
+    return new PythonNoseTestRunConfigurationEditor(getProject(), this);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -81,14 +88,13 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
     myClassName = className;
   }
 
-  public String getPattern() {
-    return myPattern;
+  public String getParams() {
+    return myParams;
   }
 
-  public void setPattern(String pattern) {
-    myPattern = pattern;
+  public void setParams(String pattern) {
+    myParams = pattern;
   }
-
   public String getFolderName() {
     return myFolderName;
   }
@@ -121,13 +127,6 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
     myTestType = testType;
   }
 
-  public enum TestType {
-    TEST_FOLDER,
-    TEST_SCRIPT,
-    TEST_CLASS,
-    TEST_METHOD,
-    TEST_FUNCTION,}
-
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
@@ -150,28 +149,28 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new PythonDocTestCommandLineState(this, env);
+    return new PythonNoseTestCommandLineState(this, env);
   }
 
   @Override
   public String suggestedName() {
     switch (myTestType) {
       case TEST_CLASS:
-        return "Doctests in " + myClassName;
+        return "Nosetests in " + myClassName;
       case TEST_METHOD:
-        return "Doctests in " + myClassName + "." + myMethodName;
+        return "Nosetests in " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
-        return "Doctests in " + myScriptName;
+        return "Nosetests in " + myScriptName;
       case TEST_FOLDER:
-        return "Doctests in " + FileUtil.toSystemDependentName(myFolderName);
+        return "Nosetests in " + FileUtil.toSystemDependentName(myFolderName);
       case TEST_FUNCTION:
-        return "Doctests in " + myMethodName;
+        return "Nosetests in " + myMethodName;
       default:
         throw new IllegalStateException("Unknown test type: " + myTestType);
     }
   }
 
-  public boolean compareSettings(PythonDocTestRunConfiguration cfg) {
+  public boolean compareSettings(PythonNoseTestRunConfiguration cfg) {
     if (cfg == null) return false;
 
     if (getTestType() != cfg.getTestType()) return false;
@@ -200,13 +199,13 @@ public class PythonDocTestRunConfiguration extends AbstractPythonRunConfiguratio
     }
   }
 
-  public static void copyParams(PythonDocTestRunConfigurationParams source, PythonDocTestRunConfigurationParams target) {
+  public static void copyParams(PythonNoseTestRunConfigurationParams source, PythonNoseTestRunConfigurationParams target) {
     AbstractPythonRunConfiguration.copyParams(source.getBaseParams(), target.getBaseParams());
     target.setScriptName(source.getScriptName());
     target.setClassName(source.getClassName());
     target.setFolderName(source.getFolderName());
     target.setMethodName(source.getMethodName());
     target.setTestType(source.getTestType());
-    target.setPattern(source.getPattern());
+    target.setParams(source.getParams());
   }
 }

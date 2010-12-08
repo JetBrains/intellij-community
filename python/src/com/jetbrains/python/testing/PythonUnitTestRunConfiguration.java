@@ -144,7 +144,7 @@ public class PythonUnitTestRunConfiguration extends AbstractPythonRunConfigurati
       throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_class_name"));
     }
 
-    if (StringUtil.isEmptyOrSpaces(myMethodName) && myTestType == TestType.TEST_METHOD) {
+    if (StringUtil.isEmptyOrSpaces(myMethodName) && (myTestType == TestType.TEST_METHOD || myTestType == TestType.TEST_FUNCTION)) {
       throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_method_name"));
     }
   }
