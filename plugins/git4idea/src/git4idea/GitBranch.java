@@ -141,10 +141,13 @@ public class GitBranch extends GitReference {
     handler.setNoSSH(true);
     handler.setSilent(true);
     handler.addParameters("--no-color");
+    boolean remoteOnly = false;
     if (remoteWanted && localWanted) {
       handler.addParameters("-a");
+      remoteOnly = false;
     } else if (remoteWanted) {
       handler.addParameters("-r");
+      remoteOnly = true;
     }
     if (containingCommit != null) {
       handler.addParameters("--contains", containingCommit);
@@ -166,11 +169,14 @@ public class GitBranch extends GitReference {
     // standard situation. output example:
     //  master
     //* my_feature
+    //  remotes/origin/HEAD -> origin/master
     //  remotes/origin/eap
     //  remotes/origin/feature
     //  remotes/origin/master
     // also possible:
     //* (no branch)
+    // and if we call with -r instead of -a, remotes/ prefix is omitted:
+    // origin/HEAD -> origin/master
     final String[] split = output.split("\n");
     GitBranch currentBranch = null;
     for (String b : split) {
@@ -178,8 +184,16 @@ public class GitBranch extends GitReference {
       b = b.substring(2).trim();
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
-      boolean isRemote = b.startsWith("remotes/") || b.startsWith(REFS_REMOTES_PREFIX);
-//      boolean isRemote = (! localWanted) || b.startsWith("remotes");
+      String remotePrefix = null;
+      if (b.startsWith("remotes/")) {
+        remotePrefix = "remotes/";
+      } else if (b.startsWith(REFS_REMOTES_PREFIX)) {
+        remotePrefix = REFS_REMOTES_PREFIX;
+      }
+      boolean isRemote = remotePrefix != null || remoteOnly;
+      if (isRemote && !remoteOnly) {
+        b = b.substring(remotePrefix.length());
+      }
       final GitBranch branch = new GitBranch(b, current, isRemote);
       if (current) {
         currentBranch = branch;
