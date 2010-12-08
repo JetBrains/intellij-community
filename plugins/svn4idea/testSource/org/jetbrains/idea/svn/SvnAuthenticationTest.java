@@ -115,7 +115,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
-    final Boolean[] result = new Boolean[1];
+    final boolean[] result = new boolean[]{false};
     synchronousBackground(new Runnable() {
       @Override
       public void run() {
@@ -135,6 +135,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
           //waitListenerStep(start, listener, 3);
 
           listener.reset();
+          if (!SystemInfo.isWindows) savedOnceListener.reset();
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
           listener.addStep(new Trinity<ProviderType, SVNURL, Type>(ProviderType.persistent, url, Type.request));
           if (! SystemInfo.isWindows) {
