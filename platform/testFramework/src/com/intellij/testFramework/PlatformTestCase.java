@@ -144,8 +144,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void setUp() throws Exception {
     super.setUp();
     if (ourTestCase != null) {
-      String message = "Previous test " + ourTestCase +
-                       " hasn't called tearDown(). Probably overriden without super call.";
+      String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
       ourTestCase = null;
       fail(message);
     }
