@@ -479,3 +479,12 @@ public class Test {
 
 class W<T> {}
 class P<L> {}
+
+// IDEA-62529
+class Refx<T> {
+    Class<? super T> get() { return null; }
+    boolean f() {
+      if (get() == Enum.class) return false;
+      return (Class<Enum>)get() == Enum.class;
+    }
+}
