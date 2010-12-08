@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
+package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
+public class IdeaJetBrainsTvAction extends JetBrainsTvAction {
+  private static final String CHANNEL = "intellij-idea";
 
-/**
- * Provides text in the editor for Evaluate expression action
- * @author Maxim.Medvedev
- */
-public interface EditorTextProvider {
-  LanguageExtension<EditorTextProvider> EP = new LanguageExtension<EditorTextProvider>("com.intellij.debuggerEditorTextProvider");
-
-  @Nullable
-  TextWithImports getEditorText(PsiElement elementAtCaret);
+  public IdeaJetBrainsTvAction() {
+    super(CHANNEL);
+  }
 }

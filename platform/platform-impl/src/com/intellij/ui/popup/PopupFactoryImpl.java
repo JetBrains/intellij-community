@@ -114,7 +114,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final Runnable disposeCallback,
                                           final int maxRowCount) {
     return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-                                  maxRowCount, null);
+                                  maxRowCount, null, null);
   }
 
   public ListPopup createActionGroupPopup(final String title,
@@ -130,18 +130,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   private static ListPopup createActionGroupPopup(final String title,
-                                          final ActionGroup actionGroup,
-                                          DataContext dataContext,
-                                          boolean showNumbers,
-                                          boolean useAlphaAsNumbers,
-                                          boolean showDisabledActions,
-                                          boolean honorActionMnemonics,
-                                          final Runnable disposeCallback,
-                                          final int maxRowCount,
-                                          final Condition<AnAction> preselectActionCondition) {
+                                                  final ActionGroup actionGroup,
+                                                  DataContext dataContext,
+                                                  boolean showNumbers,
+                                                  boolean useAlphaAsNumbers,
+                                                  boolean showDisabledActions,
+                                                  boolean honorActionMnemonics,
+                                                  final Runnable disposeCallback,
+                                                  final int maxRowCount,
+                                                  final Condition<AnAction> preselectActionCondition, @Nullable final String actionPlace) {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
     final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+    if (actionPlace != null) {
+      builder.setActionPlace(actionPlace);
+    }
     builder.buildGroup(actionGroup);
     final List<ActionItem> items = builder.getItems();
 
@@ -177,7 +180,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
         AnAction action = actionItem.getAction();
         Presentation presentation = new Presentation();
         presentation.setDescription(action.getTemplatePresentation().getDescription());
-        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(component), ActionPlaces.UNKNOWN, presentation,
+        final String actualActionPlace = (actionPlace == null) ? ActionPlaces.UNKNOWN : actionPlace;
+        action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(component), actualActionPlace, presentation,
                                         ActionManager.getInstance(), 0));
         ActionMenu.showDescriptionInStatusBar(true, component, presentation.getDescription());
       }
@@ -194,7 +198,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final int maxRowCount,
                                           final Condition<AnAction> preselectActionCondition) {
     return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
-                                  disposeCallback, maxRowCount, preselectActionCondition);
+                                  disposeCallback, maxRowCount, preselectActionCondition, null);
   }
 
   public ListPopup createActionGroupPopup(String title,
@@ -208,6 +212,20 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                   showDisabledActions,
                                   selectionAidMethod == ActionSelectionAid.MNEMONICS,
                                   null, -1);
+  }
+
+  public ListPopup createActionGroupPopup(String title,
+                                          ActionGroup actionGroup,
+                                          DataContext dataContext,
+                                          ActionSelectionAid selectionAidMethod,
+                                          boolean showDisabledActions,
+                                          @Nullable String actionPlace) {
+    return createActionGroupPopup(title, actionGroup, dataContext,
+                                  selectionAidMethod == ActionSelectionAid.NUMBERING || selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
+                                  selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
+                                  showDisabledActions,
+                                  selectionAidMethod == ActionSelectionAid.MNEMONICS,
+                                  null, -1, null, actionPlace);
   }
 
   public ListPopup createActionGroupPopup(String title,
@@ -552,6 +570,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Icon myEmptyIcon;
     private int myMaxIconWidth = -1;
     private int myMaxIconHeight = -1;
+    @NotNull
+    private String myActionPlace;
 
     private ActionStepBuilder(final DataContext dataContext,
                              final boolean showNumbers,
@@ -568,6 +588,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myPrependWithSeparator = false;
       mySeparatorText = null;
       myHonorActionMnemonics = honorActionMnemonics;
+      myActionPlace = ActionPlaces.UNKNOWN;
+    }
+
+    public void setActionPlace(@NotNull String actionPlace) {
+      myActionPlace = actionPlace;
     }
 
     public List<ActionItem> getItems() {
@@ -587,7 +612,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private void calcMaxIconSize(final ActionGroup actionGroup) {
       AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     ActionPlaces.UNKNOWN,
+                                                                     myActionPlace,
                                                                      getPresentation(actionGroup),
                                                                      ActionManager.getInstance(),
                                                                      0));
@@ -617,7 +642,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private void appendActionsFromGroup(final ActionGroup actionGroup) {
       AnAction[] actions = actionGroup.getChildren(new AnActionEvent(null, myDataContext,
-                                                                     ActionPlaces.UNKNOWN,
+                                                                     myActionPlace,
                                                                      getPresentation(actionGroup),
                                                                      ActionManager.getInstance(),
                                                                      0));
@@ -646,7 +671,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private void appendAction(AnAction action) {
       Presentation presentation = getPresentation(action);
       AnActionEvent event = new AnActionEvent(null, myDataContext,
-                                              ActionPlaces.UNKNOWN,
+                                              myActionPlace,
                                               presentation,
                                               ActionManager.getInstance(),
                                               0);

@@ -94,13 +94,19 @@ public final class LoadTextUtil {
     return Pair.create(result, detectedLineSeparator);
   }
 
-  public static Charset detectCharset(final VirtualFile virtualFile, final byte[] content) {
+  private static Charset detectCharset(final VirtualFile virtualFile, final byte[] content) {
     Charset charset = dodetectCharset(virtualFile, content);
     charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
     if (virtualFile.getFileType() == StdFileTypes.PROPERTIES && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
+    return charset;
+  }
+
+  public static Charset detectCharsetAndSetBOM(final VirtualFile virtualFile, final byte[] content) {
+    Charset charset = detectCharset(virtualFile, content);
+    detectAndSetBOM(virtualFile, content);
     return charset;
   }
 
@@ -133,7 +139,8 @@ public final class LoadTextUtil {
     return CharsetToolkit.forName(charsetName);
   }
 
-  private static int skipBOM(final VirtualFile virtualFile, byte[] content) {
+  // returns offset of the BOM end
+  private static int detectAndSetBOM(final VirtualFile virtualFile, byte[] content) {
     final byte[] bom = getBOM(content, Patches.SUN_BUG_ID_4508058 ? virtualFile.getCharset() : null);
     if (bom.length != 0) {
       virtualFile.setBOM(bom);
@@ -268,7 +275,7 @@ public final class LoadTextUtil {
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, @NotNull VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
     final Charset charset = detectCharset(virtualFile, bytes);
-    final int offset = skipBOM(virtualFile, bytes);
+    final int offset = detectAndSetBOM(virtualFile, bytes);
 
     final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
     if (rememberDetectedSeparators) {

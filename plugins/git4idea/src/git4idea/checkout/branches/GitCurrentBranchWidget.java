@@ -19,7 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -115,39 +118,60 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
       public void consume(MouseEvent mouseEvent) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            update();
-          }
-        });
+          update();
       }
     };
   }
 
   private void update() {
-    String currentBranchName = null;
     final VirtualFile file = getSelectedFile();
-    if (file != null) {
-      AbstractVcs vcs = myVcsManager.getVcsFor(file);
-      if (vcs != null && vcs instanceof GitVcs) {
-        VirtualFile root = myVcsManager.getVcsRootFor(file);
-        if (root != null) {
-          GitBranch currentBranch = null;
-          try {
-            currentBranch = GitBranch.current(getProject(), root);
-          } catch (VcsException e) {
-            LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
-            // doing nothing - null will be set to myCurrentBranchName
+    final Project project = getProject();
+    Task.Backgroundable task = new Task.Backgroundable(project, "") {
+      @Override
+      public void run(ProgressIndicator indicator) {
+        if (isDisposed()) return;
+
+        String currentBranchName = null;
+        if (file != null) {
+          AbstractVcs vcs = myVcsManager.getVcsFor(file);
+          if (vcs != null && vcs instanceof GitVcs) {
+            VirtualFile root = myVcsManager.getVcsRootFor(file);
+            if (root != null) {
+              GitBranch currentBranch = null;
+              try {
+                currentBranch = GitBranch.current(project, root);
+              }
+              catch (VcsException e) {
+                LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
+                // doing nothing - null will be set to myCurrentBranchName
+              }
+              currentBranchName = currentBranch != null ? currentBranch.getName() : null;
+            }
           }
-          currentBranchName = currentBranch != null ? currentBranch.getName() : null;
         }
+        if (currentBranchName == null) {
+          currentBranchName = "";
+        }
+        myCurrentBranchName.set(currentBranchName);
+        // status bar update would be anyway invoked on awt thread
+        // check not-disposed predicates before (they will be also checked on awt thread)
+        // in any other thread we wouldn't have guarantee that disposed hadn't started in parallel
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myStatusBar.updateWidget(ID());
+          }
+        }, new Condition() {
+          public boolean value(Object o) {
+            return isDisposed() || (project != null) && ((! project.isOpen()) || project.isDisposed()) || myStatusBar == null;
+          }
+        });
       }
+    };
+    if (project == null) {
+      task.queue();
+    } else {
+      GitVcs.getInstance(project).runInBackground(task);
     }
-    if (currentBranchName == null) {
-      currentBranchName = "";
-    }
-    myCurrentBranchName.set(currentBranchName);
-    myStatusBar.updateWidget(ID());
   }
 
 }

@@ -339,6 +339,7 @@ public class GitLogUI implements Disposable {
     final JLabel label = new JLabel(text, JLabel.CENTER);
     label.setUI(new MultiLineLabelUI());
     jPanel.add(label, BorderLayout.CENTER);
+    jPanel.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor()));
     return jPanel;
   }
 
