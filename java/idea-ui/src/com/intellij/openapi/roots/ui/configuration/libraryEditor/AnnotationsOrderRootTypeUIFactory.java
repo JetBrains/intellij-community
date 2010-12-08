@@ -23,9 +23,9 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.roots.ui.PathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
