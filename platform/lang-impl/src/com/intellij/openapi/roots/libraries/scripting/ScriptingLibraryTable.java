@@ -52,7 +52,7 @@ public class ScriptingLibraryTable {
           LibraryModel libModel = new LibraryModel(library.getName());
           libModel.setSourceFiles(library.getFiles(SOURCE_ROOT_TYPE));
           libModel.setCompactFiles(library.getFiles(COMPACT_ROOT_TYPE));
-          libModel.setDocUrls(library.getUrls(DocOrderRootType.getInstance()));
+          //libModel.setDocUrls(library.getUrls(DocOrderRootType.getInstance()));  // TODO: Rustam, write tests first!
           myLibraryModels.add(libModel);
         }
       }
