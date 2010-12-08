@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -231,7 +232,11 @@ public abstract class LocalToFieldHandler {
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
     final PsiCodeBlock body = inClass.getBody();
     assert body != null;
-    body.add(assignment);
+    if (PsiTreeUtil.isAncestor(body, local, false)) {
+      body.addBefore(assignment, PsiTreeUtil.getParentOfType(local, PsiStatement.class));
+    } else {
+      body.add(assignment);
+    }
     local.delete();
   }
 

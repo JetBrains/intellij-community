@@ -60,6 +60,7 @@ public class TypesDistinctProver {
           final PsiType superBound = ((PsiWildcardType)type1).getSuperBound();
           if (superBound instanceof PsiArrayType &&
               proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)superBound, type2)) return true;
+
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(superBound);
           if (boundClass1 == null || boundClass1 instanceof PsiTypeParameter) return false;
           return !InheritanceUtil.isInheritorOrSelf(boundClass1, psiClass2, true);

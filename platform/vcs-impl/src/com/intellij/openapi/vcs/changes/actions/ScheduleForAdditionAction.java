@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -46,7 +47,10 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && (getUnversionedFiles(e) != null);
     e.getPresentation().setEnabled(enabled);
-    //e.getPresentation().setVisible(enabled);
+    final String place = e.getPlace();
+    if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(place) || ActionPlaces.CHANGES_VIEW_POPUP.equals(place) ) {
+      e.getPresentation().setVisible(enabled);
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {

@@ -47,23 +47,20 @@ import java.awt.image.PixelGrabber;
 import java.util.*;
 import java.util.List;
 
+import static java.awt.GridBagConstraints.*;
+
 /**
  * @author pti
  */
 public class WelcomeScreen {
-  private JPanel myWelcomePanel;
-  private final JPanel myMainPanel;
-  private JPanel myPluginsPanel;
-
-  private static final Insets ICON_INSETS = new Insets(15, 30, 15, 0);
   private static final Insets ACTION_GROUP_CAPTION_INSETS = new Insets(20, 30, 5, 0);
+  private static final Insets PLUGINS_CAPTION_INSETS = new Insets(20, 25, 0, 0);
+  private static final Insets ACTION_ICON_INSETS = new Insets(5, 20, 15, 0);
+  private static final Insets ACTION_NAME_INSETS = new Insets(15, 5, 0, 0);
+  private static final Insets ACTION_DESCRIPTION_INSETS = new Insets(7, 5, 0, 30);
+  private static final Insets NO_INSETS = new Insets(0, 0, 0, 0);
 
-  private MyActionButton myKeypressedButton = null;
-  private int mySelectedRow = -1;
-  private int mySelectedColumn = -1;
-  private int mySelectedGroup = -1;
   private static final int MAIN_GROUP = 0;
-  private static final int PLUGINS_GROUP = 1;
   private static final int PLUGIN_DSC_MAX_WIDTH = 260;
   private static final int PLUGIN_DSC_MAX_ROWS = 2;
   private static final int PLUGIN_NAME_MAX_WIDTH = 180;
@@ -73,171 +70,121 @@ public class WelcomeScreen {
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
-  private static final Dimension LEARN_MORE_SIZE = new Dimension(26, 26);
-  private static final Dimension OPEN_PLUGIN_MANAGER_SIZE = new Dimension(166, 31);
-
-  private static final Icon LEARN_MORE_ICON = IconLoader.getIcon("/general/learnMore.png");
-  private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/general/openPluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
-  private static Icon CAPTION_IMAGE;
-  private static Icon DEVELOPER_SLOGAN;
 
-  @NonNls protected static final String TAHOMA_FONT_NAME = "Tahoma";
-  private static final Font TEXT_FONT = new Font(TAHOMA_FONT_NAME, Font.PLAIN, 11);
-  private static final Font LINK_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 12);
-  private static final Font GROUP_CAPTION_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 18);
+  @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
+  private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
+  private static final Font LINK_FONT = new Font(CAPTION_FONT_NAME, Font.BOLD, 12);
+  private static final Font GROUP_CAPTION_FONT = new Font(CAPTION_FONT_NAME, Font.BOLD, 18);
 
+  private static final Color WELCOME_PANEL_BACKGROUND = Color.WHITE;
+  private static final Color MAIN_PANEL_BACKGROUND = WELCOME_PANEL_BACKGROUND;
+  private static final Color PLUGINS_PANEL_BACKGROUND = new Color(248, 248, 248);
+  private static final Color PLUGINS_PANEL_BORDER = new Color(234, 234, 234);
   private static final Color CAPTION_COLOR = new Color(47, 67, 96);
   private static final Color DISABLED_CAPTION_COLOR = UIUtil.getInactiveTextColor();
-  private static final Color PLUGINS_PANEL_COLOR = new Color(229, 229, 229);
-  private static final Color MAIN_PANEL_COLOR = new Color(210, 213, 226);
-  private static final Color BUTTON_PUSHED_COLOR = new Color(130, 146, 185);
-  private static final Color BUTTON_POPPED_COLOR = new Color(181, 190, 214);
-  private static final Color MAIN_PANEL_BACKGROUND = new Color(238, 238, 238);
-  private static final Color LEARN_MORE_BUTTON_COLOR = new Color(238, 238, 238);
-  private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
-  private static Color CAPTION_BACKGROUND = new Color(23, 52, 150);
-  private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
-  private static final Color ACTION_BUTTON_BORDER_COLOR = new Color(166, 170, 182);
-  private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
+  private static final Color ACTION_BUTTON_COLOR = WELCOME_PANEL_BACKGROUND;
+  private static final Color BUTTON_POPPED_COLOR = new Color(241, 241, 241);
+  private static final Color BUTTON_PUSHED_COLOR = new Color(228, 228, 228);
 
-  private int myPluginsButtonsCount = 0;
+  @NonNls private static final String HTML_PREFIX = "<html>";
+  @NonNls private static final String HTML_SUFFIX = "</html>";
+  @NonNls private static final String ___HTML_SUFFIX = "...</html>";
+  @NonNls private static final String ESC_NEW_LINE = "\\n";
+
+  private final JPanel myWelcomePanel;
+  private final JPanel myMainPanel;
+  private final JPanel myPluginsPanel;
+
+  private Icon myCaptionImage;
+  private Icon myDeveloperSlogan;
+  private Color myCaptionBackground = new Color(23, 52, 150);
+
+  private MyActionButton myPressedButton = null;
+  private int mySelectedRow = -1;
+  private int mySelectedColumn = -1;
+  private int mySelectedGroup = -1;
   private int myPluginsIdx = -1;
-  @NonNls protected static final String ___HTML_SUFFIX = "...</html>";
-  @NonNls protected static final String ESC_NEW_LINE = "\\n";
 
-  private class ActionGroupDescriptor {
-    private int myIdx = -1;
-    private int myCount = 0;
-    private final JPanel myPanel;
-    private final int myColumnIdx;
-    @NonNls protected static final String HTML_PREFIX = "<html>";
-    @NonNls protected static final String HTML_SUFFIX = "</html>";
-
-    public ActionGroupDescriptor(final String caption, final int columnIndex) {
-      JPanel panel = new JPanel(new GridBagLayout()) {
-        public Dimension getPreferredSize() {
-          return getMinimumSize();
-        }
-      };
-      panel.setBackground(MAIN_PANEL_COLOR);
-
-      JLabel actionGroupCaption = new JLabel(caption);
-      actionGroupCaption.setFont(GROUP_CAPTION_FONT);
-      actionGroupCaption.setForeground(CAPTION_COLOR);
-
-      GridBagConstraints gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, ACTION_GROUP_CAPTION_INSETS, 0, 0);
-      panel.add(actionGroupCaption, gBC);
-      myPanel = panel;
-      myColumnIdx = columnIndex;
-    }
-
-    public void addButton(final MyActionButton button, String commandLink, String description) {
-      final int y = myIdx += 2;
-      GridBagConstraints gBC =
-        new GridBagConstraints(0, y, 1, 2, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, ICON_INSETS, ACTION_BUTTON_PADDING, ACTION_BUTTON_PADDING);
-
-      button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myPanel.add(button, gBC);
-      button.setupWithinPanel(myMainPanel, MAIN_GROUP, myCount, myColumnIdx);
-      myCount++;
-
-      JLabel name = new JLabel(underlineHtmlText(commandLink));
-      name.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          button.onPress(e);
-        }
-      });
-
-      name.setForeground(CAPTION_COLOR);
-      name.setFont(LINK_FONT);
-      name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-      gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(15, 15, 0, 0), 5, 0);
-      myPanel.add(name, gBC);
-
-      description = wrapWithHtml(description);
-      JLabel shortDescription = new JLabel(description);
-      shortDescription.setFont(TEXT_FONT);
-
-      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
-      myPanel.add(shortDescription, gBC);
-    }
-
-    private String wrapWithHtml(final String description) {
-      return HTML_PREFIX + description + HTML_SUFFIX;
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private String underlineHtmlText(final String commandLink) {
-      return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
-    }
-
-    private void appendActionsFromGroup(final ActionGroup group) {
-      final AnAction[] actions = group.getChildren(null);
-      PresentationFactory factory = new PresentationFactory();
-      for (final AnAction action : actions) {
-        if (action instanceof ActionGroup) {
-          final ActionGroup childGroup = (ActionGroup)action;
-          appendActionsFromGroup(childGroup);
-        }
-        else {
-          Presentation presentation = factory.getPresentation(action);
-          action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myMainPanel),
-                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
-          if (presentation.isVisible()) {
-            appendButtonForAction(action);
-          }
-        }
-      }
-    }
-
-    public void appendButtonForAction(final AnAction action) {
-      final Presentation presentation = action.getTemplatePresentation();
-      final Icon icon = presentation.getIcon();
-      final String text = presentation.getText();
-      MyActionButton button = new ButtonWithExtension(icon, "") {
-        protected void onPress(InputEvent e, MyActionButton button) {
-          final ActionManager actionManager = ActionManager.getInstance();
-          AnActionEvent evt = new AnActionEvent(
-            null,
-            DataManager.getInstance().getDataContext(e.getComponent()),
-            ActionPlaces.WELCOME_SCREEN,
-            action.getTemplatePresentation(),
-            actionManager,
-            0
-          );
-          action.beforeActionPerformedUpdate(evt);
-          if (evt.getPresentation().isEnabled()) {
-            action.actionPerformed(evt);
-          }
-        }
-      };
-
-      addButton(button, text, presentation.getDescription());
-    }
-
-    public JPanel getPanel() {
-      return myPanel;
-    }
-
-    public int getIdx() {
-      return myIdx;
-    }
+  public static JPanel createWelcomePanel() {
+    return new WelcomeScreen().myWelcomePanel;
   }
 
   private WelcomeScreen() {
     initApplicationSpecificImages();
-
-    GridBagConstraints gBC;
-    final ActionManager actionManager = ActionManager.getInstance();
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
 
     // Create Main Panel for Quick Start and Documentation
     myMainPanel = new WelcomeScrollablePanel(new GridLayout(1, 2));
-    myMainPanel.setBackground(MAIN_PANEL_COLOR);
+    myMainPanel.setBackground(MAIN_PANEL_BACKGROUND);
+    setUpMainPanel();
+    JScrollPane mainScrollPane = scrollPane(myMainPanel, null);
+
+    // Create Plugins Panel
+    myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
+    myPluginsPanel.setBackground(PLUGINS_PANEL_BACKGROUND);
+    setUpPluginsPanel();
+    JScrollPane pluginsScrollPane = scrollPane(myPluginsPanel, PLUGINS_PANEL_BORDER);
+
+    // Create Welcome panel
+    GridBagConstraints gBC;
+    myWelcomePanel = new JPanel(new GridBagLayout());
+    myWelcomePanel.setBackground(WELCOME_PANEL_BACKGROUND);
+    gBC = new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(7, 7, 7, 7), 0, 0);
+    myWelcomePanel.add(topPanel, gBC);
+    gBC = new GridBagConstraints(0, 1, 1, 1, 0.7, 1, NORTHWEST, BOTH, new Insets(0, 7, 7, 7), 0, 0);
+    myWelcomePanel.add(mainScrollPane, gBC);
+    gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, NORTHWEST, BOTH, new Insets(0, 0, 7, 7), 0, 0);
+    myWelcomePanel.add(pluginsScrollPane, gBC);
+  }
+
+  private void initApplicationSpecificImages() {
+    if (myCaptionImage == null) {
+      ApplicationInfoEx applicationInfoEx = ApplicationInfoEx.getInstanceEx();
+      myCaptionImage = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenCaptionUrl());
+      myDeveloperSlogan = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenDeveloperSloganUrl());
+
+      BufferedImage image = new BufferedImage(myCaptionImage.getIconWidth(), myCaptionImage.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+      myCaptionImage.paintIcon(null, image.getGraphics(), 0, 0);
+      final int[] pixels = new int[1];
+      final PixelGrabber pixelGrabber =
+        new PixelGrabber(image, myCaptionImage.getIconWidth() - 1, myCaptionImage.getIconHeight() - 2, 1, 1, pixels, 0, 1);
+      try {
+        pixelGrabber.grabPixels();
+        myCaptionBackground = new Color(pixels[0]);
+      }
+      catch (InterruptedException ignore) {
+      }
+    }
+  }
+
+  private JPanel createCaptionPane() {
+    JPanel topPanel = new JPanel(new GridBagLayout()) {
+      public void paint(Graphics g) {
+        Icon welcome = myCaptionImage;
+        welcome.paintIcon(null, g, 0, 0);
+        g.setColor(myCaptionBackground);
+        g.fillRect(welcome.getIconWidth(), 0, getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
+        super.paint(g);
+      }
+    };
+    topPanel.setOpaque(false);
+    topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, myCaptionBackground));
+
+    JPanel transparentTopPanel = new JPanel();
+    transparentTopPanel.setOpaque(false);
+
+    topPanel.add(transparentTopPanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, CENTER, HORIZONTAL, NO_INSETS, 0, 0));
+    topPanel.add(new JLabel(myDeveloperSlogan), new GridBagConstraints(1, 0, 1, 1, 0, 0, SOUTHWEST, NONE, new Insets(0, 0, 0, 10), 0, 0));
+
+    return topPanel;
+  }
+
+  private void setUpMainPanel() {
+    final ActionManager actionManager = ActionManager.getInstance();
+
     // Create QuickStarts group of actions
     ActionGroupDescriptor quickStarts = new ActionGroupDescriptor(UIBundle.message("welcome.screen.quick.start.action.group.name"), 0);
     // Append plug-in actions to the end of the QuickStart list
@@ -245,8 +192,8 @@ public class WelcomeScreen {
     final JPanel quickStartPanel = quickStarts.getPanel();
     // Add empty panel at the end of the QuickStarts panel
     JPanel emptyPanel_2 = new JPanel();
-    emptyPanel_2.setBackground(MAIN_PANEL_COLOR);
-    quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    emptyPanel_2.setBackground(MAIN_PANEL_BACKGROUND);
+    quickStartPanel.add(emptyPanel_2, new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Create Documentation group of actions
     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor(UIBundle.message("welcome.screen.documentation.action.group.name"), 1);
@@ -255,181 +202,92 @@ public class WelcomeScreen {
     final JPanel docsPanel = docsGroup.getPanel();
     // Add empty panel at the end of the Documentation list
     JPanel emptyPanel_3 = new JPanel();
-    emptyPanel_3.setBackground(MAIN_PANEL_COLOR);
-    docsPanel.add(emptyPanel_3, new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    emptyPanel_3.setBackground(MAIN_PANEL_BACKGROUND);
+    docsPanel.add(emptyPanel_3, new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0));
 
     // Add QuickStarts and Docs to main panel
     myMainPanel.add(quickStartPanel);
     myMainPanel.add(docsPanel);
-
-    JScrollPane myMainScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
-    myMainScrollPane.setBorder(null);
-    myMainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myMainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-
-    // Create Plugins Panel
-    JScrollPane myPluginsScrollPane = createPluginsPanel();
-
-    // Create Welcome panel
-    gBC = new GridBagConstraints(0, 0, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 5, 0, 5), 0, 0);
-    myWelcomePanel.add(topPanel, gBC);
-    gBC = new GridBagConstraints(0, 1, 1, 1, 0.7, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 0), 0, 0);
-    myWelcomePanel.add(myMainScrollPane, gBC);
-    gBC = new GridBagConstraints(1, 1, 1, 1, 0.3, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(15, 15, 15, 15), 0, 0);
-    myWelcomePanel.add(myPluginsScrollPane, gBC);
   }
 
-  private static void initApplicationSpecificImages() {
-    if (CAPTION_IMAGE == null) {
-      ApplicationInfoEx applicationInfoEx = ApplicationInfoEx.getInstanceEx();
-      CAPTION_IMAGE = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenCaptionUrl());
-      DEVELOPER_SLOGAN = IconLoader.getIcon(applicationInfoEx.getWelcomeScreenDeveloperSloganUrl());
-
-      BufferedImage image = new BufferedImage(CAPTION_IMAGE.getIconWidth(), CAPTION_IMAGE.getIconHeight(), BufferedImage.TYPE_INT_RGB);
-      CAPTION_IMAGE.paintIcon(null, image.getGraphics(), 0, 0);
-      final int[] pixels = new int[1];
-      final PixelGrabber pixelGrabber = new PixelGrabber(image, CAPTION_IMAGE.getIconWidth() - 1, CAPTION_IMAGE.getIconHeight() - 2, 1, 1, pixels, 0, 1);
-      try {
-        pixelGrabber.grabPixels();
-        CAPTION_BACKGROUND = new Color(pixels[0]);
-      }
-      catch (InterruptedException e) {
-        //ignore exception
-      }
-    }
-  }
-
-  public static JPanel createWelcomePanel() {
-    return new WelcomeScreen().myWelcomePanel;
-  }
-
-  private JPanel createCaptionPane() {
-    JPanel topPanel = new JPanel(new GridBagLayout()) {
-      public void paint(Graphics g) {
-        Icon welcome = CAPTION_IMAGE;
-        welcome.paintIcon(null, g, 0, 0);
-        g.setColor(CAPTION_BACKGROUND);
-        g.fillRect(welcome.getIconWidth(), 0, getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
-        super.paint(g);
-      }
-    };
-    topPanel.setOpaque(false);
-
-    JPanel transparentTopPanel = new JPanel();
-    transparentTopPanel.setOpaque(false);
-
-    topPanel.add(transparentTopPanel,
-                 new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    topPanel.add(new JLabel(DEVELOPER_SLOGAN),
-                 new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-
-    // Create the base welcome panel
-    myWelcomePanel = new JPanel(new GridBagLayout());
-    myWelcomePanel.setBackground(MAIN_PANEL_BACKGROUND);
-    return topPanel;
-  }
-
-  private JScrollPane createPluginsPanel() {
-    myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
-    myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
+  private void setUpPluginsPanel() {
+    GridBagConstraints gBC;
 
     JLabel pluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.plugins.label"));
     pluginsCaption.setFont(GROUP_CAPTION_FONT);
     pluginsCaption.setForeground(CAPTION_COLOR);
+
+    JLabel openPluginManager = new JLabel(UIBundle.message("welcome.screen.plugins.panel.manager.link"));
+    openPluginManager.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
+        ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, configurable);
+      }
+    });
+    openPluginManager.setForeground(CAPTION_COLOR);
+    openPluginManager.setFont(LINK_FONT);
+    openPluginManager.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     JLabel installedPluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.my.plugins.label"));
     installedPluginsCaption.setFont(LINK_FONT);
     installedPluginsCaption.setForeground(CAPTION_COLOR);
 
     JPanel installedPluginsPanel = new JPanel(new GridBagLayout());
-    installedPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
+    installedPluginsPanel.setBackground(PLUGINS_PANEL_BACKGROUND);
 
     JLabel bundledPluginsCaption = new JLabel(UIBundle.message("welcome.screen.plugins.panel.bundled.plugins.label"));
     bundledPluginsCaption.setFont(LINK_FONT);
     bundledPluginsCaption.setForeground(CAPTION_COLOR);
 
     JPanel bundledPluginsPanel = new JPanel(new GridBagLayout());
-    bundledPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
-
-    JPanel topPluginsPanel = new JPanel(new GridBagLayout());
-    topPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
-
-    GridBagConstraints gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(17, 25, 0, 0), 0, 0);
-    topPluginsPanel.add(pluginsCaption, gBC);
-
-    JLabel emptyLabel_1 = new JLabel();
-    emptyLabel_1.setBackground(PLUGINS_PANEL_COLOR);
-    gBC = new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    topPluginsPanel.add(emptyLabel_1, gBC);
+    bundledPluginsPanel.setBackground(PLUGINS_PANEL_BACKGROUND);
 
     createListOfPlugins(installedPluginsPanel, bundledPluginsPanel);
 
-    gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
-    MyActionButton openPluginManager = new PluginsActionButton(OPEN_PLUGINS_ICON, null) {
-      protected void onPress(InputEvent e) {
-        final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-        ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, configurable);
-      }
+    JPanel topPluginsPanel = new JPanel(new GridBagLayout());
+    topPluginsPanel.setBackground(PLUGINS_PANEL_BACKGROUND);
 
-      public Dimension getMaximumSize() {
-        return OPEN_PLUGIN_MANAGER_SIZE;
-      }
+    gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTHWEST, NONE, PLUGINS_CAPTION_INSETS, 0, 0);
+    topPluginsPanel.add(pluginsCaption, gBC);
 
-      public Dimension getMinimumSize() {
-        return OPEN_PLUGIN_MANAGER_SIZE;
-      }
+    JLabel emptyLabel_1 = new JLabel();
+    emptyLabel_1.setBackground(PLUGINS_PANEL_BACKGROUND);
+    gBC = new GridBagConstraints(1, 0, 1, 1, 1, 0, NORTHWEST, NONE, NO_INSETS, 0, 0);
+    topPluginsPanel.add(emptyLabel_1, gBC);
 
-      public Dimension getPreferredSize() {
-        return OPEN_PLUGIN_MANAGER_SIZE;
-      }
-    };
-    openPluginManager.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(22, 0, 0, 10), 0, 0);
     topPluginsPanel.add(openPluginManager, gBC);
-    openPluginManager.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
-    myPluginsButtonsCount++;
 
-    gBC = new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 25, 0, 0), 0, 0);
-    topPluginsPanel.add(installedPluginsCaption, gBC);
-
-    JLabel emptyLabel_2 = new JLabel();
-    emptyLabel_2.setBackground(PLUGINS_PANEL_COLOR);
-    gBC = new GridBagConstraints(1, 1, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    topPluginsPanel.add(emptyLabel_2, gBC);
-
-    gBC = new GridBagConstraints(0, 0, 1, 1, 0.5, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 0, 1, 1, 0, 0, NORTHWEST, HORIZONTAL, NO_INSETS, 0, 0);
     myPluginsPanel.add(topPluginsPanel, gBC);
 
-    gBC = new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 1, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(20, 25, 0, 0), 0, 0);
+    myPluginsPanel.add(installedPluginsCaption, gBC);
+    gBC = new GridBagConstraints(0, 2, 1, 1, 1, 0, NORTHWEST, NONE, new Insets(0, 5, 0, 0), 0, 0);
     myPluginsPanel.add(installedPluginsPanel, gBC);
 
-    JPanel emptyPanel_1 = new JPanel();
-    emptyPanel_1.setBackground(PLUGINS_PANEL_COLOR);
-
-    gBC = new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(25, 25, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 3, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(20, 25, 0, 0), 0, 0);
     myPluginsPanel.add(bundledPluginsCaption, gBC);
-
-    gBC = new GridBagConstraints(0, 3, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 5, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 4, 1, 1, 1, 0, NORTHWEST, NONE, new Insets(0, 5, 0, 0), 0, 0);
     myPluginsPanel.add(bundledPluginsPanel, gBC);
 
-    gBC = new GridBagConstraints(0, 4, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+    JPanel emptyPanel_1 = new JPanel();
+    emptyPanel_1.setBackground(PLUGINS_PANEL_BACKGROUND);
+    gBC = new GridBagConstraints(0, 5, 1, 1, 1, 1, NORTHWEST, BOTH, NO_INSETS, 0, 0);
     myPluginsPanel.add(emptyPanel_1, gBC);
-
-    JScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
-    myPluginsScrollPane.setBorder(BorderFactory.createLineBorder(GRAY_BORDER_COLOR));
-    myPluginsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myPluginsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-    return myPluginsScrollPane;
   }
 
   private void createListOfPlugins(final JPanel installedPluginsPanel, final JPanel bundledPluginsPanel) {
     //Create the list of installed plugins
-    List<IdeaPluginDescriptor> installedPlugins = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(ApplicationManager.getApplication().getPlugins()));
+    List<IdeaPluginDescriptor> installedPlugins =
+      new ArrayList<IdeaPluginDescriptor>(Arrays.asList(ApplicationManager.getApplication().getPlugins()));
 
     if (installedPlugins.size() == 0) {
-      addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
-      addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-        .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
+      addListItemToPlugins(installedPluginsPanel,
+                           italic(UIBundle.message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
+      addListItemToPlugins(bundledPluginsPanel,
+                           italic(UIBundle.message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
     }
     else {
       final Comparator<IdeaPluginDescriptor> pluginsComparator = new Comparator<IdeaPluginDescriptor>() {
@@ -447,7 +305,7 @@ public class WelcomeScreen {
       int installedPluginsCount = 0;
 
       for (IdeaPluginDescriptor plugin : installedPlugins) {
-        if (plugin.getName().equals("IDEA CORE") || ((IdeaPluginDescriptorImpl) plugin).isUseCoreClassLoader()) {
+        if (plugin.getName().equals("IDEA CORE") || ((IdeaPluginDescriptorImpl)plugin).isUseCoreClassLoader()) {
           // this is not really a plugin, so it shouldn't be displayed
           continue;
         }
@@ -461,18 +319,18 @@ public class WelcomeScreen {
         }
       }
       if (embeddedPlugins == 0) {
-        addListItemToPlugins(bundledPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
+        addListItemToPlugins(bundledPluginsPanel,
+                             italic(UIBundle.message("welcome.screen.plugins.panel.all.bundled.plugins.were.uninstalled.message.text")));
       }
       if (installedPluginsCount == 0) {
-        addListItemToPlugins(installedPluginsPanel, makeItalic(UIBundle
-          .message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
+        addListItemToPlugins(installedPluginsPanel,
+                             italic(UIBundle.message("welcome.screen.plugins.panel.no.plugins.currently.installed.message.text")));
       }
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static String makeItalic(final String message) {
+  private static String italic(final String message) {
     return "<i>" + message + "</i>";
   }
 
@@ -486,9 +344,14 @@ public class WelcomeScreen {
                          plugin.getPluginClassLoader(), plugin.getUrl(), plugin.isEnabled(), PluginManager.isIncompatible(plugin));
   }
 
-  public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url,
-                                   final boolean enabled, final boolean incompatible) {
-
+  public void addListItemToPlugins(final JPanel panel,
+                                   String name,
+                                   String description,
+                                   final String iconPath,
+                                   final ClassLoader pluginClassLoader,
+                                   final String url,
+                                   final boolean enabled,
+                                   final boolean incompatible) {
     if (StringUtil.isEmptyOrSpaces(name)) {
       return;
     }
@@ -508,11 +371,12 @@ public class WelcomeScreen {
       if (logoImage == null) logoImage = new EmptyIcon(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     JLabel imageLabel = new JLabel(logoImage);
-    GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                    new Insets(15, 20, 0, 0), 0, 0);
+    GridBagConstraints gBC = new GridBagConstraints(0, y, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(15, 20, 0, 0), 0, 0);
     panel.add(imageLabel, gBC);
 
-    String shortenedName = adjustStringBreaksByWidth(name + " " + (incompatible ? UIBundle.message("welcome.screen.incompatible.plugins.description") : (enabled ? "": UIBundle.message("welcome.screen.disabled.plugins.description"))), LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
+    name = name + " " + (incompatible ? UIBundle.message("welcome.screen.incompatible.plugins.description")
+                                      : (enabled ? "" : UIBundle.message("welcome.screen.disabled.plugins.description")));
+    String shortenedName = adjustStringBreaksByWidth(name, LINK_FONT, false, PLUGIN_NAME_MAX_WIDTH, PLUGIN_NAME_MAX_ROWS);
     JLabel logoName = new JLabel(shortenedName);
     logoName.setFont(LINK_FONT);
     logoName.setForeground(enabled ? CAPTION_COLOR : DISABLED_CAPTION_COLOR);
@@ -520,16 +384,39 @@ public class WelcomeScreen {
       logoName.setToolTipText(adjustStringBreaksByWidth(name, UIUtil.getToolTipFont(), false, MAX_TOOLTIP_WIDTH, 0));
     }
 
-    gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                 new Insets(15, 7, 0, 0), 0, 0);
-    panel.add(logoName, gBC);
+    JPanel logoPanel = new JPanel(new BorderLayout());
+    logoPanel.setBackground(PLUGINS_PANEL_BACKGROUND);
+    logoPanel.add(logoName, BorderLayout.WEST);
+    gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, NORTHWEST, NONE, new Insets(15, 7, 0, 0), 0, 0);
+    panel.add(logoPanel, gBC);
+
+    if (!StringUtil.isEmptyOrSpaces(url)) {
+      JLabel learnMore = new JLabel(UIBundle.message("welcome.screen.plugins.panel.learn.more.link"));
+      learnMore.setFont(LINK_FONT);
+      learnMore.setForeground(enabled ? CAPTION_COLOR : DISABLED_CAPTION_COLOR);
+      learnMore.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      learnMore.setToolTipText(UIBundle.message("welcome.screen.plugins.panel.learn.more.tooltip.text"));
+      learnMore.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          try {
+            BrowserUtil.launchBrowser(url);
+          }
+          catch (IllegalThreadStateException ignore) {
+          }
+        }
+      });
+
+      logoPanel.add(new JLabel(" "), BorderLayout.CENTER);
+      logoPanel.add(learnMore, BorderLayout.EAST);
+    }
 
     if (!StringUtil.isEmpty(description)) {
       description = description.trim();
-      if (description.startsWith(ActionGroupDescriptor.HTML_PREFIX)) {
-        description = description.replaceAll(ActionGroupDescriptor.HTML_PREFIX, "");
-        if (description.endsWith(ActionGroupDescriptor.HTML_SUFFIX)) {
-          description = description.replaceAll(ActionGroupDescriptor.HTML_SUFFIX, "");
+      if (description.startsWith(HTML_PREFIX)) {
+        description = description.replaceAll(HTML_PREFIX, "");
+        if (description.endsWith(HTML_SUFFIX)) {
+          description = description.replaceAll(HTML_SUFFIX, "");
         }
       }
       description = description.replaceAll(ESC_NEW_LINE, "");
@@ -540,33 +427,9 @@ public class WelcomeScreen {
         pluginDescription.setToolTipText(adjustStringBreaksByWidth(description, UIUtil.getToolTipFont(), false, MAX_TOOLTIP_WIDTH, 0));
       }
 
-      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                   new Insets(5, 7, 0, 0), 5, 0);
+      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, NORTHWEST, HORIZONTAL, new Insets(5, 7, 0, 0), 5, 0);
       panel.add(pluginDescription, gBC);
     }
-
-    if (!StringUtil.isEmptyOrSpaces(url)) {
-      gBC = new GridBagConstraints(2, y + 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
-      MyActionButton learnMore = new PluginsActionButton(LEARN_MORE_ICON, null) {
-        protected void onPress(InputEvent e) {
-          try {
-            BrowserUtil.launchBrowser(url);
-          }
-          catch (IllegalThreadStateException ex) {
-            // it's not a problem
-          }
-        }
-      };
-      learnMore.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      learnMore.setToolTipText(UIBundle.message("welcome.screen.plugins.panel.learn.more.tooltip.text"));
-      panel.add(learnMore, gBC);
-      learnMore.setupWithinPanel(myPluginsPanel, PLUGINS_GROUP, myPluginsButtonsCount, 0);
-      myPluginsButtonsCount++;
-    }
-    gBC = new GridBagConstraints(2, y, 2, 2, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0);
-    JPanel emptyPane = new JPanel();
-    emptyPane.setBackground(PLUGINS_PANEL_COLOR);
-    panel.add(emptyPane, gBC);
   }
 
   /**
@@ -574,25 +437,25 @@ public class WelcomeScreen {
    * and/or cuts it, so that the string does not exceed the given width (with ellipsis concatenated at the end if needed).<br>
    * It also removes all of the formatting HTML tags, except <b>&lt;br&gt;</b> and <b>&lt;li&gt;</b> (they are used for correct line breaks).
    * Returns the resulting or original string surrounded by <b>&lt;html&gt;</b> tags.
-   * @param string not <code>null</code> {@link String String} value, otherwise the "Not specified." string is returned.
+   *
+   * @param string        not <code>null</code> {@link String String} value, otherwise the "Not specified." string is returned.
+   * @param font          not <code>null</code> {@link Font Font} object.
+   * @param isAntiAliased <code>boolean</code> value to denote whether the font is anti-aliased or not.
+   * @param maxWidth      <code>int</code> value specifying maximum width of the resulting string in pixels.
+   * @param maxRows       <code>int</code> value specifying the number of rows. If the value is positive, the string is modified to not exceed
+   *                      the specified number, and method adds an ellipsis instead of the exceeding part. If the value is zero or negative,
+   *                      the entire string is broken into lines until its end.
    * @return the resulting or original string ({@link String String}) surrounded by <b>&lt;html&gt;</b> tags.
-   * @param font not <code>null</code> {@link Font Font} object.
-   * @param isAntiAliased <code>boolean</code> value to denote whether the font is antialiased or not.
-   * @param maxWidth <code>int</code> value specifying maximum width of the resulting string in pixels.
-   * @param maxRows <code>int</code> value spesifying the number of rows. If the value is positive, the string is modified to not exceed
-   * the specified number, and method adds an ellipsis instead of the exceeding part. If the value is zero or negative, the entire string is broken
-   * into lines until its end.
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private String adjustStringBreaksByWidth(String string,
-                                           final Font font,
-                                           final boolean isAntiAliased,
-                                           final int maxWidth,
-                                           final int maxRows) {
-
+  private static String adjustStringBreaksByWidth(String string,
+                                                  final Font font,
+                                                  final boolean isAntiAliased,
+                                                  final int maxWidth,
+                                                  final int maxRows) {
     string = string.trim();
     if (StringUtil.isEmpty(string)) {
-      return "<html>" + UIBundle.message("welcome.script.text.not.specified.message") + "</html>";
+      return "<html>" + UIBundle.message("welcome.screen.text.not.specified.message") + "</html>";
     }
 
     string = string.replaceAll("<li>", " <>&gt; ");
@@ -666,7 +529,122 @@ public class WelcomeScreen {
       string = prefix + suffix;
     }
     string = string.replaceAll(" <>", "<br>");
-    return ActionGroupDescriptor.HTML_PREFIX + string + ActionGroupDescriptor.HTML_SUFFIX;
+    return HTML_PREFIX + string + HTML_SUFFIX;
+  }
+
+  private class ActionGroupDescriptor {
+    private int myIdx = -1;
+    private int myCount = 0;
+    private final JPanel myPanel;
+    private final int myColumnIdx;
+
+    public ActionGroupDescriptor(final String caption, final int columnIndex) {
+      JPanel panel = new JPanel(new GridBagLayout()) {
+        public Dimension getPreferredSize() {
+          return getMinimumSize();
+        }
+      };
+      panel.setBackground(MAIN_PANEL_BACKGROUND);
+
+      JLabel actionGroupCaption = new JLabel(caption);
+      actionGroupCaption.setFont(GROUP_CAPTION_FONT);
+      actionGroupCaption.setForeground(CAPTION_COLOR);
+
+      GridBagConstraints gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, NORTHWEST, NONE, ACTION_GROUP_CAPTION_INSETS, 0, 0);
+      panel.add(actionGroupCaption, gBC);
+      myPanel = panel;
+      myColumnIdx = columnIndex;
+    }
+
+    public void addButton(final MyActionButton button, String commandLink, String description) {
+      GridBagConstraints gBC;
+
+      final int y = myIdx += 2;
+      gBC = new GridBagConstraints(0, y, 1, 2, 0, 0, NORTHWEST, NONE, ACTION_ICON_INSETS, ACTION_BUTTON_PADDING, ACTION_BUTTON_PADDING);
+      myPanel.add(button, gBC);
+      button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      button.setupWithinPanel(myMainPanel, MAIN_GROUP, myCount, myColumnIdx);
+      myCount++;
+
+      JLabel name = new JLabel(underlineHtmlText(commandLink));
+      name.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          button.onPress(e);
+        }
+      });
+      name.setForeground(CAPTION_COLOR);
+      name.setFont(LINK_FONT);
+      name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, SOUTHWEST, NONE, ACTION_NAME_INSETS, 5, 0);
+      myPanel.add(name, gBC);
+
+      description = wrapWithHtml(description);
+      JLabel shortDescription = new JLabel(description);
+      shortDescription.setFont(TEXT_FONT);
+      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, NORTHWEST, HORIZONTAL, ACTION_DESCRIPTION_INSETS, 5, 0);
+      myPanel.add(shortDescription, gBC);
+    }
+
+    private String wrapWithHtml(final String description) {
+      return HTML_PREFIX + description + HTML_SUFFIX;
+    }
+
+    @SuppressWarnings({"HardCodedStringLiteral"})
+    private String underlineHtmlText(final String commandLink) {
+      return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
+    }
+
+    private void appendActionsFromGroup(final ActionGroup group) {
+      final AnAction[] actions = group.getChildren(null);
+      PresentationFactory factory = new PresentationFactory();
+      for (final AnAction action : actions) {
+        if (action instanceof ActionGroup) {
+          final ActionGroup childGroup = (ActionGroup)action;
+          appendActionsFromGroup(childGroup);
+        }
+        else {
+          Presentation presentation = factory.getPresentation(action);
+          action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(myMainPanel),
+                                          ActionPlaces.WELCOME_SCREEN, presentation, ActionManager.getInstance(), 0));
+          if (presentation.isVisible()) {
+            appendButtonForAction(action);
+          }
+        }
+      }
+    }
+
+    public void appendButtonForAction(final AnAction action) {
+      final Presentation presentation = action.getTemplatePresentation();
+      final Icon icon = presentation.getIcon();
+      final String text = presentation.getText();
+      MyActionButton button = new ButtonWithExtension(icon, "") {
+        protected void onPress(InputEvent e, MyActionButton button) {
+          final ActionManager actionManager = ActionManager.getInstance();
+          AnActionEvent evt = new AnActionEvent(
+            null,
+            DataManager.getInstance().getDataContext(e.getComponent()),
+            ActionPlaces.WELCOME_SCREEN,
+            action.getTemplatePresentation(),
+            actionManager,
+            0
+          );
+          action.beforeActionPerformedUpdate(evt);
+          if (evt.getPresentation().isEnabled()) {
+            action.actionPerformed(evt);
+          }
+        }
+      };
+
+      addButton(button, text, presentation.getDescription());
+    }
+
+    public JPanel getPanel() {
+      return myPanel;
+    }
+
+    public int getIdx() {
+      return myIdx;
+    }
   }
 
   private abstract class MyActionButton extends JComponent implements ActionButtonComponent {
@@ -687,18 +665,6 @@ public class WelcomeScreen {
       myColumnIdx = columnIdx;
       setToolTipText(null);
       setupListeners(panel);
-    }
-
-    protected int getColumnIdx() {
-      return myColumnIdx;
-    }
-
-    protected int getGroupIdx() {
-      return myGroupIdx;
-    }
-
-    protected int getRowIdx() {
-      return myRowIdx;
     }
 
     protected String getDisplayName() {
@@ -752,21 +718,9 @@ public class WelcomeScreen {
       }
     }
 
-    protected void paintBorder(Graphics g) {
-      Rectangle rectangle = new Rectangle(getSize());
-      Color color = ACTION_BUTTON_BORDER_COLOR;
-      g.setColor(color);
-      UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-      UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-      UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
-                      (rectangle.y + rectangle.height) - 1);
-      UIUtil.drawLine(g, rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-                      (rectangle.y + rectangle.height) - 1);
-    }
-
     public int getPopState() {
-      if (myKeypressedButton == this) return PUSHED;
-      if (myKeypressedButton != null) return NORMAL;
+      if (myPressedButton == this) return PUSHED;
+      if (myPressedButton != null) return NORMAL;
       if (mySelectedColumn == myColumnIdx &&
           mySelectedRow == myRowIdx &&
           mySelectedGroup == myGroupIdx) {
@@ -778,17 +732,17 @@ public class WelcomeScreen {
     private void setupListeners(final JPanel panel) {
       addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
-          myKeypressedButton = MyActionButton.this;
+          myPressedButton = MyActionButton.this;
           panel.repaint();
         }
 
         public void mouseReleased(MouseEvent e) {
-          if (myKeypressedButton == MyActionButton.this) {
-            myKeypressedButton = null;
+          if (myPressedButton == MyActionButton.this) {
+            myPressedButton = null;
             onPress(e);
           }
           else {
-            myKeypressedButton = null;
+            myPressedButton = null;
           }
 
           panel.repaint();
@@ -830,39 +784,12 @@ public class WelcomeScreen {
     protected abstract void onPress(InputEvent e, MyActionButton button);
   }
 
-  private abstract class PluginsActionButton extends MyActionButton {
-    protected PluginsActionButton(Icon icon, String displayName) {
-      super(icon, displayName);
-    }
-
-    public Dimension getMaximumSize() {
-      return LEARN_MORE_SIZE;
-    }
-
-    public Dimension getMinimumSize() {
-      return LEARN_MORE_SIZE;
-    }
-
-    public Dimension getPreferredSize() {
-      return LEARN_MORE_SIZE;
-    }
-
-    @Override protected Color getNormalButtonColor() {
-      return LEARN_MORE_BUTTON_COLOR;
-    }
-
-    protected void paintBorder(Graphics g) {
-      Rectangle rectangle = new Rectangle(getSize());
-      Color color = WHITE_BORDER_COLOR;
-      g.setColor(color);
-      UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-      UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-      color = GRAY_BORDER_COLOR;
-      g.setColor(color);
-      UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y + 1, (rectangle.x + rectangle.width) - 1,
-                      (rectangle.y + rectangle.height) - 1);
-      UIUtil.drawLine(g, rectangle.x + 1, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-                      (rectangle.y + rectangle.height) - 1);
-    }
+  private static JScrollPane scrollPane(final JPanel panel, final Color borderColor) {
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
+    scrollPane.setBorder(borderColor != null ?
+                         BorderFactory.createLineBorder(borderColor, 1) : BorderFactory.createEmptyBorder());
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    return scrollPane;
   }
 }

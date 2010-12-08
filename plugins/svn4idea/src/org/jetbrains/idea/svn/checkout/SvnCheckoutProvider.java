@@ -231,7 +231,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {
                 errorMessage.set("Can not find file: " + targetPath);
-              } else if (! ExcludedFileIndex.getInstance(project).isInContent(targetVf)) {
+              } else if (project.isDefault() || !ExcludedFileIndex.getInstance(project).isInContent(targetVf)) {
                 // do not pay attention to ignored/excluded settings
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {

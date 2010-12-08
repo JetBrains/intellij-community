@@ -40,6 +40,10 @@ public class HgShowConfigCommand {
     HgCommandResult result =
       HgCommandService.getInstance(project).execute(repo, "showconfig", null);
 
+    if (result == null) {
+      return Collections.emptyMap();
+    }
+
     Map<String, String> options = new HashMap<String, String>();
     for (String line : result.getOutputLines()) {
       String[] option = StringUtils.splitPreserveAllTokens(line, '=');

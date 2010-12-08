@@ -474,7 +474,7 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      TextRange currentTextRange = getCurrentTextRange(range, false);
+      TextRange currentTextRange = getCurrentTextRange(range);
 
       if (range.getType() == Range.INSERTED) {
         myDocument
@@ -495,7 +495,7 @@ public class LineStatusTracker {
 
   public String getUpToDateContent(Range range) {
     synchronized (myLock) {
-      TextRange textRange = getUpToDateRange(range, false);
+      TextRange textRange = getUpToDateRange(range);
       final int startOffset = textRange.getStartOffset();
       final int endOffset = Math.min(textRange.getEndOffset() + 1, myUpToDateDocument.getTextLength());
       return myUpToDateDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
@@ -506,12 +506,12 @@ public class LineStatusTracker {
     return myProject;
   }
 
-  TextRange getCurrentTextRange(Range range, final boolean keepEnd) {
-    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument, keepEnd);
+  TextRange getCurrentTextRange(Range range) {
+    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument, false);
   }
 
-  TextRange getUpToDateRange(Range range, final boolean keepEnd) {
-    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, keepEnd);
+  TextRange getUpToDateRange(Range range) {
+    return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, false);
   }
 
   // a hack
