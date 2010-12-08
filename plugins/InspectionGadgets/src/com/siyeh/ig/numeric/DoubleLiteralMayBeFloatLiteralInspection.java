@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Bas Leijdekkers
+ * Copyright 2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
+public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
 
     @Override
     @Nls
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "int.literal.may.be.long.literal.display.name");
+                "double.literal.may.be.float.literal.display.name");
     }
 
     @Override
@@ -44,7 +44,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
         final StringBuilder replacementText =
                 buildReplacementText(typeCastExpression, new StringBuilder());
         return InspectionGadgetsBundle.message(
-                "int.literal.may.be.long.literal.problem.descriptor",
+                "double.literal.may.be.float.literal.problem.descriptor",
                 replacementText);
     }
 
@@ -61,7 +61,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
             PsiExpression expression, StringBuilder out) {
         if (expression instanceof PsiLiteralExpression) {
             out.append(expression.getText());
-            out.append('L');
+            out.append('f');
         } else if (expression instanceof PsiPrefixExpression) {
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression) expression;
@@ -98,7 +98,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
-                    "int.literal.may.be.long.literal.quickfix",
+                    "double.literal.may.be.float.literal.quickfix",
                     replacementString);
         }
 
@@ -127,7 +127,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
         public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
-            if (PsiType.INT != type) {
+            if (PsiType.DOUBLE != type) {
                 return;
             }
             PsiElement parent = expression.getParent();
@@ -141,7 +141,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
             final PsiTypeCastExpression typeCastExpression =
                     (PsiTypeCastExpression) parent;
             final PsiType castType = typeCastExpression.getType();
-            if (PsiType.LONG != castType) {
+            if (PsiType.FLOAT != castType) {
                 return;
             }
             registerError(typeCastExpression, typeCastExpression);

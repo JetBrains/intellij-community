@@ -86,6 +86,11 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     public int getWidth(JTable table) {
       return myDelegate.getWidth(table);
     }
+
+    @Override
+    public Class getColumnClass() {
+      return myDelegate.getColumnClass();
+    }
   }
 
   private JPanel myContentPane;
@@ -118,6 +123,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return null;
   }
 
+  @Nullable
   protected abstract Item createItem();
 
   private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
@@ -225,8 +231,12 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   protected void addItem() {
+    Item newItem = createItem();
+    if (newItem == null) {
+      return;
+    }
     List<Item> items = new ArrayList<Item>(doGetItems());
-    items.add(createItem());
+    items.add(newItem);
 
     setItems(items);
 

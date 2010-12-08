@@ -245,5 +245,19 @@ public class AndroidSdkImpl extends AndroidSdk {
     public int compareTo(IAndroidTarget o) {
       return myWrapee.compareTo(o);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof MyTargetWrapper)) {
+        return false;
+      }
+      MyTargetWrapper other = (MyTargetWrapper)obj;
+      return myWrapee.equals(other.myWrapee);
+    }
+
+    @Override
+    public int hashCode() {
+      return myWrapee.hashCode();
+    }
   }
 }

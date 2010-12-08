@@ -247,7 +247,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     for (TemplateKey templateKey : myDeletedTemplates) {
       if (templateKey.groupName == null) {
-        final Collection<TemplateImpl> templates = myTemplates.get(templateKey.key);
+        final Collection<TemplateImpl> templates = new ArrayList<TemplateImpl>(myTemplates.get(templateKey.key));
         for (TemplateImpl template : templates) {
           removeTemplate(template);
         }

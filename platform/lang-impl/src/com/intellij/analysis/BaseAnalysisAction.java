@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -52,7 +53,10 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(getInspectionScope(event.getDataContext()) != null);
+    final DataContext dataContext = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final boolean dumbMode = project != null && DumbService.getInstance(project).isDumb();
+    presentation.setEnabled(!dumbMode && getInspectionScope(dataContext) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {

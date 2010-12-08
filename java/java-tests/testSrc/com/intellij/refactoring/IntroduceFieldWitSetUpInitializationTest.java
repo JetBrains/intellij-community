@@ -78,6 +78,10 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     doTest();
   }
 
+  public void testOrderInSetup() throws Exception {
+    doTest();
+  }
+
 
   private void doTest() throws Exception {
     configureByFile("/refactoring/introduceField/before" + getTestName(false) + ".java");
