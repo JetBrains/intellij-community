@@ -609,9 +609,11 @@ class PyDB:
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     global exception_set
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
-                    exc_type = get_class(exception)
+
                     is_notify_always = int(notify_always) == 1
                     is_notify_on_terminate = int(notify_on_terminate) == 1
+
+                    exc_type = get_class(exception)
 
                     if exc_type is not None:
                         exception_set.add(ExceptionBreakpoint(exc_type, is_notify_always, is_notify_on_terminate))

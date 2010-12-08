@@ -66,7 +66,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
 
-  public PyDebugProcess(@NotNull XDebugSession session,
+  public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
                         @NotNull final ExecutionConsole executionConsole,
                         @Nullable final ProcessHandler processHandler, @NotNull PyPositionConverter positionConverter) {
@@ -81,6 +81,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myProcessHandler.addProcessListener(this);
     }
     myPositionConverter = positionConverter;
+    myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
+      @Override
+      public void closed() {
+        session.stop();
+      }
+    });
   }
 
   @Override

@@ -115,7 +115,10 @@ def get_class( kls ):
             module = "builtins"
         else:
             module = "__builtin__"
-    m = __import__( module )
-    for comp in parts[-1:]:
-        m = getattr(m, comp)
-    return m
+    try:
+        m = __import__( module )
+        for comp in parts[-1:]:
+            m = getattr(m, comp)
+        return m
+    except ImportError:
+        return None

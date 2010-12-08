@@ -357,6 +357,7 @@
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
     <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
+    <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
   </extensions>
 
   <extensionPoints>
