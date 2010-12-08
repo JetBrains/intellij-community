@@ -20,4 +20,8 @@ public class RepositoryInfo {
   public String getOwner() {
     return myRepository.getChildText("owner");
   }
+
+  public boolean isFork() {
+    return Boolean.valueOf(myRepository.getChildText("fork"));
+  }
 }

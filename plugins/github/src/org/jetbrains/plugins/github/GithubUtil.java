@@ -109,6 +109,25 @@ public class GithubUtil {
     return Collections.emptyList();
   }
 
+  @Nullable
+  public static RepositoryInfo getDetailedRepoInfo(final String login, final String password, final String name) {
+    try {
+      final String request = "/repos/show/" + login + "/" + name;
+      final HttpMethod method = doREST(login, password, request, false);
+      final InputStream stream = method.getResponseBodyAsStream();
+      final Element element = new SAXBuilder(false).build(stream).getRootElement();
+      if ("error".equals(element.getName())){
+        LOG.warn("Got error element by request: " + request);
+        return null;
+      }
+      return (new RepositoryInfo(element));
+    }
+    catch (Exception e) {
+      // ignore
+    }
+    return null;
+  }
+
   public static boolean isPrivateRepoAllowed(final String login, final String password) {
     try {
       final String request = "/user/show/" + login;
@@ -175,4 +194,46 @@ public class GithubUtil {
     }
   }
 
+  /**
+   * Shows GitHub login settings if credentials are wrong or empty and return the list of all the watched repos by user
+   * @param project
+   * @return
+   */
+  @Nullable
+  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String name) {
+    final GithubSettings settings = GithubSettings.getInstance();
+    final boolean validCredentials;
+    try {
+      validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          return testConnection(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return null;
+    }
+    if (!validCredentials){
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return null;
+      }
+    }
+    // Otherwise our credentials are valid and they are successfully stored in settings
+    try {
+      return accessToGithubWithModalProgress(project, new Computable<RepositoryInfo>() {
+        @Override
+        public RepositoryInfo compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
+          return getDetailedRepoInfo(settings.getLogin(), settings.getPassword(), name);
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return null;
+    }
+  }
 }
