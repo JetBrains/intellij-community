@@ -8,7 +8,6 @@ import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,7 +15,7 @@ import java.util.List;
  */
 public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PythonNoseTestRunConfiguration myConfig;
-  private static final String UTRUNNER_PY = "pycharm/noserunner.py";
+  private static final String NOSERUNNER_PY = "pycharm/noserunner.py";
 
   public PythonNoseTestCommandLineState(PythonNoseTestRunConfiguration runConfiguration, ExecutionEnvironment env) {
     super(runConfiguration, env);
@@ -26,21 +25,8 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
   protected void addTestRunnerParameters(GeneralCommandLine cmd) {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
-    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), UTRUNNER_PY).getAbsolutePath());
+    script_params.addParameter(new File(PythonHelpersLocator.getHelpersRoot(), NOSERUNNER_PY).getAbsolutePath());
     script_params.addParameters(getTestSpecs());
-  }
-
-  @Override
-  protected Collection<String> buildPythonPath() {
-    List<String> pythonPath = new ArrayList<String>(super.buildPythonPath());
-    // the first entry is the helpers path; add script directory as second entry
-    if (myConfig.getTestType() == PythonNoseTestRunConfiguration.TestType.TEST_FOLDER) {
-      pythonPath.add(1, myConfig.getFolderName());
-    }
-    else {
-      pythonPath.add(1, new File(myConfig.getWorkingDirectory(), myConfig.getScriptName()).getParent());
-    }
-    return pythonPath;
   }
 
   private List<String> getTestSpecs() {

@@ -129,9 +129,6 @@ def process_args():
       else:
           tests.append(a[0] + ":" + a[1] + "." + a[2])
 
-    #debug("/ Loaded " + str(all.countTestCases()) + " tests")
-    #TeamcityServiceMessages(sys.stdout).testCount(all.countTestCases())
-
     argv = ['nosetests']
 
     if len(sys.argv) > 2:

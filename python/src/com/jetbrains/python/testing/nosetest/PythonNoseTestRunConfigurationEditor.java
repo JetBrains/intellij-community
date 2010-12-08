@@ -3,8 +3,6 @@ package com.jetbrains.python.testing.nosetest;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationForm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

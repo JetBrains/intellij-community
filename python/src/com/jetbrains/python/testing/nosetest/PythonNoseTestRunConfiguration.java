@@ -9,18 +9,16 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
+import com.jetbrains.python.testing.PythonUnitTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
  */
-public class PythonNoseTestRunConfiguration extends AbstractPythonRunConfiguration
-    implements AbstractPythonRunConfigurationParams, PythonNoseTestRunConfigurationParams {
+public class PythonNoseTestRunConfiguration extends PythonUnitTestRunConfiguration
+                                    implements PythonNoseTestRunConfigurationParams {
   private String myClassName = "";
   private String myScriptName = "";
   private String myMethodName = "";
@@ -28,64 +26,31 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonRunConfigurati
   private String myParams = ""; // parameters for nosetests
   private TestType myTestType = TestType.TEST_SCRIPT;
 
-  protected PythonNoseTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
-    super(name, module, configurationFactory);
+  protected PythonNoseTestRunConfiguration(RunConfigurationModule module,
+                                     ConfigurationFactory configurationFactory, String name) {
+    super(module, configurationFactory, name);
   }
 
+  @Override
   protected ModuleBasedConfiguration createInstance() {
     return new PythonNoseTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
   }
 
-  public enum TestType {
-    TEST_FOLDER,
-    TEST_SCRIPT,
-    TEST_CLASS,
-    TEST_METHOD,
-    TEST_FUNCTION,}
-
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myScriptName = JDOMExternalizerUtil.readField(element, "SCRIPT_NAME");
-    myClassName = JDOMExternalizerUtil.readField(element, "CLASS_NAME");
-    myMethodName = JDOMExternalizerUtil.readField(element, "METHOD_NAME");
-    myFolderName = JDOMExternalizerUtil.readField(element, "FOLDER_NAME");
     myParams = JDOMExternalizerUtil.readField(element, "PARAMS");
-
-    try {
-      myTestType = TestType.valueOf(JDOMExternalizerUtil.readField(element, "TEST_TYPE"));
-    }
-    catch (IllegalArgumentException e) {
-      myTestType = TestType.TEST_SCRIPT; // safe default
-    }
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-
-    JDOMExternalizerUtil.writeField(element, "SCRIPT_NAME", myScriptName);
-    JDOMExternalizerUtil.writeField(element, "CLASS_NAME", myClassName);
-    JDOMExternalizerUtil.writeField(element, "METHOD_NAME", myMethodName);
-    JDOMExternalizerUtil.writeField(element, "FOLDER_NAME", myFolderName);
     JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
-    JDOMExternalizerUtil.writeField(element, "TEST_TYPE", myTestType.toString());
   }
 
+  @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new PythonNoseTestRunConfigurationEditor(getProject(), this);
-  }
-
-  public AbstractPythonRunConfigurationParams getBaseParams() {
-    return this;
-  }
-
-  public String getClassName() {
-    return myClassName;
-  }
-
-  public void setClassName(String className) {
-    myClassName = className;
   }
 
   public String getParams() {
@@ -94,58 +59,6 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonRunConfigurati
 
   public void setParams(String pattern) {
     myParams = pattern;
-  }
-  public String getFolderName() {
-    return myFolderName;
-  }
-
-  public void setFolderName(String folderName) {
-    myFolderName = folderName;
-  }
-
-  public String getScriptName() {
-    return myScriptName;
-  }
-
-  public void setScriptName(String scriptName) {
-    myScriptName = scriptName;
-  }
-
-  public String getMethodName() {
-    return myMethodName;
-  }
-
-  public void setMethodName(String methodName) {
-    myMethodName = methodName;
-  }
-
-  public TestType getTestType() {
-    return myTestType;
-  }
-
-  public void setTestType(TestType testType) {
-    myTestType = testType;
-  }
-
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-    super.checkConfiguration();
-
-    if (StringUtil.isEmptyOrSpaces(myFolderName) && myTestType == TestType.TEST_FOLDER) {
-      throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_folder_name"));
-    }
-
-    if (StringUtil.isEmptyOrSpaces(getScriptName()) && myTestType != TestType.TEST_FOLDER) {
-      throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_script_name"));
-    }
-
-    if (StringUtil.isEmptyOrSpaces(myClassName) && (myTestType == TestType.TEST_METHOD || myTestType == TestType.TEST_CLASS)) {
-      throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_class_name"));
-    }
-
-    if (StringUtil.isEmptyOrSpaces(myMethodName) && (myTestType == TestType.TEST_METHOD || myTestType == TestType.TEST_FUNCTION)) {
-      throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_method_name"));
-    }
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {

@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 
 import javax.swing.*;
 
@@ -18,8 +17,8 @@ public class PythonNoseTestRunConfigurationType extends ConfigurationTypeBase {
 
   public PythonNoseTestRunConfigurationType() {
     super("PythonNoseTestRunConfigurationType",
-          "Python's nose tests",
-          "Python's nose test run configuration",
+          PyBundle.message("runcfg.nosetests.display_name"),
+          PyBundle.message("runcfg.nosetests.description"),
           ICON);
     addFactory(new PythonNoseTestConfigurationFactory(this));
   }
