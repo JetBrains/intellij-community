@@ -36,7 +36,8 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
       @Override
       public int compare(final RepositoryInfo r1, final RepositoryInfo r2) {
-        return r1.getName().compareTo(r2.getName());
+        final int comparedOwners = r1.getOwner().compareTo(r2.getOwner());
+        return comparedOwners != 0 ? comparedOwners : r1.getName().compareTo(r2.getName());
       }
     });
     final GithubCloneProjectDialog checkoutDialog = new GithubCloneProjectDialog(project, availableRepos);
