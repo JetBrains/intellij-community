@@ -15,12 +15,14 @@
  */
 package git4idea.checkout.branches;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -151,7 +153,18 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
           currentBranchName = "";
         }
         myCurrentBranchName.set(currentBranchName);
-        myStatusBar.updateWidget(ID());
+        // status bar update would be anyway invoked on awt thread
+        // check not-disposed predicates before (they will be also checked on awt thread)
+        // in any other thread we wouldn't have guarantee that disposed hadn't started in parallel
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myStatusBar.updateWidget(ID());
+          }
+        }, new Condition() {
+          public boolean value(Object o) {
+            return isDisposed() || (project != null) && ((! project.isOpen()) || project.isDisposed()) || myStatusBar == null;
+          }
+        });
       }
     };
     if (project == null) {
