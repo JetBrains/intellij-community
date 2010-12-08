@@ -1034,6 +1034,7 @@ public class PluginManager {
         printWriter.close();
       }
     }
+    ourDisabledPlugins = null;
   }
 
   public static List<String> getDisabledPlugins() {
