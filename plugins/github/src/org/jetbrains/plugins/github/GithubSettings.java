@@ -70,27 +70,30 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
   }
 
+  @NotNull
   public String getLogin() {
-    return myLogin;
+    return myLogin != null ? myLogin : "";
   }
 
+  @NotNull
   public String getPassword() {
-    return myPassword;
+    return myPassword != null ? myPassword : "";
+  }
+
+  @NotNull
+  public String getClonePath() {
+    return myClonePath != null ? myClonePath : "";
   }
 
   public void setLogin(final String login) {
-    myLogin = login;
+    myLogin = login != null ? login : "";
   }
 
   public void setPassword(final String password) {
-    myPassword = password;
+    myPassword = password != null ? password : "";
   }
 
-  public String getClonePath() {
-    return myClonePath;
-  }
-
-  public void setClonePath(String clonePath) {
-    myClonePath = clonePath;
+  public void setClonePath(final String clonePath) {
+    myClonePath = clonePath != null ? clonePath : "";
   }
 }

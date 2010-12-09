@@ -17,8 +17,10 @@ package com.intellij.execution.junit2.segments;
 
 import com.intellij.execution.junit.SegmentedInputStreamReader;
 import com.intellij.execution.junit2.SegmentedInputStream;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
 import java.io.InputStream;
@@ -31,6 +33,8 @@ import java.nio.charset.Charset;
 public class Extractor {
   private DeferredActionsQueue myFulfilledWorkGate = null;
   private final SegmentedInputStream myStream;
+  private OutputPacketProcessor myEventsDispatcher;
+  private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
 
   public Extractor(final InputStream stream, final Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -54,7 +58,7 @@ public class Extractor {
         queue.setDispactchListener(listener);
       }
     };
-    myStream.setEventsDispatcher(new PacketProcessor() {
+    myEventsDispatcher = new OutputPacketProcessor() {
       public void processPacket(final String packet) {
         myFulfilledWorkGate.addLast(new Runnable() {
           public void run() {
@@ -62,7 +66,22 @@ public class Extractor {
           }
         });
       }
-    });
+
+      @Override
+      public void processOutput(final Printable printable) {
+        LOG.assertTrue(packetProcessor instanceof OutputPacketProcessor);
+        myFulfilledWorkGate.addLast(new Runnable() {
+          public void run() {
+            ((OutputPacketProcessor)packetProcessor).processOutput(printable);
+          }
+        });
+      }
+    };
+    myStream.setEventsDispatcher(myEventsDispatcher);
+  }
+
+  public OutputPacketProcessor getEventsDispatcher() {
+    return myEventsDispatcher;
   }
 
   public Reader createReader() {

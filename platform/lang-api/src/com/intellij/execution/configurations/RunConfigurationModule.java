@@ -17,14 +17,13 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +84,13 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   @Nullable
   public Module findModule(final String moduleName) {
-    return getModuleManager().findModuleByName(moduleName);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+      @Nullable
+      @Override
+      public Module compute() {
+        return getModuleManager().findModuleByName(moduleName);
+      }
+    });
   }
 
   public void setModule(final Module module) {

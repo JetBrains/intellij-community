@@ -129,8 +129,25 @@ public class PasteHandler extends EditorActionHandler {
 
       text = TextBlockTransferable.convertLineSeparators(text, "\n", extraData.values());
 
-      final int col = editor.getCaretModel().getLogicalPosition().column;
-      if (editor.getSelectionModel().hasSelection()) {
+      final CaretModel caretModel = editor.getCaretModel();
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      final int col = caretModel.getLogicalPosition().column;
+      
+      // There is a possible case that we want to perform paste while there is an active selection at the editor and caret is located
+      // inside it (e.g. Ctrl+A is pressed while caret is not at the zero column). We want to insert the text at selection start column
+      // then, hence, inserted block of text should be indented according to the selection start as well.
+      final int blockIndentAnchorColumn;
+      final int caretOffset = caretModel.getOffset();
+      if (selectionModel.hasSelection() && caretOffset >= selectionModel.getSelectionStart()
+          && caretOffset < selectionModel.getSelectionEnd()) 
+      {
+        blockIndentAnchorColumn = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).column;
+      }
+      else {
+        blockIndentAnchorColumn = col;
+      }
+        
+      if (selectionModel.hasSelection()) {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
             public void run() {
@@ -164,16 +181,16 @@ public class PasteHandler extends EditorActionHandler {
         }
       );
 
-      int offset = editor.getCaretModel().getOffset() - length;
+      int offset = caretModel.getOffset() - length;
       if (offset < 0) {
         length += offset;
         offset = 0;
       }
       final RangeMarker bounds = document.createRangeMarker(offset, offset + length);
 
-      editor.getCaretModel().moveToOffset(bounds.getEndOffset());
+      caretModel.moveToOffset(bounds.getEndOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().removeSelection();
+      selectionModel.removeSelection();
 
       final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
       for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
@@ -188,7 +205,7 @@ public class PasteHandler extends EditorActionHandler {
             switch (indentOptions1) {
               case CodeInsightSettings.INDENT_BLOCK:
                 if (!indented.get()) {
-                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), col);
+                  indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
                 }
                 break;
 
@@ -208,9 +225,9 @@ public class PasteHandler extends EditorActionHandler {
       );
 
       if (bounds.isValid()) {
-        editor.getCaretModel().moveToOffset(bounds.getEndOffset());
+        caretModel.moveToOffset(bounds.getEndOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().removeSelection();
+        selectionModel.removeSelection();
         editor.putUserData(EditorEx.LAST_PASTED_REGION, new TextRange(bounds.getStartOffset(), bounds.getEndOffset()));
       }
     }

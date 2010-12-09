@@ -280,7 +280,7 @@ public class RenameDialog extends RefactoringDialog {
   @Override
   protected void canRun() throws ConfigurationException {
     if (!areButtonsValid()) {
-      throw new ConfigurationException("\'" + StringUtil.first(getNewName(), 10, true) + "\' is invalid identifier");
+      throw new ConfigurationException("\'" + getNewName() + "\' is invalid identifier");
     }
   }
 

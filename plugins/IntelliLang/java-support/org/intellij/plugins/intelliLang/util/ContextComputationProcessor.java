@@ -65,7 +65,6 @@ public class ContextComputationProcessor {
   }
 
   public void collectOperands(final PsiElement expression, final List<Object> result, final Ref<Boolean> unparsable) {
-    final PsiElement firstChild;
     if (expression instanceof PsiParenthesizedExpression) {
       collectOperands(((PsiParenthesizedExpression)expression).getExpression(), result, unparsable);
     }
@@ -93,17 +92,17 @@ public class ContextComputationProcessor {
     else if (PsiUtilEx.isStringOrCharacterLiteral(expression)) {
       result.add(expression);
     }
-    else {
+    else if (expression instanceof PsiExpression) {
       final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
-      final Object o = expression instanceof PsiExpression? myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables) : null;
+      final Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
+      addStringFragment(String.valueOf(o), result);
       if (uncomputables.size() > 0) {
         unparsable.set(Boolean.TRUE);
       }
-      if (o == null) {
-        result.add(expression);
-      } else {
-        addStringFragment(String.valueOf(o), result);
-      }
+    }
+    else {
+      unparsable.set(Boolean.TRUE);
+      result.add(expression);
     }
   }
 

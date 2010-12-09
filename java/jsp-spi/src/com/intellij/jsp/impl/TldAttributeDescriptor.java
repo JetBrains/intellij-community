@@ -45,4 +45,8 @@ public interface TldAttributeDescriptor extends XmlAttributeDescriptor {
    */
   @Nullable
   String getType();
+
+  boolean isDeferred();
+
+  boolean isDynamic();
 }

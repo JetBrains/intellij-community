@@ -53,18 +53,16 @@ public class Splash extends JDialog {
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
     if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
-      GraphicsConfig config = new GraphicsConfig(g);
-      config.setAntialiasing(true);
+      UIUtil.applyRenderingHints(g);
       g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
       g.setColor(textColor);
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
       if (provider != null) {
         final String licensedToMessage = provider.getLicensedToMessage();
         final String licenseRestrictionsMessage = provider.getLicenseRestrictionsMessage();
-        g.drawString(licensedToMessage, x + 20, y + height - 52);
-        g.drawString(licenseRestrictionsMessage, x + 20, y + height - 32);
+        g.drawString(licensedToMessage, x + 21, y + height - 49);
+        g.drawString(licenseRestrictionsMessage, x + 21, y + height - 33);
       }
-      config.restore();
       return true;
     }
     return false;

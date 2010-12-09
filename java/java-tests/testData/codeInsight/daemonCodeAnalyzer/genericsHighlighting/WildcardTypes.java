@@ -162,3 +162,14 @@ class CollectionHelper {
     numbers4.hashCode();
   }
 }
+
+//IDEA-62529
+class My<T> {
+    private  Class<? super T> getSuperclass(){
+        return null;
+    }
+
+    public void test() {
+        if (getSuperclass() == List.class);
+    }
+}

@@ -261,6 +261,8 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
   }
 
   public void disposeUIResources() {
+    if (myRepaintTimer == null) return; // has not yet been initialized and reset
+
     myRepaintTimer.removeActionListener(myTimerListener);
     myRepaintTimer.stop();
     Disposer.dispose(myUpdatingIcon);

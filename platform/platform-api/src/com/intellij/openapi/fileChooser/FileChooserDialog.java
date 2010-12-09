@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FileChooserDialog {
+  DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = DataKey.create("PREFER_LAST_OVER_TO_SELECT");
+  
   @NotNull
   VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project);
 }

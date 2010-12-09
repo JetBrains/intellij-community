@@ -51,7 +51,7 @@ public class TypesDistinctProver {
           final PsiType extendsBound = ((PsiWildcardType)type1).getExtendsBound();
           if (extendsBound instanceof PsiArrayType &&
               proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)extendsBound, type2)) return true;
-          final PsiClass boundClass1 = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(extendsBound));
+          final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound);
           if (boundClass1 == null) return false;
           return proveExtendsBoundsDistinct(type1, type2, boundClass1, psiClass2);
         }
@@ -60,7 +60,8 @@ public class TypesDistinctProver {
           final PsiType superBound = ((PsiWildcardType)type1).getSuperBound();
           if (superBound instanceof PsiArrayType &&
               proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)superBound, type2)) return true;
-          final PsiClass boundClass1 = PsiUtil.resolveClassInType(TypeConversionUtil.erasure(superBound));
+
+          final PsiClass boundClass1 = PsiUtil.resolveClassInType(superBound);
           if (boundClass1 == null || boundClass1 instanceof PsiTypeParameter) return false;
           return !InheritanceUtil.isInheritorOrSelf(boundClass1, psiClass2, true);
         }

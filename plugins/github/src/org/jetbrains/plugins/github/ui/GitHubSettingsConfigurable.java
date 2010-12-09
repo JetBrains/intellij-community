@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
@@ -41,8 +40,8 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
   }
 
   public boolean isModified() {
-    return mySettingsPane == null || !StringUtil.equals(mySettings.getLogin(), mySettingsPane.getLogin()) ||
-           !StringUtil.equals(mySettings.getPassword(), mySettingsPane.getPassword());
+    return mySettingsPane == null || !mySettings.getLogin().equals(mySettingsPane.getLogin()) ||
+           !mySettings.getPassword().equals(mySettingsPane.getPassword());
   }
 
   public void apply() throws ConfigurationException {

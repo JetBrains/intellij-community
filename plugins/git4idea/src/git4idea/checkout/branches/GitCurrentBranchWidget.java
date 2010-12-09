@@ -19,11 +19,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
@@ -34,6 +38,10 @@ import git4idea.vfs.GitReferenceListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,10 +53,12 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   private ProjectLevelVcsManager myVcsManager;
   private AtomicReference<String> myCurrentBranchName = new AtomicReference<String>("");
   private static final Logger LOG = Logger.getInstance(GitCurrentBranchWidget.class.getName());
+  private final Map<VirtualFile, GitBranch> myCurrentBranches = new HashMap<VirtualFile, GitBranch>();
 
   public GitCurrentBranchWidget(Project project) {
     super(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    updateBranchInfo(null);
   }
 
   @Override
@@ -69,22 +79,22 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
 
   @Override
   public void selectionChanged(FileEditorManagerEvent event) {
-    update();
+    updateUI();
   }
 
   @Override
   public void fileOpened(FileEditorManager source, VirtualFile file) {
-    update();
+    updateUI();
   }
 
   @Override
   public void fileClosed(FileEditorManager source, VirtualFile file) {
-    update();
+    updateUI();
   }
 
   @Override
   public void referencesChanged(VirtualFile root) {
-    update();
+    updateBranchInfo(root);
   }
 
   @NotNull
@@ -115,31 +125,27 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
       public void consume(MouseEvent mouseEvent) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            update();
-          }
-        });
+          updateUI();
       }
     };
   }
 
-  private void update() {
-    String currentBranchName = null;
+  @CalledInAwt
+  private void updateUI() {
     final VirtualFile file = getSelectedFile();
-    if (file != null) {
-      AbstractVcs vcs = myVcsManager.getVcsFor(file);
-      if (vcs != null && vcs instanceof GitVcs) {
-        VirtualFile root = myVcsManager.getVcsRootFor(file);
-        if (root != null) {
-          GitBranch currentBranch = null;
-          try {
-            currentBranch = GitBranch.current(getProject(), root);
-          } catch (VcsException e) {
-            LOG.info("Exception while trying to get current branch for file " + file + " under root " + root, e);
-            // doing nothing - null will be set to myCurrentBranchName
-          }
-          currentBranchName = currentBranch != null ? currentBranch.getName() : null;
+    final Project project = getProject();
+    if (file == null || project == null || isDisposed() || !project.isOpen() || project.isDisposed() || myStatusBar == null) {
+      return;
+    }
+
+    String currentBranchName = null;
+    final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    if (vcs != null && vcs instanceof GitVcs) {
+      final VirtualFile root = myVcsManager.getVcsRootFor(file);
+      if (root != null) {
+        final GitBranch currentBranch = myCurrentBranches.get(root);
+        if (currentBranch != null) {
+          currentBranchName = currentBranch.getName();
         }
       }
     }
@@ -148,6 +154,43 @@ public class GitCurrentBranchWidget extends EditorBasedWidget implements StatusB
     }
     myCurrentBranchName.set(currentBranchName);
     myStatusBar.updateWidget(ID());
+  }
+
+  private void updateBranchInfo(VirtualFile root) {
+    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>(1);
+    if (root == null) { // all roots may be affected
+      for (VcsRoot vcsRoot : myVcsManager.getAllVcsRoots()) {
+        if (vcsRoot.vcs != null && vcsRoot.vcs instanceof GitVcs && vcsRoot.path != null) {
+          roots.add(vcsRoot.path);
+        }
+      }
+    } else {
+      roots.add(root);
+    }
+
+    final Project project = getProject();
+    final Task.Backgroundable task = new Task.Backgroundable(project, "Loading Git branch info") {
+      @Override public void run(@NotNull ProgressIndicator indicator) {
+        for (VirtualFile root : roots) {
+          try {
+            GitBranch currentBranch = GitBranch.current(project, root);
+            synchronized (myCurrentBranches) {
+              myCurrentBranches.put(root, currentBranch);
+            }
+          } catch (VcsException e) {
+            LOG.info("Exception while trying to get current branch for root " + root, e);
+          }
+        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            updateUI();
+          }
+        });
+      }
+    };
+    if (project != null) {
+      GitVcs.getInstance(project).runInBackground(task);
+    }
   }
 
 }

@@ -159,7 +159,10 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
     if (currentEvent == null) return currentEvent;
 
-    currentEvent.updateAction(getDnDActionForPlatformAction(nativeAction));
+    final DnDAction dndAction = getDnDActionForPlatformAction(nativeAction);
+    if (dndAction == null) return null;
+
+    currentEvent.updateAction(dndAction);
     currentEvent.setPoint(aPoint);
     currentEvent.setHandlerComponent(aComponentOverDragging);
 

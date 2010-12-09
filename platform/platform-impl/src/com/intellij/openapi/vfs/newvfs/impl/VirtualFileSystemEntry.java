@@ -271,6 +271,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       if (isDirectory()) {
         Charset configured = EncodingManager.getInstance().getEncoding(this, true);
         charset = configured == null ? Charset.defaultCharset() : configured;
+        setCharset(charset);
       }
       else {
         try {
@@ -282,7 +283,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
             // file has already been deleted from disk
             return super.getCharset();
           }
-          charset = LoadTextUtil.detectCharset(this, content);
+          charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
         }
         catch (FileTooBigException e) {
           return super.getCharset();
@@ -291,7 +292,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
           throw new RuntimeException(e);
         }
       }
-      setCharset(charset);
     }
     return charset;
   }

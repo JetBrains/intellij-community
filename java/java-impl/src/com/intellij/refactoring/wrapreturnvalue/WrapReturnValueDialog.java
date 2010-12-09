@@ -106,12 +106,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     final PsiNameHelper nameHelper = manager.getNameHelper();
     if (myCreateInnerClassButton.isSelected()) {
       final String innerClassName = getInnerClassName().trim();
-      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + StringUtil.first(innerClassName, 10, true) + "\' is invalid inner class name");
-      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + StringUtil.first(innerClassName, 10, true) + "\' already exist");
+      if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");
+      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
     } else if (useExistingClassButton.isSelected()) {
       final String className = existingClassField.getText().trim();
       if (className.length() == 0 || !nameHelper.isQualifiedName(className)) {
-        throw new ConfigurationException("\'" + StringUtil.last(className, 10, true) + "\' is invalid qualified wrapper class name");
+        throw new ConfigurationException("\'" + className + "\' is invalid qualified wrapper class name");
       }
       final Object item = myFieldsCombo.getSelectedItem();
       if (item == null) {
@@ -120,12 +120,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
     } else {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid wrapper class name");
+        throw new ConfigurationException("\'" + className + "\' is invalid wrapper class name");
       }
       final String packageName = getPackageName();
 
       if (packageName.length() == 0 || !nameHelper.isQualifiedName(packageName)) {
-        throw new ConfigurationException("\'" + StringUtil.last(packageName, 10, true) + "\' is invalid wrapper class package name");
+        throw new ConfigurationException("\'" + packageName + "\' is invalid wrapper class package name");
       }
     }
   }

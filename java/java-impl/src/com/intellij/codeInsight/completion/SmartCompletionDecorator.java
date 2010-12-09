@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
@@ -57,10 +58,15 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       return defType;
     }
 
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(myPosition, PsiExpression.class, true);
     LookupElement item = getDelegate();
+    Object object = item.getObject();
+    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && (object instanceof PsiMethod || object instanceof PsiClass)) {
+      return TailType.NONE;
+    }
 
-    if (enclosing != null && item.getObject() instanceof PsiElement) {
+    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(myPosition, PsiExpression.class, true);
+
+    if (enclosing != null && object instanceof PsiElement) {
       final PsiType type = getItemType(item);
       final TailType itemType = item instanceof LookupItem ? ((LookupItem)item).getTailType() : TailType.NONE;
       TailType cached = itemType;

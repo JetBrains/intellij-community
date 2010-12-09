@@ -1539,7 +1539,7 @@ public class FileBasedIndex implements ApplicationComponent {
         IndexingStamp.flushCache();
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
-        final boolean isTooLarge = isTooLarge(file);
+        Boolean isTooLarge = null;
         for (final ID<?, ?> indexId : myIndices.keySet()) {
           try {
             if (!needsFileContentLoading(indexId)) {
@@ -1548,8 +1548,13 @@ public class FileBasedIndex implements ApplicationComponent {
               }
             }
             else { // the index requires file content
-              if (!isTooLarge && shouldUpdateIndex(file, indexId)) {
-                affectedIndices.add(indexId);
+              if (shouldUpdateIndex(file, indexId)) {
+                if (isTooLarge == null) {
+                  isTooLarge = Boolean.valueOf(isTooLarge(file));
+                }
+                if (!isTooLarge.booleanValue()) {
+                  affectedIndices.add(indexId);
+                }
               }
             }
           }

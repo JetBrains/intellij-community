@@ -548,8 +548,8 @@ public class GitHistoryUtils {
     parser.parseStatusBeforeName(true);
     h.addParameters(new ArrayList<String>(commitsIds));
 
-    h.endOptions();
-    h.addRelativePaths(path);
+    //h.endOptions();
+    //h.addRelativePaths(path);
     String output;
     try {
       output = h.run();

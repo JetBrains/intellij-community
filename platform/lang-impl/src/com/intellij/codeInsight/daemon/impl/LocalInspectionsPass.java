@@ -538,6 +538,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              HighlightSeverity severity,
                                              ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
+    if (psiElement == null) return;
     if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) return;
     HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
     HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered);

@@ -64,6 +64,9 @@ public class AbstractTreeUi {
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
     public int compare(TreeNode n1, TreeNode n2) {
       if (isLoadingNode(n1) || isLoadingNode(n2)) return 0;
+      //todo kirillk hard to undertstand why nodes may be null, just avoid NPEs
+      if (n1 == null || n2 == null) return 0;
+
       NodeDescriptor nodeDescriptor1 = getDescriptorFrom(((DefaultMutableTreeNode)n1));
       NodeDescriptor nodeDescriptor2 = getDescriptorFrom(((DefaultMutableTreeNode)n2));
       return myNodeDescriptorComparator != null
