@@ -55,7 +55,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           }
         }
         
-        if (node.getParent() instanceof PyPrintStatement && ((PyFile)node.getContainingFile()).getLanguageLevel().isPy3K())
+        if (node.getParent() instanceof PyPrintStatement)
           return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
