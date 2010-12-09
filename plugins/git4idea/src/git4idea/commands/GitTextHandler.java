@@ -51,7 +51,6 @@ public abstract class GitTextHandler extends GitHandler {
   @Override
   protected Process startProcess() throws ExecutionException {
     final ProcessHandler processHandler = new MyRunnerMediator().createProcess(myCommandLine);
-    assert processHandler instanceof MyOSProcessHandler;
     myHandler = (MyOSProcessHandler)processHandler;
     return myHandler.getProcess();
   }
