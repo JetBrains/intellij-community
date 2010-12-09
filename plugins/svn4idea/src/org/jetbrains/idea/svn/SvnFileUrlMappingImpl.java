@@ -76,15 +76,15 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   private final NestedCopiesSink myTempSink;
   private boolean myInitialized;
 
-  private class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
+  private static class MyRootsHelper extends ThreadLocalDefendedInvoker<VirtualFile[]> {
     private final ProjectLevelVcsManager myPlVcsManager;
 
     private MyRootsHelper(final ProjectLevelVcsManager vcsManager) {
       myPlVcsManager = vcsManager;
     }
 
-    protected VirtualFile[] execute() {
-      return myPlVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
+    protected VirtualFile[] execute(Project project) {
+      return myPlVcsManager.getRootsUnderVcs(SvnVcs.getInstance(project));
     }
   }
 
@@ -194,7 +194,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
-    if (myHelper.isInside()) return result;
+    if (ThreadLocalDefendedInvoker.isInside()) return result;
 
     synchronized (myMonitor) {
       final List<VirtualFile> cachedRoots = myMapping.getUnderVcsRoots();
@@ -224,7 +224,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
 
   public void realRefresh(final AtomicSectionsAware atomicSectionsAware) {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final VirtualFile[] roots = myHelper.executeDefended();
+    final VirtualFile[] roots = myHelper.executeDefended(myProject);
 
     final CopiesApplier copiesApplier = new CopiesApplier();
     final CopiesDetector copiesDetector = new CopiesDetector(atomicSectionsAware, vcs, copiesApplier, new Getter<NestedCopiesData>() {
@@ -492,7 +492,7 @@ class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateCompone
   }
 
   public VirtualFile[] getNotFilteredRoots() {
-    return myHelper.executeDefended();
+    return myHelper.executeDefended(myProject);
   }
 
   public boolean isEmpty() {
