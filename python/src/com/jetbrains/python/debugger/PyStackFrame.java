@@ -110,4 +110,8 @@ public class PyStackFrame extends XStackFrame {
     return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
   }
 
+  protected XSourcePosition getPosition() {
+    return myPosition;
+  }
+
 }

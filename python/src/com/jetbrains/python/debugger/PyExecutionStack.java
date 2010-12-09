@@ -53,7 +53,7 @@ public class PyExecutionStack extends XExecutionStack {
   }
 
   private static PyStackFrame convert(final PyDebugProcess debugProcess, final PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(debugProcess, frameInfo);
+    return debugProcess.createStackFrame(frameInfo);
   }
 
   @Override

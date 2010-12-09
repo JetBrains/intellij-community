@@ -41,8 +41,6 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: pydevd supports module reloading - look for a way to use the feature
 // todo: smart step into
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
-
-  private final PyPositionConverter myPositionConverter;
   private final RemoteDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
@@ -58,18 +56,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private boolean myClosing = false;
 
-  public PyDebugProcess(@NotNull XDebugSession session,
-                        @NotNull final ServerSocket serverSocket,
-                        @NotNull final ExecutionConsole executionConsole,
-                        @Nullable final ProcessHandler processHandler) {
-    this(session, serverSocket, executionConsole, processHandler, new PyLocalPositionConverter());
-  }
-
+  private PyPositionConverter myPositionConverter;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
                         @NotNull final ExecutionConsole executionConsole,
-                        @Nullable final ProcessHandler processHandler, @NotNull PyPositionConverter positionConverter) {
+                        @Nullable final ProcessHandler processHandler) {
     super(session);
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
@@ -80,7 +72,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    myPositionConverter = positionConverter;
+    myPositionConverter = new PyLocalPositionConverter();
     myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
       @Override
       public void closed() {
@@ -88,6 +80,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
     });
   }
+
+  public void setPositionConverter(PyPositionConverter positionConverter) {
+    myPositionConverter = positionConverter;
+  }
+
 
   @Override
   public PyPositionConverter getPositionConverter() {
@@ -272,6 +269,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
   }
 
+  @Nullable
+  public String loadSource(String path) {
+    return myDebugger.loadSource(path);
+  }
+
   @Override
   public boolean isVariable(String name) {
     final Project project = getSession().getProject();
@@ -410,5 +412,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void onTextAvailable(ProcessEvent event, Key outputType) {
+  }
+
+  public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
+    return new PyStackFrame(this, frameInfo);
   }
 }

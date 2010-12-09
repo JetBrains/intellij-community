@@ -25,6 +25,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_CONSOLE_EXEC, \
                          CMD_ADD_EXCEPTION_BREAK, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
+                         CMD_LOAD_SOURCE, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -632,6 +633,17 @@ class PyDB:
                         exception_set.remove(exc_type)
                         always_exception_set.remove(exc_type)
                     update_exception_hook()
+
+                elif cmd_id == CMD_LOAD_SOURCE:
+                    path = text
+                    try:
+                        print path
+                        f = open(path, 'r')
+                        source = f.read()
+                        print source
+                        self.cmdFactory.makeLoadSourceMessage(seq, source, self)
+                    except:
+                        return self.cmdFactory.makeErrorMessage(seq, GetExceptionTracebackStr())
 
                 else:
                     #I have no idea what this is all about

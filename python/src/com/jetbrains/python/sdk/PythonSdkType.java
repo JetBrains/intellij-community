@@ -707,7 +707,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findPythonSdk(Module module) {
+  public static Sdk findPythonSdk(@Nullable Module module) {
     if (module == null) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) return sdk;

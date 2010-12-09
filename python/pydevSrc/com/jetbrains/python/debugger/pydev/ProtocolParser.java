@@ -17,6 +17,10 @@ public class ProtocolParser {
   private ProtocolParser() {
   }
 
+  public static String parseSourceContent(String payload) throws PyDebuggerException {
+    return payload;
+  }
+
   public static String decode(final String value) throws PyDebuggerException {
     try {
       return URLDecoder.decode(value, "UTF-8");

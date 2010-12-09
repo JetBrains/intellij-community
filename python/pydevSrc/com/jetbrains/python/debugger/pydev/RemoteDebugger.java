@@ -150,6 +150,18 @@ public class RemoteDebugger {
     return command.getNewValue();
   }
 
+  @Nullable
+  public String loadSource(String path) {
+    LoadSourceCommand command = new LoadSourceCommand(this, path);
+    try {
+      command.execute();
+      return command.getContent();
+    }
+    catch (PyDebuggerException e) {
+      return "print 1";
+    }
+  }
+
   private static String composeName(final PyDebugValue var) {
     final StringBuilder sb = new StringBuilder(var.getTempName());
     PyDebugValue p = var;
@@ -472,7 +484,7 @@ public class RemoteDebugger {
   }
 
   private void fireCloseEvent() {
-    for (RemoteDebuggerCloseListener listener: myCloseListeners) {
+    for (RemoteDebuggerCloseListener listener : myCloseListeners) {
       listener.closed();
     }
   }
