@@ -179,6 +179,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         selectionListener.valueChanged(e);
       }
     };
+    myRevisionsList.getExpandableItemsHandler().setEnabled(false);
     new TableViewSpeedSearch(myRevisionsList) {
       @Override
       protected String getElementText(Object element) {

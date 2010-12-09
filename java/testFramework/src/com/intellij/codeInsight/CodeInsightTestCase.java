@@ -45,7 +45,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -241,7 +240,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                 }
               }));
 
-            VirtualFileManager.getInstance().refresh(false);
+            // grand VFS refresh significantly slows down local tests and generally not needed
+            //VirtualFileManager.getInstance().refresh(false);
           }
           else {
             editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();

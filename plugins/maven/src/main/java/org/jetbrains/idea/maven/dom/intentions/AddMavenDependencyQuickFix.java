@@ -17,19 +17,24 @@ package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+
+import java.util.List;
 
 public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
   private final PsiJavaCodeReferenceElement myRef;
@@ -56,15 +61,25 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     MavenProject mavenProject = MavenDomUtil.findContainingProject(file);
     if (mavenProject == null) return;
 
-    MavenId dependency = MavenArtifactSearchDialog.searchForClass(project, getReferenceText());
-    if (dependency == null) return;
+    final List<MavenId> ids = MavenArtifactSearchDialog.searchForClass(project, getReferenceText());
+    if (ids.isEmpty()) return;
 
-    MavenProjectsManager.getInstance(project).addDependency(mavenProject, dependency);
+    final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile());
+    if (model == null) return;
+
+    new WriteCommandAction(project, "Add Maven Dependency", DomUtil.getFile(model)) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        for (MavenId each : ids) {
+          MavenDomUtil.createDomDependency(model, null, each);
+        }
+      }
+    }.execute();
   }
 
   private String getReferenceText() {
     PsiElement result = myRef;
-    while(result.getParent() instanceof PsiJavaCodeReferenceElement) {
+    while (result.getParent() instanceof PsiJavaCodeReferenceElement) {
       result = result.getParent();
     }
     return result.getText();

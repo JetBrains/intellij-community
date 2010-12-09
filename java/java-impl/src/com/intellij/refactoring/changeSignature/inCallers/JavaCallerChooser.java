@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature.inCallers;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.changeSignature.CallerChooserBase;
@@ -27,7 +28,7 @@ import java.util.Set;
 public class JavaCallerChooser extends CallerChooserBase<PsiMethod> {
 
   public JavaCallerChooser(PsiMethod method, Project project, String title, Tree previousTree, Consumer<Set<PsiMethod>> callback) {
-    super(method, project, title, previousTree, callback);
+    super(method, project, title, previousTree, "dummy." + StdFileTypes.JAVA.getDefaultExtension(), callback);
   }
 
   @Override

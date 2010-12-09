@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Caches information about number of logical columns inside the collapsed single line folding.
@@ -31,7 +32,9 @@ class FoldingData {
   private final EditorTextRepresentationHelper myRepresentationHelper;
   private final FoldRegion myFoldRegion;
 
-  FoldingData(FoldRegion foldRegion, int startX, EditorTextRepresentationHelper representationHelper, Editor editor) {
+  FoldingData(@NotNull FoldRegion foldRegion, int startX, @NotNull EditorTextRepresentationHelper representationHelper,
+              @NotNull Editor editor) 
+  {
     myFoldRegion = foldRegion;
     this.startX = startX;
     myRepresentationHelper = representationHelper;
@@ -47,5 +50,10 @@ class FoldingData {
     }
 
     return widthInColumns;
+  }
+
+  @NotNull
+  public FoldRegion getFoldRegion() {
+    return myFoldRegion;
   }
 }

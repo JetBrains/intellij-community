@@ -153,17 +153,17 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     for (ParameterData parameterData : myParametersMap.values()) {
-      if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException("\'" + StringUtil.first(parameterData.getFieldName(), 10, true) + "\' is not a valid field name");
-      if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException("\'" + StringUtil.first(parameterData.getSetterName(), 10, true) + "\' is not a valid setter name");
+      if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException("\'" + parameterData.getFieldName() + "\' is not a valid field name");
+      if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException("\'" + parameterData.getSetterName() + "\' is not a valid setter name");
     }
     if (myCreateBuilderClassRadioButton.isSelected()) {
       final String className = myNewClassName.getText().trim();
-      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid builder class name");
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException("\'" + className + "\' is invalid builder class name");
       final String packageName = myPackageTextField.getText().trim();
-      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("\'" + StringUtil.last(packageName , 10, true)+ "\' is invalid builder package name");
+      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("\'" + packageName + "\' is invalid builder package name");
     } else {
       final String qualifiedName = myExistentClassTF.getText().trim();
-      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException("\'" + StringUtil.last(qualifiedName, 10, true) + "\' is invalid builder qualified class name");
+      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException("\'" + qualifiedName + "\' is invalid builder qualified class name");
     }
   }
 

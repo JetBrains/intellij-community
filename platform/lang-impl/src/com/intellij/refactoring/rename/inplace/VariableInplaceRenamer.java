@@ -60,7 +60,6 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -77,13 +76,13 @@ import java.util.*;
  */
 public class VariableInplaceRenamer {
   public static final Key<VariableInplaceRenamer> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<ResolveSnapshotProvider>(
     "com.intellij.rename.inplace.resolveSnapshotProvider"
   );
 
   private final PsiNamedElement myElementToRename;
-  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
   private final Editor myEditor;
@@ -104,10 +103,10 @@ public class VariableInplaceRenamer {
   }
 
   public boolean performInplaceRename() {
-    return performInplaceRename(true, null, null);
+    return performInplaceRename(true, null);
   }
 
-  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions, final Consumer<Boolean> moveOffsetAfterr) {
+  public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
@@ -231,16 +230,12 @@ public class VariableInplaceRenamer {
                 if (myNewName != null) {
                   performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset), PsiNameIdentifierOwner.class));
                 }
-                if (moveOffsetAfterr != null) {
-                  moveOffsetAfterr.consume(true);
-                }
+                moveOffsetAfter(true);
               }
 
               public void templateCancelled(Template template) {
                 finish();
-                if (moveOffsetAfterr != null) {
-                  moveOffsetAfterr.consume(false);
-                }
+                moveOffsetAfter(false);
               }
             });
 
@@ -270,6 +265,9 @@ public class VariableInplaceRenamer {
 
     myEditor.putUserData(INPLACE_RENAMER, this);
     return true;
+  }
+
+  protected void moveOffsetAfter(boolean success) {
   }
 
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
@@ -444,6 +442,10 @@ public class VariableInplaceRenamer {
     }
   }
 
+  protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
+    return lookupItems;
+  }
+
   private class MyExpression extends Expression {
     private final String myName;
     private final LookupElement[] myLookupItems;
@@ -464,7 +466,7 @@ public class VariableInplaceRenamer {
     }
 
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return myLookupItems;
+      return createLookupItems(myLookupItems, myName);
     }
 
     public Result calculateQuickResult(ExpressionContext context) {

@@ -63,22 +63,22 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
 
   private static class VersionComparator implements Comparator<MavenArtifactInfo> {
     public int compare(MavenArtifactInfo f1, MavenArtifactInfo f2) {
-      int result = f1.getGroupId().compareTo(f2.getGroupId());
+      int result = Comparing.compare(f1.getGroupId(), f2.getGroupId());
       if (result != 0) return result;
 
-      result = f1.getArtifactId().compareTo(f2.getArtifactId());
+      result = Comparing.compare(f1.getArtifactId(), f2.getArtifactId());
       if (result != 0) return result;
 
-      result = f2.getVersion().compareTo(f1.getVersion());
-      if (result != 0) return result;
-
-      result = Comparing.compare(f1.getClassifier(), f2. getClassifier());
+      result = Comparing.compare(f2.getVersion(), f1.getVersion());
       if (result != 0) return result;
 
       result = Comparing.compare(f1.getPackaging(), f2.getPackaging());
       if (result != 0) return result;
 
-      return Comparing.compare(f1.getRepositoryId(), f2.getGroupId());
+      result = Comparing.compare(f1.getClassifier(), f2. getClassifier());
+      if (result != 0) return result;
+
+      return Comparing.compare(f1.getRepositoryId(), f2.getRepositoryId());
     }
   }
 }

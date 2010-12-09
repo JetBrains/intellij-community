@@ -346,7 +346,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testExcessSpaceInTypeCast() throws Throwable {
-   configureByFile(getTestName(false) + ".java");
+   configure()
    selectItem(myItems[0]);
    checkResult()
   }
@@ -361,6 +361,28 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAtUnderClass() throws Throwable {
     doTest();
+  }
+
+  public void testLocalClassName() throws Throwable { doTest(); }
+
+  public void testClassTypeParameters() throws Throwable {
+    configure()
+    assert 'K' in myFixture.lookupElementStrings
+  }
+
+  public void testClassTypeParametersGenericBounds() throws Throwable {
+    configure()
+    assert 'K' in myFixture.lookupElementStrings
+  }
+
+  public void testLocalClassTwice() throws Throwable {
+    configure()
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
+  }
+
+  public void testLocalTopLevelConflict() throws Throwable {
+    configure()
+    assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo'
   }
 
   public void testMethodParenthesesSpaces() throws Throwable {

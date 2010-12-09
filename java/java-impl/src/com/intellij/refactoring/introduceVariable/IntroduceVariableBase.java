@@ -27,10 +27,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.template.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
@@ -56,7 +53,6 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
@@ -67,7 +63,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
@@ -476,63 +471,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 final PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-                  final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
-                  final SmartPsiElementPointer<PsiDeclarationStatement> pointer =
-                    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement);
-                  editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, pointer);
-                  editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
-                                     occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
                   final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
-                  final VariableInplaceRenamer renamer = new VariableInplaceRenamer(elementToRename, editor){
-                    @Override
-                    protected void addAdditionalVariables(TemplateBuilderImpl builder) {
-                      final PsiTypeElement typeElement = elementToRename.getTypeElement();
-                      builder.replaceElement(typeElement, "Variable_Type",
-                                             ReassignVariableUtil.createExpression(expression, typeElement.getText(), !cantChangeFinalModifier), true, true);
-                      if (!cantChangeFinalModifier) {
-                        builder.replaceElement(elementToRename.getModifierList(), "_FINAL_", new FinalExpression(project), false, true);
-                      }
-                    }
-                  };
-                  renamer.setAdvertisementText(
-                    ReassignVariableUtil.getAdvertisementText(editor, declarationStatement, elementToRename.getType(), typeSelectorManager.getTypesForAll(), !cantChangeFinalModifier));
-                  renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)), new Consumer<Boolean>() {
-                      @Override
-                      public void consume(Boolean apply) {
-                        if (apply) {
-                          final Document document = editor.getDocument();
-                          final PsiDeclarationStatement declarationStatement = pointer.getElement();
-                          final PsiVariable psiVariable = declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
-                          if (psiVariable != null) {
-                            JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-                            FinalExpression.adjustLine(psiVariable, document);
-                          }
-                          int startOffset = exprMarker.getStartOffset();
-                          final PsiReference referenceAt = file.findReferenceAt(startOffset);
-                          if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
-                            startOffset = referenceAt.getElement().getTextRange().getEndOffset();
-                          } else if (declarationStatement != null) {
-                            startOffset = declarationStatement.getTextRange().getEndOffset();
-                          }
-                          editor.getCaretModel().moveToOffset(startOffset);
-                          final PsiType selectedType = ReassignVariableUtil.getVariableType(declarationStatement);
-                          if (selectedType != null) {
-                            typeSelectorManager.typeSelected(selectedType);
-                          }
-                          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                            public void run() {
-                              appendTypeCasts(occurrenceMarkers, file, project, psiVariable);
-                            }
-                          });
-                        }
-                        editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
-                        for (RangeMarker occurrenceMarker : occurrenceMarkers) {
-                          occurrenceMarker.dispose();
-                        }
-                        editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY, null);
-                        exprMarker.dispose();
-                      }
-                    });
+                  final VariableInplaceRenamer renamer =
+                    new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
+                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers);
+                  renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
               }
             }
@@ -549,47 +492,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     return true;
   }
 
-  private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
-                                      PsiFile file,
-                                      Project project,
-                                      PsiVariable psiVariable) {
-    for (RangeMarker occurrenceMarker : occurrenceMarkers) {
-      final PsiElement refVariableElement = file.findElementAt(occurrenceMarker.getStartOffset());
-      final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-      if (referenceExpression != null) {
-        final PsiElement parent = referenceExpression.getParent();
-        if (parent instanceof PsiVariable) {
-          createCastInVariableDeclaration(project, (PsiVariable)parent);
-        } else if (parent instanceof PsiReferenceExpression && psiVariable != null) {
-          final PsiExpression initializer = psiVariable.getInitializer();
-          LOG.assertTrue(initializer != null);
-          final PsiType type = initializer.getType();
-          if (((PsiReferenceExpression)parent).resolve() == null) {
-            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-            final PsiExpression castedExpr =
-              elementFactory.createExpressionFromText("((" + type.getCanonicalText() + ")" + referenceExpression.getText() + ")", parent);
-            JavaCodeStyleManager.getInstance(project).shortenClassReferences(referenceExpression.replace(castedExpr));
-          }
-        }
-      }
-    }
-    if (psiVariable != null && psiVariable.isValid()) {
-      createCastInVariableDeclaration(project, psiVariable);
-    }
-  }
-
-  private static void createCastInVariableDeclaration(Project project, PsiVariable psiVariable) {
-    final PsiExpression initializer = psiVariable.getInitializer();
-    LOG.assertTrue(initializer != null);
-    final PsiType type = psiVariable.getType();
-    final PsiType initializerType = initializer.getType();
-    if (initializerType != null && !TypeConversionUtil.isAssignable(type, initializerType)) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      final PsiExpression castExpr =
-        elementFactory.createExpressionFromText("(" +psiVariable.getType().getCanonicalText()+ ")" + initializer.getText(), psiVariable);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(initializer.replace(castExpr));
-    }
-  }
 
   private static Runnable introduce(final Project project,
                                     final PsiExpression expr,
@@ -895,7 +797,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     };
   }
 
-  private static boolean createFinals(Project project) {
+  public static boolean createFinals(Project project) {
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     return createFinals == null ? CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS : createFinals.booleanValue();
   }
@@ -944,39 +846,5 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
   }
 
-  private static class FinalExpression extends Expression {
-    private final Project myProject;
 
-    public FinalExpression(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      return new TextResult(createFinals(myProject) ? PsiKeyword.FINAL : "");
-    }
-
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return calculateResult(context);
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      LookupElement[] lookupElements = new LookupElement[2];
-      lookupElements[0] = LookupElementBuilder.create("");
-      lookupElements[1] = LookupElementBuilder.create(PsiModifier.FINAL + " ");
-      return lookupElements;
-    }
-
-    public static void adjustLine(final PsiVariable psiVariable, final Document document) {
-      final int modifierListOffset = psiVariable.getTextRange().getStartOffset();
-      final int varLineNumber = document.getLineNumber(modifierListOffset);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() { //adjust line indent if final was inserted and then deleted
-        public void run() {
-          CodeStyleManager.getInstance(psiVariable.getProject()).adjustLineIndent(document, document.getLineStartOffset(varLineNumber));
-        }
-      });
-    }
-  }
 }

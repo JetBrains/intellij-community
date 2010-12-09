@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,6 +126,9 @@ public class LoadingOrder {
       }
     }
 
+    final Map<Orderable, LoadingOrder> cachedMap = new THashMap<Orderable, LoadingOrder>();
+    for(Orderable o:orderables) cachedMap.put(o, o.getOrder());
+
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
       public Collection<Orderable> getNodes() {
         final ArrayList<Orderable> list = new ArrayList<Orderable>(Arrays.asList(orderables));
@@ -133,7 +137,7 @@ public class LoadingOrder {
       }
 
       public Iterator<Orderable> getIn(final Orderable n) {
-        final LoadingOrder order = n.getOrder();
+        final LoadingOrder order = cachedMap.get(n);
 
         Set<Orderable> predecessors = new LinkedHashSet<Orderable>();
         for (final String id : order.myAfter) {
@@ -145,7 +149,7 @@ public class LoadingOrder {
 
         String id = n.getOrderId();
         for (final Orderable orderable : orderables) {
-          final LoadingOrder hisOrder = orderable.getOrder();
+          final LoadingOrder hisOrder = cachedMap.get(orderable);
           if (StringUtil.isNotEmpty(id) && hisOrder.myBefore.contains(id) ||
               order.myLast && !hisOrder.myLast ||
               hisOrder.myFirst && !order.myFirst) {

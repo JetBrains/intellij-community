@@ -27,6 +27,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenIcons;
@@ -40,12 +41,12 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenArtifactSearchPanel extends JPanel {
@@ -87,7 +88,6 @@ public class MavenArtifactSearchPanel extends JPanel {
     myResultList.setModel(null);
     myResultList.setCellRenderer(myClassMode ? new MyClassCellRenderer(myResultList)
                                              : new MyArtifactCellRenderer(myResultList));
-    myResultList.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
@@ -171,17 +171,23 @@ public class MavenArtifactSearchPanel extends JPanel {
     });
   }
 
-  public MavenId getResult() {
-    Object sel = myResultList.getLastSelectedPathComponent();
-    MavenArtifactInfo info;
-    if (sel instanceof MavenArtifactInfo) {
-      info = (MavenArtifactInfo)sel;
-    }
-    else {
-      info = ((MavenArtifactSearchResult)sel).versions.get(0);
+  @NotNull
+  public List<MavenId> getResult() {
+    List<MavenId> result = new ArrayList<MavenId>();
+
+    for (TreePath each : myResultList.getSelectionPaths()) {
+      Object sel = each.getLastPathComponent();
+      MavenArtifactInfo info;
+      if (sel instanceof MavenArtifactInfo) {
+        info = (MavenArtifactInfo)sel;
+      }
+      else {
+        info = ((MavenArtifactSearchResult)sel).versions.get(0);
+      }
+      result.add(new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion()));
     }
 
-    return new MavenId(info.getGroupId(), info.getArtifactId(), info.getVersion());
+    return result;
   }
 
   private static class MyTreeModel implements TreeModel {
@@ -312,9 +318,13 @@ public class MavenArtifactSearchPanel extends JPanel {
     protected void formatSearchResult(JTree tree, MavenArtifactSearchResult searchResult, boolean selected) {
       MavenArtifactInfo info = searchResult.versions.get(0);
       myLeftComponent.setIcon(MavenIcons.DEPENDENCY_ICON);
-      myLeftComponent.append(info.getGroupId() + ":", getGrayAttributes(selected));
-      myLeftComponent.append(info.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myLeftComponent.append(":" + info.getVersion(), getGrayAttributes(selected));
+      appendArtifactInfo(myLeftComponent, info, selected);
+    }
+
+    protected void appendArtifactInfo(SimpleColoredComponent component, MavenArtifactInfo info, boolean selected) {
+      component.append(info.getGroupId() + ":", getGrayAttributes(selected));
+      component.append(info.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(":" + info.getVersion(), getGrayAttributes(selected));
     }
 
     protected SimpleTextAttributes getGrayAttributes(boolean selected) {
@@ -338,9 +348,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       myLeftComponent.append(classResult.className, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myLeftComponent.append(" (" + classResult.packageName + ")", getGrayAttributes(selected));
 
-      myRightComponent.append(info.getGroupId() + ":", getGrayAttributes(selected));
-      myRightComponent.append(info.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myRightComponent.append(":" + info.getVersion(), getGrayAttributes(selected));
+      appendArtifactInfo(myRightComponent, info, selected);
     }
   }
 
