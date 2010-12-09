@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -42,7 +43,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The class contains utilities for creating and removing stashes.
@@ -52,6 +57,7 @@ public class GitStashUtils {
    * The version when quiet stash supported
    */
   private final static GitVersion QUIET_STASH_SUPPORTED = new GitVersion(1, 6, 4, 0);
+  private static final Logger LOG = Logger.getInstance(GitStashUtils.class.getName());
 
   private GitStashUtils() {
   }
@@ -103,6 +109,7 @@ public class GitStashUtils {
                                       final ShelveChangesManager shelveManager,
                                       final ChangeListManagerEx changeManager,
                                       List<VcsException> exceptions) {
+    LOG.info("doSystemUnshelve ");
     // The changes are temporary copied to the first local change list, the next operation will restore them back
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
@@ -126,15 +133,18 @@ public class GitStashUtils {
       }
     }
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+    LOG.info("doSystemUnshelve files refreshed. unshelving in AWT thread.");
     // Do unshevle
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         GitVFSListener l = GitVcs.getInstance(project).getVFSListener();
         l.setEventsSuppressed(true);
         try {
+          LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
           shelveManager
             .unshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(), shelvedChangeList.getBinaryFiles(),
                                 changeManager.getDefaultChangeList(), false);
+          LOG.info("Deleting change list");
           shelveManager.deleteChangeList(shelvedChangeList);
         }
         finally {

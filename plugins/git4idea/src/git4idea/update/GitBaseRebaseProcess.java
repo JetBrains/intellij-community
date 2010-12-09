@@ -259,7 +259,7 @@ public abstract class GitBaseRebaseProcess {
    * Restore project changes after update
    */
   private void restoreProjectChangesAfterUpdate() {
-    LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy());
+    LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy() + " myShelvedChangeList: " + myShelvedChangeList);
     if (mySkippedCommits.size() > 0) {
       GitSkippedCommits.showSkipped(myProject, mySkippedCommits);
     }
