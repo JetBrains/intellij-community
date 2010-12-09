@@ -4476,6 +4476,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           getFoldingModel().runBatchFoldingOperation(processor);
           y = myGutterComponent.getHeadCenterY(range);
           getScrollingModel().scrollVertically(y - scrollShift);
+          myGutterComponent.updateSize();
           return;
         }
       }
