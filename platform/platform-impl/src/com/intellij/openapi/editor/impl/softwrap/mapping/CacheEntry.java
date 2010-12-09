@@ -18,9 +18,12 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
+import com.intellij.openapi.util.Ref;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -129,8 +132,29 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
     return result;
   }
 
-  public TIntObjectHashMap<FoldingData> getFoldingData() {
-    return myFoldingData;
+  @Nullable
+  public FoldingData getFoldingData(@NotNull final FoldRegion region) {
+    FoldingData candidate = myFoldingData.get(region.getStartOffset());
+    if (candidate != null) {
+      return candidate;
+    }
+    
+    // Folding implementation is known to postpone actual fold region offsets update on document change, i.e. it performs
+    // fold data caching with its further replace by up-to-date info. Hence, there is a possible case that soft wraps processing
+    // advances fold region offset but folding model still provides old cached values. Hence, we're trying to match exact given
+    // fold region against the cached data here.
+    final Ref<FoldingData> result = new Ref<FoldingData>();
+    myFoldingData.forEachValue(new TObjectProcedure<FoldingData>() {
+      @Override
+      public boolean execute(FoldingData data) {
+        if (data.getFoldRegion().equals(region)) {
+          result.set(data);
+          return false;
+        }
+        return true;
+      }
+    });
+    return result.get();
   }
   
   public void store(FoldRegion foldRegion, int startX) {
