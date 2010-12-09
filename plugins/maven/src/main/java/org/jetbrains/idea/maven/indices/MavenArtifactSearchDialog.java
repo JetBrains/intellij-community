@@ -19,16 +19,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.TabbedPaneWrapper;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
-  private MavenId myResult;
+  private List<MavenId> myResult = Collections.emptyList();
 
   private TabbedPaneWrapper myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
@@ -36,18 +39,20 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
 
   private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<MavenArtifactSearchPanel, Boolean>();
 
-  public static MavenId searchForClass(Project project, String className) {
+  @NotNull
+  public static List<MavenId> searchForClass(Project project, String className) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
     d.show();
-    if (!d.isOK()) return null;
+    if (!d.isOK()) return Collections.emptyList();
 
     return d.getResult();
   }
 
-  public static MavenId searchForArtifact(Project project) {
+  @NotNull
+  public static List<MavenId> searchForArtifact(Project project) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, "", false);
     d.show();
-    if (!d.isOK()) return null;
+    if (!d.isOK()) return Collections.emptyList();
 
     return d.getResult();
   }
@@ -126,7 +131,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     return "Maven.ArtifactSearchDialog";
   }
 
-  public MavenId getResult() {
+  @NotNull
+  public List<MavenId> getResult() {
     return myResult;
   }
 

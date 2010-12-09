@@ -154,9 +154,10 @@ public class GitLogUI implements Disposable {
           myRecalculatedCommon.addLocals(refs.getLocalBranches());
           myRecalculatedCommon.addRemotes(refs.getRemoteBranches());
           myRecalculatedCommon.addTags(refs.getTags());
+          final String currentFromRefs = refs.getCurrent() == null ? null : refs.getCurrent().getFullName();
           if (current == null) {
-            current = refs.getCurrent().getFullName();
-          } else if (! current.equals(refs.getCurrent().getFullName())) {
+            current = currentFromRefs;
+          } else if (! current.equals(currentFromRefs)) {
             same = false;
           }
         }
