@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class GithubRebaseAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
-  private static final Logger LOG = Logger.getInstance(GithubShareAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(GithubRebaseAction.class.getName());
 
   public GithubRebaseAction() {
     super("Rebase my fork", "Rebase your forked repository relative to the origin", ICON);
@@ -138,7 +138,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     final String parent = repositoryInfo.getParent();
-    assert parent != null;
+    LOG.assertTrue(parent != null, "Parent repository not found!");
     final String parentRepoString = "http://github.com/" + parent;
 
     BasicAction.saveAll();
