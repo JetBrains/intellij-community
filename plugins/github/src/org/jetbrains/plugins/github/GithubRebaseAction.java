@@ -29,8 +29,10 @@ import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
+import git4idea.rebase.GitRebaseDialog;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -130,13 +132,37 @@ public class GithubRebaseAction extends DumbAwareAction {
 
       final String parent = repositoryInfo.getParent();
       LOG.assertTrue(parent != null, "Parent repository not found!");
-      final String parentRepoString = "git://github.com/" + parent + ".git";
+      final String parentRepoSuffix = parent + ".git";
+      final String parentRepoUrl = "git://github.com/" + parentRepoSuffix;
+
+      // Check that corresponding remote branch is configured for the fork origin repo
+      boolean remoteForParentSeen = false;
+      for (GitRemote gitRemote : gitRemotes) {
+        final String fetchUrl = gitRemote.fetchUrl();
+        if (fetchUrl.endsWith(parent + ".git")) {
+          remoteForParentSeen = true;
+          break;
+        }
+      }
+      if (!remoteForParentSeen){
+        final int result = Messages.showYesNoDialog(project, "It is nescessary to have '" +
+                                                        parentRepoUrl +
+                                                        "' as a configured remote to perform rebase? Add remote?", "Github Rebase",
+                                               Messages.getQuestionIcon());
+        if (result != Messages.OK){
+          return;
+        }
+        // TODO[oleg]: add remote url with remote update before perfoming rebase
+      }
 
       BasicAction.saveAll();
-      int i = Messages.showYesNoDialog(project, "Perform rebase relative to '" + parentRepoString + "'?", "Github Rebase", Messages.getQuestionIcon());
-      if (i != Messages.OK) {
+
+      GitRebaseDialog dialog = new GitRebaseDialog(project, Arrays.asList(roots), root);
+      dialog.show();
+      if (!dialog.isOK()) {
         return;
       }
+      //return dialog.handler();
     }
     catch (VcsException e1) {
       Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), "Cannot perform github rebase");
