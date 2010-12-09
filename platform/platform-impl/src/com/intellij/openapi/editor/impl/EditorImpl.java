@@ -1071,6 +1071,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // optimization: do not do column calculations here since we are interested in line number only
   public int offsetToVisualLine(int offset) {
+    int textLength = getDocument().getTextLength();
+    if (offset >= textLength) {
+      int result = getVisibleLineCount();
+      if (textLength > 0 && getDocument().getCharsSequence().charAt(textLength - 1) == '\n') {
+        result++;
+      }
+      return result;
+    }
     int line = calcLogicalLineNumber(offset);
     int lineStartOffset = myDocument.getLineStartOffset(line);
     int result = logicalToVisualLine(line);
