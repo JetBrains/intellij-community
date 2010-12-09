@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +55,8 @@ public class LoadingOrder {
   @NonNls private final String myName; // for debug only
   private final boolean myFirst;
   private final boolean myLast;
-  private final Set<String> myBefore = new HashSet<String>();
-  private final Set<String> myAfter = new HashSet<String>();
+  private final Set<String> myBefore = new HashSet<String>(2);
+  private final Set<String> myAfter = new HashSet<String>(2);
 
   private LoadingOrder() {
     myName = "ANY";
@@ -118,16 +117,20 @@ public class LoadingOrder {
   }
 
   public static void sort(final Orderable[] orderables) {
+    // our graph is pretty sparse so do benefit from the fact
     final Map<String,Orderable> map = new HashMap<String, Orderable>();
-    for (final Orderable orderable : orderables) {
-      final String id = orderable.getOrderId();
-      if (StringUtil.isNotEmpty(id)) {
-        map.put(id, orderable);
-      }
-    }
+    final HashMap<Orderable, LoadingOrder> cachedMap = new HashMap<Orderable, LoadingOrder>(orderables.length);
+    final HashSet<Orderable> first = new HashSet<Orderable>(1);
+    final HashSet<Orderable> hasBefore = new HashSet<Orderable>(orderables.length);
 
-    final Map<Orderable, LoadingOrder> cachedMap = new THashMap<Orderable, LoadingOrder>();
-    for(Orderable o:orderables) cachedMap.put(o, o.getOrder());
+    for(Orderable o:orderables) {
+      final String id = o.getOrderId();
+      if (StringUtil.isNotEmpty(id)) map.put(id, o);
+      LoadingOrder order = o.getOrder();
+      cachedMap.put(o, order);
+      if (order.myFirst) first.add(o);
+      if (order.myBefore.size() != 0) hasBefore.add(o);
+    }
 
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
       public Collection<Orderable> getNodes() {
@@ -148,14 +151,30 @@ public class LoadingOrder {
         }
 
         String id = n.getOrderId();
-        for (final Orderable orderable : orderables) {
-          final LoadingOrder hisOrder = cachedMap.get(orderable);
-          if (StringUtil.isNotEmpty(id) && hisOrder.myBefore.contains(id) ||
-              order.myLast && !hisOrder.myLast ||
-              hisOrder.myFirst && !order.myFirst) {
+        if (StringUtil.isNotEmpty(id)) {
+          for (final Orderable orderable : hasBefore) {
+            final LoadingOrder hisOrder = cachedMap.get(orderable);
+            if (hisOrder.myBefore.contains(id)) {
+              predecessors.add(orderable);
+            }
+          }
+        }
+
+        if (order.myLast) {
+          for (final Orderable orderable : orderables) {
+            final LoadingOrder hisOrder = cachedMap.get(orderable);
+            if (!hisOrder.myLast) {
+              predecessors.add(orderable);
+            }
+          }
+        }
+
+        if (!order.myFirst) {
+          for(Orderable orderable:first) {
             predecessors.add(orderable);
           }
         }
+
         return predecessors.iterator();
       }
     })));
