@@ -147,8 +147,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private RepositoryChangeListener myIndexChangeListener;
   private GitCurrentBranchWidget myCurrentBranchWidget;
 
-  public static GitVcs getInstance(@NotNull Project project) {
-    return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+  @Nullable
+  public static GitVcs getInstance(Project project) {
+    if (project == null || project.isDisposed()) {
+      return null;
+    }
+    return (GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
 
   public GitVcs(@NotNull Project project,
