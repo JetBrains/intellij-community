@@ -21,11 +21,9 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -122,14 +120,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (myWatcher.isOperational()) {
       new StoreRefreshStatusThread().start();
     }
-    if (SystemInfo.isWindows &&
-        Win32LocalFileSystem.isAvailable() &&
-        Registry.is("filesystem.useNative")) {
-      myNativeFileSystem = null; //Win32LocalFileSystem.getWin32Instance();
-    }
-    else {
-      myNativeFileSystem = null;
-    }
+    myNativeFileSystem = null;
   }
 
   public void initComponent() {
@@ -153,11 +144,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        refresh(false);
-      }
-    });
+    // grand VFS refresh significantly slows down local tests and generally not needed
+    //ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //  public void run() {
+    //    refresh(false);
+    //  }
+    //});
 
     myRootsToWatch.clear();
 
