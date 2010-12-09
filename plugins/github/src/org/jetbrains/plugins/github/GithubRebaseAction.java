@@ -139,7 +139,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     final String parent = repositoryInfo.getParent();
     LOG.assertTrue(parent != null, "Parent repository not found!");
-    final String parentRepoString = "http://github.com/" + parent;
+    final String parentRepoString = "git://github.com/" + parent + ".git";
 
     BasicAction.saveAll();
     int i = Messages.showYesNoDialog(project, "Perform rebase relative to '" + parentRepoString + "'?", "Github Rebase", Messages.getQuestionIcon());
