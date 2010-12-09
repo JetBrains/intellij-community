@@ -570,6 +570,19 @@ else:
         'file': None,
     })
 
+def packageOf(name, unqualified_ok=False):
+    """
+    packageOf('foo.bar.baz') = 'foo.bar.'
+    packageOf('foo') = ''
+    packageOf('foo', True) = 'foo'
+    """
+    if name:
+        res = name[:name.rfind('.')+1]
+        if not res and unqualified_ok:
+            res = name
+        return res
+    else:
+        return ''
 
 
 class ModuleRedeclarator(object):
@@ -587,6 +600,7 @@ class ModuleRedeclarator(object):
         self.imported_modules = {"": the_builtins}
         self._defined = {} # contains True for every name defined so far
         self.doing_builtins = doing_builtins
+        self.ret_type_cache = {}
 
 
     def indent(self, level):
@@ -1093,8 +1107,39 @@ class ModuleRedeclarator(object):
             thing = getattr(self.module, s, None)
             if thing:
                 return s
-        # TODO: handle things like "[a, b,..] and (foo,..)"
+            # adds no noticeable slowdown, I did measure. dch.
+            for im_name, im_module in self.imported_modules.items():
+                cache_key = (im_name, s)
+                cached = self.ret_type_cache.get(cache_key, None)
+                if cached:
+                  return cached
+                v = getattr(im_module, s, None)
+                if v:
+                    if isinstance(v, type):
+                        # detect a constructor
+                        constr_args = self.detectConstructor(v)
+                        if constr_args is None:
+                            constr_args = "*(), **{}" # a silly catch-all constructor
+                        ref = "%s(%s)" % (s, constr_args)
+                    else:
+                        ref = s
+                    if im_name:
+                        result = "%s.%s" % (im_name, ref)
+                    else: # built-in
+                        result = ref
+                    self.ret_type_cache[cache_key] = result
+                    return result
+            # TODO: handle things like "[a, b,..] and (foo,..)"
         return None
+
+    def detectConstructor(self, p_class):
+        # try to inspect the thing
+        constr = getattr(p_class, "__init__")
+        if constr and inspect and inspect.isfunction(constr):
+            args, _, _, _ = inspect.getargspec(constr)
+            return ", ".join(args)
+        else:
+            return None
 
     SIG_DOC_NOTE = "restored from __doc__"
     SIG_DOC_UNRELIABLY = "NOTE: unreliably restored from __doc__ "
@@ -1539,6 +1584,7 @@ class ModuleRedeclarator(object):
         funcs = {}
         classes = {}
         reexports = {} # contains not real objects, but qualified id strings, like "sys.stdout"
+        our_package = packageOf(p_name)
         #
         for item_name in self.module.__dict__:
             if item_name in ("__dict__", "__doc__", "__module__", "__file__", "__name__", "__builtins__", "__package__"):
@@ -1556,7 +1602,8 @@ class ModuleRedeclarator(object):
                 imported_name = None
             else:
                 imported_name = self.findImportedName(item)
-            if imported_name is not None:
+            if imported_name is not None and not our_package.startswith(packageOf(imported_name, True)):
+                # reexport only names from lower levels or different packages
                 reexports[item_name] = imported_name
             else:
                 if isinstance(item, type) or item is FakeClassObj: # some classes are callable, check them before functions
