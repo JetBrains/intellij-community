@@ -17,12 +17,15 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,6 +33,10 @@ import java.util.List;
 
 public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
+  private static final TokenSet TYPES_OF_STATEMENTS_WITH_OPTIONAL_BRACES = TokenSet.create(
+    JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.FOR_STATEMENT
+  );
+  
   private final static int BEFORE_FIRST = 0;
   private final static int BEFORE_BLOCK = 1;
   private final static int AFTER_ELSE = 2;
@@ -207,12 +214,37 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       return new ChildAttributes(getCodeBlockExternalIndent(), null);
     }
 
+    boolean useExternalIndent = false;
     if (newChildIndex == getSubBlocks().size()) {
+      useExternalIndent = true;
+    }
+    else if (TYPES_OF_STATEMENTS_WITH_OPTIONAL_BRACES.contains(myNode.getElementType())) {
+      // There is a possible case that we have situation like below:
+      //    if (true) <enter was pressed here>
+      //    <caret>
+      //    System.out.println();
+      // We would like to indent current caret position then because there is a high probability that the user starts
+      // typing there (populating statement body). So, we perform dedicated check for that here and use 'external indent'
+      // if necessary.
+      Block prevBlock = getSubBlocks().get(newChildIndex - 1);
+      Block nextBlock = getSubBlocks().get(newChildIndex);
+      if (prevBlock instanceof ASTBlock && nextBlock instanceof ASTBlock) {
+        ASTNode prevNode = ((ASTBlock)prevBlock).getNode();
+        ASTNode nextNode = ((ASTBlock)nextBlock).getNode();
+        if (prevNode != null && nextNode != null && prevNode.getElementType() == JavaTokenType.RPARENTH 
+            && nextNode.getElementType() != JavaTokenType.LBRACE) 
+        {
+          useExternalIndent = true;
+        }
+      }
+    }
+    
+    if (useExternalIndent) {
       return new ChildAttributes(getCodeBlockChildExternalIndent(newChildIndex), null);
     }
-
-    return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
-
+    else {
+      return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
+    }
   }
 
   private boolean isInsideForParens(final int newChildIndex) {
