@@ -186,15 +186,13 @@ public class LazyParseableElement extends CompositeElement {
     if (parsedNode != null) {
       rawAddChildren((TreeElement)parsedNode);
 
-      /*
-      if (getTextLength() != text.length()) {
-        if (ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
-        } else {
-          LOG.error("Inconsistent reparse: type=" + getElementType());
-        }
-      }
-      */
+      //if (getNotCachedLength() != text.length()) {
+      //  if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      //    LOG.error("Inconsistent reparse: type=" + getElementType() + "; text=" + text + "; treeText=" + getText());
+      //  } else {
+      //    LOG.error("Inconsistent reparse: type=" + getElementType());
+      //  }
+      //}
 
       //ensure PSI is created all at once, to reduce contention of PsiLock in CompositeElement.getPsi()
       ((TreeElement)parsedNode).acceptTree(CREATE_PSI);

@@ -64,7 +64,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
           return new WriteCommandAction<MavenDomDependency>(editor.getProject(), mavenModel.getXmlTag().getContainingFile()) {
             @Override
             protected void run(Result result) throws Throwable {
-              MavenDomDependency dependency = MavenDomUtil.createMavenDomDependency(mavenModel, editor);
+              MavenDomDependency dependency = MavenDomUtil.createDomDependency(mavenModel, editor);
 
               dependency.getGroupId().setStringValue(groupId);
               dependency.getArtifactId().setStringValue(artifactId);

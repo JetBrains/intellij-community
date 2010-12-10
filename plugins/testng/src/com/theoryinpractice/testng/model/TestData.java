@@ -184,8 +184,15 @@ public class TestData implements Cloneable
     if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
     else return getPackageName();
     String name = JavaExecutionUtil.getPresentableClassName(getMainClassName(), runconfigurationmodule);
-    if (TestType.METHOD.getType().equals(TEST_OBJECT)) return name + '.' + getMethodName();
-    else return name;
+    if (TestType.METHOD.getType().equals(TEST_OBJECT)) {
+      return name + '.' + getMethodName();
+    }
+    else if (TestType.SUITE.getType().equals(TEST_OBJECT)) {
+      return getSuiteName();
+    }
+    else {
+      return name;
+    }
   }
 
   public String getMainClassName() {

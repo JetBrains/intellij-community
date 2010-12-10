@@ -52,6 +52,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.content.*;
 import com.intellij.util.containers.HashMap;
@@ -63,9 +64,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -521,6 +520,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (RUN_GLOBAL_TOOLS_ONLY) return;
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
+    final Set<VirtualFile> localScopeFiles = scope.toSearchScope() instanceof LocalSearchScope ? new HashSet<VirtualFile>() : null;
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
@@ -528,6 +528,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         if (virtualFile != null) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
           if (SingleRootFileViewProvider.isTooLarge(virtualFile)) return;
+          if (localScopeFiles != null) {
+            if (localScopeFiles.contains(virtualFile)) return;
+            localScopeFiles.add(virtualFile);
+          }
         }
 
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);

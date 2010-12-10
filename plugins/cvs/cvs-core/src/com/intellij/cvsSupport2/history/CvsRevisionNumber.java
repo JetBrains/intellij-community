@@ -96,13 +96,11 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
 
   protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
     if (mySubRevisions != null && other.mySubRevisions != null) {
-      if (other.mySubRevisions.length > mySubRevisions.length) {
-        return -other.compareToCvsRevisionNumber(this);
-      }
-
-      for (int i = 0; i < mySubRevisions.length; i++) {
-        int subRevision = mySubRevisions[i];
-        int otherSubRevision = other.getSubRevisionAt(i);
+      final int thisLength = mySubRevisions.length;
+      final int thatLength = other.mySubRevisions.length;
+      for (int i = 0; i < Math.max(thisLength, thatLength); i++) {
+        int subRevision = i < thisLength ? mySubRevisions[i] : 0;
+        int otherSubRevision = i < thatLength ? other.getSubRevisionAt(i) : 0;
         if (subRevision != otherSubRevision) {
           return subRevision > otherSubRevision ? 1 : -1;
         }

@@ -67,7 +67,7 @@ public class ResourceValue {
       return null;
     }
     if (s.startsWith("@")) {
-      return reference(s, withPrefix);
+      return reference(s, true);
     }
     else if (!withPrefix) {
       ResourceValue value = reference(s, withPrefix);

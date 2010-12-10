@@ -604,7 +604,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() +
-                               " type: "+contentElementType+"; content:<<<\n"+
+                               " type: "+contentElementType+";" +
+                               " StubUpdatingIndex.canHaveStub(vFile)=" + StubUpdatingIndex.canHaveStub(vFile) + 
+                               " content:<<<\n"+
                                StringUtil.first(getViewProvider().getContents(),200,true)+
                                "\n>>>; stubs=" + stubHolder.getPlainList());
     }

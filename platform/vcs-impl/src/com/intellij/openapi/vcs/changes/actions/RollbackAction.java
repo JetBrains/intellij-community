@@ -29,8 +29,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -58,9 +58,24 @@ public class RollbackAction extends AnAction implements DumbAware {
     if (! visible) return;
 
     final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
-    final boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
+    boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING));
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES));
+    if (! isEnabled) {
+      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      if (files != null) {
+        final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+        for (VirtualFile file : files) {
+          final FileStatus status = fileStatusManager.getStatus(file);
+          if (FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status) || FileStatus.NOT_CHANGED.equals(status)) {
+            continue;
+          }
+          isEnabled = true;
+          break;
+        }
+      }
+    }
     e.getPresentation().setEnabled(isEnabled);
     if (isEnabled) {
       final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();

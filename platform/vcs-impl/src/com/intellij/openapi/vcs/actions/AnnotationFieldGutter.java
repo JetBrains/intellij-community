@@ -34,6 +34,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Irina Chernushina
@@ -82,6 +83,22 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @Nullable
   private static String shorten(String value) {
     if (value != null) {
+      // Vasya Pupkin <vasya.pupkin@jetbrains.com>
+      final int[] ind = {value.indexOf('<'), value.indexOf('@'), value.indexOf('>')};
+      if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
+        return shorten(value.substring(0, ind[0]).trim());
+      }
+
+      // vasya.pupkin@email.com --> vasya pupkin
+      if (isEmail(value)) {
+        final String firstPart = value.substring(0, value.indexOf('@')).replace('.', ' ').replace('_', ' ').replace('-', ' ');
+        if (firstPart.length() < value.length()) {
+          return shorten(firstPart);
+        } else {
+          return firstPart;
+        }
+      }
+
       final List<String> strings = StringUtil.split(value, " ");
       if (strings.size() > 1) {
         //Middle name check: Vasya S. Pupkin
@@ -99,6 +116,15 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
     }
     return value;
   }
+
+  private static final Pattern EMAIL = Pattern.compile("^[\\w\\.-]+@([\\w\\-]+\\.)+[a-z]{2,15}$");
+  public static boolean isEmail(String s) {
+    if (!StringUtil.isEmpty(s)) {
+      return EMAIL.matcher(s).matches();
+    }
+    return false;
+  }
+
 
   @Nullable
   public String getToolTip(final int line, final Editor editor) {

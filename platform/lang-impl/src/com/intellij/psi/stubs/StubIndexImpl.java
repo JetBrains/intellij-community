@@ -45,6 +45,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 @State(
@@ -64,6 +66,7 @@ import java.util.concurrent.locks.Lock;
     }
 )
 public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
+  private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new HashMap<StubIndexKey<?,?>, MyIndex<?>>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
@@ -71,19 +74,29 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private StubIndexState myPreviouslyRegistered;
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
+    final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+
     final StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
     boolean needRebuild = false;
     for (StubIndexExtension extension : extensions) {
       //noinspection unchecked
-      needRebuild |= registerIndexer(extension);
+      needRebuild |= registerIndexer(extension, forceClean);
     }
     if (needRebuild) {
       requestRebuild();
     }
     dropUnregisteredIndices();
   }
-
-  private <K> boolean registerIndexer(final StubIndexExtension<K, ?> extension) throws IOException {
+  
+  @Nullable
+  public static StubIndexImpl getInstanceOrInvalidate() {
+    if (ourForcedClean.compareAndSet(null, Boolean.TRUE)) {
+      return null;
+    }
+    return (StubIndexImpl)getInstance();
+  }
+  
+  private <K> boolean registerIndexer(final StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     myIndexIdToVersionMap.put(indexKey, version);
@@ -91,10 +104,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     final boolean versionFileExisted = versionFile.exists();
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     boolean needRebuild = false;
-    if (IndexInfrastructure.versionDiffers(versionFile, version)) {
+    if (forceClean || IndexInfrastructure.versionDiffers(versionFile, version)) {
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
-      needRebuild = versionFileExisted || children != null && children.length > 0;
+      needRebuild = !forceClean && (versionFileExisted || children != null && children.length > 0);
       if (needRebuild) {
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }

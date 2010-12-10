@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,24 +47,24 @@ public class InheritorsHolder implements Consumer<LookupElement> {
       final PsiClass psiClass = (PsiClass)object;
       if (JavaCompletionUtil.hasAccessibleInnerClass(psiClass, myPosition)) return;
 
-      ContainerUtil.addIfNotNull(myAddedClasses, psiClass.getQualifiedName());
+      ContainerUtil.addIfNotNull(myAddedClasses, getClassName(psiClass));
     }
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
   }
 
+  @Nullable
+  private static String getClassName(PsiClass psiClass) {
+    String name = psiClass.getQualifiedName();
+    return name == null ? psiClass.getName() : name;
+  }
+
   public boolean alreadyProcessed(@NotNull LookupElement element) {
     final Object object = element.getObject();
-    if (object instanceof PsiClass) {
-      if (alreadyProcessed((PsiClass)object)) return true;
-    }
-    return false;
+    return object instanceof PsiClass && alreadyProcessed((PsiClass)object);
   }
 
   public boolean alreadyProcessed(@NotNull PsiClass object) {
-    final String qualifiedName = object.getQualifiedName();
-    if (qualifiedName == null || myAddedClasses.contains(qualifiedName)) {
-      return true;
-    }
-    return false;
+    final String name = getClassName(object);
+    return name == null || myAddedClasses.contains(name);
   }
 }

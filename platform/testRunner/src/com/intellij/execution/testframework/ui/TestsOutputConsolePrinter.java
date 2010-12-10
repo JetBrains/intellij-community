@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -89,7 +88,6 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     if (myCurrentTest != null) {
       myCurrentTest.setPrinter(null);
     }
-    myConsole.clear();
     myMarkOffset = 0;
     if (test == null) {
       myCurrentTest = null;
@@ -97,23 +95,34 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     }
     myCurrentTest = test;
     myCurrentTest.setPrinter(this);
+    final Runnable clearRunnable = new Runnable() {
+      public void run() {
+        myConsole.clear();
+      }
+    };
+    final Runnable scrollRunnable = new Runnable() {
+      @Override
+      public void run() {
+        scrollToBeginning();
+      }
+    };
     if (isRoot() && myUnboundOutputRoot != null) {
+      myUnboundOutputRoot.invokeInAlarm(clearRunnable);
       myUnboundOutputRoot.printOn(this);
+      myUnboundOutputRoot.invokeInAlarm(scrollRunnable);
     } else {
+      myCurrentTest.invokeInAlarm(clearRunnable);
       myCurrentTest.printOn(this);
-    }
-    scrollToBeginning();
-    if (myConsole instanceof ConsoleViewImpl) {
-      ((ConsoleViewImpl)myConsole).foldImmediately();
+      myCurrentTest.invokeInAlarm(scrollRunnable);
     }
   }
 
   public boolean isCurrent(CompositePrintable printable) {
-    return myCurrentTest == printable || (isRoot() && myUnboundOutputRoot != null);
+    return myCurrentTest == printable || isRoot();
   }
 
   private boolean isRoot() {
-    return myCurrentTest.getParent() == myUnboundOutputRoot;
+    return myCurrentTest != null && myCurrentTest.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {

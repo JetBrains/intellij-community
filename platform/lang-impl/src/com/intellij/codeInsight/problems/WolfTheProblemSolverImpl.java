@@ -251,7 +251,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
         if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
           doRemove(virtualFile);
         }
-        pass.advanceProgress(virtualFile.getLength());
+        if (virtualFile.isValid()) pass.advanceProgress(virtualFile.getLength());
       }
     }
     finally {

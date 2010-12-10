@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -212,11 +210,13 @@ public class ExpectedTypeUtils{
             expectedType = PsiType.BOOLEAN;
         }
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement){
+        @Override public void visitForStatement(
+                @NotNull PsiForStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement statement){
+        @Override public void visitIfStatement(
+                @NotNull PsiIfStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
@@ -360,24 +360,47 @@ public class ExpectedTypeUtils{
                         return;
                     }
                     final PsiClass aClass = field.getContainingClass();
+                    if (aClass == null) {
+                        return;
+                    }
                     final PsiElementFactory factory =
                             psiFacade.getElementFactory();
                     expectedType = factory.createType(aClass, substitutor);
                 } else if(element instanceof PsiMethod){
+                    final PsiElement parent = referenceExpression.getParent();
+                    final PsiType returnType;
+                    if (parent instanceof PsiMethodCallExpression) {
+                        final PsiMethodCallExpression methodCallExpression = 
+                                (PsiMethodCallExpression) parent;
+                        final PsiType type = methodCallExpression.getType();
+                        if (!PsiType.VOID.equals(type)) {
+                            returnType = 
+                                    findExpectedType(methodCallExpression, true);
+                        } else {
+                            returnType = null;
+                        }
+                    } else {
+                        returnType = null;
+                    }
                     final PsiMethod method = (PsiMethod) element;
                     final PsiMethod superMethod =
-                            findDeepestVisibleSuperMethod(method,
+                            findDeepestVisibleSuperMethod(method, returnType,
                                     referenceExpression);
                     final PsiClass aClass;
                     if(superMethod != null){
                         aClass = superMethod.getContainingClass();
+                        if (aClass == null) {
+                            return;
+                        }
                         substitutor =
                                 TypeConversionUtil.getSuperClassSubstitutor(
-                                        superMethod.getContainingClass(),
-                                        method.getContainingClass(),
+                                        aClass, method.getContainingClass(),
                                         substitutor);
                     } else{
                         aClass = method.getContainingClass();
+                        if (aClass == null) {
+                            return;
+                        }
                     }
                     final PsiElementFactory factory =
                             psiFacade.getElementFactory();
@@ -390,7 +413,7 @@ public class ExpectedTypeUtils{
 
         @Nullable
         private static PsiMethod findDeepestVisibleSuperMethod(
-                PsiMethod method, PsiElement element){
+                PsiMethod method, PsiType returnType, PsiElement element){
             if(method.isConstructor()){
                 return null;
             }
@@ -404,42 +427,36 @@ public class ExpectedTypeUtils{
             if(aClass == null){
                 return null;
             }
-            final PsiMethod[] allMethods = aClass.getAllMethods();
+            final PsiMethod[] superMethods =
+                    aClass.findMethodsBySignature(method, true);
             PsiMethod topSuper = null;
-            for(PsiMethod superMethod : allMethods){
+            PsiClass topSuperContainingClass = null;
+            for(PsiMethod superMethod : superMethods){
                 final PsiClass superClass = superMethod.getContainingClass();
-                if(!isAccessibleFrom(superMethod, element)){
+                if (superClass == null) {
                     continue;
                 }
                 if(aClass.equals(superClass)){
                     continue;
                 }
-                PsiSubstitutor superClassSubstitutor = TypeConversionUtil
-                        .getClassSubstitutor(superClass, aClass,
-                                             PsiSubstitutor.EMPTY);
-                if(superClassSubstitutor
-                        == null){
-                    superClassSubstitutor = PsiSubstitutor.EMPTY;
+                if(!isAccessibleFrom(superMethod, element)){
+                    continue;
                 }
-                final String name = method.getName();
-                final MethodSignature signature =
-                        method.getSignature(PsiSubstitutor.EMPTY);
-                final boolean looksLikeSuperMethod =
-                        name.equals(superMethod.getName()) &&
-                                !superMethod.hasModifierProperty(
-                                        PsiModifier.STATIC) &&
-                                PsiUtil.isAccessible(superMethod, aClass,
-                                        aClass) &&
-                                signature.equals(superMethod.getSignature(
-                                        superClassSubstitutor));
-                if(looksLikeSuperMethod){
-                    if(topSuper != null &&
-                            superClass.isInheritor(
-                                    topSuper.getContainingClass(), true)){
+                if (returnType != null) {
+                    final PsiType superReturnType = superMethod.getReturnType();
+                    if (superReturnType == null) {
                         continue;
                     }
-                    topSuper = superMethod;
+                    if (!returnType.isAssignableFrom(superReturnType)) {
+                        continue;
+                    }
                 }
+                if(topSuper != null &&
+                        superClass.isInheritor(topSuperContainingClass, true)){
+                    continue;
+                }
+                topSuper = superMethod;
+                topSuperContainingClass = superClass;
             }
             return topSuper;
         }

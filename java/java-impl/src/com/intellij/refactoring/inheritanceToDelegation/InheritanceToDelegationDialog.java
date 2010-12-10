@@ -18,7 +18,6 @@ package com.intellij.refactoring.inheritanceToDelegation;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -110,12 +109,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     final String fieldName = getFieldName();
     final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     if (!helper.isIdentifier(fieldName)){
-      throw new ConfigurationException("\'" + StringUtil.first(fieldName, 10, true) + "\' is invalid field name for delegation");
+      throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
     }
     if (myInnerClassNameField != null) {
       final String className = myInnerClassNameField.getEnteredName();
       if (!helper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + StringUtil.first(className, 10, true) + "\' is invalid inner class name");
+        throw new ConfigurationException("\'" + className + "\' is invalid inner class name");
       }
     }
   }

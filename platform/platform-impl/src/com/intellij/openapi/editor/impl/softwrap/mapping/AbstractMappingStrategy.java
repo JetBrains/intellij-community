@@ -48,6 +48,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   private EditorPosition myInitialPosition;
   private CacheEntry myTargetEntry;
   private T myEagerMatch;
+  private int myLastEntryOffset;
 
   AbstractMappingStrategy(@NotNull Editor editor,
                           @NotNull SoftWrapsStorage storage,
@@ -93,6 +94,9 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
     myEagerMatch = null;
     myTargetEntry = null;
     myInitialPosition = null;
+    if (!myCache.isEmpty()) {
+      myLastEntryOffset = myCache.get(myCache.size() - 1).endOffset;
+    }
   }
   
   protected void setInitialPosition(@NotNull EditorPosition position) {
@@ -106,25 +110,29 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   @Nullable
-  protected FoldingData getFoldRegionData(FoldRegion foldRegion) {
+  protected FoldingData getFoldRegionData(@NotNull FoldRegion foldRegion) {
     int i = MappingUtil.getCacheEntryIndexForOffset(foldRegion.getStartOffset(), myEditor.getDocument(), myCache);
     if (i < 0 || i >= myCache.size()) {
       return null;
     }
 
     CacheEntry cacheEntry = myCache.get(i);
-    return cacheEntry.getFoldingData().get(foldRegion.getStartOffset());
+    return cacheEntry.getFoldingData(foldRegion);
   }
 
   @Override
   public T advance(EditorPosition position, int offset) {
+    Document document = myEditor.getDocument();
+    if (offset >= myLastEntryOffset || offset >= document.getTextLength()) {
+      return build(position);
+    }
+    
     T result = buildIfExceeds(position, offset);
     if (result != null) {
       return result;
     }
 
     // Update context state and continue processing.
-    Document document = myEditor.getDocument();
     int linesDiff = document.getLineNumber(offset) - position.logicalLine;
     position.logicalLine += linesDiff;
     position.visualLine += linesDiff;
@@ -147,7 +155,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected abstract T buildIfExceeds(EditorPosition position, int offset);
 
   @Override
-  public T processFoldRegion(EditorPosition position, FoldRegion foldRegion) {
+  public T processFoldRegion(EditorPosition position, @NotNull FoldRegion foldRegion) {
     T result = buildIfExceeds(position, foldRegion);
     if (result != null) {
       return result;

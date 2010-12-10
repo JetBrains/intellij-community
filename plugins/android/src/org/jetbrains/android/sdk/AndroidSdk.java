@@ -98,7 +98,7 @@ public abstract class AndroidSdk {
   public static AndroidSdk parse(@NotNull String path, @NotNull ISdkLog log) {
     path = FileUtil.toSystemDependentName(path);
     if (isAndroid15Sdk(path)) {
-      SdkManager manager = SdkManager.createManager(path, log);
+      SdkManager manager = SdkManager.createManager(path + File.separatorChar, log);
       if (manager != null) {
         return new AndroidSdkImpl(manager);
       }
@@ -142,7 +142,7 @@ public abstract class AndroidSdk {
 
   public void initializeDdmlib() {
     synchronized (myDdmsLock) {
-      String adbPath = getLocation() + File.separator + AndroidUtils.toolPath(ADB);
+      String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
         myDdmLibInitialized = true;
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
@@ -152,6 +152,14 @@ public abstract class AndroidSdk {
         AndroidDebugBridge.createBridge(adbPath, false);
       }
     }
+  }
+
+  private String getAdbPath() {
+    String path = getLocation() + File.separator + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + ADB;
+    if (!new File(path).exists()) {
+      return getLocation() + File.separator + AndroidUtils.toolPath(ADB);
+    }
+    return path;
   }
 
   public static void terminateDdmlib() {

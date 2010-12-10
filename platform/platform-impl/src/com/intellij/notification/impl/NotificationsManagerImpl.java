@@ -15,13 +15,21 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -33,10 +41,18 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -154,6 +170,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   private static void notifyByBalloon(final Notification notification,
                                       final NotificationDisplayType displayType,
                                       @Nullable final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
 
@@ -229,6 +247,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (balloon.isDisposed()) return;
         show.run();
       }
     });

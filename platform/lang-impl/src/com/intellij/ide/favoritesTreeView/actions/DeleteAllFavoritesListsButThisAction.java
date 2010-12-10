@@ -19,10 +19,7 @@ package com.intellij.ide.favoritesTreeView.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
@@ -53,16 +50,23 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction implements Du
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Presentation presentation = e.getPresentation();
     if (project == null){
-      e.getPresentation().setEnabled(false);
+      presentation.setEnabled(false);
       return;
     }
-    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
-    e.getPresentation().setEnabled(listName != null);
+    final String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
+    presentation.setEnabled(false);
     if (listName != null) {
-      e.getPresentation().setText(IdeBundle.message("action.delete.all.favorites.lists.but.this",listName));
-      e.getPresentation().setDescription(IdeBundle.message("action.delete.all.favorites.lists.but.this",listName));
+      final String[] favoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
+      if (listName.equals(project.getName())) {
+        presentation.setEnabled(favoritesLists.length > 1);
+      }  else {
+        presentation.setEnabled(favoritesLists.length > 2);
+      }
+      presentation.setText(IdeBundle.message("action.delete.all.favorites.lists.but.this", listName));
+      presentation.setDescription(IdeBundle.message("action.delete.all.favorites.lists.but.this", listName));
     }
   }
 }

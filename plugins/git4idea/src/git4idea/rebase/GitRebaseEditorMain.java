@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -90,7 +91,7 @@ public class GitRebaseEditorMain {
     }
     String file = args[1];
     try {
-      XmlRpcClientLite client = new XmlRpcClientLite("localhost", port);
+      XmlRpcClientLite client = new XmlRpcClientLite(InetAddress.getLocalHost().getHostName(), port);
       Vector<Object> params = new Vector<Object>();
       params.add(handler);
       if (System.getProperty("os.name").toLowerCase().startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {

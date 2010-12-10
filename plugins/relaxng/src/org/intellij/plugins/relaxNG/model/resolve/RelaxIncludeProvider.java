@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /*
 * Created by IntelliJ IDEA.
@@ -38,11 +41,15 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
   @NotNull
   @Override
   public FileIncludeInfo[] getIncludeInfos(FileContent content) {
-    final ArrayList<FileIncludeInfo> infos = new ArrayList<FileIncludeInfo>();
+    final ArrayList<FileIncludeInfo> infos;
 
     if (content.getFileType() == XmlFileType.INSTANCE) {
-      NanoXmlUtil.parse(new ByteArrayInputStream(content.getContent()), new RngBuilderAdapter(infos));
+      CharSequence inputDataContentAsText = content.getContentAsText();
+      if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return FileIncludeInfo.EMPTY;
+      infos = new ArrayList<FileIncludeInfo>();
+      NanoXmlUtil.parse(new CharSequenceReader(inputDataContentAsText), new RngBuilderAdapter(infos));
     } else if (content.getFileType() == RncFileType.getInstance()) {
+      infos = new ArrayList<FileIncludeInfo>();
       content.getPsiFile().acceptChildren(new RncElementVisitor() {
         @Override
         public void visitElement(RncElement element) {
@@ -57,6 +64,8 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
           }
         }
       });
+    } else {
+      return FileIncludeInfo.EMPTY;
     }
     return infos.toArray(new FileIncludeInfo[infos.size()]);
   }

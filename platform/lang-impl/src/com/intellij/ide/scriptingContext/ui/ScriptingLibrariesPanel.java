@@ -18,7 +18,6 @@ package com.intellij.ide.scriptingContext.ui;
 import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.ui.table.JBTable;
@@ -97,7 +96,7 @@ public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
     EditLibraryDialog editLibDialog = new EditLibraryDialog("New Library", myProvider, myProject);
     editLibDialog.show();
     if (editLibDialog.isOK()) {
-      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
+      myLibTableModel.createLibrary(editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles(), null);
     }
   }
 
@@ -129,7 +128,8 @@ public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
       EditLibraryDialog editLibDialog = new EditLibraryDialog("Edit Library", myProvider, myProject, lib);
       editLibDialog.show();
       if (editLibDialog.isOK()) {
-        myLibTableModel.updateLibrary(libName, editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles());
+        myLibTableModel
+          .updateLibrary(libName, editLibDialog.getLibName(), editLibDialog.getSourceFiles(), editLibDialog.getCompactFiles(), null);
       }
     }
   }

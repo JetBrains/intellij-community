@@ -100,6 +100,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     toTestCompletion("styles5.xml", "styles5_after.xml");
   }
 
+  public void testStyles10() throws Throwable {
+    doTestHighlighting("styles10.xml");
+  }
+
   public void testParentStyleReference() throws Throwable {
     VirtualFile file = myFixture.copyFileToProject(testFolder + "/psreference.xml", getPathToCopy("psreference.xml"));
     myFixture.configureFromExistingVirtualFile(file);

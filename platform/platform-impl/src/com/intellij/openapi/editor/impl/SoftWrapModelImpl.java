@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,29 +56,25 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
 
-  /** Upper boundary of time interval to check editor settings. */
-  private static final long EDITOR_SETTINGS_CHECK_PERIOD_MILLIS = 10000;
-
   private final OffsetToLogicalTask   myOffsetToLogicalTask   = new OffsetToLogicalTask();
   private final VisualToLogicalTask   myVisualToLogicalTask   = new VisualToLogicalTask();
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
-  private final List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
-  private final List<FoldingListener>  myFoldListeners     = new ArrayList<FoldingListener>();
+  private final List<DocumentListener>         myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<FoldingListener>          myFoldListeners     = new ArrayList<FoldingListener>();
 
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
   private final SoftWrapsStorage                   myStorage;
   private final SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
+  private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
 
   private final EditorEx myEditor;
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
   private int myActive;
-  /** Holds timestamp of the last editor settings check. */
-  private long myLastSettingsCheckTimeMillis;
-  private Boolean myLastUseSoftWraps;
+  private boolean myUseSoftWraps;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
@@ -108,16 +105,23 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myApplianceManager = applianceManager;
     myDataMapper = dataMapper;
     myFoldBasedApplianceStrategy = new SoftWrapFoldBasedApplianceStrategy(editor);
+    myVisualSizeManager = new SoftWrapAwareVisualSizeManager(painter);
 
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
+    applianceManager.addListener(myVisualSizeManager);
+    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
   }
 
   /**
    * Called on editor settings change. Current model is expected to drop all cached information about the settings if any.
    */
   public void reinitSettings() {
-    myLastUseSoftWraps = null;
+    boolean softWrapsUsedBefore = myUseSoftWraps;
+    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    if (myUseSoftWraps && !softWrapsUsedBefore) {
+      myApplianceManager.reset();
+    }
   }
 
   public boolean isSoftWrappingEnabled() {
@@ -136,13 +140,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return false;
     }
 
-    // Profiling shows that editor settings lookup have impact at overall performance if called often.
-    // Hence, we cache value used last time.
-    if (myLastUseSoftWraps != null && System.currentTimeMillis() - myLastSettingsCheckTimeMillis <= EDITOR_SETTINGS_CHECK_PERIOD_MILLIS) {
-      return myLastUseSoftWraps == Boolean.TRUE;
-    }
-    myLastSettingsCheckTimeMillis = System.currentTimeMillis();
-    return myLastUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    return myUseSoftWraps;
   }
 
   @Nullable
@@ -465,6 +463,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     return myStorage.addSoftWrapChangeListener(listener);
   }
 
+  public boolean addVisualSizeChangeListener(@NotNull VisualSizeChangeListener listener) {
+    return myVisualSizeManager.addVisualSizeChangeListener(listener);
+  }
+  
   @Override
   public int getPriority() {
     return EditorDocumentPriorities.SOFT_WRAP_MODEL;
@@ -515,10 +517,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myStorage.removeAll();
   }
 
-  public void refreshSettings() {
-    myLastSettingsCheckTimeMillis = 0;
-  }
-
   public SoftWrapApplianceManager getApplianceManager() {
     return myApplianceManager;
   }
@@ -545,7 +543,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
           task, myDataMapper, myEditor.getDocument().getText(), Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e);
       }
       myDataMapper.release();
-      myApplianceManager.release();
+      myApplianceManager.reset();
+      myStorage.removeAll();
       try {
         task.run(true);
       }

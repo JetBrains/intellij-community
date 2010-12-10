@@ -107,7 +107,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
     myDockManager = dockManager;
-    myListenerList = new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+    myListenerList =
+      new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
   }
 
   private void initDockableContentFactory() {
@@ -179,7 +180,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
         if (container instanceof DockableEditorTabbedContainer) {
           result.setDone(((DockableEditorTabbedContainer)container).getSplitters());
-        } else {
+        }
+        else {
           result.setDone(getMainSplitters());
         }
       }
@@ -187,7 +189,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     if (async) {
       fm.doWhenFocusSettlesDown(run);
-    } else {
+    }
+    else {
       run.run();
     }
 
@@ -195,6 +198,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   private final Object myInitLock = new Object();
+
   private void initUI() {
     if (myPanels == null) {
       synchronized (myInitLock) {
@@ -306,7 +310,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   void updateFileName(@Nullable final VirtualFile file) {
     // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
     // only the last event makes sense to handle
-    myQueue.queue(new Update("UpdateFileName "+(file==null?"":file.getPath())) {
+    myQueue.queue(new Update("UpdateFileName " + (file == null ? "" : file.getPath())) {
       public boolean isExpired() {
         return myProject.isDisposed() || !myProject.isOpen() || (file == null ? super.isExpired() : !file.isValid());
       }
@@ -510,26 +514,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
 
-  private VirtualFile findNextFile(final VirtualFile file) {
-    final EditorWindow [] windows = getWindows(); // TODO: use current file as base
-    for (int i = 0; i != windows.length; ++ i) {
-      final VirtualFile[] files = windows[i].getFiles();
-      for (final VirtualFile fileAt : files) {
-        if (fileAt != file) {
-          return fileAt;
-        }
-      }
-    }
-    return null;
-  }
 
   private void closeFileImpl(@NotNull final VirtualFile file, final boolean moveFocus) {
     assertDispatchThread();
-    getSplitters().runChange(new Runnable() {
-      public void run() {
-        final List<EditorWindow> windows = getSplitters().findWindows(file);
+    runChange(new FileEditorManagerChange() {
+      public void run(EditorsSplitters splitters) {
+        final List<EditorWindow> windows = splitters.findWindows(file);
         if (!windows.isEmpty()) {
-          final VirtualFile nextFile = findNextFile(file);
+          final VirtualFile nextFile = splitters.findNextFile(file);
           for (final EditorWindow window : windows) {
             LOG.assertTrue(window.getSelectedEditor() != null);
             window.closeFile(file, false, moveFocus);
@@ -555,9 +547,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 //-------------------------------------- Open File ----------------------------------------
 
-  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
-                                                                                 final boolean focusEditor,
-                                                                                 boolean searchForSplitter) {
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
+                                                                        final boolean focusEditor,
+                                                                        boolean searchForSplitter) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -574,7 +567,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           break;
         }
       }
-    } else {
+    }
+    else {
       wndToOpenIn = getSplitters().getCurrentWindow();
     }
     if (wndToOpenIn == null) {
@@ -583,9 +577,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return openFileImpl2(wndToOpenIn, file, focusEditor);
   }
 
-  @NotNull public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
-                                                                  @NotNull final VirtualFile file,
-                                                                  final boolean focusEditor) {
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
+                                                                @NotNull final VirtualFile file,
+                                                                final boolean focusEditor) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -596,19 +591,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   /**
-   * @param file  to be opened. Unlike openFile method, file can be
-   *              invalid. For example, all file were invalidate and they are being
-   *              removed one by one. If we have removed one invalid file, then another
-   *              invalid file become selected. That's why we do not require that
-   *              passed file is valid.
-   * @param entry map between FileEditorProvider and FileEditorState. If this parameter
+   * @param file    to be opened. Unlike openFile method, file can be
+   *                invalid. For example, all file were invalidate and they are being
+   *                removed one by one. If we have removed one invalid file, then another
+   *                invalid file become selected. That's why we do not require that
+   *                passed file is valid.
+   * @param entry   map between FileEditorProvider and FileEditorState. If this parameter
    * @param current
    */
-  @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
-                                                                  @NotNull final VirtualFile file,
-                                                                  final boolean focusEditor,
-                                                                  final HistoryEntry entry,
-                                                                  boolean current) {
+  @NotNull
+  Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
+                                                         @NotNull final VirtualFile file,
+                                                         final boolean focusEditor,
+                                                         final HistoryEntry entry,
+                                                         boolean current) {
     // Open file
     FileEditor[] editors;
     FileEditorProvider[] providers;
@@ -662,7 +658,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           if (current && editor instanceof TextEditorImpl) {
             ((TextEditorImpl)editor).initFolding();
           }
-       }
+        }
         catch (Exception e) {
           LOG.error(e);
         }
@@ -730,8 +726,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       focusManager.doWhenFocusSettlesDown(new Runnable() {
         @Override
         public void run() {
-          getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-            .fileOpened(FileEditorManagerImpl.this, file);
+          if (isFileOpen(file)) {
+            getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+              .fileOpened(FileEditorManagerImpl.this, file);
+          }
         }
       });
 
@@ -779,7 +777,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final FileEditorProvider selectedProvider = composite.getSelectedEditorWithProvider().getSecond();
 
     for (int i = 0; i < editorProviders.length; i++) {
-      if (editorProviders[i].getEditorTypeId().equals(fileEditorProviderId) &&  !selectedProvider.equals(editorProviders[i])) {
+      if (editorProviders[i].getEditorTypeId().equals(fileEditorProviderId) && !selectedProvider.equals(editorProviders[i])) {
         composite.setSelectedEditor(i);
         composite.getSelectedEditor().selectNotify();
       }
@@ -936,17 +934,32 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    return getSplitters().getOpenFiles();
+    HashSet<VirtualFile> openFiles = new HashSet<VirtualFile>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      openFiles.addAll(Arrays.asList(each.getOpenFiles()));
+    }
+
+    return openFiles.toArray(new VirtualFile[openFiles.size()]);
   }
 
   @NotNull
   public VirtualFile[] getSelectedFiles() {
-    return getSplitters().getSelectedFiles();
+    HashSet<VirtualFile> selectedFiles = new HashSet<VirtualFile>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
+    }
+
+    return selectedFiles.toArray(new VirtualFile[selectedFiles.size()]);
   }
 
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    return getSplitters().getSelectedEditors();
+    HashSet<FileEditor> selectedEditors = new HashSet<FileEditor>();
+    for (EditorsSplitters each : getAllSplitters()) {
+      selectedEditors.addAll(Arrays.asList(each.getSelectedEditors()));
+    }
+
+    return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);
   }
 
   public EditorsSplitters getSplitters() {
@@ -1182,7 +1195,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   }
 
-  public void disposeComponent() { /* really do nothing */  }
+  public void disposeComponent() { /* really do nothing */ }
 
 //JDOMExternalizable methods
 
@@ -1217,6 +1230,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private static void assertDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
+
   private static void assertReadAccess() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
@@ -1225,8 +1239,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final VirtualFile oldSelectedFile = oldSelectedComposite != null ? oldSelectedComposite.getFile() : null;
     final VirtualFile newSelectedFile = newSelectedComposite != null ? newSelectedComposite.getFile() : null;
 
-    final FileEditor oldSelectedEditor = oldSelectedComposite != null && !oldSelectedComposite.isDisposed() ? oldSelectedComposite.getSelectedEditor() : null;
-    final FileEditor newSelectedEditor = newSelectedComposite != null && !newSelectedComposite.isDisposed() ? newSelectedComposite.getSelectedEditor() : null;
+    final FileEditor oldSelectedEditor =
+      oldSelectedComposite != null && !oldSelectedComposite.isDisposed() ? oldSelectedComposite.getSelectedEditor() : null;
+    final FileEditor newSelectedEditor =
+      newSelectedComposite != null && !newSelectedComposite.isDisposed() ? newSelectedComposite.getSelectedEditor() : null;
 
     final boolean filesEqual = oldSelectedFile == null ? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile);
     final boolean editorsEqual = oldSelectedEditor == null ? newSelectedEditor == null : oldSelectedEditor.equals(newSelectedEditor);
@@ -1290,8 +1306,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return null;
   }
 
-  public void runChange(Runnable runnable) {
-    getSplitters().runChange(runnable);
+  public void runChange(FileEditorManagerChange change) {
+    for (EditorsSplitters each : getAllSplitters()) {
+      each.myInsideChange++;
+      try {
+        change.run(each);
+      }
+      finally {
+        each.myInsideChange--;
+      }
+    }
   }
 
   //================== Listeners =====================
@@ -1413,7 +1437,6 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
     }
   }
-
 
 
   /**

@@ -59,7 +59,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
 
   private void createUIComponents() {
     myList = new CheckBoxList(this);
-    myListModel = myList.getModel();
+    myListModel = (DefaultListModel)myList.getModel();
   }
 
   public void reset() {

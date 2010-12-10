@@ -133,7 +133,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myInheritVersionCheckBox.addActionListener(updatingListener);
 
     myUseArchetypeCheckBox.addActionListener(updatingListener);
-    myArchetypesTree.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myArchetypesTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
     myAddArchetypeButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

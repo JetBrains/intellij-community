@@ -96,7 +96,7 @@ public final class FileContent extends UserDataHolderBase {
   public FileContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     this(file);
     myContent = content;
-    myCharset = LoadTextUtil.detectCharset(file, content);
+    myCharset = LoadTextUtil.detectCharsetAndSetBOM(file, content);
   }
 
   public FileContent(@NotNull final VirtualFile file) {

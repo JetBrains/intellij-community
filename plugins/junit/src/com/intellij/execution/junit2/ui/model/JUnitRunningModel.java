@@ -152,7 +152,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
   }
 
   public void onUIBuilt() {
-    myNotifier.fireTestSelected(myRoot);
+    //myNotifier.fireTestSelected(myRoot);
   }
 
   private TreePath pathToTest(final TestProxy test, final boolean expandIfCollapsed) {

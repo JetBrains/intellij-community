@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -86,18 +84,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private boolean myContainBasedChanges;
 
   public ApplyPatchDifferentiatedDialog(final Project project, final Consumer<ApplyPatchDifferentiatedDialog> callback,
-                                        @Nullable final VirtualFile patchFile) {
+                                        @NotNull final VirtualFile patchFile) {
     super(project, true);
     myCallback = callback;
     setModal(false);
     setTitle(VcsBundle.message("patch.apply.dialog.title"));
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
-      }
-    };
+    final FileChooserDescriptor descriptor = createSelectPatchDescriptor();
     descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
@@ -136,7 +129,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     };
 
-    myChangeListChooser = new ChangeListChooserPanel(null, new Consumer<String>() {
+    myChangeListChooser = new ChangeListChooserPanel(project, new Consumer<String>() {
       public void consume(final String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage);
@@ -145,22 +138,25 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
-    myChangeListChooser.init(project);
+    myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
 
     init();
 
-    if (patchFile != null && patchFile.isValid()) {
+    if (patchFile.isValid()) {
       init(patchFile);
-    } else {
-      final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-      final VirtualFile[] files = fileChooserDialog.choose(null, project);
-      if (files != null && files.length > 0) {
-        init(files[0]);
-      }
     }
+  }
+
+  public static FileChooserDescriptor createSelectPatchDescriptor() {
+    return new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
+      }
+    };
   }
 
   @Override

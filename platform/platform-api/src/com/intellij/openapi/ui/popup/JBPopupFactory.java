@@ -169,6 +169,23 @@ public abstract class JBPopupFactory {
    * @param dataContext the data context which provides the data for the selected action
    * @param selectionAidMethod keyboard selection mode for actions in the popup.
    * @param showDisabledActions if true, disabled actions are shown as disabled; if false, disabled actions are not shown
+   * @param actionPlace action place for ActionManager to use when creating the popup
+   * @return the popup instance.
+   */
+  public abstract ListPopup createActionGroupPopup(String title,
+                                                   ActionGroup actionGroup,
+                                                   DataContext dataContext,
+                                                   ActionSelectionAid selectionAidMethod,
+                                                   boolean showDisabledActions, final @Nullable String actionPlace);
+
+  /**
+   * Creates a popup allowing to choose one of the actions from the specified action group.
+   *
+   * @param title the title of the popup.
+   * @param actionGroup the action group from which the popup is built.
+   * @param dataContext the data context which provides the data for the selected action
+   * @param selectionAidMethod keyboard selection mode for actions in the popup.
+   * @param showDisabledActions if true, disabled actions are shown as disabled; if false, disabled actions are not shown
    * @param disposeCallback method which is called when the popup is closed (either by selecting an action or by canceling)
    * @param maxRowCount maximum number of popup rows visible at once (if there are more actions in the action group, a scrollbar
    *                    is displayed)

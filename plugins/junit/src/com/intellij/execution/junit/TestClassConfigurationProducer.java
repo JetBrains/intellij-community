@@ -32,6 +32,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
+    if (location == null) return null;
     final Project project = location.getProject();
 
     final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());

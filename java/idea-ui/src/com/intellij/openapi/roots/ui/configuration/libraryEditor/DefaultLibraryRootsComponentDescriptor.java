@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.libraries.ui.AttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.ChooserBasedAttachRootButtonDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
-import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;

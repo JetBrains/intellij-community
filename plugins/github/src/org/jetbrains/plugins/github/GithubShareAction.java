@@ -29,7 +29,6 @@ import git4idea.checkin.GitPushUtils;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import javax.swing.*;
@@ -83,21 +82,29 @@ public class GithubShareAction extends DumbAwareAction {
     }
 
     BasicAction.saveAll();
-    final GithubSettings settings = GithubSettings.getInstance();
-    if (!GithubUtil.testConnection(settings.getLogin(), settings.getPassword())){
-      final GithubLoginDialog dialog = new GithubLoginDialog(project);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
+    final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, true);
+    if (availableRepos == null){
+      return;
     }
-
     final HashSet<String> names = new HashSet<String>();
-    for (RepositoryInfo info : GithubUtil.getAvailableRepos(settings.getLogin(), settings.getPassword())) {
+    for (RepositoryInfo info : availableRepos) {
       names.add(info.getName());
     }
 
-    final boolean privateRepoAllowed = GithubUtil.isPrivateRepoAllowed(settings.getLogin(), settings.getPassword());
+    final GithubSettings settings = GithubSettings.getInstance();
+    final boolean privateRepoAllowed;
+    try {
+      privateRepoAllowed = GithubUtil.accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          return GithubUtil.isPrivateRepoAllowed(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (GithubUtil.CancelledException ex) {
+      return;
+    }
     final GithubShareDialog shareDialog = new GithubShareDialog(project, names, privateRepoAllowed);
     shareDialog.show();
     if (!shareDialog.isOK()) {

@@ -90,6 +90,9 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
     else if (component instanceof JComboBox) {
       return ((JComboBox)component).getSelectedItem();
     }
+    else if (component instanceof JCheckBox) {
+      return Boolean.valueOf(((JCheckBox)component).isSelected());
+    }
     throw new UnsupportedOperationException("editor control of type " + component.getClass().getName() + " is not supported");
   }
 
@@ -125,6 +128,21 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
         @Override
         public void dispose() {
           ((JComboBox)component).removeActionListener(comboListener);
+        }
+      });
+    }
+    else if (component instanceof JCheckBox) {
+      final ActionListener checkBoxListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          listener.stateChanged(new ChangeEvent(component));
+        }
+      };
+      ((JCheckBox)component).addActionListener(checkBoxListener);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          ((JCheckBox)component).removeActionListener(checkBoxListener);
         }
       });
     }

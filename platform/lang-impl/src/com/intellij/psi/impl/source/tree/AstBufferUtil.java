@@ -30,7 +30,11 @@ public class AstBufferUtil {
   }
 
   public static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
-    if (element instanceof ForeignLeafPsiElement || skipTypes != null && skipTypes.contains(element.getElementType())) return offset;
+    if (element instanceof ForeignLeafPsiElement ||
+        skipTypes != null && skipTypes.contains(element.getElementType())) {
+      return offset;
+    }
+
     if (element instanceof LeafElement) {
       return ((LeafElement)element).copyTo(buffer, offset);
     }

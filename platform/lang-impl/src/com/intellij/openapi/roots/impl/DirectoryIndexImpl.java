@@ -150,7 +150,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     subscribeToFileChanges();
 
     myInitialized = true;
+    long l = System.currentTimeMillis();
     doInitialize();
+    LOG.info("Directory index initialized in " + (System.currentTimeMillis() - l) + " ms");
   }
 
   private void subscribeToFileChanges() {

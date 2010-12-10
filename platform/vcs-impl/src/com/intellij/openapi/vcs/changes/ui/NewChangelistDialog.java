@@ -27,7 +27,7 @@ import javax.swing.*;
  */
 public class NewChangelistDialog extends DialogWrapper {
 
-  private EditChangelistPanel myPanel;
+  private NewEditChangelistPanel myPanel;
   private JPanel myTopPanel;
   private JLabel myErrorLabel;
   private final Project myProject;
@@ -37,7 +37,7 @@ public class NewChangelistDialog extends DialogWrapper {
     myProject = project;
     setTitle(VcsBundle.message("changes.dialog.newchangelist.title"));
 
-    myPanel.init(project, null);
+    myPanel.init(null);
 
     init();
   }
@@ -53,7 +53,7 @@ public class NewChangelistDialog extends DialogWrapper {
   }
 
   public String getName() {
-    return myPanel.getName();
+    return myPanel.getChangeListName();
   }
 
   public String getDescription() {
@@ -65,19 +65,19 @@ public class NewChangelistDialog extends DialogWrapper {
   }
 
   protected String getDimensionServiceKey() {
-    return "VCS.NewChangelistDialog";
+    return "VCS.EditChangelistDialog";
   }
 
   public boolean isNewChangelistActive() {
     return myPanel.getMakeActiveCheckBox().isSelected();
   }
 
-  public EditChangelistPanel getPanel() {
+  public NewEditChangelistPanel getPanel() {
     return myPanel;
   }
 
   private void createUIComponents() {
-    myPanel = new EditChangelistPanel(null) {
+    myPanel = new NewEditChangelistPanel(myProject) {
       @Override
       protected void nameChanged(String errorMessage) {
         setOKActionEnabled(errorMessage == null);

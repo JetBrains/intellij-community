@@ -477,6 +477,29 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSameNamedFieldAndLocal() throws Throwable { doTest(); }
 
+  public void testNoTailWhenNoPairBracket() throws Throwable {
+    doTestNoPairBracket();
+  }
+
+  public void testNoTailWhenNoPairBracket2() throws Throwable {
+    doTestNoPairBracket();
+  }
+
+  private void doTestNoPairBracket() throws Exception {
+    boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
+    try {
+      doTest();
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
+    }
+  }
+
+  public void testNoConstructorTailWhenNoPairBracket() throws Throwable {
+    doTestNoPairBracket();
+  }
+
   public void testAbstractClassTwice() throws Throwable {
     configureByTestName();
     assertOneElement(myItems);

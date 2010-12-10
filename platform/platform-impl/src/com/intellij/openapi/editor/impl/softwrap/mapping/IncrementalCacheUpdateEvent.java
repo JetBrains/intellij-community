@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 class IncrementalCacheUpdateEvent {
   
+  private final int myStartLogicalLine;
   private final int myOldExactStartOffset;
   private final int myOldExactEndOffset;
   private final int myOldStartOffset;
@@ -51,6 +52,7 @@ class IncrementalCacheUpdateEvent {
    * @param event   object that describes document change that caused cache update
    */
   public IncrementalCacheUpdateEvent(@NotNull DocumentEvent event) {
+    myStartLogicalLine = getLine(event.getOffset(), event.getDocument());
     myOldExactStartOffset = myNewExactStartOffset = event.getOffset();
     myOldExactEndOffset = myOldExactStartOffset + event.getOldLength();
     myNewExactEndOffset = myNewExactStartOffset + event.getNewLength();
@@ -79,6 +81,7 @@ class IncrementalCacheUpdateEvent {
    * @param exactEndOffset    end offset of document range to reparse (inclusive)
    */
   public IncrementalCacheUpdateEvent(@NotNull Document document, int exactStartOffset, int exactEndOffset) {
+    myStartLogicalLine = getLine(exactStartOffset, document);
     myOldExactStartOffset = myNewExactStartOffset = myOldStartOffset = myNewStartOffset = exactStartOffset;
     myOldExactEndOffset = myNewExactEndOffset = myOldEndOffset = myNewEndOffset = exactEndOffset;
     myOldLogicalLinesDiff = document.getLineNumber(myOldExactEndOffset) - document.getLineNumber(myOldExactStartOffset);
@@ -106,6 +109,13 @@ class IncrementalCacheUpdateEvent {
     return myNewExactEndOffset - myOldExactEndOffset;
   }
 
+  /**
+   * @return    logical line that contains start offset of the changed region
+   */
+  public int getStartLogicalLine() {
+    return myStartLogicalLine;
+  }
+  
   /**
    * @return    exact start offset of the changed document range
    * @see #getOldStartOffset()  
@@ -150,6 +160,13 @@ class IncrementalCacheUpdateEvent {
   }
 
   /**
+   * @return    logical line that contained end offset of the changed region
+   */
+  public int getOldEndLogicalLine() {
+    return myStartLogicalLine + myOldLogicalLinesDiff;
+  }
+
+  /**
    * @return    start offset (inclusive) within the current document to use during performing cache update
    */
   public int getNewStartOffset() {
@@ -171,6 +188,14 @@ class IncrementalCacheUpdateEvent {
     return myNewLogicalLinesDiff;
   }
 
+  private static int getLine(int offset, Document document) {
+    if (offset >= document.getTextLength()) {
+      int result = document.getLineCount();
+      return result > 0 ? result - 1 : 0;
+    }
+    return document.getLineNumber(offset);
+  }
+  
   private static int getLineStartOffset(int offset, Document document) {
     if (offset > document.getTextLength()) {
       return offset;

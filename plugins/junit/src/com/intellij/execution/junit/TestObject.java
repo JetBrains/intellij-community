@@ -23,6 +23,7 @@ import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
 import com.intellij.execution.junit2.segments.DispatchListener;
+import com.intellij.execution.junit2.segments.Extractor;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
 import com.intellij.execution.junit2.ui.TestsPacketsReceiver;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
@@ -263,7 +264,7 @@ public abstract class TestObject implements JavaCommandLine {
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());
     Disposer.register(consoleView, unboundOutputRoot);
-    final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView) {
+    final TestsPacketsReceiver packetsReceiver = new TestsPacketsReceiver(consoleView, unboundOutputRoot) {
       @Override
       public void notifyStart(TestProxy root) {
         super.notifyStart(root);
@@ -295,9 +296,9 @@ public abstract class TestObject implements JavaCommandLine {
         if (myListenersFile != null) {
           FileUtil.delete(myListenersFile);
         }
-        unboundOutputRoot.flush();
         IJSwingUtilities.invoke(new Runnable() {
           public void run() {
+            unboundOutputRoot.flush();
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
             TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties);
@@ -309,20 +310,23 @@ public abstract class TestObject implements JavaCommandLine {
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
-        final Set<TestProxy> currentTests = packetsReceiver.getCurrentTests();
         final Printable printable = new Printable() {
           public void printOn(final Printer printer) {
             printer.print(text, consoleViewType);
           }
         };
-
-        if (!currentTests.isEmpty()) {
-          for (TestProxy currentTest : currentTests) {
-            currentTest.addLast(printable);
-          }
+        if (consoleViewType == ConsoleViewContentType.SYSTEM_OUTPUT) {
+          unboundOutputRoot.addLast(printable);
         }
         else {
-          unboundOutputRoot.addLast(printable);
+          final Extractor extractor;
+          if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT) {
+            extractor = handler.getErr();
+          }
+          else {
+            extractor = handler.getOut();
+          }
+          extractor.getEventsDispatcher().processOutput(printable);
         }
       }
     });

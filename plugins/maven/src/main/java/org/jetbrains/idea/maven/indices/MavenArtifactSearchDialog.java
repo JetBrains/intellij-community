@@ -17,37 +17,42 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.TabbedPaneWrapper;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
-  private MavenId myResult;
+  private List<MavenId> myResult = Collections.emptyList();
 
-  private JTabbedPane myTabbedPane;
+  private TabbedPaneWrapper myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
   private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<MavenArtifactSearchPanel, Boolean>();
 
-  public static MavenId searchForClass(Project project, String className) {
+  @NotNull
+  public static List<MavenId> searchForClass(Project project, String className) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
     d.show();
-    if (!d.isOK()) return null;
+    if (!d.isOK()) return Collections.emptyList();
 
     return d.getResult();
   }
 
-  public static MavenId searchForArtifact(Project project) {
+  @NotNull
+  public static List<MavenId> searchForArtifact(Project project) {
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, "", false);
     d.show();
-    if (!d.isOK()) return null;
+    if (!d.isOK()) return Collections.emptyList();
 
     return d.getResult();
   }
@@ -66,10 +71,9 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   private void initComponents(Project project, String initialText, boolean classMode) {
-    myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    myTabbedPane.setFocusable(false);
+    myTabbedPane = new TabbedPaneWrapper(project);
 
-    MavenArtifactSearchPanel.Listener l = new MavenArtifactSearchPanel.Listener() {
+    MavenArtifactSearchPanel.Listener listener = new MavenArtifactSearchPanel.Listener() {
       public void itemSelected() {
         clickDefaultButton();
       }
@@ -80,19 +84,14 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
       }
     };
 
-    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, l,getDisposable());
-    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, l,getDisposable());
+    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, listener, this);
+    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, listener, this);
 
     myTabbedPane.addTab("Search for artifact", myArtifactsPanel);
     myTabbedPane.addTab("Search for class", myClassesPanel);
     myTabbedPane.setSelectedIndex(classMode ? 1 : 0);
 
-    myTabbedPane.setMnemonicAt(0, KeyEvent.VK_A);
-    myTabbedPane.setDisplayedMnemonicIndexAt(0, myTabbedPane.getTitleAt(0).indexOf("artifact"));
-    myTabbedPane.setMnemonicAt(1, KeyEvent.VK_C);
-    myTabbedPane.setDisplayedMnemonicIndexAt(1, myTabbedPane.getTitleAt(1).indexOf("class"));
-
-    myTabbedPane.setPreferredSize(new Dimension(600, 400));
+    myTabbedPane.getComponent().setPreferredSize(new Dimension(900, 600));
 
     myTabbedPane.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -117,7 +116,7 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return myTabbedPane;
+    return myTabbedPane.getComponent();
   }
 
   @Override
@@ -132,7 +131,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
     return "Maven.ArtifactSearchDialog";
   }
 
-  public MavenId getResult() {
+  @NotNull
+  public List<MavenId> getResult() {
     return myResult;
   }
 

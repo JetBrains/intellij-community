@@ -41,7 +41,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
   
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
-    return elements != null && elements.length > 0;
+    return elements != null && elements.length > 1;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {

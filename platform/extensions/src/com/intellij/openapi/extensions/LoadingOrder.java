@@ -55,8 +55,8 @@ public class LoadingOrder {
   @NonNls private final String myName; // for debug only
   private final boolean myFirst;
   private final boolean myLast;
-  private final Set<String> myBefore = new HashSet<String>();
-  private final Set<String> myAfter = new HashSet<String>();
+  private final Set<String> myBefore = new HashSet<String>(2);
+  private final Set<String> myAfter = new HashSet<String>(2);
 
   private LoadingOrder() {
     myName = "ANY";
@@ -117,12 +117,19 @@ public class LoadingOrder {
   }
 
   public static void sort(final Orderable[] orderables) {
+    // our graph is pretty sparse so do benefit from the fact
     final Map<String,Orderable> map = new HashMap<String, Orderable>();
-    for (final Orderable orderable : orderables) {
-      final String id = orderable.getOrderId();
-      if (StringUtil.isNotEmpty(id)) {
-        map.put(id, orderable);
-      }
+    final HashMap<Orderable, LoadingOrder> cachedMap = new HashMap<Orderable, LoadingOrder>(orderables.length);
+    final HashSet<Orderable> first = new HashSet<Orderable>(1);
+    final HashSet<Orderable> hasBefore = new HashSet<Orderable>(orderables.length);
+
+    for(Orderable o:orderables) {
+      final String id = o.getOrderId();
+      if (StringUtil.isNotEmpty(id)) map.put(id, o);
+      LoadingOrder order = o.getOrder();
+      cachedMap.put(o, order);
+      if (order.myFirst) first.add(o);
+      if (order.myBefore.size() != 0) hasBefore.add(o);
     }
 
     DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(new GraphGenerator<Orderable>(new CachingSemiGraph<Orderable>(new GraphGenerator.SemiGraph<Orderable>() {
@@ -133,7 +140,7 @@ public class LoadingOrder {
       }
 
       public Iterator<Orderable> getIn(final Orderable n) {
-        final LoadingOrder order = n.getOrder();
+        final LoadingOrder order = cachedMap.get(n);
 
         Set<Orderable> predecessors = new LinkedHashSet<Orderable>();
         for (final String id : order.myAfter) {
@@ -144,14 +151,30 @@ public class LoadingOrder {
         }
 
         String id = n.getOrderId();
-        for (final Orderable orderable : orderables) {
-          final LoadingOrder hisOrder = orderable.getOrder();
-          if (StringUtil.isNotEmpty(id) && hisOrder.myBefore.contains(id) ||
-              order.myLast && !hisOrder.myLast ||
-              hisOrder.myFirst && !order.myFirst) {
+        if (StringUtil.isNotEmpty(id)) {
+          for (final Orderable orderable : hasBefore) {
+            final LoadingOrder hisOrder = cachedMap.get(orderable);
+            if (hisOrder.myBefore.contains(id)) {
+              predecessors.add(orderable);
+            }
+          }
+        }
+
+        if (order.myLast) {
+          for (final Orderable orderable : orderables) {
+            final LoadingOrder hisOrder = cachedMap.get(orderable);
+            if (!hisOrder.myLast) {
+              predecessors.add(orderable);
+            }
+          }
+        }
+
+        if (!order.myFirst) {
+          for(Orderable orderable:first) {
             predecessors.add(orderable);
           }
         }
+
         return predecessors.iterator();
       }
     })));

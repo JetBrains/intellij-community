@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -35,7 +36,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   private PatchedSoftReference<PsiClassType> myCachedBaseType = null;
 
   public PsiAnonymousClassImpl(final PsiClassStub stub) {
-    super(stub);
+    super(stub, JavaStubElementTypes.ANONYMOUS_CLASS);
   }
 
   public PsiAnonymousClassImpl(final ASTNode node) {

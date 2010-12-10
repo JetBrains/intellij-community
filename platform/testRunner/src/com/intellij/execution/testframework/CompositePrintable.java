@@ -40,11 +40,25 @@ public class CompositePrintable implements Printable, Disposable {
   private final PrintablesWrapper myWrapper = new PrintablesWrapper();
   protected int myExceptionMark;
   private int myCurrentSize = 0;
+  private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public void flush() {
     synchronized (myNestedPrintables) {
       myWrapper.flush(myNestedPrintables);
       clear();
+    }
+  }
+
+  public void invokeInAlarm(Runnable runnable) {
+    invokeInAlarm(runnable, !ApplicationManager.getApplication().isDispatchThread() ||
+                            ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  public void invokeInAlarm(Runnable runnable, final boolean sync) {
+    if (sync) {
+      runnable.run();
+    } else {
+      myAlarm.addRequest(runnable, 0);
     }
   }
 
@@ -99,7 +113,6 @@ public class CompositePrintable implements Printable, Disposable {
     @NonNls private static final String HYPERLINK = "hyperlink";
 
     private ConsoleViewContentType myLastSelected;
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     private File myFile;
     private final MyFlushToFilePrinter myPrinter = new MyFlushToFilePrinter();
@@ -108,7 +121,7 @@ public class CompositePrintable implements Printable, Disposable {
     private synchronized File getFile() {
       if (myFile == null) {
         try {
-          final File tempFile = FileUtil.createTempFile("frst", "scd");
+          final File tempFile = FileUtil.createTempFile("idea_test_", ".out");
           if (tempFile.exists()) {
             myFile = tempFile;
             return myFile;
@@ -126,6 +139,10 @@ public class CompositePrintable implements Printable, Disposable {
       if (myFile != null) FileUtil.delete(myFile);
     }
 
+    public synchronized boolean hasOutput() {
+      return myFile != null;
+    }
+
     public void flush(final List<Printable> printables) {
       if (printables.isEmpty()) return;
       final ArrayList<Printable> currentPrintables = new ArrayList<Printable>(printables);
@@ -139,30 +156,19 @@ public class CompositePrintable implements Printable, Disposable {
           myPrinter.close();
         }
       };
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        request.run();
-      } else {
-        myAlarm.addRequest(request, 0);
-      }
+      invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
     }
 
     public void printOn(final Printer console, final List<Printable> printables) {
-      final File file = getFile();
-      if (file == null) return;
-      final MyFileContentPrinter printer = new MyFileContentPrinter();
-      if (console instanceof MyFlushToFilePrinter || ApplicationManager.getApplication().isUnitTestMode()) {
-        //parent test need to load child file content to flush itself which is already done in alarm thread
-        //output stream is closed sync in flush() so invoke later would result in unclosed stream
-        printer.printFileContent(console, file, printables);
-      } else {
-        //move out from AWT thread
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            printer.printFileContent(console, file, printables);
-          }
-        }, 0);
-      }
+      final File file = hasOutput() ? getFile() : null;
+      final Runnable request = new Runnable() {
+        @Override
+        public void run() {
+          final MyFileContentPrinter printer = new MyFileContentPrinter();
+          printer.printFileContent(console, file, printables);
+        }
+      };
+      invokeInAlarm(request);
     }
 
     private class MyFlushToFilePrinter implements Printer {
@@ -244,52 +250,36 @@ public class CompositePrintable implements Printable, Disposable {
 
     private class MyFileContentPrinter {
 
-      public void printFileContent(Printer printer, File file, List<Printable> nestedPrintables) {
-        DataInputStream reader = null;
-        try {
-          reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-          int lineNum = 0;
-          while (reader.available() > 0 && !wasPrintableChanged(printer)) {
-            if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
-            final String line = IOUtil.readString(reader);
-            boolean printed = false;
-            for (ConsoleViewContentType contentType : ConsoleViewContentType.OUTPUT_TYPES) {
-              final String prefix = contentType.toString();
-              if (line.startsWith(prefix)) {
-                printer.print(line.substring(prefix.length()), contentType);
-                myLastSelected = contentType;
-                printed = true;
-                break;
-              }
-            }
-            if (!printed) {
-              if (line.startsWith(HYPERLINK)) {
-                new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader)).printOn(printer);
-              }
-              else {
-                printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
-              }
-            }
-            lineNum++;
-          }
-
-          for (int i = 0; i < nestedPrintables.size(); i++) {
-            if (i == getExceptionMark() && i > 0) printer.mark();
-            nestedPrintables.get(i).printOn(printer);
-          }
-
-        }
-        catch (FileNotFoundException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-        finally {
+      public void printFileContent(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
+        if (file != null) {
+          DataInputStream reader = null;
           try {
-            if (reader != null) {
-              reader.close();
+            reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+            int lineNum = 0;
+            while (reader.available() > 0 && !wasPrintableChanged(printer)) {
+              if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
+              final String line = IOUtil.readString(reader);
+              boolean printed = false;
+              for (ConsoleViewContentType contentType : ConsoleViewContentType.OUTPUT_TYPES) {
+                final String prefix = contentType.toString();
+                if (line.startsWith(prefix)) {
+                  printer.print(line.substring(prefix.length()), contentType);
+                  myLastSelected = contentType;
+                  printed = true;
+                  break;
+                }
+              }
+              if (!printed) {
+                if (line.startsWith(HYPERLINK)) {
+                  new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader)).printOn(printer);
+                }
+                else {
+                  printer.print(line, myLastSelected != null ? myLastSelected : ConsoleViewContentType.NORMAL_OUTPUT);
+                }
+              }
+              lineNum++;
             }
+
           }
           catch (FileNotFoundException e) {
             LOG.info(e);
@@ -297,6 +287,23 @@ public class CompositePrintable implements Printable, Disposable {
           catch (IOException e) {
             LOG.error(e);
           }
+          finally {
+            try {
+              if (reader != null) {
+                reader.close();
+              }
+            }
+            catch (FileNotFoundException e) {
+              LOG.info(e);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+        }
+        for (int i = 0; i < nestedPrintables.size(); i++) {
+          if (i == getExceptionMark() && i > 0) printer.mark();
+          nestedPrintables.get(i).printOn(printer);
         }
       }
 

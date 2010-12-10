@@ -18,7 +18,7 @@
  * User: anna
  * Date: 26-Dec-2007
  */
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;

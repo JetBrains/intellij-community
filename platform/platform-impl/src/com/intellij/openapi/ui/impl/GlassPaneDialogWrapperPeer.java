@@ -343,7 +343,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
-    private final MyRootPane myRootPane;
+    private MyRootPane myRootPane;
     private BufferedImage shadow;
     private final JLayeredPane myTransparentPane;
     private JButton myDefaultButton;
@@ -363,6 +363,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 //      myProject = new WeakReference<Project>(project);
 
       myRootPane = new MyRootPane(this); // be careful with DialogWrapper.dispose()!
+      Disposer.register(this, myRootPane);
 
       myContentPane = new JPanel();
       myContentPane.setOpaque(true);
@@ -565,6 +566,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(disposer);
       }
+
+      myRootPane = null;
     }
 
     public void setContentPane(JComponent content) {
@@ -640,11 +643,16 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     }
   }
 
-  private static class MyRootPane extends JRootPane {
-    private final MyDialog myDialog;
+  private static class MyRootPane extends JRootPane implements Disposable {
+    private MyDialog myDialog;
 
     private MyRootPane(final MyDialog dialog) {
       myDialog = dialog;
+    }
+
+    @Override
+    public void dispose() {
+      myDialog = null;
     }
 
     @Override

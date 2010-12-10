@@ -342,8 +342,11 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
-      return (targetElement instanceof PsiDirectoryContainer || targetElement instanceof PsiDirectory) &&
-             CopyHandler.canCopy(sourceElements);
+      final PsiFile containingFile = targetElement.getContainingFile();
+      final boolean isTargetAcceptable = targetElement instanceof PsiDirectoryContainer ||
+                                         targetElement instanceof PsiDirectory ||
+                                         (containingFile != null && containingFile.getContainingDirectory() != null);
+      return isTargetAcceptable && CopyHandler.canCopy(sourceElements);
     }
 
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
@@ -358,8 +361,12 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         final PsiDirectoryContainer directoryContainer = (PsiDirectoryContainer)targetElement;
         final PsiDirectory[] psiDirectories = directoryContainer.getDirectories();
         psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
-      } else {
+      } else if (targetElement instanceof PsiDirectory) {
         psiDirectory = (PsiDirectory)targetElement;
+      } else {
+        final PsiFile containingFile = targetElement.getContainingFile();
+        LOG.assertTrue(containingFile != null);
+        psiDirectory = containingFile.getContainingDirectory();
       }
       CopyHandler.doCopy(sourceElements, psiDirectory);
     }

@@ -652,6 +652,8 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
+      <action id="WelcomeScreen.JetBrainsTV.IDEA" class="com.intellij.openapi.wm.impl.welcomeScreen.IdeaJetBrainsTvAction"
+        icon="/general/jetbrainsTvIdea.png"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
         icon="/general/pluginManager.png"/>
 

@@ -38,7 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,8 +53,9 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     return ApplicationManager.getApplication().runReadAction(new Computable<GenerationItem[]>() {
       @Override
       public GenerationItem[] compute() {
-        Map<String, MyItem> result = new HashMap<String, MyItem>();
+        List<MyItem> result = new ArrayList<MyItem>();
         for (Module module : context.getProjectCompileScope().getAffectedModules()) {
+          Map<String, MyItem> qName2Item = new HashMap<String, MyItem>();
           AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
             for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
@@ -63,14 +65,14 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
 
               for (VirtualFile depSourceRoot : srcRoots) {
                 if (depSourceRoot != genSrcRoot) {
-                  collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, result);
+                  collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, qName2Item);
                 }
               }
             }
           }
+          result.addAll(qName2Item.values());
         }
-        Collection<MyItem> items = result.values();
-        return items.toArray(new MyItem[items.size()]);
+        return result.toArray(new MyItem[result.size()]);
       }
     });
   }

@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
  * @date 10/20/10
  */
 public class GithubSettingsPanel {
-  private static final String SIGNUP_FOR_FREE_ACOUNT = "https://github.com/signup/free";
+  private static final String SIGNUP_FOR_FREE_ACOUNT = "http://github.com";
 
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
