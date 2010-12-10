@@ -424,6 +424,7 @@ def layoutFull(String target, Set usedJars) {
       jar("bootstrap.jar") { module("bootstrap")}
       jar("resources.jar") {
         module("platform-resources")
+        module("colorSchemes")
       }
 
       jar("forms_rt.jar") {
