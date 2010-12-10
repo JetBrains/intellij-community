@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -29,6 +30,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -325,6 +327,11 @@ public class MavenArtifactSearchPanel extends JPanel {
       component.append(info.getGroupId() + ":", getGrayAttributes(selected));
       component.append(info.getArtifactId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(":" + info.getVersion(), getGrayAttributes(selected));
+
+      String packaging = info.getPackaging();
+      if(!StringUtil.isEmptyOrSpaces(packaging) && !MavenConstants.TYPE_JAR.equals(packaging)) {
+        component.append(" [" + packaging + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     }
 
     protected SimpleTextAttributes getGrayAttributes(boolean selected) {
