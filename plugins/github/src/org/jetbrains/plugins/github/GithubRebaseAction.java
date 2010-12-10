@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +31,10 @@ import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
-import git4idea.rebase.GitRebaseDialog;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -147,22 +149,30 @@ public class GithubRebaseAction extends DumbAwareAction {
       if (!remoteForParentSeen){
         final int result = Messages.showYesNoDialog(project, "It is nescessary to have '" +
                                                         parentRepoUrl +
-                                                        "' as a configured remote to perform rebase? Add remote?", "Github Rebase",
+                                                        "' as a configured remote. Add remote?", "Github Rebase",
                                                Messages.getQuestionIcon());
         if (result != Messages.OK){
           return;
         }
-        // TODO[oleg]: add remote url with remote update before perfoming rebase
+
+        LOG.info("Adding GitHub as a remote host");
+        final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
+        addRemoteHandler.setNoSSH(true);
+        addRemoteHandler.setSilent(true);
+        addRemoteHandler.addParameters("add", repoName, parentRepoUrl);
+        addRemoteHandler.run();
+        if (addRemoteHandler.getExitCode() != 0) {
+          Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", "Failed to add GitHub remote");
+          return;
+        }
+
       }
 
       BasicAction.saveAll();
-
-      GitRebaseDialog dialog = new GitRebaseDialog(project, Arrays.asList(roots), root);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-      //return dialog.handler();
+      final AnAction action = ActionManager.getInstance().getAction("Git.Rebase");
+      final AnActionEvent actionEvent =
+        new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+      action.actionPerformed(actionEvent);
     }
     catch (VcsException e1) {
       Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), "Cannot perform github rebase");
