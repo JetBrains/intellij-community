@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
@@ -45,6 +44,7 @@ import java.util.List;
 public class GithubRebaseAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private static final Logger LOG = Logger.getInstance(GithubRebaseAction.class.getName());
+  private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
     super("Rebase my fork", "Rebase your forked repository relative to the origin", ICON);
@@ -56,6 +56,10 @@ public class GithubRebaseAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
+    if (GithubUtil.getGithubBoundRepository(project) == null){
+      e.getPresentation().setEnabled(false);
+      return;
+    }
     e.getPresentation().setEnabled(true);
   }
 
@@ -64,54 +68,29 @@ public class GithubRebaseAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
     if (roots.length == 0) {
-      Messages.showErrorDialog(project, "Project doesn't have any project roots", "Cannot create new GitHub repository");
+      Messages.showErrorDialog(project, "Project doesn't have any project roots", CANNOT_PERFORM_GITHUB_REBASE);
       return;
     }
     final VirtualFile root = roots[0];
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (!gitDetected) {
-      Messages.showErrorDialog(project, "Cannot find any git repository configured for the project", "Cannot perform github rebase");
+      Messages.showErrorDialog(project, "Cannot find any git repository configured for the project", CANNOT_PERFORM_GITHUB_REBASE);
       return;
     }
 
     try {
-    // Check current branch
-      final GitBranch currentBranch = GitBranch.current(project, root);
-      if (currentBranch == null) {
-        Messages.showErrorDialog(project, "Cannot find current branch", "Cannot perform github rebase");
-        return;
-      }
-      if (!"master".equals(currentBranch.getName())) {
-        Messages.showErrorDialog(project, "Cannot perform rebase with '" + currentBranch.getName() + "' branch.\nPlease switch to master",
-                                 "Cannot perform github rebase");
-        return;
-      }
-
       // Check that given repository is properly configured git repository
-      GitRemote githubRemote = null;
+      final GitRemote githubRemote = GithubUtil.getGithubBoundRepository(project);
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      if (gitRemotes.isEmpty()) {
-        Messages.showErrorDialog(project, "Git repository doesn't have any remotes configured", "Cannot perform github rebase");
-        return;
-      }
-      for (GitRemote gitRemote : gitRemotes) {
-        if (gitRemote.pushUrl().contains("git@github.com")) {
-          githubRemote = gitRemote;
-          break;
-        }
-      }
-      if (githubRemote == null) {
-        Messages.showErrorDialog(project, "Configured own github repository is not found", "Cannot perform github rebase");
-        return;
-      }
+      LOG.assertTrue(githubRemote != null);
 
       final String pushUrl = githubRemote.pushUrl();
       final String login = GithubSettings.getInstance().getLogin();
       final int index = pushUrl.lastIndexOf(login);
       if (index == -1) {
         Messages.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
-                                 "Cannot perform github rebase");
+                                 CANNOT_PERFORM_GITHUB_REBASE);
         return;
       }
       String repoName = pushUrl.substring(index + login.length() + 1);
@@ -122,12 +101,12 @@ public class GithubRebaseAction extends DumbAwareAction {
       final RepositoryInfo repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, repoName);
       if (repositoryInfo == null) {
         Messages
-          .showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl, "Cannot perform github rebase");
+          .showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl, CANNOT_PERFORM_GITHUB_REBASE);
         return;
       }
 
       if (!repositoryInfo.isFork()) {
-        Messages.showErrorDialog(project, "Github repository '" + repoName + "' is not a forked one", "Cannot perform github rebase");
+        Messages.showErrorDialog(project, "Github repository '" + repoName + "' is not a forked one", CANNOT_PERFORM_GITHUB_REBASE);
         return;
       }
 
@@ -161,7 +140,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         addRemoteHandler.addParameters("add", repoName, parentRepoUrl);
         addRemoteHandler.run();
         if (addRemoteHandler.getExitCode() != 0) {
-          Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", "Failed to add GitHub remote");
+          Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", CANNOT_PERFORM_GITHUB_REBASE);
           return;
         }
 
@@ -175,7 +154,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       action.actionPerformed(actionEvent);
     }
     catch (VcsException e1) {
-      Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), "Cannot perform github rebase");
+      Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), CANNOT_PERFORM_GITHUB_REBASE);
       return;
     }
   }

@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -87,7 +88,9 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setDefaultName(String name) {
-    myNewListPanel.setChangeListName(name);
+    if (! StringUtil.isEmptyOrSpaces(name)) {
+      myNewListPanel.setChangeListName(name);
+    }
   }
 
   private void updateEnabledItems() {

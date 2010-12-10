@@ -139,8 +139,7 @@ public class FileReferenceSet {
   public FileReferenceSet(final @NotNull PsiElement element) {
 
     myElement = element;
-    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
-    final TextRange range = manipulator.getRangeInElement(element);
+    TextRange range = ElementManipulators.getValueTextRange(element);
     myStartInElement = range.getStartOffset();
     final String s = range.substring(element.getText());
     myPathString = s.trim();

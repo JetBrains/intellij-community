@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -48,7 +49,7 @@ public abstract class MappedBufferWrapper {
     myLength = length;
   }
 
-  protected abstract MappedByteBuffer map();
+  protected abstract MappedByteBuffer map() throws IOException;
 
   private static final int MAX_FORCE_ATTEMPTS = 10;
 
@@ -63,7 +64,7 @@ public abstract class MappedBufferWrapper {
     return myBuffer;
   }
 
-  public ByteBuffer buf() {
+  public ByteBuffer buf() throws IOException {
     if (myBuffer == null) {
       myBuffer = map();
     }
