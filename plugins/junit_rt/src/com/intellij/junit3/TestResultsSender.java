@@ -18,7 +18,6 @@ package com.intellij.junit3;
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.Packet;
-import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import junit.framework.AssertionFailedError;
 import junit.framework.ComparisonFailure;
@@ -27,13 +26,11 @@ import junit.framework.TestListener;
 
 public class TestResultsSender implements TestListener {
   private final OutputObjectRegistry myRegistry;
-  private final PacketProcessor myErr;
   private TestMeter myCurrentTestMeter;
   private Test myCurrentTest;
 
-  public TestResultsSender(OutputObjectRegistry packetFactory, PacketProcessor segmentedErr) {
+  public TestResultsSender(OutputObjectRegistry packetFactory) {
     myRegistry = packetFactory;
-    myErr = segmentedErr;
   }
 
   public synchronized void addError(Test test, Throwable throwable) {
@@ -93,7 +90,6 @@ public class TestResultsSender implements TestListener {
 
   private void switchOutput(Packet switchPacket) {
     switchPacket.send();
-    switchPacket.sendThrough(myErr);
   }
 
   public synchronized void startTest(Test test) {

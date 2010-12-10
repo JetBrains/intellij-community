@@ -20,6 +20,7 @@ package com.intellij.rt.execution.junit.segments;
  */
 public interface PoolOfDelimiters {
   char REFERENCE_END = ':';
+  String REFERENCE_END_STR = ":";
   char INTEGER_DELIMITER = ' ';
 
   String OBJECT_PREFIX = "O";

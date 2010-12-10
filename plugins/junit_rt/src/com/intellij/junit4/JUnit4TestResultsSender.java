@@ -35,13 +35,11 @@ import java.util.regex.Pattern;
 
 public class JUnit4TestResultsSender extends RunListener {
   private final OutputObjectRegistry myRegistry;
-  private final PacketProcessor myErr;
   private Map myCurrentTestMeters = new HashMap();
   private Set myCurrentTests = new HashSet();
 
-  public JUnit4TestResultsSender(OutputObjectRegistry packetFactory, PacketProcessor segmentedErr) {
+  public JUnit4TestResultsSender(OutputObjectRegistry packetFactory) {
     myRegistry = packetFactory;
-    myErr = segmentedErr;
   }
 
   public synchronized void testFailure(Failure failure) throws Exception {
@@ -139,7 +137,6 @@ public class JUnit4TestResultsSender extends RunListener {
 
   private void switchOutput(Packet switchPacket) {
     switchPacket.send();
-    switchPacket.sendThrough(myErr);
   }
 
 
