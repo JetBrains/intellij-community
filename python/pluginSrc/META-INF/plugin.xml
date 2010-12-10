@@ -4,9 +4,9 @@
 
   <id>Pythonid</id>
   <name>Python</name>
-  <idea-version since-build="100.0" until-build="101.0"/>
+  <idea-version since-build="99.0" until-build="101.0"/>
   <description>Smart editing for Python scripts</description>
-  <version>2.6.4</version>
+  <version>2.6.5</version>
   <depends>com.intellij.modules.ultimate</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>org.jetbrains.plugins.yaml</depends>

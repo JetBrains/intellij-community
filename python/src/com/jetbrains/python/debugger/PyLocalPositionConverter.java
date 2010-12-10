@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyLocalPositionConverter implements PyPositionConverter {
 
   protected static class PyLocalSourcePosition extends PySourcePosition {
-    PyLocalSourcePosition(final String file, final int line) {
+    public PyLocalSourcePosition(final String file, final int line) {
       super(file, line);
     }
   }

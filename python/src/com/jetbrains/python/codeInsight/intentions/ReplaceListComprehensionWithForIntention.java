@@ -1,25 +1,17 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenSeparatorGenerator;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStatementListImpl;
 import org.jetbrains.annotations.NotNull;
-import sun.tools.tree.Statement;
 
-import javax.swing.*;
 import java.util.List;
 
 /**

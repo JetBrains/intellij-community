@@ -88,6 +88,7 @@
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
     <configurationType implementation="com.jetbrains.python.run.remote.PyRemoteDebugConfigurationType"/>
+    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugEditorProvider"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>

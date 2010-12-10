@@ -121,6 +121,7 @@
         <patternset refid="resources.pt"/>
         <type type="file"/>
       </fileset>
+      <fileset dir="${plugin.home}/../community/colorSchemes/src"/>
     </copy>
 
     <!-- copy plugin.xml -->
