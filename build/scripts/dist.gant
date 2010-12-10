@@ -198,6 +198,7 @@ def layoutLinux(Map args, String home, Paths paths) {
       fileset(dir: "$home/bin/nix")
       fileset(dir: "$home/build/images")
     }
+    fileset(dir: "$home/build", includes: "Install-Linux-tar.txt")
   }
 
   patchPropertiesFile(paths.distUnix)
