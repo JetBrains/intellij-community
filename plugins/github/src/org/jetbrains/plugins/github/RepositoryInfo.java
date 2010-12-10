@@ -1,23 +1,31 @@
 package org.jetbrains.plugins.github;
 
+import org.jdom.Element;
+
 /**
 * @author oleg
 * @date 10/21/10
 */
 public class RepositoryInfo {
-  public RepositoryInfo(final String name, final String owner) {
-    myName = name;
-    myOwner = owner;
+  private final Element myRepository;
+
+  public RepositoryInfo(final Element repository) {
+    myRepository = repository;
   }
 
-  private String myName;
-  private String myOwner;
-
   public String getName() {
-    return myName;
+    return myRepository.getChildText("name");
   }
 
   public String getOwner() {
-    return myOwner;
+    return myRepository.getChildText("owner");
+  }
+
+  public boolean isFork() {
+    return Boolean.valueOf(myRepository.getChildText("fork"));
+  }
+
+  public String getParent() {
+    return myRepository.getChildText("parent");
   }
 }

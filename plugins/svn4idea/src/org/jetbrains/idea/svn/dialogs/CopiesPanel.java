@@ -65,6 +65,7 @@ public class CopiesPanel {
   private LinkLabel myRefreshLabel;
   // updated only on AWT
   private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
+  private int myTextHeight;
 
   public CopiesPanel(final Project project) {
     myProject = project;
@@ -107,11 +108,13 @@ public class CopiesPanel {
     });
 
     final JPanel holderPanel = new JPanel(new BorderLayout());
+    FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
+    myTextHeight = (int)(fm.getHeight() * 1.3);
     myPanel = new JPanel(new GridBagLayout());
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myPanel, BorderLayout.NORTH);
     holderPanel.add(panel, BorderLayout.WEST);
-    myRefreshLabel = new LinkLabel("Refresh", null, new LinkListener() {
+    myRefreshLabel = new MyLinkLabel(myTextHeight, "Refresh", new LinkListener() {
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myRefreshLabel.isEnabled()) {
           myVcs.invokeRefreshSvnRoots(true);
@@ -130,13 +133,29 @@ public class CopiesPanel {
   }
 
   private JTextField createField(final String text) {
-    final JTextField field = new JTextField(text);
+    final JTextField field = new JTextField(text) {
+      public Dimension getPreferredSize() {
+        Dimension preferredSize = super.getPreferredSize();
+        return new Dimension(preferredSize.width, myTextHeight);
+      }
+    };
     field.setBackground(UIUtil.getPanelBackground());
     field.setEditable(false);                               
-    field.setBorder(null);
-    field.setFocusable(false);
+    final Border lineBorder = BorderFactory.createLineBorder(UIUtil.getPanelBackground());
+    final DottedBorder dotted = new DottedBorder(UIUtil.getActiveTextColor());
+    field.setBorder(lineBorder);
+    //field.setFocusable(false);
     field.setHorizontalAlignment(JTextField.RIGHT);
     field.setCaretPosition(0);
+    field.addFocusListener(new FocusAdapter() {
+      public void focusGained(FocusEvent e) {
+        field.setBorder(dotted);
+      }
+
+      public void focusLost(FocusEvent e) {
+        field.setBorder(lineBorder);
+      }
+    });
     return field;
   }
 
@@ -183,7 +202,7 @@ public class CopiesPanel {
       copyPanel.add(format, gb1);
 
       gb1.gridx = 2;
-      final LinkLabel changeFormatLabel = new LinkLabel("Change", null, new LinkListener() {
+      final LinkLabel changeFormatLabel = new MyLinkLabel(myTextHeight, "Change", new LinkListener() {
         public void linkSelected(LinkLabel aSource, Object aLinkData) {
           changeFormat(wcInfo);
         }
@@ -198,7 +217,7 @@ public class CopiesPanel {
 
       if (! SVNDepth.INFINITY.equals(wcInfo.getStickyDepth())) {
         gb1.gridx = 2;
-        final LinkLabel fixDepthLabel = new LinkLabel("Make infinity", null, new LinkListener() {
+        final LinkLabel fixDepthLabel = new MyLinkLabel(myTextHeight, "Make infinity", new LinkListener() {
           public void linkSelected(LinkLabel aSource, Object aLinkData) {
             final int result =
               Messages.showDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
@@ -208,7 +227,7 @@ public class CopiesPanel {
             if (result == 0) {
               // update of view will be triggered by roots changed event
               SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
-                                             SVNDepth.INFINITY, false, null, wcInfo.getFormat());
+                                           SVNDepth.INFINITY, false, null, wcInfo.getFormat());
             }
           }
         });
@@ -237,7 +256,7 @@ public class CopiesPanel {
 
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
       final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
-      final LinkLabel configureBranchesLabel = new LinkLabel("Configure Branches", null, new LinkListener() {
+      final LinkLabel configureBranchesLabel = new MyLinkLabel(myTextHeight, "Configure Branches", new LinkListener() {
         public void linkSelected(LinkLabel aSource, Object aLinkData) {
           BranchConfigurationDialog.configureBranches(myProject, root, true);
         }
@@ -249,7 +268,7 @@ public class CopiesPanel {
       setFocusableForLinks(configureBranchesLabel);
 
       ++ gb1.gridy;
-      final LinkLabel mergeLabel = new LinkLabel("Merge from...", null);
+      final LinkLabel mergeLabel = new MyLinkLabel(myTextHeight, "Merge from...", null);
       mergeLabel.setListener(new LinkListener() {
         public void linkSelected(LinkLabel aSource, Object aLinkData) {
           mergeFrom(wcInfo, root, mergeLabel);
@@ -417,6 +436,21 @@ public class CopiesPanel {
 
     public int compare(WCInfo o1, WCInfo o2) {
       return o1.getPath().compareTo(o2.getPath());
+    }
+  }
+
+  private static class MyLinkLabel extends LinkLabel {
+    private final int myHeight;
+
+    public MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
+      super(text, null, linkListener);
+      myHeight = height;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension preferredSize = super.getPreferredSize();
+      return new Dimension(preferredSize.width, myHeight);
     }
   }
 }

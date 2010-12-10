@@ -110,14 +110,14 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   }
 
   @Nullable
-  protected FoldingData getFoldRegionData(FoldRegion foldRegion) {
+  protected FoldingData getFoldRegionData(@NotNull FoldRegion foldRegion) {
     int i = MappingUtil.getCacheEntryIndexForOffset(foldRegion.getStartOffset(), myEditor.getDocument(), myCache);
     if (i < 0 || i >= myCache.size()) {
       return null;
     }
 
     CacheEntry cacheEntry = myCache.get(i);
-    return cacheEntry.getFoldingData().get(foldRegion.getStartOffset());
+    return cacheEntry.getFoldingData(foldRegion);
   }
 
   @Override
@@ -155,7 +155,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
   protected abstract T buildIfExceeds(EditorPosition position, int offset);
 
   @Override
-  public T processFoldRegion(EditorPosition position, FoldRegion foldRegion) {
+  public T processFoldRegion(EditorPosition position, @NotNull FoldRegion foldRegion) {
     T result = buildIfExceeds(position, foldRegion);
     if (result != null) {
       return result;

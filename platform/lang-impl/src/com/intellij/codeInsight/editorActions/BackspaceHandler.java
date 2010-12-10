@@ -35,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -56,7 +57,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
     if (file == null) return false;
 

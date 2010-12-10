@@ -87,7 +87,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private Color myBackgroundColor = null;
   private GutterDraggableObject myGutterDraggableObject;
   private String myLastGutterToolTip = null;
-
+  private int myLastPreferredHeight = -1;
 
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
@@ -105,7 +105,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   public Dimension getPreferredSize() {
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
-    return new Dimension(w, myEditor.getPreferredHeight());
+    myLastPreferredHeight = myEditor.getPreferredHeight();
+    return new Dimension(w, myLastPreferredHeight);
   }
 
   protected void setUI(ComponentUI newUI) {
@@ -421,7 +422,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int oldAnnotationsWidth = myTextAnnotationGuttersSize;
     calcIconAreaWidth();
     calcAnnotationsSize();
-    if (oldIconsWidth != myLineMarkerAreaWidth || oldAnnotationsWidth != myTextAnnotationGuttersSize) {
+    if (oldIconsWidth != myLineMarkerAreaWidth || oldAnnotationsWidth != myTextAnnotationGuttersSize
+        || myLastPreferredHeight != myEditor.getPreferredHeight()) 
+    {
       fireResized();
     }
     repaint();

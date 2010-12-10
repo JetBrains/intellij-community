@@ -15,14 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
@@ -30,10 +28,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  */
 public class AccessorResolverProcessor extends ResolverProcessor {
   private final boolean mySearchForGetter;
+  private final boolean myIsPropertyInvoked;
 
   public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter) {
+    this(name, place, searchForGetter, false);
+  }
+
+  public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter, boolean propertyInvoked) {
     super(name, RESOLVE_KINDS_METHOD, place, PsiType.EMPTY_ARRAY);
     mySearchForGetter = searchForGetter;
+    myIsPropertyInvoked = propertyInvoked;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -41,15 +45,25 @@ public class AccessorResolverProcessor extends ResolverProcessor {
     boolean usedInCategory = usedInCategory(resolveContext);
     if (mySearchForGetter) {
       if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null, usedInCategory)) {
-        return super.execute(element, state);
+        return addAccessor((PsiMethod)element, state);
       }
     }
     else {
       if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null, usedInCategory)) {
-        return super.execute(element, state);
+        return addAccessor((PsiMethod)element, state);
       }
     }
     return true;
+  }
+
+  private boolean addAccessor(PsiMethod method, ResolveState state) {
+    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+    boolean isAccessible = isAccessible(method);
+    final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+    boolean isStaticsOK = isStaticsOK(method, resolveContext);
+    addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK, myIsPropertyInvoked));
+    return !isAccessible;
   }
 
   private static boolean usedInCategory(GroovyPsiElement resolveContext) {

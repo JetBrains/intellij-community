@@ -40,6 +40,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ConfigureBranchesAction;
@@ -561,6 +562,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   private static class RenameContext {
+    @NotNull
     private String myCurrentPath;
     private String myRepositoryRoot;
     private boolean myHadChanged;
@@ -573,10 +575,11 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
 
     public void accept(final SVNLogEntry entry) {
       final Map changedPaths = entry.getChangedPaths();
+      if (changedPaths == null) return;
 
       for (Object o : changedPaths.values()) {
         final SVNLogEntryPath entryPath = (SVNLogEntryPath) o;
-        if ('A' == entryPath.getType()) {
+        if (entryPath != null && 'A' == entryPath.getType()) {
           if (myCurrentPath.equals(entryPath.getPath())) {
             myHadChanged = true;
             myCurrentPath = entryPath.getCopyPath();

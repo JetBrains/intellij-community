@@ -616,4 +616,14 @@ set<caret>Foo(2)
   public void testMetaClassIsResolvesWithMapQualifier() {
     assertInstanceOf resolve("A.groovy"), PsiMethod
   }
+
+  public void testStaticFieldOfInterface() {
+    final GroovyResolveResult result = advancedResolve("A.groovy")
+    assertTrue result.staticsOK
+  }
+
+  public void testNonStaticFieldInStaticContext() {
+    final GroovyResolveResult result = advancedResolve("A.groovy")
+    assertFalse result.staticsOK
+  }
 }

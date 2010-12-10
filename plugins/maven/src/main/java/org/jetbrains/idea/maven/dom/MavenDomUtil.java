@@ -41,7 +41,6 @@ import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -341,26 +340,21 @@ public class MavenDomUtil {
     return new MavenId(groupId, artifactId, version);
   }
 
-
   @NotNull
   public static MavenDomDependency createDomDependency(MavenDomProjectModel model,
-                                                       MavenArtifact mavenArtifact,
-                                                       Editor editor,
-                                                       boolean overriden) {
-    MavenDomDependency domDependency = createMavenDomDependency(model, editor);
+                                                @Nullable Editor editor,
+                                                @NotNull final MavenId id) {
+    MavenDomDependency dep = createDomDependency(model, editor);
 
-    domDependency.getGroupId().setStringValue(mavenArtifact.getGroupId());
-    domDependency.getArtifactId().setStringValue(mavenArtifact.getArtifactId());
-    if (!overriden) {
-      domDependency.getVersion().setStringValue(mavenArtifact.getVersion());
-    }
+    dep.getGroupId().setStringValue(id.getGroupId());
+    dep.getArtifactId().setStringValue(id.getArtifactId());
+    dep.getVersion().setStringValue(id.getVersion());
 
-    return domDependency;
+    return dep;
   }
 
-
   @NotNull
-  public static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
+  public static MavenDomDependency createDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
     MavenDomDependencies dependencies = model.getDependencies();
 
     int index = getCollectionIndex(dependencies, editor);
@@ -372,7 +366,6 @@ public class MavenDomUtil {
           return (MavenDomDependency)element;
         }
       }
-
     }
     return dependencies.addDependency();
   }

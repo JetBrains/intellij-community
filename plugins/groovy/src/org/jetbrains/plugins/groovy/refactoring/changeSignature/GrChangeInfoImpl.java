@@ -184,7 +184,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
       myExceptionSetChanged = false;
       for (int i = 0; i < myThrownExceptions.length; i++) {
         ThrownExceptionInfo info = myThrownExceptions[i];
-        if (info.getOldIndex() < 0) {
+        if (info.getOldIndex() < 0 || !thrownTypes[info.getOldIndex()].equals(info.createType(method, method.getManager()))) {
           myExceptionSetChanged = true;
           myExceptionSetOrOrderChanged = true;
           break;

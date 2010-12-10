@@ -32,8 +32,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * @author yole
  */
@@ -116,7 +114,7 @@ public class VcsFileStatusProvider implements FileStatusProvider {
       LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
     }
     FileStatus cachedStatus = myFileStatusManager.getCachedStatus(file);
-    if (cachedStatus == FileStatus.NOT_CHANGED || file.getModificationStamp() == doc.getModificationStamp()) {
+    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || file.getModificationStamp() == doc.getModificationStamp()) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
       if (vcs == null) return;
       if (cachedStatus == FileStatus.MODIFIED && file.getModificationStamp() == doc.getModificationStamp()) {

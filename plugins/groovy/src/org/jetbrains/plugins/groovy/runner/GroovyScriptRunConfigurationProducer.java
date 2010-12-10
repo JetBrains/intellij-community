@@ -151,7 +151,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
       final GroovyScriptRunConfiguration existing = (GroovyScriptRunConfiguration)configuration;
-      final String path = existing.scriptPath;
+      final String path = existing.getScriptPath();
       if (path != null) {
         final PsiFile file = location.getPsiElement().getContainingFile();
         if (file instanceof GroovyFile) {
@@ -182,7 +182,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     configuration.setWorkDir(dir.getVirtualFile().getPath());
     final VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
-    configuration.scriptPath = vFile.getPath();
+    configuration.setScriptPath(vFile.getPath());
     RunConfigurationModule module = configuration.getConfigurationModule();
 
 

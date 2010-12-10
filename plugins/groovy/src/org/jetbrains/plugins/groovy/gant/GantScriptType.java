@@ -65,7 +65,7 @@ public class GantScriptType extends GroovyScriptType {
 
   @Override
   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location place) {
-    final String params = existing.scriptParams;
+    final String params = existing.getProgramParameters();
     final String s = getTargetName(place);
     return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
   }
@@ -93,7 +93,7 @@ public class GantScriptType extends GroovyScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTargetName(location);
     if (target != null) {
-      configuration.scriptParams = target;
+      configuration.setProgramParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
     final CompileStepBeforeRun.MakeBeforeRunTask runTask =
