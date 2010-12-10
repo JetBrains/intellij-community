@@ -68,16 +68,16 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     addClasspathFromRootModel(module, tests, params, true);
 
-    params.getVMParametersList().addParametersString(configuration.vmParams);
+    params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
     addScriptEncodingSettings(params, script, module);
 
-    if (configuration.isDebugEnabled) {
+    if (configuration.isDebugEnabled()) {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
-    params.getProgramParametersList().addParametersString(configuration.scriptParams);
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
+    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
   }
 
   public static void configureGenericGroovyRunner(JavaParameters params, Module module, String mainClass) {
