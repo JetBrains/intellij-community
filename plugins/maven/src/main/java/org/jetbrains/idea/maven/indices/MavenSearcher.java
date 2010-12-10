@@ -18,8 +18,6 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.apache.lucene.search.Query;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
@@ -32,7 +30,7 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
     Pair<String, Query> patternAndQuery = preparePatternAndQuery(pattern);
 
     MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
-    Set<MavenArtifactInfo> infos = new THashSet<MavenArtifactInfo>(m.search(patternAndQuery.second, maxResult), new HashingStrategy());
+    Set<MavenArtifactInfo> infos = m.search(patternAndQuery.second, maxResult);
 
     List<RESULT_TYPE> result = new ArrayList<RESULT_TYPE>(processResults(infos, patternAndQuery.first, maxResult));
     sort(result);
@@ -77,27 +75,10 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
       result = Comparing.compare(f1.getPackaging(), f2.getPackaging());
       if (result != 0) return result;
 
-      return Comparing.compare(f1.getClassifier(), f2.getClassifier());
-    }
-  }
+      result = Comparing.compare(f1.getClassifier(), f2. getClassifier());
+      if (result != 0) return result;
 
-  private static class HashingStrategy implements TObjectHashingStrategy<MavenArtifactInfo> {
-    @Override
-    public int computeHashCode(MavenArtifactInfo o) {
-      return Comparing.hashcode(o.getGroupId()) +
-             31 * Comparing.hashcode(o.getArtifactId()) +
-             31 * Comparing.hashcode(o.getVersion()) +
-             31 * Comparing.hashcode(o.getPackaging()) +
-             31 * Comparing.hashcode(o.getClassifier());
-    }
-
-    @Override
-    public boolean equals(MavenArtifactInfo o1, MavenArtifactInfo o2) {
-      return Comparing.equal(o1.getGroupId(), o2.getGroupId()) &&
-             Comparing.equal(o1.getArtifactId(), o2.getArtifactId()) &&
-             Comparing.equal(o1.getVersion(), o2.getVersion()) &&
-             Comparing.equal(o1.getPackaging(), o2.getPackaging()) &&
-             Comparing.equal(o1.getClassifier(), o2.getClassifier());
+      return Comparing.compare(f1.getRepositoryId(), f2.getRepositoryId());
     }
   }
 }
