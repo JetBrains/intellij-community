@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -193,7 +194,11 @@ public class RollbackWorker {
 
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
-      ApplicationManager.getApplication().invokeLater(forAwtThread);
+      ApplicationManager.getApplication().invokeLater(forAwtThread, new Condition() {
+        public boolean value(Object o) {
+          return project.isDisposed() || (! project.isOpen());
+        }
+      });
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {
