@@ -51,11 +51,9 @@ public class UnshelveChangesAction extends AnAction {
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
-    final LocalChangeList defaultChangeList = changeListManager.getDefaultChangeList();
     String defaultName = changeLists.length == 1 ? changeLists [0].DESCRIPTION : null;
-    ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, defaultChangeList,
-                                                      VcsBundle.message("unshelve.changelist.chooser.title"), 
-                                                      defaultName);
+    ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, null,
+                                                      VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
     chooser.show();
     if (!chooser.isOK()) {
       return;
