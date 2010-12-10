@@ -595,13 +595,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static File createTempDir(@NonNls final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
-    // grand VFS refresh significantly slows down local tests and generally not needed
-    //ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //  @Override
-    //  public void run() {
-    //    VirtualFileManager.getInstance().refresh(false);
-    //  }
-    //});
     return tempDirectory;
   }
 
