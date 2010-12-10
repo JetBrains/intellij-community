@@ -22,10 +22,10 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -33,7 +33,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.SchemesManagerFactoryImpl");
 
-  private final Collection<SchemesManagerImpl> myRegisteredManagers = new ArrayList<SchemesManagerImpl>();
+  private final Collection<SchemesManagerImpl> myRegisteredManagers = ContainerUtil.createEmptyCOWList();
 
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(final String fileSpec,
                                                                    final SchemeProcessor<E> processor, final RoamingType roamingType) {

@@ -60,7 +60,8 @@ public class BranchConfigurationDialog extends DialogWrapper {
     init();
     setTitle(SvnBundle.message("configure.branches.title"));
 
-    if (configuration.getTrunkUrl() == null) {
+    final String trunkUrl = configuration.getTrunkUrl();
+    if (trunkUrl == null || trunkUrl.trim().length() == 0) {
       configuration.setTrunkUrl(rootUrl);
     }
 

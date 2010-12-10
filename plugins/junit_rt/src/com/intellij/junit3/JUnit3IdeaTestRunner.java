@@ -62,8 +62,8 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
 
   public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr) {
     setPrinter(new TimeSender());
-    myRegistry = new JUnit3OutputObjectRegistry(segmentedOut, segmentedErr);
-    myTestsListener = new TestResultsSender(myRegistry, segmentedErr);
+    myRegistry = new JUnit3OutputObjectRegistry(segmentedOut);
+    myTestsListener = new TestResultsSender(myRegistry);
   }
 
   protected TestResult createTestResult() {

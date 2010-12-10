@@ -16,16 +16,15 @@
 
 package com.intellij.xdebugger;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +62,8 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void pause();
   void resume();
+
+  void showExecutionPoint(XSourcePosition sourcePosition);
 
   void showExecutionPoint();
 

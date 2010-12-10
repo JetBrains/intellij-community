@@ -1088,25 +1088,6 @@ public class MavenProjectsTree {
     }
   }
 
-  public static MavenArtifact downloadArtifact(@NotNull MavenProject mavenProject,
-                                               @NotNull MavenId id,
-                                               @NotNull MavenEmbeddersManager embeddersManager,
-                                               @NotNull MavenConsole console,
-                                               @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(console, process);
-
-    try {
-      MavenArtifact result = embedder.resolve(new MavenArtifactInfo(id, MavenConstants.TYPE_JAR, null),
-                                              mavenProject.getRemoteRepositories());
-      result.setScope(MavenConstants.SCOPE_COMPILE);
-      return result;
-    }
-    finally {
-      embeddersManager.release(embedder);
-    }
-  }
-
   public void executeWithEmbedder(@NotNull MavenProject mavenProject,
                                   @NotNull MavenEmbeddersManager embeddersManager,
                                   @NotNull Key embedderKind,

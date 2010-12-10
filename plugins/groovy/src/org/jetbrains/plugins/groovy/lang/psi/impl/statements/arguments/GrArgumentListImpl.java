@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -185,13 +184,13 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
-      GrExpression[] params = getExpressionArguments();
+      final boolean insertComma = getAllArguments().length != 0;
 
       if (anchor == null) anchor = getLeftParen();
 
       PsiElement result;
       result = super.addAfter(element, anchor);
-      if (params.length != 0) {
+      if (insertComma) {
         final ASTNode astNode = getNode();
         if (anchor == getLeftParen()) {
           astNode.addLeaf(mCOMMA, ",", result.getNextSibling().getNode());

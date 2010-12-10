@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -139,7 +138,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + StringUtil.first(myTypeCodeFragment.getText(), 10, true) + "\' is invalid type");
+    if (!checkType(getMigrationType())) throw new ConfigurationException("\'" + myTypeCodeFragment.getText() + "\' is invalid type");
     if (myScopeChooserCombo.getSelectedScope() == null) throw new ConfigurationException("Scope is not chosen");
   }
 

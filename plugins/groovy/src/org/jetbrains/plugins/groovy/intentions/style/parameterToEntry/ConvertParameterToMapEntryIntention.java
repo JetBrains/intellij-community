@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -207,12 +206,14 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         try {
           for (PsiElement occurrence : occurrences) {
             GrReferenceExpression refExpr = null;
+            GroovyResolveResult resolveResult = null;
             boolean isExplicitGetterCall = false;
             if (occurrence instanceof GrReferenceExpression) {
               final PsiElement parent = occurrence.getParent();
               if (parent instanceof GrCall) {
                 refExpr = (GrReferenceExpression)occurrence;
-                final PsiElement resolved = refExpr.resolve();
+                resolveResult = refExpr.advancedResolve();
+                final PsiElement resolved = resolveResult.getElement();
                 if (resolved instanceof PsiMethod &&
                     GroovyPropertyUtils.isSimplePropertyGetter(((PsiMethod)resolved)) &&
                     //check for explicit getter call
@@ -221,7 +222,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
                 }
               }
               else if (parent instanceof GrReferenceExpression) {
-                final PsiElement resolved = ((GrReferenceExpression)parent).resolve();
+                resolveResult = ((GrReferenceExpression)parent).advancedResolve();
+                final PsiElement resolved = resolveResult.getElement();
                 if (resolved instanceof PsiMethod && "call".equals(((PsiMethod)resolved).getName())) {
                   refExpr = (GrReferenceExpression)parent;
                 }
@@ -249,7 +251,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
               call = (GrCall)refExpr.getParent();
             }
 
-            if (((GrReferenceExpressionImpl)refExpr).isResolvedToGetter()) {
+            if (resolveResult.isInvokedOnProperty()) {
               final PsiElement parent = call.getParent();
               if (parent instanceof GrCall) {
                 call = (GrCall)parent;

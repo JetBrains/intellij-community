@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -73,8 +72,6 @@ import java.util.List;
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
-  public static final Key<Boolean> IS_RESOLVED_TO_GETTER = new Key<Boolean>("Is resolved to getter");
-
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -238,11 +235,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
-      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
+      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true, true);
       resolveImpl(getterResolver);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {
-        putUserData(IS_RESOLVED_TO_GETTER, true);
         return candidates;
       }
       ContainerUtil.addAll(allCandidates, candidates);
@@ -896,9 +892,5 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       ((GroovyFile)file).addImport(statement);
     }
     return this;
-  }
-
-  public boolean isResolvedToGetter() {
-    return getUserData(IS_RESOLVED_TO_GETTER) != null;
   }
 }

@@ -758,6 +758,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
       final HintInfo info = myHintsStack.get(i);
       if (!info.hint.isVisible()) {
         myHintsStack.remove(i);
+        
+        // We encountered situation when 'hint' instances use 'hide()' method as object destruction callback
+        // (e.g. LineTooltipRenderer creates hint that overrides keystroke of particular action that produces hint and
+        // de-registers it inside 'hide()'. That means that the hint can 'stuck' to old editor location if we just remove
+        // it but don't call hide())
+        info.hint.hide();
         continue;
       }
 
@@ -777,6 +783,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
         final HintInfo info = myHintsStack.get(i);
         if (!info.hint.isVisible()) {
           myHintsStack.remove(i);
+          
+          // We encountered situation when 'hint' instances use 'hide()' method as object destruction callback
+          // (e.g. LineTooltipRenderer creates hint that overrides keystroke of particular action that produces hint and
+          // de-registers it inside 'hide()'. That means that the hint can 'stuck' to old editor location if we just remove
+          // it but don't call hide())
+          info.hint.hide();
           continue;
         }
 

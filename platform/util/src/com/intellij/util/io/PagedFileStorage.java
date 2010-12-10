@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,12 @@ import java.util.Set;
  * @author max
  */
 public class PagedFileStorage implements Forceable {
-  private final static int BUFFER_SIZE = 10 * 1024 * 1024; // 10M
+
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
+  private static final int MEGABYTE = 1024 * 1024;
+  private final static int BUFFER_SIZE = 10 * MEGABYTE;
+  private final static int UPPER_LIMIT = 200 * MEGABYTE;
+  private final static int LOWER_LIMIT = 100 * MEGABYTE;
 
   private final StorageLock myLock;
 
@@ -51,8 +57,9 @@ public class PagedFileStorage implements Forceable {
     final BuffersCache myBuffersCache = new BuffersCache();
 
     private class BuffersCache extends MyCache {
+
       public BuffersCache() {
-        super(20 * BUFFER_SIZE);
+        super(UPPER_LIMIT);
       }
 
       @NotNull
@@ -65,7 +72,40 @@ public class PagedFileStorage implements Forceable {
         if (off > key.owner.length()) {
           throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + key.owner.length());
         }
-        return new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
+        ReadWriteMappedBufferWrapper wrapper =
+          new ReadWriteMappedBufferWrapper(key.owner.myFile, off, Math.min((int)(key.owner.length() - off), BUFFER_SIZE));
+        IOException oome = null;
+        while (true) {
+          try {
+            // ensure it's allocated
+            wrapper.buf();
+            if (oome != null) {
+              LOG.error("Successfully recovered OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
+                        "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+                        "trying to allocate " + wrapper.myLength + " block");
+            }
+            return wrapper;
+          }
+          catch (IOException e) {
+            if (e.getCause() instanceof OutOfMemoryError) {
+              oome = e;
+              if (mySizeLimit > LOWER_LIMIT) {
+                mySizeLimit -= BUFFER_SIZE;
+              }
+              long newSize = getSize() - BUFFER_SIZE;
+              if (newSize >= 0) {
+                ensureSize(newSize);
+                continue; // next try
+              }
+              else {
+                throw new MappingFailedException("Cannot recover from OOME in memory mapping: -Xmx=" + Runtime.getRuntime().maxMemory() / MEGABYTE + "MB " +
+                        "new size limit: " + mySizeLimit / MEGABYTE + "MB " +
+                        "trying to allocate " + wrapper.myLength + " block", e);
+              }
+            }
+            throw new MappingFailedException("Cannot map buffer", e);
+          }
+        }
       }
 
       public void onDropFromCache(PageKey key, MappedBufferWrapper buf) {
@@ -106,7 +146,7 @@ public class PagedFileStorage implements Forceable {
   private final byte[] myTypedIOBuffer = new byte[8];
   private boolean isDirty = false;
   private final File myFile;
-  private long mySize = -1;
+  protected long mySize = -1;
   @NonNls private static final String RW = "rw";
 
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
@@ -133,6 +173,7 @@ public class PagedFileStorage implements Forceable {
     put(addr, myTypedIOBuffer, 0, 8);
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public void putByte(final int addr, final byte b) {
     myTypedIOBuffer[0] = b;
     put(addr, myTypedIOBuffer, 0, 1);
@@ -277,7 +318,12 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(int page) {
-    return myLock.myBuffersCache.get(new PageKey(this, page)).buf();
+    try {
+      return myLock.myBuffersCache.get(new PageKey(this, page)).buf();
+    }
+    catch (IOException e) {
+      throw new MappingFailedException("Cannot map buffer", e);
+    }
   }
 
   public void force() {
@@ -296,7 +342,7 @@ public class PagedFileStorage implements Forceable {
   private static abstract class MyCache {
 
     private final LinkedHashMap<PageKey, MappedBufferWrapper> myMap;
-    private final long mySizeLimit;
+    protected long mySizeLimit;
     private long mySize;
 
     protected MyCache(long sizeLimit) {
@@ -329,11 +375,19 @@ public class PagedFileStorage implements Forceable {
       wrapper = createValue(key);
       mySize += wrapper.myLength;
       myMap.put(key, wrapper);
-      while (mySize > mySizeLimit) {
+      ensureSize(mySizeLimit);
+      return wrapper;
+    }
+
+    protected void ensureSize(long sizeLimit) {
+      while (mySize > sizeLimit) {
         // we still have to drop something
         myMap.doRemoveEldestEntry();
       }
-      return wrapper;
+    }
+
+    public long getSize() {
+      return mySize;
     }
 
     public Set<Map.Entry<PageKey, MappedBufferWrapper>> entrySet() {

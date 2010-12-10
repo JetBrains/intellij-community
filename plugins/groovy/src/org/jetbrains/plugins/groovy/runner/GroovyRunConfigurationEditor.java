@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -40,6 +41,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JPanel scriptPathPanel;
   private JPanel workDirPanel;
   private JCheckBox myDebugCB;
+  private EnvironmentVariablesComponent myEnvVariables;
   private final JTextField scriptPathField;
   private final JTextField workDirField;
 
@@ -70,31 +72,34 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
 
   public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
     myVMParameters.setDialogCaption("VM Parameters");
-    myVMParameters.setText(configuration.vmParams);
+    myVMParameters.setText(configuration.getVMParameters());
 
     myParameters.setDialogCaption("Script Parameters");
-    myParameters.setText(configuration.scriptParams);
+    myParameters.setText(configuration.getProgramParameters());
 
-    scriptPathField.setText(configuration.scriptPath);
+    scriptPathField.setText(configuration.getScriptPath());
     workDirField.setText(configuration.getWorkDir());
 
     myDebugCB.setEnabled(true);
-    myDebugCB.setSelected(configuration.isDebugEnabled);
+    myDebugCB.setSelected(configuration.isDebugEnabled());
 
     myModulesModel.removeAllElements();
     for (Module module : configuration.getValidModules()) {
       myModulesModel.addElement(module);
     }
     myModulesModel.setSelectedItem(configuration.getModule());
+
+    myEnvVariables.setEnvs(configuration.getEnvs());
   }
 
   public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule((Module) myModulesBox.getSelectedItem());
-    configuration.vmParams = myVMParameters.getText();
-    configuration.isDebugEnabled = myDebugCB.isSelected();
-    configuration.scriptParams = myParameters.getText();
-    configuration.scriptPath = scriptPathField.getText();
+    configuration.setVMParameters(myVMParameters.getText());
+    configuration.setDebugEnabled(myDebugCB.isSelected());
+    configuration.setProgramParameters(myParameters.getText());
+    configuration.setScriptPath(scriptPathField.getText());
     configuration.setWorkDir(workDirField.getText());
+    configuration.setEnvs(myEnvVariables.getEnvs());
   }
 
   @NotNull

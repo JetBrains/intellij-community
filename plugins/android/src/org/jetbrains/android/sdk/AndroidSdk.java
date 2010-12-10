@@ -17,6 +17,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.ddmlib.AndroidDebugBridge;
+import com.android.ddmlib.DdmPreferences;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -145,6 +146,7 @@ public abstract class AndroidSdk {
       String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
         myDdmLibInitialized = true;
+        DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
         AndroidDebugBridge.createBridge(adbPath, true);
       }

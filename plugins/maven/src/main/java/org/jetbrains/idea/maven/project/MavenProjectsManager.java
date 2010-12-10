@@ -17,15 +17,11 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -35,8 +31,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,10 +41,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
@@ -996,47 +986,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
     VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
     if (pom != null) result.add(pom);
-
-    return result;
-  }
-
-  public MavenDomDependency addDependency(@NotNull MavenProject mavenProject, @NotNull MavenId id) {
-    return addDependency(mavenProject, id, false);
-  }
-
-  public MavenDomDependency addDependency(@NotNull final MavenProject mavenProject,
-                                          @NotNull final MavenId id,
-                                          final boolean overridden) {
-    final MavenArtifact[] artifact = new MavenArtifact[1];
-
-    try {
-      MavenUtil.run(myProject, "Downloading dependency...", new MavenTask() {
-        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-          artifact[0] = MavenProjectsTree.downloadArtifact(mavenProject, id, myEmbeddersManager, new SoutMavenConsole(), indicator);
-        }
-      });
-    }
-    catch (MavenProcessCanceledException ignore) {
-      return null;
-    }
-
-    VirtualFile file = mavenProject.getFile();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-
-    MavenDomDependency result = new WriteCommandAction<MavenDomDependency>(myProject, "Add Maven Dependency", psiFile) {
-      protected void run(Result<MavenDomDependency> result) throws Throwable {
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
-
-        Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-        MavenDomDependency domDependency = MavenDomUtil.createDomDependency(model, artifact[0], editor, overridden);
-
-        mavenProject.addDependency(artifact[0]);
-        result.setResult(domDependency);
-      }
-    }.execute().getResultObject();
-
-    scheduleForNextImport(Collections.singletonList(Pair.create(mavenProject, MavenProjectChanges.DEPENDENCIES)));
-    // todo shceduleImport();
 
     return result;
   }

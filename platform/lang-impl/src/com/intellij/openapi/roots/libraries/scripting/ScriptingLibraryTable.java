@@ -20,7 +20,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.doc.DocOrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
@@ -49,6 +52,7 @@ public class ScriptingLibraryTable {
           LibraryModel libModel = new LibraryModel(library.getName());
           libModel.setSourceFiles(library.getFiles(SOURCE_ROOT_TYPE));
           libModel.setCompactFiles(library.getFiles(COMPACT_ROOT_TYPE));
+          //libModel.setDocUrls(library.getUrls(DocOrderRootType.getInstance()));  // TODO: Rustam, write tests first!
           myLibraryModels.add(libModel);
         }
       }
@@ -60,6 +64,16 @@ public class ScriptingLibraryTable {
       if (libraryModel.containsFile(file)) return true;
     }
     return false;
+  }
+
+  public String[] getDocUrlsFor(VirtualFile file) {
+    Set<String> urls = new HashSet<String>();
+    for (LibraryModel libraryModel : myLibraryModels) {
+      if (libraryModel.containsFile(file)) {
+        urls.addAll(Arrays.asList(libraryModel.getDocUrls()));
+      }
+    }
+    return ArrayUtil.toStringArray(urls);
   }
 
   public boolean isCompactFile(VirtualFile file) {
@@ -113,8 +127,8 @@ public class ScriptingLibraryTable {
     return libModel;
   }
 
-  public LibraryModel createLibrary(String libName, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
-    LibraryModel libModel = new LibraryModel(libName, sourceFiles, compactFiles);
+  public LibraryModel createLibrary(String libName, VirtualFile[] sourceFiles, VirtualFile[] compactFiles, String[] docUrls) {
+    LibraryModel libModel = new LibraryModel(libName, sourceFiles, compactFiles, docUrls);
     myLibraryModels.add(libModel);
     invalidateCache();
     return libModel;
@@ -138,11 +152,13 @@ public class ScriptingLibraryTable {
     private String myName;
     private ArrayList<VirtualFile> mySourceFiles = new ArrayList<VirtualFile>();
     private ArrayList<VirtualFile> myCompactFiles = new ArrayList<VirtualFile>();
+    private ArrayList<String> myDocUrls = new ArrayList<String>(); 
 
-    public LibraryModel(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles) {
+    public LibraryModel(String name, VirtualFile[] sourceFiles, VirtualFile[] compactFiles, String[] docUrls) {
       this(name);
       mySourceFiles.addAll(Arrays.asList(sourceFiles));
       myCompactFiles.addAll(Arrays.asList(compactFiles));
+      myDocUrls.addAll(Arrays.asList(docUrls));
     }
 
     public LibraryModel(String name) {
@@ -162,6 +178,11 @@ public class ScriptingLibraryTable {
       myCompactFiles.clear();
       myCompactFiles.addAll(Arrays.asList(files));
     }
+    
+    public void setDocUrls(String[] docUrls) {
+      myDocUrls.clear();
+      myDocUrls.addAll(Arrays.asList(docUrls));
+    }
 
     public VirtualFile[] getSourceFiles() {
       return mySourceFiles.toArray(new VirtualFile[mySourceFiles.size()]);
@@ -169,6 +190,10 @@ public class ScriptingLibraryTable {
 
     public VirtualFile[] getCompactFiles() {
       return myCompactFiles.toArray(new VirtualFile[myCompactFiles.size()]);
+    }
+    
+    public String[] getDocUrls() {
+      return ArrayUtil.toStringArray(myDocUrls);
     }
 
     @NotNull

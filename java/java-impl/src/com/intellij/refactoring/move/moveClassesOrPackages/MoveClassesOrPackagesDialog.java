@@ -27,7 +27,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -269,7 +268,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
       if (name.length() != 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name)) {
-        throw new ConfigurationException("\'" + StringUtil.last(name, 10, true) + "\' is invalid destination package name");
+        throw new ConfigurationException("\'" + name + "\' is invalid destination package name");
       }
     }
     else {

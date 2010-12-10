@@ -24,6 +24,8 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,6 +81,13 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   protected PsiElement resolve(String fileName) {
     PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
     return ref.resolve();
+  }
+
+  @Nullable
+  protected GroovyResolveResult advancedResolve(String fileName) {
+    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
+    assertInstanceOf(ref, GrReferenceExpression.class);
+    return ((GrReferenceExpression)ref).advancedResolve();
   }
 
 }

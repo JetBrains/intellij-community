@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -221,7 +223,37 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    return node.getElementType() == IMPORT_STATEMENT && JavaCodeFoldingSettings.getInstance().isCollapseImports();
+    final JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+    if ( node.getElementType() == IMPORT_STATEMENT ){
+      return settings.isCollapseImports();
+    }
+
+    if (node.getElementType() == GROOVY_DOC_COMMENT) {
+      return settings.isCollapseJavadocs();
+    }
+
+    if (node.getElementType() == OPEN_BLOCK && node.getTreeParent().getElementType() == METHOD_DEFINITION) {
+      return settings.isCollapseMethods();
+    }
+
+    if (node.getElementType() == CLOSABLE_BLOCK) {
+      return settings.isCollapseLambdas();
+    }
+
+    if (node.getElementType() == CLASS_BODY) {
+      final PsiElement parent = node.getPsi().getParent();
+      if (parent instanceof PsiClass) {
+        if (parent instanceof PsiAnonymousClass) {
+          return settings.isCollapseAnonymousClasses();
+        }
+        if (((PsiClass)parent).getContainingClass() != null) {
+          return settings.isCollapseInnerClasses();
+        }
+      }
+    }
+
+
+    return false;
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {

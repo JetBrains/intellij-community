@@ -1,6 +1,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
@@ -28,7 +29,8 @@ public class SearchRequestCollector {
   }
 
   public void searchWord(@NotNull String word, @NotNull SearchScope searchScope, boolean caseSensitive, @NotNull PsiElement searchTarget) {
-    final short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS;
+    final short searchContext = (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS
+                                | (searchTarget instanceof PsiFileSystemItem ? UsageSearchContext.IN_STRINGS : 0));
     searchWord(word, searchScope, searchContext, caseSensitive, searchTarget);
   }
 

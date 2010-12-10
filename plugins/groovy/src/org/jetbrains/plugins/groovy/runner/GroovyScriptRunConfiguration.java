@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -42,6 +43,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,16 +57,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author peter
  */
-public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
-  public String vmParams;
-  public String workDir;
-  public boolean isDebugEnabled;
-  @Nullable public String scriptParams;
-  @Nullable public String scriptPath;
+public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
+  implements CommonJavaRunConfigurationParameters {
+  private String vmParams;
+  private String workDir;
+  private boolean isDebugEnabled;
+  @Nullable private String scriptParams;
+  @Nullable private String scriptPath;
+  private final Map<String, String> envs = new HashMap<String, String>();
+  public boolean passParentEnv = true;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project), factory);
@@ -143,6 +149,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       workDir = wrk;
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
+    envs.clear();
+    JDOMExternalizer.readMap(element, envs, null, "env");
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -153,6 +161,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", workDir);
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
+    JDOMExternalizer.writeMap(element, envs, null, "env");
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
@@ -246,5 +255,104 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     else if (!(scriptClass instanceof GroovyScriptClass)) {
       throw new RuntimeConfigurationWarning(GroovyBundle.message("script.file.is.not.groovy.file"));
     }
+  }
+
+  @Override
+  public void setVMParameters(String value) {
+    vmParams = value;
+  }
+
+  @Override
+  public String getVMParameters() {
+    return vmParams;
+  }
+
+  @Override
+  public boolean isAlternativeJrePathEnabled() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setAlternativeJrePathEnabled(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getAlternativeJrePath() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setAlternativeJrePath(String path) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String getRunClass() {
+    return null;
+  }
+
+  @Override
+  public String getPackage() {
+    return null;
+  }
+
+  @Override
+  public void setProgramParameters(@Nullable String value) {
+    scriptParams = value;
+  }
+
+  @Override
+  public String getProgramParameters() {
+    return scriptParams;
+  }
+
+  @Override
+  public void setWorkingDirectory(@Nullable String value) {
+    workDir = value;
+  }
+
+  @Override
+  public String getWorkingDirectory() {
+    return workDir;
+  }
+
+  @Override
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    this.envs.clear();
+    this.envs.putAll(envs);
+  }
+
+  @NotNull
+  @Override
+  public Map<String, String> getEnvs() {
+    return envs;
+  }
+
+  @Override
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    this.passParentEnv = passParentEnvs;
+  }
+
+  @Override
+  public boolean isPassParentEnvs() {
+    return passParentEnv;
+  }
+
+  public boolean isDebugEnabled() {
+    return isDebugEnabled;
+  }
+
+  public void setDebugEnabled(boolean debugEnabled) {
+    isDebugEnabled = debugEnabled;
+  }
+
+  @Nullable
+  public String getScriptPath() {
+    return scriptPath;
+  }
+
+  public void setScriptPath(@Nullable String scriptPath) {
+    this.scriptPath = scriptPath;
   }
 }

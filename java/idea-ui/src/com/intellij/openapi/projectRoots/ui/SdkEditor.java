@@ -25,7 +25,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
@@ -132,8 +132,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       if (mySdk == null || mySdk.getSdkType().isRootTypeApplicable(type)) {
         final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
-        myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
-        myPathEditors.put(type, pathEditor);
+        if (pathEditor != null) {
+          myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
+          myPathEditors.put(type, pathEditor);
+        }
       }
     }
 

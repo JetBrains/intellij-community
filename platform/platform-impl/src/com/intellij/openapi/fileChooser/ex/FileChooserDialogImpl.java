@@ -60,8 +60,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {
-  public static final DataKey<Boolean> PREFER_LAST_OVER_TO_SELECT = DataKey.create("PREFER_LAST_OVER_TO_SELECT");
+public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {  
 
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;

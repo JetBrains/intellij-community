@@ -15,48 +15,28 @@
  */
 package com.intellij.openapi.projectRoots.ui;
 
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.roots.libraries.doc.DocUrlChooser;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 /**
+ * Note: for languages other than Java use com.intellij.openapi.roots.libraries.doc.DocUrlChooser.
  * @author MYakovlev
  * Date: Oct 29, 2002
  * Time: 8:47:43 PM
  */
 public class Util{
 
+  @Nullable
   public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent) {
     return showSpecifyJavadocUrlDialog(parent, "");
   }
 
+  @Nullable
   public static VirtualFile showSpecifyJavadocUrlDialog(JComponent parent, String initialValue){
-    final String url = Messages.showInputDialog(parent, ProjectBundle.message("sdk.configure.javadoc.url.prompt"),
-                                                ProjectBundle.message("sdk.configure.javadoc.url.title"), Messages.getQuestionIcon(), initialValue, new InputValidator() {
-      public boolean checkInput(String inputString) {
-        return true;
-      }
-      public boolean canClose(String inputString) {
-        try {
-          new URL(inputString);
-          return true;
-        }
-        catch (MalformedURLException e1) {
-          Messages.showErrorDialog(e1.getMessage(), ProjectBundle.message("sdk.configure.javadoc.url.title"));
-        }
-        return false;
-      }
-    });
-    if (url == null) {
-      return null;
-    }
-    return VirtualFileManager.getInstance().findFileByUrl(url);
+    return DocUrlChooser.showSpecifyDocUrlDialog(parent, initialValue);
   }
 
 

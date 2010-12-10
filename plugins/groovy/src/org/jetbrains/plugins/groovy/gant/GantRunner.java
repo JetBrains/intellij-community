@@ -96,7 +96,7 @@ public class GantRunner extends GroovyScriptRunner {
     final String confPath = getGantConfPath(gantHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
 
-    params.getVMParametersList().addParametersString(configuration.vmParams);
+    params.getVMParametersList().addParametersString(configuration.getVMParameters());
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 
     params.getProgramParametersList().add("--conf");
@@ -120,13 +120,13 @@ public class GantRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add("gant.Gant");
 
     params.getProgramParametersList().add("--file");
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
 
-    if (configuration.isDebugEnabled) {
+    if (configuration.isDebugEnabled()) {
       params.getProgramParametersList().add("--debug");
     }
 
-    params.getProgramParametersList().addParametersString(configuration.scriptParams);
+    params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
   }
 
 }

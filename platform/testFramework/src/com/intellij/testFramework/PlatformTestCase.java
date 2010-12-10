@@ -54,7 +54,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -144,8 +143,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void setUp() throws Exception {
     super.setUp();
     if (ourTestCase != null) {
-      String message = "Previous test " + ourTestCase +
-                       " hasn't called tearDown(). Probably overriden without super call.";
+      String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
       ourTestCase = null;
       fail(message);
     }
@@ -597,12 +595,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static File createTempDir(@NonNls final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    });
     return tempDirectory;
   }
 

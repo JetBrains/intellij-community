@@ -30,7 +30,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
@@ -84,6 +83,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -428,11 +428,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (parent instanceof GrClosableBlock) {
           duplicate = ResolveUtil
             .resolveExistingElement((GrClosableBlock)parent, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
-          if (duplicate instanceof LightElement) {
-            duplicate = null;
-          }
         }
       }
+    }
+
+    if (duplicate instanceof GrLightParameter && "args".equals(((GrLightParameter)duplicate).getName())) {
+      duplicate = null;
     }
 
     if (duplicate instanceof GrVariable) {

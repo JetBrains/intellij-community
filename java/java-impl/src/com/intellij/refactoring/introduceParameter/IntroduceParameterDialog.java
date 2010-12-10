@@ -27,7 +27,6 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
@@ -462,7 +461,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
     if (name == null || !JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name)) {
-      throw new ConfigurationException("\'" + StringUtil.first(name != null ? name : "", 10 , true) + "\' is invalid parameter name");
+      throw new ConfigurationException("\'" + (name != null ? name : "") + "\' is invalid parameter name");
     }
   }
 

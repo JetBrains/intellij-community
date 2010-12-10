@@ -16,10 +16,7 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -37,6 +34,7 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
+  private DataContext myDataContext;
 
   protected ComboBoxAction() {
   }
@@ -50,6 +48,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
               new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,3,0,3),0,0)
     );
     return panel;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    myDataContext = e.getDataContext();
   }
 
   @NotNull
@@ -120,7 +124,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     protected ListPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, DataManager.getInstance().getDataContext(),
+
+      DataContext context = myDataContext == null ? DataManager.getInstance().getDataContext() : myDataContext;
+      myDataContext = null;
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                                                                   onDispose,
                                                                                   getMaxRows());

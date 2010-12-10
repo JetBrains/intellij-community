@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.regexp;
 
-import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -31,13 +30,20 @@ import java.util.Map;
 /**
  * @author traff
  */
-public class RegExpColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
+public class RegExpColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Keywords",  RegExpHighlighter.META),
-    new AttributesDescriptor("Escaped characters",  RegExpHighlighter.ESC_CHARACTER),
-    new AttributesDescriptor("Braces",  RegExpHighlighter.BRACES),
-    new AttributesDescriptor("Brackets",  RegExpHighlighter.BRACKETS),
+    new AttributesDescriptor("Keyword",  RegExpHighlighter.META),
+    new AttributesDescriptor("Escaped character",  RegExpHighlighter.ESC_CHARACTER),
+    new AttributesDescriptor("Invalid escape sequence",  RegExpHighlighter.INVALID_CHARACTER_ESCAPE),
+    new AttributesDescriptor("Redundant escape sequence",  RegExpHighlighter.REDUNDANT_ESCAPE),
+    new AttributesDescriptor("Brace",  RegExpHighlighter.BRACES),
+    new AttributesDescriptor("Bracket",  RegExpHighlighter.BRACKETS),
     new AttributesDescriptor("Parenthesis",  RegExpHighlighter.PARENTHS),
+    new AttributesDescriptor("Comma",  RegExpHighlighter.COMMA),
+    new AttributesDescriptor("Bad character",  RegExpHighlighter.BAD_CHARACTER),
+    new AttributesDescriptor("Character class",  RegExpHighlighter.CHAR_CLASS),
+    new AttributesDescriptor("Quote character",  RegExpHighlighter.QUOTE_CHARACTER),
+    new AttributesDescriptor("Comment",  RegExpHighlighter.COMMENT)
   };
 
   @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
@@ -71,7 +77,7 @@ public class RegExpColorsPage implements ColorSettingsPage, InspectionColorSetti
   @NotNull
   public String getDemoText() {
     return
-      "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
+      "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}\\x0g\\#\\p{alpha}\\Q\\E$";
 
   }
 
