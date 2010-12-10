@@ -68,7 +68,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private XDebugSessionImpl myActiveSession;
 
-
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
