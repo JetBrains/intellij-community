@@ -23,5 +23,6 @@
     <action id="Github.Rebase" class="org.jetbrains.plugins.github.GithubRebaseAction">
       <add-to-group group-id="VcsGlobalGroup"/>
     </action>
+    <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>
 </idea-plugin>

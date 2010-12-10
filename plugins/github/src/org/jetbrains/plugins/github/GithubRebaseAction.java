@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -169,7 +168,8 @@ public class GithubRebaseAction extends DumbAwareAction {
       }
 
       BasicAction.saveAll();
-      final AnAction action = ActionManager.getInstance().getAction("Git.Rebase");
+      final GithubRebase action = (GithubRebase) ActionManager.getInstance().getAction("Github.Rebase.Internal");
+      action.setRebaseOrigin(parent);
       final AnActionEvent actionEvent =
         new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
       action.actionPerformed(actionEvent);
