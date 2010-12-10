@@ -29,7 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -90,7 +92,18 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     if (targetClass == null) return;
 
     final GrVariableDeclaration declaration = createField(context, settings);
-    final GrVariableDeclaration added = ((GrVariableDeclaration)targetClass.add(declaration));
+    if (targetClass.isInterface()) {
+      declaration.getModifierList().setModifierProperty(GrModifier.STATIC, false);
+      declaration.getModifierList().setModifierProperty(GrModifier.FINAL, false);
+    }
+
+    final GrVariableDeclaration added;
+    if (targetClass instanceof GrEnumTypeDefinition) {
+      final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();
+      added = (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
+    } else {
+      added = ((GrVariableDeclaration)targetClass.add(declaration));
+    }
     PsiUtil.shortenReferences(added);
     final GrField field = (GrField)added.getVariables()[0];
     if (settings.replaceAllOccurrences()) {

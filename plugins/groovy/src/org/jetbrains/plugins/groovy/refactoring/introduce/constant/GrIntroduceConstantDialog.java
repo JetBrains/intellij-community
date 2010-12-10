@@ -140,7 +140,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
             .createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"),
                                                 GlobalSearchScope.projectScope(myContext.project), new ClassFilter() {
                 public boolean isAccepted(PsiClass aClass) {
-                  return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
+                  return aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC);
                 }
               }, null);
           if (myTargetClass != null) {
@@ -154,9 +154,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
         }
       }, "", PsiManager.getInstance(myContext.project), true, RECENTS_KEY);
-    if (myDefaultTargetClass != null) {
-      myTargetClassEditor.setText(myDefaultTargetClass.getQualifiedName());
-    }
     myTargetClassPanel.setLayout(new BorderLayout());
     myTargetClassPanel.add(myTargetClassLabel, BorderLayout.NORTH);
     myTargetClassPanel.add(myTargetClassEditor, BorderLayout.CENTER);
@@ -171,6 +168,11 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     for (String possibleClassName : possibleClassNames) {
       myTargetClassEditor.prependItem(possibleClassName);
     }
+
+    if (myDefaultTargetClass != null) {
+      myTargetClassEditor.prependItem(myDefaultTargetClass.getQualifiedName());
+    }
+
     myTargetClassEditor.getChildComponent().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
@@ -368,6 +370,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         }
         myTargetClass =
           getTargetClass(targetClassName, myContext.expression.getContainingFile().getContainingDirectory(), myContext.project, module);
+        if (myTargetClass == null) return;
       }
       else {
         myTargetClass =

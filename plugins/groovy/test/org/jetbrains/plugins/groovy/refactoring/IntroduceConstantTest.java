@@ -54,6 +54,14 @@ public class IntroduceConstantTest extends LightCodeInsightFixtureTestCase {
     doTest("Other", true, false, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
+  public void testInsertInEnum() {
+    doTest("Planet", false, false, GrModifier.PROTECTED);
+  }
+
+  public void testInsertInInterface() {
+    doTest("MyInterface", false, false, GrModifier.PROTECTED);
+  }
+
   private void doTest() {
     doTest(null, true, true, GrModifier.PUBLIC);
   }
