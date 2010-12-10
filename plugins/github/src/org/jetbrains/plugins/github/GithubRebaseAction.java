@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
@@ -76,18 +75,6 @@ public class GithubRebaseAction extends DumbAwareAction {
     }
 
     try {
-    // Check current branch
-      final GitBranch currentBranch = GitBranch.current(project, root);
-      if (currentBranch == null) {
-        Messages.showErrorDialog(project, "Cannot find current branch", "Cannot perform github rebase");
-        return;
-      }
-      if (!"master".equals(currentBranch.getName())) {
-        Messages.showErrorDialog(project, "Cannot perform rebase with '" + currentBranch.getName() + "' branch.\nPlease switch to master",
-                                 "Cannot perform github rebase");
-        return;
-      }
-
       // Check that given repository is properly configured git repository
       GitRemote githubRemote = null;
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
