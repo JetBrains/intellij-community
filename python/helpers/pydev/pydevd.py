@@ -637,10 +637,8 @@ class PyDB:
                 elif cmd_id == CMD_LOAD_SOURCE:
                     path = text
                     try:
-                        print path
                         f = open(path, 'r')
                         source = f.read()
-                        print source
                         self.cmdFactory.makeLoadSourceMessage(seq, source, self)
                     except:
                         return self.cmdFactory.makeErrorMessage(seq, GetExceptionTracebackStr())
