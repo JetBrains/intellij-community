@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author ven
  */
 public interface GroovyResolveResult extends ResolveResult {
-  public static final GroovyResolveResult[] EMPTY_ARRAY = new GroovyResolveResult[0];
+  GroovyResolveResult[] EMPTY_ARRAY = new GroovyResolveResult[0];
 
   boolean isAccessible();
 
@@ -36,7 +36,9 @@ public interface GroovyResolveResult extends ResolveResult {
 
   PsiSubstitutor getSubstitutor();
 
-  public static final GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
+  boolean isInvokedOnProperty();
+
+  GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
     public boolean isAccessible() {
       return false;
     }
@@ -59,6 +61,11 @@ public interface GroovyResolveResult extends ResolveResult {
     }
 
     public boolean isValidResult() {
+      return false;
+    }
+
+    @Override
+    public boolean isInvokedOnProperty() {
       return false;
     }
   };
