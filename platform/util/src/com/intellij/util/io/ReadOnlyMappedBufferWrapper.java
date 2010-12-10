@@ -30,22 +30,15 @@ public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
     super(file, pos, file.length() - pos);
   }
 
-  public MappedByteBuffer map() {
+  public MappedByteBuffer map() throws IOException {
+    FileInputStream stream = new FileInputStream(myFile);
+    FileChannel channel = stream.getChannel();
     try {
-      FileInputStream stream = new FileInputStream(myFile);
-      FileChannel channel = stream.getChannel();
-      try {
-        return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
-      }
-      finally {
-        channel.close();
-        stream.close();
-      }
+      return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
     }
-    catch (IOException e) {
-      final MappingFailedException mapFailed = new MappingFailedException("Mapping failed for: " + myFile.getPath(), e);
-      LOG.error(mapFailed);
-      throw mapFailed;
+    finally {
+      channel.close();
+      stream.close();
     }
   }
 }
