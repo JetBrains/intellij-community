@@ -576,8 +576,6 @@ def layoutWin(String target) {
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
         exclude(name: "idea.bat")
-        include(name: "runnerw.exe")
-
       }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")
