@@ -78,6 +78,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     fixers.add(new GrWhileConditionFixer());
     fixers.add(new GrWhileBodyFixer());
     fixers.add(new GrForBodyFixer());
+    fixers.add(new GrListFixer());
 
     ourFixers = fixers.toArray(new GrFixer[fixers.size()]);
 
