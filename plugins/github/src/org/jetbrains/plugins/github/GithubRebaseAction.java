@@ -56,6 +56,10 @@ public class GithubRebaseAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
+    if (GithubUtil.getGithubBoundRepository(project) == null){
+      e.getPresentation().setEnabled(false);
+      return;
+    }
     e.getPresentation().setEnabled(true);
   }
 
@@ -77,22 +81,9 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     try {
       // Check that given repository is properly configured git repository
-      GitRemote githubRemote = null;
+      final GitRemote githubRemote = GithubUtil.getGithubBoundRepository(project);
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      if (gitRemotes.isEmpty()) {
-        Messages.showErrorDialog(project, "Git repository doesn't have any remotes configured", CANNOT_PERFORM_GITHUB_REBASE);
-        return;
-      }
-      for (GitRemote gitRemote : gitRemotes) {
-        if (gitRemote.pushUrl().contains("git@github.com")) {
-          githubRemote = gitRemote;
-          break;
-        }
-      }
-      if (githubRemote == null) {
-        Messages.showErrorDialog(project, "Configured own github repository is not found", CANNOT_PERFORM_GITHUB_REBASE);
-        return;
-      }
+      LOG.assertTrue(githubRemote != null);
 
       final String pushUrl = githubRemote.pushUrl();
       final String login = GithubSettings.getInstance().getLogin();

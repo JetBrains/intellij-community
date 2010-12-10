@@ -5,9 +5,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitRemote;
+import git4idea.GitUtil;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -235,5 +240,31 @@ public class GithubUtil {
     catch (CancelledException e) {
       return null;
     }
+  }
+
+  @Nullable
+  public static GitRemote getGithubBoundRepository(final Project project){
+    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
+    if (roots.length == 0) {
+      return null;
+    }
+    final VirtualFile root = roots[0];
+    // Check if git is already initialized and presence of remote branch
+    final boolean gitDetected = GitUtil.isUnderGit(root);
+    if (!gitDetected) {
+      return null;
+    }
+    try {
+      // Check that given repository is properly configured git repository
+      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
+      for (GitRemote gitRemote : gitRemotes) {
+        if (gitRemote.pushUrl().contains("git@github.com")) {
+          return gitRemote;
+        }
+      }
+    } catch (VcsException e){
+      // ignore
+    }
+    return null;
   }
 }

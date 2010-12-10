@@ -55,6 +55,10 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
+    if (GithubUtil.getGithubBoundRepository(project) == null){
+      e.getPresentation().setEnabled(false);
+      return;
+    }
     e.getPresentation().setEnabled(true);
   }
 
