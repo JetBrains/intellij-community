@@ -142,7 +142,7 @@ def buildDebuggerEgg(paths, buildName) {
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", "python-pydev", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
