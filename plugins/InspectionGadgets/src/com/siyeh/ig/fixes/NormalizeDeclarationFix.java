@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,105 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix{
+
     @NotNull
     public String getName(){
         return InspectionGadgetsBundle.message("normalize.declaration.quickfix");
     }
 
+    @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException{
         final PsiElement variableNameElement = descriptor.getPsiElement();
-        final PsiVariable var = (PsiVariable) variableNameElement.getParent();
-        assert var != null;
-        var.normalizeDeclaration();
+        final PsiVariable parent =
+                (PsiVariable) variableNameElement.getParent();
+        if (parent == null) {
+            return;
+        }
+        final PsiElement grandParent = parent.getParent();
+        if (!(grandParent instanceof PsiDeclarationStatement)) {
+            return;
+        }
+        final PsiElement greatGrandParent = grandParent.getParent();
+        if (greatGrandParent instanceof PsiForStatement) {
+            final PsiForStatement forStatement =
+                    (PsiForStatement) greatGrandParent;
+            final PsiStatement initialization =
+                    forStatement.getInitialization();
+            if (grandParent.equals(initialization)) {
+                final PsiDeclarationStatement declarationStatement =
+                        (PsiDeclarationStatement) grandParent;
+                splitMultipleDeclarationInForStatementInitializer(
+                        declarationStatement);
+                return;
+            }
+        }
+        parent.normalizeDeclaration();
+    }
+
+    private static void splitMultipleDeclarationInForStatementInitializer(
+            PsiDeclarationStatement declarationStatement) {
+        final PsiElement forStatement = declarationStatement.getParent();
+        final PsiElement[] declaredElements =
+                declarationStatement.getDeclaredElements();
+        final Project project = forStatement.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
+        final PsiElement greatGreatGrandParent = forStatement.getParent();
+        final PsiBlockStatement blockStatement;
+        final PsiCodeBlock codeBlock;
+        if (!(greatGreatGrandParent instanceof PsiCodeBlock)) {
+            blockStatement = (PsiBlockStatement)
+                    factory.createStatementFromText("{}", forStatement);
+            codeBlock = blockStatement.getCodeBlock();
+        } else {
+            blockStatement = null;
+            codeBlock = null;
+        }
+        for (int i = 1; i < declaredElements.length; i++) {
+            final PsiElement declaredElement = declaredElements[i];
+            if (!(declaredElement instanceof PsiVariable)) {
+                continue;
+            }
+            final PsiVariable variable = (PsiVariable) declaredElement;
+            final PsiType type = variable.getType();
+            final String typeText = type.getCanonicalText();
+            final StringBuilder newStatementText =
+                    new StringBuilder(typeText);
+            newStatementText.append(' ');
+            newStatementText.append(variable.getName());
+            final PsiExpression initializer = variable.getInitializer();
+            if (initializer != null) {
+                newStatementText.append('=');
+                newStatementText.append(initializer.getText());
+            }
+            newStatementText.append(';');
+            final PsiStatement newStatement =
+                    factory.createStatementFromText(
+                            newStatementText.toString(), forStatement);
+            if (codeBlock == null) {
+                greatGreatGrandParent.addBefore(newStatement, forStatement);
+            } else {
+                codeBlock.add(newStatement);
+            }
+        }
+        for (int i = 1; i < declaredElements.length; i++) {
+            final PsiElement declaredElement = declaredElements[i];
+            if (!(declaredElement instanceof PsiVariable)) {
+                continue;
+            }
+            declaredElement.delete();
+        }
+        if (codeBlock != null) {
+            codeBlock.add(forStatement);
+            forStatement.replace(blockStatement);
+        }
     }
 }
