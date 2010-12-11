@@ -835,14 +835,14 @@ public class ProjectWrapper {
             final String myString = my.getBuffer().toString();
             final String hisString = history.getBuffer().toString();
 
-            FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
-            FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
+            //FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
+            //FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
 
-            f1.write(myString);
-            f2.write(hisString);
+            //f1.write(myString);
+            //f2.write(hisString);
 
-            f1.close();
-            f2.close();
+            //f1.close();
+            //f2.close();
 
             return !myString.equals(hisString);
         } catch (IOException e) {
