@@ -3,8 +3,7 @@ package org.jetbrains.ether;
 import javax.xml.transform.Result;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,43 +14,92 @@ import java.util.regex.Pattern;
  * Time: 2:01
  * To change this template use File | Settings | File Templates.
  */
+
 public class DirectoryScanner {
+
+    public static class Result {
+        final Set<ProjectWrapper.FileWrapper> myFiles;
+        long myLatest;
+        long myEarliest;
+
+        public Result () {
+            myFiles = new HashSet<ProjectWrapper.FileWrapper> ();
+            myLatest = 0;
+            myEarliest = Long.MAX_VALUE;
+        }
+
+        public void update (final ProjectWrapper.FileWrapper w) {
+            final long t = w.getStamp ();
+
+            if (t > myLatest)
+                myLatest = t;
+
+            if (t< myEarliest)
+                myEarliest = t;
+
+            myFiles.add(w);
+        }
+
+        public long getEarliest () {
+            return myEarliest;
+        }
+
+        public long getLatest () {
+            return myLatest;
+        }
+
+        public Set<ProjectWrapper.FileWrapper> getFiles () {
+            return myFiles;
+        }
+    }
+
+    private static class Crawler {
+        final Result myResult;
+        final FileFilter myFilter;
+        final ProjectWrapper myProjectWrapper;
+
+        public Crawler (final FileFilter ff, final ProjectWrapper pw) {
+            myResult = new Result();
+            myFilter = ff;
+            myProjectWrapper = pw;
+        }
+
+        public Result getResult () {
+            return myResult;
+        }
+
+        public void run(File root) {
+            if (root.exists()) {
+                final File[] files = root.listFiles(myFilter);
+
+                for (int i = 0; i < files.length; i++) {
+                    myResult.update (myProjectWrapper.new FileWrapper(files[i]));
+                }
+
+                final File[] subdirs = root.listFiles(myDirectoryFilter);
+
+                for (int i = 0; i < subdirs.length; i++) {
+                    run(subdirs[i]);
+                }
+            }
+        }
+    }
+
     private static FileFilter myDirectoryFilter = new FileFilter() {
-        public boolean accept (File f) {
+        public boolean accept(File f) {
             final String name = f.getName();
 
-            return f.isDirectory() && !name.equals(".") && !name.equals("..") ;
+            return f.isDirectory() && !name.equals(".") && !name.equals("..");
         }
     };
 
-    private static FileFilter filterByExtensions (final String[] exts) {
-        return new FileFilter (){
-            public boolean accept (File path) {
-                final String filename = path.getName();
-
-                for (int i = 0; i<exts.length; i++) {
-                    if (filename.endsWith(exts[i]))
-                        return true;
-                }
-
-                return false;
-            }
-        };
-    }
-
-    public static class Result {
-        public List<String> myFiles = new ArrayList<String> ();
-        public long myEarliest = Long.MAX_VALUE;
-        public long myLatest = 0;
-    }
-
     private static FileFilter myTrueFilter = new FileFilter() {
-                public boolean accept (File s) {
-                    return true;
-                }
-            };
+        public boolean accept(File s) {
+            return s.isFile();
+        }
+    };
 
-    private static FileFilter createFilter (final List<String> excludes) {
+    private static FileFilter createFilter(final Collection<String> excludes) {
         if (excludes == null) {
             return myTrueFilter;
         }
@@ -62,7 +110,7 @@ public class DirectoryScanner {
             StringBuffer alternative = new StringBuffer();
 
             if (exclude != null) {
-                for (int i = 0; i<exclude.length(); i++) {
+                for (int i = 0; i < exclude.length(); i++) {
                     final char c = exclude.charAt(i);
 
                     switch (c) {
@@ -104,11 +152,11 @@ public class DirectoryScanner {
             final Pattern patt = Pattern.compile(buf.toString());
 
             return new FileFilter() {
-                public boolean accept (File f) {
+                public boolean accept(File f) {
                     final Matcher m = patt.matcher(f.getAbsolutePath());
                     final boolean ok = !m.matches();
 
-                    return ok;
+                    return ok && f.isFile();
                 }
             };
         }
@@ -116,36 +164,21 @@ public class DirectoryScanner {
         return myTrueFilter;
     }
 
-    public static Result getFiles (final String root, final List<String> excludes) {
-        final Result result = new Result ();
-        final FileFilter ff = createFilter(excludes);
+    public static Result getFiles(final String root, final Set<String> excludes, final ProjectWrapper pw) {
+        final Crawler cw = new Crawler(createFilter(excludes), pw);
 
-        new Object(){
-            public void run (File root) {
-                if (root.exists()) {
-                  final File[] files = root.listFiles(ff);
+        if (root != null)
+            cw.run(new File(pw.getAbsolutePath(root)));
 
-                  for (int i = 0; i<files.length; i++) {
-                      long t = files[i].lastModified();
+        return cw.getResult();
+    }
 
-                      if (t > result.myLatest)
-                        result.myLatest = t;
+    public static Result getFiles(final Set<String> roots, final Set<String> excludes, final ProjectWrapper pw) {
+        final Crawler cw = new Crawler(createFilter(excludes), pw);
 
-                      if (t < result.myEarliest)
-                        result.myEarliest = t;
+        for (String root : roots)
+            cw.run(new File(pw.getAbsolutePath(root)));
 
-                      result.myFiles.add(files[i].getAbsolutePath());
-                  }
-
-                  final File[] subdirs = root.listFiles(myDirectoryFilter);
-
-                  for (int i=0; i<subdirs.length; i++) {
-                      run (subdirs [i]);
-                  }
-                }
-            }
-        }.run(new File (root));
-
-        return result;
+        return cw.getResult();
     }
 }

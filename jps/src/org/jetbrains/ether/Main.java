@@ -134,14 +134,14 @@ public class Main {
         }
 
         for (String prj : projects) {
-            final ProjectWrapper project = new ProjectWrapper(prj);
             boolean saved = false;
+            ProjectWrapper project = null;
 
             switch (getAction()) {
                 case CLEAN:
-
                     System.out.println("Cleaning project \"" + prj + "\"");
-                    project.load();
+                    project = ProjectWrapper.load(prj);
+
                     project.clean();
                     project.save();
                     saved = true;
@@ -149,7 +149,7 @@ public class Main {
 
                 case REBUILD:
                     System.out.println("Rebuilding project \"" + prj + "\"");
-                    project.load();
+                    project = ProjectWrapper.load(prj);
                     project.rebuild();
                     project.save();
                     saved = true;
@@ -162,13 +162,13 @@ public class Main {
                         final String module = ((Options.Value) make).get();
 
                         System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
-                        project.load();
+                        project = ProjectWrapper.load(prj);
                         project.makeModule(module, doForce(), doTests());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
                         System.out.println("Making project \"" + prj + "\"");
-                        project.load();
+                        project = ProjectWrapper.load(prj);
                         project.make(doForce(), doTests());
                         project.save();
                         saved = true;
@@ -179,14 +179,14 @@ public class Main {
             final Options.Argument inspect = doInspect();
 
             if (inspect instanceof Options.Switch) {
-                project.load();
+                project = ProjectWrapper.load(prj);
                 project.report();
                 if (doSave()) {
                     project.save();
                     saved = true;
                 }
             } else if (inspect instanceof Options.Value) {
-                project.load();
+                project = ProjectWrapper.load(prj);
                 project.report(((Options.Value) inspect).get());
                 if (doSave()) {
                     project.save();
@@ -195,7 +195,7 @@ public class Main {
             }
 
             if (doSave() && !saved) {
-                project.load();
+                project = ProjectWrapper.load(prj);
                 project.save();
             }
         }
