@@ -887,8 +887,9 @@ public class ProjectWrapper {
 
     public void make(final boolean force, final boolean tests) {
         if (structureChanged() && !force) {
-            System.out.println("Project \"" + myRoot + "\" structure changed, performing rebuild.");
-            rebuild();
+            System.out.println("Project \"" + myRoot + "\" structure changed, building all modules.");
+            clean();
+            makeModules(myProject.getModules().values(), tests);
             return;
         }
 
@@ -912,7 +913,7 @@ public class ProjectWrapper {
         makeModules(modules, tests);
     }
 
-    private void makeModules(final List<Module> initial, final boolean tests) {
+    private void makeModules(final Collection<Module> initial, final boolean tests) {
         final Set<Module> modules = new HashSet<Module>();
         final Map<Module, Set<Module>> reversedDependencies = new HashMap<Module, Set<Module>>();
 
