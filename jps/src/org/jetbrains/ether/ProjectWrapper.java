@@ -256,20 +256,60 @@ public class ProjectWrapper {
         }
     }
 
-    public final Constructor<ClasspathItemWrapper> myClasspathItemWrapperConstructor =
+    public final Constructor<ClasspathItemWrapper> myWeakClasspathItemWrapperConstructor =
             new Constructor<ClasspathItemWrapper>() {
                 public ClasspathItemWrapper read(final BufferedReader r) {
                     final String s = lookString(r);
                     if (s.startsWith("Library:")) {
-                        return new LibraryWrapper(r);
+                        return new WeakClasspathItemWrapper(readStringAttribute(r, "Library:"), "Library");
                     }
                     if (s.startsWith("Module:")) {
-                        return new ModuleWrapper(r);
+                        return new WeakClasspathItemWrapper(readStringAttribute(r, "Module:"), "Module");
                     } else {
                         return new GenericClasspathItemWrapper(r);
                     }
                 }
             };
+
+    public class WeakClasspathItemWrapper implements ClasspathItemWrapper {
+        final String myName;
+        final String myType;
+
+        public WeakClasspathItemWrapper(final String name, final String type) {
+            myName = name;
+            myType = type;
+        }
+
+        public WeakClasspathItemWrapper(final ModuleWrapper m) {
+            myType = "Module";
+            myName = m.getName();
+        }
+
+        public WeakClasspathItemWrapper(final LibraryWrapper l) {
+            myType = "Library";
+            myName = l.getName();
+        }
+
+        public boolean isModule() {
+            return myType.equals("Module");
+        }
+
+        public String getName() {
+            return myName;
+        }
+
+        public int compareTo(Object o) {
+            return getName().compareTo(((WeakClasspathItemWrapper) o).getName());
+        }
+
+        public List<String> getClassPath(ClasspathKind kind) {
+            return null;
+        }
+
+        public void write(final BufferedWriter w) {
+            writeln(w, myType + ":" + getName());
+        }
+    }
 
     public class GenericClasspathItemWrapper implements ClasspathItemWrapper {
         final List<String> myClassPath;
@@ -347,6 +387,11 @@ public class ProjectWrapper {
         final String myName;
         final long myModificationTime;
 
+        FileWrapper(final String name) {
+            myName = name;
+            myModificationTime = 0;
+        }
+
         FileWrapper(final File f) {
             myName = getRelativePath(f.getAbsolutePath());
             myModificationTime = f.lastModified();
@@ -373,6 +418,14 @@ public class ProjectWrapper {
         public int compareTo(Object o) {
             return getName().compareTo(((FileWrapper) o).getName());
         }
+
+        public boolean equals(Object o) {
+            return o instanceof FileWrapper && myName.equals(((FileWrapper) o).getName());
+        }
+
+        public int hashCode() {
+            return myName.hashCode();
+        }
     }
 
     public final Constructor<ModuleWrapper> myModuleWrapperConstructor =
@@ -390,13 +443,13 @@ public class ProjectWrapper {
             final Set<FileWrapper> mySources;
 
             final String myOutput;
-            final Set<FileWrapper> myOutputs;
+            String myOutputStatus;
 
             final long myLatestSource;
             final long myEarliestSource;
 
-            final long myLatestOutput;
-            final long myEarliestOutput;
+            long myLatestOutput;
+            long myEarliestOutput;
 
             public void write(final BufferedWriter w) {
                 writeln(w, "Roots:");
@@ -408,8 +461,7 @@ public class ProjectWrapper {
                 writeln(w, "Output:");
                 writeln(w, myOutput == null ? "" : myOutput);
 
-                writeln(w, "Outputs:");
-                writeln(w, myOutputs);
+                writeln(w, "OutputStatus:" + myOutputStatus);
 
                 //writeln(w, "EarliestSource:");
                 //writeln(w, Long.toString(myEarliestSource));
@@ -435,8 +487,7 @@ public class ProjectWrapper {
                 final String s = readString(r);
                 myOutput = s.equals("") ? null : s;
 
-                readTag(r, "Outputs:");
-                myOutputs = (Set<FileWrapper>) readMany(r, myFileWrapperConstructor, new HashSet<FileWrapper>());
+                myOutputStatus = readStringAttribute(r, "OutputStatus:");
 
                 //readTag(r, "EarliestSource:");
                 myEarliestSource = 0;//readLong(r);
@@ -463,11 +514,21 @@ public class ProjectWrapper {
 
                 {
                     myOutput = getRelativePath(output);
-                    final DirectoryScanner.Result result = DirectoryScanner.getFiles(myOutput, excludes, ProjectWrapper.this);
-                    myOutputs = result.getFiles();
-                    myEarliestOutput = result.getEarliest();
-                    myLatestOutput = result.getLatest();
+                    rescan ();
                 }
+            }
+
+            public void rescan() {
+                final DirectoryScanner.Result result = DirectoryScanner.getFiles(myOutput, null, ProjectWrapper.this);
+                myOutputStatus =
+                        result.getFiles().isEmpty()
+                                ? "empty"
+                                : (result.getFiles().contains(new FileWrapper(myOutput + File.separator + Reporter.myOkFlag))
+                                ? "ok"
+                                : "fail"
+                        );
+                myEarliestOutput = result.getEarliest();
+                myLatestOutput = result.getLatest();
             }
 
             public Set<String> getRoots() {
@@ -480,10 +541,6 @@ public class ProjectWrapper {
 
             public String getOutputPath() {
                 return myOutput;
-            }
-
-            public Set<FileWrapper> getOutputs() {
-                return myOutputs;
             }
 
             public long getEarliestOutput() {
@@ -506,12 +563,16 @@ public class ProjectWrapper {
                 return mySources.isEmpty();
             }
 
-            public boolean emptyOutput() {
-                return myOutputs.isEmpty();
+            public boolean outputEmpty() {
+                return myOutputStatus.equals("empty");
+            }
+
+            public boolean outputOk() {
+                return myOutputStatus.equals("ok");
             }
 
             public boolean isOutdated() {
-                return (!emptySource() && emptyOutput()) || (getLatestSource() > getEarliestOutput());
+                return (!emptySource() && !outputOk()) || (getLatestSource() > getEarliestOutput());
             }
 
             public int compareTo(Object o) {
@@ -530,6 +591,11 @@ public class ProjectWrapper {
 
         final Set<LibraryWrapper> myLibraries;
 
+        public void rescan() {
+            mySource.rescan();
+            myTest.rescan();
+        }
+
         public void write(final BufferedWriter w) {
             writeln(w, "Module:" + myName);
 
@@ -546,7 +612,19 @@ public class ProjectWrapper {
             writeln(w, myLibraries);
 
             writeln(w, "Dependencies:");
-            writeln(w, dependsOn());
+
+            final List<ClasspathItemWrapper> weakened = new ArrayList<ClasspathItemWrapper>();
+
+            for (ClasspathItemWrapper cpiw : dependsOn()) {
+                if (cpiw instanceof ModuleWrapper) {
+                    weakened.add(new WeakClasspathItemWrapper((ModuleWrapper) cpiw));
+                } else if (cpiw instanceof LibraryWrapper) {
+                    weakened.add(new WeakClasspathItemWrapper((LibraryWrapper) cpiw));
+                } else
+                    weakened.add(cpiw);
+            }
+
+            writeln(w, weakened);
         }
 
         public ModuleWrapper(final BufferedReader r) {
@@ -566,7 +644,7 @@ public class ProjectWrapper {
             myLibraries = (Set<LibraryWrapper>) readMany(r, myLibraryWrapperConstructor, new HashSet<LibraryWrapper>());
 
             readTag(r, "Dependencies:");
-            myDependsOn = (List<ClasspathItemWrapper>) readMany(r, myClasspathItemWrapperConstructor, new ArrayList<ClasspathItemWrapper>());
+            myDependsOn = (List<ClasspathItemWrapper>) readMany(r, myWeakClasspathItemWrapperConstructor, new ArrayList<ClasspathItemWrapper>());
         }
 
         public ModuleWrapper(final Module m) {
@@ -658,6 +736,12 @@ public class ProjectWrapper {
     final Map<String, ModuleWrapper> myModules = new HashMap<String, ModuleWrapper>();
     final Map<String, LibraryWrapper> myLibraries = new HashMap<String, LibraryWrapper>();
     final ProjectWrapper myHistory;
+
+    private void rescan() {
+        for (ModuleWrapper m : myModules.values()) {
+            m.rescan();
+        }
+    }
 
     public ModuleWrapper getModule(final String name) {
         return myModules.get(name);
@@ -835,14 +919,16 @@ public class ProjectWrapper {
             final String myString = my.getBuffer().toString();
             final String hisString = history.getBuffer().toString();
 
-            //FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
-            //FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
+            /*
+            FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
+            FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
 
-            //f1.write(myString);
-            //f2.write(hisString);
+            f1.write(myString);
+            f2.write(hisString);
 
-            //f1.close();
-            //f2.close();
+            f1.close();
+            f2.close();
+            */
 
             return !myString.equals(hisString);
         } catch (IOException e) {
@@ -879,10 +965,12 @@ public class ProjectWrapper {
 
     public void clean() {
         myProject.clean();
+        rescan();
     }
 
     public void rebuild() {
         myProject.makeAll();
+        rescan();
     }
 
     public void make(final boolean force, final boolean tests) {
@@ -951,6 +1039,7 @@ public class ProjectWrapper {
         }.run(initial);
 
         myProject.makeSelected(modules, tests);
+        rescan();
     }
 
     public void makeModule(final String modName, final boolean force, final boolean tests) {

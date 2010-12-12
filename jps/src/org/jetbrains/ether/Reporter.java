@@ -12,8 +12,8 @@ import java.io.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Reporter {
-    private static final String myOkFlag = ".jps.ok";
-    private static final String myFailFlag = ".jps.fail";
+    public static final String myOkFlag = ".jps.ok";
+    public static final String myFailFlag = ".jps.fail";
 
     private static String getSafePath (final String path) {
         final File f = new File(path);
