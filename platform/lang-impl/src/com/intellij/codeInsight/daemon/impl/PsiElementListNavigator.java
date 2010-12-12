@@ -18,11 +18,14 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -34,35 +37,44 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(MouseEvent e, NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
-    if (targets.length == 0) return;
-    if (targets.length == 1){
+    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer);
+    if (popup != null) popup.show(new RelativePoint(e));
+  }
+
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
+    JBPopup popup = navigateOrCreatePopup(targets, title, listRenderer);
+    if (popup != null) popup.showInBestPositionFor(e);
+  }
+
+  @Nullable
+  private static JBPopup navigateOrCreatePopup(NavigatablePsiElement[] targets, String title, ListCellRenderer listRenderer) {
+    if (targets.length == 0) return null;
+    if (targets.length == 1) {
       targets[0].navigate(true);
+      return null;
     }
-    else{
-      final JList list = new JBList(targets);
-      list.setCellRenderer(listRenderer);
+    final JList list = new JBList(targets);
+    list.setCellRenderer(listRenderer);
 
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-      if (listRenderer instanceof PsiElementListCellRenderer) {
-        ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
-      }
+    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    if (listRenderer instanceof PsiElementListCellRenderer) {
+      ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
+    }
 
-      builder.
-        setTitle(title).
-        setMovable(true).
-        setItemChoosenCallback(new Runnable() {
-          public void run() {
-            int[] ids = list.getSelectedIndices();
-            if (ids == null || ids.length == 0) return;
-            Object [] selectedElements = list.getSelectedValues();
-            for (Object element : selectedElements) {
-              PsiElement selected = (PsiElement) element;
-              LOG.assertTrue(selected.isValid());
-              ((NavigatablePsiElement)selected).navigate(true);
-            }
+    return builder.
+      setTitle(title).
+      setMovable(true).
+      setItemChoosenCallback(new Runnable() {
+        public void run() {
+          int[] ids = list.getSelectedIndices();
+          if (ids == null || ids.length == 0) return;
+          Object[] selectedElements = list.getSelectedValues();
+          for (Object element : selectedElements) {
+            PsiElement selected = (PsiElement)element;
+            LOG.assertTrue(selected.isValid());
+            ((NavigatablePsiElement)selected).navigate(true);
           }
-        }).createPopup().
-        show(new RelativePoint(e));
-    }
+        }
+      }).createPopup();
   }
 }
