@@ -80,12 +80,7 @@ public class MultipleDeclarationInspection extends BaseInspection {
             final PsiElement parent = statement.getParent();
             if (ignoreForLoopDeclarations &&
                     parent instanceof PsiForStatement) {
-                final PsiForStatement forStatement = (PsiForStatement)parent;
-                final PsiStatement initialization =
-                        forStatement.getInitialization();
-                if (statement.equals(initialization)) {
-                    return;
-                }
+                return;
             }
             final PsiElement[] declaredElements =
                     statement.getDeclaredElements();

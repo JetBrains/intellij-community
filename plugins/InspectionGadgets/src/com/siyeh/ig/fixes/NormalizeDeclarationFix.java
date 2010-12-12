@@ -45,22 +45,16 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix{
         }
         final PsiElement greatGrandParent = grandParent.getParent();
         if (greatGrandParent instanceof PsiForStatement) {
-            final PsiForStatement forStatement =
-                    (PsiForStatement) greatGrandParent;
-            final PsiStatement initialization =
-                    forStatement.getInitialization();
-            if (grandParent.equals(initialization)) {
-                final PsiDeclarationStatement declarationStatement =
-                        (PsiDeclarationStatement) grandParent;
-                splitMultipleDeclarationInForStatementInitializer(
-                        declarationStatement);
-                return;
-            }
+            final PsiDeclarationStatement declarationStatement =
+                    (PsiDeclarationStatement) grandParent;
+            splitMultipleDeclarationInForStatementInitialization(
+                    declarationStatement);
+            return;
         }
         parent.normalizeDeclaration();
     }
 
-    private static void splitMultipleDeclarationInForStatementInitializer(
+    private static void splitMultipleDeclarationInForStatementInitialization(
             PsiDeclarationStatement declarationStatement) {
         final PsiElement forStatement = declarationStatement.getParent();
         final PsiElement[] declaredElements =
