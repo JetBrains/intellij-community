@@ -39,6 +39,8 @@ public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
   public void testGotoNextLineInFor() throws Throwable { doTest(); }
   public void testGotoParentInIf() throws Throwable { doTest(); }
 
+  public void testListFixer() throws Throwable {doTest();}
+
   protected static List<SmartEnterProcessor> getSmartProcessors(Language grLanguage) {
     return SmartEnterProcessors.INSTANCE.forKey(grLanguage);
   }

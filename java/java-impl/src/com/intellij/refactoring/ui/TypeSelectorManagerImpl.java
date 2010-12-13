@@ -309,14 +309,22 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public void typeSelected(@NotNull PsiType type) {
-    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(), serialize(type)));
+    typeSelected(type, getDefaultType());
+  }
+
+  public static void typeSelected(final PsiType type, final PsiType defaultType) {
+    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
   }
 
   private String getStatsKey() {
-    return "IntroduceVariable##" + serialize(getDefaultType());
+    return getStatsKey(getDefaultType());
   }
 
-  private String serialize(PsiType type) {
+  private static String getStatsKey(final PsiType defaultType) {
+    return "IntroduceVariable##" + serialize(defaultType);
+  }
+
+  private static String serialize(PsiType type) {
     if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }

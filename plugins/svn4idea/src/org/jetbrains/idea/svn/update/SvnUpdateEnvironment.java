@@ -35,7 +35,6 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment {
 
@@ -131,7 +130,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+    /*final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
 
     final Map<File,UpdateRootInfo> map = configuration.getUpdateInfosMap();
     try {
@@ -154,7 +153,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     catch (SVNException e) {
       Messages.showErrorDialog(myVcs.getProject(), e.getMessage(), SvnBundle.message("switch.target.problem.title"));
       return false;
-    }
+    }*/
 
     return true;
   }

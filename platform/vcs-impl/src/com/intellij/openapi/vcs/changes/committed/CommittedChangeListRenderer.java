@@ -194,6 +194,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
   }
 
   public static int getRowX(JTree tree, int depth) {
+    if (tree == null) return 0;
     final TreeUI ui = tree.getUI();
     if (ui instanceof BasicTreeUI) {
       final BasicTreeUI treeUI = ((BasicTreeUI)ui);

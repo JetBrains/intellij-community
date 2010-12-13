@@ -78,10 +78,6 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
             "REGEXP.QUOTE_CHARACTER",
             SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
     );
-    static final TextAttributesKey CTRL_CHARACTER = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.CTRL_CHARACTER",
-            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-    );
     static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
             "REGEXP.COMMENT",
             SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
@@ -108,7 +104,6 @@ class RegExpHighlighter extends SyntaxHighlighterBase {
         keys1.put(RegExpTT.BAD_HEX_VALUE, INVALID_CHARACTER_ESCAPE);
         keys1.put(RegExpTT.BAD_OCT_VALUE, INVALID_CHARACTER_ESCAPE);
 
-        keys1.put(RegExpTT.CTRL_CHARACTER, CTRL_CHARACTER);
         keys1.put(RegExpTT.PROPERTY, CHAR_CLASS);
 
         keys1.put(RegExpTT.ESC_CHARACTER, ESC_CHARACTER);

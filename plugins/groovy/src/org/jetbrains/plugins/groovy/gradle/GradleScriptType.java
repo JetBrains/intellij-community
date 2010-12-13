@@ -80,7 +80,7 @@ public class GradleScriptType extends GroovyScriptType {
 
   @Override
    public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
-    final String params = existing.scriptParams;
+    final String params = existing.getProgramParameters();
     final String s = getTaskTarget(location);
     return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
   }
@@ -89,7 +89,7 @@ public class GradleScriptType extends GroovyScriptType {
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
     String target = getTaskTarget(location);
     if (target != null) {
-      configuration.scriptParams = target;
+      configuration.setProgramParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
 
@@ -190,7 +190,7 @@ public class GradleScriptType extends GroovyScriptType {
             GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GradleLibraryPresentationProvider.ANY_GRADLE_JAR_FILE_PATTERN));
         }
 
-        params.getVMParametersList().addParametersString(configuration.vmParams);
+        params.getVMParametersList().addParametersString(configuration.getVMParameters());
 
 
         params.getVMParametersList().add("-Dgradle.home=" + FileUtil.toSystemDependentName(gradleHome.getPath()));
@@ -198,8 +198,8 @@ public class GradleScriptType extends GroovyScriptType {
         setToolsJar(params);
 
         params.getProgramParametersList().add("--build-file");
-        params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
-        params.getProgramParametersList().addParametersString(configuration.scriptParams);
+        params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.getScriptPath()));
+        params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
       }
     };
   }

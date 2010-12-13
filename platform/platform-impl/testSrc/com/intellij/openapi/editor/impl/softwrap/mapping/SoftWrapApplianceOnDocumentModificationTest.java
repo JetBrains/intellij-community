@@ -420,6 +420,21 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(startOffset, myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(2, 0))));
   }
   
+  public void testFoldRegionThatStartsAtLineEnd() throws IOException {
+    String text =
+      "line1\n" +
+      "line2\n" +
+      "line3\n" +
+      "line4\n" +
+      "line5";
+    
+    init(30, text);
+    int start = text.indexOf("line3") - 1;
+    addCollapsedFoldRegion(start, text.length(), "...");
+    assertEquals(1, getSoftWrapModel().getRegisteredSoftWraps().size());
+    assertEquals(start, getSoftWrapModel().getRegisteredSoftWraps().get(0).getStart());
+  }
+  
   public void testHomeProcessing() throws IOException {
     String text = 
       "class Test {\n" +

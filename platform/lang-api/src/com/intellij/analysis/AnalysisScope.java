@@ -622,6 +622,7 @@ public class AnalysisScope {
       case CUSTOM:
         return myScope;
       case DIRECTORY:
+        return GlobalSearchScope.directoryScope((PsiDirectory)myElement, true);
       case FILE:
         return new LocalSearchScope(myElement);
       case INVALID:

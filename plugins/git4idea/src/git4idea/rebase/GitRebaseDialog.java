@@ -44,15 +44,15 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * Git root selector
    */
-  private JComboBox myGitRootComboBox;
+  protected JComboBox myGitRootComboBox;
   /**
    * The selector for branch to rebase
    */
-  private JComboBox myBranchComboBox;
+  protected JComboBox myBranchComboBox;
   /**
    * The from branch combo box. This is used as base branch if different from onto branch
    */
-  private JComboBox myFromComboBox;
+  protected JComboBox myFromComboBox;
   /**
    * The validation button for from branch
    */
@@ -60,7 +60,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The onto branch combobox.
    */
-  private JComboBox myOntoComboBox;
+  protected JComboBox myOntoComboBox;
   /**
    * The validate button for onto branch
    */
@@ -88,7 +88,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * If selected, remote branches are shown as well
    */
-  private JCheckBox myShowRemoteBranchesCheckBox;
+  protected JCheckBox myShowRemoteBranchesCheckBox;
   /**
    * Preserve merges checkbox
    */
@@ -96,23 +96,23 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The current project
    */
-  private final Project myProject;
+  protected final Project myProject;
   /**
    * The list of local branches
    */
-  private final List<GitBranch> myLocalBranches = new ArrayList<GitBranch>();
+  protected final List<GitBranch> myLocalBranches = new ArrayList<GitBranch>();
   /**
    * The list of remote branches
    */
-  private final List<GitBranch> myRemoteBranches = new ArrayList<GitBranch>();
+  protected final List<GitBranch> myRemoteBranches = new ArrayList<GitBranch>();
   /**
    * The current branch
    */
-  private GitBranch myCurrentBranch;
+  protected GitBranch myCurrentBranch;
   /**
    * The tags
    */
-  private final List<GitTag> myTags = new ArrayList<GitTag>();
+  protected final List<GitTag> myTags = new ArrayList<GitTag>();
   /**
    * The validator for onto field
    */
@@ -284,7 +284,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * Update onto and from comboboxes.
    */
-  private void updateOntoFrom() {
+  protected void updateOntoFrom() {
     String onto = GitUIUtil.getTextField(myOntoComboBox).getText();
     String from = GitUIUtil.getTextField(myFromComboBox).getText();
     myFromComboBox.removeAllItems();
@@ -312,7 +312,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * Load tags and branches
    */
-  private void loadRefs() {
+  protected void loadRefs() {
     try {
       myLocalBranches.clear();
       myRemoteBranches.clear();

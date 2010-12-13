@@ -570,8 +570,9 @@ public class ResolveUtil {
         PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, GrMethod.class, GroovyFile.class, GrTypeDefinitionBody.class);
       if (closure == null) break;
       place = closure;
-      final PsiElement clParent = closure.getParent();
-      if (!(clParent instanceof GrMethodCall)) continue; //todo it may also be an argument list
+      PsiElement clParent = closure.getParent();
+      if (clParent instanceof GrArgumentList) clParent = clParent.getParent();
+      if (!(clParent instanceof GrMethodCall)) continue;
       final GrExpression expression = ((GrMethodCall)clParent).getInvokedExpression();
       if (expression instanceof GrReferenceExpression &&
           "with".equals(((GrReferenceExpression)expression).getReferenceName()) &&

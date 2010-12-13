@@ -27,8 +27,8 @@ import org.junit.runner.Description;
 
 
 public class JUnit4OutputObjectRegistry extends OutputObjectRegistry {
-  public JUnit4OutputObjectRegistry(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
-    super(mainTransport, auxilaryTransport);
+  public JUnit4OutputObjectRegistry(PacketProcessor mainTransport) {
+    super(mainTransport);
   }
 
   protected int getTestCont(Object test) {

@@ -69,7 +69,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -627,7 +626,7 @@ public class PsiUtil {
     if (element instanceof PsiMethod) {
       PsiType returnType = getSmartReturnType((PsiMethod)element);
       final GrExpression expression = call.getInvokedExpression();
-      if (expression instanceof GrReferenceExpression && expression.getUserData(GrReferenceExpressionImpl.IS_RESOLVED_TO_GETTER) != null) {
+      if (expression instanceof GrReferenceExpression && result.isInvokedOnProperty()) {
         if (returnType instanceof GrClosureType) {
           final GrClosureSignature signature = ((GrClosureType)returnType).getSignature();
           return isRawType(signature.getReturnType(), signature.getSubstitutor());

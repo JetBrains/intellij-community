@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -101,6 +102,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private JRadioButton myStashRadioButton; // Save files policy option
   private JRadioButton myShelveRadioButton;
   private GitVcs myVcs;
+  private static final Logger LOG = Logger.getInstance(GitPushActiveBranchesDialog.class.getName());
 
   /**
    * A modification of Runnable with the roots-parameter.
@@ -232,6 +234,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     final Task.Backgroundable rebaseAndPushTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
       public void run(@NotNull ProgressIndicator indicator) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
+        List<VcsException> pushExceptions = new ArrayList<VcsException>();
         for (int i = 0; i < 3; i++) {
           final RebaseInfo rebaseInfo = collectRebaseInfo();
 
@@ -251,6 +254,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                                       "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".");
               return;
             }
+            pushExceptions = new ArrayList<VcsException>(exceptions);
             exceptions.clear();
           }
 
@@ -270,7 +274,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
             GitUtil.refreshFiles(myProject, rebaseInfo.roots);
           }
         }
-        notifyException("Failed to push", exceptions);
+        notifyException("Failed to push", pushExceptions);
       }
     };
     myVcs.runInBackground(rebaseAndPushTask);
@@ -280,11 +284,15 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * Notifies about errors during background rebase & push tasks.
    */
   private void notifyException(String title, Collection<VcsException> exceptions) {
-    final String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
+    String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
       @Override public String fun(VcsException e) {
         return e.getLocalizedMessage();
       }
     }, "<br/>");
+    if (StringUtil.isEmptyOrSpaces(content)) {
+      content = title;
+    }
+    LOG.info(title + " || " + content);
     Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.ERROR),
                              NotificationDisplayType.STICKY_BALLOON, myProject);
   }

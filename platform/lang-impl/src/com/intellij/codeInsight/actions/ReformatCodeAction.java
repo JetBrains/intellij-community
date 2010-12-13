@@ -168,7 +168,12 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
 
     if (optimizeImports && range == null) {
-      new ReformatAndOptimizeImportsProcessor(project, file).run();
+      if (file != null || dir == null) {
+        new ReformatAndOptimizeImportsProcessor(project, file).run();
+      }
+      else {
+        new ReformatAndOptimizeImportsProcessor(project, dir, true).run();
+      }
     }
     else {
       new ReformatCodeProcessor(project, file, range).run();

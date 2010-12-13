@@ -59,8 +59,12 @@ public abstract class ConnectionOnProcess implements IConnection {
     }
 
   public synchronized void close() throws IOException {
-    myWaitForThreadFuture.cancel(true);
-    myWaitSemaphore.up();
+    if (myWaitForThreadFuture != null) {
+      myWaitForThreadFuture.cancel(true);
+    }
+    if (myWaitSemaphore != null) {
+      myWaitSemaphore.up();
+    }
 
     try {
       if (myInputStream != null && !myContainsError) {
@@ -84,8 +88,12 @@ public abstract class ConnectionOnProcess implements IConnection {
 
         }
         try {
-          myErrThread.setProcessTerminated(true);
-          myStdErrFuture.get();
+          if (myErrThread != null) {
+            myErrThread.setProcessTerminated(true);
+          }
+          if (myStdErrFuture != null) {
+            myStdErrFuture.get();
+          }
         }
         catch (InterruptedException e) {
           //

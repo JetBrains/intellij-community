@@ -66,6 +66,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction implements DumbAware
   }
 
   public void update(AnActionEvent e) {
+    super.update(e);
     Presentation presentation = e.getPresentation();
     DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     if (diffPanel != null && diffPanel.getComponent().isDisplayable()) {

@@ -128,10 +128,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (!ResolveUtil.processElement(processor, definition, state)) return false;
     }
 
-    if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
-      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
-    }
-
     if (!processChildrenScopes(this, processor, state, lastParent, place)) return false;
 
     final ClassHint classHint = processor.getHint(ClassHint.KEY);
@@ -170,6 +166,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         }
       }
 
+    }
+
+    if (lastParent != null && !(lastParent instanceof GrTypeDefinition) && scriptClass != null) {
+      if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
     }
 
     return true;

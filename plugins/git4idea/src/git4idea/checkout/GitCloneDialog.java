@@ -17,16 +17,24 @@ package git4idea.checkout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResult;
 import git4idea.i18n.GitBundle;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
@@ -163,14 +171,17 @@ public class GitCloneDialog extends DialogWrapper {
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
-        String output = GitHandlerUtil
-          .doSynchronously(checkRepository(myProject, myTestURL), GitBundle.message("clone.testing", myTestURL), "connection test");
-        if (output != null) {
+        GitSimpleHandler handler = new GitSimpleHandler(myProject, new File("."), GitCommand.LS_REMOTE);
+        handler.addParameters(myTestURL, "master");
+
+        GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", myTestURL));
+        GitTaskResult result = task.execute();
+
+        if (result.isOK()) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
                                    GitBundle.getString("clone.test.success"));
           myTestResult = Boolean.TRUE;
-        }
-        else {
+        } else {
           myTestResult = Boolean.FALSE;
         }
         updateOkButton();

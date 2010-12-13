@@ -15,10 +15,13 @@
  */
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.process.RunnerMediator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,43 +35,27 @@ import java.nio.charset.Charset;
  */
 public abstract class GitTextHandler extends GitHandler {
   /**
-   * the logger
-   */
-  private static final Logger log = Logger.getInstance(GitTextHandler.class.getName());
-
-  /**
    * wrapped process handler
    */
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
 
-  /**
-   * The constructor from super
-   *
-   * @param project   the project
-   * @param directory the command directory
-   * @param command   the command
-   */
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
-  /**
-   * The constructor
-   *
-   * @param project the project
-   * @param vcsRoot the vcs root
-   * @param command the command to run
-   */
   protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
     super(project, vcsRoot, command);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Override
+  protected Process startProcess() throws ExecutionException {
+    final ProcessHandler processHandler = new MyRunnerMediator().createProcess(myCommandLine);
+    myHandler = (MyOSProcessHandler)processHandler;
+    return myHandler.getProcess();
+  }
+
   protected void startHandlingStreams() {
-    myHandler = new MyOSProcessHandler(myProcess, myCommandLine.getCommandLineString(), getCharset());
     myHandler.addProcessListener(new ProcessListener() {
       public void startNotified(final ProcessEvent event) {
         // do nothing
@@ -108,31 +95,28 @@ public abstract class GitTextHandler extends GitHandler {
    */
   protected abstract void onTextAvailable(final String text, final Key outputType);
 
-  /**
-   * {@inheritDoc}
-   */
-  protected void destroyProcess() {
-    try {
-      myHandler.destroyProcess();
-    }
-    catch (Exception e) {
-      log.warn("Exception during cancel", e);
-    }
+  public void destroyProcess() {
+    myHandler.destroyProcess();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void waitForProcess() {
-    OSProcessHandler handler = myHandler;
-    myHandler = null;
-    handler.waitFor();
+    myHandler.waitFor();
   }
 
-  private static class MyOSProcessHandler extends OSProcessHandler {
+  /**
+   * RunnerMediator that attaches our MyProcessHandler to the process instead of the standard CustomDestroyProcessHandler.
+   */
+  private class MyRunnerMediator extends RunnerMediator {
+    @Override
+    protected ProcessHandler createProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
+      return new MyOSProcessHandler(process, commandLine, getCharset());
+    }
+  }
+
+  private static class MyOSProcessHandler extends RunnerMediator.CustomDestroyProcessHandler {
     private final Charset myCharset;
 
-    public MyOSProcessHandler(Process process, String commandLine, Charset charset) {
+    public MyOSProcessHandler(Process process, GeneralCommandLine commandLine, Charset charset) {
       super(process, commandLine);
       myCharset = charset;
     }

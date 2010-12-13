@@ -15,32 +15,30 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.project.Project;
+
 public abstract class ThreadLocalDefendedInvoker<T> {
-  protected final ThreadLocal<Boolean> myThreadLocal;
+  protected final static ThreadLocal<Boolean> myThreadLocal = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.TRUE;
+    }
+  };
 
-  protected ThreadLocalDefendedInvoker() {
-    myThreadLocal = new ThreadLocal<Boolean>() {
-      @Override
-      protected Boolean initialValue() {
-        return Boolean.TRUE;
-      }
-    };
-  }
+  protected abstract T execute(Project project);
 
-  protected abstract T execute();
-
-  public boolean isInside() {
+  public static boolean isInside() {
     return ! Boolean.TRUE.equals(myThreadLocal.get());
   }
 
-  public boolean isOutside() {
+  public static boolean isOutside() {
     return ! isInside();
   }
 
-  public T executeDefended() {
+  public T executeDefended(Project project) {
     try {
       myThreadLocal.set(Boolean.FALSE);
-      return execute();
+      return execute(project);
     } finally {
       myThreadLocal.set(Boolean.TRUE);
     }

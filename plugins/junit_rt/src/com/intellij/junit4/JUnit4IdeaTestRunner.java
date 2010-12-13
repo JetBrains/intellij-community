@@ -30,26 +30,29 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunListener;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 /** @noinspection UnusedDeclaration*/
 public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
   private OutputObjectRegistry myRegistry;
 
-  private static void sendNode(Description test, Packet packet) {
+  private static void sendNode(Description test, Packet packet, Collection objectPackets) {
     final ArrayList children = test.getChildren();
-    packet.addObject(test).addLong(children.size());
+    packet.addObject(test, objectPackets).addLong(children.size());
     for (int i = 0; i < children.size(); i++) {
-      sendNode((Description)children.get(i), packet);
+      sendNode((Description)children.get(i), packet, objectPackets);
     }
   }
 
-  public static void sendTree(OutputObjectRegistry registry, Description suite) {
+  public void sendTree(OutputObjectRegistry registry, Description suite) {
     Packet packet = registry.createPacket();
     packet.addString(PoolOfDelimiters.TREE_PREFIX);
-    sendNode(suite, packet);
+    Set objects = new HashSet();
+    sendNode(suite, packet, objects);
+    for (Iterator iterator = objects.iterator(); iterator.hasNext();) {
+      ((Packet)iterator.next()).send();
+    }
     packet.addString("\n");
     packet.send();
   }
@@ -150,8 +153,8 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
 
   public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr) {
-    myRegistry = new JUnit4OutputObjectRegistry(segmentedOut, segmentedErr);
-    myTestsListener = new JUnit4TestResultsSender(myRegistry, segmentedErr);
+    myRegistry = new JUnit4OutputObjectRegistry(segmentedOut);
+    myTestsListener = new JUnit4TestResultsSender(myRegistry);
   }
 
   private class TimeSender extends ResultPrinter {

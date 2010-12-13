@@ -92,7 +92,7 @@ interface MappingStrategy<T> {
    *                      <code>null</code> otherwise
    */
   @Nullable
-  T processFoldRegion(EditorPosition position, FoldRegion foldRegion);
+  T processFoldRegion(EditorPosition position, @NotNull FoldRegion foldRegion);
 
   /**
    * Notifies current strategy that tabulation symbols is encountered during the processing. Tabulation symbols

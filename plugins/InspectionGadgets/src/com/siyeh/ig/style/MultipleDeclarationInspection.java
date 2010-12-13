@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -23,34 +24,51 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class MultipleDeclarationInspection extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreForLoopDeclarations = true;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "multiple.declaration.display.name");
     }
 
+    @Override
     @NotNull
     public String getID() {
         return "MultipleVariablesInDeclaration";
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "multiple.declaration.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "multiple.declaration.option"),
+                this, "ignoreForLoopDeclarations");
+    }
+
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new NormalizeDeclarationFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new MultipleDeclarationVisitor();
     }
 
-    private static class MultipleDeclarationVisitor
+    private class MultipleDeclarationVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitDeclarationStatement(
@@ -60,19 +78,21 @@ public class MultipleDeclarationInspection extends BaseInspection {
                 return;
             }
             final PsiElement parent = statement.getParent();
-            if (parent instanceof PsiForStatement) {
-                final PsiForStatement forStatement = (PsiForStatement)parent;
-                final PsiStatement initialization =
-                        forStatement.getInitialization();
-                if (statement.equals(initialization)) {
-                    return;
-                }
+            if (ignoreForLoopDeclarations &&
+                    parent instanceof PsiForStatement) {
+                return;
             }
-            final PsiElement[] declaredVars = statement.getDeclaredElements();
-            for (int i = 1; i < declaredVars.length; i++) {
+            final PsiElement[] declaredElements =
+                    statement.getDeclaredElements();
+            for (int i = 1; i < declaredElements.length; i++) {
                 //skip the first one;
-                final PsiLocalVariable var = (PsiLocalVariable)declaredVars[i];
-                registerVariableError(var);
+                final PsiElement declaredElement = declaredElements[i];
+                if (!(declaredElement instanceof PsiVariable)) {
+                    continue;
+                }
+                final PsiVariable variable =
+                        (PsiVariable) declaredElement;
+                registerVariableError(variable);
             }
         }
 
@@ -87,7 +107,7 @@ public class MultipleDeclarationInspection extends BaseInspection {
             registerFieldError(field);
         }
 
-        public static boolean childrenContainTypeElement(PsiElement field) {
+        public boolean childrenContainTypeElement(PsiElement field) {
             final PsiElement[] children = field.getChildren();
             for (PsiElement aChildren : children) {
                 if (aChildren instanceof PsiTypeElement) {

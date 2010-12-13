@@ -28,10 +28,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
  * @author ven
  */
 public class GroovyResolveResultImpl implements GroovyResolveResult {
-  private PsiElement myElement;
-  private boolean myIsAccessible;
-  private boolean myIsStaticsOK;
-  private PsiSubstitutor mySubstitutor;
+  private final PsiElement myElement;
+  private final boolean myIsAccessible;
+  private final boolean myIsStaticsOK;
+  private final PsiSubstitutor mySubstitutor;
+  private final boolean myIsInvokedOnProperty;
 
   private GroovyPsiElement myCurrentFileResolveContext;
 
@@ -44,11 +45,21 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
                                  PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK) {
+    this(element, context, substitutor, isAccessible, staticsOK, false);
+  }
+
+  public GroovyResolveResultImpl(PsiElement element,
+                                 GroovyPsiElement context,
+                                 PsiSubstitutor substitutor,
+                                 boolean isAccessible,
+                                 boolean staticsOK,
+                                 boolean isInvokedOnProperty) {
     myCurrentFileResolveContext = context;
     myElement = element instanceof PsiClass? GrClassSubstitutor.getSubstitutedClass((PsiClass)element) : element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;
     myIsStaticsOK = staticsOK;
+    myIsInvokedOnProperty = isInvokedOnProperty;
   }
 
   public PsiSubstitutor getSubstitutor() {
@@ -97,5 +108,9 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
 
   public GroovyPsiElement getCurrentFileResolveContext() {
     return myCurrentFileResolveContext;
+  }
+
+  public boolean isInvokedOnProperty() {
+    return myIsInvokedOnProperty;
   }
 }

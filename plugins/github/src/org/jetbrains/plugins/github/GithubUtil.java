@@ -5,9 +5,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitRemote;
+import git4idea.GitUtil;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -99,7 +104,7 @@ public class GithubUtil {
       final List<RepositoryInfo> result = new ArrayList<RepositoryInfo>();
       for (int i = 0; i < repositories.size(); i++) {
         final Element repo = (Element)repositories.get(i);
-        result.add(new RepositoryInfo(repo.getChildText("name"), repo.getChildText("owner")));
+        result.add(new RepositoryInfo(repo));
       }
       return result;
     }
@@ -107,6 +112,25 @@ public class GithubUtil {
       // ignore
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  public static RepositoryInfo getDetailedRepoInfo(final String login, final String password, final String name) {
+    try {
+      final String request = "/repos/show/" + login + "/" + name;
+      final HttpMethod method = doREST(login, password, request, false);
+      final InputStream stream = method.getResponseBodyAsStream();
+      final Element element = new SAXBuilder(false).build(stream).getRootElement();
+      if ("error".equals(element.getName())){
+        LOG.warn("Got error element by request: " + request);
+        return null;
+      }
+      return (new RepositoryInfo(element));
+    }
+    catch (Exception e) {
+      // ignore
+    }
+    return null;
   }
 
   public static boolean isPrivateRepoAllowed(final String login, final String password) {
@@ -175,4 +199,72 @@ public class GithubUtil {
     }
   }
 
+  /**
+   * Shows GitHub login settings if credentials are wrong or empty and return the list of all the watched repos by user
+   * @param project
+   * @return
+   */
+  @Nullable
+  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String name) {
+    final GithubSettings settings = GithubSettings.getInstance();
+    final boolean validCredentials;
+    try {
+      validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          return testConnection(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return null;
+    }
+    if (!validCredentials){
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return null;
+      }
+    }
+    // Otherwise our credentials are valid and they are successfully stored in settings
+    try {
+      return accessToGithubWithModalProgress(project, new Computable<RepositoryInfo>() {
+        @Override
+        public RepositoryInfo compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
+          return getDetailedRepoInfo(settings.getLogin(), settings.getPassword(), name);
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static GitRemote getGithubBoundRepository(final Project project){
+    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
+    if (roots.length == 0) {
+      return null;
+    }
+    final VirtualFile root = roots[0];
+    // Check if git is already initialized and presence of remote branch
+    final boolean gitDetected = GitUtil.isUnderGit(root);
+    if (!gitDetected) {
+      return null;
+    }
+    try {
+      // Check that given repository is properly configured git repository
+      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
+      for (GitRemote gitRemote : gitRemotes) {
+        if (gitRemote.pushUrl().contains("git@github.com")) {
+          return gitRemote;
+        }
+      }
+    } catch (VcsException e){
+      // ignore
+    }
+    return null;
+  }
 }
