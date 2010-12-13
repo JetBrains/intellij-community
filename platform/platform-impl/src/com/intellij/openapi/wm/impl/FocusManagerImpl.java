@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.EdtRunnable;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -114,7 +115,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           final Component c = fe.getComponent();
           if (c instanceof Window || c == null) return false;
 
-          Component parent = UIUtil.findUltimateParent(c);
+          Component parent = SwingUtilities.getWindowAncestor(c);
+
           if (parent instanceof IdeFrame) {
             myLastFocused.put((IdeFrame)parent, new WeakReference<Component>(c));
           }
@@ -362,6 +364,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
+  @Override
+  public void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable) {
+    doWhenFocusSettlesDown((Runnable)runnable);
+  }
+
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -372,7 +379,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
 
         if (myRunContext != null) {
-          runnable.run();
+          flushRequest(runnable);
           return;
         }
 
@@ -465,9 +472,18 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     final Runnable[] all = myIdleRequests.toArray(new Runnable[myIdleRequests.size()]);
     myIdleRequests.clear();
     for (Runnable each : all) {
-      if (each != null) {
+      flushRequest(each);
+    }
+  }
+
+  private void flushRequest(Runnable each) {
+    if (each == null) return;
+    if (each instanceof Expirable) {
+      if (!((Expirable)each).isExpired()) {
         each.run();
       }
+    } else {
+      each.run();
     }
   }
 

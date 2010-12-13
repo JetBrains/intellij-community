@@ -18,13 +18,10 @@ package org.jetbrains.plugins.groovy.completion;
 
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-import org.jetbrains.plugins.groovy.GroovyFileType
-
-/**
+ /**
  * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends GroovyCompletionTestBase {
@@ -395,5 +392,12 @@ format<caret>"""
     myFixture.type 'lan\n'
     myFixture.checkResult "import java.lang<caret>"
   }
-  
+
+  public void testInvalidScriptClass() {
+    myFixture.addFileToProject("b.groovy", "//comment")
+    myFixture.configureByText "a.groovy", "def b<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult "def b<caret>"
+  }
+
 }

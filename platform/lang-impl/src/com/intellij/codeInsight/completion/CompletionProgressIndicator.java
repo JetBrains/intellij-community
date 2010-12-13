@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -77,25 +76,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CodeCompletionHandlerBase myHandler;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
-  private boolean myDisposed;
-  private boolean myShownLookup;
-  private volatile int myCount;
   private final Update myUpdate = new Update("update") {
     public void run() {
       updateLookup();
       myQueue.setMergingTimeSpan(100);
     }
   };
-  private LightweightHint myHint;
   private final Semaphore myFreezeSemaphore;
-  private Boolean myToRestart;
-  private boolean myRestartScheduled;
-
-  private boolean myModifiersReleased;
-
-  private Runnable myRestorePrefix;
-  private boolean myBackgrounded;
-  private OffsetMap myOffsetMap;
+  private final OffsetMap myOffsetMap;
   private final CopyOnWriteArrayList<Pair<Integer, ElementPattern<String>>> myRestartingPrefixConditions = ContainerUtil.createEmptyCOWList();
   private final LookupAdapter myLookupListener = new LookupAdapter() {
     public void itemSelected(LookupEvent event) {
@@ -118,7 +106,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private final Semaphore myDuringCompletionSemaphore = new Semaphore();
-  private volatile boolean myFocusLookupWhenDone;
+  private final CompletionState myState;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup) {
@@ -130,7 +118,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myLookup = lookup;
 
     myLookup.setArranger(new CompletionLookupArranger(parameters));
-    myShownLookup = lookup.isShown();
+    myState = new CompletionState(lookup.isShown());
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -158,13 +146,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void notifyBackgrounded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myBackgrounded = true;
+    myState.setBackgrounded();
   }
 
   boolean isBackgrounded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myBackgrounded;
+    return myState.isBackgrounded();
   }
 
   void duringCompletion(CompletionInitializationContext initContext) {
@@ -205,7 +191,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void setFocusLookupWhenDone(boolean focusLookup) {
-    myFocusLookupWhenDone = focusLookup;
+    myState.setFocusLookupWhenDone(focusLookup);
     if (!focusLookup && isAutopopupCompletion()) {
       myLookup.setAdvertisementText("Press " + CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE) + " to choose the first suggestion");
     }
@@ -259,7 +245,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                 if (isOutdated()) {
                   return;
                 }
-                if (isAutopopupCompletion() && !myShownLookup) {
+                if (isAutopopupCompletion() && !myState.isShownLookup()) {
                   return;
                 }
                 if (!isBackgrounded()) {
@@ -276,11 +262,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private boolean isOutdated() {
-    if (!myDisposed) {
+    if (!myState.isCompletionDisposed()) {
       CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
       LOG.assertTrue(this == current, current + " != " + this);
     }
-    return myDisposed || myEditor.isDisposed() || getProject().isDisposed();
+    return myState.isCompletionDisposed() || myEditor.isDisposed() || getProject().isDisposed();
   }
 
   private void trackModifiers() {
@@ -301,8 +287,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       private void processModifier(KeyEvent e) {
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
-          myModifiersReleased = true;
-          if (myRestorePrefix != null) {
+          myState.setModifiersReleased(true);
+          if (myState.isWaitingAfterAutoInsertion()) {
             cleanup();
           }
           contentComponent.removeKeyListener(this);
@@ -332,14 +318,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
-    LOG.assertTrue(myDisposed);
+    myState.assertDisposed();
 
-    if (myModifiersReleased || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myState.isModifiersReleased() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
     registerItself();
-    myHint = hint;
+    myState.setCompletionHint(hint);
     if (hint != null) {
       hint.addHintListener(new HintListener() {
         public void hintHidden(final EventObject event) {
@@ -384,11 +370,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myShownLookup) {
+    if (!myState.isShownLookup()) {
       if (hideAutopopupIfMeaningless()) {
         return;
       }
-      myShownLookup = true;
+      myState.setShownLookup(true);
 
       if (StringUtil.isEmpty(myLookup.getAdvertisementText()) && !isAutopopupCompletion()) {
         final String text = DefaultCompletionContributor.getDefaultAdvertisementText(myParameters);
@@ -423,10 +409,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
 
     myLookup.addItem(item);
-    myCount++;
+    final int count = myState.incCount();
     if (unitTestMode) return;
 
-    if (myCount == 1) {
+    if (count == 1) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           try {
@@ -445,8 +431,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void closeAndFinish(boolean hideLookup) {
     LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
 
-    if (myHint != null) {
-      myHint.hide();
+    if (myState.getCompletionHint() != null) {
+      myState.getCompletionHint().hide();
     }
 
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
@@ -459,16 +445,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
     } else {
-      LOG.assertTrue(myDisposed);
+      myState.assertDisposed();
     }
   }
 
   private void finishCompletionProcess() {
-    myToRestart = false;
+    myState.setToRestart(false);
     cancel();
 
-    LOG.assertTrue(!myDisposed);
-    myDisposed = true;
+    myState.setCompletionDisposed(true);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
@@ -484,10 +469,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   private void cleanup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(myDisposed);
-    myHint = null;
-    myRestorePrefix = null;
+    myState.handleDeath();
     unregisterItself();
   }
 
@@ -503,12 +485,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("CompletionProgressIndicator.stop.later");
-        }
         if (isOutdated()) return;
         if (!isBackgrounded()) return;
-        if (isCanceled() && !myRestartScheduled) return;
+        if (isCanceled() && !myState.isRestartScheduled()) return;
 
         myLookup.setCalculating(false);
 
@@ -516,7 +495,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           return;
         }
 
-        if (myCount == 0) {
+        if (myState.hasNoVariants()) {
           LookupManager.getInstance(getProject()).hideActiveLookup();
 
           final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
@@ -527,7 +506,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           }
         }
         else {
-          if (myFocusLookupWhenDone) {
+          if (myState.isFocusLookupWhenDone()) {
             myLookup.setFocused(true);
           }
           updateLookup();
@@ -558,12 +537,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void cancelByWriteAction() {
-    if (myToRestart != null) {
-      LOG.assertTrue(myToRestart == Boolean.FALSE); //explicit completionFinished was invoked before this write action
-      return;
-    }
-
-    myToRestart = true;
+    myState.setToRestart(true);
     cancel();
 
     scheduleRestart();
@@ -598,11 +572,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       protected void run(Result result) throws Throwable {
         setMergeCommand();
 
-        if (myRestorePrefix != null) {
-          myRestorePrefix.run();
-          myRestorePrefix = null;
-        }
-
+        myState.restorePrefix();
         getLookup().restorePrefix();
       }
     }.execute();
@@ -614,8 +584,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void rememberDocumentState() {
-    LOG.assertTrue(myDisposed);
-    if (myModifiersReleased) {
+    myState.assertDisposed();
+    if (myState.isModifiersReleased()) {
       return;
     }
 
@@ -624,7 +594,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final int selStart = myEditor.getSelectionModel().getSelectionStart();
     final int selEnd = myEditor.getSelectionModel().getSelectionEnd();
 
-    myRestorePrefix = new Runnable() {
+    myState.setRestorePrefix(new Runnable() {
       @Override
       public void run() {
         DocumentEx document = (DocumentEx) myEditor.getDocument();
@@ -639,7 +609,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           document.setInBulkUpdate(false);
         }
       }
-    };
+    });
   }
 
   public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
@@ -671,22 +641,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void prefixUpdated() {
-    if (myToRestart == Boolean.TRUE) {
+    if (myState.isToRestart()) {
       scheduleRestart();
       return;
     }
 
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CompletionProgressIndicator.prefixUpdated");
-    }
 
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
-      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-        System.out.println("newPrefix = " + newPrefix);
-      }
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
         myRestartingPrefixConditions.clear();
@@ -698,28 +662,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
-    myRestartScheduled = true;
-
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CompletionProgressIndicator.scheduleRestart");
-    }
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myState.setRestartScheduled(true);
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("later");
-        }
-
         if (isOutdated()) {
           return;
-        }
-
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("invoking");
         }
 
         closeAndFinish(false);
@@ -733,5 +683,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     });
+  }
+
+  @Override
+  public String toString() {
+    return myState.toString();
   }
 }

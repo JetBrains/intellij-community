@@ -27,10 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -85,9 +82,10 @@ public class AntTasksProvider {
 
         final Project project = file.getProject();
         final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GrClosableBlock.GROOVY_LANG_CLOSURE, file);
+        final PsiClassType stringType = PsiType.getJavaLangString(file.getManager(), file.getResolveScope());
 
         for (String name : antObjects.keySet()) {
-          methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name)));
+          methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
         }
         final Result<Set<LightMethodBuilder>> result =
           Result.create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));

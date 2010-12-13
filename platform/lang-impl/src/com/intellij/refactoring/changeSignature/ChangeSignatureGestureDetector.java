@@ -15,11 +15,8 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,67 +30,46 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * User: anna
  * Date: Sep 6, 2010
  */
 public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter implements ProjectComponent, EditorFactoryListener {
-  private final Map<PsiFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<PsiFile, MyDocumentChangeAdapter>();
+  private final Map<VirtualFile, MyDocumentChangeAdapter> myListenerMap = new HashMap<VirtualFile, MyDocumentChangeAdapter>();
   private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureGestureDetector.class.getName());
   private boolean myDeaf = false;
-  private final PsiDocumentManager myPsiDocumentManager;
+  private final FileDocumentManager myDocumentManager;
   private final PsiManager myPsiManager;
   private final FileEditorManager myFileEditorManager;
   private final Project myProject;
   private final TemplateManager myTemplateManager;
+  private PsiDocumentManager myPsiDocumentManager;
 
   public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
+                                        final FileDocumentManager documentManager,
                                         final PsiManager psiManager,
                                         final FileEditorManager fileEditorManager,
                                         final TemplateManager templateManager,
                                         final Project project) {
+    myDocumentManager = documentManager;
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myFileEditorManager = fileEditorManager;
     myProject = project;
     myTemplateManager = templateManager;
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
-        final Set<PsiFile> files = new HashSet<PsiFile>(myListenerMap.keySet());
-        for (PsiFile psiFile : files) {
-          removeDocListener(myPsiDocumentManager.getDocument(psiFile), psiFile);
-        }
-      }
-
-      public void rootsChanged(ModuleRootEvent event) {
-        final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        for (VirtualFile file : myFileEditorManager.getOpenFiles()) {
-          final Document document = documentManager.getDocument(file);
-          if (document != null) {
-            addDocListener(document);
-          }
-        }
-      }
-    });
   }
 
   public static ChangeSignatureGestureDetector getInstance(Project project){
@@ -101,7 +77,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public boolean isChangeSignatureAvailable(@NotNull PsiElement element) {
-    final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(PsiUtilBase.getVirtualFile(element));
     if (adapter != null && adapter.getCurrentInfo() != null) {
       final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
       return detector != null && detector.isChangeSignatureAvailable(element, adapter.getCurrentInfo());
@@ -111,7 +87,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
    @Nullable
    public String getChangeSignatureAcceptText(@NotNull PsiElement element) {
-    final MyDocumentChangeAdapter adapter = myListenerMap.get(element.getContainingFile());
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(PsiUtilBase.getVirtualFile(element));
     if (adapter != null && adapter.getCurrentInfo() != null) {
       final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(element.getLanguage());
       final ChangeInfo currentInfo = adapter.getCurrentInfo();
@@ -129,14 +105,14 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Nullable
   public ChangeInfo getChangeInfo(@NotNull PsiFile file) {
-    final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(file.getVirtualFile());
     return adapter != null ? adapter.getCurrentInfo() : null;
   }
 
   public void changeSignature(PsiFile file, final boolean silently) {
     try {
       myDeaf = true;
-      final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
+      final MyDocumentChangeAdapter changeBean = myListenerMap.get(file.getVirtualFile());
       final ChangeInfo currentInfo = changeBean.getCurrentInfo();
       if (currentInfo != null) {
         final LanguageChangeSignatureDetector detector = LanguageChangeSignatureDetectors.INSTANCE.forLanguage(currentInfo.getLanguage());
@@ -185,12 +161,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     final PsiElement child = event.getChild();
     if (child instanceof PsiFile) {
       final PsiFile psiFile = (PsiFile)child;
-      if (myListenerMap.containsKey(psiFile)) {
-        final Document document = myPsiDocumentManager.getDocument(psiFile);
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && myListenerMap.containsKey(virtualFile)) {
+        final Document document = myDocumentManager.getDocument(virtualFile);
         if (document != null) {
-          removeDocListener(document, psiFile);
+          removeDocListener(document, virtualFile);
         } else {
-          myListenerMap.remove(psiFile);
+          myListenerMap.remove(virtualFile);
         }
       }
     }
@@ -216,7 +193,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     if (child == null || !child.isValid()) return;
     final PsiFile file = child.getContainingFile();
     if (file != null) {
-      final MyDocumentChangeAdapter changeBean = myListenerMap.get(file);
+      final MyDocumentChangeAdapter changeBean = myListenerMap.get(file.getVirtualFile());
       if (changeBean != null && changeBean.getInitialText() != null) {
         final Editor editor = myFileEditorManager.getSelectedTextEditor();
         if (editor != null && myTemplateManager.getActiveTemplate(editor) != null) return;
@@ -240,8 +217,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public void addDocListener(Document document) {
-    final PsiFile file = myPsiDocumentManager.getPsiFile(document);
-    if (file != null && file.isPhysical() && !myListenerMap.containsKey(file)) {
+    final VirtualFile file = myDocumentManager.getFile(document);
+    if (file != null && file.isValid() && !myListenerMap.containsKey(file)) {
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
       document.addDocumentListener(adapter);
       myListenerMap.put(file, adapter);
@@ -254,16 +231,16 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public void removeDocListener(Document document) {
-    final PsiFile file = myPsiDocumentManager.getPsiFile(document);
-    if (file != null && file.isPhysical()) {
-      if (ArrayUtil.find(myFileEditorManager.getOpenFiles(), file.getVirtualFile()) != -1) {
+    final VirtualFile file = myDocumentManager.getFile(document);
+    if (file != null && file.isValid()) {
+      if (myFileEditorManager.isFileOpen(file)) {
         return;
       }
       removeDocListener(document, file);
     }
   }
 
-  private void removeDocListener(Document document, PsiFile file) {
+  private void removeDocListener(Document document, VirtualFile file) {
     final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
     if (adapter != null) {
       document.removeDocumentListener(adapter);
@@ -271,7 +248,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   public void clearSignatureChange(PsiFile file) {
-    final MyDocumentChangeAdapter adapter = myListenerMap.get(file);
+    final MyDocumentChangeAdapter adapter = myListenerMap.get(file.getVirtualFile());
     if (adapter != null) {
       adapter.reinit();
     }

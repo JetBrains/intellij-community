@@ -17,8 +17,15 @@ package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -30,6 +37,7 @@ import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -139,7 +147,7 @@ public class NullityInferrer {
     while (prevNumAnnotationsAdded < numAnnotationsAdded && pass < MAX_PASSES);
   }
 
-  public void apply(Project project) {
+  public void apply(final Project project) {
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
       final PsiModifierListOwner element = pointer.getElement();
       if (element != null) {
@@ -154,6 +162,14 @@ public class NullityInferrer {
         if (shouldIgnore(element)) continue;
         new AddAnnotationFix(AnnotationUtil.NOT_NULL, element, AnnotationUtil.NULLABLE).invoke(project, null, element.getContainingFile());
       }
+    }
+
+    if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
+        }
+      });
     }
   }
 
@@ -577,6 +593,10 @@ public class NullityInferrer {
           registerNotNullAnnotation(parameter);
           return true;
         }
+      }
+      else if (parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expr) {
+        registerNotNullAnnotation(parameter);
+        return true;
       }
 
       final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
