@@ -84,6 +84,10 @@ public class GroovyPropertyUtils {
     return null;
   }
 
+  /**
+   * @deprecated use PropertyUtil.getAllProperties() instead.
+   */
+  @Deprecated()
   public static List<PsiMethod> getAllPropertyGetters(@NotNull PsiClass aClass, @Nullable Boolean isStatic, boolean checkSuperClasses) {
     PsiMethod[] methods;
     if (checkSuperClasses) {
