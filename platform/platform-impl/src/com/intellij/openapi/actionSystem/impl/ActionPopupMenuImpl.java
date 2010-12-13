@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +152,12 @@ final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopu
       }
 
       super.show(component, x, y);
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+      super.setVisible(b);
+      if (!b) ReflectionUtil.resetField(this, "invoker");
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
