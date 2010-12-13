@@ -24,10 +24,12 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Collections;
@@ -77,6 +79,8 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
       final Module module = ModuleUtil.findModuleForFile(file, myProject);
       if (module == null) return null;
 
+      if (isMavenModule(module)) return null;
+
       for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
         if (configNotification.hasFrameworkStructure(module)) {
           if (!configNotification.hasFrameworkLibrary(module)) {
@@ -94,6 +98,14 @@ public class ConfigureGroovyLibraryNotificationProvider implements EditorNotific
     }
 
     return null;
+  }
+
+  private static boolean isMavenModule(@NotNull Module module) {
+    for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+      if (root.findChild("pom.xml") != null) return true;
+    }
+
+    return false;
   }
 
 }
