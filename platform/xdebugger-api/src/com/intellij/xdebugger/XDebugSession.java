@@ -131,4 +131,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void rebuildViews();
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
+
+  void updateExecutionPosition();
 }

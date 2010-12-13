@@ -144,6 +144,16 @@ public class GithubRebaseAction extends DumbAwareAction {
           return;
         }
 
+        LOG.info("Updating remotes");
+        final GitSimpleHandler updateRemotesHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
+        updateRemotesHandler.setNoSSH(true);
+        updateRemotesHandler.setSilent(true);
+        updateRemotesHandler.addParameters("update");
+        updateRemotesHandler.run();
+        if (updateRemotesHandler.getExitCode() != 0) {
+          Messages.showErrorDialog("Failed to update remotes", CANNOT_PERFORM_GITHUB_REBASE);
+          return;
+        }
       }
 
       BasicAction.saveAll();

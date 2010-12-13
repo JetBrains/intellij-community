@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
@@ -47,8 +48,9 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
     XmlAttribute attribute = (XmlAttribute)context;
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
+    if (tag == null) return null;
 
-    @NonNls String tagName = tag != null ? tag.getName() : "";
+    @NonNls String tagName = tag.getName();
     if (!myCaseSensitive) {
       name = name.toLowerCase();
       tagName = tagName.toLowerCase();
@@ -84,7 +86,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
             "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE", "Trailer", "Transfer-Encoding",
             "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
       }
-      else if("content".equals(name) && "meta".equals(tagName)) {
+      else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
         return new String[] {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft", "application/dec-dx", "application/mac-binhex40"
             , "application/mac-compactpro", "application/macwriteii", "application/msword", "application/news-message-id", "application/news-transmission", "application/octet-stream"
             , "application/oda", "application/pdf", "application/postscript", "application/powerpoint", "application/remote-printing", "application/rtf"
@@ -109,6 +111,21 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
           names[i] = charSets[i].toString();
         }
         return names;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private XmlAttribute getAttribute(@NotNull XmlTag tag, @NotNull String attributeName) {
+    if (myCaseSensitive) {
+      return tag.getAttribute(attributeName);
+    }
+
+    for (XmlAttribute xmlAttribute : tag.getAttributes()) {
+      if (attributeName.equalsIgnoreCase(xmlAttribute.getName())) {
+        return xmlAttribute;
       }
     }
 
