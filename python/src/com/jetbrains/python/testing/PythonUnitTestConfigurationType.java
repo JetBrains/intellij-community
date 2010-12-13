@@ -11,6 +11,7 @@ import javax.swing.*;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
+
   public static PythonUnitTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonUnitTestConfigurationType.class);
   }
@@ -26,11 +27,13 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
   private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
+    final private PythonTestConfigurationsModel myModel = PythonTestConfigurationsModel.getInstance();
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
+      myModel.addConfiguration(PyBundle.message("runcfg.unittest.display_name"), false);
       return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }
