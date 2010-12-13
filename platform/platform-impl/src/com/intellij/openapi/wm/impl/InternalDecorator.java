@@ -176,10 +176,12 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   }
 
   public boolean isFocused() {
-    Component component = IdeFocusManager.getInstance(myProject).getFocusedDescendantFor(myToolWindow.getComponent());
+    IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+    Component component = fm.getFocusedDescendantFor(myToolWindow.getComponent());
     if (component != null) return true;
 
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
+
     return owner != null && SwingUtilities.isDescendingFrom(owner, myToolWindow.getComponent());
   }
 
