@@ -45,14 +45,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EdtRunnable;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusCommand;
@@ -239,7 +232,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       public void fileClosed(FileEditorManager source, VirtualFile file) {
-        getFocusManagerImpl().doWhenFocusSettlesDown(new Runnable() {
+        getFocusManagerImpl().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
           public void run() {
             if (!hasOpenEditorFiles()) {
               focusToolWinowByDefault(null);
@@ -266,7 +259,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
 
   private void updateToolWindowHeaders() {
-    getFocusManager().doWhenFocusSettlesDown(new Runnable() {
+    getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
       @Override
       public void run() {
         WindowInfoImpl[] infos = myLayout.getInfos();
@@ -592,7 +585,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    Runnable runnable = new Runnable() {
+    Runnable runnable = new ExpirableRunnable.ForProject(myProject) {
       @Override
       public void run() {
         final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
@@ -1928,7 +1921,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
 
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         public void run() {
           if (mgr.getFocusOwner() == owner) {
             activateEditorComponent(false);
