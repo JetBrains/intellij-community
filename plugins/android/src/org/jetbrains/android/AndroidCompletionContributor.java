@@ -20,8 +20,6 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -90,18 +88,10 @@ public class AndroidCompletionContributor extends CompletionContributor {
             resultSet.addElement(LookupElementBuilder.create("view"));
             resultSet.addElement(LookupElementBuilder.create("merge"));
             Map<String, PsiClass> viewClassMap = AndroidDomExtender.getViewClassMap(facet);
-            final PsiClass viewGroupClass = viewClassMap.get("ViewGroup");
             for (String tagName : viewClassMap.keySet()) {
               final PsiClass viewClass = viewClassMap.get(tagName);
               if (!AndroidUtils.isAbstract(viewClass)) {
-                boolean inheritsViewGroup = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-                  public Boolean compute() {
-                    return viewClass.isInheritor(viewGroupClass, true);
-                  }
-                });
-                if (inheritsViewGroup) {
-                  resultSet.addElement(LookupElementBuilder.create(tagName));
-                }
+                resultSet.addElement(LookupElementBuilder.create(tagName));
               }
             }
             return false;
