@@ -803,17 +803,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResult();
   }
 
-  public void testClassNameWithInnersTab() throws Throwable {
-    configure()
-    myFixture.type '\t'
-    checkResult();
-  }
+  public void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
-  public void testClassNameWithGenericsTab() throws Throwable {
-    configure()
-    myFixture.type '\t'
-    checkResult();
-  }
+  public void testClassNameWithGenericsTab() throws Throwable {doTest('\t') }
+
+  public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
   public void testRightShift() throws Throwable {
     configure()
