@@ -30,8 +30,15 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.util.Consumer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.EnumSet;
 
 public abstract class NewEditChangelistPanel extends JPanel {
@@ -56,6 +63,8 @@ public abstract class NewEditChangelistPanel extends JPanel {
     gb.weightx = 1;
     myNameTextField = createEditorField(project, 1);
     myNameTextField.setOneLineMode(true);
+    myNameTextField.setText("New changelist");
+    myNameTextField.selectAll();
     add(myNameTextField, gb);
     nameLabel.setLabelFor(myNameTextField);
 
@@ -88,11 +97,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     setPreferredSize(new Dimension(300, 150));
     setMinimumSize(new Dimension(300, 150));
-
-    // a hack to create editor inside field
-    // todo: denis zhdanov
-    setChangeListName("a");
-    setChangeListName("");
   }
 
   public JCheckBox getMakeActiveCheckBox() {

@@ -93,6 +93,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int myLexemeCount = 0;
   private boolean myTokenTypeChecked;
   private ITokenTypeRemapper myRemapper;
+  private WhitespaceSkippedCallback myWhispaceSkippedCallback;
+
 
   private ASTNode myOriginalTree = null;
   private MyTreeStructure myParentLightTree = null;
@@ -610,6 +612,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myRemapper = remapper;
   }
 
+  @Override
+  public void remapCurrentToken(IElementType type) {
+    myLexTypes[myCurrentLexeme] = type;
+  }
+
+  @Nullable
+  @Override
+  public IElementType lookAhead(int steps) {
+    if (steps + myCurrentLexeme >= myLexemeCount) return null;
+    return myLexTypes[myCurrentLexeme + steps];
+  }
+
+  @Override
+  public void setWhitespaceSkippedCallback(WhitespaceSkippedCallback callback) {
+    myWhispaceSkippedCallback = callback;
+  }
+
   public void advanceLexer() {
     if (eof()) return;
 
@@ -621,7 +640,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void skipWhitespace() {
-    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(myLexTypes[myCurrentLexeme])) myCurrentLexeme++;
+    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(myLexTypes[myCurrentLexeme])) {
+      onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
+      myCurrentLexeme++;
+    }
+  }
+
+  private void onSkip(IElementType type, int start, int end) {
+    if (myWhispaceSkippedCallback != null) {
+      myWhispaceSkippedCallback.onSkip(type, start, end);
+    }
   }
 
   public int getCurrentOffset() {

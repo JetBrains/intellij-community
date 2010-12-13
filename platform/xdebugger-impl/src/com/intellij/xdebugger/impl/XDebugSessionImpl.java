@@ -344,6 +344,13 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionResumed();
   }
 
+  @Override
+  public void updateExecutionPosition() {
+    XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
+    boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == myCurrentStackFrame;
+    myDebuggerManager.updateExecutionPoint(myCurrentStackFrame.getSourcePosition(), !isTopFrame);
+  }
+
   public void showExecutionPoint(XSourcePosition sourcePosition) {
     XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
     boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == myCurrentStackFrame;
