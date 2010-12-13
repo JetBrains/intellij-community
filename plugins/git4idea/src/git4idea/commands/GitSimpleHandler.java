@@ -218,7 +218,7 @@ public class GitSimpleHandler extends GitTextHandler {
       }
 
       public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Process failed to start (" + printableCommandLine() + "): " + exception.toString(), exception);
+        ex[0] = new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception);
         sem.release();
       }
     });
@@ -227,13 +227,13 @@ public class GitSimpleHandler extends GitTextHandler {
       sem.acquire();
     }
     catch (InterruptedException e) {
-      throw new VcsException("The git process is interrupted: " + printableCommandLine(), e);
+      throw new VcsException("The git process is interrupted: " + myCommandLine.getCommandLineString(), e);
     }
     if (ex[0] != null) {
       throw ex[0];
     }
     if (result[0] == null) {
-      throw new VcsException("The git command returned null: " + printableCommandLine());
+      throw new VcsException("The git command returned null: " + myCommandLine.getCommandLineString());
     }
     return result[0];
   }

@@ -384,9 +384,7 @@ public abstract class GitHandler {
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
-      }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("running git: " + myCommandLine.getCommandLineString() + " in " + myWorkingDirectory);
+        LOG.info(myCommandLine.getCommandLineString());
       }
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
