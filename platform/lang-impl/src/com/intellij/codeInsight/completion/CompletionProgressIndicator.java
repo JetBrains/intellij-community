@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -503,9 +502,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("CompletionProgressIndicator.stop.later");
-        }
         if (isOutdated()) return;
         if (!isBackgrounded()) return;
         if (isCanceled() && !myRestartScheduled) return;
@@ -676,17 +672,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CompletionProgressIndicator.prefixUpdated");
-    }
 
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
-      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-        System.out.println("newPrefix = " + newPrefix);
-      }
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
         myRestartingPrefixConditions.clear();
@@ -700,26 +690,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void scheduleRestart() {
     myRestartScheduled = true;
 
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CompletionProgressIndicator.scheduleRestart");
-    }
-
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("later");
-        }
-
         if (isOutdated()) {
           return;
-        }
-
-        if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-          System.out.println("invoking");
         }
 
         closeAndFinish(false);
