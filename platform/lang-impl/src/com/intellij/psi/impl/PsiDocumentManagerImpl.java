@@ -172,8 +172,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
-    if (document != null && !file.getViewProvider().isPhysical()) {
-      cachePsi(document, file);
+    if (document != null) {
+      if (document.getTextLength() != file.getTextLength()) {
+        throw new AssertionError("Modified PSI with no document: " + file + "; physical=" + file.getViewProvider().isPhysical());
+      }
+
+      if (!file.getViewProvider().isPhysical()) {
+        cachePsi(document, file);
+      }
     }
 
     fireDocumentCreated(document, file);
