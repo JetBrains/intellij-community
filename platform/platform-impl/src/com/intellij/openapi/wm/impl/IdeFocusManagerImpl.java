@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -51,6 +52,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    getGlobalInstance().doWhenFocusSettlesDown(runnable);
+  }
+
+  @Override
+  public void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable) {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
 
