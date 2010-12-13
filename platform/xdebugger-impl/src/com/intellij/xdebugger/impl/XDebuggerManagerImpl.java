@@ -189,14 +189,18 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   public void setActiveSession(@Nullable XDebugSessionImpl session, @Nullable XSourcePosition position, boolean useSelection) {
     boolean sessionChanged = myActiveSession != session;
     myActiveSession = session;
+    updateExecutionPoint(position, useSelection);
+    if (sessionChanged) {
+      onActiveSessionChanged();
+    }
+  }
+
+  public void updateExecutionPoint(XSourcePosition position, boolean useSelection) {
     if (position != null) {
       myExecutionPointHighlighter.show(position, useSelection);
     }
     else {
       myExecutionPointHighlighter.hide();
-    }
-    if (sessionChanged) {
-      onActiveSessionChanged();
     }
   }
 
