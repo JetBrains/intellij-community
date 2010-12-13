@@ -578,6 +578,10 @@ public class NullityInferrer {
           return true;
         }
       }
+      else if (parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expr) {
+        registerNotNullAnnotation(parameter);
+        return true;
+      }
 
       final PsiCall call = PsiTreeUtil.getParentOfType(expr, PsiCall.class);
       if (call != null) {
