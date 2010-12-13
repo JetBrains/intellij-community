@@ -97,7 +97,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
-
+    myOutOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(myOutOfScopeVariable, PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(myOutOfScopeVariable, myUnresolvedReference);
     LOG.assertTrue(commonParent != null);
