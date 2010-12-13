@@ -29,7 +29,7 @@ public class CompletionState {
   }
 
   public void setCompletionDisposed(boolean completionDisposed) {
-    LOG.assertTrue(!myCompletionDisposed);
+    LOG.assertTrue(!myCompletionDisposed, this);
     myCompletionDisposed = completionDisposed;
   }
 
@@ -56,7 +56,7 @@ public class CompletionState {
   public void setToRestart(boolean toRestart) {
     if (toRestart) {
       if (myToRestart != null) {
-        LOG.assertTrue(myToRestart == Boolean.FALSE); //explicit completionFinished was invoked before this write action
+        LOG.assertTrue(myToRestart == Boolean.FALSE, this); //explicit completionFinished was invoked before this write action
         return;
       }
     }
@@ -109,7 +109,7 @@ public class CompletionState {
   }
 
   public void assertDisposed() {
-    LOG.assertTrue(myCompletionDisposed);
+    LOG.assertTrue(myCompletionDisposed, this);
   }
 
   public void restorePrefix() {
