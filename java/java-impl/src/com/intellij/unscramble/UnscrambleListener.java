@@ -16,6 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 
 import java.util.regex.Pattern;
@@ -32,8 +33,9 @@ public class UnscrambleListener extends ApplicationAdapter {
     final String clipboard = AnalyzeStacktraceUtil.getTextInClipboard();
     if (clipboard != null && clipboard.length() < MAX_STACKTRACE_SIZE && !clipboard.equals(stacktrace)) {
       stacktrace = clipboard;
-      if (isStacktrace(stacktrace)) {
-        final UnscrambleDialog dialog = new UnscrambleDialog(ideFrame.getProject());
+      final Project project = ideFrame.getProject();
+      if (project != null && isStacktrace(stacktrace)) {
+        final UnscrambleDialog dialog = new UnscrambleDialog(project);
         dialog.createNormalizeTextAction().actionPerformed(null);
         dialog.doOKAction();
       }

@@ -30,51 +30,25 @@ import java.nio.channels.FileChannel;
 public class ReadWriteMappedBufferWrapper extends MappedBufferWrapper {
   @NonNls private static final String RW = "rw";
 
-  public ReadWriteMappedBufferWrapper(final File file) {
-    super(file, 0, file.length());
-  }
-
   public ReadWriteMappedBufferWrapper(final File file, int offset, int len) {
     super(file, offset, len);
   }
 
-  public MappedByteBuffer map() {
-    MappedByteBuffer buf;
+  public MappedByteBuffer map() throws IOException {
+    RandomAccessFile raf = null;
+    FileChannel channel = null;
     try {
-      buf = null;
-      RandomAccessFile raf = null;
-      FileChannel channel = null;
-      try {
-        raf = new RandomAccessFile(myFile, RW);
-        channel = raf.getChannel();
-        buf = channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
+      raf = new RandomAccessFile(myFile, RW);
+      channel = raf.getChannel();
+      return channel.map(FileChannel.MapMode.READ_WRITE, myPosition, myLength);
+    }
+    finally {
+      if (channel != null) {
+        channel.close();
       }
-      catch (IOException e) {
-        final MappingFailedException mapFailed =
-          new MappingFailedException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength, e);
-        LOG.error(mapFailed);
-        throw mapFailed;
-      }
-      finally {
-        if (channel != null) {
-          channel.close();
-        }
-        if (raf != null) {
-          raf.close();
-        }
+      if (raf != null) {
+        raf.close();
       }
     }
-    catch (IOException e) {
-      buf = null;
-    }
-
-    if (buf == null) {
-      final MappingFailedException mapFailed =
-        new MappingFailedException("Mapping failed: " + myFile.getAbsolutePath() + ", position=" + myPosition + ", length=" + myLength);
-      LOG.error(mapFailed);
-      throw mapFailed;
-    }
-
-    return buf;
   }
 }

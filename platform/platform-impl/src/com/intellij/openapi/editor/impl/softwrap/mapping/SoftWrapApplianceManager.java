@@ -249,9 +249,14 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
 
     myContext.logicalLineData.update(foldRegion.getStartOffset());
     SoftWrap softWrap = registerSoftWrap(
-      myContext.softWrapStartOffset, myContext.tokenStartOffset, myContext.tokenStartOffset, myContext.getSpaceWidth(), myContext.logicalLineData
+      myContext.softWrapStartOffset, myContext.tokenStartOffset, myContext.tokenStartOffset, myContext.getSpaceWidth(),
+      myContext.logicalLineData
     );
-    assert softWrap != null; // We expect that it's always possible to wrap collapsed fold region placeholder text
+    if (softWrap == null) {
+      // If we're here that means that we can't find appropriate soft wrap offset before the fold region.
+      // However, we expect that it's always possible to wrap collapsed fold region placeholder text
+      softWrap = registerSoftWrap(myContext.tokenStartOffset, myContext.getSpaceWidth(), myContext.logicalLineData);
+    }
     myContext.softWrapStartOffset = softWrap.getStart();
     if (softWrap.getStart() < myContext.tokenStartOffset) {
       revertListeners(softWrap.getStart(), myContext.currentPosition.visualLine);
@@ -524,19 +529,24 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
       return null;
     }
 
+    return registerSoftWrap(softWrapOffset, spaceSize, lineData);
+  }
+  
+  @NotNull
+  private SoftWrap registerSoftWrap(int offset, int spaceSize, LogicalLineData lineData) {
     int indentInColumns = 0;
     int indentInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     if (myCustomIndentUsedLastTime) {
       indentInColumns = myCustomIndentValueUsedLastTime + lineData.indentInColumns;
       indentInPixels += lineData.indentInPixels + (myCustomIndentValueUsedLastTime * spaceSize);
     }
-    SoftWrapImpl softWrap = new SoftWrapImpl(
-      new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), softWrapOffset, softWrapOffset),
+    SoftWrapImpl result = new SoftWrapImpl(
+      new TextChangeImpl("\n" + StringUtil.repeatSymbol(' ', indentInColumns), offset, offset),
       indentInColumns + 1/* for 'after soft wrap' drawing */,
       indentInPixels
     );
-    myStorage.storeOrReplace(softWrap, true);
-    return softWrap;
+    myStorage.storeOrReplace(result, true);
+    return result;
   }
 
   /**

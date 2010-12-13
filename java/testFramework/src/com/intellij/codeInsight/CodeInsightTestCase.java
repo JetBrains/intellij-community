@@ -240,8 +240,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
                 }
               }));
 
-            // grand VFS refresh significantly slows down local tests and generally not needed
-            //VirtualFileManager.getInstance().refresh(false);
+            toDir.refresh(false, true);
           }
           else {
             editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();

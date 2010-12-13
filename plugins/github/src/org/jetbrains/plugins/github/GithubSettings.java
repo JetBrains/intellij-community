@@ -40,9 +40,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
       return null;
     }
     final Element element = new Element(GITHUB_SETTINGS_TAG);
-    element.setAttribute(LOGIN, myLogin);
+    element.setAttribute(LOGIN, getLogin());
     element.setAttribute(PASSWORD, getEncodedPassword());
-    element.setAttribute(CLONE_PATH, myClonePath);
+    element.setAttribute(CLONE_PATH, getClonePath());
     return element;
   }
 

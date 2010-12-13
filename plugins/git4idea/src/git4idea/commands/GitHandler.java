@@ -15,6 +15,7 @@
  */
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -397,7 +398,7 @@ public abstract class GitHandler {
       }
       myCommandLine.setEnvParams(myEnv);
       // start process
-      myProcess = myCommandLine.createProcess();
+      myProcess = startProcess();
       startHandlingStreams();
     }
     catch (Throwable t) {
@@ -410,8 +411,10 @@ public abstract class GitHandler {
     }
   }
 
+  protected abstract Process startProcess() throws ExecutionException;
+
   /**
-   * Start handling streams for the handler
+   * Start handling process output streams for the handler.
    */
   protected abstract void startHandlingStreams();
 
@@ -438,7 +441,7 @@ public abstract class GitHandler {
   /**
    * Destroy process
    */
-  protected abstract void destroyProcess();
+  public abstract void destroyProcess();
 
   /**
    * @return exit code for process if it is available

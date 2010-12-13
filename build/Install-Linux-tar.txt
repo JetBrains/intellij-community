@@ -1,0 +1,51 @@
+IntelliJ IDEA
+
+INSTALLATION INSTRUCTIONS
+===============================================================================
+
+  Linux Installation Instructions
+  ------------------------------------------------------------------------------
+  1. Unpack the IntelliJ IDEA distribution file that you downloaded to
+     where you wish to install the program. We will refer to this destination
+     location as your {installation home} below.
+
+  2. Open a console and cd into "{installation home}/bin" and type:
+
+       ./idea.sh
+
+     to start the application.
+
+  3. [OPTIONAL] Add the "{installation home}/bin" to your PATH environmental
+     variable so that you may start IntelliJ IDEA from any directory.
+
+  4. [OPTIONAL] To adjust the value of JVM heap size open idea.vmoptions and
+     modify the -Xms and -Xmx parameters.
+
+
+  [OPTIONAL] Changing location of "config" and "system" directory
+  ------------------------------------------------------------------------------
+  By default IDEA stores all your settings under ~/.IntelliJIdea10/config directory
+  and stores data cache under ~/.IntelliJIdea10/system directory.
+  If you want to change these settings,
+
+  1. Open a console and cd into "{installation home}/bin"
+
+  2. Open file "idea.properties" in an editor. You should find strings like
+
+     idea.system.path=~/.IntelliJIdea10/system
+
+     and
+
+     idea.config.path=~/.IntelliJIdea10/config
+
+     and change them.
+
+  3. Note that we recommend to store data cache ("system" directory) at a disk 
+     with at least 1G bytes free space
+
+
+
+
+Enjoy!
+
+-IntelliJ IDEA Development Team

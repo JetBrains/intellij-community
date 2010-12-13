@@ -15,27 +15,40 @@
  */
 package com.intellij.rt.execution.junit.segments;
 
+import java.util.Collection;
 import java.util.Hashtable;
 
 public abstract class OutputObjectRegistry  {
   private final Hashtable myKnownKeys = new Hashtable();
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
-  private PacketProcessor myAuxilaryTransport;
 
   public OutputObjectRegistry(PacketProcessor transport) {
     myMainTransport = transport;
-  }
-
-  public OutputObjectRegistry(PacketProcessor mainTransport, PacketProcessor auxilaryTransport) {
-    this(mainTransport);
-    myAuxilaryTransport = auxilaryTransport;
   }
 
   public String referenceTo(Object test) {
     if (myKnownKeys.containsKey(test))
       return (String) myKnownKeys.get(test);
     return sendObject(test);
+  }
+
+  public String referenceTo(Object test, Collection packets) {
+    if (myKnownKeys.containsKey(test))
+      return (String) myKnownKeys.get(test);
+    return sendObject(test, packets);
+  }
+
+  private String sendObject(Object test, Collection packets) {
+    String key = String.valueOf(myLastIndex++);
+    myKnownKeys.put(test, key);
+    final Packet packet = createPacket();
+    packet.addString(PoolOfDelimiters.OBJECT_PREFIX).addReference(key);
+    addStringRepresentation(test, packet);
+    packet.addLong(getTestCont(test));
+    packet.addString(PoolOfDelimiters.REFERENCE_END_STR);
+    packets.add(packet);
+    return key;
   }
 
   public Packet createPacket() {
@@ -48,20 +61,12 @@ public abstract class OutputObjectRegistry  {
     Packet packet = createPacket().addString(PoolOfDelimiters.OBJECT_PREFIX).addReference(key);
     addStringRepresentation(test, packet);
     packet.addLong(getTestCont(test));
-    sendViaAllTransports(packet);
+    packet.send();
     return key;
   }
 
   protected abstract int getTestCont(Object test);
   protected abstract void addStringRepresentation(Object test, Packet packet);
-
-  private void sendViaAllTransports(Packet packet) {
-    packet.send();
-    if (myAuxilaryTransport != null)
-      packet.sendThrough(myAuxilaryTransport);
-  }
-
-
 
   protected static void addTestClass(Packet packet, String className) {
     packet.

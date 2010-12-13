@@ -26,7 +26,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,7 +52,16 @@ import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -126,6 +140,7 @@ public abstract class GitBaseRebaseProcess {
    * @param roots             the vcs roots
    */
   public void doUpdate(ProgressIndicator progressIndicator, Set<VirtualFile> roots) {
+    LOG.info("GitBaseRebaseProcess.doUpdate started");
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     projectManager.blockReloadingProjectOnExternalChanges();
     this.myProgressIndicator = progressIndicator;
@@ -244,6 +259,7 @@ public abstract class GitBaseRebaseProcess {
    * Restore project changes after update
    */
   private void restoreProjectChangesAfterUpdate() {
+    LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate update policy: " + getUpdatePolicy() + " myShelvedChangeList: " + myShelvedChangeList);
     if (mySkippedCommits.size() > 0) {
       GitSkippedCommits.showSkipped(myProject, mySkippedCommits);
     }
@@ -259,6 +275,7 @@ public abstract class GitBaseRebaseProcess {
       final boolean isStash = getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH;
       HashSet<File> filesToRefresh = isStash ? new HashSet<File>() : null;
       for (LocalChangeList changeList : myListsCopy) {
+        LOG.info("GitBaseRebaseProcess.restoreProjectChangesAfterUpdate refreshing files from changelist " + changeList);
         for (Change c : changeList.getChanges()) {
           ContentRevision after = c.getAfterRevision();
           if (after != null) {
@@ -285,6 +302,7 @@ public abstract class GitBaseRebaseProcess {
             public void run() {
               for (LocalChangeList changeList : myListsCopy) {
                 final Collection<Change> changes = changeList.getChanges();
+                LOG.debug("restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
                 if (!changes.isEmpty()) {
                   LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
                   myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
@@ -351,12 +369,13 @@ public abstract class GitBaseRebaseProcess {
    * @return false, if update process needs to be aborted
    */
   private boolean saveProjectChangesBeforeUpdate() {
+    LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate update policy: " + getUpdatePolicy());
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
       myStashMessage = makeStashMessage();
       myListsCopy = myChangeManager.getChangeListsCopy();
       for (LocalChangeList l : myListsCopy) {
         final Collection<Change> changeCollection = l.getChanges();
-        LOG.debug("Stashing " + changeCollection.size() + " changes from '" + l.getName() + "'");
+        LOG.info("Stashing " + changeCollection.size() + " changes from '" + l.getName() + "'");
         for (Change c : changeCollection) {
           ContentRevision after = c.getAfterRevision();
           if (after != null) {
@@ -405,7 +424,9 @@ public abstract class GitBaseRebaseProcess {
       }
       if (changes.size() > 0) {
         myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
+        LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate shelving changes");
         myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, myExceptions);
+        LOG.info("GitBaseRebaseProcess.saveProjectChangesBeforeUpdate shelved changes to " + myShelvedChangeList);
         if (myShelvedChangeList == null) {
           return false;
         }

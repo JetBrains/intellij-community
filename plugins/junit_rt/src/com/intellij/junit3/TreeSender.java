@@ -21,16 +21,15 @@ import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.*;
 
 public class TreeSender {
-  private static void sendNode(Test test, Packet packet) {
+  private static void sendNode(Test test, Packet packet, Collection objects) {
     Vector testCases = getTestCasesOf(test);
-    packet.addObject(test).addLong(testCases.size());
+    packet.addObject(test, objects).addLong(testCases.size());
     for (int i = 0; i < testCases.size(); i++) {
       Test nextTest = (Test)testCases.get(i);
-      sendNode(nextTest, packet);
+      sendNode(nextTest, packet, objects);
     }
   }
 
@@ -54,7 +53,11 @@ public class TreeSender {
   public static void sendSuite(OutputObjectRegistry registry, Test suite) {
     Packet packet = registry.createPacket();
     packet.addString(PoolOfDelimiters.TREE_PREFIX);
-    sendNode(suite, packet);
+    Collection objects = new ArrayList();
+    sendNode(suite, packet, objects);
+    for (Iterator iterator = objects.iterator(); iterator.hasNext();) {
+      ((Packet)iterator.next()).send();
+    }
     packet.addString("\n");
     packet.send();
   }

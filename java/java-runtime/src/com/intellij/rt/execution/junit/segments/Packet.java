@@ -18,6 +18,7 @@ package com.intellij.rt.execution.junit.segments;
 import junit.runner.BaseTestRunner;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.Vector;
 
 public class Packet extends PacketWriter {
@@ -34,6 +35,10 @@ public class Packet extends PacketWriter {
 
   public Packet addObject(Object test) {
     return addReference(myRegistry.referenceTo(test));
+  }
+
+  public Packet addObject(Object test, Collection packet) {
+    return addReference(myRegistry.referenceTo(test, packet));
   }
 
   public Packet addReference(String reference) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.rt.execution.junit.segments;
+package git4idea.branch;
+
+import java.util.EventListener;
 
 /**
- * @noinspection HardCodedStringLiteral
+ * GitBranchesListener listens to events related to Git branches.
+ * Change of active branch, branch creation, etc.
+ * @author Kirill Likhodedov
  */
-public interface PoolOfDelimiters {
-  char REFERENCE_END = ':';
-  String REFERENCE_END_STR = ":";
-  char INTEGER_DELIMITER = ' ';
-
-  String OBJECT_PREFIX = "O";
-  String TREE_PREFIX = "T";
-  String INPUT_COSUMER = "I";
-  String CHANGE_STATE = "S";
-  String TESTS_DONE = "D";
+public interface GitBranchesListener extends EventListener {
+  void branchConfigurationChanged();
 }

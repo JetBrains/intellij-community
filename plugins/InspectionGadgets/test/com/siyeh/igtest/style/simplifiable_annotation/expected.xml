@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SimplifiableAnnotation.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Simplifiable annotation</problem_class>
+    <description>Annotation &lt;code&gt;@ SuppressWarnings(value = &quot;blabla&quot;)&lt;/code&gt; may be replaced with '@SuppressWarnings(value = &quot;blabla&quot;)'</description>
+  </problem>
+
+  <problem>
+    <file>SimplifiableAnnotation.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Simplifiable annotation</problem_class>
+    <description>Annotation &lt;code&gt;@ Deprecated()&lt;/code&gt; may be replaced with '@Deprecated'</description>
+  </problem>
+</problems>

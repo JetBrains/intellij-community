@@ -58,13 +58,14 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
+import git4idea.branch.GitBranchWidget;
+import git4idea.branch.GitBranches;
 import git4idea.changes.GitChangeProvider;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.checkout.branches.GitCurrentBranchWidget;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitExecutableValidator;
@@ -145,10 +146,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private boolean isActivated; // If true, the vcs was activated
   private GitExecutableValidator myExecutableValidator;
   private RepositoryChangeListener myIndexChangeListener;
-  private GitCurrentBranchWidget myCurrentBranchWidget;
+  private GitBranchWidget myBranchWidget;
 
-  public static GitVcs getInstance(@NotNull Project project) {
-    return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
+  @Nullable
+  public static GitVcs getInstance(Project project) {
+    if (project == null || project.isDisposed()) {
+      return null;
+    }
+    return (GitVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);
   }
 
   public GitVcs(@NotNull Project project,
@@ -203,8 +208,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    *
    * @param task the task to run
    */
-  public void runInBackground(Task.Backgroundable task) {
-    myTaskQueue.run(task);
+  public static void runInBackground(Task.Backgroundable task) {
+    GitVcs vcs = getInstance(task.getProject());
+    if (vcs != null) {
+      vcs.myTaskQueue.run(task);
+    }
   }
 
   /**
@@ -431,9 +439,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   protected void shutdown() throws VcsException {
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void activate() {
     isActivated = true;
@@ -456,17 +461,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NewGitUsersComponent.getInstance(myProject).activate();
     GitProjectLogManager.getInstance(myProject).activate();
 
+    GitBranches.getInstance(myProject).activate(this);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
-      myCurrentBranchWidget = new GitCurrentBranchWidget(myProject);
-      statusBar.addWidget(myCurrentBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
-      addGitReferenceListener(myCurrentBranchWidget);
+      myBranchWidget = new GitBranchWidget(myProject);
+      statusBar.addWidget(myBranchWidget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), myProject);
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void deactivate() {
     isActivated = false;
@@ -491,11 +493,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NewGitUsersComponent.getInstance(myProject).deactivate();
     GitProjectLogManager.getInstance(myProject).deactivate();
 
+    GitBranches.getInstance(myProject).deactivate();
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null && myCurrentBranchWidget != null) {
-      statusBar.removeWidget(myCurrentBranchWidget.ID());
-      removeGitReferenceListener(myCurrentBranchWidget);
-      myCurrentBranchWidget = null;
+    if (statusBar != null && myBranchWidget != null) {
+      statusBar.removeWidget(myBranchWidget.ID());
+      myBranchWidget = null;
     }
   }
 

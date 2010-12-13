@@ -104,6 +104,10 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService
+        serviceInterface="git4idea.branch.GitBranches"
+        serviceImplementation="git4idea.branch.GitBranches"/>
+
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"
         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
