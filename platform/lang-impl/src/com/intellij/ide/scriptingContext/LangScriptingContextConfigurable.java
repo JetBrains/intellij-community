@@ -34,17 +34,15 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
   private final ScriptingLibrariesPanelStub myPanel;
   private final ScriptingLibraryManager myLibManager;
   private ScriptingContextsConfigurable myContextsConfigurable;
-  private final String productName = System.getProperty("idea.platform.prefix");
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
-    myPanel = useDedicatedLibraryUI() ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
+    myPanel = useDedicatedLibraryUI(project) ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
     myContextsConfigurable = new ScriptingContextsConfigurable(project, provider.getLibraryMappings(project));
   }
 
-  private boolean useDedicatedLibraryUI() {
-    //TODO<rv> Find a better way to check it
-    return "WebStorm".equalsIgnoreCase(productName) || "PhpStorm".equalsIgnoreCase(productName);
+  private static boolean useDedicatedLibraryUI(Project project) {
+    return project.getPicoContainer().getComponentInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable") == null;
   }
 
   @Nls
