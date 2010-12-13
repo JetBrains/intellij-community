@@ -3,6 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightweightHint;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -14,11 +16,12 @@ public class CompletionState {
   private LightweightHint myCompletionHint;
   private Boolean myToRestart;
   private boolean myRestartScheduled;
-  private boolean myModifiersReleased;
+  private boolean myModifiersChanged;
   private Runnable myRestorePrefix;
   private boolean myBackgrounded;
   private volatile boolean myFocusLookupWhenDone;
   private volatile int myCount;
+  private Runnable myZombieCleanup;
 
   public CompletionState(boolean shownLookup) {
     myShownLookup = shownLookup;
@@ -30,6 +33,8 @@ public class CompletionState {
 
   public void setCompletionDisposed(boolean completionDisposed) {
     LOG.assertTrue(!myCompletionDisposed, this);
+    LOG.assertTrue(!isWaitingAfterAutoInsertion(), this);
+    LOG.assertTrue(myCompletionHint == null, this);
     myCompletionDisposed = completionDisposed;
   }
 
@@ -45,8 +50,15 @@ public class CompletionState {
     return myCompletionHint;
   }
 
-  public void setCompletionHint(LightweightHint completionHint) {
+  public void goZombie(@Nullable LightweightHint completionHint, @NotNull Runnable cleanup) {
+    LOG.assertTrue(myZombieCleanup == null, this);
+    if (completionHint != null) {
+      LOG.assertTrue(myCompletionHint == null, this);
+    } else {
+      LOG.assertTrue(!myModifiersChanged, this);
+    }
     myCompletionHint = completionHint;
+    myZombieCleanup = cleanup;
   }
 
   public boolean isToRestart() {
@@ -54,11 +66,9 @@ public class CompletionState {
   }
 
   public void setToRestart(boolean toRestart) {
-    if (toRestart) {
-      if (myToRestart != null) {
-        LOG.assertTrue(myToRestart == Boolean.FALSE, this); //explicit completionFinished was invoked before this write action
-        return;
-      }
+    if (toRestart && myToRestart != null) {
+      LOG.assertTrue(myToRestart == Boolean.FALSE, this); //explicit completionFinished was invoked before this write action
+      return;
     }
 
     myToRestart = toRestart;
@@ -68,18 +78,16 @@ public class CompletionState {
     return myRestartScheduled;
   }
 
-  public void setRestartScheduled(boolean restartScheduled) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    myRestartScheduled = restartScheduled;
+  public void scheduleRestart() {
+    myRestartScheduled = true;
   }
 
-  public boolean isModifiersReleased() {
-    return myModifiersReleased;
+  public boolean areModifiersChanged() {
+    return myModifiersChanged;
   }
 
-  public void setModifiersReleased(boolean modifiersReleased) {
-    myModifiersReleased = modifiersReleased;
+  public void modifiersChanged() {
+    myModifiersChanged = true;
   }
 
   public boolean isWaitingAfterAutoInsertion() {
@@ -122,7 +130,11 @@ public class CompletionState {
   public void handleDeath() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assertDisposed();
-    setCompletionHint(null);
+    if (myZombieCleanup != null) {
+      myZombieCleanup.run();
+    }
+    myZombieCleanup = null;
+    myCompletionHint = null;
     setRestorePrefix(null);
   }
 
@@ -142,11 +154,12 @@ public class CompletionState {
            ", myCompletionHint=" + myCompletionHint +
            ", myToRestart=" + myToRestart +
            ", myRestartScheduled=" + myRestartScheduled +
-           ", myModifiersReleased=" + myModifiersReleased +
+           ", myModifiersReleased=" + myModifiersChanged +
            ", myRestorePrefix=" + myRestorePrefix +
            ", myBackgrounded=" + myBackgrounded +
            ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +
            ", myCount=" + myCount +
+           ", myZombieCleanup=" + myZombieCleanup +
            '}';
   }
 }
