@@ -142,7 +142,7 @@ def buildDebuggerEgg(paths, buildName) {
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", "python-pydev", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
@@ -424,6 +424,7 @@ def layoutFull(String target, Set usedJars) {
       jar("bootstrap.jar") { module("bootstrap")}
       jar("resources.jar") {
         module("platform-resources")
+        module("colorSchemes")
       }
 
       jar("forms_rt.jar") {
@@ -575,8 +576,6 @@ def layoutWin(String target) {
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
         exclude(name: "idea.bat")
-        include(name: "runnerw.exe")
-
       }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")

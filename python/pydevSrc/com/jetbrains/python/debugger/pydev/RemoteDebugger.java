@@ -158,7 +158,7 @@ public class RemoteDebugger {
       return command.getContent();
     }
     catch (PyDebuggerException e) {
-      return "print 1";
+      return "#Couldn't load source of file " + path;
     }
   }
 

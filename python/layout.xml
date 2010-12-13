@@ -17,6 +17,7 @@
             <module name="python"> <patternset refid="resources.excluded"/> </module>
             <module name="python-plugin"/>
             <module name="python-pydev"/>
+            <module name="colorSchemes"/>
           </jar>
           <jar name="resources_en.jar">
             <module name="python">  <patternset refid="resources.included"/> </module>
