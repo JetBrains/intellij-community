@@ -313,6 +313,21 @@ public class JavaParserUtil {
       myDelegate.setTokenTypeRemapper(remapper);
     }
 
+    @Override
+    public void setWhitespaceSkippedCallback(WhitespaceSkippedCallback callback) {
+      myDelegate.setWhitespaceSkippedCallback(callback);
+    }
+
+    @Override
+    public void remapCurrentToken(IElementType type) {
+      myDelegate.remapCurrentToken(type);
+    }
+
+    @Override
+    public IElementType lookAhead(int steps) {
+      return myDelegate.lookAhead(steps);
+    }
+
     @Nullable @NonNls
     public String getTokenText() {
       return myDelegate.getTokenText();
