@@ -1,7 +1,8 @@
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 /**
  * @author peter
