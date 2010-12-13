@@ -1,7 +1,6 @@
 package com.jetbrains.python.testing.nosetest;
 
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
-import com.jetbrains.python.testing.PythonUnitTestRunConfiguration;
 
 /**
  * User: catherine
@@ -21,8 +20,8 @@ public interface PythonNoseTestRunConfigurationParams {
   String getMethodName();
   void setMethodName(String methodName);
 
-  PythonUnitTestRunConfiguration.TestType getTestType();
-  void setTestType(PythonUnitTestRunConfiguration.TestType testType);
+  PythonNoseTestRunConfiguration.TestType getTestType();
+  void setTestType(PythonNoseTestRunConfiguration.TestType testType);
 
   String getParams();
   void setParams(String params);
