@@ -15,6 +15,10 @@
  */
 package com.siyeh.ipp.annotation;
 
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
@@ -69,12 +73,22 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiAnnotation annotation = (PsiAnnotation) element;
-        final PsiElementFactory factory =
-                JavaPsiFacade.getElementFactory(annotation.getProject());
+        final int textOffset = annotation.getTextOffset();
+        final Project project = annotation.getProject();
         final String text = buildReplacementText(annotation);
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
         final PsiAnnotation newAnnotation =
                 factory.createAnnotationFromText(
                         text, annotation);
         annotation.replace(newAnnotation);
+        final FileEditorManager editorManager =
+                FileEditorManager.getInstance(project);
+        final Editor editor = editorManager.getSelectedTextEditor();
+        if (editor == null) {
+            return;
+        }
+        final CaretModel caretModel = editor.getCaretModel();
+        caretModel.moveToOffset(textOffset + text.length() - 1);
     }
 }
