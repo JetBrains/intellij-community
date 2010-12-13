@@ -1,5 +1,5 @@
 public class X {
   void f() {
-    double d = 1234.56789;
+    double d = <spot>1234.56789</spot>;
   }
 }
