@@ -351,12 +351,6 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebuggerManager.updateExecutionPoint(myCurrentStackFrame.getSourcePosition(), !isTopFrame);
   }
 
-  public void showExecutionPoint(XSourcePosition sourcePosition) {
-    XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
-    boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == myCurrentStackFrame;
-    myDebuggerManager.setActiveSession(this, sourcePosition, !isTopFrame);
-  }
-
   public void showExecutionPoint() {
     if (mySuspendContext != null) {
       XExecutionStack executionStack = mySuspendContext.getActiveExecutionStack();

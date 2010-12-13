@@ -63,8 +63,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void pause();
   void resume();
 
-  void showExecutionPoint(XSourcePosition sourcePosition);
-
   void showExecutionPoint();
 
   void setCurrentStackFrame(@NotNull XStackFrame frame);
