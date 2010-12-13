@@ -211,6 +211,7 @@ class PyDBDaemonThread(threading.Thread):
     def doKill(self):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
+
             
 #=======================================================================================================================
 # ReaderThread
@@ -232,8 +233,7 @@ class ReaderThread(PyDBDaemonThread):
         except:
             #just ignore that
             pass
-        
-     
+
     def OnRun(self):
         pydevd_tracing.SetTrace(None) # no debugging on this thread
         buffer = ""

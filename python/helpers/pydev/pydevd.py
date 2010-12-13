@@ -204,7 +204,6 @@ class PyDB:
     def FinishDebuggingSession(self):
         self._finishDebuggingSession = True
 
-        
     def acquire(self):
         if PyDBUseLocks:
             self.lock.acquire()
@@ -279,6 +278,16 @@ class PyDB:
             queue = self.getInternalQueue(thread_id)
             queue.put(int_cmd)
 
+    def checkOutputRedirect(self):
+        global bufferStdOutToServer
+        global bufferStdErrToServer
+
+        if bufferStdOutToServer:
+                self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
+
+        if bufferStdErrToServer:
+                self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+
     def checkOutput(self, out, outCtx):
         '''Checks the output to see if we have to send some buffered output to the debug server
         
@@ -288,6 +297,7 @@ class PyDB:
         
         try:
             v = out.getvalue()
+
             if v:
                 self.cmdFactory.makeIoMessage(v, outCtx, self)
         except:
@@ -300,11 +310,8 @@ class PyDB:
         
         self.acquire()
         try:
-            if bufferStdOutToServer:
-                self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
-                    
-            if bufferStdErrToServer:
-                self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+
+            self.checkOutputRedirect()
 
             currThreadId = GetThreadId(threadingCurrentThread())
             threads = threadingEnumerate()
@@ -1000,6 +1007,9 @@ def SetTraceForParents(frame, dispatch_func):
         frame = frame.f_back
     del frame
 
+def exit_hook():
+    GetGlobalDebugger().checkOutputRedirect()
+
 def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=True):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
     
@@ -1075,6 +1085,8 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
                 thread.start_new = pydev_start_new_thread
             except:
                 pass
+
+        #sys.exitfunc = exit_hook
         
         PyDBCommandThread(debugger).start()
         

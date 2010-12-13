@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -424,5 +425,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
     return new PyStackFrame(this, frameInfo);
+  }
+
+  @Override
+  public String getCurrentStateMessage() {
+    if (getSession().isStopped()) {
+      return XDebuggerBundle.message("debugger.state.message.disconnected");
+    } else
+    if (myDebugger.isConnected()) {
+      return XDebuggerBundle.message("debugger.state.message.connected");
+    } else {
+      return "Waiting for connection...";
+    }
   }
 }

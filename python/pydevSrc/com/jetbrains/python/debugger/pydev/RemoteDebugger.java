@@ -43,6 +43,7 @@ public class RemoteDebugger {
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
+
   private final List<RemoteDebuggerCloseListener> myCloseListeners = Lists.newArrayList();
 
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
@@ -58,6 +59,7 @@ public class RemoteDebugger {
   public boolean isConnected() {
     return myConnected;
   }
+
 
   public void waitForConnect() throws Exception {
     try {
