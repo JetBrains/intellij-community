@@ -417,6 +417,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     @Override
+    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+      if (PyNames.ALL.equals(node.getTarget().getName())) {
+        myDynamic = true;
+      }
+    }
+
+    @Override
     public void visitPyCallExpression(PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyQualifiedExpression) {
