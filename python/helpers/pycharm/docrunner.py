@@ -7,6 +7,7 @@ import traceback
 import datetime
 
 from tcunittest import TeamcityTestResult
+from tcmessages import TeamcityServiceMessages
 
 class TeamcityDocTestResult(TeamcityTestResult):
     """
@@ -182,6 +183,8 @@ def testfile(filename):
     parser = doctest.DocTestParser()
     # Read the file, convert it to a test, and run it.
     test = parser.get_doctest(text, globs, name, filename, 0)
+    debug("/ Loaded " + str(len(test.examples)) + " tests")
+    TeamcityServiceMessages(sys.stdout).testCount(len(test.examples))
     if test.examples:
       runner.run(test)
 
@@ -263,6 +266,8 @@ if __name__ == "__main__":
       # for doctests
       for module in modules:
         tests = finder.find(module, module.__name__)
+        debug("/ Loaded " + str(len(tests)) + " tests")
+        TeamcityServiceMessages(sys.stdout).testCount(len(tests))
         for test in tests:
           if test.examples:
             runner.run(test)
@@ -277,6 +282,8 @@ if __name__ == "__main__":
       if hasattr(module, a[1]):
         testcase = getattr(module, a[1])
         tests = finder.find(testcase, testcase.__name__)
+        debug("/ Loaded " + str(len(tests)) + " tests")
+        TeamcityServiceMessages(sys.stdout).testCount(len(tests))
         for test in tests:
             runner.run(test)
       else:
@@ -293,6 +300,8 @@ if __name__ == "__main__":
           if hasattr(module, a[2]):
             testcase = getattr(module, a[2])
             tests = finder.find(testcase, testcase.__name__)
+            debug("/ Loaded " + str(len(tests)) + " tests")
+            TeamcityServiceMessages(sys.stdout).testCount(len(tests))
             for test in tests:
               runner.run(test)
           else:
@@ -304,6 +313,8 @@ if __name__ == "__main__":
             if hasattr(testCaseClass, a[2]):
               testcase = getattr(testCaseClass, a[2])
               tests = finder.find(testcase, testcase.__name__)
+              debug("/ Loaded " + str(len(tests)) + " tests")
+              TeamcityServiceMessages(sys.stdout).testCount(len(tests))
               for test in tests:
                 runner.run(test)
             else:
