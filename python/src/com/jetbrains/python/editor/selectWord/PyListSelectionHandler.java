@@ -4,7 +4,9 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyParameterList;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
 public class PyListSelectionHandler implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(PsiElement e) {
-    return e instanceof PyListLiteralExpression;
+    return e instanceof PyListLiteralExpression || e instanceof PyParameterList || e instanceof PyArgumentList;
   }
 
   @Override

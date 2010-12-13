@@ -373,10 +373,10 @@ def buildTarGz() {
     }
     tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
       exclude(name: "libbreakgen*")
-      exclude("fsnotifier*")
+      exclude(name: "fsnotifier*")
     }
     tarfileset(dir: "$home/community/bin/linux", filemode: "755", prefix: "$tarRoot/bin") {
-      include("fsnotifier*")
+      include(name: "fsnotifier*")
     }
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
