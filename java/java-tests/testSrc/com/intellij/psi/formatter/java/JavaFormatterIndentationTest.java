@@ -296,13 +296,15 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
     String precededByMultiLineComment =
       "/*\n" +
-      " * test\n" +
-      " */\n" +
+      "test\n" +
+      "*/\n" +
       "public int getFoo()\n" +
       "    {\n" +
       "    return foo;\n" +
       "    }";
     
     doClassTest(precededByJavadoc, precededByJavadoc);
+    doClassTest(precededBySingleLineComment, precededBySingleLineComment);
+    doClassTest(precededByMultiLineComment, precededByMultiLineComment);
   }
 }
