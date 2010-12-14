@@ -40,7 +40,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
 
   public void installSearch(EditorTextField name, final EditorTextField comment) {
     Document document = name.getDocument();
-    TaskCompletionContributor.installCompletion(document, myProject, null);
+    TaskCompletionContributor.installCompletion(document, myProject, null, false);
   }
 
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, LocalChangeList initial) {

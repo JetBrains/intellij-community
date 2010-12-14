@@ -28,15 +28,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class TaskCompletionContributor extends CompletionContributor {
 
-  public static void installCompletion(Document document, Project project, Consumer<Task> consumer) {
+  private static final Key<Consumer<Task>> KEY = Key.create("task completion available");
+  private static final Key<Boolean> AUTO_POPUP_KEY = Key.create("task completion auto-popup");
+
+  public static void installCompletion(Document document, Project project, Consumer<Task> consumer, boolean autoPopup) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile != null) {
       //noinspection unchecked
       psiFile.putUserData(KEY, consumer == null ? (Consumer<Task>)Consumer.EMPTY_CONSUMER : consumer);
+      psiFile.putUserData(AUTO_POPUP_KEY, autoPopup);
     }
   }
-
-  private static final Key<Consumer<Task>> KEY = Key.create("task completion available");
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
@@ -48,7 +50,7 @@ public class TaskCompletionContributor extends CompletionContributor {
       String text = parameters.getOriginalFile().getText();
       int i = text.lastIndexOf(' ', parameters.getOffset() - 1) + 1;
       final String prefix = text.substring(i, parameters.getOffset());
-      if (parameters.getInvocationCount() == 0) {                         // is autopopup
+      if (parameters.getInvocationCount() == 0 && !file.getUserData(AUTO_POPUP_KEY)) {   // is autopopup
         return;
       }
       result = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));

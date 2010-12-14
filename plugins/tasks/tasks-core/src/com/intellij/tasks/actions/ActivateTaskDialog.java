@@ -92,7 +92,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         mySelectedTask = task;
         taskChanged();
       }
-    });
+    }, true);
     
     myTaskName.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
