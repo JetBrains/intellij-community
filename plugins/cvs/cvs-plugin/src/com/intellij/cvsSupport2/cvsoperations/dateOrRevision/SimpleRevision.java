@@ -70,4 +70,8 @@ public class SimpleRevision implements RevisionOrDate {
     }
   }
 
+  @Override
+  public String toString() {
+    return myRevision;
+  }
 }
