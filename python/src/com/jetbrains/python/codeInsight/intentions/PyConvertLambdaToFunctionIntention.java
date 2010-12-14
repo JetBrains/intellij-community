@@ -58,17 +58,36 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       }
       functionBuilder.statement("return " + body.getText());
       PyFunction function = functionBuilder.buildFunction(project);
-      PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
-      if (statement != null) {
-        PsiElement parentOfStatement = statement.getParent();
-        if (parentOfStatement != null)
-          function = (PyFunction)parentOfStatement.addBefore(function, statement);
+
+
+
+      PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(lambdaExpression, PyFunction.class);
+      if (parentFunction != null ) {
+        PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
+        if (parentClass != null) {
+          PsiElement classParent = parentClass.getParent();
+          function = (PyFunction)classParent.addBefore(function, parentClass);
+        } else {
+          PsiElement funcParent = parentFunction.getParent();
+          function = (PyFunction)funcParent.addBefore(function, parentFunction);
+        }
+      } else {
+        PyStatement statement = PsiTreeUtil.getTopmostParentOfType(lambdaExpression,
+                                                                   PyStatement.class);
+        if (statement != null) {
+          PsiElement statementParent = statement.getParent();
+          if (statementParent != null)
+            function = (PyFunction)statementParent.addBefore(function, statement);
+        }
       }
+      function = CodeInsightUtilBase
+        .forcePsiPostprocessAndRestoreElement(function);
+
       if (parent instanceof PyAssignmentStatement) {
         parent.delete();
       }
       else {
-        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class, PyClass.class, PyFile.class);
+        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyClass.class, PyFile.class);
         final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parentScope);
         PsiElement functionName = function.getNameIdentifier();
         functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
