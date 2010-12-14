@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.roots.libraries.scripting;
 
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.doc.DocOrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -52,7 +52,7 @@ public class ScriptingLibraryTable {
           LibraryModel libModel = new LibraryModel(library.getName());
           libModel.setSourceFiles(library.getFiles(SOURCE_ROOT_TYPE));
           libModel.setCompactFiles(library.getFiles(COMPACT_ROOT_TYPE));
-          //libModel.setDocUrls(library.getUrls(DocOrderRootType.getInstance()));  // TODO: Rustam, write tests first!
+          libModel.setDocUrls(library.getUrls(JavadocOrderRootType.getInstance()));
           myLibraryModels.add(libModel);
         }
       }

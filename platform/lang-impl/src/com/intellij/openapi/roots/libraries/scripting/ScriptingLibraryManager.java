@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.libraries.scripting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
@@ -25,7 +26,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryType;
-//import com.intellij.openapi.roots.libraries.doc.DocOrderRootType;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +81,7 @@ public class ScriptingLibraryManager {
   }
 
   private void updateLibraries(LibraryTable.ModifiableModel libTableModel) {
-    //final OrderRootType docRootType = DocOrderRootType.getInstance(); 
+    final OrderRootType docRootType = JavadocOrderRootType.getInstance(); 
     for (Library library : libTableModel.getLibraries()) {
       ScriptingLibraryTable.LibraryModel scriptingLibModel = myLibTable.getLibraryByName(library.getName());
       if (scriptingLibModel == null) {
@@ -91,11 +91,9 @@ public class ScriptingLibraryManager {
         Library.ModifiableModel libModel = library.getModifiableModel();
         removeRoots(libModel, OrderRootType.CLASSES);
         removeRoots(libModel, OrderRootType.SOURCES);
-        /*
-        for (String docUrl : libModel.getUrls(DocOrderRootType.getInstance())) {
+        for (String docUrl : libModel.getUrls(JavadocOrderRootType.getInstance())) {
           libModel.removeRoot(docUrl, docRootType);
         }
-        */
         addAllRoots(libModel, scriptingLibModel);
         libModel.commit();
       }
@@ -118,14 +116,12 @@ public class ScriptingLibraryManager {
   }
 
   private static void addAllRoots(Library.ModifiableModel libModel, ScriptingLibraryTable.LibraryModel srcModel) {
-    //final OrderRootType docRootType = DocOrderRootType.getInstance();
+    final OrderRootType docRootType = JavadocOrderRootType.getInstance();
     addRoots(libModel, srcModel, OrderRootType.CLASSES);
     addRoots(libModel, srcModel, OrderRootType.SOURCES);
-    /*
     for (String docUrl : srcModel.getDocUrls()) {
       libModel.addRoot(docUrl, docRootType);
     }
-    */
   }
 
   private static void addRoots(Library.ModifiableModel libModel,
