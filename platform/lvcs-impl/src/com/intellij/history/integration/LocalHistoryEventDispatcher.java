@@ -16,12 +16,13 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.StoredContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 
 public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener {
@@ -102,9 +103,9 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
     if (!areContentChangesVersioned(e)) return;
     VirtualFile f = e.getFile();
 
-    Content content = myGateway.acquireAndUpdateActualContent(f, null);
+    Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
     if (content != null) {
-      myVcs.contentChanged(f.getPath(), content, f.getTimeStamp());
+      myVcs.contentChanged(f.getPath(), content.first, content.second);
     }
   }
 
