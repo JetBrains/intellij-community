@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -118,7 +119,12 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
     // let's show coverage only for module files
-    final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
+    final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+      @Nullable
+      public Module compute() {
+        return ModuleUtil.findModuleForPsiElement(psiFile);
+      }
+    });
     return module != null;
   }
 
@@ -150,22 +156,27 @@ public class JavaCoverageEngine extends CoverageEngine {
     if ((outputpath == null && isModuleOutputNeeded(module, false)) || (suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, true))) {
       final Project project = module.getProject();
 
-      if (Messages.showOkCancelDialog(
-        "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
-        "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
-        final CompilerManager compilerManager = CompilerManager.getInstance(project);
-        compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
-          public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
-            if (aborted || errors != 0) return;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (project.isDisposed()) return;
-                CoverageDataManager.getInstance(project).chooseSuite(suite);
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          if (Messages.showOkCancelDialog(
+            "Project class files are out of date. Would you like to recompile? The refusal to do it will result in incomplete coverage information",
+            "Project is out of date", Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+            final CompilerManager compilerManager = CompilerManager.getInstance(project);
+            compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
+              public void finished(final boolean aborted, final int errors, final int warnings, final CompileContext compileContext) {
+                if (aborted || errors != 0) return;
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  public void run() {
+                    if (project.isDisposed()) return;
+                    CoverageDataManager.getInstance(project).chooseSuite(suite);
+                  }
+                });
               }
             });
           }
-        });
-      }
+        }
+      };
+      ApplicationManager.getApplication().invokeLater(runnable);
       return true;
     }
     return false;
@@ -185,7 +196,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
-    final String hisPackageName = javaFile.getPackageName();
+    final String hisPackageName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return javaFile.getPackageName();
+      }
+    });
     PsiPackage hisPackage = JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(hisPackageName);
     if (hisPackage == null) return false;
     for (PsiPackage aPackage : packages) {
@@ -236,11 +251,20 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   @Override
-  public Set<String> getQualifiedNames(@NotNull PsiFile sourceFile) {
-    final PsiClass[] classes = ((PsiClassOwner)sourceFile).getClasses();
+  public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
+    final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+      public PsiClass[] compute() {
+        return ((PsiClassOwner)sourceFile).getClasses();
+      }
+    });
     final Set<String> qNames = new HashSet<String>();
-    for (PsiClass aClass : classes) {
-      qNames.add(aClass.getQualifiedName());
+    for (final PsiClass aClass : classes) {
+      qNames.add(ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Nullable
+        public String compute() {
+          return aClass.getQualifiedName();
+        }
+      }));
     }
     return qNames;
   }
@@ -272,7 +296,12 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
 
     final Set<VirtualFile> classFiles = new HashSet<VirtualFile>();
-    for (PsiClass psiClass : ((PsiClassOwner)srcFile).getClasses()) {
+    final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+      public PsiClass[] compute() {
+        return ((PsiClassOwner)srcFile).getClasses();
+      }
+    });
+    for (PsiClass psiClass : classes) {
       final String className = psiClass.getName();
       for (VirtualFile child : children) {
         if (child.getFileType().equals(StdFileTypes.CLASS)) {
@@ -439,6 +468,10 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @NotNull
   private String getPackageName(final PsiFile sourceFile) {
-    return ((PsiClassOwner)sourceFile).getPackageName();
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        return ((PsiClassOwner)sourceFile).getPackageName();
+      }
+    });
   }
 }
