@@ -296,7 +296,7 @@ public class MavenRootModelAdapter {
     return false;
   }
 
-  public Library findLibrary(final MavenArtifact artifact) {
+  public Library findLibrary(@NotNull final MavenArtifact artifact) {
     final String name = makeLibraryName(artifact);
     final Ref<Library> result = Ref.create(null);
     myRootModel.orderEntries().forEachLibrary(new Processor<Library>() {
@@ -311,11 +311,11 @@ public class MavenRootModelAdapter {
     return result.get();
   }
 
-  private static String makeLibraryName(MavenArtifact artifact) {
+  private static String makeLibraryName(@NotNull MavenArtifact artifact) {
     return MAVEN_LIB_PREFIX + artifact.getDisplayStringForLibraryName();
   }
 
-  public static boolean isMavenLibrary(Library library) {
+  public static boolean isMavenLibrary(@Nullable Library library) {
     if (library == null) return false;
 
     String name = library.getName();
@@ -323,7 +323,7 @@ public class MavenRootModelAdapter {
   }
 
   @Nullable
-  public static OrderEntry findLibraryEntry(Module m, MavenArtifact artifact) {
+  public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
     String name = makeLibraryName(artifact);
     for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
@@ -334,7 +334,9 @@ public class MavenRootModelAdapter {
   }
 
   @Nullable
-  public static MavenArtifact findArtifact(MavenProject project, Library library) {
+  public static MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
+    if (library == null) return null;
+
     String name = library.getName();
     for (MavenArtifact each : project.getDependencies()) {
       if (makeLibraryName(each).equals(name)) return each;

@@ -424,7 +424,7 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
-  public void testDoNotIncludeProvidedAndTestDependenciesInProductionClasspath() throws Exception {
+  public void testProvidedAndTestDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -487,7 +487,50 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/jmock/jmock/4.0/jmock-4.0.jar");
   }
 
-  // todo next
+  public void testRuntimeDependency() throws Exception {
+    createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar");
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m2</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "    <scope>runtime</scope>" +
+                                           "  </dependency>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "    <scope>runtime</scope>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>");
+
+    importProjects(m1, m2);
+    assertModules("m1", "m2");
+
+    setupJdkForModules("m1", "m2");
+
+    assertCompileProductionClasspath("m1",
+                                     getProjectPath() + "/m1/target/classes");
+
+    assertRuntimeProductionClasspath("m1",
+                                     getProjectPath() + "/m1/target/classes",
+                                     getProjectPath() + "/m2/target/classes",
+                                     getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+
+    assertAllTestsClasspath("m1",
+                            getProjectPath() + "/m1/target/test-classes",
+                            getProjectPath() + "/m1/target/classes",
+                            getProjectPath() + "/m2/target/classes",
+                            getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
+  }
 
   public void testDoNotIncludeProvidedAndTestTransitiveDependencies() throws Exception {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar");
@@ -669,13 +712,13 @@ public class MavenClasspathConfigurationTest extends MavenImportingTestCase {
   }
 
   private void assertAllProductionClasspath(String moduleName, String... paths) throws Exception {
-    assertClasspath(moduleName, Scope.COMPILE, Type.PRODUCTION, paths);
-    assertClasspath(moduleName, Scope.RUNTIME, Type.PRODUCTION, paths);
+    assertCompileProductionClasspath(moduleName, paths);
+    assertRuntimeProductionClasspath(moduleName, paths);
   }
 
   private void assertAllTestsClasspath(String moduleName, String... paths) throws Exception {
-    assertClasspath(moduleName, Scope.COMPILE, Type.TESTS, paths);
-    assertClasspath(moduleName, Scope.RUNTIME, Type.TESTS, paths);
+    assertCompileTestsClasspath(moduleName, paths);
+    assertRuntimeTestsClasspath(moduleName, paths);
   }
 
   private void assertCompileProductionClasspath(String moduleName, String... paths) throws Exception {
