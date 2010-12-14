@@ -6,6 +6,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +42,11 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         PyBinaryExpression expression = (PyBinaryExpression)node.getAssignedValue();
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
+        if (rightExpression.getText().equals(target.getText())) {
+          PyExpression tmp = rightExpression;
+          rightExpression = leftExpression;
+          leftExpression = tmp;
+        }
         if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(expression.getOperator()) ||
               PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(expression.getOperator())) {
           if (leftExpression != null
@@ -54,17 +60,11 @@ public class PyAugmentAssignmentInspection extends PyInspection {
                   registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
                 }
               }
-            }
-          }
-          else if (rightExpression != null &&
-               (rightExpression instanceof PyReferenceExpression || rightExpression instanceof PySubscriptionExpression)) {
-            if (rightExpression.getText().equals(target.getText())) {
-              if (leftExpression instanceof PyNumericLiteralExpression) {
-                PyElementType op = expression.getOperator();
-                if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
-                      op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
-                  AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-                  registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
+              else {
+                PyType type = rightExpression.getType(myTypeEvalContext);
+                if (type != null) {
+                  if (type.getName().equals("int") || type.getName().equals("str"))
+                    registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
                 }
               }
             }

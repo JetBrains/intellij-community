@@ -3,12 +3,12 @@
 
 str = "string"
 
-var_2 = var_2 + str
+<warning descr="Assignment can be replaced with augmented assignment">var_2 = var_2 + str</warning>
 
 var_3 = var_3
 var_4 = 1
-var_5 = var_5 + "string"
-var_6 = var_6 + var_4
+<warning descr="Assignment can be replaced with augmented assignment">var_5 = var_5 + "string"</warning>
+<warning descr="Assignment can be replaced with augmented assignment">var_6 = var_6 + var_4</warning>
 
 var_7 += 2
 
