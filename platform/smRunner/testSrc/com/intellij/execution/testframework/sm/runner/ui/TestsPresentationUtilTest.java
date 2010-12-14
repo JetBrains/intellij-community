@@ -536,6 +536,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   }
 
+  public void testFormatRootNodeWithoutChildren_PY_2434() {
+    // See [PY-2434] Unittest: Do not show "No test were found" notification before completing test suite
+    mySuite.addChild(mySimpleTest);
+    mySuite.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("msg", "stacktrace", false);
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySuite, myRenderer);
+
+    assertEquals(PoolOfTestIcons.FAILED_ICON, myRenderer.getIcon());
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("Test Results:", myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+  }
+
+
   public void testGetPresentableName() {
     //Test unit examples
     assertProxyPresentation("testFirst", "MyRubyTest1", "MyRubyTest1.testFirst");
