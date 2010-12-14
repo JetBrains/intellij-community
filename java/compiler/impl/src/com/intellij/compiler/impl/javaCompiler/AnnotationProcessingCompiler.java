@@ -60,14 +60,14 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    if (!myConfig.isAnnotationProcessorsEnabled()) {
+    if (!context.isAnnotationProcessorsEnabled()) {
       return false;
     } 
     return file.getFileType() == StdFileTypes.JAVA && !isExcludedFromAnnotationProcessing(file, context);
   }
 
   public void compile(final CompileContext context, final Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
-    if (!myConfig.isAnnotationProcessorsEnabled()) {
+    if (!context.isAnnotationProcessorsEnabled()) {
       return;
     }
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -117,7 +117,7 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   private boolean isExcludedFromAnnotationProcessing(VirtualFile file, CompileContext context) {
     final Module module = context.getModuleByFile(file);
     if (module != null) {
-      if (!myConfig.isAnnotationProcessingEnabled(module)) {
+      if (!context.isAnnotationProcessorsEnabled()) {
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);

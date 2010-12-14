@@ -108,7 +108,7 @@ public class CompilerAPICompiler implements BackendCompiler {
           List<String> commandLine = new ArrayList<String>();
           JavacSettings javacSettings = CompilerAPIConfiguration.getSettings(myProject, CompilerAPIConfiguration.class);
           final List<String> additionalOptions =
-            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, 6, myProject);
+            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, 6, myProject, compileContext.isAnnotationProcessorsEnabled());
 
           JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false, false);
           commandLine.addAll(additionalOptions);
