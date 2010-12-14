@@ -162,7 +162,7 @@ public class NavigationGutterIconBuilder<T> {
                                           renderer.getIcon(),
                                           Pass.UPDATE_OVERRIDEN_MARKERS,
                                           tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
-                                          renderer,
+                                          renderer.isNavigateAction()? renderer : null,
                                           renderer.getAlignment());
   }
 
@@ -185,9 +185,7 @@ public class NavigationGutterIconBuilder<T> {
       }
     };
 
-    if (!myLazy) {
-      pointers.getValue();
-    }
+    final boolean empty = !myLazy && pointers.getValue().isEmpty();
 
     if (myTooltipText == null && !myLazy) {
       final SortedSet<String> names = new TreeSet<String>();
@@ -212,19 +210,31 @@ public class NavigationGutterIconBuilder<T> {
       myCellRenderer = new DefaultPsiElementCellRenderer();
     }
 
-    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers);
+    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, empty);
   }
 
   private static class MyNavigationGutterIconRenderer extends NavigationGutterIconRenderer {
     private final Alignment myAlignment;
     private final Icon myIcon;
     private final String myTooltipText;
+    private final boolean myEmpty;
 
-    public MyNavigationGutterIconRenderer(final NavigationGutterIconBuilder builder, final Alignment alignment, final Icon icon, final String tooltipText, final NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
+    public MyNavigationGutterIconRenderer(final NavigationGutterIconBuilder builder,
+                                          final Alignment alignment,
+                                          final Icon icon,
+                                          final String tooltipText,
+                                          final NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                          boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, builder.myCellRenderer, pointers);
       myAlignment = alignment;
       myIcon = icon;
       myTooltipText = tooltipText;
+      myEmpty = empty;
+    }
+
+    @Override
+    public boolean isNavigateAction() {
+      return !myEmpty;
     }
 
     @NotNull
