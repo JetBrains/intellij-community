@@ -176,8 +176,7 @@ def testfile(filename):
     text, filename = doctest._load_testfile(filename, None, False)
 
     name = os.path.basename(filename)
-    globs = {}
-    globs['__name__'] = '__main__'
+    globs = {'__name__': '__main__'}
 
     runner = DocTestRunner()
     parser = doctest.DocTestParser()

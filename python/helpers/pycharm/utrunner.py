@@ -1,4 +1,3 @@
-import unittest
 import os
 import imp
 import sys
@@ -6,12 +5,6 @@ import types
 import re
 from tcmessages import TeamcityServiceMessages
 from tcunittest import TeamcityTestRunner
-
-try:
-  import unittest2 as unittest
-except:
-  # python version doesn't have unittest2
-  pass
 
 from nose_helper import TestLoader, ContextSuite
 
