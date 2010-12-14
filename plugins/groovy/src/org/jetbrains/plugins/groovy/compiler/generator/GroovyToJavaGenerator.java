@@ -288,7 +288,7 @@ public class GroovyToJavaGenerator {
       }
 
       if (method instanceof GrConstructor) {
-        writeConstructor(text, (GrConstructor)method, aClass.isEnum());
+        writeConstructor(text, (GrConstructor)method, aClass.isEnum(), true);
         continue;
       }
 
@@ -305,7 +305,7 @@ public class GroovyToJavaGenerator {
           MethodSignature signature =
             MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
           if (methodSignatures.add(signature)) {
-            writeMethod(text, method, parametersCopy);
+            writeMethod(text, method, parametersCopy, true);
           }
 
           PsiParameter parameter = parameters[i];
@@ -317,7 +317,7 @@ public class GroovyToJavaGenerator {
       else {
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
         if (methodSignatures.add(signature)) {
-          writeMethod(text, method, parameters);
+          writeMethod(text, method, parameters, true);
         }
       }
     }
@@ -407,7 +407,7 @@ public class GroovyToJavaGenerator {
       if (block != null) {
         text.append("{\n");
         for (PsiMethod method : block.getMethods()) {
-          writeMethod(text, method, method.getParameterList().getParameters());
+          writeMethod(text, method, method.getParameterList().getParameters(), true);
         }
         text.append("}");
       }
@@ -434,9 +434,11 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum) {
-    text.append("\n");
-    text.append("  ");
+  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum, final boolean prefix) {
+    if (prefix) {
+      text.append("\n");
+      text.append("  ");
+    }
     if (!isEnum) {
       text.append("public ");
       //writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
@@ -562,15 +564,15 @@ public class GroovyToJavaGenerator {
     final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), null, Collections.<VirtualFile>emptyList());
     final StringBuffer buffer = new StringBuffer();
     if (method instanceof GrConstructor) {
-      generator.writeConstructor(buffer, (GrConstructor)method, false);
+      generator.writeConstructor(buffer, (GrConstructor)method, false, false);
     }
     else {
-      generator.writeMethod(buffer, method, method.getParameterList().getParameters());
+      generator.writeMethod(buffer, method, method.getParameterList().getParameters(), false);
     }
     return buffer.toString();
   }
 
-  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
+  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters, final boolean prefix) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
@@ -580,8 +582,10 @@ public class GroovyToJavaGenerator {
 
     PsiModifierList modifierList = method.getModifierList();
 
-    text.append("\n");
-    text.append("  ");
+    if (prefix) {
+      text.append("\n");
+      text.append("  ");
+    }
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
     if (method.hasTypeParameters()) {
       appendTypeParameters(text, method);
