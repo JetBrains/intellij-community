@@ -71,20 +71,20 @@ public class UnixProcessManager {
     }
   }
 
-  public static void sendSigIntToProcessTree(Process process) {
-    sendSignalToProcessTree(process, SIGINT);
+  public static boolean sendSigIntToProcessTree(Process process) {
+    return sendSignalToProcessTree(process, SIGINT);
   }
 
-  public static void sendSigKillToProcessTree(Process process) {
-    sendSignalToProcessTree(process, SIGKILL);
+  public static boolean sendSigKillToProcessTree(Process process) {
+    return sendSignalToProcessTree(process, SIGKILL);
   }
 
   /**
    * Sends signal to every child process of a tree root process
-   * @param process tree root process
    *
+   * @param process tree root process
    */
-  public static void sendSignalToProcessTree(Process process, int signal) {
+  public static boolean sendSignalToProcessTree(Process process, int signal) {
     checkCLib();
 
     int our_pid = C_LIB.getpid();
@@ -101,6 +101,10 @@ public class UnixProcessManager {
                                                      InputStreamReader(p.getInputStream()));
       BufferedReader stdError = new BufferedReader(new
                                                      InputStreamReader(p.getErrorStream()));
+
+      List<Integer> childrenPids = Lists.newArrayList();
+
+      boolean result;
       try {
         String s;
         stdInput.readLine(); //ps output header
@@ -112,6 +116,10 @@ public class UnixProcessManager {
           int pid = Integer.parseInt(st.nextToken());
 
           processInfo.register(pid, parent_pid);
+
+          if (parent_pid == process_pid) {
+            childrenPids.add(pid);
+          }
 
           if (pid == process_pid) {
             if (parent_pid == our_pid) {
@@ -125,9 +133,13 @@ public class UnixProcessManager {
 
         if (foundPid != 0) {
           processInfo.killProcTree(foundPid, signal);
+          result = true;
         }
         else {
-          throw new IllegalStateException("process not found: " + process_pid + ", idea pid =" + our_pid);
+          for (Integer pid : childrenPids) {
+            processInfo.killProcTree(pid, signal);
+          }
+          result = false;
         }
 
         StringBuffer errorStr = new StringBuffer();
@@ -142,6 +154,7 @@ public class UnixProcessManager {
         stdInput.close();
         stdError.close();
       }
+      return result;
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
