@@ -49,7 +49,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   private final PsiManagerImpl myManager;
   private final Language myLanguage;
 
-  public LightPsiFileImpl(final FileViewProvider provider, final Language language) {
+  public LightPsiFileImpl(@NotNull FileViewProvider provider, @NotNull Language language) {
     myViewProvider = provider;
     myManager = (PsiManagerImpl)provider.getManager();
     myLanguage = language;

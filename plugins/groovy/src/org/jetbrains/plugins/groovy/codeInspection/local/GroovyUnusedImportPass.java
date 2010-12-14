@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -109,7 +110,7 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
   }
 
   public void doApplyInformationToEditor() {
-    AnnotationHolder annotationHolder = new AnnotationHolderImpl();
+    AnnotationHolder annotationHolder = new AnnotationHolderImpl(new AnnotationSession(myFile));
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myUnusedImports.size());
     for (GrImportStatement unusedImport : myUnusedImports) {
       Annotation annotation = annotationHolder.createWarningAnnotation(unusedImport, GroovyInspectionBundle.message("unused.import"));

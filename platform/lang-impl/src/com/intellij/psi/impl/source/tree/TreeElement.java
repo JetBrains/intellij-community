@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -44,12 +45,14 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
-    clone.clearCaches();
+    synchronized (PsiLock.LOCK) {
+      clone.clearCaches();
 
-    clone.myNextSibling = null;
-    clone.myPrevSibling = null;
-    clone.myParent = null;
-    clone.myStartOffsetInParent = -1;
+      clone.myNextSibling = null;
+      clone.myPrevSibling = null;
+      clone.myParent = null;
+      clone.myStartOffsetInParent = -1;
+    }
 
     return clone;
   }

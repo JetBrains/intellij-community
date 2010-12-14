@@ -23,10 +23,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -87,18 +84,30 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
     return "Annotator";
   }
 
-  private static class MyPsiRecursiveElementVisitor extends PsiRecursiveElementVisitor
-    implements PsiLanguageInjectionHost.InjectedPsiVisitor {
-    private final AnnotationHolder myHolder;
+  private static class MyPsiRecursiveElementVisitor extends PsiRecursiveElementVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
+    private AnnotationHolderImpl myHolder;
     private List<Annotator> annotators;
     private PsiFile myFile;
+    private final InspectionManager myManager;
     private final GlobalInspectionContext myGlobalContext;
+    private final ProblemDescriptionsProcessor myProblemDescriptionsProcessor;
 
     public MyPsiRecursiveElementVisitor(final InspectionManager manager,
                                         final GlobalInspectionContext globalContext,
                                         final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+      myManager = manager;
       myGlobalContext = globalContext;
-      myHolder = new AnnotationHolderImpl() {
+      myProblemDescriptionsProcessor = problemDescriptionsProcessor;
+    }
+
+    @Override
+    public void visitFile(PsiFile file) {
+      myFile = file;
+      final VirtualFile virtualFile = myFile.getVirtualFile();
+      if (virtualFile != null) {
+        myGlobalContext.incrementJobDoneAmount(ANNOTATOR, ProjectUtil.calcRelativeToProjectPath(virtualFile, myFile.getProject()));
+      }
+      myHolder = new AnnotationHolderImpl(new AnnotationSession(file)) {
         @Override
         public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
           return createProblem(elt, message, ProblemHighlightType.ERROR, HighlightSeverity.ERROR, null);
@@ -125,7 +134,7 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
                                          HighlightSeverity severity,
                                          TextRange range) {
           GlobalInspectionUtil
-            .createProblem(elt, message, problemHighlightType, range, manager, problemDescriptionsProcessor, globalContext);
+            .createProblem(elt, message, problemHighlightType, range, myManager, myProblemDescriptionsProcessor, myGlobalContext);
           return super.createAnnotation(elt.getTextRange(), severity, message);
         }
 
@@ -152,21 +161,12 @@ public class AnnotatorBasedInspection extends GlobalInspectionTool {
         @Override
         protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
           if (severity != HighlightSeverity.INFORMATION) {
-            GlobalInspectionUtil.createProblem(myFile, message, HighlightInfo.convertSeverityToProblemHighlight(severity), range, manager,
-                                               problemDescriptionsProcessor, globalContext);
+            GlobalInspectionUtil.createProblem(myFile, message, HighlightInfo.convertSeverityToProblemHighlight(severity), range, myManager,
+                                               myProblemDescriptionsProcessor, myGlobalContext);
           }
           return super.createAnnotation(range, severity, message);
         }
       };
-    }
-
-    @Override
-    public void visitFile(PsiFile file) {
-      myFile = file;
-      final VirtualFile virtualFile = myFile.getVirtualFile();
-      if (virtualFile != null) {
-        myGlobalContext.incrementJobDoneAmount(ANNOTATOR, ProjectUtil.calcRelativeToProjectPath(virtualFile, myFile.getProject()));
-      }
       super.visitFile(file);
     }
 
