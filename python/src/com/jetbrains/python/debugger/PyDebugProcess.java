@@ -150,11 +150,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void registerBreakpoints() {
-    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
-      addBreakpoint(entry.getKey(), entry.getValue());
-    }
+    registerLineBreakpoints();
+    registerExceptionBreakpoints();
+  }
+
+  private void registerExceptionBreakpoints() {
     for (XBreakpoint<PyExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
+    }
+  }
+
+  public void registerLineBreakpoints() {
+    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
+      addBreakpoint(entry.getKey(), entry.getValue());
     }
   }
 

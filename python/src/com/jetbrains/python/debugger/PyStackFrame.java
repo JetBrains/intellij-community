@@ -25,7 +25,7 @@ public class PyStackFrame extends XStackFrame {
 
   private final PyDebugProcess myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
-  private final XSourcePosition myPosition;
+  private XSourcePosition myPosition;
 
   public PyStackFrame(@NotNull final PyDebugProcess debugProcess, @NotNull final PyStackFrameInfo frameInfo) {
     myDebugProcess = debugProcess;

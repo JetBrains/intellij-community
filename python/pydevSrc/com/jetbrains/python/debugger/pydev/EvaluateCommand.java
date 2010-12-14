@@ -27,7 +27,6 @@ public class EvaluateCommand extends AbstractFrameCommand {
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
     payload.add("FRAME").add(myExpression).add(myTrimResult);
-
   }
 
   @Override

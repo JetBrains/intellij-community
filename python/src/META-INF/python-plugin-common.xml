@@ -62,7 +62,7 @@
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
-    <programRunner implementation="com.jetbrains.python.run.remote.PyRemoteDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -88,8 +88,8 @@
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
-    <configurationType implementation="com.jetbrains.python.run.remote.PyRemoteDebugConfigurationType"/>
-    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugEditorProvider"/>
+    <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
+    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>

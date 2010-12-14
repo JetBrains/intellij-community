@@ -23,7 +23,8 @@ public class ChangeVariableCommand extends AbstractFrameCommand {
 
   @Override
   protected void buildPayload(Payload payload) {
-    payload.add("FRAME").add(myVariableName).add(myValue);
+    super.buildPayload(payload);
+    payload.add("FRAME").add(myVariableName).add(ProtocolParser.encodeExpression(myValue));
   }
 
   @Override
