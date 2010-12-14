@@ -249,9 +249,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     if(ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
-    final boolean wasInActiveWindow = toolWindow != null && toolWindow.isActive();
-
     final ContentManager contentManager  = getContentManagerForRunner(executor);
     RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor);
 
@@ -308,17 +305,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
-        if (wasInActiveWindow) {
-          window.activate(null, true, false);
-        } else {
-          // let's activate tool window, but don't move focus
-          //
-          // window.show() isn't valid here, because it will not
-          // mark the window as "last activated" windows and thus
-          // some action like navigation up/down in stactrace wont
-          // work correctly
-          window.activate(null, false, false);
-        }
+        // let's activate tool window, but don't move focus
+        //
+        // window.show() isn't valid here, because it will not
+        // mark the window as "last activated" windows and thus
+        // some action like navigation up/down in stactrace wont
+        // work correctly
+        window.activate(null, false, false);
       }
     });
   }
