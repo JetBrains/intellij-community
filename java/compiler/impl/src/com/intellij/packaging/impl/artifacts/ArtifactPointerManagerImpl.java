@@ -56,18 +56,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
 
       @Override
       public void artifactChanged(@NotNull Artifact artifact, @NotNull String oldName) {
-        final ArtifactPointerImpl pointer = myPointers.get(artifact);
-        if (pointer != null) {
-          pointer.setName(artifact.getName());
-        }
-        
-        final ArtifactPointerImpl unresolved = myUnresolvedPointers.remove(artifact.getName());
-        if (unresolved != null) {
-          unresolved.setArtifact(artifact);
-          if (pointer == null) {
-            myPointers.put(artifact, unresolved);
-          }
-        }
+        artifactAdded(artifact);
       }
     });
   }
