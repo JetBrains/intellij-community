@@ -204,5 +204,6 @@
   <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
   <!-- <checkinHandlerFactory implementation="com.intellij.openapi.vcs.CheckRemoteStatusCheckinHandlerFactory"/> -->
 
+  <statistics.usagesCollector  implementation="com.intellij.ide.plugins.PluginsUsagesCollector"/>
   <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
 </extensions>
