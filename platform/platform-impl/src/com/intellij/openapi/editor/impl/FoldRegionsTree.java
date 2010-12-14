@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,9 @@ import java.util.Comparator;
 * User: cdr
 */
 abstract class FoldRegionsTree {
+
+  public static final boolean DEBUG = Boolean.getBoolean("idea.editor.debug.folding");
+  
   private FoldRegion[] myCachedVisible;
   private FoldRegion[] myCachedTopLevelRegions;
   private int[] myCachedEndOffsets;
@@ -189,6 +193,7 @@ abstract class FoldRegionsTree {
     return true;
   }
 
+  @Nullable
   FoldRegion fetchOutermost(int offset) {
     if (!isFoldingEnabledAndUpToDate()) return null;
 
@@ -206,6 +211,19 @@ abstract class FoldRegionsTree {
         start = i + 1;
       }
       else {
+        // We encountered situation when cached data is inconsistent. It's not clear what produced that, so, the following was done:
+        //     1. Corresponding check was added and cached data is rebuilt in case of inconsistency;
+        //     2. Debug asserts are activated if dedicated flag is on (it's off by default);
+        if (myCachedStartOffsets[i] != myCachedTopLevelRegions[i].getStartOffset()) {
+          if (DEBUG) {
+            assert false :
+              "inconsistent cached fold data detected. Start offsets: " + Arrays.toString(myCachedStartOffsets) 
+              + ", end offsets: " + Arrays.toString(myCachedEndOffsets) + ", top regions: " + Arrays.toString(myCachedTopLevelRegions)
+              + ", visible regions: " + Arrays.toString(myCachedVisible);
+          }
+          rebuild();
+          return fetchOutermost(offset);
+        }
         return myCachedTopLevelRegions[i];
       }
     }
@@ -218,6 +236,7 @@ abstract class FoldRegionsTree {
     return myCachedVisible;
   }
 
+  @Nullable
   FoldRegion[] fetchTopLevel() {
     if (!isFoldingEnabledAndUpToDate()) return null;
     return myCachedTopLevelRegions;

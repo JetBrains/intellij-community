@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -46,7 +45,7 @@ public class CodeInsightUtilBase {
   private CodeInsightUtilBase() {
   }
 
-  static <T extends PsiElement> T findElementInRange(final PsiFile file,
+  public static <T extends PsiElement> T findElementInRange(final PsiFile file,
                                                              int startOffset,
                                                              int endOffset,
                                                              final Class<T> klass,

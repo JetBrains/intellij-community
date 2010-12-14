@@ -28,9 +28,25 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
+/**
+ * @author Kirill Kalishev
+ * @author Konstantin Bulenkov
+ */
 public interface AnActionListener {
   void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
+
   void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
-  
+
   void beforeEditorTyping(char c, DataContext dataContext);
+
+  class Adapter implements AnActionListener {
+    @Override
+    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
+
+    @Override
+    public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
+
+    @Override
+    public void beforeEditorTyping(char c, DataContext dataContext) {}
+  }
 }
