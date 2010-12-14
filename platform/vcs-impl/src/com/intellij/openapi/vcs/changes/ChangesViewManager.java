@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -81,6 +82,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -208,7 +210,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @Override
   public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myRepaintAlarm.cancelAllRequests();
+    int was = myRepaintAlarm.cancelAllRequests();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("schedule refresh, was " + was);
+    }
     myRepaintAlarm.addRequest(new Runnable() {
       public void run() {
         refreshView();
@@ -228,6 +233,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       new Trinity<List<VirtualFile>, Integer, Integer>(manyUnversioned ? Collections.<VirtualFile>emptyList() : changeListManager.getUnversionedFiles(), unv.getFirst(),
                                                        unv.getSecond());
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("refresh view, unversioned collections size: " + unversionedPair.getFirst().size() + " unv size passed: " +
+      unversionedPair.getSecond() + " dirs: " + unversionedPair.getThird());
+    }
     myView.updateModel(changeListManager.getChangeListsCopy(), unversionedPair,
                        changeListManager.getDeletedFiles(),
                        changeListManager.getModifiedWithoutEditing(),
