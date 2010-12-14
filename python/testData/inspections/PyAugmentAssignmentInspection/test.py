@@ -12,4 +12,8 @@ var_6 = var_6 + var_4
 
 var_7 += 2
 
-<warning descr="Assignment can be replaced with augmented assignment">var = 2 + var</warning> # PY-2482
+#PY-2482
+<warning descr="Assignment can be replaced with augmented assignment">var = 2 + var</warning>
+
+# PY-2483
+<warning descr="Assignment can be replaced with augmented assignment">list[0] = list[0] + 1</warning>

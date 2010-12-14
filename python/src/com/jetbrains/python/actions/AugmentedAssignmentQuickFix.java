@@ -36,13 +36,14 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
     if (element != null && element instanceof PyAssignmentStatement && element.isWritable()) {
       PyAssignmentStatement statement = (PyAssignmentStatement)element;
 
-      PyTargetExpression target = ((PyTargetExpression)statement.getLeftHandSideExpression());
+      PyExpression target = statement.getLeftHandSideExpression();
       PyBinaryExpression expression = (PyBinaryExpression)statement.getAssignedValue();
       PyExpression leftExpression = expression.getLeftExpression();
       PyExpression rightExpression = expression.getRightExpression();
 
-      if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
-        if (leftExpression.getName().equals(target.getName())) {
+      if (leftExpression != null
+          && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
+        if (leftExpression.getText().equals(target.getText())) {
           if (rightExpression instanceof PyNumericLiteralExpression ||
                     rightExpression instanceof PyStringLiteralExpression
                           || rightExpression instanceof PyReferenceExpression) {
@@ -57,8 +58,9 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
           }
         }
       }
-      else if (rightExpression != null && rightExpression instanceof PyReferenceExpression) {
-        if (rightExpression.getName().equals(target.getName())) {
+      else if (rightExpression != null &&
+               (rightExpression instanceof PyReferenceExpression || rightExpression instanceof PySubscriptionExpression)) {
+        if (rightExpression.getText().equals(target.getText())) {
           if (leftExpression instanceof PyNumericLiteralExpression ||
                     leftExpression instanceof PyStringLiteralExpression) {
 

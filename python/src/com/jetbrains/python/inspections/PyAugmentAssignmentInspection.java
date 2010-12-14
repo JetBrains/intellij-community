@@ -36,15 +36,15 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
     @Override
     public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-      if (node.getLeftHandSideExpression() instanceof PyTargetExpression &&
-                            node.getAssignedValue() instanceof PyBinaryExpression) {
-        PyTargetExpression target = ((PyTargetExpression)node.getLeftHandSideExpression());
+      if (node.getAssignedValue() instanceof PyBinaryExpression) {
+        PyExpression target = node.getLeftHandSideExpression();
         PyBinaryExpression expression = (PyBinaryExpression)node.getAssignedValue();
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
         if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(expression.getOperator()) ||
               PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(expression.getOperator())) {
-          if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
+          if (leftExpression != null
+              && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
             if (leftExpression.getText().equals(target.getText())) {
               if (rightExpression instanceof PyNumericLiteralExpression) {
                 PyElementType op = expression.getOperator();
@@ -56,7 +56,8 @@ public class PyAugmentAssignmentInspection extends PyInspection {
               }
             }
           }
-          else if (rightExpression != null && rightExpression instanceof PyReferenceExpression) {
+          else if (rightExpression != null &&
+               (rightExpression instanceof PyReferenceExpression || rightExpression instanceof PySubscriptionExpression)) {
             if (rightExpression.getText().equals(target.getText())) {
               if (leftExpression instanceof PyNumericLiteralExpression) {
                 PyElementType op = expression.getOperator();
