@@ -246,9 +246,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     public void setValue(final IdeaPluginDescriptorImpl ideaPluginDescriptor, Boolean value) {
       final PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
-      myEnabled.put(currentPluginId, myEnabled.get(currentPluginId) == null ? Boolean.FALSE : value);
+      final Boolean enabled = myEnabled.get(currentPluginId) == null ? Boolean.FALSE : value;
+      myEnabled.put(currentPluginId, enabled);
       updatePluginDependencies();
-      if (value.booleanValue()) {
+      if (enabled.booleanValue()) {
         final Set<PluginId> deps = new HashSet<PluginId>();
         PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
             @Nullable
