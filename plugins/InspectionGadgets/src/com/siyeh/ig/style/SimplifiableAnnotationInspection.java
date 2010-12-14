@@ -101,17 +101,17 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
                 return;
             }
             final PsiNameValuePair[] attributes = parameterList.getAttributes();
-
             final PsiElement[] annotationChildren = annotation.getChildren();
             if (annotationChildren.length >= 2) {
                 final PsiElement child = annotationChildren[1];
                 if (child instanceof PsiWhiteSpace) {
+                    final String annotationName = nameReferenceElement.getText();
                     final String replacementText;
                     if (attributes.length > 0) {
-                        replacementText = '@' + nameReferenceElement.getText() +
+                        replacementText = '@' + annotationName +
                                 parameterList.getText();
                     } else {
-                        replacementText = '@' + nameReferenceElement.getText();
+                        replacementText = '@' + annotationName;
                     }
                     registerError(annotation, replacementText);
                     return;
@@ -122,15 +122,23 @@ public class SimplifiableAnnotationInspection extends BaseInspection {
                 if (children.length <= 0) {
                     return;
                 }
-                registerError(annotation, '@' + nameReferenceElement.getText());
+                final String annotationName = nameReferenceElement.getText();
+                registerError(annotation, '@' + annotationName);
             } else if (attributes.length == 1) {
                 final PsiNameValuePair attribute = attributes[0];
                 @NonNls final String name = attribute.getName();
                 if (!"value".equals(name)) {
                     return;
                 }
-                registerError(annotation, '@' + nameReferenceElement.getText() +
-                        '(' + attribute.getValue().getText() + ')');
+                final PsiAnnotationMemberValue attributeValue =
+                        attribute.getValue();
+                if (attributeValue == null) {
+                    return;
+                }
+                final String annotationName = nameReferenceElement.getText();
+                final String replacementText = '@' + annotationName +
+                        '(' + attributeValue.getText() + ')';
+                registerError(annotation, replacementText);
             }
         }
     }
