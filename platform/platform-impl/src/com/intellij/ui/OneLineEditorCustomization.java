@@ -15,22 +15,23 @@
  */
 package com.intellij.ui;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Defines common contract for building {@link EditorTextField} with necessary combinations of features.
- *
- * @author Denis Zhdanov
- * @since Aug 18, 2010 1:37:55 PM
- */
-public interface EditorTextFieldProvider {
+import java.util.EnumSet;
+import java.util.Set;
 
-  /**
-   * @param project   target project
-   * @param features  features to use within the returned editor text field
-   * @return          Multiline {@link EditorTextField} with spell checking support.
-   */
-  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull EditorCustomization.Feature ... features);
+/**
+ * @author Kirill Likhodedov
+ */
+public class OneLineEditorCustomization  implements EditorCustomization {
+  public Set<Feature> getSupportedFeatures() {
+    return EnumSet.of(Feature.ONE_LINE);
+  }
+
+  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+    if (Feature.ONE_LINE.equals(feature)) {
+      editor.setOneLineMode(true);
+    }
+  }
 }
