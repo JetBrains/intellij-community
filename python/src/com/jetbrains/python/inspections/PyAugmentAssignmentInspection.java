@@ -47,19 +47,16 @@ public class PyAugmentAssignmentInspection extends PyInspection {
           rightExpression = leftExpression;
           leftExpression = tmp;
         }
-        if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(expression.getOperator()) ||
-              PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(expression.getOperator()) ||
-                PyTokenTypes.SHIFT_OPERATIONS.contains(expression.getOperator())) {
+        PyElementType op = expression.getOperator();
+        if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(op) ||
+              PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(op) ||
+                PyTokenTypes.SHIFT_OPERATIONS.contains(op)) {
           if (leftExpression != null
               && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
             if (leftExpression.getText().equals(target.getText())) {
               if (rightExpression instanceof PyNumericLiteralExpression) {
-                PyElementType op = expression.getOperator();
-                if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
-                      op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
-                  AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
-                  registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
-                }
+                AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
+                registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
               }
               else {
                 PyType type = rightExpression.getType(myTypeEvalContext);
