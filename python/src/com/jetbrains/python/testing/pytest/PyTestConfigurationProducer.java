@@ -29,6 +29,7 @@ import java.util.List;
 
 public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
+  private boolean isActive = false;
 
   public PyTestConfigurationProducer() {
     super(ConfigurationTypeUtil.findConfigurationType(PyTestRunConfigurationType.class));
@@ -41,6 +42,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
+    if (!isActive) return null;
     PsiElement element = location.getPsiElement();
     PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
     if (file == null) return null;
@@ -73,6 +75,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       configuration.setName(name + " in " + configuration.getName());
       myPsiElement = pyFunction;
     }
+    configuration.setName(configuration.suggestedName());
     return result;
   }
 
@@ -115,5 +118,8 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       return -PREFERED;
     }
     return PREFERED;
+  }
+  public void setActive(boolean active) {
+    isActive = active;
   }
 }

@@ -106,4 +106,8 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     if (runner.exists()) return runner.getPath();
     return null;
   }
+  @Override
+  public String suggestedName() {
+    return "py.test in " + getName();
+  }
 }

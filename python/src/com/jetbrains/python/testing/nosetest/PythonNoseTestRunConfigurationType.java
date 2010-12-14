@@ -33,7 +33,7 @@ public class PythonNoseTestRunConfigurationType extends ConfigurationTypeBase {
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      myModel.addConfiguration(PyBundle.message("runcfg.nosetests.display_name"), false);
+      myModel.addConfiguration(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, false);
       return new PythonNoseTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }
