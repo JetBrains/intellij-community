@@ -18,7 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;

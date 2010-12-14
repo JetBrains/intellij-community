@@ -58,6 +58,7 @@ public class HighlightInfoHolder {
     myAnnotationSession = new AnnotationSession(contextFile);
   }
 
+  @NotNull
   public AnnotationSession getAnnotationSession() {
     return myAnnotationSession;
   }

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -50,7 +51,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myFile = file;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
-    myAnnotationHolder = new AnnotationHolderImpl();
+    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
