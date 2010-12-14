@@ -1088,6 +1088,22 @@ public class StringUtil {
   }
 
   @NotNull
+  public static String join(final String... strings) {
+    if (strings == null || strings.length == 0) return "";
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      for (final String string : strings) {
+        builder.append(string);
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  @NotNull
   public static String stripQuotesAroundValue(@NotNull String text) {
     if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
     if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
