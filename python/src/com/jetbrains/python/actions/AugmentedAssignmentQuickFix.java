@@ -52,7 +52,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
 
             PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(target.getName()).append(" ").
+            stringBuilder.append(target.getText()).append(" ").
                 append(expression.getPsiOperator().getText()).append("= ").append(rightExpression.getText());
             PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.getDefault(),
                                                           PyAugAssignmentStatementImpl.class, stringBuilder.toString());
