@@ -95,13 +95,19 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
     };
     FileDocumentManager.getInstance().saveAllDocuments();
-    final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(
-      ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor(), project);
-    final VirtualFile[] files = fileChooserDialog.choose(null, project);
-    if (files.length != 1) {
-      return;
+    final VirtualFile toUse;
+    if (file != null) {
+      toUse = file;
+    } else {
+      final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(
+        ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor(), project);
+      final VirtualFile[] files = fileChooserDialog.choose(null, project);
+      if (files.length != 1) {
+        return;
+      }
+      toUse = files[0];
     }
-    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback, files[0]);
+    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, callback, toUse);
     dialog.show();
   }
 

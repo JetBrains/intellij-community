@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -31,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -148,6 +150,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return advancedResolve(false).getElement();
   }
 
+  @Nullable
   private PsiElement resolveElement() {
     PsiElement element = getParent();
     while(element != null && (!(element instanceof PsiClass) || element instanceof PsiTypeParameter)) {
@@ -171,12 +174,20 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return resolveClassPreferringMyJar();
   }
 
+  @Nullable
   private PsiClass resolveClassPreferringMyJar() {
     PsiClass[] classes = JavaPsiFacade.getInstance(getProject()).findClasses(myQualifiedName, getResolveScope());
-    for (PsiClass aClass : classes) {
-      if (JavaDirectInheritorsSearcher.isFromTheSameJar(aClass, this)) return aClass;
+    if (classes.length == 0) return null;
+
+    if (classes.length > 1) {
+      VirtualFile jarFile = JavaDirectInheritorsSearcher.getJarFile(this);
+      if (jarFile != null) {
+        for (PsiClass aClass : classes) {
+          if (JavaDirectInheritorsSearcher.getJarFile(aClass) == jarFile) return aClass;
+        }
+      }
     }
-    return classes.length == 0 ? null : classes[0];
+    return classes[0];
   }
 
   public void processVariants(PsiScopeProcessor processor) {

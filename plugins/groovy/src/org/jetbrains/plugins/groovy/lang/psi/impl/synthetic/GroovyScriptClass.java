@@ -93,7 +93,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public boolean isValid() {
-    return myFile.isValid() && myFile.getTopStatements().length > 0;
+    return myFile.isValid() && myFile.isScript();
   }
 
   @NotNull

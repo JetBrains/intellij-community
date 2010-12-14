@@ -23,7 +23,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToPlainPredicate implements PsiElementPredicate {
+class ConvertToPlainPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiLiteralExpression)) {

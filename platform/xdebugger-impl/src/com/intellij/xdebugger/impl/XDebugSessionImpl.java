@@ -344,10 +344,19 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionResumed();
   }
 
-  public void showExecutionPoint(XSourcePosition sourcePosition) {
+  @Override
+  /**
+   * Causes the same effect as #positionReached, but without changing context,
+   * only updating position highlighting and re-enabling exceptions
+   */
+  public void updateExecutionPosition() {
     XExecutionStack activeExecutionStack = mySuspendContext.getActiveExecutionStack();
     boolean isTopFrame = activeExecutionStack != null && activeExecutionStack.getTopFrame() == myCurrentStackFrame;
-    myDebuggerManager.setActiveSession(this, sourcePosition, !isTopFrame);
+    myDebuggerManager.updateExecutionPoint(myCurrentStackFrame.getSourcePosition(), !isTopFrame);
+
+
+    disableBreakpoints();
+    enableBreakpoints();
   }
 
   public void showExecutionPoint() {

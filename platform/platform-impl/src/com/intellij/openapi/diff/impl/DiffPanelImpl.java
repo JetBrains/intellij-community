@@ -50,6 +50,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
@@ -89,8 +90,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   };
   private boolean myDisposed = false;
   private final GenericDataProvider myDataProvider;
+  private Project myProject;
 
   public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar) {
+    myProject = project;
     myOptions = new DiffPanelOptions(this);
     myPanel = new DiffPanelOutterComponent(TextDiffType.DIFF_TYPES, TOOL_BAR);
     myPanel.disableToolbar(!enableToolbar);
@@ -325,6 +328,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     myDataProvider.putData(myDiffRequest.getGenericData());
 
+    IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+    boolean isEditor2Focused = myData.getContent2() != null
+                               && getEditor2() != null
+                               && fm.getFocusedDescendantFor(getEditor2().getComponent()) != null;
+
     setContents(data.getContents()[0], data.getContents()[1]);
     setTitle1(data.getContentTitles()[0]);
     setTitle2(data.getContentTitles()[1]);
@@ -338,6 +346,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     final JComponent newBottomComponent = data.getBottomComponent();
     myPanel.setBottomComponent(newBottomComponent);
+
+
+    fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
+
     myPanel.requestScrollEditors();
   }
 

@@ -116,12 +116,17 @@ public class BlockSupportImpl extends BlockSupport {
           if (end > newFileText.length() && ApplicationManagerEx.getApplicationEx().isInternal()) {
             String newTextBefore = newFileText.subSequence(0, start).toString();
             String oldTextBefore = file.getText().subSequence(0, start).toString();
-            throw new AssertionError("IOOBE: type=" + elementType +
-                                     "; oldText=" + node.getText() +
-                                     "; newText=" + newFileText.subSequence(start, newFileText.length()) +
-                                     "; length=" + node.getTextLength() +
-                                     "; oldTextBefore=" + oldTextBefore +
-                                     "; newTextBefore=" + newTextBefore);
+            String message = "IOOBE: type=" + elementType +
+                             "; oldText=" + node.getText() +
+                             "; newText=" + newFileText.subSequence(start, newFileText.length()) +
+                             "; length=" + node.getTextLength();
+            if (oldTextBefore.equals(newTextBefore)) {
+              message += "; oldTextBefore==newTextBefore";
+            } else {
+              message += "; oldTextBefore=" + oldTextBefore +
+                         "; newTextBefore=" + newTextBefore;
+            }
+            throw new AssertionError(message);
           }
 
           CharSequence newTextStr = newFileText.subSequence(start, end);

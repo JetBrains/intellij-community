@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class CopyResourcesUtil {
   private CopyResourcesUtil() {
@@ -76,18 +78,25 @@ public final class CopyResourcesUtil {
     copyStreamToFile(stream, file);
   }
 
-  public static void copyFormsRuntime(final String targetDir, final boolean deleteOnExit) throws IOException {
-    copyClass(targetDir, "com/intellij/uiDesigner/core/AbstractLayout", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/DimensionInfo", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/GridConstraints", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/GridLayoutManager", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/HorizontalInfo", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/LayoutState", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/Spacer", deleteOnExit);
-    //copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode$1", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode$TextWithMnemonic", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/SupportCode", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/Util", deleteOnExit);
-    copyClass(targetDir, "com/intellij/uiDesigner/core/VerticalInfo", deleteOnExit);
+  public static List<File> copyFormsRuntime(final String targetDir, final boolean deleteOnExit) throws IOException {
+    String[] runtimeClasses = {
+      "AbstractLayout",
+      "DimensionInfo",
+      "GridConstraints",
+      "GridLayoutManager",
+      "HorizontalInfo",
+      "LayoutState",
+      "Spacer",
+      "SupportCode$TextWithMnemonic",
+      "SupportCode",
+      "Util",
+      "VerticalInfo",
+    };
+
+    List<File> copied = new ArrayList<File>();
+    for (String runtimeClass : runtimeClasses) {
+      copied.add(copyClass(targetDir, "com/intellij/uiDesigner/core/" + runtimeClass, deleteOnExit));
+    }
+    return copied;
   }
 }

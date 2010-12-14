@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -35,12 +36,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
  */
 public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiClassType>> {
   private final PsiClassType myClassType;
-  private final PsiElement myPlace;
   private final boolean myTriggerFeature;
 
-  public AfterNewClassInsertHandler(PsiClassType classType, PsiElement place, boolean triggerFeature) {
+  public AfterNewClassInsertHandler(PsiClassType classType, boolean triggerFeature) {
     myClassType = classType;
-    myPlace = place;
     myTriggerFeature = triggerFeature;
   }
 
@@ -50,15 +49,12 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     if (psiClass == null || !psiClass.isValid()) {
       return;
     }
-    PsiElement place = myPlace;
-    if (!(place instanceof GroovyPsiElement)) {
-      place = myPlace.getContainingFile();
-    }
-    PsiMethod[] constructors = ResolveUtil.getAllClassConstructors(psiClass, (GroovyPsiElement)place, resolveResult.getSubstitutor());
+    final GroovyPsiElement place = obtainPlace(context);
+    PsiMethod[] constructors = ResolveUtil.getAllClassConstructors(psiClass, place, resolveResult.getSubstitutor());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper();
     boolean hasParams = ContainerUtil.or(constructors, new Condition<PsiMethod>() {
       public boolean value(PsiMethod psiMethod) {
-        if (!resolveHelper.isAccessible(psiMethod, myPlace, null)) {
+        if (!resolveHelper.isAccessible(psiMethod, place, null)) {
           return false;
         }
 
@@ -80,5 +76,12 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     if (hasParams) AutoPopupController.getInstance(constructors[0].getProject()).autoPopupParameterInfo(context.getEditor(), null);
   }
 
-  
+  private static GroovyPsiElement obtainPlace(InsertionContext context) {
+    PsiElement place = context.getFile().findElementAt(context.getStartOffset());
+    assert place != null;
+    if (place instanceof GroovyPsiElement) {
+      return (GroovyPsiElement)place;
+    }
+    return (GroovyFileBase)place.getContainingFile();
+  }
 }

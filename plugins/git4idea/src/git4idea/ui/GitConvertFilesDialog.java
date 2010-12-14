@@ -24,7 +24,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -38,14 +42,25 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This dialog allows converting the specified files before committing them.
@@ -257,6 +272,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
    */
   private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
     boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
+    stdin = false;
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
       GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);

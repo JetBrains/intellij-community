@@ -21,8 +21,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
-import com.intellij.ide.dnd.DnDManager;
-import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -1090,9 +1088,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         if (psiElements == null) return null;
         Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
         for (PsiElement element : psiElements) {
-          if (element instanceof PsiFileSystemItem) {
-            files.add(((PsiFileSystemItem)element).getVirtualFile());
-          }
+          files.add(PsiUtilBase.getVirtualFile(element));
         }
         return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
       }

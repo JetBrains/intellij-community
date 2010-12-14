@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -109,7 +110,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     });
   }
 
-  private void runAnnotators(final PsiElement element, final HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
+  private void runAnnotators(PsiElement element, HighlightInfoHolder holder, AnnotationHolderImpl annotationHolder) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
@@ -129,9 +130,8 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       for (Annotation annotation : annotationHolder) {
         holder.add(HighlightInfo.fromAnnotation(annotation));
       }
-      annotationHolder.clear();
     }
-    annotationHolder.setSession(null);
+    annotationHolder.clear();
   }
 
   private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {

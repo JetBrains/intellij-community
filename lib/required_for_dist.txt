@@ -22,7 +22,7 @@ JNIWrap.jar
 jsf-api.jar
 jsp-api.jar
 junit.jar
-junit-4.6.jar
+junit-4.8.jar
 log4j.jar
 microba.jar
 nanoxml-2.2.3.jar

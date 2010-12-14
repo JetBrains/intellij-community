@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,15 @@ public abstract class MutablyNamedIntention extends Intention{
 
     protected abstract String getTextForElement(PsiElement element);
 
+    @Override
     @NotNull
-    public String getText(){
+    public final String getText(){
       return m_text;
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement node) {
+    @Override
+    public final boolean isAvailable(@NotNull Project project, Editor editor,
+                                     @NotNull PsiElement node) {
       final PsiElement element = findMatchingElement(node);
       if(element != null){
           m_text = getTextForElement(element);

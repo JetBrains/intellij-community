@@ -63,8 +63,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void pause();
   void resume();
 
-  void showExecutionPoint(XSourcePosition sourcePosition);
-
   void showExecutionPoint();
 
   void setCurrentStackFrame(@NotNull XStackFrame frame);
@@ -131,4 +129,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void rebuildViews();
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
+
+  void updateExecutionPosition();
 }

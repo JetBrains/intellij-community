@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         predicate = getElementPredicate();
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
         if(isFileReadOnly(project, file)){
@@ -173,7 +174,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
                                              Editor editor){
         final CaretModel caretModel = editor.getCaretModel();
         final int position = caretModel.getOffset();
-        PsiElement element = file.findElementAt(position);
+        final PsiElement element = file.findElementAt(position);
         return findMatchingElement(element);
     }
 
@@ -192,6 +193,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
       while (element != null) {
         if (predicate.satisfiedBy(element)) {
@@ -207,6 +209,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
       return false;
     }
 
+    @Override
     public boolean startInWriteAction(){
         return true;
     }
@@ -237,6 +240,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         return buffer.toString();
     }
 
+    @Override
     @NotNull
     public String getText() {
         //noinspection UnresolvedPropertyKey

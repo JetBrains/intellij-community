@@ -48,11 +48,31 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.io.*;
-import java.util.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.EventQueue;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 /**
  * Git environment for commit operations.
@@ -128,11 +148,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
-    if (message.length() == 0) {
-      //noinspection ThrowableInstanceNeverThrown
-      exceptions.add(new VcsException("Empty commit message is not supported for the Git"));
-      return exceptions;
-    }
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     if (GitConvertFilesDialog.showDialogIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {

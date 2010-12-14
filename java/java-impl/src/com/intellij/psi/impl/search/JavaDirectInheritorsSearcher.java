@@ -21,8 +21,10 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -142,33 +144,30 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   private static boolean processSameNamedClasses(Processor<PsiClass> consumer, PsiClass aClass, List<PsiClass> sameNamedClasses) {
     // if there is a class from the same jar, prefer it
     boolean sameJarClassFound = false;
-    for (PsiClass sameNamedClass : sameNamedClasses) {
-      boolean fromSameJar = isFromTheSameJar(sameNamedClass, aClass);
-      if (fromSameJar) {
-        sameJarClassFound = true;
-        if (!consumer.process(sameNamedClass)) return false;
+
+    VirtualFile jarFile = getJarFile(aClass);
+    if (jarFile != null) {
+      for (PsiClass sameNamedClass : sameNamedClasses) {
+        boolean fromSameJar = getJarFile(sameNamedClass) == jarFile;
+        if (fromSameJar) {
+          sameJarClassFound = true;
+          if (!consumer.process(sameNamedClass)) return false;
+        }
       }
     }
 
     if (!sameJarClassFound) {
-      for (PsiClass sameNamedClass : sameNamedClasses) {
-        if (!consumer.process(sameNamedClass)) return false;
-      }
+      return ContainerUtil.process(sameNamedClasses, consumer);
     }
     return true;
   }
 
-  private static VirtualFile getJarFile(PsiElement candidate) {
+  @Nullable
+  public static VirtualFile getJarFile(PsiElement candidate) {
     VirtualFile file = candidate.getContainingFile().getVirtualFile();
     if (file != null && file.getFileSystem() instanceof JarFileSystem) {
       return JarFileSystem.getInstance().getVirtualFileForJar(file);
     }
     return file;
   }
-  public static boolean isFromTheSameJar(PsiElement candidate, PsiElement other) {
-    VirtualFile c1 = getJarFile(candidate);
-    VirtualFile c2 = getJarFile(other);
-    return c1 != null && c1 == c2;
-  }
-
 }
