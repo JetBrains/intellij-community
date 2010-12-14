@@ -637,8 +637,11 @@ class PyDB:
                     exception = text
                     exc_type = get_class(exception)
                     if exc_type is not None:
-                        exception_set.remove(exc_type)
-                        always_exception_set.remove(exc_type)
+                        try:
+                            exception_set.remove(exc_type)
+                            always_exception_set.remove(exc_type)
+                        except:
+                            pass
                     update_exception_hook()
 
                 elif cmd_id == CMD_LOAD_SOURCE:
