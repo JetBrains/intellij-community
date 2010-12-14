@@ -31,6 +31,7 @@ import java.util.Set;
 public class PythonTestConfigurationsModel implements ComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
   public static final String PYTHONS_NOSETEST_NAME = PyBundle.message("runcfg.nosetests.display_name");
+  public static final String PY_TEST_NAME = PyBundle.message("runcfg.pytest.display_name");
   private static final PythonTestConfigurationsModel INSTANCE = new PythonTestConfigurationsModel();
 
   private final List<String> myConfigurationTypes = new ArrayList<String>();

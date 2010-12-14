@@ -33,7 +33,7 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      myModel.addConfiguration(PyBundle.message("runcfg.unittest.display_name"), false);
+      myModel.addConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, false);
       return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }

@@ -11,3 +11,5 @@ var_5 = var_5 + "string"
 var_6 = var_6 + var_4
 
 var_7 += 2
+
+<warning descr="Assignment can be replaced with augmented assignment">var = 2 + var</warning> # PY-2482

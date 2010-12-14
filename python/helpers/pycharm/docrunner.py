@@ -7,6 +7,7 @@ import traceback
 import datetime
 
 from tcunittest import TeamcityTestResult
+from tcmessages import TeamcityServiceMessages
 
 class TeamcityDocTestResult(TeamcityTestResult):
     """
@@ -57,6 +58,20 @@ class DocTestRunner(doctest.DocTestRunner):
         doctest.DocTestRunner.__init__(self, verbose, optionflags)
         self.stream = sys.stdout
         self.result = TeamcityDocTestResult(self.stream)
+        self._tests = []
+
+    def addTests(self, tests):
+      self._tests.extend(tests)
+
+    def addTest(self, test):
+        self._tests.append(test)
+
+    def countTests(self):
+      return len(self._tests)
+
+    def start(self):
+      for test in self._tests:
+        self.run(test)
 
     def __run(self, test, compileflags, out):
         failures = tries = 0
@@ -152,6 +167,8 @@ modules = {}
 
 from utrunner import debug, getModuleName, PYTHON_VERSION_MAJOR
 
+runner = DocTestRunner()
+
 def loadSource(fileName):
   """
   loads source from fileName,
@@ -175,15 +192,13 @@ def testfile(filename):
     text, filename = doctest._load_testfile(filename, None, False)
 
     name = os.path.basename(filename)
-    globs = {}
-    globs['__name__'] = '__main__'
+    globs = {'__name__': '__main__'}
 
-    runner = DocTestRunner()
     parser = doctest.DocTestParser()
     # Read the file, convert it to a test, and run it.
     test = parser.get_doctest(text, globs, name, filename, 0)
     if test.examples:
-      runner.run(test)
+      runner.addTest(test)
 
 def walkModules(modules, dirname, names):
   walkModulesUsingPattern(modules, dirname, names)
@@ -229,7 +244,6 @@ def testFilesInFolderUsingPattern(folder, pattern = ".*"):
   return result
 
 if __name__ == "__main__":  
-  runner = DocTestRunner()
   finder = doctest.DocTestFinder()
 
   for arg in sys.argv[1:]:
@@ -265,7 +279,7 @@ if __name__ == "__main__":
         tests = finder.find(module, module.__name__)
         for test in tests:
           if test.examples:
-            runner.run(test)
+            runner.addTest(test)
 
     elif len(a) == 2:
       # From testcase
@@ -277,8 +291,7 @@ if __name__ == "__main__":
       if hasattr(module, a[1]):
         testcase = getattr(module, a[1])
         tests = finder.find(testcase, testcase.__name__)
-        for test in tests:
-            runner.run(test)
+        runner.addTests(tests)
       else:
         raise NameError('Module "%s" has no class "%s"' % (a[0], a[1]))
     else:
@@ -293,8 +306,7 @@ if __name__ == "__main__":
           if hasattr(module, a[2]):
             testcase = getattr(module, a[2])
             tests = finder.find(testcase, testcase.__name__)
-            for test in tests:
-              runner.run(test)
+            runner.addTests(tests)
           else:
             raise NameError('Module "%s" has no method "%s"' % (a[0], a[2]))
       else:
@@ -304,9 +316,12 @@ if __name__ == "__main__":
             if hasattr(testCaseClass, a[2]):
               testcase = getattr(testCaseClass, a[2])
               tests = finder.find(testcase, testcase.__name__)
-              for test in tests:
-                runner.run(test)
+              runner.addTests(tests)
             else:
               raise NameError('Class "%s" has no function "%s"' % (testCaseClass, a[2]))
           else:
             raise NameError('Module "%s" has no class "%s"' % (module, a[1]))
+
+  debug("/ Loaded " + str(runner.countTests()) + " tests")
+  TeamcityServiceMessages(sys.stdout).testCount(runner.countTests())
+  runner.start()
