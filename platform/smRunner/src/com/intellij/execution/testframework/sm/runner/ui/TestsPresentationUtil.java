@@ -174,10 +174,17 @@ public class TestsPresentationUtil {
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else {
-      renderer.setIcon(PoolOfTestIcons.NOT_RAN);
-      renderer.append(SMTestsRunnerBundle.message(
+      if (!testProxy.getChildren().isEmpty()) {
+        // some times test proxy may be updated faster than tests tree
+        // so let's process such situation correctly
+        formatRootNodeWithChildren(testProxy, renderer);
+      }
+      else {
+        renderer.setIcon(PoolOfTestIcons.NOT_RAN);
+        renderer.append(SMTestsRunnerBundle.message(
           "sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
-                      SimpleTextAttributes.ERROR_ATTRIBUTES);
+                        SimpleTextAttributes.ERROR_ATTRIBUTES);
+      }
     }
   }
 
