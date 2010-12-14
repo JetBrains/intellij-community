@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * @deprecated old Java parser is deprecated in favor of PSI builder-based one (see com.intellij.lang.java.parser.*) (to remove in IDEA 11).
  */
 public class FileTextParsing extends Parsing {
   public FileTextParsing(JavaParsingContext context) {
