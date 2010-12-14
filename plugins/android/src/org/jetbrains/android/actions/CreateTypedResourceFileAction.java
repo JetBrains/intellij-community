@@ -102,7 +102,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     FileTemplateManager manager = FileTemplateManager.getInstance();
-    String templateName = myValuesResourceFile ? AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE : AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
+    String templateName = getTemplateName();
     FileTemplate template = manager.getJ2eeTemplate(templateName);
     Properties properties = new Properties();
     if (!myValuesResourceFile) {
@@ -135,35 +135,45 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
     return new PsiElement[]{createdElement};
   }
 
- /* private void invokeCompletion(Project project, final Editor editor, XmlFile file) {
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, file, 1);
-    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    if (indicator != null) {
-      final LookupImpl lookup = indicator.getLookup();
-      lookup.setAdditionalPrefix(myDefaultRootTag);
-      lookup.addLookupListener(new LookupAdapter() {
-        boolean prefixCanceled;
-
-        @Override
-        public void itemSelected(LookupEvent event) {
-          TemplateManagerImpl.getTemplateState(editor).gotoEnd();
-        }
-
-        @Override
-        public void currentItemChanged(LookupEvent event) {
-          if (!prefixCanceled) {
-            prefixCanceled = true;
-            lookup.setAdditionalPrefix("");
-          }
-        }
-
-        @Override
-        public void lookupCanceled(LookupEvent event) {
-        }
-      });
+  private String getTemplateName() {
+    if (myValuesResourceFile) {
+      return AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE;
     }
+    if ("layout".equals(myResourceType)) {
+      return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
+    }
+    return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
   }
-*/
+
+  /* private void invokeCompletion(Project project, final Editor editor, XmlFile file) {
+      new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, file, 1);
+      CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      if (indicator != null) {
+        final LookupImpl lookup = indicator.getLookup();
+        lookup.setAdditionalPrefix(myDefaultRootTag);
+        lookup.addLookupListener(new LookupAdapter() {
+          boolean prefixCanceled;
+
+          @Override
+          public void itemSelected(LookupEvent event) {
+            TemplateManagerImpl.getTemplateState(editor).gotoEnd();
+          }
+
+          @Override
+          public void currentItemChanged(LookupEvent event) {
+            if (!prefixCanceled) {
+              prefixCanceled = true;
+              lookup.setAdditionalPrefix("");
+            }
+          }
+
+          @Override
+          public void lookupCanceled(LookupEvent event) {
+          }
+        });
+      }
+    }
+  */
   @Override
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
