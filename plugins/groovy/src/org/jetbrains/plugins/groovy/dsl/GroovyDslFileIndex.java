@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -368,6 +369,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     e.printStackTrace(new PrintWriter(writer));
     final String exceptionText = writer.toString();
     LOG.info(exceptionText);
+
+    if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
+      return;
+    }
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
       new Notification("Groovy DSL parsing", "DSL script execution error",
