@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
-import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +47,18 @@ public class PyAugmentAssignmentInspection extends PyInspection {
           if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
             if (leftExpression.getText().equals(target.getText())) {
               if (rightExpression instanceof PyNumericLiteralExpression) {
+                PyElementType op = expression.getOperator();
+                if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
+                      op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
+                  AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
+                  registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
+                }
+              }
+            }
+          }
+          else if (rightExpression != null && rightExpression instanceof PyReferenceExpression) {
+            if (rightExpression.getText().equals(target.getText())) {
+              if (leftExpression instanceof PyNumericLiteralExpression) {
                 PyElementType op = expression.getOperator();
                 if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
                       op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
