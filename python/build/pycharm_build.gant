@@ -257,6 +257,7 @@ target('default': "Build artifacts") {
     }
   }
   executeExternalAnt("file.name": "pycharm",
+                     "dmg.image.name" : "${home}/python/build/DMG_background.png",
                      "$home/build/buildDmg.xml")
 
   buildTarGz()
