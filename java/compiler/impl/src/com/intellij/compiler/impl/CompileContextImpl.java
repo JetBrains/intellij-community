@@ -21,6 +21,7 @@
  */
 package com.intellij.compiler.impl;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
@@ -61,6 +62,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final DependencyCache myDependencyCache;
   private final boolean myMake;
   private final boolean myIsRebuild;
+  private final boolean myIsAnnotationProcessorsEnabled;
   private boolean myRebuildRequested = false;
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
@@ -86,6 +88,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myStartCompilationStamp = System.currentTimeMillis();
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     myProjectCompileScope = new ProjectCompileScope(myProject);
+    myIsAnnotationProcessorsEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
 
     if (compilerSession != null) {
       compilerSession.setContentIdKey(compileScope.getUserData(CompilerManager.CONTENT_ID_KEY));
@@ -416,6 +419,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   public boolean isRebuild() {
     return myIsRebuild;
+  }
+
+  public boolean isAnnotationProcessorsEnabled() {
+    return myIsAnnotationProcessorsEnabled;
   }
 
   public void addScope(final CompileScope additionalScope) {

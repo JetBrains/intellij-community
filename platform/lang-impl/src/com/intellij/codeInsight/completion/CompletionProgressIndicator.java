@@ -287,9 +287,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       private void processModifier(KeyEvent e) {
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
-          myState.setModifiersReleased(true);
+          myState.modifiersChanged();
           if (myState.isWaitingAfterAutoInsertion()) {
-            cleanup();
+            unregisterItself();
           }
           contentComponent.removeKeyListener(this);
         }
@@ -320,42 +320,60 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void liveAfterDeath(@Nullable final LightweightHint hint) {
     myState.assertDisposed();
 
-    if (myState.isModifiersReleased() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myState.areModifiersChanged() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
+
     registerItself();
-    myState.setCompletionHint(hint);
-    if (hint != null) {
-      hint.addHintListener(new HintListener() {
-        public void hintHidden(final EventObject event) {
-          hint.removeHintListener(this);
-          cleanup();
-        }
-      });
-    }
-    final Document document = myEditor.getDocument();
-    document.addDocumentListener(new DocumentAdapter() {
+
+
+    final HintListener hintListener = new HintListener() {
+      public void hintHidden(final EventObject event) {
+        unregisterItself();
+      }
+    };
+    final DocumentAdapter documentListener = new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
-        document.removeDocumentListener(this);
-        cleanup();
+        unregisterItself();
       }
-    });
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    selectionModel.addSelectionListener(new SelectionListener() {
+    };
+    final SelectionListener selectionListener = new SelectionListener() {
       public void selectionChanged(SelectionEvent e) {
-        selectionModel.removeSelectionListener(this);
-        cleanup();
+        unregisterItself();
       }
-    });
-    final CaretModel caretModel = myEditor.getCaretModel();
-    caretModel.addCaretListener(new CaretListener() {
+    };
+    final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e) {
-        caretModel.removeCaretListener(this);
-        cleanup();
+        unregisterItself();
+      }
+    };
+
+    final Document document = myEditor.getDocument();
+    final SelectionModel selectionModel = myEditor.getSelectionModel();
+    final CaretModel caretModel = myEditor.getCaretModel();
+
+
+    if (hint != null) {
+      hint.addHintListener(hintListener);
+    }
+    document.addDocumentListener(documentListener);
+    selectionModel.addSelectionListener(selectionListener);
+    caretModel.addCaretListener(caretListener);
+
+    myState.goZombie(hint, new Runnable() {
+      @Override
+      public void run() {
+        if (hint != null) {
+          hint.removeHintListener(hintListener);
+        }
+        document.removeDocumentListener(documentListener);
+        selectionModel.removeSelectionListener(selectionListener);
+        caretModel.removeCaretListener(caretListener);
       }
     });
+
   }
 
   public CodeCompletionHandlerBase getHandler() {
@@ -457,7 +475,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
-    cleanup();
+    unregisterItself();
   }
 
   @TestOnly
@@ -468,12 +486,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private void cleanup() {
+  private void unregisterItself() {
     myState.handleDeath();
-    unregisterItself();
-  }
-
-  private static void unregisterItself() {
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    assert currentCompletion == this : currentCompletion + "!=" + this;
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
@@ -585,9 +601,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void rememberDocumentState() {
     myState.assertDisposed();
-    if (myState.isModifiersReleased()) {
-      return;
-    }
+    assert !myState.areModifiersChanged() : myState;
 
     final String documentText = myEditor.getDocument().getText();
     final int caret = myEditor.getCaretModel().getOffset();
@@ -662,7 +676,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void scheduleRestart() {
-    myState.setRestartScheduled(true);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myState.scheduleRestart();
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {

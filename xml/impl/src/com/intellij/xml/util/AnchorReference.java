@@ -16,6 +16,8 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
@@ -202,7 +204,12 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     final Map<String, XmlTag> idMap = getIdMap();
     if (idMap == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
-    return idMap.keySet().toArray(new Object[idMap.size()]);
+    String[] variants = idMap.keySet().toArray(new String[idMap.size()]);
+    LookupElement[] elements = new LookupElement[variants.length];
+    for (int i = 0, variantsLength = variants.length; i < variantsLength; i++) {
+      elements[i] = LookupElementBuilder.create(variants[i]).setCaseSensitive(true);
+    }
+    return elements;
   }
 
   @Nullable

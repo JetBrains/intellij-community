@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -35,6 +36,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
   protected final Project myProject;
 
   public NonClasspathClassFinder(Project project) {
@@ -53,7 +55,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         final VirtualFile classFile = classRoot.findFileByRelativePath(qualifiedName.replace('.', '/') + ".class");
         if (classFile != null) {
           if (!classFile.isValid()) {
-            throw new AssertionError("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
+            LOG.error("Invalid child of valid parent: " + classFile.getPath() + "; " + classRoot.isValid() + " path=" + classRoot.getPath());
+            return null;
           }
           final PsiFile file = PsiManager.getInstance(myProject).findFile(classFile);
           if (file instanceof PsiClassOwner) {

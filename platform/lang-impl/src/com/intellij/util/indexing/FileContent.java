@@ -42,9 +42,9 @@ public final class FileContent extends UserDataHolderBase {
   private final VirtualFile myFile;
   private final String fileName;
   private final FileType myFileType;
-  private Charset myCharset;
+  private final Charset myCharset;
   private byte[] myContent;
-  private CharSequence myContentAsText = null;
+  private CharSequence myContentAsText;
 
   public Project getProject() {
     return getUserData(FileBasedIndex.PROJECT);
@@ -81,26 +81,25 @@ public final class FileContent extends UserDataHolderBase {
     public IllegalDataException(final String message) {
       super(message);
     }
-
-    public IllegalDataException(final String message, final Throwable cause) {
-      super(message, cause);
-    }
   }
 
   public FileContent(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
-    this(file);
-    myContentAsText = contentAsText;
-    myCharset = charset;
+    this(file, contentAsText, null, charset);
   }
 
   public FileContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file);
-    myContent = content;
-    myCharset = LoadTextUtil.detectCharsetAndSetBOM(file, content);
+    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content));
   }
 
   public FileContent(@NotNull final VirtualFile file) {
+    this(file, null, null, null);
+  }
+
+  private FileContent(@NotNull VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset) {
     myFile = file;
+    myContentAsText = contentAsText;
+    myContent = content;
+    myCharset = charset;
     myFileType = FileTypeManager.getInstance().getFileTypeByFile(file);
     // remember name explicitly because the file could be renamed afterwards
     fileName = file.getName();

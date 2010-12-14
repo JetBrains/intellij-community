@@ -21,8 +21,11 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -32,13 +35,22 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl");
   private AnnotationSession myAnnotationSession;
 
+  AnnotationHolderImpl() {
+  }
+  public AnnotationHolderImpl(@NotNull AnnotationSession session) {
+    myAnnotationSession = session;
+  }
+
   public Annotation createErrorAnnotation(@NotNull PsiElement elt, String message) {
+    assertMyFile(elt);
     return createAnnotation(elt.getTextRange(), HighlightSeverity.ERROR, message);
   }
 
   public Annotation createErrorAnnotation(@NotNull ASTNode node, String message) {
+    assertMyFile(node.getPsi());
     return createAnnotation(node.getTextRange(), HighlightSeverity.ERROR, message);
   }
 
@@ -47,10 +59,12 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   public Annotation createWarningAnnotation(@NotNull PsiElement elt, String message) {
+    assertMyFile(elt);
     return createAnnotation(elt.getTextRange(), HighlightSeverity.WARNING, message);
   }
 
   public Annotation createWarningAnnotation(@NotNull ASTNode node, String message) {
+    assertMyFile(node.getPsi());
     return createAnnotation(node.getTextRange(), HighlightSeverity.WARNING, message);
   }
 
@@ -59,10 +73,12 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   public Annotation createInformationAnnotation(@NotNull PsiElement elt, String message) {
+    assertMyFile(elt);
     return createAnnotation(elt.getTextRange(), HighlightSeverity.INFO, message);
   }
 
   public Annotation createInformationAnnotation(@NotNull ASTNode node, String message) {
+    assertMyFile(node.getPsi());
     return createAnnotation(node.getTextRange(), HighlightSeverity.INFO, message);
   }
 
@@ -71,11 +87,27 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {
+    assertMyFile(elt);
     return createAnnotation(elt.getTextRange(), HighlightSeverity.INFORMATION, message);
   }
 
   public Annotation createInfoAnnotation(@NotNull ASTNode node, String message) {
+    assertMyFile(node.getPsi());
     return createAnnotation(node.getTextRange(), HighlightSeverity.INFORMATION, message);
+  }
+
+  private void assertMyFile(PsiElement node) {
+    if (node == null) return;
+    PsiFile myFile = myAnnotationSession.getFile();
+    PsiFile containingFile = node.getContainingFile();
+    LOG.assertTrue(containingFile != null, node);
+    VirtualFile containingVFile = containingFile.getVirtualFile();
+    VirtualFile myVFile = myFile.getVirtualFile();
+    if (containingVFile != myVFile) {
+      LOG.error(
+        "Annotation must be registered for an element inside '" + myFile + "' which is in '" + myVFile + "'.\n" +
+        "Element passed: '" + node + "' is inside the '" + containingFile + "' which is in '" + containingVFile + "'");
+    }
   }
 
   public Annotation createInfoAnnotation(@NotNull TextRange range, String message) {
@@ -96,12 +128,19 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
-  public void setSession(AnnotationSession annotationSession) {
+  void setSession(@NotNull AnnotationSession annotationSession) {
     myAnnotationSession = annotationSession;
   }
 
   @Override
+  @NotNull("it's not null during highlighting")
   public AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    myAnnotationSession = null;
   }
 }

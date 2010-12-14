@@ -167,7 +167,7 @@ public class JavacCompiler extends ExternalCompiler {
         public String[] compute() {
           try {
             final List<String> commandLine = new ArrayList<String>();
-            createStartupCommand(chunk, commandLine, outputPath, JavacSettings.getInstance(myProject));
+            createStartupCommand(chunk, commandLine, outputPath, JavacSettings.getInstance(myProject), context.isAnnotationProcessorsEnabled());
             return ArrayUtil.toStringArray(commandLine);
           }
           catch (IOException e) {
@@ -186,7 +186,7 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   private void createStartupCommand(final ModuleChunk chunk, @NonNls final List<String> commandLine, final String outputPath,
-                                    JavacSettings javacSettings) throws IOException {
+                                    JavacSettings javacSettings, final boolean annotationProcessorsEnabled) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString) || !(jdk.getSdkType() instanceof JavaSdkType)) {
@@ -220,7 +220,7 @@ public class JavacCompiler extends ExternalCompiler {
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex, myProject);
+      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex, myProject, annotationProcessorsEnabled);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -281,7 +281,7 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
-                                                   int versionIndex, Project project) {
+                                                   int versionIndex, Project project, final boolean annotationProcessorsEnabled) {
     final List<String> additionalOptions = new ArrayList<String>();
     StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(project), " ");
     if (versionIndex < 6) {
@@ -319,9 +319,11 @@ public class JavacCompiler extends ExternalCompiler {
     }
     else {
       if (versionIndex > 5) {
-        // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
-        // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
-        additionalOptions.add("-proc:none");
+        if (annotationProcessorsEnabled) {
+          // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
+          // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
+          additionalOptions.add("-proc:none");
+        }
       }
     }
 

@@ -1148,6 +1148,10 @@ public class StringUtil {
     }
 
     if (name.endsWith("ies")) {
+      if (name.endsWith("cookies") || name.endsWith("Cookies")) {
+        return name.substring(0, name.length() - "ookies".length()) + "ookie";
+      }
+
       return name.substring(0, name.length() - 3) + "y";
     }
 

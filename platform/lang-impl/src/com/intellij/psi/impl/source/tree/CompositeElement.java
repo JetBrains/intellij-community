@@ -20,6 +20,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -54,6 +55,7 @@ public class CompositeElement extends TreeElement {
   private volatile int myCachedLength = NOT_CACHED;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
+  private static final boolean ASSERT_THREADING = DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
@@ -66,13 +68,15 @@ public class CompositeElement extends TreeElement {
   public Object clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
-    clone.clearCaches();
-    clone.firstChild = null;
-    clone.lastChild = null;
-    clone.myModificationsCount = 0;
-    clone.myWrapper = null;
-    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
-      clone.rawAddChildren((TreeElement)child.clone());
+    synchronized (PsiLock.LOCK) {
+      clone.clearCaches();
+      clone.firstChild = null;
+      clone.lastChild = null;
+      clone.myModificationsCount = 0;
+      clone.myWrapper = null;
+      for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
+        clone.rawAddChildren((TreeElement)child.clone());
+      }
     }
     return clone;
   }
@@ -98,7 +102,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public void clearCaches() {
-    if (DebugUtil.CHECK) {
+    if (ASSERT_THREADING) {
       PsiElement wrapper = myWrapper;
       LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed() ||
                      Thread.holdsLock(PsiLock.LOCK) ||
@@ -120,20 +124,28 @@ public class CompositeElement extends TreeElement {
   }
 
   public LeafElement findLeafElementAt(int offset) {
-    TreeElement child = getFirstChildNode();
-    while (child != null) {
-      final int textLength = child.getTextLength();
-      if (textLength > offset) {
-        if (child instanceof ForeignLeafPsiElement) {
-          child = child.getTreeNext();
-          continue;
+    TreeElement element = this;
+    startFind:
+    while (true) {
+      TreeElement child = element.getFirstChildNode();
+      while (child != null) {
+        final int textLength = child.getTextLength();
+        if (textLength > offset) {
+          if (child instanceof LeafElement) {
+            if (child instanceof ForeignLeafPsiElement) {
+              child = child.getTreeNext();
+              continue;
+            }
+            return (LeafElement)child;
+          }
+          element = child;
+          continue startFind;
         }
-        return child.findLeafElementAt(offset);
+        offset -= textLength;
+        child = child.getTreeNext();
       }
-      offset -= textLength;
-      child = child.getTreeNext();
+      return null;
     }
-    return null;
   }
 
   public ASTNode findChildByType(IElementType type) {

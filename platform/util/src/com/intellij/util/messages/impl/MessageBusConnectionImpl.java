@@ -73,6 +73,11 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   public void disconnect() {
+    Queue<Message> jobs = myPendingMessages.get();
+    if (!jobs.isEmpty()) {
+      LOG.error("Not delivered events in the queue: "+jobs);
+    }
+    myPendingMessages.remove();
     myBus.notifyConnectionTerminated(this);
   }
 

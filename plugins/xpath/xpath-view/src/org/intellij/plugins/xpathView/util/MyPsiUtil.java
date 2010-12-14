@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.util;
 
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -138,7 +139,7 @@ public class MyPsiUtil {
         return false;
     }
 
-    public static String checkFile(PsiFile file) {
+    public static String checkFile(final PsiFile file) {
         final String[] error = new String[1];
         file.accept(new PsiRecursiveElementVisitor() {
             public void visitErrorElement(PsiErrorElement element) {
@@ -150,7 +151,7 @@ public class MyPsiUtil {
         final Annotator annotator = LanguageAnnotators.INSTANCE.forLanguage(file.getLanguage());
         file.accept(new PsiRecursiveElementVisitor() {
             public void visitElement(PsiElement element) {
-                annotator.annotate(element, new AnnotationHolderImpl() {
+                annotator.annotate(element, new AnnotationHolderImpl(new AnnotationSession(file)) {
                     public Annotation createErrorAnnotation(@NotNull ASTNode astNode, String string) {
                         error[0] = string;
                         return super.createErrorAnnotation(astNode, string);
