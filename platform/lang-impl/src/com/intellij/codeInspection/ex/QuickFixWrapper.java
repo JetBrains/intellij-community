@@ -44,9 +44,10 @@ public class QuickFixWrapper implements IntentionAction {
 
   public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber > -1);
-    LOG.assertTrue(descriptor.getFixes() != null && descriptor.getFixes().length > fixNumber);
+    QuickFix[] fixes = descriptor.getFixes();
+    LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
-    final QuickFix fix = descriptor.getFixes()[fixNumber];
+    final QuickFix fix = fixes[fixNumber];
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, fixNumber);
   }
 

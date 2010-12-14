@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -142,6 +144,32 @@ target(aaa: "") {
     }
   }
 }""", "include", "includesfile", "includeTargets", "includeTool"
+  }
+
+  public void testUntypedTargets() throws Exception {
+    myFixture.enableInspections(new GroovyUntypedAccessInspection())
+
+    myFixture.configureByText "a.gant", """
+target (default : '') {
+        echo(message: 'Echo task.')
+        copy(file: 'from.txt', tofile: 'to.txt')
+        delete(file: 'to.txt')
+}"""
+    myFixture.checkHighlighting(true, false, false)
+
+  }
+
+  public void testStringTargets() throws Exception {
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
+
+    myFixture.configureByText "a.gant", """
+target (default : '') {
+  echo<warning descr="'echo' cannot be applied to '(java.io.FileInputStream)'">(new FileInputStream<warning descr="Ambiguous constructor call">()</warning>)</warning>
+  echo("hello2")
+  echo(message: 'Echo task.')
+  ant.fail('Failure reason')
+}"""
+    myFixture.checkHighlighting(true, false, false)
   }
 
   static final def GANT_JARS = ["gant.jar", "ant.jar", "ant-junit.jar", "ant-launcher.jar", "commons.jar"]

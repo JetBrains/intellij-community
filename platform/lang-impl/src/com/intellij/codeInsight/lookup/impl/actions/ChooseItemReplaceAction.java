@@ -17,6 +17,8 @@
 package com.intellij.codeInsight.lookup.impl.actions;
 
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionProcess;
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -49,7 +51,8 @@ public class ChooseItemReplaceAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup != null) {
-        if (hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
+        CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+        if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
           return false;
         }
 

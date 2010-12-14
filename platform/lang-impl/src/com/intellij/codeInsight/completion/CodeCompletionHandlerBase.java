@@ -108,10 +108,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   public void invokeCompletion(final Project project, final Editor editor, final PsiFile psiFile, int time) {
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CodeCompletionHandlerBase.doComplete");
-    }
-
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
     }
@@ -258,9 +254,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private void doComplete(final int invocationCount, CompletionInitializationContext initContext) {
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CodeCompletionHandlerBase.doComplete");
-    }
     final Editor editor = initContext.getEditor();
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
@@ -281,16 +274,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (freezeSemaphore.waitFor(2000)) {
       final LookupElement[] allItems = data.get();
-      if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-        System.out.println("allItems = " + allItems);
-      }
       if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems);
         return;
       }
-    }
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("backgrounded");
     }
 
     indicator.notifyBackgrounded();
@@ -471,11 +458,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final int offset2,
                                     final CompletionProgressIndicator indicator,
                                     final LookupElement[] items) {
-    if (CompletionAutoPopupHandler.ourTestingAutopopup) {
-      System.out.println("CodeCompletionHandlerBase.completionFinished");
-      System.out.println("items " + Arrays.asList(items));
-    }
-
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
       handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator);

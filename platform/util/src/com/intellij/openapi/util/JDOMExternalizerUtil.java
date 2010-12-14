@@ -18,6 +18,8 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,6 +34,17 @@ public class JDOMExternalizerUtil {
     root.addContent(element);
   }
 
+  @NotNull
+  public static String readField(Element parent, @NonNls String fieldName, @NotNull String defaultValue) {
+    String val = readField(parent, fieldName);
+    if (val != null) {
+      return val;
+    } else {
+      return defaultValue;
+    }
+  }
+
+  @Nullable
   public static String readField(Element parent, @NonNls String fieldName) {
     List list = parent.getChildren("option");
     for (int i = 0; i < list.size(); i++) {

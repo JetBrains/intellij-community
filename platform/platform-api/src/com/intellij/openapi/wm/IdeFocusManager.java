@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
 
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
+
+  public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);

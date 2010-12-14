@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.make;
 
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,10 +34,12 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
@@ -149,6 +152,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
     final HashSet<Module> processedModules = new HashSet<Module>();
 
+    final List<File> filesToRefresh = new ArrayList<File>();
     for (ProcessingItem item1 : items) {
       context.getProgressIndicator().setFraction((double)(++formsProcessed) / ((double)items.length));
 
@@ -165,11 +169,11 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
               try {
                 if (moduleOutputPath != null) {
-                  CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false);
+                  filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
                 }
                 final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
                 if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
-                  CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false);
+                  filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
                 }
               }
               catch (IOException e) {
@@ -210,6 +214,8 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
         }
       }, ModalityState.NON_MODAL);
     }
+
+    CompilerUtil.refreshIOFiles(filesToRefresh);
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
   }
 

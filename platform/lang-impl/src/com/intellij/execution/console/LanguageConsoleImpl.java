@@ -38,10 +38,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -490,40 +487,41 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   private void installEditorFactoryListener() {
-    final EditorFactoryListener factoryListener = new EditorFactoryListener() {
-      public void editorCreated(final EditorFactoryEvent event) {
-        final Editor editor = event.getEditor();
-        if (editor.getDocument() == myEditorDocument) {
-          if (myConsoleEditor != null) {
-            // i.e. if console is initialized
-            queueUiUpdate(false);
+    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileOpened(FileEditorManager source, VirtualFile file) {
+        if (file != myFile.getVirtualFile()) return;
+        if (myConsoleEditor != null) {
+          queueUiUpdate(false);
+          for (FileEditor fileEditor : source.getAllEditors()) {
+            if (!(fileEditor instanceof TextEditor)) continue;
+            final Editor editor = ((TextEditor)fileEditor).getEditor();
             registerActionShortcuts(editor.getComponent());
-          }
-          editor.getCaretModel().addCaretListener(new CaretListener() {
-            public void caretPositionChanged(CaretEvent e) {
-              queueUiUpdate(false);
-            }
-          });
-          editor.getContentComponent().addFocusListener(new FocusListener() {
-            public void focusGained(final FocusEvent e) {
-              myCurrentEditor = editor;
-            }
+            editor.getCaretModel().addCaretListener(new CaretListener() {
+              public void caretPositionChanged(CaretEvent e) {
+                queueUiUpdate(false);
+              }
+            });
+            editor.getContentComponent().addFocusListener(new FocusListener() {
+              public void focusGained(final FocusEvent e) {
+                myCurrentEditor = editor;
+              }
 
-            public void focusLost(final FocusEvent e) {
-            }
-          });
-        }
-      }
-
-      public void editorReleased(final EditorFactoryEvent event) {
-        if (event.getEditor().getDocument() == myEditorDocument) {
-          if (myUiUpdateRunnable != null) {
-            ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
+              public void focusLost(final FocusEvent e) {
+              }
+            });
           }
         }
       }
-    };
-    EditorFactory.getInstance().addEditorFactoryListener(factoryListener, this);
+
+      @Override
+      public void fileClosed(FileEditorManager source, VirtualFile file) {
+        if (file != myFile.getVirtualFile()) return;
+        if (myUiUpdateRunnable != null) {
+          ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
+        }
+      }
+    });
   }
 
   protected void registerActionShortcuts(JComponent component) {

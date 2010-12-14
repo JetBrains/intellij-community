@@ -134,10 +134,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
-        final int formatVersion = Integer.parseInt(internalVersionString);
+        Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
-        LOG.error(new PluginException("Invalid value in plugin.xml format version: " + internalVersionString, e, myId));
+        LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString+"'", e, myId));
       }
     }
     myUseIdeaClassLoader = pluginBean.useIdeaClassLoader;
@@ -189,7 +189,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         hsPathes.add(hsPath);
       }
     }
-    myHelpSets = hsPathes.size()>0 ? hsPathes.toArray(new HelpSetPath[hsPathes.size()]) : HelpSetPath.EMPTY;
+    myHelpSets = !hsPathes.isEmpty() ? hsPathes.toArray(new HelpSetPath[hsPathes.size()]) : HelpSetPath.EMPTY;
 
     myAppComponents = pluginBean.applicationComponents;
     myProjectComponents = pluginBean.projectComponents;
@@ -202,15 +202,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myExtensions = copyElements(pluginBean.extensions);
     myExtensionsPoints = copyElements(pluginBean.extensionPoints);
     myActionsElements = copyElements(pluginBean.actions);
-
-    if (pluginBean.extensionPoints != null) {
-      myExtensionsPoints = new ArrayList<Element>();
-      for (Element root : pluginBean.extensionPoints) {
-        for (Object o : root.getChildren()) {
-          myExtensionsPoints.add((Element)o);
-        }
-      }
-    }
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
       myModules = pluginBean.modules;
@@ -393,9 +384,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
 
-    if (myName != null ? !myName.equals(pluginDescriptor.myName) : pluginDescriptor.myName != null) return false;
-
-    return true;
+    return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
   }
 
   public int hashCode() {
