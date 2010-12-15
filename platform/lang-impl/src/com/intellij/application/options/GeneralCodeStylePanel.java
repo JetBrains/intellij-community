@@ -306,7 +306,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
       else {
         FileType type = entry.getKey();
-        editor.reset(settings, settings.getAdditionalIndentOptions(type));
+        CodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(type);
+        if (additionalIndentOptions != null) {
+          editor.reset(settings, additionalIndentOptions);
+        }
       }
     }
 

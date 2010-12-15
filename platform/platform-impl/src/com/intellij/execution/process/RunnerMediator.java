@@ -121,8 +121,7 @@ public class RunnerMediator {
         return true;
       }
       else if (isUnix()) {
-        UnixProcessManager.sendSigKillToProcessTree(process);
-        return true;
+        return UnixProcessManager.sendSigKillToProcessTree(process);
       }
       else {
         return false;

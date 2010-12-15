@@ -98,9 +98,9 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestHighlighting("unknownAttribute.xml");
   }
 
-  public void testNamespaceCompletion() throws Throwable {
+  /*public void testNamespaceCompletion() throws Throwable {
     toTestCompletion("ns.xml", "ns_after.xml");
-  }
+  }*/
 
   public void testInnerActivityHighlighting() throws Throwable {
     copyFileToProject("A.java", "src/p1/p2/A.java");

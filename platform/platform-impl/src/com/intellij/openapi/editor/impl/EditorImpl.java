@@ -2300,8 +2300,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawStringWithSoftWraps(Graphics g,
                                       final char[] text,
-                                      int start,
-                                      int end,
+                                      final int start,
+                                      final int end,
                                       Point position,
                                       Rectangle clip,
                                       Color effectColor,
@@ -2403,7 +2403,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       // Draw remaining soft wrap symbols from its last line if any.
-      if (softWrapSegmentStartIndex < softWrapChars.length - 1) {
+      if (softWrapSegmentStartIndex < softWrapChars.length) {
         position.x += drawString(
           g, softWrapChars, softWrapSegmentStartIndex, softWrapChars.length, position, clip, effectColor, effectType,
           fontType, fontColor

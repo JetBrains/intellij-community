@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -271,5 +272,39 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}"
     );
+  }
+  
+  public void testBracesShiftedOnNextLineOnMethodWithJavadoc() throws Exception {
+    // Inspired by IDEA-62997
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    
+    String precededByJavadoc =
+      "/**\n" +
+      " * test\n" +
+      " */\n" +
+      "public int getFoo()\n" +
+      "    {\n" +
+      "    return foo;\n" +
+      "    }";
+    
+    String precededBySingleLineComment =
+      "// test\n" +
+      "public int getFoo()\n" +
+      "    {\n" +
+      "    return foo;\n" +
+      "    }";
+
+    String precededByMultiLineComment =
+      "/*\n" +
+      "test\n" +
+      "*/\n" +
+      "public int getFoo()\n" +
+      "    {\n" +
+      "    return foo;\n" +
+      "    }";
+    
+    doClassTest(precededByJavadoc, precededByJavadoc);
+    doClassTest(precededBySingleLineComment, precededBySingleLineComment);
+    doClassTest(precededByMultiLineComment, precededByMultiLineComment);
   }
 }

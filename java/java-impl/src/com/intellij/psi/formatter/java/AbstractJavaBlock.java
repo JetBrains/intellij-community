@@ -1233,7 +1233,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, true);
         }
         final boolean rBrace = isRBrace(child);
-        final Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
+        Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
+        if (!rBrace && child.getElementType() == JavaElementType.CODE_BLOCK 
+            && (getBraceStyle() == CodeStyleSettings.NEXT_LINE_SHIFTED || getBraceStyle() == CodeStyleSettings.NEXT_LINE_SHIFTED2)) 
+        {
+          childIndent = Indent.getNormalIndent();
+        }
         AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(child.getElementType())
                                                       ? varDeclarationAlignmentStrategy : AlignmentStrategy.getNullStrategy();
         child = processChild(localResult, child, alignmentStrategyToUse, childWrap, childIndent);
@@ -1270,7 +1275,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                                               mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
-  private SyntheticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent, final int childrenIndent) {
+  public SyntheticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent, final int childrenIndent) {
     final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), indent, null);
     result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
     return result;

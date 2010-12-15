@@ -23,16 +23,21 @@
 package com.intellij.util.messages;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Use ComponentManager.getMessageBus() to obtain one.
  */
 public interface MessageBus {
+  @NotNull
   MessageBusConnection connect();
-  MessageBusConnection connect(Disposable parentDisposable);
+  @NotNull
+  MessageBusConnection connect(@NotNull Disposable parentDisposable);
 
-  <L> L syncPublisher(Topic<L> topic);
-  <L> L asyncPublisher(Topic<L> topic);
+  @NotNull
+  <L> L syncPublisher(@NotNull Topic<L> topic);
+  @NotNull
+  <L> L asyncPublisher(@NotNull Topic<L> topic);
 
   void dispose();
 }

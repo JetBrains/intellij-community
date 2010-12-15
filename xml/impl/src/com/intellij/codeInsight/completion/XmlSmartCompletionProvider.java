@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
@@ -64,13 +63,14 @@ public class XmlSmartCompletionProvider {
   }
 
   private static void addElementToResult(@NotNull XmlElementDescriptor descriptor, CompletionResultSet result) {
-    LookupElementBuilder builder = createLookupElement(descriptor);
-    result.addElement(builder.setInsertHandler(new InsertHandler<LookupElement>() {
-      @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
-        XmlTagInsertHandler.INSTANCE.handleInsert(context, item);
+    XmlTagInsertHandler insertHandler = XmlTagInsertHandler.INSTANCE;
+    if (descriptor instanceof XmlElementDescriptorImpl) {
+      String name = descriptor.getName();
+      if (name != null) {
+        insertHandler = new ExtendedTagInsertHandler(name, ((XmlElementDescriptorImpl)descriptor).getNamespace(), null);
       }
-    }));
+    }
+    result.addElement(createLookupElement(descriptor).setInsertHandler(insertHandler));
   }
 
   public static LookupElementBuilder createLookupElement(@NotNull XmlElementDescriptor descriptor) {

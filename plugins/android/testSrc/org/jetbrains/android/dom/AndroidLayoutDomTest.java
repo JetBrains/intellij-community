@@ -153,9 +153,9 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestCompletionVariants("tn3.xml", "View", "ViewAnimator", "ViewFlipper", "ViewStub", "ViewSwitcher");
   }
 
-  public void testTagNameCompletion4() throws Throwable {
+  /*public void testTagNameCompletion4() throws Throwable {
     toTestCompletion("tn4.xml", "tn4_after.xml");
-  }
+  }*/
 
   public void testTagNameCompletion5() throws Throwable {
     toTestCompletion("tn5.xml", "tn5_after.xml");
@@ -195,6 +195,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testTableCellAttributes() throws Throwable {
     toTestCompletion("tableCell.xml", "tableCell_after.xml");
+  }
+
+  public void testTextViewRootTag_IDEA_62889() throws Throwable {
+    toTestCompletion("textViewRootTag.xml", "textViewRootTag_after.xml");
   }
 
   public void testRequestFocus() throws Throwable {

@@ -464,6 +464,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       if (file.getTextLength() != document.getTextLength()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+          boolean x = false;
+          if (x) {
+            myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
+          }
           throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
                                    "; doc len=" + document.getTextLength() +
                                    "; file text=" + file.getText() +

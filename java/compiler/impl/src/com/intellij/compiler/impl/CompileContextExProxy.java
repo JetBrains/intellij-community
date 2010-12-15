@@ -137,6 +137,10 @@ public class CompileContextExProxy implements CompileContextEx {
     return myDelegate.isMake();
   }
 
+  public boolean isAnnotationProcessorsEnabled() {
+    return myDelegate.isAnnotationProcessorsEnabled();
+  }
+
   public boolean isRebuild() {
     return myDelegate.isRebuild();
   }
