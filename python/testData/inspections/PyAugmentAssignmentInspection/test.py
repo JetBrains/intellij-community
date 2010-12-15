@@ -17,3 +17,11 @@ var_7 += 2
 
 # PY-2483
 <warning descr="Assignment can be replaced with augmented assignment">list[0] = list[0] + 1</warning>
+
+# PY-2488
+<warning descr="Assignment can be replaced with augmented assignment">a = a ** 1</warning>
+
+<warning descr="Assignment can be replaced with augmented assignment">x = x % 3</warning>
+<warning descr="Assignment can be replaced with augmented assignment">x = x | 3</warning>
+<warning descr="Assignment can be replaced with augmented assignment">x = x & 3</warning>
+<warning descr="Assignment can be replaced with augmented assignment">x = x ^ 3</warning>

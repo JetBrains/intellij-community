@@ -55,7 +55,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
           return true;
       }
       
-      if (leftExpression.getOperator() == rightExpression.getOperator() &&
+      if (/*leftExpression.getOperator() == rightExpression.getOperator() && */
                   PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
         PyExpression leftRight = leftExpression.getRightExpression();
         if (leftRight != null) {
