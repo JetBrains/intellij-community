@@ -90,18 +90,14 @@ public class TaskSearchSupport {
   }
 
   private List<Task> getTasks(String pattern, boolean cached) {
-    List<Task> issues;
-    if (cached) {
-      issues = myManager.getCachedIssues();
+    Set<Task> taskSet = new HashSet<Task>(myManager.getCachedIssues());
+    if (!cached) {
+      taskSet.addAll(myManager.getIssues(pattern));
     }
-    else {
-      issues = myManager.getIssues(pattern);
-    }
-    Set<Task> taskSet = new HashSet<Task>(issues);
     if (myRemoveLocal) {
       taskSet.removeAll(Arrays.asList(myManager.getLocalTasks()));
     }
-    issues = new ArrayList<Task>(taskSet);
+    List<Task> issues = new ArrayList<Task>(taskSet);
     Collections.sort(issues, myTaskComparator);
     return issues;
   }
