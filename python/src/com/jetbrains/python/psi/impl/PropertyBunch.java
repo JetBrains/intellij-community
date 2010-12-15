@@ -116,6 +116,9 @@ public abstract class PropertyBunch<MType> {
           if (arg instanceof PyKeywordArgument) {
             String keyword = ((PyKeywordArgument)arg).getKeyword();
             index = ArrayUtil.indexOf(keywords, keyword);
+            if (index < 0) {
+              continue;
+            }
             position = -1;
           }
           else if (position >= 0) {
