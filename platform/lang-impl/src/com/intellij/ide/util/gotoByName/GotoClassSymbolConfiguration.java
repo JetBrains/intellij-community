@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
  * @author yole
  */
 @State(
-    name = "GotoFileConfiguration",
+    name = "GotoClassSymbolConfiguration",
     storages = {@Storage(
         id = "other",
         file = "$WORKSPACE_FILE$")})
