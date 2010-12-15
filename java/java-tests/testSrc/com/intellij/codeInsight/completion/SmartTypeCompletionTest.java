@@ -477,28 +477,26 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSameNamedFieldAndLocal() throws Throwable { doTest(); }
 
-  public void testNoTailWhenNoPairBracket() throws Throwable {
-    doTestNoPairBracket();
-  }
+  public void testNoTailWhenNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  public void testNoTailWhenNoPairBracket2() throws Throwable {
-    doTestNoPairBracket();
-  }
+  public void testNoTailWhenNoPairBracket2() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
-  private void doTestNoPairBracket() throws Exception {
+  private void doTestNoPairBracket(final char c) throws Exception {
     boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;
     try {
-      doTest();
+      doTest(c);
     }
     finally {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old;
     }
   }
 
-  public void testNoConstructorTailWhenNoPairBracket() throws Throwable {
-    doTestNoPairBracket();
-  }
+  public void testNoConstructorTailWhenNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+
+  public void testConstructorNoPairBracketSemicolon() throws Throwable { doTestNoPairBracket(';'); }
+
+  public void testMethodNoPairBracketComma() throws Throwable { doTestNoPairBracket(','); }
 
   public void testAbstractClassTwice() throws Throwable {
     configureByTestName();
