@@ -103,6 +103,17 @@ public class OrderRootType {
    */
   public static final OrderRootType SOURCES = new PersistentOrderRootType("SOURCES", "sourcePath", null, "sourcePathEntry");
 
+  /**
+   * Documentation.
+   * Generic documentation order root type
+   */
+  public static final OrderRootType DOCUMENTATION = new PersistentOrderRootType("DOCUMENTATION", "docPath", null, null) {
+    @Override
+    public boolean skipWriteIfEmpty() {
+      return true;
+    }
+  };
+
   public String name() {
     return myName;
   }
