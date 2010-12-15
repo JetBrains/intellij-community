@@ -1,8 +1,10 @@
 package com.intellij.tasks.impl;
 
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -14,8 +16,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
+import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Timer;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
@@ -93,6 +98,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
+  private Set<TaskRepository> myBadRepositories = new HashSet<TaskRepository>();
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -157,6 +163,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {
+
+    Set<TaskRepository> set = new HashSet<TaskRepository>(myRepositories);
+    set.removeAll(repositories);
+    myBadRepositories.removeAll(set); // remove all changed reps
 
     myRepositories.clear();
     myRepositories.addAll(repositories);
@@ -617,8 +627,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private List<Task> getIssuesFromRepositories(String request, int max, long since) {
     List<Task> issues = new ArrayList<Task>();
-    for (TaskRepository repository : getAllRepositories()) {
-      if (!repository.isConfigured()) {
+    for (final TaskRepository repository : getAllRepositories()) {
+      if (!repository.isConfigured() || myBadRepositories.contains(repository)) {
         continue;
       }
       try {
@@ -626,7 +636,20 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
+        myBadRepositories.add(repository);
         LOG.warn(e);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
+          new Notification("Tasks", "Cannot connect to " + repository.getUrl(),
+                           "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                           new NotificationListener() {
+                             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                               TaskRepositoriesConfigurable configurable = new TaskRepositoriesConfigurable(myProject);
+                               ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
+                               if (!ArrayUtil.contains(repository, getAllRepositories())) {
+                                  notification.expire();
+                               }
+                             }
+                           }), NotificationDisplayType.STICKY_BALLOON);
       }
     }
     return issues;

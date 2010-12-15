@@ -56,31 +56,25 @@ public class JiraRepository extends BaseRepositoryImpl implements XmlRpcTranspor
     super(type);
   }
 
-  public Task[] getIssues(String request, int max, long since) {
-    try {
-      StringBuilder url = new StringBuilder(getUrl());
-      String version = getServerVersion();
-      if (version == null || StringUtil.compareVersionNumbers(myServerVersion, "3.7") < 0) {
-        url.append("/secure/IssueNavigator.jspa?view=rss&decorator=none&");
-      }
-      else {
-        url.append("/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?");
-      }
-      url.append("tempMax=").append(max);
-      url.append("&assignee=").append(encodeUrl(getUsername()));
+  public Task[] getIssues(String request, int max, long since) throws Exception {
+    StringBuilder url = new StringBuilder(getUrl());
+    String version = getServerVersion();
+    if (version == null || StringUtil.compareVersionNumbers(myServerVersion, "3.7") < 0) {
+      url.append("/secure/IssueNavigator.jspa?view=rss&decorator=none&");
+    }
+    else {
+      url.append("/sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?");
+    }
+    url.append("tempMax=").append(max);
+    url.append("&assignee=").append(encodeUrl(getUsername()));
 //      url.append("&resolution=-1");
-      url.append("&reset=true");
-      url.append("&sorter/field=").append("updated");
-      url.append("&sorter/order=").append("DESC");
-      url.append("&pager/start=").append(0);
-      appendAuthentication(url, false);
+    url.append("&reset=true");
+    url.append("&sorter/field=").append("updated");
+    url.append("&sorter/order=").append("DESC");
+    url.append("&pager/start=").append(0);
+    appendAuthentication(url, false);
 
-      return processRSS(url.toString());
-    }
-    catch (Exception e) {
-      LOG.info(e);
-      return new Task[0];
-    }
+    return processRSS(url.toString());
   }
 
   @Override
@@ -160,15 +154,19 @@ public class JiraRepository extends BaseRepositoryImpl implements XmlRpcTranspor
     }
   }
 
-  private String getServerVersion() {
+  private String getServerVersion() throws Exception {
     if (myServerVersion == null) {
       try {
         Map map = (Map)doXmlRpcRequest("getServerInfo");
         myServerVersion = (String)map.get("version");
       }
       catch (Exception e) {
+
         myServerVersion = "3.8";
         LOG.warn(e);
+        if (e.getMessage().contains("Authentication")) {
+          throw e;
+        }
       }
     }
     return myServerVersion;
