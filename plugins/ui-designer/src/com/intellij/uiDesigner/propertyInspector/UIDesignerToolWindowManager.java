@@ -203,7 +203,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   public void updateComponentTree() {
-    myComponentTreeBuilder.updateFromRoot();
+    final ComponentTreeBuilder builder = myComponentTreeBuilder;
+    if (builder != null) {
+      builder.queueUpdate();
+    }
   }
 
   public void addComponentSelectionListener(TreeSelectionListener treeSelectionListener) {
