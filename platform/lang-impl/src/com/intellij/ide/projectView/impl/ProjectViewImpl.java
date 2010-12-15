@@ -1088,7 +1088,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         if (psiElements == null) return null;
         Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
         for (PsiElement element : psiElements) {
-          files.add(PsiUtilBase.getVirtualFile(element));
+          final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+          if (virtualFile != null) {
+            files.add(virtualFile);
+          }
         }
         return files.size() > 0 ? VfsUtil.toVirtualFileArray(files) : null;
       }

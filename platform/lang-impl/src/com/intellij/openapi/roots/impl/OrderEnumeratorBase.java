@@ -30,10 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -64,6 +61,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         }
         myCustomHandlers.add(handler);
       }
+      if (myCustomHandlers == null) myCustomHandlers = Collections.emptyList();
     }
   }
 
@@ -204,17 +202,27 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         continue;
       }
 
+      OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
+      for (OrderEnumerationHandler handler : myCustomHandlers) {
+        shouldAdd = handler.shouldAddDependency(entry, myProductionOnly, myRuntimeOnly, myCompileOnly);
+        if (shouldAdd != OrderEnumerationHandler.AddDependencyType.DEFAULT) break;
+      }
+      if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DO_NOT_ADD) continue;
+
       boolean exported = !(entry instanceof JdkOrderEntry);
+
       if (entry instanceof ExportableOrderEntry) {
         ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
-        final DependencyScope scope = exportableEntry.getScope();
-        if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
-        if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
-        if (myProductionOnly) {
-          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
-              || myCompileOnly && !scope.isForProductionCompile()
-              || myRuntimeOnly && !scope.isForProductionRuntime()) {
-            continue;
+        if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
+          final DependencyScope scope = exportableEntry.getScope();
+          if (myCompileOnly && !scope.isForProductionCompile() && !scope.isForTestCompile()) continue;
+          if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
+          if (myProductionOnly) {
+            if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
+                || myCompileOnly && !scope.isForProductionCompile()
+                || myRuntimeOnly && !scope.isForProductionRuntime()) {
+              continue;
+            }
           }
         }
         exported = exportableEntry.isExported();
@@ -231,12 +239,10 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           boolean processRecursively = true;
-          if (myCustomHandlers != null) {
-            for (OrderEnumerationHandler handler : myCustomHandlers) {
-              if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
-                processRecursively = false;
-                break;
-              }
+          for (OrderEnumerationHandler handler : myCustomHandlers) {
+            if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
+              processRecursively = false;
+              break;
             }
           }
 
@@ -295,49 +301,41 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   }
 
   boolean addCustomOutput(ModuleOrderEntry moduleOrderEntry, Collection<VirtualFile> result) {
-    if (myCustomHandlers != null) {
-      for (OrderEnumerationHandler handler : myCustomHandlers) {
-        final List<String> urls = new ArrayList<String>();
-        final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
-        for (String url : urls) {
-          ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
-        }
-        if (added) {
-          return true;
-        }
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      final List<String> urls = new ArrayList<String>();
+      final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+      }
+      if (added) {
+        return true;
       }
     }
     return false;
   }
 
   boolean addCustomOutputUrls(ModuleOrderEntry moduleOrderEntry, Collection<String> result) {
-    if (myCustomHandlers != null) {
-      for (OrderEnumerationHandler handler : myCustomHandlers) {
-        if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, result)) {
-          return true;
-        }
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, result)) {
+        return true;
       }
     }
     return false;
   }
 
   void addAdditionalRoots(Module forModule, Collection<VirtualFile> result) {
-    if (myCustomHandlers != null) {
-      final List<String> urls = new ArrayList<String>();
-      for (OrderEnumerationHandler handler : myCustomHandlers) {
-        handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
-      }
-      for (String url : urls) {
-        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
-      }
+    final List<String> urls = new ArrayList<String>();
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
+    }
+    for (String url : urls) {
+      ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
     }
   }
 
   void addAdditionalRootsUrls(Module forModule, Collection<String> result) {
-    if (myCustomHandlers != null) {
-      for (OrderEnumerationHandler handler : myCustomHandlers) {
-        handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, result);
-      }
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      handler.addAdditionalRoots(forModule, myProductionOnly, myRuntimeOnly, myCompileOnly, result);
     }
   }
 

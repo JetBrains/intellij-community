@@ -26,10 +26,22 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class OrderEnumerationHandler {
-  public static final ExtensionPointName<OrderEnumerationHandler> EP_NAME = ExtensionPointName.create("com.intellij.orderEnumerationHandler");
+  public static final ExtensionPointName<OrderEnumerationHandler> EP_NAME =
+    ExtensionPointName.create("com.intellij.orderEnumerationHandler");
 
   public abstract boolean isApplicable(@NotNull Project project);
+
   public abstract boolean isApplicable(@NotNull Module module);
+
+  public static enum AddDependencyType {ADD, DO_NOT_ADD, DEFAULT}
+
+  @NotNull
+  public AddDependencyType shouldAddDependency(@NotNull OrderEntry orderEntry,
+                                               boolean productionOnly,
+                                               boolean runtimeOnly,
+                                               boolean compileOnly) {
+    return AddDependencyType.DEFAULT;
+  }
 
   public boolean shouldProcessRecursively(@NotNull ModuleOrderEntry dependency) {
     return true;

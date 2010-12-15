@@ -353,12 +353,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
       return;
     }
     try {
+      final ThreadReference stepThreadReference = stepThread.getThreadReference();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("DO_STEP: creating step request for " + stepThread.getThreadReference());
+        LOG.debug("DO_STEP: creating step request for " + stepThreadReference);
       }
-      deleteStepRequests();
+      deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-      StepRequest stepRequest = requestManager.createStepRequest(stepThread.getThreadReference(), StepRequest.STEP_LINE, depth);
+      StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, StepRequest.STEP_LINE, depth);
       DebuggerSettings settings = DebuggerSettings.getInstance();
       if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
         final List<ClassFilter> activeFilters = new ArrayList<ClassFilter>();
@@ -404,7 +405,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  void deleteStepRequests() {
+  void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     List<StepRequest> stepRequests = requestManager.stepRequests();
     if (stepRequests.size() > 0) {
@@ -412,7 +413,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
         // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occures
-        if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN) {
+        if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
           toDelete.add(request);
         }
       }

@@ -923,14 +923,21 @@ public class JavaCompletionUtil {
 
   public static void insertParentheses(final InsertionContext context, final LookupElement item, boolean overloadsMatter, boolean hasParams) {
     final Editor editor = context.getEditor();
-    final TailType tailType = getTailType(item, context);
+    final char completionChar = context.getCompletionChar();
     final PsiFile file = context.getFile();
 
+    final TailType tailType = completionChar == '(' ? TailType.NONE : LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
+    final boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
+    final boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
+
+    final boolean addCompletionChar = context.shouldAddCompletionChar();
     context.setAddCompletionChar(false);
 
-
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean needRightParenth = tailType != TailType.SMART_COMPLETION && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
+    final boolean needRightParenth = !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET || hasTail);
+    if (hasTail) {
+      hasParams = false;
+    }
 
     if (needLeftParenth) {
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
@@ -947,42 +954,20 @@ public class JavaCompletionUtil {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (tailType == TailType.SEMICOLON) {
-      if (!needRightParenth) {
-        return;
+    if (smart || needLeftParenth && needRightParenth && addCompletionChar) {
+      TailType toInsert = tailType;
+      LookupItem lookupItem = item.as(LookupItem.class);
+      if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+        if (!hasTail && item.getObject() instanceof PsiMethod && ((PsiMethod)item.getObject()).getReturnType() == PsiType.VOID) {
+          PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+          if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(file.findElementAt(context.getTailOffset() - 1))) {
+            return;
+          }
+          toInsert = TailType.SEMICOLON;
+        }
       }
-
-      PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-      if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(file.findElementAt(context.getTailOffset() - 1))) {
-        return;
-      }
+      toInsert.processTail(editor, context.getTailOffset());
     }
-
-    if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
-      tailType.processTail(editor, context.getTailOffset());
-    }
-  }
-
-  @NotNull
-  public static TailType getTailType(final LookupElement item, InsertionContext context) {
-    final char completionChar = context.getCompletionChar();
-    if (completionChar == '!') return item instanceof LookupItem ? ((LookupItem)item).getTailType() : TailType.NONE;
-    if (completionChar == '(') {
-      final Object o = item.getObject();
-      if (o instanceof PsiMethod) {
-        final PsiMethod psiMethod = (PsiMethod)o;
-        return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
-               ? TailType.NONE : TailType.SEMICOLON;
-      } else if (o instanceof PsiClass) { // it may be a constructor
-        return TailType.NONE;
-      }
-    }
-    if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
-    if (!context.shouldAddCompletionChar()) {
-      return TailType.NONE;
-    }
-
-    return LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
   }
 
   public static boolean isToInsertParenth(PsiElement place){

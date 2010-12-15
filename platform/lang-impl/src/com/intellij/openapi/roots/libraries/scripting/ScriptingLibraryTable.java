@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.libraries.scripting;
 
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -52,7 +51,7 @@ public class ScriptingLibraryTable {
           LibraryModel libModel = new LibraryModel(library.getName());
           libModel.setSourceFiles(library.getFiles(SOURCE_ROOT_TYPE));
           libModel.setCompactFiles(library.getFiles(COMPACT_ROOT_TYPE));
-          libModel.setDocUrls(library.getUrls(JavadocOrderRootType.getInstance()));
+          libModel.setDocUrls(library.getUrls(OrderRootType.DOCUMENTATION));
           myLibraryModels.add(libModel);
         }
       }
