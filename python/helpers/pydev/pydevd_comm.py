@@ -211,6 +211,7 @@ class PyDBDaemonThread(threading.Thread):
     def doKill(self):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
+
             
 #=======================================================================================================================
 # ReaderThread
@@ -232,8 +233,7 @@ class ReaderThread(PyDBDaemonThread):
         except:
             #just ignore that
             pass
-        
-     
+
     def OnRun(self):
         pydevd_tracing.SetTrace(None) # no debugging on this thread
         buffer = ""
@@ -259,7 +259,13 @@ class ReaderThread(PyDBDaemonThread):
                     command, buffer = buffer.split('\n', 1)
                     PydevdLog(1, "received command ", command)
                     args = command.split('\t', 2)
-                    GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
+                    try:
+                        GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
+                    except:
+                        traceback.print_exc()
+                        sys.stderr.write("Can't process net command %" % command)
+                        sys.stderr.flush()
+
         except:
             traceback.print_exc()
             GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
