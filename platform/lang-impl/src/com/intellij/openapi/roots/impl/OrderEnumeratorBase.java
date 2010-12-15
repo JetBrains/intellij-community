@@ -61,8 +61,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         }
         myCustomHandlers.add(handler);
       }
-      if (myCustomHandlers == null) myCustomHandlers = Collections.emptyList();
     }
+    if (myCustomHandlers == null) myCustomHandlers = Collections.emptyList();
   }
 
   @Override
