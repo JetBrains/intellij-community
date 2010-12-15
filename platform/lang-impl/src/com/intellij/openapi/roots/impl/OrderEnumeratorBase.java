@@ -48,21 +48,22 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   protected boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
   private Condition<OrderEntry> myCondition;
-  private List<OrderEnumerationHandler> myCustomHandlers;
+  private final List<OrderEnumerationHandler> myCustomHandlers;
   protected ModulesProvider myModulesProvider;
   private OrderRootsCache myCache;
 
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {
     myCache = cache;
+    List<OrderEnumerationHandler> customHandlers = null;
     for (OrderEnumerationHandler handler : OrderEnumerationHandler.EP_NAME.getExtensions()) {
       if (handler.isApplicable(project) && (module == null || handler.isApplicable(module))) {
-        if (myCustomHandlers == null) {
-          myCustomHandlers = new SmartList<OrderEnumerationHandler>();
+        if (customHandlers == null) {
+          customHandlers = new SmartList<OrderEnumerationHandler>();
         }
-        myCustomHandlers.add(handler);
+        customHandlers.add(handler);
       }
     }
-    if (myCustomHandlers == null) myCustomHandlers = Collections.emptyList();
+    this.myCustomHandlers = customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
   }
 
   @Override
