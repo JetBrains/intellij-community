@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.PsiClassWriter;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +53,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
@@ -264,8 +266,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     final Project project = context.getProject();
     final HashMap<Module, ArrayList<MyInstrumentationItem>> module2itemsList = sortByModules(project, items);
 
-    int formsProcessed = 0;
-
+    List<File> filesToRefresh = new ArrayList<File>();
     for (final Module module : module2itemsList.keySet()) {
       final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
       final ClassLoader loader = createClassLoader(classPath);
@@ -274,11 +275,11 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
         try {
           if (moduleOutputPath != null) {
-            CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false);
+            filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
           }
           final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
           if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
-            CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false);
+            filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
           }
         }
         catch (IOException e) {
@@ -342,6 +343,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         }
       }
     }
+    CompilerUtil.refreshIOFiles(filesToRefresh);
     context.getProgressIndicator().popState();
 
     return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);

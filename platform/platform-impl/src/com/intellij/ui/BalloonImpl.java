@@ -16,6 +16,11 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -375,6 +380,12 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
                                                                            KeyEvent.KEY_EVENT_MASK);
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        hide();
+      }
+    }, this);
   }
 
   private Rectangle getRecForPosition(Position position, boolean adjust) {

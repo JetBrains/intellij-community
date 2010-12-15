@@ -4,7 +4,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.Consumer;
 
 import java.util.Arrays;
 
@@ -31,12 +30,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(String text, String after) {
     PsiFile psiFile = myFixture.configureByText("test.txt", text);
-    TaskCompletionContributor.installCompletion(myFixture.getDocument(psiFile), getProject(), new Consumer<Task>() {
-      @Override
-      public void consume(Task task) {
-
-      }
-    });
+    TaskCompletionContributor.installCompletion(myFixture.getDocument(psiFile), getProject(), null, false);
     TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(getProject());
     manager.setRepositories(Arrays.asList(new TestRepository()));
     manager.getState().updateEnabled = false;

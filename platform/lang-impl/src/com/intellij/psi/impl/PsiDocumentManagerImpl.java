@@ -172,8 +172,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (!file.getViewProvider().isEventSystemEnabled()) return null;
     document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
-    if (document != null && !file.getViewProvider().isPhysical()) {
-      cachePsi(document, file);
+    if (document != null) {
+      if (document.getTextLength() != file.getTextLength()) {
+        throw new AssertionError("Modified PSI with no document: " + file + "; physical=" + file.getViewProvider().isPhysical());
+      }
+
+      if (!file.getViewProvider().isPhysical()) {
+        cachePsi(document, file);
+      }
     }
 
     fireDocumentCreated(document, file);
@@ -458,6 +464,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       if (file.getTextLength() != document.getTextLength()) {
         if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+          boolean x = false;
+          if (x) {
+            myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
+          }
           throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
                                    "; doc len=" + document.getTextLength() +
                                    "; file text=" + file.getText() +

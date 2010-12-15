@@ -304,6 +304,13 @@
       <keyboard-shortcut first-keystroke="meta Z"/>
     </action>
 
+    <action id="MinimizeCurrentWindow">
+      <keyboard-shortcut first-keystroke="meta M"/>
+    </action>
+
+    <action id="EditorScrollToCenter"/> <!-- Disables meta M -->
+    <action id="Vcs.ShowMessageHistory"/> <!-- Disables meta M -->
+
     <action id="QuickChangeScheme">
       <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
     </action>

@@ -372,6 +372,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+        <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
+        <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

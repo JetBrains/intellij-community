@@ -44,7 +44,6 @@ public class Paths {
   }
 
   public static String appended(String path, String child) {
-    if (path.length() == 0) return child;
     path = appendParent(path);
     return path + child;
   }
@@ -82,6 +81,7 @@ public class Paths {
   }
 
   private static String appendParent(String parent) {
+    if (parent.isEmpty()) return parent;
     if (parent.charAt(parent.length() - 1) != DELIM) parent += DELIM;
     return parent;
   }

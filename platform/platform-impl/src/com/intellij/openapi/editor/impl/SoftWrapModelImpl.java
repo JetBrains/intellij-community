@@ -446,11 +446,14 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     if (!isInsideSoftWrap(visualCaretPosition)) {
       return;
     }
-    //TODO den implement
-    //if (myDocumentChangeManager.makeHardWrap(caretModel.getOffset())) {
-    //  // Restore caret position.
-    //  caretModel.moveToVisualPosition(visualCaretPosition);
-    //}
+
+    SoftWrap softWrap = myStorage.getSoftWrap(caretModel.getOffset());
+    if (softWrap == null) {
+      return;
+    }
+    
+    myEditor.getDocument().replaceString(softWrap.getStart(), softWrap.getEnd(), softWrap.getText());
+    caretModel.moveToVisualPosition(visualCaretPosition);
   }
 
   @Override

@@ -1,5 +1,5 @@
 public class X {
   void f() {
-    int i <spot>=</spot> 0;
+    <spot>int i = 0</spot>;
   }
 }

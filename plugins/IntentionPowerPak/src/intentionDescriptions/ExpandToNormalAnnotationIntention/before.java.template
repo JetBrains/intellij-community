@@ -1,0 +1,4 @@
+public class X {
+  <spot>@SuppressWarnings("EmptyMethod")</spot>
+  void f() {}
+}

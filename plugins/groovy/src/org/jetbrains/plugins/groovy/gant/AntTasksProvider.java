@@ -33,16 +33,22 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author ilyas, peter
@@ -51,7 +57,7 @@ public class AntTasksProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gant.AntTasksProvider");
   public static final boolean antAvailable;
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
-  private static final Key<CachedValue<Map<String, Class>>> ANT_OBJECTS = Key.create("antObjects");
+  private static final Object ourLock = new Object();
 
   private AntTasksProvider() {
   }
@@ -96,68 +102,94 @@ public class AntTasksProvider {
   }
 
   private static Map<String, Class> getAntObjects(final GroovyFile groovyFile) {
-    return CachedValuesManager
-      .getManager(groovyFile.getProject()).getCachedValue(groovyFile, ANT_OBJECTS, new CachedValueProvider<Map<String, Class>>() {
+    final Project project = groovyFile.getProject();
+
+    final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
+    Set<VirtualFile> jars = new HashSet<VirtualFile>();
+    if (module != null) {
+      ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
+    }
+
+    if (groovyFile.isScript() && GroovyScriptTypeDetector.getScriptType(groovyFile) instanceof GantScriptType) {
+      jars.addAll(GantScriptType.additionalScopeFiles(groovyFile));
+    }
+
+    final ArrayList<URL> urls = new ArrayList<URL>();
+    for (VirtualFile jar : jars) {
+      urls.add(VfsUtil.convertToURL(PathUtil.getLocalFile(jar).getUrl()));
+    }
+
+    AntClassLoader loader;
+    synchronized (ourLock) {
+      final Map<List<URL>, SoftReference<AntClassLoader>> map = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<List<URL>, SoftReference<AntClassLoader>>>() {
         @Override
-        public Result<Map<String, Class>> compute() {
-          final Module module = ModuleUtil.findModuleForPsiElement(groovyFile);
-          Set<VirtualFile> jars = new HashSet<VirtualFile>();
-          if (module != null) {
-            ContainerUtil.addAll(jars, OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots());
-          }
-
-          if (groovyFile.isScript() && GroovyScriptTypeDetector.getScriptType(groovyFile) instanceof GantScriptType) {
-            jars.addAll(GantScriptType.additionalScopeFiles(groovyFile));
-          }
-
-          final ArrayList<URL> urls = new ArrayList<URL>();
-          for (VirtualFile jar : jars) {
-            urls.add(VfsUtil.convertToURL(PathUtil.getLocalFile(jar).getUrl()));
-          }
-          final ClassLoader loader = new UrlClassLoader(urls, null, false, false, true);
-          Future<ReflectedProject> future =  ApplicationManager.getApplication().executeOnPooledThread(new Callable<ReflectedProject>() {
-            @Override
-            public ReflectedProject call() throws Exception {
-              try {
-                return ReflectedProject.getProject(loader);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-                return null;
-              }
-            }
-          });
-
-          ReflectedProject antProject = null;
-          while (true) {
-            try {
-              antProject = future.get(100, TimeUnit.MILLISECONDS);
-              break;
-            }
-            catch (TimeoutException ignore) {
-            }
-            catch (Exception e) {
-              LOG.error(e);
-              break;
-            }
-            ProgressManager.checkCanceled();
-          }
-
-          final Map<String, Class> result = new HashMap<String, Class>();
-          if (antProject != null) {
-            final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
-            if (taskDefinitions != null) {
-              result.putAll(taskDefinitions);
-            }
-            final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
-            if (dataTypeDefinitions != null) {
-              result.putAll(dataTypeDefinitions);
-            }
-          }
-          return Result.create(result, ProjectRootManager.getInstance(groovyFile.getProject()));
+        public Result<Map<List<URL>, SoftReference<AntClassLoader>>> compute() {
+          final Map<List<URL>, SoftReference<AntClassLoader>> map = CollectionFactory.hashMap();
+          final Result<Map<List<URL>, SoftReference<AntClassLoader>>> result = Result.create(map, ProjectRootManager.getInstance(project));
+          result.setLockValue(true);
+          return result;
         }
+      });
 
-      }, false);
+      final SoftReference<AntClassLoader> reference = map.get(urls);
+      loader = reference != null ? reference.get() : null;
+      if (loader == null) {
+        map.put(urls, new SoftReference<AntClassLoader>(loader = new AntClassLoader(urls)));
+      }
+    }
+
+    return loader.getAntObjects();
   }
 
+  private static class AntClassLoader extends UrlClassLoader {
+    private final Future<Map<String, Class>> myFuture;
+
+    public AntClassLoader(ArrayList<URL> urls) {
+      super(urls, null, false, false, true);
+      myFuture = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Map<String, Class>>() {
+        @Override
+        public Map<String, Class> call() throws Exception {
+          try {
+            final ReflectedProject antProject = ReflectedProject.getProject(AntClassLoader.this);
+            final Map<String, Class> result = new HashMap<String, Class>();
+            if (antProject != null) {
+              final Map<String, Class> taskDefinitions = antProject.getTaskDefinitions();
+              if (taskDefinitions != null) {
+                result.putAll(taskDefinitions);
+              }
+              final Map<String, Class> dataTypeDefinitions = antProject.getDataTypeDefinitions();
+              if (dataTypeDefinitions != null) {
+                result.putAll(dataTypeDefinitions);
+              }
+            }
+            return result;
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            return null;
+          }
+        }
+      });
+    }
+
+    @NotNull
+    public Map<String, Class> getAntObjects() {
+      while (true) {
+        try {
+          final Map<String, Class> map = myFuture.get(100, TimeUnit.MILLISECONDS);
+          if (map != null) {
+            return map;
+          }
+        }
+        catch (TimeoutException ignore) {
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          break;
+        }
+        ProgressManager.checkCanceled();
+      }
+      return Collections.emptyMap();
+    }
+  }
 }

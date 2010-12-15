@@ -17,12 +17,11 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEnumerationHandler;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,10 +29,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.util.Collection;
+import java.util.List;
 
-/**
- * @author nik
- */
 public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   @Override
   public boolean isApplicable(@NotNull Project project) {
@@ -47,6 +44,52 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   @Override
+  @NotNull
+  public AddDependencyType shouldAddDependency(@NotNull OrderEntry orderEntry,
+                                               boolean productionOnly,
+                                               boolean runtimeOnly,
+                                               boolean compileOnly) {
+    Module ownerModule = orderEntry.getOwnerModule();
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(ownerModule.getProject());
+
+    MavenProject project = manager.findProject(ownerModule);
+    if (project == null) return AddDependencyType.DEFAULT;
+
+    if (orderEntry instanceof LibraryOrderEntry) {
+      MavenArtifact artifact = MavenRootModelAdapter.findArtifact(project, ((LibraryOrderEntry)orderEntry).getLibrary());
+      if (artifact == null) return AddDependencyType.DEFAULT;
+
+      return shouldAddArtifact(artifact, productionOnly, runtimeOnly, compileOnly) ? AddDependencyType.ADD : AddDependencyType.DO_NOT_ADD;
+    }
+    else if (orderEntry instanceof ModuleOrderEntry) {
+      Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
+      if (depModule == null) return AddDependencyType.DEFAULT;
+
+      MavenProject depProject = manager.findProject(depModule);
+      if (depProject == null) return AddDependencyType.DEFAULT;
+
+      List<MavenArtifact> deps = project.findDependencies(depProject);
+
+      for (MavenArtifact each : deps) {
+        if (shouldAddArtifact(each, productionOnly, runtimeOnly, compileOnly)) return OrderEnumerationHandler.AddDependencyType.ADD;
+      }
+      return AddDependencyType.DO_NOT_ADD;
+    }
+
+    return AddDependencyType.DEFAULT;
+  }
+
+  private boolean shouldAddArtifact(MavenArtifact artifact, boolean productionOnly, boolean runtimeOnly, boolean compileOnly) {
+    if (productionOnly) {
+      String scope = artifact.getScope();
+      if (compileOnly && MavenConstants.SCOPE_RUNTIME.endsWith(scope)) return false;
+      if (runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(scope)) return false;
+      if (MavenConstants.SCOPE_TEST.equals(scope)) return false;
+    }
+    return true;
+  }
+
+  @Override
   public boolean shouldProcessRecursively(@NotNull ModuleOrderEntry dependency) {
     return false;
   }
@@ -54,22 +97,23 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   @Override
   public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
                                  boolean productionOnly,
-                                 boolean runtimeOnly, boolean compileOnly, @NotNull Collection<String> urls) {
-    final Module ownerModule = orderEntry.getOwnerModule();
-    final Module depModule = orderEntry.getModule();
+                                 boolean runtimeOnly,
+                                 boolean compileOnly,
+                                 @NotNull Collection<String> urls) {
+    Module ownerModule = orderEntry.getOwnerModule();
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(ownerModule.getProject());
+    MavenProject project = manager.findProject(ownerModule);
+    if (project == null) return false;
+
+    Module depModule = orderEntry.getModule();
     if (depModule == null) return false;
 
-    final MavenProjectsManager manager = MavenProjectsManager.getInstance(ownerModule.getProject());
-    MavenProject project = manager.findProject(ownerModule);
     MavenProject depProject = manager.findProject(depModule);
-    if (project == null || depProject == null) {
-      return false;
-    }
+    if (depProject == null) return false;
 
     for (MavenArtifact each : project.findDependencies(depProject)) {
-
-      if (productionOnly && runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
-      if (productionOnly && MavenConstants.SCOPE_TEST.equals(each.getScope())) continue;
+      if (!shouldAddArtifact(each, productionOnly, runtimeOnly, compileOnly)) continue;
 
       boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(each.getType()) || "tests".equals(each.getClassifier());
       addOutput(depModule, isTestJar, urls);

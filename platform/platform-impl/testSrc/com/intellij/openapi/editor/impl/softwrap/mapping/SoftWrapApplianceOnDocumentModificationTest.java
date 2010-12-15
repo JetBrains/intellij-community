@@ -538,6 +538,36 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(expectedVisualLine, caretModel.getVisualPosition().line);
   }
   
+  public void testSoftWrapToHardWrapConversion() throws IOException {
+    String text =
+      "this is line 1\n" +
+      "this is line 2\n" +
+      "this is line 3\n" +
+      "this is line 4\n" +
+      "this is line 5";
+    
+    init(50, text);
+    VisualPosition changePosition = new VisualPosition(1, 0);
+    myEditor.getCaretModel().moveToVisualPosition(changePosition);
+    
+    int logicalLinesBefore = myEditor.offsetToLogicalPosition(text.length()).line;
+    int offsetBefore = myEditor.getCaretModel().getOffset();
+    
+    LogicalPosition logicalPositionBefore = myEditor.visualToLogicalPosition(changePosition);
+    assertEquals(1, logicalPositionBefore.softWrapLinesOnCurrentLogicalLine);
+    assertTrue(logicalPositionBefore.column > 0);
+    
+    SoftWrap softWrap = getSoftWrapModel().getSoftWrap(offsetBefore);
+    assertNotNull(softWrap);
+    
+    type('a');
+
+    LogicalPosition logicalPositionAfter = myEditor.visualToLogicalPosition(changePosition);
+    assertEquals(new LogicalPosition(1, 0, 0, 0, 0, 0, 0), logicalPositionAfter);
+    assertEquals(offsetBefore + softWrap.getText().length() + 1, myEditor.getCaretModel().getOffset());
+    assertEquals(logicalLinesBefore + 1, myEditor.offsetToLogicalPosition(text.length()).line);
+  }
+  
   //public void testPastingInsideSelection() throws IOException {
   //  String text = 
   //    "this is line number 0\n" +

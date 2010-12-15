@@ -219,7 +219,11 @@ public class PagedFileStorage implements Forceable {
         buffer.position(page_offset);
       }
       catch (IllegalArgumentException iae) {
-        throw new IllegalArgumentException("can't position buffer to offset " + page_offset);
+        throw new IllegalArgumentException("can't position buffer to offset " + page_offset + ", " +
+                                           "buffer.limit=" + buffer.limit() + ", " +
+                                           "page=" + page + ", " +
+                                           "file=" + myFile.getName() + ", "+
+                                           "file.length=" + mySize);
       }
       buffer.get(dst, o, page_len);
 

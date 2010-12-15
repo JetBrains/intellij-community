@@ -43,8 +43,11 @@ public class DirectoryUrl extends AbstractUrl {
   }
 
   public Object[] createPath(Project project) {
-    final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
-    if (module == null) return null;
+    if (moduleName != null) {
+
+      final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
+      if (module == null) return null;
+    }
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     VirtualFile file = virtualFileManager.findFileByUrl(url);
     if (file == null) return null;

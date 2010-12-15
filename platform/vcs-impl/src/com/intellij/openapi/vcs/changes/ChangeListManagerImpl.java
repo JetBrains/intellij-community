@@ -378,6 +378,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myUpdateException = null;
           composite.cleanAll();
         }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("refresh procedure started, everything = " + wasEverythingDirty);
+        }
       }
       if (wasEverythingDirty) {
         changeListWorker.notifyStartProcessingChanges(null);
@@ -450,6 +453,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
 
         if (takeChanges) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("refresh procedure finished, size: " + composite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
+          }
           final boolean statusChanged = ! myComposite.equals(composite);
           myComposite = composite;
           if (statusChanged) {

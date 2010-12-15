@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -58,7 +60,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public void doOKAction() {
     if (myModifier == null) return;
-    
+
     myExpressionEditor.saveTextInHistory();
     final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
     myValueNode.setValueModificationStarted();
@@ -75,7 +77,13 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
         DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
           public void run() {
             myTree.rebuildAndRestore(treeState);
-            HintManager.getInstance().showErrorHint(myExpressionEditor.getEditor(), errorMessage);
+
+            Editor editor = myExpressionEditor.getEditor();
+            if (editor != null) {
+              HintManager.getInstance().showErrorHint(editor, errorMessage);
+            } else {
+              Messages.showErrorDialog(myTree, errorMessage);
+            }
           }
         });
       }

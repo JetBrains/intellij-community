@@ -17,6 +17,9 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.DaemonBundle;
+import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
+import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +46,15 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, superElement.getContainingFile().getVirtualFile(), superElement.getTextOffset());
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } else {
-      String title = superElements[0] instanceof PsiMethod ?
-                     CodeInsightBundle.message("goto.super.method.chooser.title") :
-                     CodeInsightBundle.message("goto.super.class.chooser.title");
-
-      NavigationUtil.getPsiElementPopup(superElements, title).showInBestPositionFor(editor);
+      if (superElements[0] instanceof PsiMethod) {
+        boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);
+        PsiElementListNavigator.openTargets(editor, (PsiMethod[])superElements,
+                                            CodeInsightBundle.message("goto.super.method.chooser.title"),
+                                            new MethodCellRenderer(showMethodNames));
+      }
+      else {
+        NavigationUtil.getPsiElementPopup(superElements, CodeInsightBundle.message("goto.super.class.chooser.title")).showInBestPositionFor(editor);
+      }
     }
   }
 
@@ -69,7 +77,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
       if (method.isConstructor()) {
         PsiMethod constructorInSuper = PsiSuperMethodUtil.findConstructorInSuper(method);
         if (constructorInSuper != null) {
-          return new PsiElement[]{constructorInSuper};
+          return new PsiMethod[]{constructorInSuper};
         }
       } else {
         return method.findSuperMethods(false);

@@ -62,6 +62,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     return myComboBox;
   }
 
+  @Nullable
   public Editor getEditor() {
     return myEditor.getEditor();
   }

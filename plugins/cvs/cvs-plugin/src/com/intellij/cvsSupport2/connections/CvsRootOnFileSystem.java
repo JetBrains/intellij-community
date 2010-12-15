@@ -64,8 +64,8 @@ public class CvsRootOnFileSystem extends CvsRootProvider {
     File result = nearestRoot;
     if (result.getParentFile() == null) return result;
     while (cvsRoot.equals(getCvsRootFor(result.getParentFile()))) {
-      if (result.getParentFile() == null) return result;
       result = result.getParentFile();
+      if (result.getParentFile() == null) return result;
     }
     return result;
   }

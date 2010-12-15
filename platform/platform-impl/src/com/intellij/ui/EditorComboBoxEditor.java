@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,6 +44,7 @@ public class EditorComboBoxEditor implements ComboBoxEditor{
     myTextField.requestFocus();
   }
 
+  @Nullable
   public Editor getEditor() {
     return myTextField.getEditor();
   }

@@ -42,6 +42,8 @@ public class PathsTest extends LocalHistoryTestCase {
     assertEquals("c:/root/file", Paths.appended("c:/root", "file"));
     assertEquals("/foo", Paths.appended("/", "foo"));
     assertEquals("/foo/bar", Paths.appended("/foo", "bar"));
+
+    assertEquals("bar", Paths.appended("", "bar"));
   }
 
   @Test
@@ -79,6 +81,8 @@ public class PathsTest extends LocalHistoryTestCase {
     assertFalse(Paths.isParent("foo/bar", "foo/baz"));
     assertFalse(Paths.isParent("foo/bar", "foo/barr"));
     assertFalse(Paths.isParent("foo/bar", "foo/barr/baz"));
+
+    assertTrue(Paths.isParent("", "foo"));
   }
 
   @Test

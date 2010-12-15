@@ -21,14 +21,16 @@ package com.intellij.lang.annotation;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class AnnotationSession extends UserDataHolderBase {
   private final PsiFile myFile;
 
-  public AnnotationSession(PsiFile file) {
+  public AnnotationSession(@NotNull PsiFile file) {
     myFile = file;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }

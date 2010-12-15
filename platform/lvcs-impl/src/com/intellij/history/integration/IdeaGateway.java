@@ -16,7 +16,6 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.StoredContent;
@@ -53,7 +52,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class IdeaGateway {
-  private static final Key<Pair<StoredContent, Long>> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
+  private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
   public boolean isVersioned(VirtualFile f) {
@@ -170,17 +169,17 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Content c;
+      Pair<StoredContent, Long> contentAndStamps;
       if (forDeletion) {
         FileDocumentManager m = FileDocumentManager.getInstance();
         Document d = m.getCachedDocument(file); // should not try to load document
         if (d != null && !m.isDocumentUnsaved(d)) d = null;
-        c = acquireAndClearCurrentContent(file, d);
+        contentAndStamps = acquireAndClearCurrentContent(file, d);
       }
       else {
-        c = getActualContentNoAcquire(file);
+        contentAndStamps = getActualContentNoAcquire(file);
       }
-      return new FileEntry(file.getName(), c, file.getTimeStamp(), !file.isWritable());
+      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
@@ -203,7 +202,6 @@ public class IdeaGateway {
           VirtualFile f = getFile(d);
           if (!shouldRegisterDocument(f)) continue;
           registerDocumentContents(vcs, f, d);
-          registerDocumentContents(vcs, f, d);
         }
         vcs.endChangeSet(null);
       }
@@ -216,70 +214,74 @@ public class IdeaGateway {
   }
 
   private void registerDocumentContents(LocalHistoryFacade vcs, VirtualFile f, Document d) {
-    Content content = acquireAndUpdateActualContent(f, d);
-    if (content != null) {
-      vcs.contentChanged(f.getPath(), content, Clock.getTime());
+    Pair<StoredContent, Long> contentAndStamp = acquireAndUpdateActualContent(f, d);
+    if (contentAndStamp != null) {
+      vcs.contentChanged(f.getPath(), contentAndStamp.first, contentAndStamp.second);
     }
   }
 
   // returns null is content has not been changes since last time
   @Nullable
-  public Content acquireAndUpdateActualContent(VirtualFile f, @Nullable Document d) {
-    Pair<StoredContent, Long> contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  public Pair<StoredContent, Long> acquireAndUpdateActualContent(VirtualFile f, @Nullable Document d) {
+    ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     if (contentAndStamp == null) {
       if (d != null) saveDocumentContent(f, d);
-      return StoredContent.acquireContent(f);
+      return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
     }
-
-    StoredContent content = contentAndStamp.first;
 
     // if no need to save current document content when simply return and clear stored one
     if (d == null) {
       f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
-      return content;
+      return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
     }
 
     // if the stored content equals the current one, do not store it and return null
-    if (d.getModificationStamp() == contentAndStamp.second) return null;
+    if (d.getModificationStamp() == contentAndStamp.documentModificationStamp) return null;
 
     // is current content has been changed, store it and return the previous one
     saveDocumentContent(f, d);
-    return content;
+    return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
   }
 
   private void saveDocumentContent(VirtualFile f, Document d) {
     f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY,
-                  Pair.create(StoredContent.acquireContent(bytesFromDocument(d)), d.getModificationStamp()));
+                  new ContentAndTimestamps(Clock.getTime(),
+                                           StoredContent.acquireContent(bytesFromDocument(d)),
+                                           d.getModificationStamp()));
   }
 
-  public Content acquireAndClearCurrentContent(VirtualFile f, @Nullable Document d) {
-    Pair<StoredContent, Long> contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  @NotNull
+  public Pair<StoredContent, Long> acquireAndClearCurrentContent(VirtualFile f, @Nullable Document d) {
+    ContentAndTimestamps contentAndStamp = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     f.putUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY, null);
 
     if (d != null && contentAndStamp != null) {
       // if previously stored content was not changed, return it
-      if (d.getModificationStamp() == contentAndStamp.second) return contentAndStamp.first;
+      if (d.getModificationStamp() == contentAndStamp.documentModificationStamp) {
+        return Pair.create(contentAndStamp.content, contentAndStamp.registeredTimestamp);
+      }
     }
 
     // release previously stored
     if (contentAndStamp != null) {
-      contentAndStamp.first.release();
+      contentAndStamp.content.release();
     }
 
     // take document's content if any
     if (d != null) {
-      return StoredContent.acquireContent(bytesFromDocument(d));
+      return Pair.create(StoredContent.acquireContent(bytesFromDocument(d)), Clock.getTime());
     }
 
-    return StoredContent.acquireContent(f);
+    return Pair.create(StoredContent.acquireContent(f), f.getTimeStamp());
   }
 
-  private Content getActualContentNoAcquire(VirtualFile f) {
-    Pair<StoredContent, Long> result = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
+  @NotNull
+  private Pair<StoredContent, Long> getActualContentNoAcquire(VirtualFile f) {
+    ContentAndTimestamps result = f.getUserData(SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY);
     if (result == null) {
-      return StoredContent.transientContent(f);
+      return Pair.create(StoredContent.transientContent(f), f.getTimeStamp());
     }
-    return result.first;
+    return Pair.create(result.content, result.registeredTimestamp);
   }
 
   private byte[] bytesFromDocument(Document d) {
@@ -318,5 +320,17 @@ public class IdeaGateway {
 
   public FileType getFileType(String fileName) {
     return FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+  }
+
+  private static class ContentAndTimestamps {
+    long registeredTimestamp;
+    StoredContent content;
+    long documentModificationStamp;
+
+    private ContentAndTimestamps(long registeredTimestamp, StoredContent content, long documentModificationStamp) {
+      this.registeredTimestamp = registeredTimestamp;
+      this.content = content;
+      this.documentModificationStamp = documentModificationStamp;
+    }
   }
 }

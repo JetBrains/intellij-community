@@ -20,12 +20,14 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -38,6 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 public class MessageBusImpl implements MessageBus {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusImpl");
   private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = new ThreadLocal<Queue<DeliveryJob>>() {
     @Override
     protected Queue<DeliveryJob> initialValue() {
@@ -84,20 +87,28 @@ public class MessageBusImpl implements MessageBus {
 
     public final MessageBusConnectionImpl connection;
     public final Message message;
+
+    @Override
+    public String toString() {
+      return "{ DJob connection:" + connection.toString() + "; message: " + message + " }";
+    }
   }
 
+  @NotNull
   public MessageBusConnection connect() {
     return new MessageBusConnectionImpl(this);
   }
 
-  public MessageBusConnection connect(Disposable parentDisposable) {
+  @NotNull
+  public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
     final MessageBusConnection connection = connect();
     Disposer.register(parentDisposable, connection);
     return connection;
   }
 
+  @NotNull
   @SuppressWarnings({"unchecked"})
-  public <L> L syncPublisher(final Topic<L> topic) {
+  public <L> L syncPublisher(@NotNull final Topic<L> topic) {
     L publisher = (L)mySyncPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -113,8 +124,9 @@ public class MessageBusImpl implements MessageBus {
     return publisher;
   }
 
+  @NotNull
   @SuppressWarnings({"unchecked"})
-  public <L> L asyncPublisher(final Topic<L> topic) {
+  public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
     L publisher = (L)myAsyncPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -131,7 +143,10 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void dispose() {
-    myMessageQueue.get().clear();
+    Queue<DeliveryJob> jobs = myMessageQueue.get();
+    if (!jobs.isEmpty()) {
+      LOG.error("Not delivered events in the queue: "+jobs);
+    }
     myMessageQueue.remove();
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
