@@ -50,7 +50,9 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         PyElementType op = expression.getOperator();
         if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(op) ||
               PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(op) ||
-                PyTokenTypes.SHIFT_OPERATIONS.contains(op)) {
+                PyTokenTypes.SHIFT_OPERATIONS.contains(op) ||
+                PyTokenTypes.BITWISE_OPERATIONS.contains(op) ||
+                op == PyTokenTypes.EXP) {
           if (leftExpression != null
               && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
             if (leftExpression.getText().equals(target.getText())) {
