@@ -184,13 +184,18 @@ public class JavaParserUtil {
     return builder;
   }
 
+  @Nullable
   public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
+    return parseFragment(chameleon, wrapper, true, LanguageLevel.HIGHEST);
+  }
+
+  @Nullable
+  public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper, final boolean eatAll, final LanguageLevel level) {
     final PsiElement psi = (chameleon.getTreeParent() != null ? chameleon.getTreeParent().getPsi() : chameleon.getPsi());
     assert psi != null : chameleon;
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final LanguageLevel level = LanguageLevel.HIGHEST;
     final Lexer lexer = JavaParserDefinition.createLexer(level);
     final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
     setLanguageLevel(builder, level);
@@ -198,6 +203,7 @@ public class JavaParserUtil {
     final PsiBuilder.Marker root = builder.mark();
     wrapper.parse(builder);
     if (!builder.eof()) {
+      if (!eatAll) throw new AssertionError("Unexpected tokens");
       final PsiBuilder.Marker extras = builder.mark();
       while (!builder.eof()) builder.advanceLexer();
       extras.error(JavaErrorMessages.message("unexpected.tokens"));
