@@ -50,14 +50,14 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     if (leftExpression.getRightExpression() instanceof PyBinaryExpression) {
       checkOperator((PyBinaryExpression)leftExpression.getRightExpression(), rightExpression, project);
     }     
-    else if (leftExpression.getOperator() == rightExpression.getOperator() &&
+    else if (/*leftExpression.getOperator() == rightExpression.getOperator() &&         */
                 PyTokenTypes.RELATIONAL_OPERATIONS.contains(leftExpression.getOperator())) {
       PyExpression leftRight = leftExpression.getRightExpression();
       if (leftRight != null) {
         if (leftRight.getText().equals(getSmallLeftExpression(rightExpression).getText())) {
           PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
           PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
-                  (leftExpression).getPsiOperator().getText(), leftExpression,
+                  (rightExpression).getPsiOperator().getText(), leftExpression,
                                                         getLargeRightExpression(rightExpression, project));
           leftExpression.replace(binaryExpression);
           rightExpression.delete();
