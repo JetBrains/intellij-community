@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a single element-value pair of an annotation parameter list.
@@ -36,6 +37,7 @@ public interface PsiNameValuePair extends PsiElement {
    *
    * @return the name identifier, or null if the annotation declaration is incomplete.
    */
+  @Nullable
   PsiIdentifier getNameIdentifier();
 
   /**
@@ -43,7 +45,7 @@ public interface PsiNameValuePair extends PsiElement {
    *
    * @return the name, or null if the annotation declaration is incomplete.
    */
-  @NonNls
+  @Nullable @NonNls
   String getName();
 
   /**
@@ -51,6 +53,7 @@ public interface PsiNameValuePair extends PsiElement {
    *
    * @return the value for the element.
    */
+  @Nullable
   PsiAnnotationMemberValue getValue();
 
   @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue);
