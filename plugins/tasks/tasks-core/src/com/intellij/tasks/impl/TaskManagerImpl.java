@@ -22,7 +22,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -39,6 +39,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 
 /**
@@ -62,12 +64,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
     }
   };
+  private static final Convertor<Task,String> KEY_CONVERTOR = new Convertor<Task, String>() {
+    @Override
+    public String convert(Task o) {
+      return o.getId();
+    }
+  };
 
   private final Project myProject;
 
   private final WorkingContextManager myContextManager;
 
   private final Map<String,Task> myIssueCache = Collections.synchronizedMap(new HashMap<String,Task>());
+  private final Map<String,Task> myTemporaryCache = Collections.synchronizedMap(new HashMap<String,Task>());
 
   private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTaskImpl>() {
     @Override
@@ -212,19 +221,20 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(String query) {
-    if (myConfig.updateEnabled) {
-      synchronized (myIssueCache) {
-        return new ArrayList<Task>(myIssueCache.values());
-      }
-    } else {
-      return getIssuesFromRepositories(query, 50, 0);
+    List<Task> tasks = getIssuesFromRepositories(query, 50, 0);
+    synchronized (myIssueCache) {
+      myTemporaryCache.clear();
+      myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
     }
+    return tasks;
   }
 
   @Override
   public List<Task> getCachedIssues() {
     synchronized (myIssueCache) {
-      return new ArrayList<Task>(myIssueCache.values());
+      ArrayList<Task> tasks = new ArrayList<Task>(myIssueCache.values());
+      tasks.addAll(myTemporaryCache.values());
+      return tasks;
     }
   }
 
@@ -596,9 +606,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
           synchronized (myIssueCache) {
             myIssueCache.clear();
-            for (Task issue : issues) {
-              myIssueCache.put(issue.getId(), issue);
-            }
+            myIssueCache.putAll(ContainerUtil.assignKeys(issues.iterator(), KEY_CONVERTOR));
           }
           // update local tasks
            synchronized (myTasks) {
