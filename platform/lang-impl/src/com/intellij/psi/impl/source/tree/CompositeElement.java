@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
@@ -388,7 +389,8 @@ public class CompositeElement extends TreeElement {
       }
       catch (AssertionError e) {
         myCachedLength = NOT_CACHED;
-        LOG.error("===\n"+PerformanceWatcher.dumpThreadsToString()+"\n===\n", e);
+        String assertion = StringUtil.getThrowableText(e);
+        LOG.error("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+PerformanceWatcher.dumpThreadsToString()+"\n===\n");
       }
       return myCachedLength;
     }
