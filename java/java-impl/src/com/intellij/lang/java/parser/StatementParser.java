@@ -165,7 +165,7 @@ public class StatementParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseStatement(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseStatement(final PsiBuilder builder) {
     final IElementType tokenType = builder.getTokenType();
 
     // todo: custom parsers (?)
@@ -637,7 +637,8 @@ public class StatementParser {
     return statement;
   }
 
-  private static boolean parseCatchBlock(final PsiBuilder builder) {
+  public static boolean parseCatchBlock(final PsiBuilder builder) {
+    assert builder.getTokenType() == JavaTokenType.CATCH_KEYWORD : builder.getTokenType();
     final PsiBuilder.Marker section = builder.mark();
     builder.advanceLexer();
 

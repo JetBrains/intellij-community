@@ -17,7 +17,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -27,12 +26,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,30 +43,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementFactoryImpl");
+  private PsiClass myArrayClass;
+  private PsiClass myArrayClass15;
+  private PsiJavaFile myDummyJavaFile;
 
-  private PsiClass ARRAY_CLASS;
-  private PsiClass ARRAY_CLASS15;
-
-  static {
-    initPrimitiveTypes();
-  }
-
-  private static void initPrimitiveTypes() {
-    ourPrimitiveTypesMap.put(PsiType.BYTE.getCanonicalText(), (PsiPrimitiveType)PsiType.BYTE);
-    ourPrimitiveTypesMap.put(PsiType.CHAR.getCanonicalText(), (PsiPrimitiveType)PsiType.CHAR);
-    ourPrimitiveTypesMap.put(PsiType.DOUBLE.getCanonicalText(), (PsiPrimitiveType)PsiType.DOUBLE);
-    ourPrimitiveTypesMap.put(PsiType.FLOAT.getCanonicalText(), (PsiPrimitiveType)PsiType.FLOAT);
-    ourPrimitiveTypesMap.put(PsiType.INT.getCanonicalText(), (PsiPrimitiveType)PsiType.INT);
-    ourPrimitiveTypesMap.put(PsiType.LONG.getCanonicalText(), (PsiPrimitiveType)PsiType.LONG);
-    ourPrimitiveTypesMap.put(PsiType.SHORT.getCanonicalText(), (PsiPrimitiveType)PsiType.SHORT);
-    ourPrimitiveTypesMap.put(PsiType.BOOLEAN.getCanonicalText(), (PsiPrimitiveType)PsiType.BOOLEAN);
-    ourPrimitiveTypesMap.put(PsiType.VOID.getCanonicalText(), (PsiPrimitiveType)PsiType.VOID);
-    ourPrimitiveTypesMap.put(PsiType.NULL.getCanonicalText(), (PsiPrimitiveType)PsiType.NULL);
-  }
-
-  public PsiElementFactoryImpl(PsiManagerEx manager) {
+  public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
   }
 
@@ -77,32 +63,29 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiClass getArrayClass(@NotNull LanguageLevel languageLevel) {
-    try {
-      if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
-        if (ARRAY_CLASS == null) {
-          ARRAY_CLASS = createClassFromText("public class __Array__{\n public final int length; \n public Object clone(){}\n}", null).getInnerClasses()[0];
-        }
-        return ARRAY_CLASS;
+  public PsiClass getArrayClass(@NotNull final LanguageLevel languageLevel) {
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (myArrayClass == null) {
+        final String body = "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
+        myArrayClass = createClassFromText(body, null).getInnerClasses()[0];
       }
-      else {
-        if (ARRAY_CLASS15 == null) {
-          ARRAY_CLASS15 = createClassFromText("public class __Array__<T>{\n public final int length; \n public T[] clone(){}\n}", null).getInnerClasses()[0];
-        }
-        return ARRAY_CLASS15;
-      }
+      return myArrayClass;
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+    else {
+      if (myArrayClass15 == null) {
+        final String body = "public class __Array__<T>{\n public final int length;\n public T[] clone() {}\n}";
+        myArrayClass15 = createClassFromText(body, null).getInnerClasses()[0];
+      }
+      return myArrayClass15;
     }
   }
 
   @NotNull
-  public PsiClassType getArrayClassType(@NotNull PsiType componentType, @NotNull final LanguageLevel languageLevel) {
-    PsiClass arrayClass = getArrayClass(languageLevel);
+  public PsiClassType getArrayClassType(@NotNull final PsiType componentType, @NotNull final LanguageLevel languageLevel) {
+    final PsiClass arrayClass = getArrayClass(languageLevel);
+    final PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
+
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
     if (typeParameters.length == 1) {
       substitutor = substitutor.put(typeParameters[0], componentType);
     }
@@ -111,305 +94,227 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor) {
+  public PsiClassType createType(@NotNull final PsiClass resolve, @NotNull final PsiSubstitutor substitutor) {
     return new PsiImmediateClassType(resolve, substitutor);
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel) {
+  public PsiClassType createType(@NotNull final PsiClass resolve,
+                                 @NotNull final PsiSubstitutor substitutor,
+                                 @NotNull final LanguageLevel languageLevel) {
     return new PsiImmediateClassType(resolve, substitutor, languageLevel);
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass resolve,
-                                 @NotNull PsiSubstitutor substitutor,
-                                 @NotNull LanguageLevel languageLevel,
-                                 @NotNull PsiAnnotation[] annotations) {
+  public PsiClassType createType(@NotNull final PsiClass resolve,
+                                 @NotNull final PsiSubstitutor substitutor,
+                                 @NotNull final LanguageLevel languageLevel,
+                                 @NotNull final PsiAnnotation[] annotations) {
     return new PsiImmediateClassType(resolve, substitutor, languageLevel, annotations);
   }
 
   @NotNull
-  public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
-    PsiUtil.checkIsIdentifier(myManager, name);
-    @NonNls String text = "public class " + name + "{ }";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiClass[] classes = aFile.getClasses();
-    if (classes.length != 1) {
-      throw new IncorrectOperationException();
-    }
-    return classes[0];
+  public PsiClass createClass(@NotNull final String name) throws IncorrectOperationException {
+    return createClassInner("class", name);
   }
 
   @NotNull
-  public PsiClass createInterface(@NotNull String name) throws IncorrectOperationException {
-    PsiUtil.checkIsIdentifier(myManager, name);
-    @NonNls String text = "public interface " + name + "{ }";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiClass[] classes = aFile.getClasses();
-    if (classes.length != 1) {
-      throw new IncorrectOperationException();
-    }
-    return classes[0];
+  public PsiClass createInterface(@NotNull final String name) throws IncorrectOperationException {
+    return createClassInner("interface", name);
   }
 
+  @NotNull
   public PsiClass createEnum(@NotNull final String name) throws IncorrectOperationException {
+    return createClassInner("enum", name);
+  }
+
+  private PsiClass createClassInner(final String type, final String name) {
     PsiUtil.checkIsIdentifier(myManager, name);
-    @NonNls String text = "public enum " + name + "{ }";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiClass[] classes = aFile.getClasses();
+    final PsiJavaFile aFile = createDummyJavaFile(join("public ", type, " ", name, " { }"));
+    final PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
-      throw new IncorrectOperationException();
+      throw new IncorrectOperationException("Incorrect " + type + " name \"" + name + "\".");
     }
     return classes[0];
   }
 
   @NotNull
-  public PsiTypeElement createTypeElement(@NotNull PsiType psiType) {
+  public PsiTypeElement createTypeElement(@NotNull final PsiType psiType) {
     final LightTypeElement element = new LightTypeElement(myManager, psiType);
     CodeEditUtil.setNodeGenerated(element.getNode(), true);
     return element;
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createReferenceElementByType(@NotNull PsiClassType type) {
+  public PsiJavaCodeReferenceElement createReferenceElementByType(@NotNull final PsiClassType type) {
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
     }
 
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
-    return new LightClassReference(myManager, type.getPresentableText(), resolveResult.getElement(), resolveResult.getSubstitutor());
+    final PsiClass refClass = resolveResult.getElement();
+    assert refClass != null : type;
+    return new LightClassReference(myManager, type.getPresentableText(), refClass, resolveResult.getSubstitutor());
   }
 
   @NotNull
-  public PsiField createField(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
+  public PsiField createField(@NotNull final String name, @NotNull final PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(type)) {
-      throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
+      throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
-    TreeElement typeCopy = ChangeUtil.copyToElement(createTypeElement(type));
-    typeCopy.acceptTree(new GeneratedMarkerVisitor());
-    @NonNls String text = "class _Dummy_ {private int " + name + ";}";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiClass aClass = aFile.getClasses()[0];
-    PsiField field = aClass.getFields()[0];
-    SourceTreeToPsiMap.psiElementToTree(field).replaceChild(SourceTreeToPsiMap.psiElementToTree(field.getTypeElement()), typeCopy);
-    ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(field));
+
+    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }"));
+    final PsiField field = aFile.getClasses()[0].getFields()[0];
+    JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(field);
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }
 
   @NotNull
-  public PsiMethod createMethod(@NotNull String name, PsiType returnType) throws IncorrectOperationException {
+  public PsiMethod createMethod(@NotNull final String name, final PsiType returnType) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(returnType)) {
-      throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
+      throw new IncorrectOperationException("Cannot create method with type \"null\".");
     }
-    @NonNls String text = "class _Dummy_ {\n public " + returnType.getCanonicalText() + " " + name + "(){}\n}";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiClass aClass = aFile.getClasses()[0];
-    PsiMethod method = aClass.getMethods()[0];
+
+    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { public " + returnType.getCanonicalText(), " ", name, "() {} }"));
+    final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
     JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(method);
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
   @NotNull
   public PsiMethod createConstructor() {
-    try {
-      @NonNls String text = "class _Dummy_ {\n public _Dummy_(){}\n}";
-      PsiJavaFile aFile = createDummyJavaFile(text);
-      PsiClass aClass = aFile.getClasses()[0];
-      PsiMethod method = aClass.getMethods()[0];
-      return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.assertTrue(false);
-      return null;
-    }
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public _Dummy_() {} }");
+    final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
+    return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
 
   @NotNull
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
-    @NonNls String text = "class _Dummy_ { {} }";
-    final PsiJavaFile aFile = createDummyJavaFile(text);
-    final PsiClass aClass = aFile.getClasses()[0];
-    final PsiClassInitializer psiClassInitializer = aClass.getInitializers()[0];
-    return (PsiClassInitializer)CodeStyleManager.getInstance(myManager.getProject()).reformat(psiClassInitializer);
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { {} }");
+    final PsiClassInitializer classInitializer = aFile.getClasses()[0].getInitializers()[0];
+    return (PsiClassInitializer)CodeStyleManager.getInstance(myManager.getProject()).reformat(classInitializer);
   }
 
   @NotNull
-  public PsiParameter createParameter(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
+  public PsiParameter createParameter(@NotNull final String name, @NotNull final PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(type)) {
-      throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
+      throw new IncorrectOperationException("Cannot create parameter with type \"null\".");
     }
-    final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
-    final String text = type.getCanonicalText() + " " + name;
-    final CompositeElement treeElement = getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(text);
-    if (treeElement == null) {
-      throw new AssertionError("Null element for text = " + text);
-    }
-    treeHolder.rawAddChildren(treeElement);
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
-    PsiParameter parameter = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
-    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
-    treeElement.acceptTree(new GeneratedMarkerVisitor());
+    final String text = join(type.getCanonicalText() + " " + name);
+    final PsiParameter parameter = createParameterFromText(text, null);
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
+                                CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
+    markGenerated(parameter);
     JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
 
   @NotNull
   public PsiCodeBlock createCodeBlock() {
-    try {
-      PsiCodeBlock block = createCodeBlockFromText("{}", null);
-      return (PsiCodeBlock)CodeStyleManager.getInstance(myManager.getProject()).reformat(block);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
+    final PsiCodeBlock block = createCodeBlockFromText("{}", null);
+    return (PsiCodeBlock)CodeStyleManager.getInstance(myManager.getProject()).reformat(block);
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass aClass) {
+  public PsiClassType createType(@NotNull final PsiClass aClass) {
     return new PsiImmediateClassType(aClass, aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : createRawSubstitutor(aClass));
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiJavaCodeReferenceElement classReference) {
+  public PsiClassType createType(@NotNull final PsiJavaCodeReferenceElement classReference) {
     return new PsiClassReferenceType(classReference, null);
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass aClass, PsiType parameter) {
-    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
-    assert typeParameters.length == 1;
+  public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType parameter) {
+    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assert typeParameters.length == 1 : aClass;
 
-    Map<PsiTypeParameter, PsiType> map = Collections.singletonMap(typeParameters[0], parameter);
-
+    final Map<PsiTypeParameter, PsiType> map = Collections.singletonMap(typeParameters[0], parameter);
     return createType(aClass, createSubstitutor(map));
   }
 
   @NotNull
-  public PsiClassType createType(@NotNull PsiClass aClass, PsiType... parameters) {
-    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+  public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType... parameters) {
+    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     assert parameters.length == typeParameters.length;
 
-    Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<PsiTypeParameter, PsiType>();
+    final Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<PsiTypeParameter, PsiType>();
     for (int i = 0; i < parameters.length; i++) {
       map.put(typeParameters[i], parameters[i]);
     }
-
     return createType(aClass, createSubstitutor(map));
   }
 
-  private static class TypeDetacher extends PsiTypeVisitor<PsiType> {
-    public static final TypeDetacher INSTANCE = new TypeDetacher();
-
-    public PsiType visitType(PsiType type) {
-      return type;
-    }
-
-    public PsiType visitWildcardType(PsiWildcardType wildcardType) {
-      final PsiType bound = wildcardType.getBound();
-      if (bound == null) {
-        return wildcardType;
-      }
-      else {
-        return PsiWildcardType.changeBound(wildcardType, bound.accept(this));
-      }
-    }
-
-    public PsiType visitArrayType(PsiArrayType arrayType) {
-      final PsiType componentType = arrayType.getComponentType();
-      final PsiType detachedComponentType = componentType.accept(this);
-      if (detachedComponentType == componentType) return arrayType; // optimization
-      return detachedComponentType.createArrayType();
-    }
-
-    public PsiType visitClassType(PsiClassType classType) {
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) return classType;
-      final HashMap<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-      for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aClass)) {
-        PsiType type = resolveResult.getSubstitutor().substitute(parameter);
-        if (type != null) {
-          type = type.accept(this);
-        }
-        map.put(parameter, type);
-      }
-      return new PsiImmediateClassType(aClass, PsiSubstitutorImpl.createSubstitutor(map));
-    }
-  }
-
-
   @NotNull
-  public PsiType detachType(@NotNull PsiType type) {
-    return type.accept(TypeDetacher.INSTANCE);
+  public PsiType detachType(@NotNull final PsiType type) {
+    return type;
   }
 
   @NotNull
-  public PsiSubstitutor createRawSubstitutor(@NotNull PsiTypeParameterListOwner owner) {
-    Map<PsiTypeParameter, PsiType> substMap = null;
+  public PsiSubstitutor createRawSubstitutor(@NotNull final PsiTypeParameterListOwner owner) {
+    Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(owner)) {
-      if (substMap == null) substMap = new HashMap<PsiTypeParameter, PsiType>();
-      substMap.put(parameter, null);
+      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      substitutorMap.put(parameter, null);
     }
-    return PsiSubstitutorImpl.createSubstitutor(substMap);
-  }
-  @NotNull
-  public PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters) {
-    Map<PsiTypeParameter, PsiType> substMap = null;
-    for (PsiTypeParameter parameter : typeParameters) {
-      if (substMap == null) substMap = new HashMap<PsiTypeParameter, PsiType>();
-      substMap.put(parameter, null);
-    }
-    return baseSubstitutor.putAll(PsiSubstitutorImpl.createSubstitutor(substMap));
+    return PsiSubstitutorImpl.createSubstitutor(substitutorMap);
   }
 
   @NotNull
-  public PsiElement createDummyHolder(@NotNull String text, @NotNull IElementType type, @Nullable PsiElement context) {
+  public PsiSubstitutor createRawSubstitutor(@NotNull final PsiSubstitutor baseSubstitutor, @NotNull final PsiTypeParameter[] typeParameters) {
+    Map<PsiTypeParameter, PsiType> substitutorMap = null;
+    for (PsiTypeParameter parameter : typeParameters) {
+      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      substitutorMap.put(parameter, null);
+    }
+    return baseSubstitutor.putAll(PsiSubstitutorImpl.createSubstitutor(substitutorMap));
+  }
+
+  @NotNull
+  public PsiElement createDummyHolder(@NotNull final String text, @NotNull final IElementType type, @Nullable final PsiElement context) {
     final DummyHolder result = DummyHolderFactory.createHolder(myManager, context);
     final FileElement holder = result.getTreeElement();
     final Language language = type.getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (parserDefinition == null) {
-      throw new AssertionError("No parser definition for language " + language);
-    }
+    assert parserDefinition != null : "No parser definition for language " + language;
     final Project project = myManager.getProject();
     final Lexer lexer = parserDefinition.createLexer(project);
     final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, language, text);
     final ASTNode node = parserDefinition.createParser(project).parse(type, builder);
     holder.rawAddChildren((TreeElement)node);
-    return node.getPsi();
+    final PsiElement psi = node.getPsi();
+    assert psi != null : text;
+    return psi;
   }
 
   @NotNull
-  public PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  public PsiSubstitutor createSubstitutor(@NotNull final Map<PsiTypeParameter, PsiType> map) {
     return PsiSubstitutorImpl.createSubstitutor(map);
   }
 
   @Nullable
-  public PsiPrimitiveType createPrimitiveType(@NotNull String text) {
-    return getPrimitiveType(text);
-  }
-
-  public static PsiPrimitiveType getPrimitiveType(final String text) {
-    return ourPrimitiveTypesMap.get(text);
+  public PsiPrimitiveType createPrimitiveType(@NotNull final String text) {
+    return PsiJavaParserFacadeImpl.getPrimitiveType(text);
   }
 
   @NotNull
-  public PsiClassType createTypeByFQClassName(@NotNull String qName) {
+  public PsiClassType createTypeByFQClassName(@NotNull final String qName) {
     return createTypeByFQClassName(qName, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   @NotNull
-  public PsiClassType createTypeByFQClassName(@NotNull String qName, @NotNull GlobalSearchScope resolveScope) {
+  public PsiClassType createTypeByFQClassName(@NotNull final String qName, @NotNull final GlobalSearchScope resolveScope) {
     return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createClassReferenceElement(@NotNull PsiClass aClass) {
+  public PsiJavaCodeReferenceElement createClassReferenceElement(@NotNull final PsiClass aClass) {
     final String text;
     if (aClass instanceof PsiAnonymousClass) {
       text = ((PsiAnonymousClass)aClass).getBaseClassType().getPresentableText();
@@ -421,19 +326,20 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createReferenceElementByFQClassName(@NotNull String qName, @NotNull GlobalSearchScope resolveScope) {
-    String shortName = PsiNameHelper.getShortClassName(qName);
+  public PsiJavaCodeReferenceElement createReferenceElementByFQClassName(@NotNull final String qName,
+                                                                         @NotNull final GlobalSearchScope resolveScope) {
+    final String shortName = PsiNameHelper.getShortClassName(qName);
     return new LightClassReference(myManager, shortName, qName, resolveScope);
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createFQClassNameReferenceElement(@NotNull String qName, @NotNull GlobalSearchScope resolveScope) {
+  public PsiJavaCodeReferenceElement createFQClassNameReferenceElement(@NotNull final String qName,
+                                                                       @NotNull final GlobalSearchScope resolveScope) {
     return new LightClassReference(myManager, qName, qName, resolveScope);
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull PsiPackage aPackage)
-    throws IncorrectOperationException {
+  public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull final PsiPackage aPackage) throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
     }
@@ -441,18 +347,20 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiPackageStatement createPackageStatement(@NotNull String name) throws IncorrectOperationException {
-    final PsiJavaFile javaFile = (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.java", "package " + name + ";");
-    final PsiPackageStatement stmt = javaFile.getPackageStatement();
-    if (stmt == null) throw new IncorrectOperationException("Incorrect package name: " + name);
+  public PsiPackageStatement createPackageStatement(@NotNull final String name) throws IncorrectOperationException {
+    final PsiJavaFile aFile = createDummyJavaFile(join("package ", name, ";"));
+    final PsiPackageStatement stmt = aFile.getPackageStatement();
+    if (stmt == null) {
+      throw new IncorrectOperationException("Incorrect package name: " + name);
+    }
     return stmt;
   }
 
   @NotNull
-  public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull String text,
-                                                                      PsiElement context,
-                                                                      boolean isPhysical,
-                                                                      boolean isClassesAccepted) {
+  public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull final String text,
+                                                                      final PsiElement context,
+                                                                      final boolean isPhysical,
+                                                                      final boolean isClassesAccepted) {
     final PsiJavaCodeReferenceCodeFragmentImpl result =
       new PsiJavaCodeReferenceCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, isClassesAccepted);
     result.setContext(context);
@@ -460,51 +368,54 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiImportStaticStatement createImportStaticStatement(@NotNull PsiClass aClass, @NotNull String memberName) throws IncorrectOperationException {
+  public PsiImportStaticStatement createImportStaticStatement(@NotNull final PsiClass aClass,
+                                                              @NotNull final String memberName) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) {
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
-    @NonNls String text = "import static " + aClass.getQualifiedName() + "." + memberName + ";";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiImportStaticStatement statement = aFile.getImportList().getImportStaticStatements()[0];
+
+    final PsiJavaFile aFile = createDummyJavaFile(join("import static ", aClass.getQualifiedName(), ".", memberName, ";"));
+    final PsiImportStatementBase statement = extractImport(aFile, true);
     return (PsiImportStaticStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
   @NotNull
-  public PsiParameterList createParameterList(@NotNull String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
-    @NonNls String text = "void method(";
-    String sep = "";
-    for (int i = 0; i < names.length; i++) {
-      final String name = names[i];
-      PsiType type = types[i];
-      text += sep + type.getCanonicalText() + " " + name;
-      sep = ",";
+  public PsiParameterList createParameterList(@NotNull final String[] names, @NotNull final PsiType[] types) throws IncorrectOperationException {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("void method(");
+      for (int i = 0; i < names.length; i++) {
+        if (i > 0) builder.append(", ");
+        builder.append(types[i].getCanonicalText()).append(' ').append(names[i]);
+      }
+      return createMethodFromText(builder.toString(), null).getParameterList();
     }
-    text += "){}";
-    PsiMethod method = createMethodFromText(text, null);
-    return method.getParameterList();
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
-  public PsiReferenceList createReferenceList(@NotNull PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
-    @NonNls String text = "void method() ";
-    if (references.length > 0) text += "throws ";
-    String sep = "";
-    for (final PsiJavaCodeReferenceElement reference : references) {
-      text += sep + reference.getCanonicalText();
-      sep = ",";
+  public PsiReferenceList createReferenceList(@NotNull final PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("void method() throws ");
+      for (int i = 0; i < references.length; i++) {
+        if (i > 0) builder.append(", ");
+        builder.append(references[i].getCanonicalText());
+      }
+      return createMethodFromText(builder.toString(), null).getThrowsList();
     }
-    text += "{}";
-    PsiMethod method = createMethodFromText(text, null);
-    return method.getThrowsList();
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
-  public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull String packageName)
-    throws IncorrectOperationException {
+  public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull final String packageName) throws IncorrectOperationException {
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
     }
@@ -512,8 +423,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiReferenceExpression createReferenceExpression(@NotNull PsiClass aClass) throws IncorrectOperationException {
-    String text;
+  public PsiReferenceExpression createReferenceExpression(@NotNull final PsiClass aClass) throws IncorrectOperationException {
+    final String text;
     if (aClass instanceof PsiAnonymousClass) {
       text = ((PsiAnonymousClass)aClass).getBaseClassType().getPresentableText();
     }
@@ -524,7 +435,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiReferenceExpression createReferenceExpression(@NotNull PsiPackage aPackage) throws IncorrectOperationException {
+  public PsiReferenceExpression createReferenceExpression(@NotNull final PsiPackage aPackage) throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
     }
@@ -532,13 +443,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiIdentifier createIdentifier(@NotNull String text) throws IncorrectOperationException {
+  public PsiIdentifier createIdentifier(@NotNull final String text) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, text);
     return new LightIdentifier(myManager, text);
   }
 
   @NotNull
-  public PsiKeyword createKeyword(@NotNull String text) throws IncorrectOperationException {
+  public PsiKeyword createKeyword(@NotNull final String text) throws IncorrectOperationException {
     if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isKeyword(text)) {
       throw new IncorrectOperationException("\"" + text + "\" is not a keyword.");
     }
@@ -546,21 +457,21 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiImportStatement createImportStatement(@NotNull PsiClass aClass) throws IncorrectOperationException {
+  public PsiImportStatement createImportStatement(@NotNull final PsiClass aClass) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
     }
     else if (aClass.getParent() instanceof PsiDeclarationStatement) {
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
-    @NonNls String text = "import " + aClass.getQualifiedName() + ";";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiImportStatement statement = aFile.getImportList().getImportStatements()[0];
+
+    final PsiJavaFile aFile = createDummyJavaFile(join("import ", aClass.getQualifiedName(), ";"));
+    final PsiImportStatementBase statement = extractImport(aFile, false);
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
   @NotNull
-  public PsiImportStatement createImportStatementOnDemand(@NotNull String packageName) throws IncorrectOperationException {
+  public PsiImportStatement createImportStatementOnDemand(@NotNull final String packageName) throws IncorrectOperationException {
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create import statement for default package.");
     }
@@ -568,109 +479,109 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Incorrect package name: \"" + packageName + "\".");
     }
 
-    @NonNls String text = "import " + packageName + ".*;";
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiImportStatement statement = aFile.getImportList().getImportStatements()[0];
+    final PsiJavaFile aFile = createDummyJavaFile(join("import ", packageName, ".*;"));
+    final PsiImportStatementBase statement = extractImport(aFile, false);
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
   @NotNull
-  public PsiDeclarationStatement createVariableDeclarationStatement(@NotNull String name, @NotNull PsiType type, PsiExpression initializer)
-    throws IncorrectOperationException {
+  public PsiDeclarationStatement createVariableDeclarationStatement(@NotNull final String name,
+                                                                    @NotNull final PsiType type,
+                                                                    final PsiExpression initializer) throws IncorrectOperationException {
     if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
     if (PsiType.NULL.equals(type)) {
-      throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
+      throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append("X ");
-    buffer.append(name);
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    builder.append("X ").append(name);
     if (initializer != null) {
-      buffer.append("=x");
+      builder.append(" = x");
     }
-    buffer.append(";");
-    PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(buffer.toString(), null);
-    PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
-    variable.getTypeElement().replace(createTypeElement(type));
-    PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
+    builder.append(';');
+    final String text = builder.toString();
+    StringBuilderSpinAllocator.dispose(builder);
+
+    final PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, null);
+    final PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
+    replace(variable.getTypeElement(), createTypeElement(type), text);
+    PsiUtil.setModifierProperty(variable, PsiModifier.FINAL,
+                                CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
     if (initializer != null) {
-      variable.getInitializer().replace(initializer);
+      replace(variable.getInitializer(), initializer, text);
     }
     markGenerated(statement);
     return statement;
-
   }
 
   @NotNull
-  public PsiDocTag createParamTag(@NotNull String parameterName, @NonNls String description) throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append(" * @param ");
-    buffer.append(parameterName);
-    buffer.append(" ");
-    final String[] strings = description.split("\\n");
-    for (int i = 0; i < strings.length; i++) {
-      String string = strings[i];
-      if (i > 0) buffer.append("\n * ");
-      buffer.append(string);
+  public PsiDocTag createParamTag(@NotNull final String parameterName, @NonNls final String description) throws IncorrectOperationException {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(" * @param ");
+      builder.append(parameterName);
+      builder.append(" ");
+      final String[] strings = description.split("\\n");
+      for (int i = 0; i < strings.length; i++) {
+        if (i > 0) builder.append("\n * ");
+        builder.append(strings[i]);
+      }
+      return createDocTagFromText(builder.toString());
     }
-    return createDocTagFromText(buffer.toString(), null);
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
-  public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull String text,
-                                                                PsiElement context,
+  public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull final String text,
+                                                                final PsiElement context,
                                                                 final PsiType expectedType,
-                                                                boolean isPhysical) {
-    final PsiExpressionCodeFragmentImpl result = new PsiExpressionCodeFragmentImpl(
-    myManager.getProject(), isPhysical, "fragment.java", text, expectedType);
+                                                                final boolean isPhysical) {
+    final PsiExpressionCodeFragmentImpl result =
+      new PsiExpressionCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, expectedType);
     result.setContext(context);
     return result;
   }
 
   @NotNull
-  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical) {
-    final PsiCodeFragmentImpl result = new PsiCodeFragmentImpl(myManager.getProject(), JavaElementType.STATEMENTS,
-                                                               isPhysical,
-                                                               "fragment.java",
-                                                               text);
+  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical) {
+    final PsiCodeFragmentImpl result =
+      new PsiCodeFragmentImpl(myManager.getProject(), JavaElementType.STATEMENTS, isPhysical, "fragment.java", text);
     result.setContext(context);
     return result;
   }
 
   @NotNull
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical) {
-
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical) {
     return createTypeCodeFragment(text, context, false, isPhysical, false);
   }
 
 
   @NotNull
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
-                                                    PsiElement context,
-                                                    boolean isVoidValid,
-                                                    boolean isPhysical) {
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
+                                                    final PsiElement context,
+                                                    final boolean isVoidValid,
+                                                    final boolean isPhysical) {
     return createTypeCodeFragment(text, context, true, isPhysical, false);
   }
 
   @NotNull
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
-                                                    PsiElement context,
-                                                    boolean isVoidValid,
-                                                    boolean isPhysical,
-                                                    boolean allowEllipsis) {
-    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(),
-                                                                       isPhysical,
-                                                                       allowEllipsis,
-                                                                       "fragment.java",
-                                                                       text);
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
+                                                    final PsiElement context,
+                                                    final boolean isVoidValid,
+                                                    final boolean isPhysical,
+                                                    final boolean allowEllipsis) {
+    final PsiTypeCodeFragmentImpl result
+      = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, allowEllipsis, "fragment.java", text);
     result.setContext(context);
     if (isVoidValid) {
       result.putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);
     }
     return result;
   }
-
 
   @NotNull
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, final PsiElement context) throws IncorrectOperationException {
@@ -727,8 +638,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, final PsiElement context) throws
-                                                                                                            IncorrectOperationException {
+  public PsiTypeParameter createTypeParameterFromText(@NotNull final String text,
+                                                      final PsiElement context) throws IncorrectOperationException {
     final PsiTypeParameter typeParameter = super.createTypeParameterFromText(text, context);
     markGenerated(typeParameter);
     return typeParameter;
@@ -742,18 +653,18 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level) throws
-                                                                                                                         IncorrectOperationException {
+  public PsiMethod createMethodFromText(@NotNull final String text,
+                                        final PsiElement context,
+                                        final LanguageLevel level) throws IncorrectOperationException {
     final PsiMethod method = super.createMethodFromText(text, context, level);
     markGenerated(method);
     return method;
   }
 
-
   @NotNull
   public PsiCatchSection createCatchSection(@NotNull final PsiClassType exceptionType,
-                                            @NotNull final String exceptionName, final PsiElement context) throws
-                                                                                                           IncorrectOperationException {
+                                            @NotNull final String exceptionName,
+                                            final PsiElement context) throws IncorrectOperationException {
     final PsiCatchSection psiCatchSection = super.createCatchSection(exceptionType, exceptionName, context);
     markGenerated(psiCatchSection);
     return psiCatchSection;
@@ -761,5 +672,26 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   private static void markGenerated(final PsiElement element) {
     ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
+  }
+
+  private static PsiImportStatementBase extractImport(final PsiJavaFile aFile, final boolean isStatic) {
+    final PsiImportList importList = aFile.getImportList();
+    assert importList != null : aFile;
+    final PsiImportStatementBase[] statements = isStatic ? importList.getImportStaticStatements() : importList.getImportStatements();
+    assert statements.length == 1 : aFile.getText();
+    return statements[0];
+  }
+
+  private static void replace(final PsiElement original, final PsiElement replacement, final String message) {
+    assert original != null : message;
+    original.replace(replacement);
+  }
+
+  /**
+   * @deprecated use {@link PsiJavaParserFacadeImpl#getPrimitiveType(String)} (remove in IDEA 11).
+   */
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static PsiPrimitiveType getPrimitiveType(final String text) {
+    return PsiJavaParserFacadeImpl.getPrimitiveType(text);
   }
 }
