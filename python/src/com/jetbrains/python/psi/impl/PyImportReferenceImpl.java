@@ -177,7 +177,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           if (thisQName == null) {
             fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
           }
-          else {
+          else if (thisQName.getComponentCount() >= relative_level) {
             thisQName = thisQName.removeTail(relative_level);
             fillFromQName(thisQName, insertHandler);
           }
