@@ -95,7 +95,10 @@ class UpdateFoldRegionsOperation implements Runnable {
       FoldingGroup group = descriptor.getGroup();
       TextRange range = descriptor.getRange();
       String placeholder = descriptor.getPlaceholderText();
-      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(), placeholder == null ? "..." : placeholder, group);
+      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
+                                                        placeholder == null ? "..." : placeholder,
+                                                        group,
+                                                        descriptor.isNonExpandable());
       if (region == null) continue;
 
       if (!foldingModel.addFoldRegion(region)) {
@@ -106,7 +109,7 @@ class UpdateFoldRegionsOperation implements Runnable {
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(descriptor.getElement().getPsi()));
       newRegions.add(region);
 
-      boolean expandStatus = shouldExpandNewRegion(element, range, rangeToExpandStatusMap);
+      boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(element, range, rangeToExpandStatusMap);
       if (group == null) {
         shouldExpand.put(region, expandStatus);
       }
