@@ -252,9 +252,11 @@ public abstract class AbstractValueHint {
     //Editor may be disposed before later invokator process this action
     if(getEditor().getComponent().getRootPane() == null) return false;
 
-    Point p = HintManagerImpl.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), HintManagerImpl.UNDER);
+    short constraint = HintManagerImpl.UNDER;
+    Point p = HintManagerImpl.getHintPosition(myCurrentHint, getEditor(), getEditor().xyToLogicalPosition(myPoint), constraint);
     HintManagerImpl.getInstanceImpl().showEditorHint(myCurrentHint, getEditor(), p,
-                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false);
+                               HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE | HintManagerImpl.HIDE_BY_SCROLLING, HINT_TIMEOUT, false,
+                               constraint);
     return true;
   }
 

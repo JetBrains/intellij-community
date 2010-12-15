@@ -45,6 +45,9 @@ public class HintHint {
   private int myCalloutShift;
   private boolean myExplicitClose;
 
+  private int myPositionChangeX;
+  private int myPositionChangeY;
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }
@@ -219,5 +222,19 @@ public class HintHint {
   public HintHint setExplicitClose(boolean explicitClose) {
     myExplicitClose = explicitClose;
     return this;
+  }
+
+  public HintHint setPositionChangeShift(int x, int y) {
+    myPositionChangeX = x;
+    myPositionChangeY = y;
+    return this;
+  }
+
+  public int getPositionChangeX() {
+    return myPositionChangeX;
+  }
+
+  public int getPositionChangeY() {
+    return myPositionChangeY;
   }
 }

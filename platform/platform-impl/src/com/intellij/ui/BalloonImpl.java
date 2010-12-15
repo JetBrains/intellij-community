@@ -159,6 +159,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
   private boolean myFadedOut;
   private int myCalloutshift;
 
+  private int myPositionChangeXShift;
+  private int myPositionChangeYShift;
+
   public boolean isInsideBalloon(MouseEvent me) {
     if (!me.getComponent().isShowing()) return true;
     if (me.getComponent() == myCloseRec) return true;
@@ -204,7 +207,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      ActionListener clickHandler,
                      boolean closeOnClick,
                      int animationCycle,
-                     int calloutShift) {
+                     int calloutShift,
+                     int positioChangeXShfit,
+                     int positionChangeYShift) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -216,6 +221,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myClickHandler = clickHandler;
     myCloseOnClick = closeOnClick;
     myCalloutshift = calloutShift;
+    myPositionChangeXShift = positioChangeXShfit;
+    myPositionChangeYShift = positionChangeYShift;
 
     myFadeoutTime = fadeoutTime;
     myAnimationCycle = animationCycle;
@@ -304,7 +311,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
 
-
+    int positionChangeFix = 0;
     if (myShowPointer) {
       Rectangle rec = getRecForPosition(myPosition, true);
 
@@ -331,12 +338,13 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
           }
 
           myPosition = targetPosition;
+          positionChangeFix = myPosition.getChangeShift(originalPreferred, myPositionChangeXShift, myPositionChangeYShift);
         }
       }
     }
 
     if (myPosition != originalPreferred) {
-      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
+      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift > 0 ? myCalloutshift + positionChangeFix : positionChangeFix);
     }
 
     createComponent();
@@ -589,6 +597,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     abstract void setRecToRelativePosition(Rectangle rec, Point targetPoint);
 
+    abstract int getChangeShift(Position original, int xShift, int yShift);
 
     public void updateBounds(final BalloonImpl balloon) {
       balloon.myComp._setBounds(getUpdatedBounds(balloon.myLayeredPane.getSize(),
@@ -705,6 +714,12 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
+    int getChangeShift(Position original, int xShift, int yShift) {
+      return original == ABOVE ? yShift : 0;
+    }
+
+
+    @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
       return rectangle.y - targetPoint.y;
     }
@@ -756,6 +771,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     @Override
     public Point getShiftedPoint(Point targetPoint, int shift) {
       return new Point(targetPoint.x, targetPoint.y - shift);
+    }
+
+    @Override
+    int getChangeShift(Position original, int xShift, int yShift) {
+      return original == BELOW ? -yShift : 0;
     }
 
     @Override
@@ -816,6 +836,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
+    int getChangeShift(Position original, int xShift, int yShift) {
+      return original == AT_LEFT ? xShift : 0;
+    }
+
+    @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
       return rectangle.x - targetPoint.x;
     }
@@ -867,6 +892,12 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     public Point getShiftedPoint(Point targetPoint, int shift) {
       return new Point(targetPoint.x - shift, targetPoint.y);
     }
+
+    @Override
+    int getChangeShift(Position original, int xShift, int yShift) {
+      return original == AT_RIGHT ? -xShift : 0;
+    }
+
 
     @Override
     protected int getDistanceToTarget(Rectangle rectangle, Point targetPoint) {
@@ -1194,7 +1225,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500, 5));
+          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, 0, true, null, false, 500, 5, 0, 0));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
