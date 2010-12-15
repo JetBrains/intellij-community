@@ -408,9 +408,15 @@
       <keyboard-shortcut first-keystroke="control alt I"/>
     </action>
 
+    <action id="MinimizeCurrentWindow">
+      <keyboard-shortcut first-keystroke="meta M"/>
+    </action>
+
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->
     <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
+    <action id="EditorScrollToCenter"/> <!-- Disables meta M -->
+    <action id="Vcs.ShowMessageHistory"/> <!-- Disables meta M -->
 
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="meta Z"/> <!-- Disables alt backspace -->
