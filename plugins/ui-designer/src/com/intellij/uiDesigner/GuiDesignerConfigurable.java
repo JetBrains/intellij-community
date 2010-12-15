@@ -80,6 +80,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(myProject);
 
+    if (myGeneralUI == null) {
+      return false;
+    }
+
     if (myGeneralUI.myChkCopyFormsRuntime.isSelected() != configuration.COPY_FORMS_RUNTIME_TO_OUTPUT) {
       return true;
     }
