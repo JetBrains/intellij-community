@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/Xerces-J-src.2.8.1.zip!/xerces-2_8_1/src" />
+      <root url="jar://$PROJECT_DIR$/lib/src/Xerces-J-src.2.9.1.zip!/xerces-2_9_1/src" />
     </SOURCES>
   </library>
 </component>
