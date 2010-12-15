@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="execution-impl" exported="" scope="RUNTIME" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="testFramework" exported="" />
   </component>
   <component name="copyright">
     <Base>
