@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -94,7 +95,18 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       JavaCompletionUtil.insertParentheses(context, item, false, true);
       AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
     }
+
+    LOG.assertTrue(context.getTailOffset() >= 0);
+    String docText = context.getDocument().getText();
     DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), item);
+    if (context.getTailOffset() < 0) {
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        LOG.error("Tail offset degraded: " + context.getStartOffset() + "; " + docText);
+      } else {
+        LOG.error("Tail offset degraded after insertion");
+      }
+    }
+
 
     if (annotation) {
       // Check if someone inserts annotation class that require @

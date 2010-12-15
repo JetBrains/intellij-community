@@ -132,6 +132,7 @@ public class AllClassesGetter {
           start--;
         }
         context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
+        LOG.assertTrue(context.getTailOffset() >= 0);
       }
     }
   };
