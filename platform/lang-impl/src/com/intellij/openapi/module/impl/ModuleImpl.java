@@ -37,6 +37,7 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
@@ -322,16 +323,12 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "Module:" + getName() + " path:" + getModuleFilePath();
+    if (myName == null) return "Module"; // was called before initialized
+    return "Module: '" + getName() + "' path: '" + getModuleFilePath()+"'";
   }
 
-  private static String moduleNameByFileName(String fileName) {
-    if (fileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-      return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
-    }
-    else {
-      return fileName;
-    }
+  private static String moduleNameByFileName(@NotNull String fileName) {
+    return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
