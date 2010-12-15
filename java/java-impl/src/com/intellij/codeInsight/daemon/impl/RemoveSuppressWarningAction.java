@@ -138,7 +138,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
     else if (newText != null) {
       newText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
-      PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText, tag);
+      PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText);
       tag.replace(newTag);
     }
   }

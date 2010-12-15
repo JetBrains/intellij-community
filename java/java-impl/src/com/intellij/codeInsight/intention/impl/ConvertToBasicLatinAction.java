@@ -177,7 +177,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     }
 
     public PsiElement createReplacement(final PsiElement element, final String newText) {
-      return JavaPsiFacade.getElementFactory(element.getProject()).createDocCommentFromText(newText, element.getParent());
+      return JavaPsiFacade.getElementFactory(element.getProject()).createDocCommentFromText(newText);
     }
 
     private static void loadEntities(final Project project) {

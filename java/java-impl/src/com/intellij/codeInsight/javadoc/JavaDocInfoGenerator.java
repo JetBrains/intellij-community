@@ -1343,9 +1343,8 @@ public class JavaDocInfoGenerator {
         }
         else {
           try {
-            final PsiDocTag tag = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createDocCommentFromText("/** @exception " + paramName + " */",
-                                                                                                   method.getContainingFile()).getTags()[0];
-
+            final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+            final PsiDocTag tag = elementFactory.createDocTagFromText("@exception " + paramName);
             collectedTags.addLast(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider));
           }
           catch (IncorrectOperationException e) {
