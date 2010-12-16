@@ -96,12 +96,19 @@ public class DeleteAction extends EditorAction {
     Document document = editor.getDocument();
     if(afterLineEnd < 0) {
       int offset = editor.getCaretModel().getOffset();
-      document.deleteString(offset, offset + 1);
-      editor.getCaretModel().moveToOffset(offset);
+      FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (region != null && region.shouldNeverExpand()) {
+        document.deleteString(region.getStartOffset(), region.getEndOffset());
+        editor.getCaretModel().moveToOffset(region.getStartOffset());
+      }
+      else {
+        document.deleteString(offset, offset + 1);
+        editor.getCaretModel().moveToOffset(offset);
+      }
       return;
     }
-    if(lineNumber + 1 >= document.getLineCount())
-      return;
+
+    if(lineNumber + 1 >= document.getLineCount()) return;
 
     // Do not group delete newline and other deletions.
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
