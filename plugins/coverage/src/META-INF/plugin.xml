@@ -21,6 +21,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
+    <projectConfigurable implementation="com.intellij.coverage.CoverageOptionsConfigurable"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
