@@ -36,10 +36,17 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private final Editor myEditor;
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
+  private final boolean myShouldNeverExpand;
 
-  FoldRegionImpl(@NotNull Editor editor, int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
+  FoldRegionImpl(@NotNull Editor editor,
+                 int startOffset,
+                 int endOffset,
+                 @NotNull String placeholder,
+                 FoldingGroup group,
+                 boolean shouldNeverExpand) {
     super((DocumentEx)editor.getDocument(), startOffset, endOffset);
     myGroup = group;
+    myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
     myEditor = editor;
     myPlaceholderText = placeholder;
@@ -89,6 +96,11 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   @Nullable
   public FoldingGroup getGroup() {
     return myGroup;
+  }
+
+  @Override
+  public boolean shouldNeverExpand() {
+    return myShouldNeverExpand;
   }
 
   public String toString() {

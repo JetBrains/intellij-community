@@ -236,6 +236,11 @@ public class LookupElementBuilder extends LookupElement {
   }
 
   @Override
+  public String toString() {
+    return "LookupElementBuilder: string=" + getLookupString() + "; handler=" + myInsertHandler;
+  }
+
+  @Override
   public int hashCode() {
     int result = 0;
     result = 31 * result + (myInsertHandler != null ? myInsertHandler.getClass().hashCode() : 0);

@@ -58,8 +58,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * @return the created enum instance.
    * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
    */
-
-  PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
+  @NotNull PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
 
   /**
    * Creates a field with the specified name and type.
@@ -158,7 +157,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    *
    * @param type the type to detach.
    * @return the detached type.
-   * @deprecated Optimization method, do not use if you do not understand what it does.
+   * @deprecated does nothing (remove in IDEA 11)
    */
   @NotNull PsiType detachType(@NotNull PsiType type);
 
@@ -189,9 +188,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   @Nullable PsiPrimitiveType createPrimitiveType(@NotNull String text);
 
   /**
-   * The same as {@link #createTypeByFQClassName(String, GlobalSearchScope)} with {@link GlobalSearchScope#allScope()}
+   * The same as {@link #createTypeByFQClassName(String, GlobalSearchScope)}
+   * with {@link GlobalSearchScope#allScope(com.intellij.openapi.project.Project)}.
    *
-   * @param qName        the full-qualified name of the class to create the reference to.
+   * @param qName the full-qualified name of the class to create the reference to.
    * @return the class type instance.
    */
   @NotNull PsiClassType createTypeByFQClassName(@NotNull @NonNls String qName);
@@ -419,6 +419,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   /**
    * Returns a synthetic Java class containing methods which are defined on Java arrays.
    *
+   * @param languageLevel language level used to construct array class.
    * @return the array synthetic class.
    */
   @NotNull PsiClass getArrayClass(@NotNull LanguageLevel languageLevel);
@@ -428,7 +429,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
    * are defined on Java arrays with the specified element type.
    *
    * @param componentType the component type of the array for which the class type is returned.
-   * @param languageLevel
+   * @param languageLevel language level used to construct array class.
    * @return the class type the array synthetic class.
    */
   @NotNull PsiClassType getArrayClassType(@NotNull PsiType componentType, @NotNull final LanguageLevel languageLevel);

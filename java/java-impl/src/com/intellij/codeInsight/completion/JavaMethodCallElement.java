@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -57,8 +56,6 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       LOG.error(method.getName());
     }
     myCanImportStatic = canImportStatic;
-    PsiType type = method.getReturnType();
-    setTailType(PsiType.VOID.equals(type) ? TailType.SEMICOLON : TailType.NONE);
   }
 
   public PsiType getType() {

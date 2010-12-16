@@ -298,7 +298,8 @@ public class SuspendManagerImpl implements SuspendManager {
         }
         myDebugProcess.logThreads();
         myDebugProcess.cancelRunToCursorBreakpoint();
-        myDebugProcess.deleteStepRequests();
+        final ThreadReferenceProxyImpl thread = suspendContext.getThread();
+        myDebugProcess.deleteStepRequests(thread != null? thread.getThreadReference() : null);
         notifyPaused(suspendContext);
       }
     }

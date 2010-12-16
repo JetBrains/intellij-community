@@ -64,7 +64,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public MessageBusImpl(final Object owner, MessageBus parentBus) {
-    myOwner = owner;
+    myOwner = owner == null ? null : owner.toString();
     myParentBus = (MessageBusImpl)parentBus;
     if (myParentBus != null) {
       myParentBus.notifyChildBusCreated(this);

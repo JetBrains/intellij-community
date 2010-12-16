@@ -41,6 +41,7 @@ public class FoldingDescriptor {
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
   private Set<Object> myDependencies;
+  private final boolean myNeverExpands;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -66,14 +67,33 @@ public class FoldingDescriptor {
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
    * @param node  The node to which the folding region is related. The node is then passed to
-   *              {@link FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
-   *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   *              {@link com.intellij.lang.folding.FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
+   *              {@link com.intellij.lang.folding.FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
    * @param range The folded text range.
    * @param group Regions with the same group instance expand and collapse together.
    * @param dependencies folding dependencies: other files or elements that could change
    * folding description
    */
   public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, Set<Object> dependencies) {
+    this(node, range, group, dependencies, false);
+  }
+
+  /**
+   * Creates a folding region related to the specified AST node and covering the specified
+   * text range.
+   * @param node  The node to which the folding region is related. The node is then passed to
+   *              {@link com.intellij.lang.folding.FoldingBuilder#getPlaceholderText(com.intellij.lang.ASTNode)} and
+   *              {@link com.intellij.lang.folding.FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
+   * @param range The folded text range.
+   * @param group Regions with the same group instance expand and collapse together.
+   * @param dependencies folding dependencies: other files or elements that could change
+   * @param neverExpands shall be true for fold regions that must not be ever expanded.
+   */
+  public FoldingDescriptor(@NotNull ASTNode node,
+                           @NotNull TextRange range,
+                           @Nullable FoldingGroup group,
+                           Set<Object> dependencies,
+                           boolean neverExpands) {
     assert range.getStartOffset() + 1 < range.getEndOffset() : range;
     myElement = node;
     ProperTextRange.assertProperRange(range);
@@ -81,6 +101,7 @@ public class FoldingDescriptor {
     myGroup = group;
     assert getRange().getLength() >= 2 : "range:" + getRange();
     myDependencies = dependencies;
+    myNeverExpands = neverExpands;
   }
 
   /**
@@ -121,5 +142,9 @@ public class FoldingDescriptor {
   @NotNull
   public Set<Object> getDependencies() {
     return myDependencies;
+  }
+
+  public boolean isNonExpandable() {
+    return myNeverExpands;
   }
 }

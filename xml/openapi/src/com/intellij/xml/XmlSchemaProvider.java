@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
@@ -39,8 +38,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public abstract class XmlSchemaProvider {
-
-  public final static ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
+  public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
@@ -74,7 +72,7 @@ public abstract class XmlSchemaProvider {
    */
   @Deprecated
   @Nullable
-  public static XmlSchemaProvider getAvailableProvider(final @NotNull XmlFile file) {
+  public static XmlSchemaProvider getAvailableProvider(@NotNull final XmlFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
       if (provider.isAvailable(file)) {
         return provider;
@@ -83,7 +81,7 @@ public abstract class XmlSchemaProvider {
     return null;    
   }
 
-  public static List<XmlSchemaProvider> getAvailableProviders(final @NotNull XmlFile file) {
+  public static List<XmlSchemaProvider> getAvailableProviders(@NotNull final XmlFile file) {
     return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), new Condition<XmlSchemaProvider>() {
       public boolean value(XmlSchemaProvider xmlSchemaProvider) {
         return xmlSchemaProvider.isAvailable(file);
@@ -95,7 +93,7 @@ public abstract class XmlSchemaProvider {
   public abstract XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull final PsiFile baseFile);
 
 
-  public boolean isAvailable(final @NotNull XmlFile file) {
+  public boolean isAvailable(@NotNull final XmlFile file) {
     return false;
   }
 
@@ -106,7 +104,7 @@ public abstract class XmlSchemaProvider {
    * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
    */
   @NotNull
-  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file, final @Nullable String tagName) {
+  public Set<String> getAvailableNamespaces(@NotNull final XmlFile file, @Nullable final String tagName) {
     return Collections.emptySet();
   }
 

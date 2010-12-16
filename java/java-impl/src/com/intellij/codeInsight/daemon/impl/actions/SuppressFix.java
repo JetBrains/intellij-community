@@ -109,7 +109,7 @@ public class SuppressFix extends SuppressIntentionAction {
       PsiManager manager = PsiManager.getInstance(project);
       if (docComment == null) {
         String commentText = "/** @" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
-        docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText, null);
+        docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText);
         PsiElement firstChild = container.getFirstChild();
         container.addBefore(docComment, firstChild);
       }
@@ -122,11 +122,11 @@ public class SuppressFix extends SuppressIntentionAction {
                            " " +
                            (valueElement != null ? valueElement.getText() + "," : "") +
                            getID(container);
-          noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
+          noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
         }
         else {
           String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
-          docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
+          docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
         }
       }
     }

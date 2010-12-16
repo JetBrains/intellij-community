@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +47,15 @@ public class LibrariesDownloadAssistant {
     final String serviceUrl = LibrariesDownloadConnectionService.getInstance().getServiceUrl();
     if (StringUtil.isNotEmpty(serviceUrl)) {
       try {
-        return new URL(serviceUrl + "/" + id + "/");
+        final String url = serviceUrl + "/" + id + "/";
+        HttpConfigurable.getInstance().prepareURL(url);
+
+        return new URL(url);
       }
       catch (MalformedURLException e) {
+        LOG.error(e);
+      }
+      catch (IOException e) {
         LOG.error(e);
       }
     }

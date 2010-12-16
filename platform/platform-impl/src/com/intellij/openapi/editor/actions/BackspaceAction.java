@@ -83,8 +83,16 @@ public class BackspaceAction extends EditorAction {
         int offset = editor.getCaretModel().getOffset();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().removeSelection();
-        document.deleteString(offset-1, offset);
-        editor.getCaretModel().moveToOffset(offset - 1, true);
+
+        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
+        if (region != null && region.shouldNeverExpand()) {
+          document.deleteString(region.getStartOffset(), region.getEndOffset());
+          editor.getCaretModel().moveToOffset(region.getStartOffset());
+        }
+        else {
+          document.deleteString(offset - 1, offset);
+          editor.getCaretModel().moveToOffset(offset - 1, true);
+        }
       }
     }
     else if(lineNumber > 0) {

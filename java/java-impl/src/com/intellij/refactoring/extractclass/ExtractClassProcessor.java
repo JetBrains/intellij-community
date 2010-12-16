@@ -395,7 +395,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
     @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();
-    fieldBuffer.append(delegateVisibility).append(' ');
+    if (delegateVisibility.length() > 0) fieldBuffer.append(delegateVisibility).append(' ');
     fieldBuffer.append("final ");
     final String fullyQualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
     fieldBuffer.append(fullyQualifiedName);
@@ -408,8 +408,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
     fieldBuffer.append(' ');
     fieldBuffer.append(delegateFieldName);
-    fieldBuffer.append('=');
-    fieldBuffer.append("new ").append(fullyQualifiedName);
+    fieldBuffer.append(" = new ").append(fullyQualifiedName);
     if (!typeParams.isEmpty()) {
       fieldBuffer.append('<');
       for (PsiTypeParameter typeParameter : typeParams) {

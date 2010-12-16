@@ -148,6 +148,13 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     catch (IOException e) {
       LOG.error(e);
     }
+    clearScriptCache();
+  }
+
+  private static void clearScriptCache() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      project.putUserData(SCRIPTS_CACHE, null);
+    }
   }
 
   static void disableFile(final VirtualFile vfile) {
@@ -158,9 +165,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       LOG.error(e1);
     }
     vfile.putUserData(CACHED_EXECUTOR, null);
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      project.putUserData(SCRIPTS_CACHE, null);
-    }
+    clearScriptCache();
   }
 
 

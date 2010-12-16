@@ -67,6 +67,11 @@ public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
     throw new UnsupportedOperationException("FoldRegion.getGroup() is not implemented yet at " + getClass());
   }
 
+  @Override
+  public boolean shouldNeverExpand() {
+    return false;
+  }
+
   @NotNull
   @Override
   public Document getDocument() {

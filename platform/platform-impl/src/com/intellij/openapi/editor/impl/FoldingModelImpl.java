@@ -142,7 +142,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
+    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
     if (region == null) return null;
     if (!addFoldRegion(region)) {
       region.dispose();
@@ -167,9 +167,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       final FoldingGroup group = region.getGroup();
       if (group != null) {
         myGroups.putValue(group, region);
-        for (FoldingListener listener : myListeners) {
-          listener.onFoldRegionStateChange(region);
-        }
+      }
+      for (FoldingListener listener : myListeners) {
+        listener.onFoldRegionStateChange(region);
       }
       return true;
     }
@@ -267,7 +267,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public void expandFoldRegion(FoldRegion region) {
     assertIsDispatchThread();
-    if (region.isExpanded()) return;
+    if (region.isExpanded() || region.shouldNeverExpand()) return;
 
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be collapsed or expanded inside batchFoldProcessing() only.");
@@ -456,8 +456,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return EditorDocumentPriorities.FOLD_MODEL;
   }
 
-  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
-    FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group);
+  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
+    FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     region.registerInDocument();
     LOG.assertTrue(region.isValid());
     return region;

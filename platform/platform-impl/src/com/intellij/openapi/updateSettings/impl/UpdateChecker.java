@@ -354,6 +354,8 @@ public final class UpdateChecker {
             }
             catch (Exception ignored) {
             }
+            catch (InternalError ignored) {
+            }
             propertiesComponent.setValue(INSTALLATION_UID, uid);
           }
           else {

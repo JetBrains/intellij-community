@@ -312,8 +312,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       }
 
       if (compatibleParamObjectConstructor != null) {
-        PsiDocComment psiDocComment =
-          JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText("/**\n*/", compatibleParamObjectConstructor);
+        PsiDocComment psiDocComment = JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText("/**\n*/");
         psiDocComment = (PsiDocComment)compatibleParamObjectConstructor.addBefore(psiDocComment, compatibleParamObjectConstructor.getFirstChild());
 
         for (PsiDocTag tag : mergedTags) {

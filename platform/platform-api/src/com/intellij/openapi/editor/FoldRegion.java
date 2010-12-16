@@ -53,4 +53,6 @@ public interface FoldRegion extends RangeMarker {
 
   @Nullable
   FoldingGroup getGroup();
+
+  boolean shouldNeverExpand();
 }

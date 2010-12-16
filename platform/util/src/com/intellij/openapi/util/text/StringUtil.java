@@ -795,7 +795,7 @@ public class StringUtil {
   @NotNull
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
-      return s.substring(0, s.lastIndexOf(suffix));
+      return s.substring(0, s.length() - suffix.length());
     }
     return s;
   }
@@ -1085,6 +1085,22 @@ public class StringUtil {
       result.append(strings[i]);
     }
     return result.toString();
+  }
+
+  @NotNull
+  public static String join(final String... strings) {
+    if (strings == null || strings.length == 0) return "";
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      for (final String string : strings) {
+        builder.append(string);
+      }
+      return builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull

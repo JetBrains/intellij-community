@@ -146,7 +146,7 @@ public class DeclarationParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseEnumConstant(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseEnumConstant(final PsiBuilder builder) {
     final PsiBuilder.Marker constant = builder.mark();
 
     parseModifierList(builder);

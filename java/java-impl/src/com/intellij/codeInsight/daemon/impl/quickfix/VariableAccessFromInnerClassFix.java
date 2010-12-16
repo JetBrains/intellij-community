@@ -176,7 +176,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     else {
-      PsiExpression init = factory.createExpressionFromText(" { " + initializer.getText() + " }", variable);
+      PsiExpression init = factory.createExpressionFromText("{ " + initializer.getText() + " }", variable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     PsiVariable newVariable = (PsiVariable)variableDeclarationStatement.getDeclaredElements()[0];

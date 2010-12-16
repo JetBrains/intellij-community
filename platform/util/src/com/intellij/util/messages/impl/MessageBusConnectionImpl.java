@@ -47,25 +47,18 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   public <L> void subscribe(Topic<L> topic, L handler) {
-    if (mySubscriptions.containsKey(topic)) {
+    if (mySubscriptions.put(topic, handler) != null) {
       throw new IllegalStateException("Subscription to " + topic + " already exists");
     }
-
-    mySubscriptions.put(topic, handler);
     myBus.notifyOnSubscription(this, topic);
   }
 
   public <L> void subscribe(Topic<L> topic) {
-    if (mySubscriptions.containsKey(topic)) {
-      throw new IllegalStateException("Subscription to " + topic + " already exists");
-    }
-
     if (myDefaultHandler == null) {
       throw new IllegalStateException("Connection must have default handler installed prior to any anonymous subscriptions.");
     }
 
-    mySubscriptions.put(topic, myDefaultHandler);
-    myBus.notifyOnSubscription(this, topic);
+    subscribe(topic, (L)myDefaultHandler);
   }
 
   public void setDefaultHandler(MessageHandler handler) {

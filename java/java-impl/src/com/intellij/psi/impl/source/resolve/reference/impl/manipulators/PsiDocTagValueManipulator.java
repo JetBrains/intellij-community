@@ -36,7 +36,7 @@ public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDoc
       range.getEndOffset(),
       newContent
     );
-    return (PsiDocTag)tag.replace(JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(replacement.toString(), null));
+    return (PsiDocTag)tag.replace(JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(replacement.toString()));
   }
 
   public TextRange getRangeInElement(final PsiDocTag tag) {

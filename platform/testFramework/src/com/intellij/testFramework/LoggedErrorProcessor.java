@@ -19,8 +19,7 @@ import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 
 @NonNls public abstract class LoggedErrorProcessor {
-
-  private final static LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
+  private static final LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor() {
     @Override
     public void processError(String message, Throwable t, String[] details, Logger logger) {
       logger.info(message, t);
@@ -28,8 +27,8 @@ import org.jetbrains.annotations.NonNls;
       t.printStackTrace();
       if (details != null && details.length > 0) {
         System.out.println("details: ");
-        for (int i = 0; i < details.length; i++) {
-          System.out.println(details[i]);
+        for (String detail : details) {
+          System.out.println(detail);
         }
       }
 

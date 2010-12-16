@@ -97,7 +97,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   @Nullable
   protected GlobalSearchScope getScope(final GenericDomValue domValue) {
     final Module module = domValue.getModule();
-    return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+    return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
   }
 
   public static class AnnotationType extends PsiClassConverter {

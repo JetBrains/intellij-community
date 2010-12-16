@@ -25,7 +25,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 
 /**
- *
+ * @deprecated old Java parser is deprecated in favor of PSI builder-based one (see com.intellij.lang.java.parser.*) (to remove in IDEA 11).
  */
 public class ClassBodyParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ClassBodyParsing");

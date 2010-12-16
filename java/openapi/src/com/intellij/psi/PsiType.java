@@ -27,16 +27,17 @@ import org.jetbrains.annotations.Nullable;
  * Representation of Java type (primitive type, array or class type).
  */
 public abstract class PsiType implements PsiAnnotationOwner {
-  public static final PsiType BYTE = new PsiPrimitiveType("byte", "java.lang.Byte");
-  public static final PsiType CHAR = new PsiPrimitiveType("char", "java.lang.Character");
-  public static final PsiType DOUBLE = new PsiPrimitiveType("double", "java.lang.Double");
-  public static final PsiType FLOAT = new PsiPrimitiveType("float", "java.lang.Float");
-  public static final PsiType INT = new PsiPrimitiveType("int", "java.lang.Integer");
-  public static final PsiType LONG = new PsiPrimitiveType("long", "java.lang.Long");
-  public static final PsiType SHORT = new PsiPrimitiveType("short", "java.lang.Short");
-  public static final PsiType BOOLEAN = new PsiPrimitiveType("boolean", "java.lang.Boolean");
-  public static final PsiType VOID = new PsiPrimitiveType("void", "java.lang.Void");
-  public static final PsiType NULL = new PsiPrimitiveType("null", (String)null);
+  public static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte", "java.lang.Byte");
+  public static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char", "java.lang.Character");
+  public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double", "java.lang.Double");
+  public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType("float", "java.lang.Float");
+  public static final PsiPrimitiveType INT = new PsiPrimitiveType("int", "java.lang.Integer");
+  public static final PsiPrimitiveType LONG = new PsiPrimitiveType("long", "java.lang.Long");
+  public static final PsiPrimitiveType SHORT = new PsiPrimitiveType("short", "java.lang.Short");
+  public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType("boolean", "java.lang.Boolean");
+  public static final PsiPrimitiveType VOID = new PsiPrimitiveType("void", "java.lang.Void");
+  public static final PsiPrimitiveType NULL = new PsiPrimitiveType("null", (String)null);
+
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
 
   private final PsiAnnotation[] myAnnotations;

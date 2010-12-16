@@ -145,8 +145,18 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
           }
         }
 
-        block.getParent().addBefore(varDeclStatement, block);
+        final PsiElement parent = block.getParent();
         decl.replace(statement);
+        if (!(parent instanceof PsiCodeBlock)) {
+          final PsiBlockStatement blockStatement =
+            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
+          final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+          codeBlock.add(varDeclStatement);
+          codeBlock.add(block);
+          block.replace(blockStatement);
+        } else {
+          parent.addBefore(varDeclStatement, block);
+        }
       } else {
         block.addAfter(statement, decl);
       }

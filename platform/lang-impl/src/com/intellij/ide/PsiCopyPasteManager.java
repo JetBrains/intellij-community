@@ -32,6 +32,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.InvalidDnDOperationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -89,9 +90,14 @@ public class PsiCopyPasteManager {
     Object transferData;
     try {
       transferData = content.getTransferData(ourDataFlavor);
-    } catch (UnsupportedFlavorException e) {
+    }
+    catch (UnsupportedFlavorException e) {
       return null;
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
+      return null;
+    }
+    catch (InvalidDnDOperationException e) {
       return null;
     }
 
