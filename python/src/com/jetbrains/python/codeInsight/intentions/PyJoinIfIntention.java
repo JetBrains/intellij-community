@@ -3,6 +3,8 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -10,6 +12,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: catherine
@@ -62,11 +66,21 @@ public class PyJoinIfIntention extends BaseIntentionAction {
     if (firstStatement != null && firstStatement instanceof PyIfStatement) {
       PyExpression condition = ((PyIfStatement)firstStatement).getIfPart().getCondition();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression newCondition = elementGenerator.createExpressionFromText(ifStatement.getIfPart().getCondition().getText() + " and " + condition.getText());
+      PyExpression newCondition = elementGenerator.createExpressionFromText(
+                    ifStatement.getIfPart().getCondition().getText() + " and " + condition.getText());
       ifStatement.getIfPart().getCondition().replace(newCondition);
 
       PyStatementList stList = ((PyIfStatement)firstStatement).getIfPart().getStatementList();
       PyStatementList ifStatementList = ifStatement.getIfPart().getStatementList();
+
+      List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(ifStatement.getIfPart(), PsiComment.class);
+      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(((PyIfStatement)firstStatement).getIfPart(), PsiComment.class));
+
+      for (PsiElement comm : comments) {
+        ifStatement.getIfPart().addBefore(comm, ifStatementList);
+        comm.delete();
+      }
+
       ifStatementList.replace(stList);
     }
   }
