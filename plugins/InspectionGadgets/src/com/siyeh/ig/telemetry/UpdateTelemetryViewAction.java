@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,25 @@
  */
 package com.siyeh.ig.telemetry;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.CommonBundle;
+import com.intellij.openapi.util.IconLoader;
 import com.siyeh.InspectionGadgetsBundle;
-
-import javax.swing.*;
 
 class UpdateTelemetryViewAction extends AnAction{
 
     private final TelemetryDisplay telemetryDisplay;
 
-    private static final Icon refreshIcon =
-            IconHelper.getIcon("/actions/sync.png");
-
     UpdateTelemetryViewAction(TelemetryDisplay telemetryDisplay){
         super(CommonBundle.message("action.refresh"),
                 InspectionGadgetsBundle.message(
-                        "action.telemetry.refresh.description"), refreshIcon);
+                        "action.telemetry.refresh.description"),
+                IconLoader.getIcon("/actions/sync.png"));
         this.telemetryDisplay = telemetryDisplay;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent event){
         telemetryDisplay.update();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
@@ -46,9 +47,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
-    private InspectionRunListener listener = null;
-    @NonNls private static final String INSPECTION_GADGETS_COMPONENT_NAME =
-            "InspectionGadgets";
     @NonNls private static final String INSPECTION = "Inspection";
     @NonNls private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<String, String>();
     static {
@@ -93,7 +91,9 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     }
 
     private String m_shortName = null;
-    private long timeStamp = -1;
+    private long timestamp = -1L;
+    private InspectionGadgetsPlugin inspectionGadgetsPlugin;
+
 
     @Override @NotNull
     public final String getShortName() {
@@ -238,39 +238,41 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         }
     }
 
-    private void initializeTelemetryIfNecessary() {
-        if (InspectionGadgetsPlugin.TELEMETRY_ENABLED && listener == null) {
-            final Application application = ApplicationManager.getApplication();
-            final InspectionGadgetsPlugin plugin = (InspectionGadgetsPlugin)
-                    application.getComponent(INSPECTION_GADGETS_COMPONENT_NAME);
-            listener = plugin.getTelemetry();
+    @Override
+    public void inspectionStarted(LocalInspectionToolSession session) {
+        super.inspectionStarted(session);
+        if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
+            timestamp = System.currentTimeMillis();
         }
     }
 
-  @Override
-  public void inspectionStarted(LocalInspectionToolSession session) {
-    super.inspectionStarted(session);
-    if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
-      if (timeStamp > 0) {
-        System.out.println("start reported without corresponding finish");
-      }
-      initializeTelemetryIfNecessary();
-      timeStamp = System.currentTimeMillis();
+    @Override
+    public void inspectionFinished(LocalInspectionToolSession session,
+                                   ProblemsHolder problemsHolder) {
+        super.inspectionFinished(session, problemsHolder);
+        if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
+            if (timestamp < 0L) {
+                LOG.warn("finish reported without corresponding start");
+                return;
+            }
+            final long end = System.currentTimeMillis();
+            final String displayName = getDisplayName();
+            inspectionGadgetsPlugin.getTelemetry().reportRun(displayName, end - timestamp);
+            timestamp = -1L;
+        }
     }
-  }
 
-  @Override
-  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
-    super.inspectionFinished(session, problemsHolder);
-    if (InspectionGadgetsPlugin.TELEMETRY_ENABLED) {
-      if (timeStamp < 0) {
-        System.out.println("finish reported without corresponding start");
-        return;
-      }
-      final long end = System.currentTimeMillis();
-      final String displayName = getDisplayName();
-      listener.reportRun(displayName, end - timeStamp);
-      timeStamp = -1;
+    @Override
+    public void projectOpened(Project project) {
+        super.projectOpened(project);
+        final Application application = ApplicationManager.getApplication();
+        inspectionGadgetsPlugin = (InspectionGadgetsPlugin)
+                application.getComponent("InspectionGadgets");
     }
-  }
+
+    @Override
+    public void projectClosed(Project project) {
+        super.projectClosed(project);
+        inspectionGadgetsPlugin = null;
+    }
 }
