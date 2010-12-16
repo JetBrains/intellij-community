@@ -32,8 +32,8 @@ public class EditorDocumentPriorities {
    */
   public static final int RANGE_MARKER = 40;
 
-  public static final int SOFT_WRAP_MODEL = 60;
-  public static final int FOLD_MODEL = 80;
+  public static final int FOLD_MODEL = 60;
+  public static final int SOFT_WRAP_MODEL = 80;
   public static final int LEXER_EDITOR = 100;
   public static final int CARET_MODEL = 120;
   public static final int SELECTION_MODEL = 140;

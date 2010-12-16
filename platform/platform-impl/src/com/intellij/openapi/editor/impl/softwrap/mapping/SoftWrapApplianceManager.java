@@ -199,7 +199,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         processNonFoldToken();
       }
       else {
-        boolean continueProcessing = processCollapsedFoldRegion(currentFold, event);
+        boolean continueProcessing = processCollapsedFoldRegion(currentFold);
         if (!continueProcessing) {
           return false;
         }
@@ -224,11 +224,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    * Encapsulates logic of processing given collapsed fold region.
    *
    * @param foldRegion    target collapsed fold region to process
-   * @param event         change event that triggered the processing
    * @return              <code>true</code> if processing should be continued; <code>false</code> otherwise
    */
-  private boolean processCollapsedFoldRegion(FoldRegion foldRegion, IncrementalCacheUpdateEvent event) {
-    if (processOutOfDateFoldRegion(foldRegion, event)) {
+  private boolean processCollapsedFoldRegion(FoldRegion foldRegion) {
+    if (processOutOfDateFoldRegion(foldRegion)) {
       return false;
     }
 
@@ -298,11 +297,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
    * This method encapsulates logic for checking and reacting on such a situation.
    * 
    * @param foldRegion    fold region that may be out-of-date
-   * @param event         change event that triggered the processing
    * @return              <code>true</code> if given fold region is really out-of-date and processing should be stopped;
    *                      <code>false</code> otherwise;
    */
-  private boolean processOutOfDateFoldRegion(FoldRegion foldRegion, IncrementalCacheUpdateEvent event) {
+  private boolean processOutOfDateFoldRegion(FoldRegion foldRegion) {
 
     Document document = myEditor.getDocument();
     
@@ -310,16 +308,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     // case that offsets of the trailing fold regions should be updated as well.
     IncrementalCacheUpdateEvent newEvent = new IncrementalCacheUpdateEvent(document);
 
-    // We assume here that fold model is processed after soft wrap (as it needs to perform document dimensions mapping).
-    // So, there is a possible case that user performed modifications at particular fold region but fold model is not updated yet
-    // and IterationState returns valid fold region. Hence, we introduce a dedicated check here.
-    if (!foldRegion.isValid() || (event.getExactOffsetsDiff() != 0 && foldRegion.getStartOffset() < event.getOldExactEndOffset() 
-        && foldRegion.getEndOffset() > event.getOldExactStartOffset()) || myContext.tokenStartOffset != foldRegion.getStartOffset()) 
-    {
+    if (!foldRegion.isValid() || myContext.tokenStartOffset != foldRegion.getStartOffset()) {
       myEventsStorage.add(document, newEvent);
       return true;
     }
-    
     
     if (foldRegion.getEndOffset() <= document.getTextLength()) {
       return false;
