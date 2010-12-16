@@ -620,8 +620,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Nullable
   @Override
   public IElementType lookAhead(int steps) {
-    if (steps + myCurrentLexeme >= myLexemeCount) return null;
-    return myLexTypes[myCurrentLexeme + steps];
+    int cur = myCurrentLexeme;
+
+    while (steps > 0) {
+      while (cur < myLexemeCount && whitespaceOrComment(myLexTypes[cur])) {
+        cur++;
+      }
+
+      steps--;
+    }
+
+    return cur < myLexemeCount ? myLexTypes[cur] : null;
   }
 
   @Override
