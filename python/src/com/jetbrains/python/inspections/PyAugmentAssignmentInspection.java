@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
@@ -43,17 +44,19 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
         if (rightExpression != null) {
+          boolean changedParts = false;
           if (rightExpression.getText().equals(target.getText())) {
             PyExpression tmp = rightExpression;
             rightExpression = leftExpression;
             leftExpression = tmp;
+            changedParts = true;
           }
           PyElementType op = expression.getOperator();
-          if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(op) ||
-                PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(op) ||
-                  PyTokenTypes.SHIFT_OPERATIONS.contains(op) ||
-                  PyTokenTypes.BITWISE_OPERATIONS.contains(op) ||
-                  op == PyTokenTypes.EXP) {
+          final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
+                           PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND, PyTokenTypes.OR,
+                           PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT, PyTokenTypes.EXP);
+          final TokenSet commutativeOperations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT);
+          if ((operations.contains(op) && !changedParts) || (changedParts && commutativeOperations.contains(op))) {
             if (leftExpression != null
                 && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
               if (leftExpression.getText().equals(target.getText())) {
