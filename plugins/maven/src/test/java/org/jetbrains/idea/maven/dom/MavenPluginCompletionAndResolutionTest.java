@@ -881,4 +881,25 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
 
     checkHighlighting();
   }
+
+  public void testTellNobodyThatIdeaIsRulezzz() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <includes>" +
+                     "          <bar a<caret> />" +
+                     "        </includes>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    assertCompletionVariants(myProjectPom);
+  }
 }
