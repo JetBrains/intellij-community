@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
+ * Customize icons for {@link PsiElement}s.
+ *
  * @author peter
  */
 public abstract class IconProvider {
@@ -30,7 +32,8 @@ public abstract class IconProvider {
 
   /**
    * @param element for which icon is shown
-   * @param flags used for customizing the icon appearance. Flags are listed in {@link com.intellij.openapi.util.Iconable}
+   * @param flags   used for customizing the icon appearance. Flags are listed in {@link com.intellij.openapi.util.Iconable}
+   * @return {@code null} if this provider cannot provide icon for given element.
    * @see com.intellij.openapi.util.Iconable
    */
   @Nullable
