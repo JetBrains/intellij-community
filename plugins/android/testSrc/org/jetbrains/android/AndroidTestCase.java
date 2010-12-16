@@ -22,6 +22,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -59,7 +60,7 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/plugins/android/testData";
+    return PluginPathManager.getPluginHomePathRelative("android") + "/testData";
   }
 
   private String getTestSdkPath() {
