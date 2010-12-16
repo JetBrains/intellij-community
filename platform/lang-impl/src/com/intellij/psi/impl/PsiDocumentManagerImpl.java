@@ -441,7 +441,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
-      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? file.getText() : null;
+      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? myTreeElementBeingReparsedSoItWontBeCollected.getText() : null;
 
       int startOffset;
       int endOffset;
@@ -451,6 +451,25 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         int psiEndOffset = textBlock.getPsiEndOffset();
         endOffset = psiEndOffset;
         lengthShift = textBlock.getTextEndOffset() - psiEndOffset;
+
+        if (oldText != null) {
+          String psiPrefix = oldText.substring(0, startOffset);
+          String docPrefix = chars.subSequence(0, startOffset).toString();
+          String psiSuffix = oldText.substring(psiEndOffset);
+          String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
+          if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
+            String msg = "PSI/document inconsistency before reparse: ";
+            if (!psiPrefix.equals(docPrefix)) {
+              msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
+            }
+            if (!psiSuffix.equals(docSuffix)) {
+              msg = msg + "psiSuffix=" + psiSuffix + "; docSuffix=" + docSuffix + ";";
+            }
+            throw new AssertionError(msg);
+          }
+        } else if (document.getTextLength() - textBlock.getTextEndOffset() != file.getTextLength() - psiEndOffset) {
+          throw new AssertionError("PSI/document inconsistency before reparse: file=" + file);
+        }
       }
       else {
         startOffset = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
-import com.siyeh.ig.telemetry.TelemetryToolWindowImpl;
 
 public class InspectionGadgetsProjectComponent implements ProjectComponent{
 
@@ -27,21 +28,24 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
     private final Project project;
 
     public InspectionGadgetsProjectComponent(Project project){
-        super();
         this.project = project;
     }
 
     public void projectOpened(){
-        telemetryEnabled = InspectionGadgetsPlugin.isTelemetryEnabled();
+        final Application application = ApplicationManager.getApplication();
+        final InspectionGadgetsPlugin inspectionGadgetsPlugin =
+                (InspectionGadgetsPlugin)
+                        application.getComponent("InspectionGadgets");
+        telemetryEnabled = inspectionGadgetsPlugin.isTelemetryEnabled();
         if(telemetryEnabled){
-            toolWindow = new TelemetryToolWindowImpl();
+            toolWindow = new TelemetryToolWindow(inspectionGadgetsPlugin.getTelemetry());
             toolWindow.register(project);
         }
     }
 
     public void projectClosed(){
         if(telemetryEnabled && toolWindow != null){
-            toolWindow.unregister(project);
+            TelemetryToolWindow.unregister(project);
         }
     }
 

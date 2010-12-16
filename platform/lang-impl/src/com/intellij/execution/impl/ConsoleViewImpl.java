@@ -1185,7 +1185,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
     if (commandLinePlaceholder != null) {
       FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(
-        document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null
+        document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null, false
       );
       toAdd.add(region);
       return;
@@ -1218,7 +1218,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
       FoldRegion region =
-        ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null);
+        ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null, false);
       if (region != null) {
         toAdd.add(region);
       }

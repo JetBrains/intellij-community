@@ -565,10 +565,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (parentFile != null) {
         // I hope ls works fast on Unix
         final String[] canonicalFileNames = parentFile.list();
-        for (String name : canonicalFileNames) {
-          // if names are equals
-          if (name.compareToIgnoreCase(originalFileName) == 0) {
-            return name;
+        if (canonicalFileNames != null) {
+          for (String name : canonicalFileNames) {
+            // if names are equals
+            if (name.compareToIgnoreCase(originalFileName) == 0) {
+              return name;
+            }
           }
         }
       }

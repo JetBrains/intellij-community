@@ -1,8 +1,10 @@
 package com.intellij.tasks.impl;
 
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -14,11 +16,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
+import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -30,10 +34,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Timer;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 
 /**
@@ -57,12 +64,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
     }
   };
+  private static final Convertor<Task,String> KEY_CONVERTOR = new Convertor<Task, String>() {
+    @Override
+    public String convert(Task o) {
+      return o.getId();
+    }
+  };
 
   private final Project myProject;
 
   private final WorkingContextManager myContextManager;
 
   private final Map<String,Task> myIssueCache = Collections.synchronizedMap(new HashMap<String,Task>());
+  private final Map<String,Task> myTemporaryCache = Collections.synchronizedMap(new HashMap<String,Task>());
 
   private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTaskImpl>() {
     @Override
@@ -93,6 +107,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
+  private Set<TaskRepository> myBadRepositories = new HashSet<TaskRepository>();
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -158,6 +173,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {
 
+    Set<TaskRepository> set = new HashSet<TaskRepository>(myRepositories);
+    set.removeAll(repositories);
+    myBadRepositories.removeAll(set); // remove all changed reps
+    myIssueCache.clear();
+    myTemporaryCache.clear();
+
     myRepositories.clear();
     myRepositories.addAll(repositories);
 
@@ -202,19 +223,20 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(String query) {
-    if (myConfig.updateEnabled) {
-      synchronized (myIssueCache) {
-        return new ArrayList<Task>(myIssueCache.values());
-      }
-    } else {
-      return getIssuesFromRepositories(query, 50, 0);
+    List<Task> tasks = getIssuesFromRepositories(query, 50, 0);
+    synchronized (myIssueCache) {
+      myTemporaryCache.clear();
+      myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
     }
+    return tasks;
   }
 
   @Override
   public List<Task> getCachedIssues() {
     synchronized (myIssueCache) {
-      return new ArrayList<Task>(myIssueCache.values());
+      ArrayList<Task> tasks = new ArrayList<Task>(myIssueCache.values());
+      tasks.addAll(myTemporaryCache.values());
+      return tasks;
     }
   }
 
@@ -586,9 +608,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
           synchronized (myIssueCache) {
             myIssueCache.clear();
-            for (Task issue : issues) {
-              myIssueCache.put(issue.getId(), issue);
-            }
+            myIssueCache.putAll(ContainerUtil.assignKeys(issues.iterator(), KEY_CONVERTOR));
           }
           // update local tasks
            synchronized (myTasks) {
@@ -617,8 +637,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private List<Task> getIssuesFromRepositories(String request, int max, long since) {
     List<Task> issues = new ArrayList<Task>();
-    for (TaskRepository repository : getAllRepositories()) {
-      if (!repository.isConfigured()) {
+    for (final TaskRepository repository : getAllRepositories()) {
+      if (!repository.isConfigured() || myBadRepositories.contains(repository)) {
         continue;
       }
       try {
@@ -626,7 +646,20 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
+        myBadRepositories.add(repository);
         LOG.warn(e);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
+          new Notification("Tasks", "Cannot connect to " + repository.getUrl(),
+                           "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                           new NotificationListener() {
+                             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                               TaskRepositoriesConfigurable configurable = new TaskRepositoriesConfigurable(myProject);
+                               ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
+                               if (!ArrayUtil.contains(repository, getAllRepositories())) {
+                                  notification.expire();
+                               }
+                             }
+                           }), NotificationDisplayType.STICKY_BALLOON);
       }
     }
     return issues;

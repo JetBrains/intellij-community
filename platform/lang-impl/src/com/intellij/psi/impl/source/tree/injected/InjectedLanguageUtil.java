@@ -60,10 +60,9 @@ public class InjectedLanguageUtil {
     });
   }
 
-  private static PsiElement loadTree(PsiElement host) {
-    PsiFile file = host.getContainingFile();
-    if (file instanceof DummyHolder) {
-      PsiElement context = file.getContext();
+  private static PsiElement loadTree(PsiElement host, PsiFile containingFile) {
+    if (containingFile instanceof DummyHolder) {
+      PsiElement context = containingFile.getContext();
       if (context != null) {
         PsiFile topFile = context.getContainingFile();
         topFile.getNode();  //load tree
@@ -81,7 +80,7 @@ public class InjectedLanguageUtil {
 
   @Nullable
   public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
-    final PsiElement inTree = loadTree(host);
+    final PsiElement inTree = loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
     enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
@@ -125,7 +124,7 @@ public class InjectedLanguageUtil {
       if (file == null || !file.isPhysical() && file.getOriginalFile() == file) return;
     }
 
-    PsiElement inTree = loadTree(host);
+    PsiElement inTree = loadTree(host, containingFile);
     if (inTree != host) {
       host = inTree;
       containingFile = host.getContainingFile();

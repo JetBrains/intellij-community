@@ -93,7 +93,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int myLexemeCount = 0;
   private boolean myTokenTypeChecked;
   private ITokenTypeRemapper myRemapper;
-  private WhitespaceSkippedCallback myWhispaceSkippedCallback;
+  private WhitespaceSkippedCallback myWhitespaceSkippedCallback;
 
 
   private ASTNode myOriginalTree = null;
@@ -620,13 +620,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Nullable
   @Override
   public IElementType lookAhead(int steps) {
-    if (steps + myCurrentLexeme >= myLexemeCount) return null;
-    return myLexTypes[myCurrentLexeme + steps];
+    int cur = myCurrentLexeme;
+
+    while (steps > 0) {
+      while (cur < myLexemeCount && whitespaceOrComment(myLexTypes[cur])) {
+        cur++;
+      }
+
+      steps--;
+    }
+
+    return cur < myLexemeCount ? myLexTypes[cur] : null;
   }
 
   @Override
   public void setWhitespaceSkippedCallback(WhitespaceSkippedCallback callback) {
-    myWhispaceSkippedCallback = callback;
+    myWhitespaceSkippedCallback = callback;
   }
 
   public void advanceLexer() {
@@ -647,8 +656,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void onSkip(IElementType type, int start, int end) {
-    if (myWhispaceSkippedCallback != null) {
-      myWhispaceSkippedCallback.onSkip(type, start, end);
+    if (myWhitespaceSkippedCallback != null) {
+      myWhitespaceSkippedCallback.onSkip(type, start, end);
     }
   }
 

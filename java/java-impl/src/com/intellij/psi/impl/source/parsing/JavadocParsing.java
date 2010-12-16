@@ -33,6 +33,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * todo[r.sh] rewrite and deprecate
+ */
 public class JavadocParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.JavadocParsing");
 

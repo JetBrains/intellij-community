@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.java.parser.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -29,79 +28,154 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.DeclarationParsing;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Properties;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+
+/*
+ * @author max
+ */
 public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJavaParserFacade {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
 
-  protected static final Map<String, PsiPrimitiveType> ourPrimitiveTypesMap = new HashMap<String, PsiPrimitiveType>();
-  protected PsiJavaFile myDummyJavaFile;
+  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseAnnotation(builder);
+    }
+  };
 
-  public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
+  private static final JavaParserUtil.ParserWrapper PARAMETER = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseParameter(builder, true);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper TYPE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseTypeParameter(builder);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper DECLARATION = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parse(builder, DeclarationParser.Context.CLASS);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper CODE_BLOCK = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      StatementParser.parseCodeBlockDeep(builder, true);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper STATEMENT = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      StatementParser.parseStatement(builder);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper EXPRESSION = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ExpressionParser.parse(builder);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper ENUM_CONSTANT = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseEnumConstant(builder);
+    }
+  };
+
+  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      StatementParser.parseCatchBlock(builder);
+    }
+  };
+
+  private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
+  static {
+    PRIMITIVE_TYPES = new HashMap<String, PsiPrimitiveType>();
+    PRIMITIVE_TYPES.put(PsiType.BYTE.getCanonicalText(), PsiType.BYTE);
+    PRIMITIVE_TYPES.put(PsiType.CHAR.getCanonicalText(), PsiType.CHAR);
+    PRIMITIVE_TYPES.put(PsiType.DOUBLE.getCanonicalText(), PsiType.DOUBLE);
+    PRIMITIVE_TYPES.put(PsiType.FLOAT.getCanonicalText(), PsiType.FLOAT);
+    PRIMITIVE_TYPES.put(PsiType.INT.getCanonicalText(), PsiType.INT);
+    PRIMITIVE_TYPES.put(PsiType.LONG.getCanonicalText(), PsiType.LONG);
+    PRIMITIVE_TYPES.put(PsiType.SHORT.getCanonicalText(), PsiType.SHORT);
+    PRIMITIVE_TYPES.put(PsiType.BOOLEAN.getCanonicalText(), PsiType.BOOLEAN);
+    PRIMITIVE_TYPES.put(PsiType.VOID.getCanonicalText(), PsiType.VOID);
+    PRIMITIVE_TYPES.put(PsiType.NULL.getCanonicalText(), PsiType.NULL);
+  }
+
+  public PsiJavaParserFacadeImpl(final PsiManagerEx manager) {
     super(manager);
   }
 
   @NotNull
-  public PsiAnnotation createAnnotationFromText(@NotNull String annotationText, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement annotationElement = getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
-    if (annotationElement == null || annotationElement.getElementType() != JavaElementType.ANNOTATION) {
-      throw new IncorrectOperationException("Incorrect annotation \"" + annotationText + "\".");
+  public PsiAnnotation createAnnotationFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ANNOTATION, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiAnnotation)) {
+      throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
     }
-    holderElement.rawAddChildren(annotationElement);
-    return (PsiAnnotation)SourceTreeToPsiMap.treeElementToPsi(annotationElement);
-  }
-
-  private LanguageLevel getLanguageLevel(final PsiElement context) {
-    if (context == null) {
-      return LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel();
-    }
-    return PsiUtil.getLanguageLevel(context);
+    return (PsiAnnotation)element;
   }
 
   @NotNull
-  public PsiDocTag createDocTagFromText(@NotNull String docTagText, PsiElement context) throws IncorrectOperationException {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append("/**\n");
-    buffer.append(docTagText);
-    buffer.append("\n */");
-    PsiDocComment comment = createDocCommentFromText(buffer.toString(), context);
-    return comment.getTags()[0];
+  public PsiDocTag createDocTagFromText(@NotNull final String text) throws IncorrectOperationException {
+    return createDocCommentFromText(join("/**\n", text, "\n */")).getTags()[0];
   }
 
   @NotNull
-  public PsiDocComment createDocCommentFromText(@NotNull String docCommentText, PsiElement context) throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append(docCommentText);
-    buffer.append("void m();");
-    final PsiMethod method = createMethodFromText(buffer.toString(), null);
-    return method.getDocComment();
+  public PsiDocTag createDocTagFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    return createDocTagFromText(text);
   }
 
   @NotNull
-  public PsiClass createClassFromText(@NotNull String body, PsiElement context) throws IncorrectOperationException {
-    @NonNls String fileText = "class _Dummy_ { " + body + " }";
-    PsiJavaFile aFile = createDummyJavaFile(fileText);
-    PsiClass[] classes = aFile.getClasses();
+  public PsiDocComment createDocCommentFromText(@NotNull final String text) throws IncorrectOperationException {
+    final PsiMethod method = createMethodFromText(join(text, "void m();"), null);
+    final PsiDocComment comment = method.getDocComment();
+    assert comment != null : text;
+    return comment;
+  }
+
+  @NotNull
+  public PsiDocComment createDocCommentFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    return createDocCommentFromText(text);
+  }
+
+  @NotNull
+  public PsiClass createClassFromText(@NotNull final String body, final PsiElement context) throws IncorrectOperationException {
+    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { ", body, " }"));
+    final PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
       throw new IncorrectOperationException("Incorrect class \"" + body + "\".");
     }
@@ -109,211 +183,186 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   }
 
   @NotNull
-  public PsiField createFieldFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, LanguageLevelProjectExtension
-      .getInstance(myManager.getProject()).getLanguageLevel(), text, DeclarationParsing.Context.CLASS_CONTEXT);
-    if (decl == null || decl.getElementType() != JavaElementType.FIELD) {
+  public PsiField createFieldFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiField)) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
-    holderElement.rawAddChildren(decl);
-    return (PsiField)SourceTreeToPsiMap.treeElementToPsi(decl);
-  }
-
-  protected JavaParsingContext getJavaParsingContext (FileElement holderElement) {
-    return new JavaParsingContext(holderElement.getCharTable(), LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
-  }
-
-  private static JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
-    return new JavaParsingContext(holderElement.getCharTable(), languageLevel);
+    return (PsiField)element;
   }
 
   @NotNull
-  public PsiMethod createMethodFromText(@NotNull String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text,
-                                                                                                                DeclarationParsing.Context.CLASS_CONTEXT);
-    if (decl == null || decl.getElementType() != JavaElementType.METHOD) {
-      throw new IncorrectOperationException("Incorrect method '" + text + "'. Context:"+context+"; Level:"+level+"; parsed: "+(decl == null ? null : DebugUtil.treeToString(decl, false)));
+  public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level)
+      throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, false, level), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiMethod)) {
+      throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }
-    holderElement.rawAddChildren(decl);
-    return (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(decl);
+    return (PsiMethod)element;
   }
 
   @NotNull
-  public final PsiMethod createMethodFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText(text, context, LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
+  public final PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel();
+    return createMethodFromText(text, context, level);
   }
 
   @NotNull
-  public PsiParameter createParameterFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement param = getJavaParsingContext(holderElement).getDeclarationParsing().parseParameterText(text);
-    if (param == null) {
+  public PsiParameter createParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, PARAMETER, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiParameter)) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
     }
-    holderElement.rawAddChildren(param);
-    return (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(param);
+    return (PsiParameter)element;
   }
 
   @NotNull
-  public PsiType createTypeFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
+  public PsiType createTypeFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, false);
   }
  
-  protected PsiType createTypeInner(final String text, final PsiElement context, boolean markAsCopy) throws IncorrectOperationException {
-    PsiPrimitiveType primitiveType = ourPrimitiveTypesMap.get(text);
+  protected PsiType createTypeInner(final String text, final PsiElement context, final boolean markAsCopy) throws IncorrectOperationException {
+    final PsiPrimitiveType primitiveType = PRIMITIVE_TYPES.get(text);
     if (primitiveType != null) return primitiveType;
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement typeElement = Parsing.parseTypeText(myManager, text, 0, text.length(), holderElement.getCharTable());
-    if (typeElement == null) {
-      throw new IncorrectOperationException("Incorrect type \"" + text + "\"");
+
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiTypeElement)) {
+      throw new IncorrectOperationException("Incorrect type \"" + text + "\".");
     }
-    holderElement.rawAddChildren(typeElement);
+
     if (markAsCopy) {
-      holderElement.acceptTree(new GeneratedMarkerVisitor());
+      holder.getTreeElement().acceptTree(new GeneratedMarkerVisitor());
     }
-    PsiTypeElement psiTypeElement = (PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(typeElement);
-    if (psiTypeElement == null) {
-      throw new IncorrectOperationException("PSI is null for element "+typeElement);
-    }
-    return psiTypeElement.getType();
+
+    return ((PsiTypeElement)element).getType();
   }
 
   @NotNull
-  public PsiCodeBlock createCodeBlockFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement treeElement = getJavaParsingContext(holderElement).getStatementParsing().parseCodeBlockText(myManager, text);
-    if (treeElement == null) {
+  public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CODE_BLOCK, true), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiCodeBlock)) {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
     }
-    holderElement.rawAddChildren(treeElement);
-    return (PsiCodeBlock)SourceTreeToPsiMap.treeElementToPsi(treeElement);
+    return (PsiCodeBlock)element;
   }
 
   @NotNull
-  public PsiStatement createStatementFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement treeElement = getJavaParsingContext(treeHolder).getStatementParsing().parseStatementText(text);
-    if (treeElement == null) {
+  public PsiStatement createStatementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, STATEMENT, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiStatement)) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
     }
-    treeHolder.rawAddChildren(treeElement);
-    return (PsiStatement)SourceTreeToPsiMap.treeElementToPsi(treeElement);
+    return (PsiStatement)element;
   }
 
   @NotNull
-  public PsiExpression createExpressionFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    final CompositeElement treeElement = ExpressionParsing.parseExpressionText(myManager, text, 0,
-                                                                               text.length(), treeHolder.getCharTable());
-    if (treeElement == null) {
+  public PsiExpression createExpressionFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, EXPRESSION, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiExpression)) {
       throw new IncorrectOperationException("Incorrect expression \"" + text + "\".");
     }
-    treeHolder.rawAddChildren(treeElement);
-    return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(treeElement);
+    return (PsiExpression)element;
   }
 
-  protected PsiJavaFile createDummyJavaFile(String text) {
-    String ext = StdFileTypes.JAVA.getDefaultExtension();
-    @NonNls String fileName = "_Dummy_." + ext;
-    FileType type = StdFileTypes.JAVA;
-
+  protected PsiJavaFile createDummyJavaFile(final String text) {
+    final String fileName = "_Dummy_." + StdFileTypes.JAVA.getDefaultExtension();
+    final FileType type = StdFileTypes.JAVA;
     return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(type, fileName, text, 0, text.length());
   }
 
   @NotNull
-  public PsiTypeParameter createTypeParameterFromText(@NotNull String text, PsiElement context)
-    throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement treeElement = getJavaParsingContext(holderElement).getDeclarationParsing().parseTypeParameterText(text);
-    if (treeElement == null) {
-      throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\"");
+  public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiTypeParameter)) {
+      throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\".");
     }
-    holderElement.rawAddChildren(treeElement);
-    return (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
+    return (PsiTypeParameter)element;
   }
 
   @NotNull
-  public PsiComment createCommentFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    PsiJavaFile aFile = createDummyJavaFile(text);
-    PsiElement[] children = aFile.getChildren();
-    for (PsiElement aChildren : children) {
+  public PsiComment createCommentFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final PsiJavaFile aFile = createDummyJavaFile(text);
+    for (PsiElement aChildren : aFile.getChildren()) {
       if (aChildren instanceof PsiComment) {
         if (!aChildren.getText().equals(text)) {
-          throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
+          break;
         }
-        PsiComment comment = (PsiComment)aChildren;
+        final PsiComment comment = (PsiComment)aChildren;
         DummyHolderFactory.createHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
         return comment;
       }
     }
+
     throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
   }
 
   @NotNull
-  public PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseEnumConstantText(text);
-    if (decl == null || decl.getElementType() != JavaElementType.ENUM_CONSTANT) {
-      throw new IncorrectOperationException("Incorrect enum constant text \"" + text + "\".");
+  public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ENUM_CONSTANT, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiEnumConstant)) {
+      throw new IncorrectOperationException("Incorrect enum constant \"" + text + "\".");
     }
-    holderElement.rawAddChildren(decl);
-    return (PsiEnumConstant)SourceTreeToPsiMap.treeElementToPsi(decl);
+    return (PsiEnumConstant)element;
   }
 
   @NotNull
-  public PsiCatchSection createCatchSection(@NotNull PsiClassType exceptionType,
-                                            @NotNull String exceptionName,
-                                            PsiElement context) throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
-    buffer.append("catch (");
-    buffer.append(exceptionType.getCanonicalText());
-    buffer.append(" ").append(exceptionName).append("){}");
-    String catchSectionText = buffer.toString();
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText);
-    if (catchSection == null || catchSection.getElementType() != JavaElementType.CATCH_SECTION) {
-      LOG.error(catchSectionText + "\nPSI:" + (catchSection == null ? null : DebugUtil.treeToString(catchSection, false)));
+  public PsiCatchSection createCatchSection(@NotNull final PsiClassType exceptionType, @NotNull final String exceptionName,
+                                            final PsiElement context) throws IncorrectOperationException {
+    final String text = join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiCatchSection)) {
+      throw new IncorrectOperationException("Incorrect catch section \"" + text + "\".");
     }
-    holderElement.rawAddChildren(catchSection);
-    PsiCatchSection psiCatchSection = (PsiCatchSection)SourceTreeToPsiMap.treeElementToPsi(catchSection);
-
-    setupCatchBlock(exceptionName, context, psiCatchSection);
-    return (PsiCatchSection)myManager.getCodeStyleManager().reformat(psiCatchSection);
+    setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
+    return (PsiCatchSection)myManager.getCodeStyleManager().reformat(element);
   }
 
-  private void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection psiCatchSection)
-    throws IncorrectOperationException {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+  private void setupCatchBlock(final String exceptionName, final PsiElement context, final PsiCatchSection psiCatchSection)
+     throws IncorrectOperationException {
+    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
-    Properties props = new Properties();
+    final Properties props = new Properties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     if (context != null && context.isPhysical()) {
-      PsiDirectory directory = context.getContainingFile().getContainingDirectory();
+      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
       if (directory != null) {
         JavaTemplateUtil.setPackageNameAttribute(props, directory);
       }
     }
-    PsiCodeBlock codeBlockFromText;
+
+    final PsiCodeBlock codeBlockFromText;
     try {
-      String catchBody = catchBodyTemplate.getText(props);
-      codeBlockFromText = createCodeBlockFromText("{\n" + catchBody + "\n}", null);
+      codeBlockFromText = createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
     }
     catch (ProcessCanceledException ce) {
       throw ce;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template",e);
+      throw new IncorrectOperationException("Incorrect file template", e);
     }
     psiCatchSection.getCatchBlock().replace(codeBlockFromText);
   }
 
-  public PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) {
-    if (annotations.length == 0) {
-      return PsiElementFactoryImpl.getPrimitiveType(text);//todo
+  public PsiType createPrimitiveType(@NotNull final String text, @NotNull final PsiAnnotation[] annotations) throws IncorrectOperationException {
+    final PsiPrimitiveType primitiveType = getPrimitiveType(text);
+    if (primitiveType == null) {
+      throw new IncorrectOperationException("Incorrect primitive type \"" + text + "\".");
     }
-    return new PsiPrimitiveType(text, annotations);
+    return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
+  }
+
+  public static PsiPrimitiveType getPrimitiveType(final String text) {
+    return PRIMITIVE_TYPES.get(text);
   }
 }

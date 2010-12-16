@@ -323,7 +323,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         if (owner != null) {
           if (!CodeInsightUtil.preparePsiElementsForWrite(owner)) return;
           final PsiDocComment docComment = owner.getDocComment();
-          final PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
+          final PsiDocTag tag = factory.createDocTagFromText("@" + myTag + " " + myValue);
           if (docComment != null) {
             PsiElement addedTag;
             final PsiElement anchor = getAnchor();

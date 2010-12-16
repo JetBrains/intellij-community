@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
@@ -33,13 +34,19 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.lang.ExternalAnnotatorsFilter;
+import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -57,15 +64,19 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.search.IndexPatternBuilder;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -160,6 +171,21 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     myRunCommandForTest = !annotatedWith(DoNotWrapInCommand.class);
+
+    if (isPerformanceTest()) {
+      IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
+      PathManagerEx.getTestDataPath(); // to cache stuff
+      ReferenceProvidersRegistry.getInstance(getProject()); // preload tons of classes
+      InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
+      LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.JAVA); // pile of annotator classes loads
+      LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);
+      ProblemHighlightFilter.EP_NAME.getExtensions();
+      Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+      Extensions.getExtensions(XmlSchemaProvider.EP_NAME);
+      Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
+      Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
+      Extensions.getExtensions(IndexPatternBuilder.EP_NAME);
+    }
   }
 
   @Override

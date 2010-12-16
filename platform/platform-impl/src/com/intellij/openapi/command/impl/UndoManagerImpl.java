@@ -59,7 +59,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int COMMAND_TO_RUN_COMPACT = 20;
   private static final int FREE_QUEUES_LIMIT = 30;
 
-  private final ProjectEx myProject;
+  @Nullable private final ProjectEx myProject;
   private final CommandProcessor myCommandProcessor;
   private final StartupManager myStartupManager;
 
@@ -110,6 +110,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return "UndoManager";
   }
 
+  @Nullable
   public Project getProject() {
     return myProject;
   }
@@ -337,7 +338,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     Runnable executeUndoOrRedoAction = new Runnable() {
       public void run() {
         try {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          if (myProject != null) {
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          }
           myMerger.undoOrRedo(editor, isUndo);
         }
         catch (RuntimeException ex) {

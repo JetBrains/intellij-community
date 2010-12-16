@@ -41,7 +41,7 @@ public class DomJavaUtil {
     if (searchScope == null) {
 
       if (module != null) {
-        scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+        scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
       }
       else {
         scope = file.getResolveScope();

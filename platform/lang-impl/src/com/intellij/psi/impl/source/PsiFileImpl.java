@@ -909,24 +909,30 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void bindStubs(final ASTNode tree, final Iterator<StubElement<?>> stubs, final StubBuilder builder) {
-    final IElementType type = tree.getElementType();
+    ((TreeElement)tree).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement root) {
+        CompositeElement parent = root.getTreeParent();
+        IElementType parentType = parent == null ? null : parent.getElementType();
+        final IElementType type = root.getElementType();
+        if (parentType != null && builder.skipChildProcessingWhenBuildingStubs(parentType, type)) {
+          return;
+        }
 
-    if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(tree)) {
-      final StubElement stub = stubs.hasNext() ? stubs.next() : null;
-      if (stub == null || stub.getStubType() != tree.getElementType()) {
-        rebuildStub();
-        assert false : "Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + tree.getElementType();
+        if (type instanceof IStubElementType && ((IStubElementType) type).shouldCreateStub(root)) {
+          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
+          if (stub == null || stub.getStubType() != type) {
+            rebuildStub();
+            assert false : "Stub and PSI element type mismatch in " + getName() + ": stub:" + stub + ", AST:" + type;
+          }
+
+          //noinspection unchecked
+          ((StubBase)stub).setPsi(root.getPsi());
+        }
+
+        super.visitNode(root);
       }
-
-      //noinspection unchecked
-      ((StubBase)stub).setPsi(tree.getPsi());
-    }
-
-    for (ASTNode node : tree.getChildren(null)) {
-      if (!builder.skipChildProcessingWhenBuildingStubs(type, node.getElementType())) {
-        bindStubs(node, stubs, builder);
-      }
-    }
+    });
   }
 
   private void rebuildStub() {

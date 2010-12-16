@@ -220,6 +220,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Nullable
   @NonNls
   public String getLocation() {
+    if (myName == null) return null; // was called before initialized
     return isDisposed() ? null : getStateStore().getLocation();
   }
 

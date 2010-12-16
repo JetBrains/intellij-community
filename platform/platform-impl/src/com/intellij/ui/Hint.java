@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @see #hide()
+ */
 public interface Hint {
   /**
    * @param parentComponent    defines coordinate system where hint will be shown.
@@ -36,6 +39,13 @@ public interface Hint {
    */
   boolean isVisible();
 
+  /**
+   * Hides current hint object.
+   * <p/>
+   * <b>Note:</b> this method is also used as a destruction callback, i.e. it performs necessary de-initialization when
+   * current hint is not necessary to use anymore. Hence, it's <b>necessary</b> to call it from place where you definitely
+   * now that current hint will not be used.
+   */
   void hide();
 
   void addHintListener(HintListener listener);

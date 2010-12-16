@@ -67,7 +67,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
     int caretOffset = editor.getCaretModel().getOffset();
 
-    if (caretOffset > 0 &&
+    if (caretOffset > 0 && caretOffset < text.length() &&
        !Character.isJavaIdentifierPart(text.charAt(caretOffset)) &&
        Character.isJavaIdentifierPart(text.charAt(caretOffset - 1))) {
       caretOffset--;

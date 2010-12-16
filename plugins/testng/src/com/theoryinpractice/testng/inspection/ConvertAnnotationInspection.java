@@ -92,7 +92,7 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
           final PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
           PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
           if (docComment == null) {
-            docComment = factory.createDocCommentFromText("/**\n */", element);
+            docComment = factory.createDocCommentFromText("/**\n */");
             docComment = (PsiDocComment)element.addBefore(docComment, parent);
           }
           @NonNls StringBuffer text = new StringBuffer(convertAnnotationClassToJavadocElement(annotation.getQualifiedName()));
@@ -114,7 +114,7 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
             text.append(parameterText);
             text.append('\"');
           }
-          docComment.addAfter(factory.createDocTagFromText('@' + text.toString(), element), docComment.getFirstChild());
+          docComment.addAfter(factory.createDocTagFromText('@' + text.toString()), docComment.getFirstChild());
           annotation.delete();
         }
         catch (IncorrectOperationException e) {

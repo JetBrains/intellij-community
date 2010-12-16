@@ -56,6 +56,11 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
     return myHostRegion.getGroup();
   }
 
+  @Override
+  public boolean shouldNeverExpand() {
+    return false;
+  }
+
   public FoldRegionImpl getDelegate() {
     return myHostRegion;
   }

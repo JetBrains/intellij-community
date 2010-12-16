@@ -76,6 +76,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private int myActive;
   private boolean myUseSoftWraps;
 
+  /**
+   * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
+   * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
+   * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model 
+   * advances fold region offsets when end-user types before it, hence, fold regions data is inconsistent between the moment
+   * when text changes are applied to the document and fold data is actually updated).
+   * <p/>
+   * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done. 
+   */
+  private boolean myUpdateInProgress;
+
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
   }
@@ -271,7 +282,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visual) {
-    if (!prepareToMapping()) {
+    if (myUpdateInProgress || !prepareToMapping()) {
       return myEditor.visualToLogicalPosition(visual, false);
     }
     myActive++;
@@ -287,7 +298,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @NotNull
   @Override
   public LogicalPosition offsetToLogicalPosition(int offset) {
-    if (!prepareToMapping()) {
+    if (myUpdateInProgress || !prepareToMapping()) {
       return myEditor.offsetToLogicalPosition(offset, false);
     }
     myActive++;
@@ -302,7 +313,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @NotNull
   public LogicalPosition adjustLogicalPosition(LogicalPosition defaultLogical, int offset) {
-    if (!prepareToMapping()) {
+    if (myUpdateInProgress || !prepareToMapping()) {
       return defaultLogical;
     }
 
@@ -318,7 +329,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @NotNull
   public VisualPosition adjustVisualPosition(@NotNull LogicalPosition logical, @NotNull VisualPosition defaultVisual) {
-    if (!prepareToMapping()) {
+    if (myUpdateInProgress || !prepareToMapping()) {
       return defaultVisual;
     }
 
@@ -477,6 +488,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    myUpdateInProgress = true;
     if (!isSoftWrappingEnabled()) {
       return;
     }
@@ -487,6 +499,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    myUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;
     }
@@ -497,6 +510,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    myUpdateInProgress = true;
     if (!isSoftWrappingEnabled() || !region.isValid()) {
       return;
     }
@@ -507,6 +521,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public void onFoldProcessingEnd() {
+    myUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
       return;
     }

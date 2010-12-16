@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -148,6 +149,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     catch (IOException e) {
       LOG.error(e);
     }
+    clearScriptCache();
+  }
+
+  private static void clearScriptCache() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      project.putUserData(SCRIPTS_CACHE, null);
+      ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+    }
   }
 
   static void disableFile(final VirtualFile vfile) {
@@ -158,9 +167,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       LOG.error(e1);
     }
     vfile.putUserData(CACHED_EXECUTOR, null);
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      project.putUserData(SCRIPTS_CACHE, null);
-    }
+    clearScriptCache();
   }
 
 

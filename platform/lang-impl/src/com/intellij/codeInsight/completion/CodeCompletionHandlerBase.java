@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,7 +158,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
             EditorUtil.fillVirtualSpaceUntilCaret(editor);
             documentManager.commitAllDocuments();
 
-            assert editor.getDocument().getTextLength() == psiFile.getTextLength() : "unsuccessful commit";
+            if (editor.getDocument().getTextLength() != psiFile.getTextLength()) {
+              if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+                throw new AssertionError("unsuccessful commit: docText=" + editor.getDocument().getText() + "; fileText=" + psiFile.getText() + "; injected=" + (editor instanceof EditorWindow));
+              }
+
+              throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+            }
 
             final Ref<CompletionContributor> current = Ref.create(null);
             initializationContext[0] = new CompletionInitializationContext(editor, psiFile, myCompletionType) {

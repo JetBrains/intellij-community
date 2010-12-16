@@ -63,7 +63,7 @@ public class FoldingModelWindow implements FoldingModelEx{
   }
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
+    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
     if (region == null) return null;
     if (!addFoldRegion(region)) {
       region.dispose();
@@ -129,10 +129,10 @@ public class FoldingModelWindow implements FoldingModelEx{
   }
 
   private static final Key<FoldingRegionWindow> FOLD_REGION_WINDOW = Key.create("FOLD_REGION_WINDOW");
-  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
+  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group, boolean neverExpands) {
     TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));
     if (hostRange.getLength() < 2) return null;
-    FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group);
+    FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group, false);
     FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, (FoldRegionImpl)hostRegion);
     hostRegion.putUserData(FOLD_REGION_WINDOW, window);
     return window;

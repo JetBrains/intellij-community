@@ -113,8 +113,11 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   public void removeFile(VirtualFile file) {
-    myFiles.remove(file);
-    if (file.isDirectory()) -- myNumDirs;
+    if (myFiles.remove(file)) {
+      if (file.isDirectory()) {
+        -- myNumDirs;
+      }
+    }
   }
 
   // todo track number of copies made

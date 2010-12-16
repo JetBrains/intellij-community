@@ -56,7 +56,12 @@ public class DummyHolder extends PsiFileImpl {
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
     myTable = table != null ? table : IdentityCharTable.INSTANCE;
-    if(contentElement != null) {
+    if (contentElement instanceof FileElement) {
+      myFileElement = (FileElement)contentElement;
+      myFileElement.setPsi(this);
+      if (myTable != null) myFileElement.setCharTable(myTable);
+    }
+    else if (contentElement != null) {
       getTreeElement().rawAddChildren(contentElement);
       clearCaches();
     }
@@ -81,7 +86,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public boolean isValid() {
-    if(myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
+    if (myExplicitlyValid != null) return myExplicitlyValid.booleanValue();
     return super.isValid() && !(myContext != null && !myContext.isValid());
   }
 
@@ -112,10 +117,10 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public FileElement getTreeElementNoLock() {
-    if(myFileElement == null){
+    if (myFileElement == null) {
       myFileElement = new FileElement(TokenType.DUMMY_HOLDER, null);
       myFileElement.setPsi(this);
-      if(myTable != null) myFileElement.setCharTable(myTable);
+      if (myTable != null) myFileElement.setCharTable(myTable);
       clearCaches();
     }
     return myFileElement;

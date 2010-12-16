@@ -43,6 +43,9 @@ public class IdeTooltip extends ComparableObject.Impl {
   private int myCalloutShift = 4;
   private boolean myExplicitClose;
 
+  private int myPositionChangeX;
+  private int myPositionChangeY;
+
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
     myComponent = component;
@@ -191,6 +194,20 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public boolean isExplicitClose() {
     return myExplicitClose;
+  }
+
+  public IdeTooltip setPositionChangeShift(int positionChangeX, int positionChangeY) {
+    myPositionChangeX = positionChangeX;
+    myPositionChangeY = positionChangeY;
+    return this;
+  }
+
+  public int getPositionChangeX() {
+    return myPositionChangeX;
+  }
+
+  public int getPositionChangeY() {
+    return myPositionChangeY;
   }
 }
 

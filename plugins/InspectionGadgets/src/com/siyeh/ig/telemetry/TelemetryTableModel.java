@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,17 @@ class TelemetryTableModel extends DefaultTableModel {
     private final NumberFormat format = NumberFormat.getNumberInstance();
 
     TelemetryTableModel(InspectionGadgetsTelemetry telemetry) {
-        super();
         this.telemetry = telemetry;
         format.setMaximumFractionDigits(2);
         format.setMinimumFractionDigits(2);
     }
 
+    @Override
     public int getColumnCount() {
         return 4;
     }
 
+    @Override
     @Nullable
     public Class getColumnClass(int column) {
         switch (column) {
@@ -54,6 +55,7 @@ class TelemetryTableModel extends DefaultTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         if (telemetry == null) {
             return 0;
@@ -61,6 +63,7 @@ class TelemetryTableModel extends DefaultTableModel {
         return telemetry.getInspections().length;
     }
 
+    @Override
     @Nullable
     public Object getValueAt(int row, int column) {
         if (telemetry == null) {
@@ -88,11 +91,13 @@ class TelemetryTableModel extends DefaultTableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object object, int i,
                            int i1) {
         //don't do anything
     }
 
+    @Override
     @Nullable
     public String getColumnName(int column) {
         switch (column) {

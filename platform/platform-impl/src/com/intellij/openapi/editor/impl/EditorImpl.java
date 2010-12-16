@@ -2356,7 +2356,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (i < softWrapChars.length - 1) {
           position.x = 0; // Soft wrap starts new visual line
           position.x = drawString(
-            g, softWrapChars, i + 1, softWrapChars.length, position, clip, effectColor, effectType, fontType, fontColor
+            g, softWrapChars, i + 1, softWrapChars.length, position, clip, null, null, fontType, fontColor
           );
         }
         position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
@@ -2367,7 +2367,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw token text before the wrap.
       if (softWrap.getStart() > startToUse) {
         position.x = drawString(
-          g, text, startToUse, softWrap.getStart(), position, clip, effectColor, effectType, fontType, fontColor
+          g, text, startToUse, softWrap.getStart(), position, clip, null, null, fontType, fontColor
         );
       }
 
@@ -2385,7 +2385,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // Draw soft wrap symbols on current visual line if any.
         if (i - softWrapSegmentStartIndex > 0) {
           drawString(
-            g, softWrapChars, softWrapSegmentStartIndex, i, position, clip, effectColor, effectType, fontType, fontColor
+            g, softWrapChars, softWrapSegmentStartIndex, i, position, clip, null, null, fontType, fontColor
           );
         }
         mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
@@ -2405,8 +2405,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw remaining soft wrap symbols from its last line if any.
       if (softWrapSegmentStartIndex < softWrapChars.length) {
         position.x += drawString(
-          g, softWrapChars, softWrapSegmentStartIndex, softWrapChars.length, position, clip, effectColor, effectType,
-          fontType, fontColor
+          g, softWrapChars, softWrapSegmentStartIndex, softWrapChars.length, position, clip, null, null, fontType, fontColor
         );
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());

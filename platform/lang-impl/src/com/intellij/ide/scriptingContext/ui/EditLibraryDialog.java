@@ -20,16 +20,21 @@ import com.intellij.ide.scriptingContext.LangScriptingContextProvider;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -52,10 +57,14 @@ public class EditLibraryDialog extends DialogWrapper {
   private JButton myAddFileButton;
   private JButton myRemoveFileButton;
   private JBTable myFileTable;
+  private JButton myAddDocUrlButton;
+  private JButton myRemoveDocUrlButton;
+  private JBList myDocUrlList;
   private Project myProject;
   private FileTableModel myFileTableModel;
   private VirtualFile mySelectedFile;
   private LangScriptingContextProvider myProvider;
+  private MyDocUrlListModel myDocUrlListModel;
 
   public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project) {
     super(true);
@@ -87,6 +96,44 @@ public class EditLibraryDialog extends DialogWrapper {
         updateSelection();
       }
     });
+
+    myDocUrlListModel = new MyDocUrlListModel();
+    myDocUrlList.setModel(myDocUrlListModel);
+    myDocUrlListModel.addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {
+        myRemoveDocUrlButton.setEnabled(true);
+      }
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {
+        Object source = e.getSource();
+        if (source instanceof MyDocUrlListModel && ((MyDocUrlListModel)source).getDocUrls().length == 0) {
+          myRemoveDocUrlButton.setEnabled(false);
+        }
+      }
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        // do nothing
+      }
+    });
+    
+    myAddDocUrlButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        specifyDocUrl();
+      }
+    });
+    
+    myRemoveDocUrlButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        removeDocUrl();
+      }
+    });
+    myRemoveDocUrlButton.setEnabled(false);
+    
     init();
 
     TableColumn typeCol = myFileTable.getColumnModel().getColumn(FILE_TYPE_COL);
@@ -99,6 +146,11 @@ public class EditLibraryDialog extends DialogWrapper {
     this(title, provider, project);
     myLibName.setText(lib.getName());
     myFileTableModel.setFiles(lib.getSourceFiles(), lib.getCompactFiles());
+    String[] docUrls = lib.getDocUrls(); 
+    myDocUrlListModel.setDocUrls(docUrls);
+    if (docUrls.length > 0) {
+      myRemoveDocUrlButton.setEnabled(true);
+    }
   }
 
   private class MyTableCellEditor extends DefaultCellEditor {
@@ -311,6 +363,10 @@ public class EditLibraryDialog extends DialogWrapper {
   public VirtualFile[] getCompactFiles() {
     return myFileTableModel.getCompactFiles();
   }
+  
+  public String[] getDocUrls() {
+    return myDocUrlListModel.getDocUrls();
+  }
 
   @Override
   protected void doOKAction() {
@@ -323,5 +379,62 @@ public class EditLibraryDialog extends DialogWrapper {
 
   private static boolean isLibNameValid(String libName) {
     return libName != null && libName.matches("\\w[\\w\\d\\._\\-\\d]*");
+  }
+  
+  private static class MyDocUrlListModel extends AbstractListModel {
+    
+    private ArrayList<String> myDocUrls = new ArrayList<String>();
+    
+    public void setDocUrls(String[] urls) {
+      if (urls != null && urls.length > 0) {
+        myDocUrls.addAll(Arrays.asList(urls));
+      }
+    }
+
+    @Override
+    public int getSize() {
+      return myDocUrls.size();
+    }
+
+    @Override
+    public Object getElementAt(int index) {
+      return myDocUrls.get(index);
+    }
+    
+    public int addUrl(String url) {
+      myDocUrls.add(url);
+      int newIndex = myDocUrls.indexOf(url);
+      fireIntervalAdded(this, newIndex, newIndex);
+      return newIndex;
+    }
+    
+    public int indexOf(String url) {
+      return myDocUrls.indexOf(url);
+    }
+
+    public void remove(String url) {
+      if (url == null || !myDocUrls.contains(url)) return;
+      int index = myDocUrls.indexOf(url);
+      myDocUrls.remove(url);
+      fireIntervalRemoved(this, index, index);
+    }
+    
+    public String[] getDocUrls() {
+      return ArrayUtil.toStringArray(myDocUrls);
+    }
+  }
+  
+  private void specifyDocUrl() {
+    VirtualFile vf = Util.showSpecifyJavadocUrlDialog(contentPane);
+    if (vf != null && vf.isValid()) {
+      String url = vf.getUrl();
+      int index = myDocUrlListModel.addUrl(url);
+      myDocUrlList.ensureIndexIsVisible(index);
+      myDocUrlList.setSelectedIndex(index);
+    }
+  }
+  
+  private void removeDocUrl() {
+    myDocUrlListModel.remove((String)myDocUrlList.getSelectedValue());
   }
 }

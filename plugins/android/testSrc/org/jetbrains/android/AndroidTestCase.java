@@ -22,6 +22,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.PathUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -57,9 +59,13 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     this(true);
   }
 
+  public static String getAbsoluteTestDataPath() {
+    return PathUtil.getCanonicalPath(PluginPathManager.getPluginHomePath("android") + "/testData");
+  }
+
   @Override
   protected String getBasePath() {
-    return "/community/plugins/android/testData";
+    return PluginPathManager.getPluginHomePathRelative("android") + "/testData";
   }
 
   private String getTestSdkPath() {

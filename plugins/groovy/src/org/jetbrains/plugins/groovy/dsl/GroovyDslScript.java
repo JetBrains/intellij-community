@@ -53,7 +53,7 @@ public class GroovyDslScript {
                                  final String qname,
                                  ResolveState state) {
     final FactorTree cache = myMaps.getValue();
-    CustomMembersHolder holder = cache.retrieve(place, qname);
+    CustomMembersHolder holder = cache.retrieve(place, placeFile, qname);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
     if (holder == null) {
       holder = addGdslMembers(descriptor, qname, psiType);
