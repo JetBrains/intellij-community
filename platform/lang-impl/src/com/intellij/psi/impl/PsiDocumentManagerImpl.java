@@ -441,7 +441,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
       }
 
-      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? file.getText() : null;
+      final String oldText = ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? myTreeElementBeingReparsedSoItWontBeCollected.getText() : null;
 
       int startOffset;
       int endOffset;

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -480,7 +481,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       for (final XmlAttribute attribute : attributes) {
         if (attribute != XmlAttributeImpl.this && attribute.getName().equals(descriptor.getName())) return false;
       }
-      return true;
+      return !descriptor.getName().contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
     }
 
     public boolean isSoft() {
