@@ -1,6 +1,5 @@
 package com.jetbrains.python.buildout.config;
 
-import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -16,7 +15,7 @@ import java.util.Map;
 /**
  * @author traff
  */
-public class BuildoutCfgColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
+public class BuildoutCfgColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
     new AttributesDescriptor("Section name", BuildoutCfgSyntaxHighlighter.BUILDOUT_SECTION_NAME),
     new AttributesDescriptor("Key", BuildoutCfgSyntaxHighlighter.BUILDOUT_KEY),
