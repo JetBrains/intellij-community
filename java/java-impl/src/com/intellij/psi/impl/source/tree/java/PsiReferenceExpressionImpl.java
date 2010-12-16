@@ -32,7 +32,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -468,12 +467,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return this;
   }
 
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
 
     if (isReferenceTo(element)) return this;
 
-    PsiManager manager = getManager();
+    final PsiManager manager = getManager();
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
       if (qName == null) {
@@ -482,40 +482,36 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       else if (JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, getResolveScope()) == null) {
         return this;
       }
-      boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);
-      final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
-      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
-      getTreeParent().replaceChildInternal(this, ref);
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
+      final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);
+      PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
+      getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
       if (!preserveQualification) {
-        ref = (TreeElement)SourceTreeToPsiMap.psiElementToTree(
-          codeStyleManager.shortenClassReferences(SourceTreeToPsiMap.treeElementToPsi(ref), JavaCodeStyleManager.UNCOMPLETE_CODE));
+        ref = (PsiExpression)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.UNCOMPLETE_CODE);
       }
-      return SourceTreeToPsiMap.treeElementToPsi(ref);
+      return ref;
     }
     else if (element instanceof PsiPackage) {
-      String qName = ((PsiPackage)element).getQualifiedName();
+      final String qName = ((PsiPackage)element).getQualifiedName();
       if (qName.length() == 0) {
         throw new IncorrectOperationException();
       }
-      final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
-      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
-      getTreeParent().replaceChildInternal(this, ref);
-      return SourceTreeToPsiMap.treeElementToPsi(ref);
+      final PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
+      getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+      return ref;
     }
     else if ((element instanceof PsiField || element instanceof PsiMethod) && ((PsiMember) element).hasModifierProperty(PsiModifier.STATIC)) {
       if (!isPhysical()) {
         // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
         return this;
       }
-      PsiMember member = (PsiMember) element;
+      final PsiMember member = (PsiMember) element;
       final PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
-      String qName = psiClass.getQualifiedName() + "." + member.getName();
-      final CharTable table = SharedImplUtil.findCharTableByTree(getTreeParent());
-      TreeElement ref = ExpressionParsing.parseExpressionText(manager, qName, 0, qName.length(), table);
-      getTreeParent().replaceChildInternal(this, ref);
-      return SourceTreeToPsiMap.treeElementToPsi(ref);
+      final String qName = psiClass.getQualifiedName() + "." + member.getName();
+      final PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
+      getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+      return ref;
     }
     else {
       throw new IncorrectOperationException(element.toString());
