@@ -124,6 +124,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         try {
           myDebugger.waitForConnect();
           handshake();
+          getSession().rebuildViews();
           registerBreakpoints();
           new RunCommand(myDebugger).execute();
         }
