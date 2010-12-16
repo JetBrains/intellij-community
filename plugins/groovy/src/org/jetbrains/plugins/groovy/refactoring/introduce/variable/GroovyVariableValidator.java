@@ -160,7 +160,10 @@ public class GroovyVariableValidator implements GroovyIntroduceVariableBase.Vali
                                                     double startOffset) {
     PsiElement prevSibling = startElement.getPrevSibling();
     while (prevSibling != null) {
-      validateVariableOccurrencesDown(prevSibling, conflicts, varName, startOffset);
+      if (!(GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(prevSibling) &&
+            prevSibling.getTextRange().getEndOffset() < startOffset)) {
+        validateVariableOccurrencesDown(prevSibling, conflicts, varName, startOffset);
+      }
       prevSibling = prevSibling.getPrevSibling();
     }
 

@@ -17,19 +17,15 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -39,7 +35,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntrodu
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -74,6 +69,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
   public void testLoop6() throws Throwable { doTest(); }
   public void testLoop7() throws Throwable { doTest(); }
   public void testLoop8() throws Throwable { doTest(); }
+  public void testInCase() {doTest();}
 
   public void testDuplicatesInsideIf() throws Throwable { doTest(); }
   public void testFromGString() throws Throwable { doTest(); }
@@ -84,8 +80,8 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   protected boolean replaceAllOccurences = false;
 
-  private String processFile(String fileText, boolean explicitType) throws IncorrectOperationException, InvalidDataException, IOException {
-    String result = "";
+  private String processFile(String fileText, boolean explicitType) {
+    String result;
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
@@ -161,12 +157,12 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
     return result;
   }
 
-  public void doTest(boolean explicitType) throws Exception {
+  public void doTest(boolean explicitType) {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     assertEquals(data.get(1), processFile(data.get(0), explicitType));
   }
 
-  public void doTest() throws Exception {
+  public void doTest() {
     doTest(false);
   }
 

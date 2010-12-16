@@ -193,7 +193,8 @@ public abstract class GroovyRefactoringUtil {
     return tempContainer instanceof GrOpenBlock ||
         tempContainer instanceof GrClosableBlock ||
         tempContainer instanceof GroovyFileBase ||
-        tempContainer instanceof GrCaseSection || tempContainer instanceof GrLoopStatement;
+        tempContainer instanceof GrCaseSection ||
+        tempContainer instanceof GrLoopStatement;
   }
 
   public static void sortOccurrences(PsiElement[] occurences) {
