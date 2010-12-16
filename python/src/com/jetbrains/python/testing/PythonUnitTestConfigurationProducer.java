@@ -28,7 +28,6 @@ import java.util.List;
 
 public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
-  private boolean isActive = true;
 
   public PythonUnitTestConfigurationProducer() {
     super(ConfigurationTypeUtil.findConfigurationType(PythonUnitTestConfigurationType.class));
@@ -41,9 +40,10 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    if (!isActive) return null;
+    PsiElement element = location.getPsiElement();
+        if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+          PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME))) return null;
     RunnerAndConfigurationSettings settings;
-
     /*Module module = location.getModule();
 
     if (module != null) {
@@ -214,9 +214,6 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
       }
     }
     return null;
-  }
-  public void setActive(boolean active) {
-    isActive = active;
   }
 
   public int compareTo(Object o) {

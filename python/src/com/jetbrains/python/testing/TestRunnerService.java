@@ -50,7 +50,6 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
     return ServiceManager.getService(project, TestRunnerService.class);
   }
   public String getProjectConfiguration() {
-    System.out.println("conf " + PROJECT_CONFIGURATION);
     return PROJECT_CONFIGURATION;
   }
 }

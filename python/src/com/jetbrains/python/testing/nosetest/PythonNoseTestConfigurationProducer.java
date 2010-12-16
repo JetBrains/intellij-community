@@ -32,7 +32,6 @@ import java.util.List;
 
 public class PythonNoseTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
-  private boolean isActive = false;
 
   public PythonNoseTestConfigurationProducer() {
     super(ConfigurationTypeUtil.findConfigurationType(PythonNoseTestRunConfigurationType.class));
@@ -45,9 +44,10 @@ public class PythonNoseTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    if (!isActive) return null;
+    PsiElement element = location.getPsiElement();
+    if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+            PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME))) return null;
     RunnerAndConfigurationSettings settings;
-
     /*Module module = location.getModule();
 
     if (module != null) {
@@ -218,10 +218,6 @@ public class PythonNoseTestConfigurationProducer extends RuntimeConfigurationPro
 
   public int compareTo(Object o) {
     return PREFERED;
-  }
-
-  public void setActive(boolean active) {
-    isActive = active;
   }
 
 }
