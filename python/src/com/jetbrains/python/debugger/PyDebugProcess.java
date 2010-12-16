@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -143,8 +144,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void handshake() throws PyDebuggerException {
-    final String remoteVersion = myDebugger.handshake();
-    printToConsole("Connected to pydevd (version " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    String remoteVersion = myDebugger.handshake();
+    String currentBuild = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
+    if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
+      remoteVersion = currentBuild;
+    }
+    printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+
+    if (!remoteVersion.equals(currentBuild)) {
+      printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.", ConsoleViewContentType.ERROR_OUTPUT);
+    }
   }
 
   public void printToConsole(String text, ConsoleViewContentType contentType) {
@@ -432,10 +441,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public String getCurrentStateMessage() {
     if (getSession().isStopped()) {
       return XDebuggerBundle.message("debugger.state.message.disconnected");
-    } else
-    if (myDebugger.isConnected()) {
+    }
+    else if (myDebugger.isConnected()) {
       return XDebuggerBundle.message("debugger.state.message.connected");
-    } else {
+    }
+    else {
       return "Waiting for connection...";
     }
   }

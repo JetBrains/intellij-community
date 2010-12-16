@@ -36,7 +36,6 @@ def compare_object_attrs(x, y):
     except:
         return cmp(str(x), str(y))
 
-
 def cmp_to_key(mycmp):
     'Convert a cmp= function into a key= function'
     class K(object):
