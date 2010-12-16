@@ -237,7 +237,7 @@ public class LookupElementBuilder extends LookupElement {
 
   @Override
   public String toString() {
-    return "LookupElementBuilder: handler=" + myInsertHandler;
+    return "LookupElementBuilder: string=" + getLookupString() + "; handler=" + myInsertHandler;
   }
 
   @Override
