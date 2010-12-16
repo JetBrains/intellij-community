@@ -236,8 +236,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       if (myFileEditorManager.isFileOpen(file)) {
         return;
       }
-      removeDocListener(document, file);
     }
+    removeDocListener(document, file);
   }
 
   private void removeDocListener(Document document, VirtualFile file) {
