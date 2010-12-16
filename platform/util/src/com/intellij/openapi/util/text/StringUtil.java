@@ -795,7 +795,7 @@ public class StringUtil {
   @NotNull
   public static String trimEnd(@NotNull String s, @NonNls @NotNull String suffix) {
     if (s.endsWith(suffix)) {
-      return s.substring(0, s.lastIndexOf(suffix));
+      return s.substring(0, s.length() - suffix.length());
     }
     return s;
   }

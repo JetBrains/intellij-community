@@ -49,7 +49,6 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public abstract class XmlExtension {
-
   private static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
 
   public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
