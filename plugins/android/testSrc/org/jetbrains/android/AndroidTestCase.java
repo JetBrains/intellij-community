@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.PathUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -56,6 +57,10 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   public AndroidTestCase() {
     this(true);
+  }
+
+  public static String getAbsoluteTestDataPath() {
+    return PathUtil.getCanonicalPath(PluginPathManager.getPluginHomePath("android") + "/testData");
   }
 
   @Override
