@@ -17,9 +17,7 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageRunner;
-import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
@@ -63,8 +61,6 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
   Project myProject;
   private MyClassFilterEditor myClassFilterEditor;
   private JCheckBox myCoverageEnabledCheckbox;
-  private JCheckBox myMergeDataCheckbox;
-  private JComboBox myMergedCoverageSuiteCombo;
   private JLabel myCoverageNotSupportedLabel;
   private JComboBox myCoverageRunnerCb;
   private JPanel myRunnerPanel;
@@ -136,19 +132,6 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     }
     UIUtil.setEnabled(myRunnerPanel, isJre50 && configuration.isCoverageEnabled(), true);
 
-    myMergeDataCheckbox.setEnabled(isJre50 && configuration.isCoverageEnabled());
-    myMergeDataCheckbox.setSelected(configuration.isMergeWithPreviousResults());
-
-    myMergedCoverageSuiteCombo.setEnabled(myMergeDataCheckbox.isEnabled() && myMergeDataCheckbox.isSelected());
-    final DefaultComboBoxModel model = (DefaultComboBoxModel)myMergedCoverageSuiteCombo.getModel();
-    model.removeAllElements();
-    final CoverageSuite[] suites = CoverageDataManager.getInstance(myProject).getSuites();
-    for (CoverageSuite suite : suites) {
-      if (suite.isValid()) {
-        model.addElement(suite.getPresentableName());
-      }
-    }
-    myMergedCoverageSuiteCombo.setSelectedItem(configuration.getSuiteToMergeWith());
 
     myCoverageEnabledCheckbox.setSelected(isJre50 && configuration.isCoverageEnabled());
     myClassFilterEditor.setEnabled(myCoverageEnabledCheckbox.isSelected());
@@ -171,9 +154,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
   protected void applyEditorTo(final T runConfiguration) throws ConfigurationException {
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     configuration.setCoverageEnabled(myCoverageEnabledCheckbox.isSelected());
-    configuration.setMergeWithPreviousResults(myMergeDataCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
-    configuration.setSuiteToMergeWith((String)myMergedCoverageSuiteCombo.getSelectedItem());
     configuration.setCoverageRunner(getSelectedRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
     configuration.setSampling(mySamplingRb.isSelected());
@@ -251,20 +232,6 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
 
     result.add(myRunnerPanel);
 
-    myMergeDataCheckbox = new JCheckBox(ExecutionBundle.message("merge.coverage.data"));
-    result.add(myMergeDataCheckbox);
-    myMergeDataCheckbox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myMergedCoverageSuiteCombo.setEnabled(myMergeDataCheckbox.isSelected());
-      }
-    });
-
-    final JPanel serFilePanel = new JPanel(new GridBagLayout());
-    myMergedCoverageSuiteCombo = new JComboBox(new DefaultComboBoxModel());
-    serFilePanel.add(myMergedCoverageSuiteCombo, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 20, 5, 5), 0, 0));
-    result.add(serFilePanel);
-
     JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ExecutionBundle.message("record.coverage.filters.title")));
     myClassFilterEditor = new MyClassFilterEditor(myProject);
@@ -277,9 +244,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
       public void actionPerformed(final ActionEvent e) {
         final boolean isCoverageEnabled = myCoverageEnabledCheckbox.isSelected();
         myClassFilterEditor.setEnabled(isCoverageEnabled);
-        myMergeDataCheckbox.setEnabled(isCoverageEnabled);
         UIUtil.setEnabled(myRunnerPanel, isCoverageEnabled, true);
-        myMergedCoverageSuiteCombo.setEnabled(isCoverageEnabled && myMergeDataCheckbox.isSelected());
         final CoverageRunner runner = getSelectedRunner();
         enableTracingPanel(isCoverageEnabled && runner != null && runner.isCoverageByTestApplicable());
         myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && isCoverageEnabled && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());

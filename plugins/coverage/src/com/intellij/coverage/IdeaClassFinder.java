@@ -25,22 +25,24 @@ class IdeaClassFinder extends ClassFinder {
   private static final Logger LOG = Logger.getInstance("#" + IdeaClassFinder.class.getName());
   
   private final Project myProject;
-  private final JavaCoverageSuite myCurrentSuite;
+  private final CoverageSuitesBundle myCurrentSuite;
 
-  public IdeaClassFinder(Project project, JavaCoverageSuite currentSuite) {
+  public IdeaClassFinder(Project project, CoverageSuitesBundle currentSuite) {
     super(obtainPatternsFromSuite(currentSuite), new ArrayList());
     myProject = project;
     myCurrentSuite = currentSuite;
   }
 
-  private static List<Pattern> obtainPatternsFromSuite(JavaCoverageSuite currentSuite) {
+  private static List<Pattern> obtainPatternsFromSuite(CoverageSuitesBundle currentSuiteBundle) {
     final List<Pattern> includePatterns = new ArrayList<Pattern>();
-    for (String pattern : currentSuite.getFilteredPackageNames()) {
-      includePatterns.add(Pattern.compile(pattern + ".*"));
-    }
+    for (CoverageSuite currentSuite : currentSuiteBundle.getSuites()) {
+      for (String pattern : ((JavaCoverageSuite)currentSuite).getFilteredPackageNames()) {
+        includePatterns.add(Pattern.compile(pattern + ".*"));
+      }
 
-    for (String pattern : currentSuite.getFilteredClassNames()) {
-      includePatterns.add(Pattern.compile(pattern));
+      for (String pattern : ((JavaCoverageSuite)currentSuite).getFilteredClassNames()) {
+        includePatterns.add(Pattern.compile(pattern));
+      }
     }
     return includePatterns;
   }

@@ -46,7 +46,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   private ClassFilter[] myCoveragePatterns;
 
-  private boolean myIsMergeWithPreviousResults = isMergeDataByDefault();
+  private boolean myIsMergeWithPreviousResults = false;
   private String mySuiteToMergeWith;
 
   @NonNls private static final String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
@@ -95,15 +95,6 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return myCoverageProvider;
   }
 
-  /**
-   * @return true if coverage data from different runs should be merged by default.
-   *         This method returns, for example, true for application configurations and false for unit tests
-   */
-
-  protected boolean isMergeDataByDefault() {
-    return getConfiguration() instanceof ApplicationConfiguration;
-  }
-
   public boolean canHavePerTestCoverage() {
     return !(getConfiguration() instanceof ApplicationConfiguration);
   }
@@ -122,11 +113,6 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
       return ArrayUtil.toStringArray(patterns);
     }
     return null;
-  }
-
-  @Override
-  public boolean overrideSuiteCoverageDataFor(String newSuiteName) {
-    return getSuiteToMergeWith() == null || !newSuiteName.equals(getSuiteToMergeWith());
   }
 
   public void setCoveragePatterns(final ClassFilter[] coveragePatterns) {
@@ -212,31 +198,11 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   @Nullable
   public String getCoverageFilePath() {
-    if (myCoverageFilePath != null && isMergeWithPreviousResults()) {
+    if (myCoverageFilePath != null ) {
       return myCoverageFilePath;
     }
     myCoverageFilePath = createCoverageFile();
     return myCoverageFilePath;
-  }
-
-  public boolean isMergeWithPreviousResults() {
-    return myIsMergeWithPreviousResults;
-  }
-
-  public void setMergeWithPreviousResults(final boolean isMergeWithPreviousResults) {
-    myIsMergeWithPreviousResults = isMergeWithPreviousResults;
-  }
-
-  @Nullable
-  public String getSuiteToMergeWith() {
-    if (myIsMergeWithPreviousResults) {
-      return mySuiteToMergeWith;
-    }
-    return null;
-  }
-
-  public void setSuiteToMergeWith(String suiteToMegeWith) {
-    mySuiteToMergeWith = suiteToMegeWith;
   }
 
   public void setUpCoverageFilters(String className, String packageName) {

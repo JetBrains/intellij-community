@@ -70,12 +70,21 @@ public class PackageAnnotator {
   }
 
   //get read lock myself when needed
-  public void annotate(JavaCoverageSuite suite, Annotator annotator) {
-    final ProjectData data = suite.getCoverageData(myCoverageManager);
+  public void annotate(CoverageSuitesBundle suite, Annotator annotator) {
+    final ProjectData data = suite.getCoverageData();
 
     if (data == null) return;
 
-    if (!suite.isPackageFiltered(myPackage.getQualifiedName())) return;
+    final String qualifiedName = myPackage.getQualifiedName();
+    boolean filtered = false;
+    for (CoverageSuite coverageSuite : suite.getSuites()) {
+      if (((JavaCoverageSuite)coverageSuite).isPackageFiltered(qualifiedName)) {
+        filtered = true;
+        break;
+      }
+
+    }
+    if (!filtered) return;
 
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(new Computable<Module[]>() {
       public Module[] compute() {
@@ -87,7 +96,7 @@ public class PackageAnnotator {
 
     Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<String, PackageCoverageInfo>();
     for (final Module module : modules) {
-      final String rootPackageVMName = myPackage.getQualifiedName().replaceAll("\\.", "/");
+      final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
       final VirtualFile packageRoot = myCoverageManager.doInReadActionIfProjectOpen(new Computable<VirtualFile>() {
         @Nullable
         public VirtualFile compute() {
@@ -301,9 +310,9 @@ public class PackageAnnotator {
 
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
-    final JavaCoverageSuite coverageSuite = (JavaCoverageSuite)CoverageDataManager.getInstance(myProject).getCurrentSuite();
+    final CoverageSuitesBundle coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (coverageSuite == null) return false;
-    SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), classData, coverageSuite.getRunner() instanceof IDEACoverageRunner && coverageSuite.isTracingEnabled());
+    SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), classData, coverageSuite.isTracingEnabled());
     reader.accept(counter, 0);
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
     classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();

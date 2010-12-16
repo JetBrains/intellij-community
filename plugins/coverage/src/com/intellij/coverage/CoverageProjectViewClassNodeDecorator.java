@@ -27,7 +27,7 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
     }
 
     final CoverageDataManager dataManager = getCoverageDataManager();
-    final CoverageSuite currentSuite = dataManager.getCurrentSuite();
+    final CoverageSuitesBundle currentSuite = dataManager.getCurrentSuitesBundle();
     final Project project = element.getProject();
 
     final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
@@ -46,7 +46,7 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
 
   public void decorate(ProjectViewNode node, PresentationData data) {
     final CoverageDataManager coverageDataManager = getCoverageDataManager();
-    final CoverageSuite currentSuite = coverageDataManager.getCurrentSuite();
+    final CoverageSuitesBundle currentSuite = coverageDataManager.getCurrentSuitesBundle();
 
     final Project project = node.getProject();
     final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(currentSuite, project);
@@ -80,9 +80,9 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
   }
 
   @Nullable
-  private JavaCoverageAnnotator getCovAnnotator(final CoverageSuite currentSuite, final Project project) {
+  private JavaCoverageAnnotator getCovAnnotator(final CoverageSuitesBundle currentSuite, Project project) {
     if (currentSuite != null) {
-      final CoverageAnnotator coverageAnnotator = currentSuite.getCoverageEngine().getCoverageAnnotator(project);
+      final CoverageAnnotator coverageAnnotator = currentSuite.getAnnotator(project);
       if (coverageAnnotator instanceof JavaCoverageAnnotator) {
         return (JavaCoverageAnnotator) coverageAnnotator;
       }

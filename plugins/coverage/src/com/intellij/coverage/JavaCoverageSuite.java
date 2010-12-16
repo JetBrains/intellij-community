@@ -45,7 +45,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final CoverageFileProvider coverageDataFileProvider,
                            final String[] filters,
                            final long lastCoverageTimeStamp,
-                           final String suiteToMerge,
                            final boolean coverageByTestEnabled,
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
@@ -56,7 +55,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
           coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class));
 
     myFilters = filters;
-    mySuiteToMerge = suiteToMerge;
     myCoverageEngine = coverageSupportProvider;
   }
 

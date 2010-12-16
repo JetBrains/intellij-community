@@ -96,11 +96,6 @@ public class CoberturaCoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  @Override
-  public boolean isHTMLReportSupported() {
-    return true;
-  }
-
   public String getPresentableName() {
     return "Cobertura";
   }

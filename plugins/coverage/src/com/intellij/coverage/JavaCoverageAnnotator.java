@@ -11,6 +11,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Nullable
   public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
-                                                @NotNull final CoverageSuite currentSuite,
+                                                @NotNull final CoverageSuitesBundle currentSuite,
                                                 @NotNull final CoverageDataManager coverageDataManager) {
     final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (psiPackage == null) return null;
@@ -55,12 +56,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuite currentSuite, @NotNull CoverageDataManager manager) {
+  public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
     // N/A here we work with java classes
     return null;
   }
 
-  public void onSuiteChosen(CoverageSuite newSuite) {
+  public void onSuiteChosen(CoverageSuitesBundle newSuite) {
     super.onSuiteChosen(newSuite);
 
     myPackageCoverageInfos.clear();
@@ -69,12 +70,18 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myClassCoverageInfos.clear();
   }
 
-  protected Runnable createRenewRequest(@NotNull final CoverageSuite suite, @NotNull final CoverageDataManager dataManager) {
-    final JavaCoverageSuite javaSuite = (JavaCoverageSuite)suite;
+  protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
+
 
     final Project project = getProject();
-    final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(project);
-    final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
+    final List<PsiPackage> packages = new ArrayList<PsiPackage>();
+    final List<PsiClass> classes = new ArrayList<PsiClass>();
+
+    for (CoverageSuite coverageSuite : suite.getSuites()) {
+      final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
+      classes.addAll(javaSuite.getCurrentSuiteClasses(project));
+      packages.addAll(javaSuite.getCurrentSuitePackages(project));
+    }
 
     if (packages.isEmpty() && classes.isEmpty()) {
       return null;
@@ -83,7 +90,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return new Runnable() {
       public void run() {
         for (PsiPackage aPackage : packages) {
-          new PackageAnnotator(aPackage).annotate(javaSuite, new PackageAnnotator.Annotator() {
+          new PackageAnnotator(aPackage).annotate(suite, new PackageAnnotator.Annotator() {
             public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
               myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
             }
