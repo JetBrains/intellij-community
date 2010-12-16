@@ -77,6 +77,7 @@ import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
 import traceback
+from pydevd_utils import *
 
 from pydevd_tracing import GetExceptionTracebackStr
 
@@ -615,9 +616,13 @@ class InternalGetVariable(InternalThreadCommand):
             valDict = pydevd_vars.resolveCompoundVariable(self.thread_id, self.frame_id, self.scope, self.attributes)                        
             keys = valDict.keys()
             if hasattr(keys, 'sort'):
-                keys.sort() #Python 3.0 does not have it
+                keys.sort(compare_object_attrs) #Python 3.0 does not have it
             else:
-                keys = sorted(keys, key=str) #Jython 2.1 does not have it (and all must be compared as strings).
+                if (IS_PY3K):
+                    keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+                else:
+                    keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+
             for k in keys:
                 xml += pydevd_vars.varToXML(valDict[k], str(k))
 
