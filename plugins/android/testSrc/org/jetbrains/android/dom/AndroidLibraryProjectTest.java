@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -46,6 +47,10 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   private final AndroidSdkTestProfile myTestProfile = new Android15TestProfile();
 
   protected JavaCodeInsightTestFixture myFixture;
+
+  public AndroidLibraryProjectTest() {
+    IdeaTestCase.initPlatformPrefix();
+  }
 
   @Override
   public void setUp() throws Exception {
@@ -92,15 +97,16 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    myFixture.tearDown();
-    myFixture = null;
-
     myAppModule = null;
     myLibModule = null;
 
     myAppFacet = null;
     myLibFacet = null;
+
+    myFixture.tearDown();
+    myFixture = null;
+
+    super.tearDown();
   }
 
   private String getTestSdkPath() {
