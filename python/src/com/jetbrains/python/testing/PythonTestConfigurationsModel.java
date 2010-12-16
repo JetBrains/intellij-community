@@ -16,87 +16,36 @@
 
 package com.jetbrains.python.testing;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
 
-import javax.swing.*;
-import javax.swing.event.ListDataListener;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: catherine
  */
-public class PythonTestConfigurationsModel implements ComboBoxModel {
+
+public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
   public static final String PYTHONS_NOSETEST_NAME = PyBundle.message("runcfg.nosetests.display_name");
   public static final String PY_TEST_NAME = PyBundle.message("runcfg.pytest.display_name");
-  private static final PythonTestConfigurationsModel INSTANCE = new PythonTestConfigurationsModel();
 
-  private final List<String> myConfigurationTypes = new ArrayList<String>();
-  private Set<ListDataListener> myListDataListeners = new HashSet<ListDataListener>();
-
-  private String myDefault;
   private String myProjectConfiguration;
-  private String myGlobalSelected;
+  private Project myProject;
 
-  private PythonTestConfigurationsModel() {
-    myDefault = PYTHONS_UNITTEST_NAME;
-    myProjectConfiguration = PYTHONS_UNITTEST_NAME;
-    myGlobalSelected = myDefault;
+  public PythonTestConfigurationsModel(final List items, final Object selection, Project project) {
+    super(items, selection);
+    myProject = project;
+    myProjectConfiguration = TestRunnerService.getInstance(myProject).getProjectConfiguration();
   }
-
-  public void addConfiguration(final String newConfiguration, boolean changeSelection) {
-    myConfigurationTypes.add(newConfiguration);
-    if (changeSelection) {
-      setSelectedItem(newConfiguration);
-    }
-  }
-
   public void reset() {
-    myDefault = myProjectConfiguration;
     setSelectedItem(myProjectConfiguration);
   }
 
   public void apply() {
-    myProjectConfiguration = myGlobalSelected;
-  }
-
-  @Override
-  public void setSelectedItem(Object o) {
-    if (myGlobalSelected != o) {
-      myGlobalSelected = (String)o;
-    }
-  }
-
-  @Override
-  public Object getSelectedItem() {
-    return myGlobalSelected;
-  }
-
-  @Override
-  public int getSize() {
-    return myConfigurationTypes.size();
-  }
-
-  @Override
-  public Object getElementAt(int i) {
-    return myConfigurationTypes.get(i);
-  }
-
-  @Override
-  public void addListDataListener(ListDataListener listDataListener) {
-    myListDataListeners.add(listDataListener);
-  }
-
-  @Override
-  public void removeListDataListener(ListDataListener listDataListener) {
-    myListDataListeners.remove(listDataListener);
-  }
-
-  public static PythonTestConfigurationsModel getInstance() {
-    return INSTANCE;
+    myProjectConfiguration = (String)getSelectedItem();
+    TestRunnerService.getInstance(myProject).setProjectConfiguration(myProjectConfiguration);
   }
 
   public Object getProjectConfiguration() {

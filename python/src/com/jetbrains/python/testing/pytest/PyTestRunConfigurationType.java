@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,13 +40,11 @@ public class PyTestRunConfigurationType implements ConfigurationType {
 
 
   private static class PyTestRunConfigurationFactory extends ConfigurationFactory {
-    final private PythonTestConfigurationsModel myModel = PythonTestConfigurationsModel.getInstance();
     protected PyTestRunConfigurationFactory(ConfigurationType type) {
       super(type);
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      myModel.addConfiguration(PythonTestConfigurationsModel.PY_TEST_NAME, false);
       return new PyTestRunConfiguration("", new RunConfigurationModule(project), this);
     }
   }

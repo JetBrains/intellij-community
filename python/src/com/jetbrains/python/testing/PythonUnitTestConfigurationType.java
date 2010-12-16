@@ -27,13 +27,11 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
   private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
-    final private PythonTestConfigurationsModel myModel = PythonTestConfigurationsModel.getInstance();
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      myModel.addConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, false);
       return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }

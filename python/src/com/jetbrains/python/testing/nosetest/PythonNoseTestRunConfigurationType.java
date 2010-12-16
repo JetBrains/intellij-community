@@ -4,7 +4,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 
 import javax.swing.*;
 
@@ -27,13 +26,11 @@ public class PythonNoseTestRunConfigurationType extends ConfigurationTypeBase {
   private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/python.png");
 
   private static class PythonNoseTestConfigurationFactory extends ConfigurationFactory {
-    final private PythonTestConfigurationsModel myModel = PythonTestConfigurationsModel.getInstance();
     protected PythonNoseTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
-      myModel.addConfiguration(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, false);
       return new PythonNoseTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
   }
