@@ -50,7 +50,16 @@ public class AppEngineSdkImpl implements AppEngineSdk {
 
   public File[] getLibraries() {
     File sdkHome = new File(FileUtil.toSystemDependentName(myHomePath));
-    final File libFolder = new File(sdkHome, "lib" + File.separator + "shared");
+    return getJarsFromDirectory(new File(sdkHome, "lib" + File.separator + "shared"));
+  }
+
+  @Override
+  public File[] getJspLibraries() {
+    File sdkHome = new File(FileUtil.toSystemDependentName(myHomePath));
+    return getJarsFromDirectory(new File(sdkHome, "lib" + File.separator + "shared" + File.separator + "jsp"));
+  }
+
+  private static File[] getJarsFromDirectory(File libFolder) {
     List<File> jars = new ArrayList<File>();
     final File[] files = libFolder.listFiles();
     if (files != null) {

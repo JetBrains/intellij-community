@@ -37,4 +37,6 @@ public interface AppEngineSdk {
   String getAgentPath();
 
   File getWebSchemeFile();
+
+  File[] getJspLibraries();
 }

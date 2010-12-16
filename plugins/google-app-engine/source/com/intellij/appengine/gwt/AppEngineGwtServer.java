@@ -9,6 +9,7 @@ import com.intellij.gwt.facet.GwtFacet;
 import com.intellij.gwt.run.GwtDevModeServer;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,6 +42,12 @@ public class AppEngineGwtServer extends GwtDevModeServer {
     File agentFile = new File(FileUtil.toSystemDependentName(agentPath));
     if (agentFile.exists()) {
       parameters.getVMParametersList().add("-javaagent:" + agentPath);
+    }
+
+    //actually these jars are added by AppEngine dev server automatically. But they need to be added to classpath before gwt-dev.jar, because
+    // otherwise wrong jsp compiler version will be used (see IDEA-63068)
+    for (File jar : ArrayUtil.mergeArrays(sdk.getLibraries(), sdk.getJspLibraries(), File.class)) {
+      parameters.getClassPath().addFirst(FileUtil.toSystemIndependentName(jar.getAbsolutePath()));
     }
 
     parameters.getClassPath().add(sdk.getToolsApiJarFile());
