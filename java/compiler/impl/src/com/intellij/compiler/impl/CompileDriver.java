@@ -1038,12 +1038,12 @@ public class CompileDriver {
                 generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(compiler));
               }
   
-              if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-                throw new ExitException(ExitStatus.ERRORS);
-              }
-  
               didSomething |= compiledSomething;
               compiledSomethingForThisChunk |= didSomething;
+
+              if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+                break; // break the loop over compilers
+              }
             }
 
             final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
