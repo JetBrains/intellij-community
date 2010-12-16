@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +21,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,34 +48,30 @@ public class PythonNoseTestConfigurationProducer extends RuntimeConfigurationPro
     if (!isActive) return null;
     RunnerAndConfigurationSettings settings;
 
-    Module module = location.getModule();
+    /*Module module = location.getModule();
+
     if (module != null) {
       for (RunnableUnitTestFilter f : Extensions.getExtensions(RunnableUnitTestFilter.EP_NAME)) {
         if (f.isRunnableUnitTest(location.getPsiElement().getContainingFile(), module)) {
           return null;
         }
       }
-    }
-
+    }*/
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) {
       return null;
     }
-
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
-
     final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class);
     if (pyElement != null) {
       settings = createConfigurationFromFunction(location, pyElement);
       if (settings != null) return settings;
-
       settings = createConfigurationFromClass(location, pyElement);
       if (settings != null) return settings;
     }
 
     settings = createConfigurationFromFile(location, location.getPsiElement());
     if (settings != null) return settings;
-
     return null;
   }
 
@@ -225,4 +223,5 @@ public class PythonNoseTestConfigurationProducer extends RuntimeConfigurationPro
   public void setActive(boolean active) {
     isActive = active;
   }
+
 }
