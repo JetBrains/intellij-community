@@ -37,10 +37,13 @@ public class PyJoinIfIntention extends BaseIntentionAction {
     PyIfStatement expression =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyIfStatement.class);
 
+
     PyIfStatement ifStatement = getIfStatement(expression);
     PyStatement firstStatement = getFirstStatement(ifStatement);
 
     if (firstStatement != null) {
+      if (((PyIfStatement)firstStatement).getElifParts().length != 0) return false;
+      if (((PyIfStatement)firstStatement).getElsePart() != null) return false;
       PyStatementList stList = ((PyIfStatement)firstStatement).getIfPart().getStatementList();
       if (stList != null)
         if (stList.getStatements().length != 0)
