@@ -97,14 +97,17 @@ public class VariableTypeFromCallFix implements IntentionAction {
       }
       final PsiElement resolved = ((PsiReferenceExpression)qualifierExpression).resolve();
       if (resolved instanceof PsiVariable) {
-        final PsiClass varClass = PsiUtil.resolveClassInType(((PsiVariable)resolved).getType());
+        final PsiType varType = ((PsiVariable)resolved).getType();
+        final PsiClass varClass = PsiUtil.resolveClassInType(varType);
         final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
         if (varClass != null) {
           final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
                                                                        parameters,
                                                                        expressions, PsiSubstitutor.EMPTY, resolved, false);
           final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+          if (!varType.equals(appropriateVarType)) {
+            QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+          }
           break;
         }
       }
