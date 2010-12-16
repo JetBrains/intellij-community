@@ -127,59 +127,55 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (!isInScopeOf(debugProcess, classType.name())) {
       return;
     }
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          List<Location> locs = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
-          if (locs.size() > 0) {
-            for (final Location location : locs) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Found location for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && location.method().isObsolete()));
-              }
-              BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(LineBreakpoint.this, location);
-              debugProcess.getRequestsManager().enableRequest(request);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex());
-              }
-            }
-          }
-          else {
-            // there's no executable code in this class
-            debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message(
-              "error.invalid.breakpoint.no.executable.code", (getLineIndex() + 1), classType.name())
-            );
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("No locations of type " + classType.name() + " found at line " + getLineIndex());
-            }
-          }
-        }
-        catch (ClassNotPreparedException ex) {
+    try {
+      List<Location> locs = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
+      if (locs.size() > 0) {
+        for (final Location location : locs) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("ClassNotPreparedException: " + ex.getMessage());
+            LOG.debug("Found location for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && location.method().isObsolete()));
           }
-          // there's a chance to add a breakpoint when the class is prepared
-        }
-        catch (ObjectCollectedException ex) {
+          BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(LineBreakpoint.this, location);
+          debugProcess.getRequestsManager().enableRequest(request);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("ObjectCollectedException: " + ex.getMessage());
+            LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex());
           }
-          // there's a chance to add a breakpoint when the class is prepared
         }
-        catch (InvalidLineNumberException ex) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("InvalidLineNumberException: " + ex.getMessage());
-          }
-          debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
-        }
-        catch (InternalException ex) {
-          LOG.info(ex);
-        }
-        catch(Exception ex) {
-          LOG.info(ex);
-        }
-        updateUI();
       }
-    });
+      else {
+        // there's no executable code in this class
+        debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message(
+          "error.invalid.breakpoint.no.executable.code", (getLineIndex() + 1), classType.name())
+        );
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("No locations of type " + classType.name() + " found at line " + getLineIndex());
+        }
+      }
+    }
+    catch (ClassNotPreparedException ex) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("ClassNotPreparedException: " + ex.getMessage());
+      }
+      // there's a chance to add a breakpoint when the class is prepared
+    }
+    catch (ObjectCollectedException ex) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("ObjectCollectedException: " + ex.getMessage());
+      }
+      // there's a chance to add a breakpoint when the class is prepared
+    }
+    catch (InvalidLineNumberException ex) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("InvalidLineNumberException: " + ex.getMessage());
+      }
+      debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
+    }
+    catch (InternalException ex) {
+      LOG.info(ex);
+    }
+    catch(Exception ex) {
+      LOG.info(ex);
+    }
+    updateUI();
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
