@@ -176,6 +176,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     Set<TaskRepository> set = new HashSet<TaskRepository>(myRepositories);
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
+    myIssueCache.clear();
+    myTemporaryCache.clear();
 
     myRepositories.clear();
     myRepositories.addAll(repositories);

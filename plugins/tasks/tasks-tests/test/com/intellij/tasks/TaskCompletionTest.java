@@ -36,7 +36,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSIOOBE() throws Exception {
-    doTest("  <caret>    my ", "  TEST-001: Test task    my");
+    doTest("  <caret>    my", "  TEST-001: Test task    my");
   }
 
   private void doTest(String text, String after) {
