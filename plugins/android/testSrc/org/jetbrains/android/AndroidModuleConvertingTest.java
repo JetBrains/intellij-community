@@ -18,7 +18,6 @@ package org.jetbrains.android;
 
 import com.intellij.conversion.ConversionService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -39,11 +39,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 19, 2009
- * Time: 7:38:18 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidModuleConvertingTest extends PlatformTestCase {
   private static void checkElement(final String filePath, final Element root) throws JDOMException, IOException {
@@ -55,11 +51,7 @@ public class AndroidModuleConvertingTest extends PlatformTestCase {
   }
 
   private static File getConvertingTestDataPath() {
-    return new File(FileUtil.toSystemDependentName(getGlobalTestDataPath() + "/converting"));
-  }
-
-  private static String getGlobalTestDataPath() {
-    return FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/community/plugins/android/testData";
+    return new File(FileUtil.toSystemDependentName(AndroidTestCase.getAbsoluteTestDataPath() + "/converting"));
   }
 
   @Override

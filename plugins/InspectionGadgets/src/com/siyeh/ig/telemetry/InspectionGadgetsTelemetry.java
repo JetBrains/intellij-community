@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package com.siyeh.ig.telemetry;
-
-import com.siyeh.ig.InspectionRunListener;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,17 +32,17 @@ public class InspectionGadgetsTelemetry implements InspectionRunListener {
         synchronized (lock) {
             final Integer count = totalRunCount.get(inspectionID);
             if (count == null) {
-                totalRunCount.put(inspectionID, 1);
+                totalRunCount.put(inspectionID, Integer.valueOf(1));
             } else {
                 totalRunCount.put(inspectionID,
-                        count + 1);
+                        Integer.valueOf(count.intValue() + 1));
             }
             final Long runTimeSoFar = totalRunTime.get(inspectionID);
             if (runTimeSoFar == null) {
-                totalRunTime.put(inspectionID, runTime);
+                totalRunTime.put(inspectionID, Long.valueOf(runTime));
             } else {
                 totalRunTime.put(inspectionID,
-                        runTimeSoFar + runTime);
+                        Long.valueOf(runTimeSoFar.longValue() + runTime));
             }
         }
     }
@@ -62,7 +60,7 @@ public class InspectionGadgetsTelemetry implements InspectionRunListener {
             if (runTime == null) {
                 return 0L;
             }
-            return runTime;
+            return runTime.longValue();
         }
     }
 
@@ -72,7 +70,7 @@ public class InspectionGadgetsTelemetry implements InspectionRunListener {
             if (runCount == null) {
                 return 0;
             }
-            return runCount;
+            return runCount.intValue();
         }
     }
 

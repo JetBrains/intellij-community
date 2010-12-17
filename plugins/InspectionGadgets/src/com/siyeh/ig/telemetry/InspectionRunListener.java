@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,7 @@
  */
 package com.siyeh.ig.telemetry;
 
-import org.jetbrains.annotations.NonNls;
-
-import javax.swing.ImageIcon;
-import java.net.URL;
-
-class IconHelper{
-
-    private IconHelper(){
-        super();
-    }
-
-    public static ImageIcon getIcon(@NonNls String location){
-        final Class<IconHelper> thisClass = IconHelper.class;
-        final URL resource = thisClass.getResource(location);
-        return new ImageIcon(resource);
-    }
+public interface InspectionRunListener{
+    
+    void reportRun(String inspectionID, long runTime);
 }

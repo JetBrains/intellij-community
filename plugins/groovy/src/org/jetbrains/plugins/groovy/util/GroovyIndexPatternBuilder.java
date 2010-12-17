@@ -41,10 +41,14 @@ public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
     }
 
     public int getCommentStartDelta(IElementType tokenType) {
-        return 0;
+      if (tokenType == GroovyTokenTypes.GROOVY_DOC_COMMENT) {
+        return 3; //     /** Comment */
+      }
+
+      return 2;
     }
 
     public int getCommentEndDelta(IElementType tokenType) {
-        return 0;
+      return (tokenType == GroovyTokenTypes.mML_COMMENT || tokenType == GroovyTokenTypes.GROOVY_DOC_COMMENT) ? 2 : 0;
     }
 }

@@ -61,5 +61,12 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
 
+  @NotNull
   BalloonBuilder setCalloutShift(int length);
+
+  @NotNull
+  BalloonBuilder setPositionChangeXShift(int positionChangeXShift);
+
+  @NotNull
+  BalloonBuilder setPositionChangeYShift(int positionChangeYShift);
 }

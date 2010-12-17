@@ -251,7 +251,16 @@ public class HintManagerImpl extends HintManager implements Disposable {
                              int flags,
                              int timeout, boolean reviveOnEditorChange) {
 
-    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, ABOVE));
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManagerImpl.ABOVE);
+  }
+
+  public void showEditorHint(@NotNull final LightweightHint hint,
+                             @NotNull Editor editor,
+                             @NotNull Point p,
+                             int flags,
+                             int timeout, boolean reviveOnEditorChange, short position) {
+
+    showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, createHintHint(editor, p, hint, position));
   }
 
   public void showEditorHint(@NotNull final LightweightHint hint,
@@ -541,7 +550,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
     else {
       Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
-      if (constraint == UNDER && !showByBalloon){
+      if (constraint == UNDER){
         p.y += editor.getLineHeight();
       }
       location = SwingUtilities.convertPoint(internalComponent, p, layeredPane);
@@ -686,6 +695,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
     } else if (constraint == LEFT) {
       hintInfo.setPreferredPosition(Balloon.Position.atLeft);
     }
+
+    hintInfo.setPositionChangeShift(0, editor.getLineHeight());
+
     return hintInfo;
   }
 

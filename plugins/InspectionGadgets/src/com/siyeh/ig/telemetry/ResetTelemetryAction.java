@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +18,25 @@ package com.siyeh.ig.telemetry;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 import com.siyeh.InspectionGadgetsBundle;
-
-import javax.swing.Icon;
 
 class ResetTelemetryAction extends AnAction{
     
     private final InspectionGadgetsTelemetry telemetry;
     private final TelemetryDisplay display;
 
-    private static final Icon resetIcon =
-            IconHelper.getIcon("/actions/reset.png");
-
     ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
                                 TelemetryDisplay display){
         super(CommonBundle.message("button.reset"),
                 InspectionGadgetsBundle.message(
                         "action.reset.telemetry.description"),
-                resetIcon);
+                IconLoader.getIcon("/actions/reset.png"));
         this.telemetry = telemetry;
         this.display = display;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent event){
         telemetry.reset();
         display.update();

@@ -88,7 +88,11 @@ public class GroovyClassDescriptor {
   }
 
   public PsiFile getPlaceFile() {
-    //affectingFactors.add(Factor.placeFile);
+    affectingFactors.add(Factor.placeFile);
+    return myFile;
+  }
+
+  public PsiFile justGetPlaceFile() {
     return myFile;
   }
 

@@ -42,7 +42,10 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private ActionListener myClickHandler;
   private boolean myCloseOnClick;
   private int myAnimationCycle = 500;
+
   private int myCalloutShift;
+  private int myPositionChangeXShift;
+  private int myPositionChangeYShift;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -104,9 +107,23 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  @Override
+  public BalloonBuilder setPositionChangeXShift(int positionChangeXShift) {
+    myPositionChangeXShift = positionChangeXShift;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setPositionChangeYShift(int positionChangeYShift) {
+    myPositionChangeYShift = positionChangeYShift;
+    return this;
+  }
+
+  @NotNull
   public Balloon createBalloon() {
     return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                           myCalloutShift);
+                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift);
   }
 
   @NotNull
@@ -122,6 +139,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     return this;
   }
 
+  @NotNull
   @Override
   public BalloonBuilder setCalloutShift(int length) {
     myCalloutShift = length;

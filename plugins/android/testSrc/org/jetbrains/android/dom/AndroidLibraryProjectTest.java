@@ -4,7 +4,6 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -59,15 +58,15 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     final JavaModuleFixtureBuilder appModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String appModuleDir = myFixture.getTempDirPath() + "/app";
     new File(appModuleDir).mkdir();
-    AndroidTestCase.tuneModule(appModuleBuilder, androidJarPath, getTestDataPath(), appModuleDir);
+    AndroidTestCase.tuneModule(appModuleBuilder, androidJarPath, AndroidTestCase.getAbsoluteTestDataPath(), appModuleDir);
 
     final JavaModuleFixtureBuilder libModuleBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     String libModuleDir = myFixture.getTempDirPath() + "/lib";
     new File(libModuleDir).mkdir();
-    AndroidTestCase.tuneModule(libModuleBuilder, androidJarPath, getTestDataPath(), libModuleDir);
+    AndroidTestCase.tuneModule(libModuleBuilder, androidJarPath, AndroidTestCase.getAbsoluteTestDataPath(), libModuleDir);
 
     myFixture.setUp();
-    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setTestDataPath(AndroidTestCase.getAbsoluteTestDataPath());
 
     myAppModule = appModuleBuilder.getFixture().getModule();
     myLibModule = libModuleBuilder.getFixture().getModule();
@@ -104,12 +103,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myLibFacet = null;
   }
 
-  private static String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/plugins/android/testData";
-  }
-
   private String getTestSdkPath() {
-    return getTestDataPath() + '/' + myTestProfile.getSdkDirName();
+    return AndroidTestCase.getAbsoluteTestDataPath() + '/' + myTestProfile.getSdkDirName();
   }
 
   public void testHighlighting() {
