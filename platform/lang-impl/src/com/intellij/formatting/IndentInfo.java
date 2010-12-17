@@ -78,7 +78,10 @@ public class IndentInfo {
       }
     }
     else {
-      StringUtil.repeatSymbol(buffer, ' ', getTotalSpaces());
+      int spaces = getTotalSpaces();
+      if (spaces > 0) {
+        StringUtil.repeatSymbol(buffer, ' ', spaces);
+      }
     }
 
     return buffer.toString();
