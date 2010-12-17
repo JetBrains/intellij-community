@@ -149,6 +149,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
       remoteVersion = currentBuild;
     }
+    if (remoteVersion.startsWith("PY-")) {
+      remoteVersion = remoteVersion.substring(3);
+    }
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
     if (!remoteVersion.equals(currentBuild)) {
