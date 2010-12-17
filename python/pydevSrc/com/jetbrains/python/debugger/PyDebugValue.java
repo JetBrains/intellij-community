@@ -133,7 +133,7 @@ public class PyDebugValue extends XValue {
         }
         catch (PyDebuggerException e) {
           if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display children");
+            node.setErrorMessage("Unable to display children:" + e.getMessage());
           }
           LOG.warn(e);
         }
@@ -156,5 +156,9 @@ public class PyDebugValue extends XValue {
     else {
       return DebuggerIcons.VALUE_ICON;
     }
+  }
+
+  boolean isException() {
+    return myValue.startsWith("Traceback (most recent call last):");
   }
 }

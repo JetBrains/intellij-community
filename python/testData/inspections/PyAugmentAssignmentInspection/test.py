@@ -25,3 +25,6 @@ var_7 += 2
 <warning descr="Assignment can be replaced with augmented assignment">x = x | 3</warning>
 <warning descr="Assignment can be replaced with augmented assignment">x = x & 3</warning>
 <warning descr="Assignment can be replaced with augmented assignment">x = x ^ 3</warning>
+
+#PY-2514
+dy = 1 - dy

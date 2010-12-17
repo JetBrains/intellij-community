@@ -125,10 +125,6 @@ public class ProtocolParser {
       value = value.substring(type.length() + 2);
     }
 
-    if (value.startsWith("Traceback (most recent call last):")) {  // convert traceback to exception
-      throw new PyDebuggerException(value);
-    }
-
     return new PyDebugValue(name, type, value, "True".equals(isContainer));
   }
 
