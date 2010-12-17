@@ -13,6 +13,8 @@ public class PythonBundledColorSchemeProvider implements BundledColorSchemesProv
 
   public static final String[] PATHS = {
     "/colorSchemes/WarmNeon",
+    "/colorSchemes/monokai",
+    "/colorSchemes/twilight",
   };
 
   @Override

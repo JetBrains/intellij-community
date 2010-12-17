@@ -1,5 +1,6 @@
 package com.jetbrains.python.actions;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class AddIgnoredIdentifierFix implements LocalQuickFix {
+public class AddIgnoredIdentifierFix implements LocalQuickFix, LowPriorityAction {
   private final String myIdentifier;
 
   public AddIgnoredIdentifierFix(String identifier) {
