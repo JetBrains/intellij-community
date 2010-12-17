@@ -130,11 +130,11 @@ def buildDebuggerEgg(paths, buildName) {
     fileset(dir: "$home/python/resources/debugger-egg/EGG-INFO")
   }
 
-  ant.replace(file: "$eggDir/pydev/PKG-INFO") {
+  ant.replace(file: "$eggDir/EGG-INFO/PKG-INFO") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
 
-  ant.replace(file: "$eggDir/pydev/pydev/pydevd_comm.py") {
+  ant.replace(file: "$eggDir/pydev/pydevd_comm.py") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
   }
   ant.zip(destfile: egg) {
