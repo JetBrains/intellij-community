@@ -46,6 +46,10 @@ public class CreateLauncherScriptAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    showDialog(project);
+  }
+
+  public static void showDialog(Project project) {
     CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
