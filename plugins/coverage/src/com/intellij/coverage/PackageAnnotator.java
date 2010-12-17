@@ -268,7 +268,7 @@ public class PackageAnnotator {
       toplevelClassCoverageInfo.totalMethodCount += classData.getMethodSigs().size();
       packageCoverageInfo.totalClassCount++;
     } else {
-      collectNonCoveredClassInfo(classFile, classData, toplevelClassCoverageInfo, packageCoverageInfo);
+      collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo);
     }
   }
 
@@ -295,8 +295,8 @@ public class PackageAnnotator {
     return true if there is executable code in the class
    */
   private boolean collectNonCoveredClassInfo(final VirtualFile classFile,
-                                             /* out */
-                                             final ClassData classData, ClassCoverageInfo classCoverageInfo, final PackageCoverageInfo packageCoverageInfo) {
+                                             final ClassCoverageInfo classCoverageInfo,
+                                             final PackageCoverageInfo packageCoverageInfo) {
     final byte[] content = myCoverageManager.doInReadActionIfProjectOpen(new Computable<byte[]>() {
       public byte[] compute() {
         try {
@@ -312,7 +312,7 @@ public class PackageAnnotator {
     ClassReader reader = new ClassReader(content, 0, content.length);
     final CoverageSuitesBundle coverageSuite = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (coverageSuite == null) return false;
-    SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), classData, coverageSuite.isTracingEnabled());
+    SourceLineCounter counter = new SourceLineCounter(new EmptyVisitor(), null, coverageSuite.isTracingEnabled());
     reader.accept(counter, 0);
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
     classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
