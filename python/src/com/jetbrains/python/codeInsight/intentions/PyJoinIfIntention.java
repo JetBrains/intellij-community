@@ -75,12 +75,13 @@ public class PyJoinIfIntention extends BaseIntentionAction {
 
       List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(ifStatement.getIfPart(), PsiComment.class);
       comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(((PyIfStatement)firstStatement).getIfPart(), PsiComment.class));
+      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(ifStatementList, PsiComment.class));
+      comments.addAll(PsiTreeUtil.getChildrenOfTypeAsList(stList, PsiComment.class));
 
       for (PsiElement comm : comments) {
         ifStatement.getIfPart().addBefore(comm, ifStatementList);
         comm.delete();
       }
-
       ifStatementList.replace(stList);
     }
   }

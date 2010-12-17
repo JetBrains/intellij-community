@@ -59,8 +59,6 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       functionBuilder.statement("return " + body.getText());
       PyFunction function = functionBuilder.buildFunction(project);
 
-
-
       PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(lambdaExpression, PyFunction.class);
       if (parentFunction != null ) {
         PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
