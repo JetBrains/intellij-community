@@ -29,6 +29,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -152,27 +153,33 @@ public class CodeInsightTestUtil {
   }
 
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, CodeInsightTestFixture fixture) {
-    final Editor editor = fixture.getEditor();
-    PsiElement element = fixture.getElementAtCaret();
+    doInlineRename(handler, newName, fixture.getEditor(), fixture.getElementAtCaret());
+  }
+
+  public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     try {
       templateManager.setTemplateTesting(true);
-      VariableInplaceRenamer renamer = handler.doRename(element, editor, null);
+      VariableInplaceRenamer renamer = handler.doRename(elementAtCaret, editor, null);
+      if (editor instanceof EditorWindow) {
+        editor = ((EditorWindow)editor).getDelegate();
+      }
       TemplateState state = TemplateManagerImpl.getTemplateState(editor);
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
+      final Editor finalEditor = editor;
       new WriteCommandAction.Simple(project) {
         @Override
         protected void run() throws Throwable {
-          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
+          finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
         }
       }.execute().throwException();
       assert renamer != null;
       renamer.finish();
 
       TemplateManagerImpl.getTemplateState(editor).gotoEnd();
-      renamer.performAutomaticRename(newName, element);
+      renamer.performAutomaticRename(newName, elementAtCaret);
     }
     finally {
       templateManager.setTemplateTesting(false);
