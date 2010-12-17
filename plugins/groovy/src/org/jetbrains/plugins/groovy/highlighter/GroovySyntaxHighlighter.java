@@ -37,7 +37,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
 
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
-      mML_COMMENT
+      mML_COMMENT, GROOVY_DOC_COMMENT
   );
 
   static final TokenSet tNUMBERS = TokenSet.create(
@@ -96,52 +96,52 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     mRBRACK
   );
 
-  public static final TokenSet tOPERATORS = TokenSet.create(
-      mQUESTION,
-      mCOMPARE_TO,
-      mEQUAL,
-      mBNOT,
-      mNOT_EQUAL,
-      mPLUS,
-      mPLUS_ASSIGN,
-      mINC,
-      mMINUS,
-      mMINUS_ASSIGN,
-      mDEC,
-      mSTAR,
-      mSTAR_ASSIGN,
-      mMOD,
-      mMOD_ASSIGN,
-      mSR_ASSIGN,
-      mBSR_ASSIGN,
-      mGE,
-      mGT,
-      mSL_ASSIGN,
-      mLE,
-      mLT,
-      mBXOR,
-      mBXOR_ASSIGN,
-      mBOR,
-      mBOR_ASSIGN,
-      mLOR,
-      mBAND,
-      mBAND_ASSIGN,
-      mLAND,
-      mDOLLAR,
-      mRANGE_INCLUSIVE,
-      mRANGE_EXCLUSIVE,
-      mTRIPLE_DOT,
-      mSPREAD_DOT,
-      mOPTIONAL_DOT,
-      mMEMBER_POINTER,
-      mREGEX_FIND,
-      mREGEX_MATCH,
-      mSTAR_STAR,
-      mSTAR_STAR_ASSIGN,
-      mCLOSABLE_BLOCK_OP,
-      mAT
-  );
-
+  //public static final TokenSet tOPERATORS = TokenSet.create(
+  //    mQUESTION,
+  //    mCOMPARE_TO,
+  //    mEQUAL,
+  //    mBNOT,
+  //    mNOT_EQUAL,
+  //    mPLUS,
+  //    mPLUS_ASSIGN,
+  //    mINC,
+  //    mMINUS,
+  //    mMINUS_ASSIGN,
+  //    mDEC,
+  //    mSTAR,
+  //    mSTAR_ASSIGN,
+  //    mMOD,
+  //    mMOD_ASSIGN,
+  //    mSR_ASSIGN,
+  //    mBSR_ASSIGN,
+  //    mGE,
+  //    mGT,
+  //    mSL_ASSIGN,
+  //    mLE,
+  //    mLT,
+  //    mBXOR,
+  //    mBXOR_ASSIGN,
+  //    mBOR,
+  //    mBOR_ASSIGN,
+  //    mLOR,
+  //    mBAND,
+  //    mBAND_ASSIGN,
+  //    mLAND,
+  //    mDOLLAR,
+  //    mRANGE_INCLUSIVE,
+  //    mRANGE_EXCLUSIVE,
+  //    mTRIPLE_DOT,
+  //    mSPREAD_DOT,
+  //    mOPTIONAL_DOT,
+  //    mMEMBER_POINTER,
+  //    mREGEX_FIND,
+  //    mREGEX_MATCH,
+  //    mSTAR_STAR,
+  //    mSTAR_STAR_ASSIGN,
+  //    mCLOSABLE_BLOCK_OP,
+  //    mAT
+  //);
+  //
   public static final TokenSet tKEYWORDS = TokenSet.create(
       kPACKAGE,
       kIMPORT,
