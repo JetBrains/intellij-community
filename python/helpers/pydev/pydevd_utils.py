@@ -4,7 +4,8 @@ import pydevd_constants
 def to_number(x):
     if isinstance(x, Number):
         return x
-    if (isinstance(x, basestring)):
+
+    if (is_string(x)):
         try:
             n = float(x)
             return n
@@ -64,3 +65,8 @@ def cmp_to_key(mycmp):
             return mycmp(self.obj, other.obj) != 0
     return K
 
+def is_string(x):
+    if (pydevd_constants.IS_PY3K):
+        return isinstance(x, str)
+    else:
+        return isinstance(x, basestring)
