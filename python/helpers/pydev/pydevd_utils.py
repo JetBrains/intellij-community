@@ -23,10 +23,15 @@ def to_number(x):
 
 def compare_object_attrs(x, y):
     try:
+        if (x == y):
+            return 0
         x_num = to_number(x)
         y_num = to_number(y)
         if (x_num is not None and y_num is not None):
-            return int(x_num - y_num)
+            if x_num - y_num<0:
+                return -1
+            else:
+                return 1
         if ('__len__' == x):
             return -1
         if ('__len__' == y):
