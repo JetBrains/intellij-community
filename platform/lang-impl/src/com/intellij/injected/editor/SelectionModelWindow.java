@@ -19,12 +19,14 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -44,8 +46,20 @@ public class SelectionModelWindow implements SelectionModel {
     return myDocument.hostToInjected(myHostModel.getSelectionStart());
   }
 
+  @Nullable
+  @Override
+  public VisualPosition getSelectionStartPosition() {
+    return myHostModel.getSelectionStartPosition();
+  }
+
   public int getSelectionEnd() {
     return myDocument.hostToInjected(myHostModel.getSelectionEnd());
+  }
+
+  @Nullable
+  @Override
+  public VisualPosition getSelectionEndPosition() {
+    return myHostModel.getSelectionEndPosition();
   }
 
   public String getSelectedText() {
@@ -56,6 +70,12 @@ public class SelectionModelWindow implements SelectionModel {
     return myDocument.hostToInjected(myHostModel.getLeadSelectionOffset());
   }
 
+  @Nullable
+  @Override
+  public VisualPosition getLeadSelectionPosition() {
+    return myHostModel.getLeadSelectionPosition();
+  }
+
   public boolean hasSelection() {
     return myHostModel.hasSelection();
   }
@@ -63,6 +83,12 @@ public class SelectionModelWindow implements SelectionModel {
   public void setSelection(final int startOffset, final int endOffset) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     myHostModel.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());
+  }
+
+  @Override
+  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
+    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
+    myHostModel.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
   }
 
   public void removeSelection() {
