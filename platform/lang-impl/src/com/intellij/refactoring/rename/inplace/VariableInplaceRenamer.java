@@ -112,17 +112,16 @@ public class VariableInplaceRenamer {
       return false;
     }
 
-    VirtualFile vFile = myElementToRename.getContainingFile().getVirtualFile();
-    SearchScope referencesSearchScope = vFile == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(vFile)
+    final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
+    VirtualFile file = getTopLevelVirtualFile(fileViewProvider);
+
+    SearchScope referencesSearchScope = file == null || ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file)
       ? ProjectScope.getProjectScope(myElementToRename.getProject())
       : new LocalSearchScope(myElementToRename.getContainingFile());
 
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
 
     addReferenceAtCaret(refs);
-
-    final FileViewProvider fileViewProvider = myElementToRename.getContainingFile().getViewProvider();
-    VirtualFile file = getTopLevelVirtualFile(fileViewProvider);
 
     for (PsiReference ref : refs) {
       final FileViewProvider usageViewProvider = ref.getElement().getContainingFile().getViewProvider();
