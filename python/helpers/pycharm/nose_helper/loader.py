@@ -12,7 +12,7 @@ from nose_helper.case import FunctionTestCase, MethodTestCase
 from nose_helper.failure import Failure
 from nose_helper.config import Config
 from nose_helper.selector import defaultSelector
-from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, add_path
+from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, add_path, ismethod, isunboundmethod
 from nose_helper.util import transplant_class, transplant_func
 from nose_helper.suite import ContextSuiteFactory, ContextList
 
@@ -22,8 +22,8 @@ op_abspath = os.path.abspath
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 PYTHON_VERSION_MINOR = sys.version_info[1]
 
-if PYTHON_VERSION_MAJOR == 3:
-    ismethod = isfunction
+#if PYTHON_VERSION_MAJOR == 3:
+#    ismethod = isfunction
 
 class TestLoader(unittest.TestLoader):
     """Test loader that extends unittest.TestLoader to support nosetests
@@ -112,6 +112,7 @@ class TestLoader(unittest.TestLoader):
             raise
         except:
             exc = sys.exc_info()
+            print ("1", obj, parent)
             return Failure(exc[0], exc[1])
 
     def _makeTest(self, obj, parent=None):
@@ -130,7 +131,7 @@ class TestLoader(unittest.TestLoader):
                 return self.loadTestsFromTestCase(obj)
             else:
                 return self.loadTestsFromTestClass(obj)
-        elif ismethod(obj):
+        elif ismethod(obj) or isunboundmethod(obj):
             if parent is None:
                 parent = obj.__class__
             if issubclass(parent, unittest.TestCase):
