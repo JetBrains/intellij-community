@@ -40,6 +40,12 @@ public interface SelectionModel {
   int getSelectionStart();
 
   /**
+   * @return    object that encapsulates information about visual position of selected text start if any
+   */
+  @Nullable
+  VisualPosition getSelectionStartPosition();
+  
+  /**
    * Returns the end offset in the document of the selected text range, or the caret
    * position if there is currently no selection.
    *
@@ -47,6 +53,12 @@ public interface SelectionModel {
    */
   int getSelectionEnd();
 
+  /**
+   * @return    object that encapsulates information about visual position of selected text end if any;
+   */
+  @Nullable
+  VisualPosition getSelectionEndPosition();
+  
   /**
    * Returns the text selected in the editor (or the concatenation of text ranges selected
    * in each line, if block selection mode is used).
@@ -67,6 +79,12 @@ public interface SelectionModel {
   int getLeadSelectionOffset();
 
   /**
+   * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
+   */
+  @Nullable
+  VisualPosition getLeadSelectionPosition();
+  
+  /**
    * Checks if a range of text is currently selected in regular (non-block) selection mode.
    *
    * @return true if a range of text is selected, false otherwise.
@@ -83,6 +101,18 @@ public interface SelectionModel {
    */
   void setSelection(int startOffset, int endOffset);
 
+  /**
+   * Selects target range based on its visual boundaries.
+   * <p/>
+   * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
+   * 
+   * @param startPosition   start visual position of the text range to select
+   * @param endPosition     end visual position of the text range to select
+   * @param startOffset     start selection offset
+   * @param endOffset       end selection offset
+   */
+  void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset);
+  
   /**
    * Removes the selection in the editor.
    */
