@@ -221,7 +221,7 @@ public class CompileDriver {
     task.start(new Runnable() {
       public void run() {
         try {
-          myAllOutputDirectories = getAllOutputDirectories();
+          myAllOutputDirectories = getAllOutputDirectories(compileContext);
           // need this for updating zip archives experiment, uncomment if the feature is turned on
           //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
           status.set(doCompile(compileContext, false, false, false, true));
@@ -500,7 +500,7 @@ public class CompileDriver {
         return;
       }
 
-      myAllOutputDirectories = getAllOutputDirectories();
+      myAllOutputDirectories = getAllOutputDirectories(compileContext);
       // need this for updating zip archives experiment, uncomment if the feature is turned on
       //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
       status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, false);
@@ -1038,12 +1038,12 @@ public class CompileDriver {
                 generatedTypes.addAll(compilerManager.getRegisteredOutputTypes(compiler));
               }
   
-              if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-                throw new ExitException(ExitStatus.ERRORS);
-              }
-  
               didSomething |= compiledSomething;
               compiledSomethingForThisChunk |= didSomething;
+
+              if (_context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+                break; // break the loop over compilers
+              }
             }
 
             final boolean hasUnprocessedTraverseRoots = context.getDependencyCache().hasUnprocessedTraverseRoots();
@@ -1388,7 +1388,7 @@ public class CompileDriver {
     return isEmpty;
   }
 
-  private Set<File> getAllOutputDirectories() {
+  private Set<File> getAllOutputDirectories(CompileContext context) {
     final Set<File> outputDirs = new OrderedSet<File>((TObjectHashingStrategy<File>)TObjectHashingStrategy.CANONICAL);
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (final String path : CompilerPathsEx.getOutputPaths(modules)) {
@@ -1399,7 +1399,7 @@ public class CompileDriver {
       outputDirs.add(new File(CompilerPaths.getGenerationOutputPath(pair.getFirst(), pair.getSecond(), true)));
     }
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
-    if (config.isAnnotationProcessorsEnabled()) {
+    if (context.isAnnotationProcessorsEnabled()) {
       for (Module module : modules) {
         if (config.isAnnotationProcessingEnabled(module)) {
           final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);

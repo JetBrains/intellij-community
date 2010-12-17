@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.ActionCallback;
@@ -427,7 +428,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
                                         new LibraryInvocationHandler((Library)result));
         }
         else if (result instanceof LibraryTable.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.ModifiableModel.class},
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTableBase.ModifiableModelEx.class},
                                         new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
         }
         if (result instanceof Library[]) {

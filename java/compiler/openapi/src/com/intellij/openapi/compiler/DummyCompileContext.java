@@ -80,6 +80,10 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
+  public boolean isAnnotationProcessorsEnabled() {
+    return false;
+  }
+
   public VirtualFile[] getSourceRoots(Module module) {
     return VirtualFile.EMPTY_ARRAY;
   }

@@ -613,6 +613,29 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     return true;
   }
 
+  private class MyISyncProgressMonitor implements SyncService.ISyncProgressMonitor {
+    @Override
+    public void start(int totalWork) {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public boolean isCanceled() {
+      return myStopped;
+    }
+
+    @Override
+    public void startSubTask(String name) {
+    }
+
+    @Override
+    public void advance(int work) {
+    }
+  }
+
   private boolean uploadApp(IDevice device, String remotePath, String localPath) throws IOException {
     if (myStopped) return false;
     getProcessHandler().notifyTextAvailable("Uploading file\n\tlocal path: " + localPath + "\n\tremote path: " + remotePath + '\n', STDOUT);
@@ -621,12 +644,57 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       getProcessHandler().notifyTextAvailable("Can't upload file: device is not available.\n", STDERR);
       return false;
     }
-    SyncService.SyncResult result = service.pushFile(localPath, remotePath, SyncService.getNullProgressMonitor());
-    if (result.getCode() != SyncService.RESULT_OK) {
-      getProcessHandler().notifyTextAvailable("Can't upload file: " + result.getMessage() + ".\n", STDERR);
-      return false;
+    SyncService.SyncResult result = service.pushFile(localPath, remotePath, new MyISyncProgressMonitor());
+    int code = result.getCode();
+    String errorMessage;
+    switch (code) {
+      case SyncService.RESULT_OK:
+        return true;
+      case SyncService.RESULT_CANCELED:
+        errorMessage = "Command canceled";
+        break;
+      case SyncService.RESULT_CONNECTION_ERROR:
+        errorMessage = "Connection error";
+        break;
+      case SyncService.RESULT_CONNECTION_TIMEOUT:
+        errorMessage = "Connection timeout";
+        break;
+      case SyncService.RESULT_FILE_READ_ERROR:
+        errorMessage = "Cannot read the file";
+        break;
+      case SyncService.RESULT_FILE_WRITE_ERROR:
+        errorMessage = "Cannot write the file";
+        break;
+      case SyncService.RESULT_LOCAL_IS_DIRECTORY:
+        errorMessage = "Local is directory";
+        break;
+      case SyncService.RESULT_NO_DIR_TARGET:
+        errorMessage = "Target directory not found";
+        break;
+      case SyncService.RESULT_NO_LOCAL_FILE:
+        errorMessage = "Local file not found";
+        break;
+      case SyncService.RESULT_NO_REMOTE_OBJECT:
+        errorMessage = "No remote object";
+        break;
+      case SyncService.RESULT_REMOTE_IS_FILE:
+        errorMessage = "Remote is a file";
+        break;
+      case SyncService.RESULT_REMOTE_PATH_ENCODING:
+        errorMessage = "Incorrect remote path encoding";
+        break;
+      case SyncService.RESULT_REMOTE_PATH_LENGTH:
+        errorMessage = "Incorrect remote path length";
+        break;
+      case SyncService.RESULT_TARGET_IS_FILE:
+        errorMessage = "Target is a file";
+        break;
+      default:
+        errorMessage = "Can't upload file";
     }
-    return true;
+    getProcessHandler()
+      .notifyTextAvailable(errorMessage + (result.getMessage() != null ? "\n" + result.getMessage() + "\n" : "\n"), STDERR);
+    return false;
   }
 
   @SuppressWarnings({"DuplicateThrows"})
@@ -676,13 +744,13 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       executeDeviceCommandAndWriteToConsole(device, "pm install -r \"" + remotePath + '\"', receiver);
       if (myStopped) return false;
     }*/
-    if (!isSuccess(receiver)) {
+    /*if (!isSuccess(receiver)) {
       getProcessHandler().notifyTextAvailable("Can't reinstall application. Installing from scratch.\n", STDOUT);
       executeDeviceCommandAndWriteToConsole(device, "pm uninstall \"" + remotePath + '\"', receiver);
       if (myStopped) return false;
       executeDeviceCommandAndWriteToConsole(device, "pm install \"" + remotePath + '\"', receiver);
       if (myStopped) return false;
-    }
+    }*/
     boolean success = isSuccess(receiver);
     getProcessHandler().notifyTextAvailable(receiver.output.toString(), success ? STDOUT : STDERR);
     return success;

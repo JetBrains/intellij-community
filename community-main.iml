@@ -77,6 +77,14 @@
     <orderEntry type="module" module-name="IntelliLang-javaee" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
     <orderEntry type="module" module-name="xpath" />
+    <orderEntry type="module" module-name="tasks-core" />
+    <orderEntry type="module" module-name="jira-connector" />
+    <orderEntry type="module" module-name="tasks-api" />
+    <orderEntry type="module" module-name="tasks-java" />
+    <orderEntry type="module" module-name="github" />
+    <orderEntry type="module" module-name="hg4idea" />
+    <orderEntry type="module" module-name="android" />
+    <orderEntry type="module" module-name="relaxng" />
   </component>
 </module>
 
