@@ -35,6 +35,13 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEquals(2, elements.length);
   }
 
+  public void testKeepOrder() throws Exception {
+    configureFile("<caret>");
+    configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"), new LocalTaskImpl("TEST-001", "Test task 1"));
+    myFixture.complete(CompletionType.BASIC);
+    assertEquals(Arrays.asList("TEST-002", "TEST-001"), myFixture.getLookupElementStrings());
+  }
+
   public void testSIOOBE() throws Exception {
     doTest("  <caret>    my", "  TEST-001: Test task    my");
   }
