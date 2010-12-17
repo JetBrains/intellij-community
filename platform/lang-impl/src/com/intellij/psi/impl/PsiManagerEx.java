@@ -41,10 +41,16 @@ public abstract class PsiManagerEx extends PsiManager {
   @NotNull
   public abstract ResolveCache getResolveCache();
 
+  /**
+   * @param runnable to be run before <b>physical</b> PSI change
+   */
   public abstract void registerRunnableToRunOnChange(@NotNull Runnable runnable);
 
   public abstract void registerWeakRunnableToRunOnChange(@NotNull Runnable runnable);
 
+  /**
+   * @param runnable to be run before <b>physical</b> or <b>non-physical</b> PSI change
+   */
   public abstract void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable);
 
   public abstract void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable);

@@ -19,10 +19,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -46,6 +44,10 @@ public class CreateLauncherScriptAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    showDialog(project);
+  }
+
+  public static void showDialog(Project project) {
     CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
@@ -107,14 +109,17 @@ public class CreateLauncherScriptAction extends AnAction {
       textBuilder.append("cd ").append(homePath).append("/bin\n");
       textBuilder.append("./").append(productName).append(".sh");
     }
-    textBuilder.append(" $@");
+    textBuilder.append(" $@\n");
     FileUtil.writeToFile(tempFile, textBuilder.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
+    if (!tempFile.setExecutable(true)) {
+      throw new IOException("Failed to mark the launcher script as executable");
+    }
     return tempFile;
   }
 
   @Override
   public void update(AnActionEvent e) {
-    boolean canCreateScript = /*SystemInfo.isUnix || SystemInfo.isMac */ ((ApplicationEx) ApplicationManager.getApplication()).isInternal();
+    boolean canCreateScript = SystemInfo.isUnix || SystemInfo.isMac;
     e.getPresentation().setVisible(canCreateScript);
   }
 

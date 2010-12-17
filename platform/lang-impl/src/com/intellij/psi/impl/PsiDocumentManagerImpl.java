@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -487,11 +488,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           if (x) {
             myBlockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars);
           }
+          String fileText = file.getText();
+          String documentText = document.getText();
           throw new AssertionError("commitDocument left PSI inconsistent; file len=" + file.getTextLength() +
                                    "; doc len=" + document.getTextLength() +
-                                   "; file text=" + file.getText() +
-                                   "; doc text=" + document.getText() +
-                                   "; old file text=" + oldText);
+                                   "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
+                                   ";\n file text=" + fileText +
+                                   ";\n doc text=" + documentText +
+                                   ";\n old file text=" + oldText);
         }
 
         throw new AssertionError("commitDocument left PSI inconsistent: " + file);
