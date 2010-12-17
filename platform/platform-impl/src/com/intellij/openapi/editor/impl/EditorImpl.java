@@ -923,6 +923,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (x >= px) {
             onSoftWrapDrawing = true;
           }
+          else {
+            column++;
+          }
           break outer;
         }
         else {
