@@ -2,9 +2,8 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -91,12 +90,38 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
         functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
         lambdaExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(lambdaExpression);
 
+        ReferenceNameExpression refExpr = new ReferenceNameExpression(name);
+
+        ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, refExpr, true);
         ((TemplateBuilderImpl)builder).replaceElement(functionName, name, name, false);
-        ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, name, true);
+
         int textOffSet = functionName.getTextOffset();
+        editor.getCaretModel().moveToOffset(parentScope.getTextRange().getStartOffset());
+
+        Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+        TemplateManager.getInstance(project).startTemplate(editor, template);
         editor.getCaretModel().moveToOffset(textOffSet);
-        builder.run();
       }
+    }
+  }
+  private class ReferenceNameExpression extends Expression {
+    ReferenceNameExpression(String oldReferenceName) {
+      myOldReferenceName = oldReferenceName;
+    }
+
+    private final String myOldReferenceName;
+
+    public Result calculateResult(ExpressionContext context) {
+      return new TextResult(myOldReferenceName);
+    }
+
+    public Result calculateQuickResult(ExpressionContext context) {
+      return null;
+    }
+
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      return null;
     }
   }
 }

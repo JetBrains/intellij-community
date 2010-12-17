@@ -1,13 +1,10 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,16 +107,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     private boolean isDict(PyCallExpression expression) {
       String name = expression.getCallee().getText();
       if ("dict".equals(name)) {
-        PyType type = expression.getType(myTypeEvalContext);
-        Application application = ApplicationManager.getApplication();
-        if (application != null && application.isUnitTestMode()) {
-          return true;
-        }
-        if (type != null) {
-          if (type.isBuiltin()) {
-            return true;
-          }
-        }
+        return true;
       }
       return false;
     }
