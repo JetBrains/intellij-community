@@ -1,4 +1,5 @@
 from numbers import *
+import pydevd_constants
 
 def to_number(x):
     if isinstance(x, Number):
@@ -39,7 +40,10 @@ def compare_object_attrs(x, y):
 
         return x.__cmp__(y)
     except:
-        return cmp(str(x), str(y))
+        if pydevd_constants.IS_PY3K:
+            return (str(x) > str(y)) - (str(x) < str(y))
+        else:
+            return cmp(str(x), str(y))
 
 def cmp_to_key(mycmp):
     'Convert a cmp= function into a key= function'
