@@ -255,7 +255,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
         chooser.show();
         avd = chooser.getSelectedAvd();
         if (chooser.getExitCode() != OK_EXIT_CODE) return;
-        assert avd != null;
+        if (avd == null) return;
       }
       myFacet.launchEmulator(avd != null ? avd.getName() : null, "", null);
     }
