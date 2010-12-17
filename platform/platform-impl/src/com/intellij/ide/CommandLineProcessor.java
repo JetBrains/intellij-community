@@ -20,6 +20,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,13 +80,27 @@ public class CommandLineProcessor {
   private static Project doOpenFile(VirtualFile virtualFile, int line) {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0) {
+      final PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+      if (processor != null) {
+        return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line);
+      }
       Messages.showErrorDialog("No project found to open file in", "Cannot open file");
       return null;
     }
     else {
-      // TODO[yole]: search for project which has specified file under content root
-      final Project project = projects[0];
-      new OpenFileDescriptor(project, virtualFile, line-1, line != -1 ? 0 : -1).navigate(true);
+      Project project = projects[0];
+      for (Project aProject : projects) {
+        if (ProjectRootManager.getInstance(aProject).getFileIndex().isInContent(virtualFile)) {
+          project = aProject;
+          break;
+        }
+      }
+      if (line == -1) {
+        new OpenFileDescriptor(project, virtualFile).navigate(true);
+      }
+      else {
+        new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
+      }
       return project;
     }
   }
