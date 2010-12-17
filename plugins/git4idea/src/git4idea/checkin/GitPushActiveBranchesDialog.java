@@ -43,11 +43,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
@@ -55,11 +51,7 @@ import git4idea.update.UpdatePolicyUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -67,18 +59,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -184,6 +169,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
     setTitle(GitBundle.getString("push.active.title"));
     setOKButtonText(GitBundle.getString("push.active.rebase.and.push"));
+    setCancelButtonText(GitBundle.getString("git.push.active.close"));
     init();
   }
 
