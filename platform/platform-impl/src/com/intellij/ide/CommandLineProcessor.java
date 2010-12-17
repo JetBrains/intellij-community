@@ -71,17 +71,22 @@ public class CommandLineProcessor {
       return result;
     }
     else {
-      final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      if (projects.length == 0) {
-        Messages.showErrorDialog("No project found to open file in", "Cannot open file");
-        return null;
-      }
-      else {
-        // TODO[yole]: search for project which has specified file under content root
-        final Project project = projects[0];
-        new OpenFileDescriptor(project, virtualFile).navigate(true);
-        return project;
-      }
+      return doOpenFile(virtualFile, -1);
+    }
+  }
+
+  @Nullable
+  private static Project doOpenFile(VirtualFile virtualFile, int line) {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 0) {
+      Messages.showErrorDialog("No project found to open file in", "Cannot open file");
+      return null;
+    }
+    else {
+      // TODO[yole]: search for project which has specified file under content root
+      final Project project = projects[0];
+      new OpenFileDescriptor(project, virtualFile, line-1, line != -1 ? 0 : -1).navigate(true);
+      return project;
     }
   }
 
@@ -89,8 +94,33 @@ public class CommandLineProcessor {
   public static Project processExternalCommandLine(List<String> args) {
     // TODO[yole] handle AppStarters here?
     Project lastOpenedProject = null;
-    for (String arg : args) {
-      lastOpenedProject = doOpenFileOrProject(arg);
+    int line = -1;
+    for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
+      String arg = args.get(i);
+      if (arg.equals("-l") || arg.equals("--line")) {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i == args.size()) {
+          break;
+        }
+        try {
+          line = Integer.parseInt(args.get(i));
+        }
+        catch (NumberFormatException e) {
+          line = -1;
+        }
+      }
+      else {
+        if (line != -1) {
+          final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
+          if (virtualFile != null) {
+            lastOpenedProject = doOpenFile(virtualFile, line);
+          }
+        }
+        else {
+          lastOpenedProject = doOpenFileOrProject(arg);
+        }
+      }
     }
     return lastOpenedProject;
   }
