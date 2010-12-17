@@ -24,7 +24,7 @@ public class LockSupportTest extends TestCase {
   public void testLock() throws Exception {
     final SocketLock lock = new SocketLock();
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock("abc"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock.lock("abc", false));
     }
     finally {
       lock.dispose();
@@ -36,12 +36,12 @@ public class LockSupportTest extends TestCase {
     final SocketLock lock2 = new SocketLock();
 
     try {
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1.1"));
-      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("2"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock1.lock("2"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1"));
-      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1.1"));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1.1", false));
+      assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("2", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock1.lock("2", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", false));
+      assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1.1", false));
     }
     finally {
       lock1.dispose();
@@ -53,11 +53,11 @@ public class LockSupportTest extends TestCase {
     final SocketLock lock1 = new SocketLock();
     final SocketLock lock2 = new SocketLock();
 
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1"));
-    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1"));
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock1.lock("1", false));
+    assertEquals(SocketLock.ActivateStatus.ACTIVATED, lock2.lock("1", false));
 
     lock1.dispose();
-    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("1"));
+    assertEquals(SocketLock.ActivateStatus.NO_INSTANCE, lock2.lock("1", false));
     lock2.dispose();
   }
 }
