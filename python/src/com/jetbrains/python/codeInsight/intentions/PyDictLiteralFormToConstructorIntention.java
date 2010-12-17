@@ -41,9 +41,9 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
       if (elements.length != 0) {
         for (PyKeyValueExpression element : elements) {
           PyExpression key = element.getKey();
-          if (! (key instanceof PyStringLiteralExpression)) canConvert = false;
+          if (! (key instanceof PyStringLiteralExpression)) return false;
           String str = ((PyStringLiteralExpression)key).getStringValue();
-          if(Character.isDigit(str.charAt(0))) canConvert = false;
+          if(Character.isDigit(str.charAt(0))) return false;
           try {
             Integer.parseInt(str) ;
             canConvert = false;
