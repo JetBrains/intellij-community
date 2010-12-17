@@ -24,6 +24,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlNSTypeDescriptorProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware {
+public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTypeDescriptorProvider {
   private XmlNSDescriptor myDelegate;
   private boolean myRelaxed;
   private boolean myCaseSensitive;
@@ -125,5 +127,17 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware {
 
   public Object[] getDependences() {
     return myDelegate == null ? null : myDelegate.getDependences();
+  }
+
+  @Override
+  public TypeDescriptor getTypeDescriptor(String name, XmlTag context) {
+    return myDelegate instanceof XmlNSTypeDescriptorProvider ?
+           ((XmlNSTypeDescriptorProvider)myDelegate).getTypeDescriptor(name, context) : null;
+  }
+
+  @Override
+  public TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
+    return myDelegate instanceof XmlNSTypeDescriptorProvider ?
+           ((XmlNSTypeDescriptorProvider)myDelegate).getTypeDescriptor(descriptorTag) : null;
   }
 }

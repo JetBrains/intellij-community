@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "MethodNamesDifferingOnlyByCase";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "method.names.differ.only.by.case.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
@@ -45,19 +48,22 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
                 infos[0]);
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
+        return new MethodNamesDifferOnlyByCaseVisitor();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new RenameFix();
     }
 
-    private static class OverloadedMethodsWithSameNumberOfParametersVisitor
+    private static class MethodNamesDifferOnlyByCaseVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(@NotNull PsiMethod method) {

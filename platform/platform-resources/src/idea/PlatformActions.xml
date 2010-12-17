@@ -124,6 +124,7 @@
           <group id="FileOtherSettingsGroup" popup="true">
               <group id="FileSettingsGroup"/>
           </group>
+          <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>

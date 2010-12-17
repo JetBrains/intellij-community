@@ -100,7 +100,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList();
     private volatile InspectionGadgetsTelemetry telemetry = null;
-    public volatile boolean telemetryEnabled = true;
+    public volatile boolean telemetryEnabled = false;
 
     public static void main(String[] args) throws FileNotFoundException {
         final PrintStream out;
