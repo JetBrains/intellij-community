@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,15 +58,34 @@ public class CreateLauncherScriptAction extends AnAction {
     try {
       final File scriptFile = createLauncherScriptFile();
 
+      final String mvCommand = "mv -f " + scriptFile + " " + path + "/" + name;
       if (SystemInfo.isMac) {
         final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
         if (engine == null) {
           throw new IOException("Could not find AppleScript engine");
         }
-        engine.eval("do shell script \"mv " + scriptFile + " " + path + "/" + name + "\" with administrator privileges");
+        engine.eval("do shell script \"" + mvCommand + "\" with administrator privileges");
       }
       else if (SystemInfo.isUnix) {
-
+        GeneralCommandLine cmdLine = new GeneralCommandLine();
+        if (SystemInfo.isGnome) {
+          cmdLine.setExePath("gksudo");
+          cmdLine.addParameters("--message",
+                                "In order to create a launcher script in " +
+                                path +
+                                ", please enter your administrator password:");
+        }
+        else if (SystemInfo.isKDE) {
+          cmdLine.setExePath("kdesudo");
+        }
+        else {
+          Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + mvCommand,
+                                     "Create Launcher Script",
+                                     Messages.getInformationIcon());
+          return;
+        }
+        cmdLine.addParameter(mvCommand);
+        cmdLine.createProcess();
       }
     }
     catch (Exception e) {
