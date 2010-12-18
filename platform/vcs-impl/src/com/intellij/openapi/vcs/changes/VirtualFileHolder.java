@@ -62,21 +62,21 @@ public class VirtualFileHolder implements FileHolder {
           for(FilePath dirtyFile: dirtyFiles) {
             VirtualFile f = dirtyFile.getVirtualFile();
             if (f != null) {
-              files.remove(f);
-              if (f.isDirectory()) ++ result;
+              if (files.remove(f)) {
+                if (f.isDirectory()) ++ result;
+              }
             }
             else {
               cleanDroppedFiles = true;
             }
-
-            if (cleanDroppedFiles) {
-              for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
-                final VirtualFile file = iterator.next();
-                if (fileDropped(file)) {
-                  iterator.remove();
-                  scope.addDirtyFile(new FilePathImpl(file));
-                  if (file.isDirectory()) ++ result;
-                }
+          }
+          if (cleanDroppedFiles) {
+            for (Iterator<VirtualFile> iterator = files.iterator(); iterator.hasNext();) {
+              final VirtualFile file = iterator.next();
+              if (fileDropped(file)) {
+                iterator.remove();
+                scope.addDirtyFile(new FilePathImpl(file));
+                if (file.isDirectory()) ++ result;
               }
             }
           }
@@ -156,6 +156,7 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   public int getNumDirs() {
+    assert myNumDirs >= 0;
     return myNumDirs;
   }
 }
