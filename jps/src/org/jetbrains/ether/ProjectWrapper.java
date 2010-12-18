@@ -514,7 +514,7 @@ public class ProjectWrapper {
 
                 {
                     myOutput = getRelativePath(output);
-                    rescan ();
+                    rescan();
                 }
             }
 
@@ -596,6 +596,15 @@ public class ProjectWrapper {
             myTest.rescan();
         }
 
+        private ClasspathItemWrapper weaken(final ClasspathItemWrapper x) {
+            if (x instanceof ModuleWrapper) {
+                return new WeakClasspathItemWrapper((ModuleWrapper) x);
+            } else if (x instanceof LibraryWrapper) {
+                return new WeakClasspathItemWrapper((LibraryWrapper) x);
+            } else
+                return x;
+        }
+
         public void write(final BufferedWriter w) {
             writeln(w, "Module:" + myName);
 
@@ -616,12 +625,7 @@ public class ProjectWrapper {
             final List<ClasspathItemWrapper> weakened = new ArrayList<ClasspathItemWrapper>();
 
             for (ClasspathItemWrapper cpiw : dependsOn()) {
-                if (cpiw instanceof ModuleWrapper) {
-                    weakened.add(new WeakClasspathItemWrapper((ModuleWrapper) cpiw));
-                } else if (cpiw instanceof LibraryWrapper) {
-                    weakened.add(new WeakClasspathItemWrapper((LibraryWrapper) cpiw));
-                } else
-                    weakened.add(cpiw);
+                weakened.add(weaken(cpiw));
             }
 
             writeln(w, weakened);
@@ -724,8 +728,77 @@ public class ProjectWrapper {
             return result;
         }
 
-        public boolean isOutdated(final boolean tests) {
-            return mySource.isOutdated() || (tests && myTest.isOutdated());
+        private boolean safeEquals(final String a, final String b) {
+            if (a == null || b == null)
+                return a == b;
+
+            return a.equals(b);
+        }
+
+        private boolean safeEquals(final ClasspathItemWrapper a, final ClasspathItemWrapper b) {
+            try {
+                final StringWriter as = new StringWriter();
+                final StringWriter bs = new StringWriter();
+
+                final BufferedWriter bas = new BufferedWriter (as);
+                final BufferedWriter bbs = new BufferedWriter (bs);
+
+                weaken(a).write(bas);
+                weaken(b).write(bbs);
+
+                bas.flush();
+                bbs.flush();
+
+                as.close();
+                bs.close();
+
+                final String x = as.getBuffer().toString();
+                final String y = bs.getBuffer().toString();
+
+                return x.equals(y);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        public boolean isOutdated(final boolean tests, final ProjectWrapper history) {
+            final ModuleWrapper past = history.getModule(myName);
+            final boolean isNewModule = past == null;
+            final boolean outputChanged = !isNewModule && !safeEquals(past.getOutputPath(), getOutputPath());
+            final boolean testOutputChanged = !isNewModule && tests && !safeEquals(past.getTestOutputPath(), getTestOutputPath());
+            final boolean sourceChanged = !isNewModule && !past.getSourceFiles().equals(getSourceFiles());
+            final boolean testSourceChanged = !isNewModule && tests && !past.getTestSourceFiles().equals(getTestSourceFiles());
+            final boolean sourceOutdated = mySource.isOutdated();
+            final boolean testSourceOutdated = tests && myTest.isOutdated();
+            final boolean unsafeDependencyChange = !isNewModule && (
+                    new Object() {
+                        public boolean run(final List<ClasspathItemWrapper> today, final List<ClasspathItemWrapper> yesterday) {
+                            final Iterator<ClasspathItemWrapper> t = today.iterator();
+                            final Iterator<ClasspathItemWrapper> y = yesterday.iterator();
+
+                            while (true) {
+                                if (!y.hasNext())
+                                    return false;
+
+                                if (!t.hasNext())
+                                    return true;
+
+                                if (!safeEquals(t.next(), y.next()))
+                                    return true;
+                            }
+                        }
+                    }.run(dependsOn(), past.dependsOn())
+            );
+
+            return sourceOutdated ||
+                    testSourceOutdated ||
+                    sourceChanged ||
+                    testSourceChanged ||
+                    outputChanged ||
+                    testOutputChanged ||
+                    unsafeDependencyChange ||
+                    isNewModule;
         }
 
         public int compareTo(Object o) {
@@ -897,21 +970,29 @@ public class ProjectWrapper {
         if (m == null) {
             System.out.println("No module \"" + module + "\" found in project \"");
         } else {
-            System.out.println("Module " + m.myName + " " + (m.isOutdated(false) ? "is outdated" : "is up-to-date"));
-            System.out.println("Module " + m.myName + " tests " + (m.isOutdated(true) ? "are outdated" : "are up-to-date"));
+            System.out.println("Module " + m.myName + " " + (m.isOutdated(false, myHistory) ? "is outdated" : "is up-to-date"));
+            System.out.println("Module " + m.myName + " tests " + (m.isOutdated(true, myHistory) ? "are outdated" : "are up-to-date"));
         }
     }
 
     private boolean structureChanged() {
-        if (myHistory == null)
+        return false;
+
+        /*if (myHistory == null)
             return true;
 
         try {
             final StringWriter my = new StringWriter();
             final StringWriter history = new StringWriter();
 
-            myHistory.write(new BufferedWriter(my));
-            write(new BufferedWriter(history));
+            final BufferedWriter bmy = new BufferedWriter(my);
+            final BufferedWriter bhistory = new BufferedWriter(history);
+
+            myHistory.write(bmy);
+            write(new BufferedWriter(bhistory));
+
+            bmy.flush();
+            bhistory.flush();
 
             my.close();
             history.close();
@@ -919,7 +1000,7 @@ public class ProjectWrapper {
             final String myString = my.getBuffer().toString();
             final String hisString = history.getBuffer().toString();
 
-            /*
+
             FileWriter f1 = new FileWriter("/home/db/tmp/1.jps");
             FileWriter f2 = new FileWriter("/home/db/tmp/2.jps");
 
@@ -928,13 +1009,13 @@ public class ProjectWrapper {
 
             f1.close();
             f2.close();
-            */
+
 
             return !myString.equals(hisString);
         } catch (IOException e) {
             e.printStackTrace();
             return true;
-        }
+        }*/
     }
 
     public void report() {
@@ -953,8 +1034,8 @@ public class ProjectWrapper {
 
         if (moduleReport) {
             for (ModuleWrapper m : myModules.values()) {
-                System.out.println("   module " + m.getName() + " " + (m.isOutdated(false) ? "is outdated" : "is up-to-date"));
-                System.out.println("   module " + m.getName() + " tests " + (m.isOutdated(true) ? "are outdated" : "are up-to-date"));
+                System.out.println("   module " + m.getName() + " " + (m.isOutdated(false, myHistory) ? "is outdated" : "is up-to-date"));
+                System.out.println("   module " + m.getName() + " tests " + (m.isOutdated(true, myHistory) ? "are outdated" : "are up-to-date"));
             }
         }
     }
@@ -984,7 +1065,7 @@ public class ProjectWrapper {
         final List<Module> modules = new ArrayList<Module>();
 
         for (Map.Entry<String, ModuleWrapper> entry : myModules.entrySet()) {
-            if (entry.getValue().isOutdated(tests))
+            if (entry.getValue().isOutdated(tests, myHistory))
                 modules.add(myProject.getModules().get(entry.getKey()));
         }
 
@@ -1060,7 +1141,7 @@ public class ProjectWrapper {
         }
 
         final ModuleWrapper h = getModule(modName);
-        if (h != null && !h.isOutdated(tests) && !force) {
+        if (h != null && !h.isOutdated(tests, myHistory) && !force) {
             System.out.println("Module \"" + modName + "\" in project \"" + myRoot + "\" is up-to-date.");
             return;
         }

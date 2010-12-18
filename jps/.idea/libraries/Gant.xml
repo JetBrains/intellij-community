@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Gant">
-    <CLASSES>
-      <root url="jar:///usr/share/groovy/lib/gant-1.8.1.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
