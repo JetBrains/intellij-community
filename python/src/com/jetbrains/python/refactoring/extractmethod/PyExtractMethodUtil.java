@@ -270,7 +270,7 @@ public class PyExtractMethodUtil {
         builder.parameter(data.getName());
       }
     }
-    final PyParameterList pyParameterList = builder.buildFunction(project).getParameterList();
+    final PyParameterList pyParameterList = builder.buildFunction(project, LanguageLevel.getDefault()).getParameterList();
     generatedMethod.getParameterList().replace(pyParameterList);
   }
 
@@ -316,7 +316,7 @@ public class PyExtractMethodUtil {
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
     addFakeParameters(builder, variableData);
     builder.statement("return " + expression.getText());
-    return builder.buildFunction(project);
+    return builder.buildFunction(project, LanguageLevel.getDefault());
   }
 
   private static PyFunction generateMethodFromElements(final Project project,
@@ -327,7 +327,7 @@ public class PyExtractMethodUtil {
 
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
     addFakeParameters(builder, variableData);
-    final PyFunction method = builder.buildFunction(project);
+    final PyFunction method = builder.buildFunction(project, LanguageLevel.getDefault());
     final PyStatementList statementList = method.getStatementList();
 
     for (PsiElement element : elementsRange) {

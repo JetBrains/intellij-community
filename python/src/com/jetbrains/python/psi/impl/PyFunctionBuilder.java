@@ -43,18 +43,18 @@ public class PyFunctionBuilder {
     return this;
   }
 
-  public PyFunction addFunction(PsiElement target) {
-    return (PyFunction) target.add(buildFunction(target.getProject()));
+  public PyFunction addFunction(PsiElement target, final LanguageLevel languageLevel) {
+    return (PyFunction) target.add(buildFunction(target.getProject(), languageLevel));
   }
 
-  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
-    return (PyFunction) target.addAfter(buildFunction(target.getProject()), anchor);
+  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor, final LanguageLevel languageLevel) {
+    return (PyFunction) target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
   }
 
-  public PyFunction buildFunction(Project project) {
+  public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {
     String text = buildText(project);
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    return generator.createFromText(LanguageLevel.getDefault(), PyFunction.class, text);
+    return generator.createFromText(languageLevel, PyFunction.class, text);
   }
 
   private String buildText(Project project) {

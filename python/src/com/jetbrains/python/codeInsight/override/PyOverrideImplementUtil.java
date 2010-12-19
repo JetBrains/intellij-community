@@ -127,7 +127,7 @@ public class PyOverrideImplementUtil {
     for (PyMethodMember newMember : newMembers) {
       PyFunction baseFunction = (PyFunction) newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction);
-      PyFunction function = builder.addFunctionAfter(statementList, anchor);
+      PyFunction function = builder.addFunctionAfter(statementList, anchor, LanguageLevel.forElement(statementList));
       element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(function);
     }
 

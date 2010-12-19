@@ -54,7 +54,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
         functionBuilder.parameter("param");
       }
     }
-    PyFunction function = functionBuilder.buildFunction(project);
+    PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
     PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
     if (parentFunction != null ) {
       PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
