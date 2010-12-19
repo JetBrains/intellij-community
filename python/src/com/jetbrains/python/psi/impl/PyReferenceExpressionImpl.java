@@ -148,7 +148,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (components == null) {
       return null;
     }
-    return new PyQualifiedName(components);
+    return PyQualifiedName.fromReferenceChain(components);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
