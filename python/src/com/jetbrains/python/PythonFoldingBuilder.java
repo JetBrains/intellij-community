@@ -56,7 +56,7 @@ public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
           final CharSequence chars = node.getChars();
           int nodeStart = node.getTextRange().getStartOffset();
           int endOffset = node.getTextRange().getEndOffset();
-          while(endOffset > colon.getStartOffset()+2 && Character.isWhitespace(chars.charAt(endOffset - nodeStart - 1))) {
+          while(endOffset > colon.getStartOffset()+2 && endOffset > nodeStart && Character.isWhitespace(chars.charAt(endOffset - nodeStart - 1))) {
             endOffset--;
           }
           descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, endOffset)));
