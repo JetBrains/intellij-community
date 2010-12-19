@@ -15,10 +15,18 @@
  */
 package git4idea.config;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import java.text.ParseException;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,13 +85,13 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * Parses output of "git version" command.
    */
-  public static GitVersion parse(String output) {
-    if (output == null || output.isEmpty()) {
-      throw new IllegalArgumentException("Empty git --version output: " + output);
+  public static GitVersion parse(String output) throws ParseException {
+    if (StringUtil.isEmptyOrSpaces(output)) {
+      throw new ParseException("Empty git --version output: " + output, 0);
     }
     Matcher m = FORMAT.matcher(output.trim());
     if (!m.matches()) {
-      throw new IllegalArgumentException("Unsupported format of git --version output: " + output);
+      throw new ParseException("Unsupported format of git --version output: " + output, 0);
     }
     int major = getIntGroup(m, 1);
     int minor = getIntGroup(m, 2);
@@ -110,6 +118,27 @@ public final class GitVersion implements Comparable<GitVersion> {
       return 0;
     }
     return Integer.parseInt(match);
+  }
+
+  public static GitVersion identifyVersion(String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.setExePath(gitExecutable);
+    commandLine.addParameter("--version");
+    CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
+    ProcessOutput result = handler.runProcess(30 * 1000);
+    if (result.isTimeout()) {
+      throw new TimeoutException("Coulnd't identify the version of Git - stopped by timeout.");
+    }
+    if (result.getExitCode() != 0 || !result.getStderr().isEmpty()) {
+      LOG.info("getVersion exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
+      // anyway trying to parse
+      try {
+        parse(result.getStdout());
+      } catch (ParseException pe) {
+        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() + " errors: " + result.getStderr());
+      }
+    }
+    return parse(result.getStdout());
   }
 
   /**

@@ -40,14 +40,7 @@ import org.jetbrains.git4idea.ssh.GitSSHService;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -120,9 +113,6 @@ public abstract class GitHandler {
       }
     }
     myVcs = GitVcs.getInstance(project);
-    if (myVcs != null) {
-      myVcs.checkVersion();
-    }
     myWorkingDirectory = directory;
     myCommandLine = new GeneralCommandLine();
     if (myAppSettings != null) {
