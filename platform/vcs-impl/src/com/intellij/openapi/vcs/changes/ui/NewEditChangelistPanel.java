@@ -175,6 +175,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     final EnumSet<EditorCustomization.Feature> features = EnumSet.of(EditorCustomization.Feature.SPELL_CHECK);
     if (defaultLines == 1) {
       features.add(EditorCustomization.Feature.NO_HORIZONTAL_SCROLLBAR);
+      features.add(EditorCustomization.Feature.ONE_LINE);
     } else {
       features.add(EditorCustomization.Feature.SOFT_WRAP);
     }

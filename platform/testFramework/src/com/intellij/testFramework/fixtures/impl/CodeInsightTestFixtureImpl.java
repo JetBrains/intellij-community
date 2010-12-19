@@ -498,10 +498,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletion(final String[] filesBefore, final String fileAfter) {
     assertInitialized();
     configureByFiles(filesBefore);
-    final LookupElement[] items = complete(CompletionType.BASIC);
-    if (items != null) {
-      System.out.println("items = " + Arrays.toString(items));
-    }
+    complete(CompletionType.BASIC);
     checkResultByFile(fileAfter);
   }
 
@@ -518,6 +515,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) {
     assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
+    UsefulTestCase.assertNotNull(result);
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 

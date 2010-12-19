@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a visual position in the editor. Visual positions take folding into account -
@@ -38,6 +39,27 @@ public class VisualPosition {
     this.column = column;
   }
 
+  /**
+   * Allows to answer if current visual position is located after the given one.
+   * <p/>
+   * One visual position is considered to be 'after' another only if one of the following is true:
+   * <pre>
+   * <ul>
+   *   <li>its visual line is greater;</li>
+   *   <li>it has the same visual line but its column is greater;</li>
+   * </ul>
+   * </pre>
+   * 
+   * @param other   visual position to compare with the current one
+   * @return        <code>true</code> if current position is 'after' the given one; <code>false</code> otherwise
+   */
+  public boolean after(@NotNull VisualPosition other) {
+    if (line == other.line) {
+      return column > other.column;
+    }
+    return line > other.line;
+  }
+  
   @NonNls
   public String toString() {
     return "VisualPosition: line = " + line + " column = " + column;

@@ -246,7 +246,8 @@ public class TableSorter extends AbstractTableModel {
     }
 
     private Row[] getViewToModel() {
-        if (viewToModel == null) {
+        if (viewToModel == null ||
+                viewToModel.length != tableModel.getRowCount()) {
             final int tableModelRowCount = tableModel.getRowCount();
             viewToModel = new Row[tableModelRowCount];
             for (int row = 0; row < tableModelRowCount; row++) {

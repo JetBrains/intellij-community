@@ -333,6 +333,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText);
 
+  @Nullable
   List<String> getCompletionVariants(String... filesBefore);
 
   /**
