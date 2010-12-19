@@ -28,27 +28,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
+import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
+import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -113,6 +102,7 @@ public class GitUnstashDialog extends DialogWrapper {
    * The project
    */
   private final Project myProject;
+  private GitVcs myVcs;
 
   /**
    * A constructor
@@ -124,6 +114,7 @@ public class GitUnstashDialog extends DialogWrapper {
   public GitUnstashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     myProject = project;
+    myVcs = GitVcs.getInstance(project);
     setTitle(GitBundle.getString("unstash.title"));
     setOKButtonText(GitBundle.getString("unstash.button.apply"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
@@ -366,8 +357,13 @@ public class GitUnstashDialog extends DialogWrapper {
     else {
       h.addParameters("branch", branch);
     }
-    final String selectedStash = getSelectedStash().myStash;
-    h.addParameters(escaped ? translateStash(selectedStash) : selectedStash);
+    String selectedStash = getSelectedStash().myStash;
+    if (escaped) {
+      selectedStash = translateStash(selectedStash);
+    } else if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) { // else if, because escaping {} also solves the issue
+      selectedStash = "\"" + selectedStash + "\"";
+    }
+    h.addParameters(selectedStash);
     return h;
   }
 
