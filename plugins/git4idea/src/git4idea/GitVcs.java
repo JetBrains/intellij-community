@@ -57,8 +57,6 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCheckinHandlerFactory;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
@@ -73,7 +71,6 @@ import git4idea.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -108,9 +105,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion; // The currently detected git version or null.
-  private final Object myCheckingVersion = new Object(); // Checking the version lock (used to prevent infinite recursion)
-  private String myVersionCheckExcecutable = ""; // The path to executable at the time of version check
 
   private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
@@ -127,6 +121,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitExecutableValidator myExecutableValidator;
   private RepositoryChangeListener myIndexChangeListener;
   private GitBranchWidget myBranchWidget;
+
+  private GitVersion myVersion; // version of Git which this plugin uses.
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -340,6 +336,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     isActivated = true;
     myExecutableValidator = new GitExecutableValidator(myProject);
     myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
+    checkVersion();
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -456,58 +453,28 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Check version and report problem
+   * Checks Git version and updates the myVersion variable. In the case of exception or unsupported version reports the problem.
    */
   public void checkVersion() {
     final String executable = myAppSettings.getPathToGit();
-    synchronized (myCheckingVersion) {
-      if (myVersion != null && myVersionCheckExcecutable.equals(executable)) {
-        return;
-      }
-      myVersionCheckExcecutable = executable;
-      // this assignment is done to prevent recursive version check
-      myVersion = GitVersion.INVALID;
-      final String version;
-      try {
-        version = version(myProject).trim();
-      }
-      catch (VcsException e) {
-        String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        if (!myProject.isDefault()) {
-          showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-        }
-        return;
-      }
-      myVersion = GitVersion.parse(version);
-      if (!GitVersion.parse(version).isSupported() && !myProject.isDefault()) {
+    try {
+      final GitVersion version = GitVersion.identifyVersion(executable);
+      if (!version.isSupported() && !myProject.isDefault()) {
         showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN),
                     ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      } else {
+        myVersion = version;
+      }
+    } catch (Exception e) {
+      final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+      if (!myProject.isDefault()) {
+        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
     }
   }
 
-  /**
-   * @return the configured version of git
-   */
-  public GitVersion version() {
-    checkVersion();
+  public GitVersion getVersion() {
     return myVersion;
-  }
-
-  /**
-   * Get the version of configured git
-   *
-   * @param project the project
-   * @return a version of configured git
-   * @throws VcsException an error if there is a problem with running git
-   */
-  public static String version(Project project) throws VcsException {
-    final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitCommand.VERSION);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    s = h.run();
-    return s;
   }
 
   /**
