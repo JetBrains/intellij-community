@@ -364,4 +364,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                              boolean searchTextOccurrences);
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
+
+  void testFolding(String fileName);
 }
