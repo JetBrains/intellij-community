@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
  * The version of Git. Note that the version number ignores build and commit hash.
  * The class is able to distinct MSYS and CYGWIN Gits under Windows assuming that msysgit adds the 'msysgit' suffix to the output
  * of the 'git version' command.
+ * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix. 
  * Note: this class has a natural ordering that is inconsistent with equals.
  */
 public final class GitVersion implements Comparable<GitVersion> {
@@ -46,10 +47,6 @@ public final class GitVersion implements Comparable<GitVersion> {
     UNDEFINED, UNIX, MSYS, CYGWIN
   }
 
-  /**
-   * Invalid version number
-   */
-  public static final GitVersion INVALID = new GitVersion(0, 0, 0, 0);
   /**
    * The minimal supported version
    */
@@ -214,6 +211,10 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public boolean isLessOrEqual(final GitVersion gitVersion) {
     return gitVersion != null && compareTo(gitVersion) <= 0;
+  }
+
+  public Type getType() {
+    return myType;
   }
 
 }
