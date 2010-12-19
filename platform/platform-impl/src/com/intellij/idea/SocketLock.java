@@ -138,14 +138,14 @@ public class SocketLock {
 
     try {
       try {
-        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getLocalHost());
+        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getByName("127.0.0.1"));
         serverSocket.close();
         return ActivateStatus.NO_INSTANCE;
       }
       catch (IOException e) {
       }
 
-      Socket socket = new Socket(InetAddress.getLocalHost(), portNumber);
+      Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), portNumber);
       socket.setSoTimeout(300);
 
       DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -191,7 +191,7 @@ public class SocketLock {
       try {
         if (isPortForbidden(i)) continue;
 
-        mySocket = new ServerSocket(i, 50, InetAddress.getLocalHost());
+        mySocket = new ServerSocket(i, 50, InetAddress.getByName("127.0.0.1"));
         port = i;
         break;
       }
