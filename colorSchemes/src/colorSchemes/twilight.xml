@@ -5,9 +5,9 @@
   <colors>
     <option name="SELECTION_BACKGROUND" value="3c3f42" />
     <option name="CARET_ROW_COLOR" value="1b1b1b" />
-    <option name="WHITESPACES" value="FFFFFF" />
+    <option name="WHITESPACES" value="4e4e4e" />
     <option name="CARET_COLOR" value="A7A7A7" />
-    <option name="INDENT_GUIDE" value="FFFFFF" />
+    <option name="INDENT_GUIDE" value="4e4e4e" />
     <option name="CONSOLE_BACKGROUND_KEY" value="141414" />
   </colors>
   <attributes>
