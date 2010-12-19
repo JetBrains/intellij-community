@@ -178,8 +178,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
             getManagerThread().invokeAndWait(new DebuggerCommandImpl() {
               protected void action() throws Exception {
+                
+                if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+                  // check if there is already one request with policy SUSPEND_ALL
+                  for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
+                    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+                      eventSet.resume();
+                      return;
+                    }
+                  }
+                }
+                
                 final SuspendContextImpl suspendContext = getSuspendManager().pushSuspendContext(eventSet);
-
+                
                 for (EventIterator eventIterator = eventSet.eventIterator(); eventIterator.hasNext();) {
                   final Event event = eventIterator.nextEvent();
 

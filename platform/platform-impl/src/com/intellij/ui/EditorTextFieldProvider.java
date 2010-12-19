@@ -30,7 +30,7 @@ public interface EditorTextFieldProvider {
   /**
    * @param project   target project
    * @param features  features to use within the returned editor text field
-   * @return          {@link EditorTextField} with spell checking support.
+   * @return          Multiline {@link EditorTextField} with spell checking support.
    */
   EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull EditorCustomization.Feature ... features);
 }

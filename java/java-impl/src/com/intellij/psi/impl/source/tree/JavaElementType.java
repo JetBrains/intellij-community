@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl;
@@ -40,6 +41,7 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 
@@ -158,6 +160,7 @@ public interface JavaElementType {
                                                                      seq, 0, seq.length(), 0).getFirstChildNode();
     }
 
+    @Override
     public int getErrorsCount(final CharSequence seq, final Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
 
@@ -184,6 +187,7 @@ public interface JavaElementType {
   class ICodeBlockNewElementType extends ICodeBlockElementType implements ILightLazyParseableElementType {
     private ICodeBlockNewElementType() { }
 
+    @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
       StatementParser.parseCodeBlockDeep(builder, true);
@@ -194,6 +198,8 @@ public interface JavaElementType {
   ILazyParseableElementType CODE_BLOCK = JavaParserDefinition.USE_NEW_PARSER ? new ICodeBlockNewElementType() : new ICodeBlockElementType();
 
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA) {
+    @Nullable
+    @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       if (JavaParserDefinition.USE_NEW_PARSER) {
         return JavaParserUtil.parseFragment(chameleon,
@@ -213,6 +219,8 @@ public interface JavaElementType {
   };
 
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", StdLanguages.JAVA) {
+    @Nullable
+    @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       if (JavaParserDefinition.USE_NEW_PARSER) {
         return JavaParserUtil.parseFragment(chameleon,
@@ -231,6 +239,8 @@ public interface JavaElementType {
   };
 
   IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", StdLanguages.JAVA) {
+    @Nullable
+    @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       if (JavaParserDefinition.USE_NEW_PARSER) {
         return JavaParserUtil.parseFragment(chameleon,
@@ -248,6 +258,8 @@ public interface JavaElementType {
   };
 
   IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", StdLanguages.JAVA) {
+    @Nullable
+    @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       if (JavaParserDefinition.USE_NEW_PARSER) {
         return JavaParserUtil.parseFragment(chameleon,
@@ -262,6 +274,16 @@ public interface JavaElementType {
       final CharSequence chars = chameleon.getChars();
       return Parsing.parseTypeText(((FileElement)chameleon).getManager(), null, chars, 0, chars.length(), 0,
                                    SharedImplUtil.findCharTableByTree(chameleon));
+    }
+  };
+
+  IElementType DUMMY_ELEMENT = new ILazyParseableElementType("DUMMY_ELEMENT", StdLanguages.JAVA) {
+    @Nullable
+    @Override
+    public ASTNode parseContents(final ASTNode chameleon) {
+      assert chameleon instanceof JavaDummyElement : chameleon;
+      final JavaDummyElement dummyElement = (JavaDummyElement)chameleon;
+      return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(), dummyElement.getLanguageLevel());
     }
   };
 }

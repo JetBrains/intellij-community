@@ -249,7 +249,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setBorderColor(border)
       .setAnimationCycle(150)
       .setShowCallout(true)
-      .setCalloutShift(tooltip.getCalloutShift());
+      .setCalloutShift(tooltip.getCalloutShift())
+      .setPositionChangeXShift(tooltip.getPositionChangeX())
+      .setPositionChangeYShift(tooltip.getPositionChangeY());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));

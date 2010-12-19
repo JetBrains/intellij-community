@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated old Java parser is deprecated in favor of PSI builder-based one (see com.intellij.lang.java.parser.*) (to remove in IDEA 11).
+ */
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
 

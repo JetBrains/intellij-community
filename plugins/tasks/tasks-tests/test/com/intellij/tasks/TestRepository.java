@@ -1,13 +1,18 @@
 package com.intellij.tasks;
 
 import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.LocalTaskImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Dmitry Avdeev
 */
 class TestRepository extends BaseRepository {
+  private final Task[] myTasks;
+
+  public TestRepository(Task... tasks) {
+    myTasks = tasks;
+  }
+
   @Override
   public BaseRepository clone() {
     return this;
@@ -19,7 +24,7 @@ class TestRepository extends BaseRepository {
 
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    return new Task[] { new LocalTaskImpl("TEST-001", "Test task")};
+    return myTasks;
   }
 
   @Override

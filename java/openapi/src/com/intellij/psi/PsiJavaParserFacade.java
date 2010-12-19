@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -26,28 +23,41 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/*
+ * @author max
+ */
 public interface PsiJavaParserFacade extends PsiParserFacade {
   /**
    * Creates a JavaDoc tag from the specified text.
    *
    * @param docTagText the text of the JavaDoc tag.
-   * @param context    ignored; no longer used
    * @return the created tag.
    * @throws com.intellij.util.IncorrectOperationException if the text of the tag is not valid.
    */
   @NotNull
-  PsiDocTag createDocTagFromText(@NotNull String docTagText, @Deprecated PsiElement context) throws IncorrectOperationException;
+  PsiDocTag createDocTagFromText(@NotNull String docTagText) throws IncorrectOperationException;
+
+  /**
+   * @deprecated use {@link #createDocTagFromText(String)} (to remove in IDEA 11)
+   */
+  @NotNull
+  PsiDocTag createDocTagFromText(@NotNull String docTagText, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a JavaDoc comment from the specified text.
    *
    * @param docCommentText the text of the JavaDoc comment.
-   * @param context        ignored; no longer used
    * @return the created comment.
    * @throws com.intellij.util.IncorrectOperationException if the text of the comment is not valid.
    */
   @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText, @Deprecated PsiElement context) throws IncorrectOperationException;
+  PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException;
+
+  /**
+   * @deprecated use {@link #createDocCommentFromText(String)} (to remove in IDEA 11)
+   */
+  @NotNull
+  PsiDocComment createDocCommentFromText(@NotNull String docCommentText, PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java class from the specified text.
@@ -110,7 +120,7 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
    * Creates a Java type from the specified text.
    *
    * @param text    the text of the type to create (for example, a primitive type keyword, an array
-   *                declaration or the name of a class)
+   *                declaration or the name of a class).
    * @param context the PSI element used as context for resolving the reference.
    * @return the created type instance.
    * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid type.
@@ -193,7 +203,7 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
    * type and name.
    *
    * @param exceptionType the type of the exception to catch.
-   * @param exceptionName the name of the variable in which the caught exception is stored (may be an empty string)
+   * @param exceptionName the name of the variable in which the caught exception is stored (may be an empty string).
    * @param context       the context for resolving references.
    * @return the created catch section instance.
    * @throws IncorrectOperationException if some of the parameters are not valid.
@@ -201,5 +211,13 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
   @NotNull PsiCatchSection createCatchSection(@NotNull PsiClassType exceptionType, @NotNull String exceptionName, PsiElement context)
     throws IncorrectOperationException;
 
-  PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations);
+  /**
+   * Creates a Java type from the specified text.
+   *
+   * @param text        the text of the type to create (a primitive type keyword).
+   * @param annotations array (possible empty) of annotations to annotate the created type.
+   * @return the created type instance.
+   * @throws IncorrectOperationException if some of the parameters are not valid.
+   */
+  PsiType createPrimitiveType(@NotNull String text, @NotNull PsiAnnotation[] annotations) throws IncorrectOperationException;
 }

@@ -15,8 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,9 +53,9 @@ public class TaskCompletionContributor extends CompletionContributor {
       }
       result = result.withPrefixMatcher(new PlainPrefixMatcher(prefix));
 
-      final TaskSearchSupport searchSupport = new TaskSearchSupport(file.getProject(), false);
+      final TaskSearchSupport searchSupport = new TaskSearchSupport(file.getProject());
       List<Task> items = searchSupport.getItems(prefix, true);
-      addCompletionElements(result, consumer, items);
+      addCompletionElements(result, consumer, items, -10000);
 
       Future<List<Task>> future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<List<Task>>() {
         @Override
@@ -70,7 +68,7 @@ public class TaskCompletionContributor extends CompletionContributor {
         try {
           List<Task> tasks = future.get(100, TimeUnit.MILLISECONDS);
           if (tasks != null) {
-            addCompletionElements(result, consumer, tasks);
+            addCompletionElements(result, consumer, tasks, 0);
             return;
           }
         }
@@ -85,32 +83,31 @@ public class TaskCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addCompletionElements(CompletionResultSet result, final Consumer<Task> consumer, List<Task> items) {
+  private static void addCompletionElements(CompletionResultSet result, final Consumer<Task> consumer, List<Task> items, int index) {
     final AutoCompletionPolicy completionPolicy = ApplicationManager.getApplication().isUnitTestMode()
                                                   ? AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE
                                                   : AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
-    result.addAllElements(ContainerUtil.map(items, new Function<Task, LookupElement>() {
-      @Override
-      public LookupElement fun(final Task task) {
-        LookupElementBuilder builder = LookupElementBuilder.create(task.getId())
-          .setIcon(task.getIcon())
-          .addLookupString(task.getSummary())
-          .setTailText(" " + task.getSummary(), true)
-          .setInsertHandler(new InsertHandler<LookupElement>() {
-            @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
-              Document document = context.getEditor().getDocument();
-              String s = task.getId() + ": " + task.getSummary();
-              document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
-              context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
-              consumer.consume(task);
-            }
-          });
-        if (task.isClosed()) {
-          builder = builder.setStrikeout();
-        }
-        return builder.withAutoCompletionPolicy(completionPolicy);
+
+    for (final Task task : items) {
+      LookupElementBuilder builder = LookupElementBuilder.create(task.getId())
+        .setIcon(task.getIcon())
+        .addLookupString(task.getSummary())
+        .setTailText(" " + task.getSummary(), true)
+        .setInsertHandler(new InsertHandler<LookupElement>() {
+          @Override
+          public void handleInsert(InsertionContext context, LookupElement item) {
+            Document document = context.getEditor().getDocument();
+            String s = task.getId() + ": " + task.getSummary();
+            document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
+            context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
+            consumer.consume(task);
+          }
+        });
+      if (task.isClosed()) {
+        builder = builder.setStrikeout();
       }
-    }));
+
+      result.addElement(PrioritizedLookupElement.withGrouping(builder.withAutoCompletionPolicy(completionPolicy), index--));
+    }
   }
 }

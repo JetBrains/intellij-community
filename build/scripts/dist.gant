@@ -46,7 +46,7 @@ target(compile: "Compile project") {
   }
 
   ant.tstamp() {
-    format(property: "today.year", pattern: "yyyy")
+    format(property: "todayYear", pattern: "yyyy")
   }
 
   project["javac"] = "$jdkHome/bin/javac"
@@ -67,7 +67,7 @@ def wire_build_date(String buildNumber) {
 target('default': 'The default target') {
   depends(compile)
   layoutAll(
-          buildNumber: "IC-100.SNAPSHOT",
+          buildNumber: "IC-102.SNAPSHOT",
           version: "IdeaX",
           system_selector: "IntelliJIdeaCE10",
           jdk_req: "1.6*",
@@ -163,6 +163,7 @@ private def layoutMac(Map args, String home, Paths paths) {
 
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
+    replacefilter(token: "@@year@@", value: "$todayYear")
 
     replacefilter(token: "@@version@@", value: version)
     replacefilter(token: "@@vmoptions@@", value: args.vmoptions + " -Xverify:none -XX:+UseCompressedOOPS")

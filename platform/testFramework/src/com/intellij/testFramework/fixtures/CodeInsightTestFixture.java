@@ -333,6 +333,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile addFileToProject(@NonNls String relativePath, @NonNls String fileText);
 
+  @Nullable
   List<String> getCompletionVariants(String... filesBefore);
 
   /**
@@ -363,4 +364,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                              boolean searchTextOccurrences);
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
+
+  void testFolding(String fileName);
 }

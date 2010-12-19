@@ -923,6 +923,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (x >= px) {
             onSoftWrapDrawing = true;
           }
+          else {
+            column++;
+          }
           break outer;
         }
         else {
@@ -1270,7 +1273,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (endOffset > myDocument.getTextLength()) {
       endOffset = myDocument.getTextLength();
     }
-    if (startOffset < endOffset) {
+    
+    // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset and
+    // it does occupy particular amount of visual space that may be necessary to repaint.
+    if (startOffset <= endOffset) {
       int startLine = myDocument.getLineNumber(startOffset);
       int endLine = myDocument.getLineNumber(endOffset);
       repaintLines(startLine, endLine);
@@ -1711,23 +1717,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = logicalPositionToOffset(logicalPosition);
     getSoftWrapModel().registerSoftWrapsIfNecessary();
 
-    // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
-    // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
-    // Hence, we store information about soft wrap to be skipped for further processing and adjust 'x' coordinate value if necessary.
-    TIntHashSet softWrapsToSkip = new TIntHashSet();
-    SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
-    if (softWrap != null) {
-      softWrapsToSkip.add(softWrap.getStart());
-      if (position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
-        // There is a possible case that target clip points to soft wrap-introduced visual line and that it's an active
-        // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
-        // virtual space then.
-        Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-        drawBackground(g, caretRowColor, softWrap.getIndentInPixels(), position, defaultBackground, clip);
-      }
-      position.x = softWrap.getIndentInPixels();
-    }
-
     IterationState iterationState = new IterationState(this, start, paintSelection());
 
     LineIterator lIterator = createLineIterator();
@@ -1742,6 +1731,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int lastLineIndex = Math.max(0, myDocument.getLineCount() - 1);
 
+    // There is a possible case that we need to draw background from the start of soft wrap-introduced visual line. Given position
+    // has valid 'y' coordinate then at it shouldn't be affected by soft wrap that corresponds to the visual line start offset.
+    // Hence, we store information about soft wrap to be skipped for further processing and adjust 'x' coordinate value if necessary.
+    TIntHashSet softWrapsToSkip = new TIntHashSet();
+    SoftWrap softWrap = getSoftWrapModel().getSoftWrap(start);
+    if (softWrap != null) {
+      softWrapsToSkip.add(softWrap.getStart());
+      Color color = null;
+      if (!backColor.equals(defaultBackground)) {
+        color = backColor;
+      }
+
+      // There is a possible case that target clip points to soft wrap-introduced visual line and that it's an active
+      // line (caret cursor is located on it). We want to draw corresponding 'caret line' background for soft wraps-introduced
+      // virtual space then.
+      if (color == null && position.y == getCaretModel().getVisualPosition().line * getLineHeight()) {
+        color = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+      }
+      
+      if (color != null) {
+        drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+      }
+      position.x = softWrap.getIndentInPixels();
+    }
+    
     // There is a possible case that caret is located at soft-wrapped line. We don't need to paint caret row background
     // on a last visual line of that soft-wrapped line then. Below is a holder for the flag that indicates if caret row
     // background is already drawn.
@@ -1901,7 +1915,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (startToUse < softWrapStart) {
         position.x = drawBackground(g, backColor, text.subSequence(startToUse, softWrapStart), position, fontType, defaultBackground, clip);
       }
-      drawSoftWrap(g, softWrap, position, fontType, defaultBackground, clip, caretRowPainted);
+      boolean drawCustomBackgroundAtSoftWrapVirtualSpace = 
+        backColor != defaultBackground && (softWrapStart > start || myLastBackgroundColor == backColor);
+      drawSoftWrap(
+        g, softWrap, position, fontType, backColor, drawCustomBackgroundAtSoftWrapVirtualSpace, defaultBackground, clip, caretRowPainted
+      );
       startToUse = softWrapStart;
     }
 
@@ -1911,65 +1929,157 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return position.x;
   }
 
-  private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, int fontType, Color defaultBackground, Rectangle clip,
-                            boolean[] caretRowPainted) {
+  private void drawSoftWrap(Graphics g, SoftWrap softWrap, Point position, int fontType, Color backColor,
+                            boolean drawCustomBackgroundAtSoftWrapVirtualSpace, Color defaultBackground, Rectangle clip,
+                            boolean[] caretRowPainted) 
+  {
     // The main idea is to to do the following:
     //     *) update given drawing position coordinates in accordance with the current soft wrap;
-    //     *) draw 'active line' background at soft wrap-introduced virtual space if necessary;
+    //     *) draw background at soft wrap-introduced virtual space if necessary;
 
     CharSequence softWrapText = softWrap.getText();
     int activeRowY = getCaretModel().getVisualPosition().line * getLineHeight();
-    if (position.y == activeRowY) {
+    int afterSoftWrapWidth = clip.x + clip.width - position.x;
+    if (drawCustomBackgroundAtSoftWrapVirtualSpace && backColor != null) {
+      drawBackground(g, backColor, afterSoftWrapWidth, position, defaultBackground, clip);
+    }
+    else if (position.y == activeRowY) {
       // Draw 'active line' background after soft wrap.
       Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      drawBackground(g, caretRowColor, clip.x + clip.width - position.x, position, defaultBackground, clip);
+      drawBackground(g, caretRowColor, afterSoftWrapWidth, position, defaultBackground, clip);
       caretRowPainted[0] = true;
     }
 
+    paintSelectionOnFirstSoftWrapLineIfNecessary(g, position, clip, defaultBackground, fontType);
+    
     int i = CharArrayUtil.lastIndexOf(softWrapText, "\n", softWrapText.length()) + 1;
-    position.x = getTextSegmentWidth(softWrapText.subSequence(i, softWrapText.length()), 0, fontType, clip);
-    position.x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+    int width = getTextSegmentWidth(softWrapText.subSequence(i, softWrapText.length()), 0, fontType, clip)
+                + getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+    position.x = 0;
     position.y += getLineHeight();
-
-    if (position.y == activeRowY) {
+    
+    if (drawCustomBackgroundAtSoftWrapVirtualSpace && backColor != null) {
+      drawBackground(g, backColor, width, position, defaultBackground, clip);
+    }
+    else if (position.y == activeRowY) {
       // Draw 'active line' background for the soft wrap-introduced virtual space.
       Color caretRowColor = getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      drawBackground(g, caretRowColor, position.x, new Point(0, activeRowY), defaultBackground, clip);
+      drawBackground(g, caretRowColor, width, position, defaultBackground, clip);
     }
-
-    // The code below draws background for soft wrap-introduced virtual space. It's is considered that we don't want
-    // to do that for now. Uncomment if that decision is changed.
-
-    //position.x = drawBackground(
-    //  g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED), position,
-    //  defaultBackground, clip
-    //);
-    //
-    //CharSequence softWrapText = softWrap.getText();
-    //int start = 0;
-    //for (
-    //  int end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n");
-    //  start < softWrapText.length() && end < softWrapText.length();
-    //  end = CharArrayUtil.shiftForwardUntil(softWrapText, start, "\n"))
-    //{
-    //  drawBackground(g, backColor, softWrapText.subSequence(start, end), position, fontType, defaultBackground, clip);
-    //  start = end + 1;
-    //  position.x = 0;
-    //  position.y += getLineHeight();
-    //}
-    //
-    //if (start < softWrapText.length()) {
-    //  position.x = drawBackground(
-    //    g, backColor, softWrapText.subSequence(start, softWrapText.length()), position, fontType, defaultBackground, clip
-    //  );
-    //}
-    //
-    //position.x = drawBackground(
-    //  g, backColor, getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP), position,
-    //  defaultBackground, clip
-    //);
+    
+    position.x = 0;
+    paintSelectionOnSecondSoftWrapLineIfNecessary(g, position, clip, defaultBackground, fontType, softWrap);
+    position.x = width;
   }
 
+  /**
+   * End user is allowed to perform selection by visual coordinates (e.g. by dragging mouse with left button hold). There is a possible
+   * case that such a move intersects with soft wrap introduced virtual space. We want to draw corresponding selection background
+   * there then.
+   * <p/>
+   * This method encapsulates functionality of drawing selection background on the first soft wrap line (e.g. on a visual line where
+   * it is applied).
+   * 
+   * @param g                   graphics to draw on
+   * @param position            current position (assumed to be position of soft wrap appliance)
+   * @param clip                target drawing area boundaries
+   * @param defaultBackground   default background
+   * @param fontType            current font type
+   */
+  private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics g, Point position, Rectangle clip, Color defaultBackground,
+                                                            int fontType) 
+  {
+    // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
+    // there then.
+    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
+    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    if (selectionStartPosition == null || selectionEndPosition == null || selectionStartPosition.equals(selectionEndPosition)) {
+      return;
+    }
+    
+    int currentVisualLine = position.y / getLineHeight();
+    int lastColumn = EditorUtil.getLastVisualLineColumnNumber(this, currentVisualLine);
+    
+    // Check if the first soft wrap line is within the visual selection.
+    if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
+        || (currentVisualLine == selectionEndPosition.line && selectionEndPosition.column <= lastColumn)) {
+      return;
+    }
+    
+    // Adjust 'x' if selection starts at soft wrap virtual space.
+    final int columnsToSkip = selectionStartPosition.column - lastColumn;
+    if (columnsToSkip > 0) {
+      position.x += getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+      position.x += (columnsToSkip - 1) * EditorUtil.getSpaceWidth(Font.PLAIN, this);
+    }
+    
+    // Calculate selection width.
+    final int width;
+    if (selectionEndPosition.line > currentVisualLine) {
+      width = clip.x + clip.width - position.x;
+    }
+    else if (selectionStartPosition.line < currentVisualLine || selectionStartPosition.column <= lastColumn) {
+      width = getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED) 
+              + (selectionEndPosition.column - lastColumn - 1) * EditorUtil.getSpaceWidth(fontType, this);
+    }
+    else {
+      width = (selectionEndPosition.column - selectionStartPosition.column) * EditorUtil.getSpaceWidth(fontType, this);
+    }
+
+    drawBackground(g, getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), width, position, defaultBackground, clip);
+  }
+
+  /**
+   * End user is allowed to perform selection by visual coordinates (e.g. by dragging mouse with left button hold). There is a possible
+   * case that such a move intersects with soft wrap introduced virtual space. We want to draw corresponding selection background
+   * there then.
+   * <p/>
+   * This method encapsulates functionality of drawing selection background on the second soft wrap line (e.g. on a visual line after
+   * the one where it is applied).
+   *
+   * @param g                   graphics to draw on
+   * @param position            current position (assumed to be position of soft wrap appliance)
+   * @param clip                target drawing area boundaries
+   * @param defaultBackground   default background
+   * @param fontType            current font type
+   * @param softWrap            target soft wrap which second line virtual space may contain selection
+   */
+  private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics g, Point position, Rectangle clip, Color defaultBackground,
+                                                             int fontType, SoftWrap softWrap) 
+  {
+    // There is a possible case that the user performed selection at soft wrap virtual space. We need to paint corresponding background
+    // there then.
+    VisualPosition selectionStartPosition = getSelectionModel().getSelectionStartPosition();
+    VisualPosition selectionEndPosition = getSelectionModel().getSelectionEndPosition();
+    if (selectionStartPosition == null || selectionEndPosition == null || selectionStartPosition.equals(selectionEndPosition)) {
+      return;
+    }
+
+    int currentVisualLine = position.y / getLineHeight();
+    
+    // Check if the second soft wrap line is within the visual selection.
+    if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
+        || (currentVisualLine == selectionStartPosition.line && selectionStartPosition.column >= softWrap.getIndentInColumns())) {
+      return;
+    }
+
+    // Adjust 'x' if selection starts at soft wrap virtual space.
+    if (selectionStartPosition.line == currentVisualLine && selectionStartPosition.column > 0) {
+      position.x += selectionStartPosition.column * EditorUtil.getSpaceWidth(fontType, this);
+    }
+
+    // Calculate selection width.
+    final int width;
+    if (selectionEndPosition.line > currentVisualLine || selectionEndPosition.column >= softWrap.getIndentInColumns()) {
+      width = softWrap.getIndentInPixels() - position.x;
+    }
+    else {
+      width = selectionEndPosition.column * EditorUtil.getSpaceWidth(fontType, this) - position.x;
+    }
+
+    drawBackground(g, getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), width, position, defaultBackground, clip);
+  }
+  
   private int drawBackground(Graphics g, Color backColor, CharSequence text, Point position, int fontType, Color defaultBackground,
                              Rectangle clip)
   {
@@ -2356,7 +2466,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (i < softWrapChars.length - 1) {
           position.x = 0; // Soft wrap starts new visual line
           position.x = drawString(
-            g, softWrapChars, i + 1, softWrapChars.length, position, clip, effectColor, effectType, fontType, fontColor
+            g, softWrapChars, i + 1, softWrapChars.length, position, clip, null, null, fontType, fontColor
           );
         }
         position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
@@ -2367,7 +2477,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw token text before the wrap.
       if (softWrap.getStart() > startToUse) {
         position.x = drawString(
-          g, text, startToUse, softWrap.getStart(), position, clip, effectColor, effectType, fontType, fontColor
+          g, text, startToUse, softWrap.getStart(), position, clip, null, null, fontType, fontColor
         );
       }
 
@@ -2385,7 +2495,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // Draw soft wrap symbols on current visual line if any.
         if (i - softWrapSegmentStartIndex > 0) {
           drawString(
-            g, softWrapChars, softWrapSegmentStartIndex, i, position, clip, effectColor, effectType, fontType, fontColor
+            g, softWrapChars, softWrapSegmentStartIndex, i, position, clip, null, null, fontType, fontColor
           );
         }
         mySoftWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, position.x, position.y, getLineHeight());
@@ -2405,8 +2515,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Draw remaining soft wrap symbols from its last line if any.
       if (softWrapSegmentStartIndex < softWrapChars.length) {
         position.x += drawString(
-          g, softWrapChars, softWrapSegmentStartIndex, softWrapChars.length, position, clip, effectColor, effectType,
-          fontType, fontColor
+          g, softWrapChars, softWrapSegmentStartIndex, softWrapChars.length, position, clip, null, null, fontType, fontColor
         );
       }
       position.x += mySoftWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, position.x, position.y, getLineHeight());
@@ -3279,12 +3388,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       SelectionModel selectionModel = getSelectionModel();
       int oldSelectionStart = selectionModel.getLeadSelectionOffset();
+      VisualPosition oldVisLeadSelectionStart = selectionModel.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
+      VisualPosition oldVisualCaret = getCaretModel().getVisualPosition();
       moveCaretToScreenPos(x, y);
       getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
       int newCaretOffset = getCaretModel().getOffset();
+      VisualPosition newVisualCaret = getCaretModel().getVisualPosition();
       int caretShift = newCaretOffset - mySavedSelectionStart;
 
       if (myMousePressedEvent != null && getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.EDITING_AREA &&
@@ -3332,7 +3444,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           if (!myMousePressedInsideSelection) {
-            selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+            if (oldVisLeadSelectionStart != null) {
+              selectionModel.setSelection(oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
+            }
+            else {
+              selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+            }
           }
           else {
             if (caretShift != 0) {

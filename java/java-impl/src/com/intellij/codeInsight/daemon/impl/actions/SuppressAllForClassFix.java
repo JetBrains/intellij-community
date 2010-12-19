@@ -84,7 +84,7 @@ public class SuppressAllForClassFix extends SuppressFix {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
           String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + SuppressionUtil.ALL;
-          noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
+          noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText));
           DaemonCodeAnalyzer.getInstance(project).restart();
           return;
         }

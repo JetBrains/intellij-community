@@ -19,7 +19,13 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.abstraction.*;
 import com.siyeh.ig.assignment.*;
@@ -70,6 +76,7 @@ import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
+import com.siyeh.ig.telemetry.TelemetryToolWindow;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.visibility.*;
 import org.jetbrains.annotations.NonNls;
@@ -85,15 +92,15 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
         InspectionToolProvider {
 
-    private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
-            new ArrayList();
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
-    private final InspectionGadgetsTelemetry telemetry =
-            new InspectionGadgetsTelemetry();
-    public static final boolean TELEMETRY_ENABLED = false;
     @NonNls private static final String INSPECTION = "Inspection";
     @NonNls private static final String BUILD_FIXES_ONLY_ON_THE_FLY = "(r)";
+
+    private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
+            new ArrayList();
+    private volatile InspectionGadgetsTelemetry telemetry = null;
+    public volatile boolean telemetryEnabled = false;
 
     public static void main(String[] args) throws FileNotFoundException {
         final PrintStream out;
@@ -337,6 +344,34 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public void initComponent() {
+        final RegistryValue registryValue =
+                Registry.get("inspectionGadgets.telemetry.enabled");
+        telemetryEnabled = registryValue.asBoolean();
+        if (telemetryEnabled) {
+            telemetry = new InspectionGadgetsTelemetry();
+        }
+        registryValue.addListener(new RegistryValueListener.Adapter() {
+
+            @Override
+            public void afterValueChanged(RegistryValue registryValue) {
+                telemetryEnabled = registryValue.asBoolean();
+                final ProjectManager projectManager = ProjectManager.getInstance();
+                final Project[] openProjects = projectManager.getOpenProjects();
+                if (telemetryEnabled) {
+                    telemetry = new InspectionGadgetsTelemetry();
+                    for (Project project : openProjects) {
+                        final TelemetryToolWindow toolWindow =
+                                new TelemetryToolWindow(telemetry);
+                        toolWindow.register(project);
+                    }
+                } else {
+                    for (Project project : openProjects) {
+                        TelemetryToolWindow.unregister(project);
+                    }
+                    telemetry = null;
+                }
+            }
+        }, ApplicationManager.getApplication());
     }
 
     private void registerResourceManagementInspections() {
@@ -1080,8 +1115,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     public void disposeComponent() {
     }
 
-    public static boolean isTelemetryEnabled() {
-        return TELEMETRY_ENABLED;
+    public boolean isTelemetryEnabled() {
+        return telemetryEnabled;
     }
 
     public InspectionGadgetsTelemetry getTelemetry() {

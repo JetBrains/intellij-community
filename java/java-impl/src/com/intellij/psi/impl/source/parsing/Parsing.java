@@ -33,6 +33,9 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated old Java parser is deprecated in favor of PSI builder-based one (see com.intellij.lang.java.parser.*) (to remove in IDEA 11).
+ */
 public class Parsing  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.Parsing");
   protected static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
@@ -198,8 +201,8 @@ public class Parsing  {
     return type;
   }
 
-  public CompositeElement parseTypeWithEllipsis(Lexer lexer, boolean eatLastDot, boolean allowWilcard) {
-    CompositeElement type = parseType(lexer, eatLastDot, allowWilcard, false);
+  public CompositeElement parseTypeWithEllipsis(Lexer lexer, boolean eatLastDot, boolean allowWildcard) {
+    CompositeElement type = parseType(lexer, eatLastDot, allowWildcard, false);
     if (type == null) return null;
     if (lexer.getTokenType() == JavaTokenType.ELLIPSIS) {
       CompositeElement type1 = ASTFactory.composite(JavaElementType.TYPE);

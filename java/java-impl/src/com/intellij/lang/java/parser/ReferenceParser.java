@@ -311,7 +311,7 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private static PsiBuilder.Marker parseTypeParameter(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseTypeParameter(final PsiBuilder builder) {
     final PsiBuilder.Marker param = builder.mark();
 
     DeclarationParser.parseAnnotations(builder);

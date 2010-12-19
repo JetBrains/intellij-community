@@ -27,6 +27,9 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -55,22 +58,7 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
 
 
   public AndroidFacetConfiguration createDefaultConfiguration() {
-    AndroidFacetConfiguration configuration = new AndroidFacetConfiguration();
-    PropertiesComponent component = PropertiesComponent.getInstance();
-    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    if (component.isValueSet(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY)) {
-      Library defaultLib = libraryTable.getLibraryByName(component.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY));
-      if (defaultLib != null && tryToSetAndroidPlatform(configuration, defaultLib)) {
-        return configuration;
-      }
-      for (Library library : libraryTable.getLibraries()) {
-        if (tryToSetAndroidPlatform(configuration, library)) {
-          component.setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, library.getName());
-          return configuration;
-        }
-      }
-    }
-    return configuration;
+    return new AndroidFacetConfiguration();
   }
 
   private static boolean tryToSetAndroidPlatform(AndroidFacetConfiguration configuration, Library library) {
@@ -86,7 +74,38 @@ public class AndroidFacetType extends FacetType<AndroidFacet, AndroidFacetConfig
                                   String name,
                                   @NotNull AndroidFacetConfiguration configuration,
                                   @Nullable Facet underlyingFacet) {
+    setupPlatform(module, configuration);
+
     return new AndroidFacet(module, name, configuration);
+  }
+
+  private static void setupPlatform(@NotNull Module module, @NotNull AndroidFacetConfiguration configuration) {
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
+        Library library = libEntry.getLibrary();
+        if (library != null &&
+            LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libEntry.getLibraryLevel()) &&
+            tryToSetAndroidPlatform(configuration, library)) {
+            return;
+        }
+      }
+    }
+
+    PropertiesComponent component = PropertiesComponent.getInstance();
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+    if (component.isValueSet(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY)) {
+      Library defaultLib = libraryTable.getLibraryByName(component.getValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY));
+      if (defaultLib != null && tryToSetAndroidPlatform(configuration, defaultLib)) {
+        return;
+      }
+      for (Library library : libraryTable.getLibraries()) {
+        if (tryToSetAndroidPlatform(configuration, library)) {
+          component.setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, library.getName());
+          return;
+        }
+      }
+    }
   }
 
   public boolean isSuitableModuleType(ModuleType moduleType) {

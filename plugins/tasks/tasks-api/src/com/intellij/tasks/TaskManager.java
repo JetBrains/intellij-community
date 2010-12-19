@@ -32,8 +32,19 @@ public abstract class TaskManager {
     return project.getComponent(TaskManager.class);
   }
 
+  /**
+   * Queries all configured task repositories.
+   * Operation may be blocked for a while.
+   * @param query text search
+   * @return up-to-date issues retrieved from repositories
+   * @see #getCachedIssues()
+   */
   public abstract List<Task> getIssues(String query);
 
+  /**
+   * Returns already cached issues.
+   * @return cached issues.
+   */
   public abstract List<Task> getCachedIssues();
 
   @Nullable
@@ -53,7 +64,7 @@ public abstract class TaskManager {
 
   /**
    * Update issue cache asynchronously
-   * @param onComplete
+   * @param onComplete callback to be invoked after updating
    */
   public abstract void updateIssues(@Nullable Runnable onComplete);
 

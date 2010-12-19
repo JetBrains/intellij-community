@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,7 @@ public class FactorTree {
       Object key;
       switch (factor) {
         case placeElement: key = descriptor.getPlace(); break;
-        //case placeFile: key = descriptor.getPlaceFile(); break;
+        case placeFile: key = descriptor.getPlaceFile(); break;
         case qualifierType: key = descriptor.getTypeText(); break;
         default: throw new IllegalStateException("Unknown variant: "+ factor);
       }
@@ -34,14 +35,13 @@ public class FactorTree {
   }
 
   @Nullable
-  public CustomMembersHolder retrieve(PsiElement place, String qualifierType) {
-    return retrieveImpl(place, qualifierType, myCache);
+  public CustomMembersHolder retrieve(PsiElement place, PsiFile placeFile, String qualifierType) {
+    return retrieveImpl(place, placeFile, qualifierType, myCache);
 
   }
 
   @Nullable
-  private static CustomMembersHolder retrieveImpl(@NotNull PsiElement place,
-                                                  @NotNull String qualifierType, @Nullable Map current) {
+  private static CustomMembersHolder retrieveImpl(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull String qualifierType, @Nullable Map current) {
     if (current == null) return null;
 
     CustomMembersHolder result;
@@ -49,19 +49,17 @@ public class FactorTree {
     result = (CustomMembersHolder)current.get(ourHolderKey);
     if (result != null) return result;
 
-    result = retrieveImpl(place, qualifierType, (Map)current.get(qualifierType));
+    result = retrieveImpl(place, placeFile, qualifierType, (Map)current.get(qualifierType));
     if (result != null) return result;
 
-    /*
     result = retrieveImpl(place, placeFile, qualifierType, (Map)current.get(placeFile));
     if (result != null) return result;
 
-    */
-    return retrieveImpl(place, qualifierType, (Map)current.get(place));
+    return retrieveImpl(place, placeFile, qualifierType, (Map)current.get(place));
   }
 
 }
 
 enum Factor {
-  qualifierType, placeElement//, placeFile
+  qualifierType, placeElement, placeFile
 }

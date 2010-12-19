@@ -17,7 +17,6 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
@@ -34,34 +33,9 @@ public class TaskSearchSupport {
 
   protected NameUtil.Matcher myMatcher;
   private final TaskManagerImpl myManager;
-  private final Project myProject;
-  private final Comparator<Task> myTaskComparator;
-  private final boolean myRemoveLocal;
 
-  public TaskSearchSupport(final Project project, boolean removeLocal) {
-
-    myProject = project;
-    myRemoveLocal = removeLocal;
-    myManager = (TaskManagerImpl)TaskManager.getManager(myProject);
-
-    myTaskComparator = new Comparator<Task>() {
-      public int compare(Task o1, Task o2) {
-        int i = Comparing.compare(isOpen(o2, myProject), isOpen(o1, myProject));
-        if (i != 0) {
-          return i;
-        }
-        //i = Comparing.compare(o1.isClosed(), o2.isClosed());
-        //if (i != 0) {
-        //  return i;
-        //}
-        i = Comparing.compare(o2.getUpdated(), o1.getUpdated());
-        return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
-      }
-    };
-  }
-
-  private static boolean isOpen(Task task, Project project) {
-    return !task.isClosed() && !TaskManager.getManager(project).getOpenChangelists(task).isEmpty();
+  public TaskSearchSupport(final Project project) {
+    myManager = (TaskManagerImpl)TaskManager.getManager(project);
   }
 
   public List<Task> getItems(String pattern, boolean cached) {
@@ -90,19 +64,6 @@ public class TaskSearchSupport {
   }
 
   private List<Task> getTasks(String pattern, boolean cached) {
-    List<Task> issues;
-    if (cached) {
-      issues = myManager.getCachedIssues();
-    }
-    else {
-      issues = myManager.getIssues(pattern);
-    }
-    Set<Task> taskSet = new HashSet<Task>(issues);
-    if (myRemoveLocal) {
-      taskSet.removeAll(Arrays.asList(myManager.getLocalTasks()));
-    }
-    issues = new ArrayList<Task>(taskSet);
-    Collections.sort(issues, myTaskComparator);
-    return issues;
+    return cached ? myManager.getCachedIssues() : myManager.getIssues(pattern);
   }
 }

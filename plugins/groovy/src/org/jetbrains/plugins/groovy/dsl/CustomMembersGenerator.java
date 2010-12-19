@@ -76,7 +76,7 @@ public class CustomMembersGenerator implements GdslMembersHolderConsumer {
       addMemberHolder(new CustomMembersHolder() {
         @Override
         public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-          return NonCodeMembersHolder.generateMembers(myMethods, descriptor.getPlaceFile()).processMembers(descriptor, processor, state);
+          return NonCodeMembersHolder.generateMembers(myMethods, descriptor.justGetPlaceFile()).processMembers(descriptor, processor, state);
         }
       });
     }

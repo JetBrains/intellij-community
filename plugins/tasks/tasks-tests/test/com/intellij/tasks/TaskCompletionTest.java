@@ -1,6 +1,9 @@
 package com.intellij.tasks;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskCompletionContributor;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -24,17 +27,40 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     doTest("my TEST-<caret>", "my TEST-001: Test task<caret>");
   }
 
+  public void testNumberCompletion() throws Exception {
+    configureFile("TEST-0<caret>");
+    configureRepository(new LocalTaskImpl("TEST-001", "Test task"), new LocalTaskImpl("TEST-002", "Test task 2"));
+    LookupElement[] elements = myFixture.complete(CompletionType.BASIC);
+    assertNotNull(elements);
+    assertEquals(2, elements.length);
+  }
+
+  public void testKeepOrder() throws Exception {
+    configureFile("<caret>");
+    configureRepository(new LocalTaskImpl("TEST-002", "Test task 2"), new LocalTaskImpl("TEST-001", "Test task 1"));
+    myFixture.complete(CompletionType.BASIC);
+    assertEquals(Arrays.asList("TEST-002", "TEST-001"), myFixture.getLookupElementStrings());
+  }
+
   public void testSIOOBE() throws Exception {
-    doTest("  <caret>    my ", "  TEST-001: Test task    my");
+    doTest("  <caret>    my", "  TEST-001: Test task    my");
   }
 
   private void doTest(String text, String after) {
-    PsiFile psiFile = myFixture.configureByText("test.txt", text);
-    TaskCompletionContributor.installCompletion(myFixture.getDocument(psiFile), getProject(), null, false);
-    TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    manager.setRepositories(Arrays.asList(new TestRepository()));
-    manager.getState().updateEnabled = false;
+    configureFile(text);
+    configureRepository(new LocalTaskImpl("TEST-001", "Test task"));
     myFixture.completeBasic();
     myFixture.checkResult(after);
+  }
+
+  private void configureFile(String text) {
+    PsiFile psiFile = myFixture.configureByText("test.txt", text);
+    TaskCompletionContributor.installCompletion(myFixture.getDocument(psiFile), getProject(), null, false);
+  }
+
+  private void configureRepository(LocalTaskImpl... tasks) {
+    TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(getProject());
+    manager.setRepositories(Arrays.asList(new TestRepository(tasks)));
+    manager.getState().updateEnabled = false;
   }
 }

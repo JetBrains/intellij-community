@@ -1196,4 +1196,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "Application";
+  }
 }

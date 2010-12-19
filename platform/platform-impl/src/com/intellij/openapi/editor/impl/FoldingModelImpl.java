@@ -167,9 +167,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       final FoldingGroup group = region.getGroup();
       if (group != null) {
         myGroups.putValue(group, region);
-        for (FoldingListener listener : myListeners) {
-          listener.onFoldRegionStateChange(region);
-        }
+      }
+      for (FoldingListener listener : myListeners) {
+        listener.onFoldRegionStateChange(region);
       }
       return true;
     }
