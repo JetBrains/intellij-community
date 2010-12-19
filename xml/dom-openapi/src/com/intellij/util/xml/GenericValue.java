@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public interface GenericValue<T> {
   String getStringValue();
 
   /**
-   * @return resolved value. May took time. It's strongly recommended that even if T is {@link String}, one uses
+   * @return resolved value (may take time). It's strongly recommended that even if T is {@link String}, one uses
    * {@link #getStringValue()} method instead. 
    */
   @Nullable
