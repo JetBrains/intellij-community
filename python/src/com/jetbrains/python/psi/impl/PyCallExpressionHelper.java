@@ -246,11 +246,20 @@ public class PyCallExpressionHelper {
       PyType qtype = context.getType(lastQualifier);
       if (qtype != null) {
         if (qtype instanceof PyClassType) {
-          return ! ((PyClassType)qtype).isDefinition();
+          if (!((PyClassType)qtype).isDefinition()) {
+            return false;
+          }
+          PyClass resolvedParent = PsiTreeUtil.getParentOfType(resolved, PyClass.class);
+          if (resolvedParent != null) {
+            final PyClass qualifierClass = ((PyClassType)qtype).getPyClass();
+            if (qualifierClass != null && (qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {
+              return false;
+            }
+          }
         }
-        else return true; // TODO: handle UnionType
+        // TODO: handle UnionType
       }
-      else return true; // NOTE. best guess: unknown qualifier is more probably an instance.
+      return true; // NOTE. best guess: unknown qualifier is more probably an instance.
     }
     return false;
   }
