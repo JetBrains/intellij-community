@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,9 +32,12 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * @author yole
@@ -59,35 +63,9 @@ public class CreateLauncherScriptAction extends AnAction {
   public static void createLauncherScript(Project project, String name, String path) {
     try {
       final File scriptFile = createLauncherScriptFile();
-
-      final String mvCommand = "mv -f " + scriptFile + " " + path + "/" + name;
-      if (SystemInfo.isMac) {
-        final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
-        if (engine == null) {
-          throw new IOException("Could not find AppleScript engine");
-        }
-        engine.eval("do shell script \"" + mvCommand + "\" with administrator privileges");
-      }
-      else if (SystemInfo.isUnix) {
-        GeneralCommandLine cmdLine = new GeneralCommandLine();
-        if (SystemInfo.isGnome) {
-          cmdLine.setExePath("gksudo");
-          cmdLine.addParameters("--message",
-                                "In order to create a launcher script in " +
-                                path +
-                                ", please enter your administrator password:");
-        }
-        else if (SystemInfo.isKDE) {
-          cmdLine.setExePath("kdesudo");
-        }
-        else {
-          Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + mvCommand,
-                                     "Create Launcher Script",
-                                     Messages.getInformationIcon());
-          return;
-        }
-        cmdLine.addParameter(mvCommand);
-        cmdLine.createProcess();
+      if (!scriptFile.renameTo(new File(path, name))) {
+        final String mvCommand = "mv -f " + scriptFile + " " + path + "/" + name;
+        sudo(mvCommand, "In order to create a launcher script in " + path + ", please enter your administrator password:");
       }
     }
     catch (Exception e) {
@@ -96,21 +74,51 @@ public class CreateLauncherScriptAction extends AnAction {
     }
   }
 
+  private static boolean sudo(String mvCommand, final String prompt) throws IOException, ScriptException, ExecutionException {
+    if (SystemInfo.isMac) {
+      final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
+      if (engine == null) {
+        throw new IOException("Could not find AppleScript engine");
+      }
+      engine.eval("do shell script \"" + mvCommand + "\" with administrator privileges");
+    }
+    else if (SystemInfo.isUnix) {
+      GeneralCommandLine cmdLine = new GeneralCommandLine();
+      if (SystemInfo.isGnome) {
+        cmdLine.setExePath("gksudo");
+        cmdLine.addParameters("--message", prompt);
+      }
+      else if (SystemInfo.isKDE) {
+        cmdLine.setExePath("kdesudo");
+      }
+      else {
+        Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + mvCommand,
+                                   "Create Launcher Script",
+                                   Messages.getInformationIcon());
+        return true;
+      }
+      cmdLine.addParameter(mvCommand);
+      cmdLine.createProcess();
+    }
+    return false;
+  }
+
   private static File createLauncherScriptFile() throws IOException {
     final File tempFile = FileUtil.createTempFile("launcher", "");
-    StringBuilder textBuilder = new StringBuilder("#!/bin/bash\n");
+
+    final InputStream stream = CreateLauncherScriptAction.class.getClassLoader().getResourceAsStream("launcher.py");
+    String launcherContents = FileUtil.loadTextAndClose(new InputStreamReader(stream));
+    launcherContents = launcherContents.replace("$CONFIG_PATH$", PathManager.getConfigPath());
+
     String homePath = PathManager.getHomePath().replace(" ", "\\ ");
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
-      textBuilder.append("cd ").append(homePath).append("/Contents/MacOS/\n");
-      textBuilder.append("./").append(productName);
+      launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/Contents/MacOS/" + productName);
     }
     else {
-      textBuilder.append("cd ").append(homePath).append("/bin\n");
-      textBuilder.append("./").append(productName).append(".sh");
+      launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/bin/" + productName + ".sh");
     }
-    textBuilder.append(" $@\n");
-    FileUtil.writeToFile(tempFile, textBuilder.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
+    FileUtil.writeToFile(tempFile, launcherContents.getBytes(CharsetToolkit.UTF8_CHARSET));
     if (!tempFile.setExecutable(true)) {
       throw new IOException("Failed to mark the launcher script as executable");
     }
