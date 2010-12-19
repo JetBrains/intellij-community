@@ -60,13 +60,12 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
         // NOTE: maybe rate non-first results lower.
       }
-      // enrich the type info with any fields assigned nearby
-      if (qualifier instanceof PyQualifiedExpression) {
-        // enrich the type info with any fields assigned nearby
-        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
-      }
       // resolve within the type proper
       addResolveMember(ret, referencedName, qualifierType, ctx);
+      // enrich the type info with any fields assigned nearby
+      if (qualifier instanceof PyQualifiedExpression && !ret.isEmpty()) {
+        if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
+      }
     }
     else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
