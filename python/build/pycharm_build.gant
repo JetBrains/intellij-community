@@ -163,7 +163,7 @@ target('default': "Build artifacts") {
   }
 
   ant.tstamp() {
-    format(property: "today.year", pattern: "yyyy")
+    format(property: "todayYear", pattern: "yyyy")
   }
 
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
@@ -565,6 +565,7 @@ def layoutMac(Map args, String target) {
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
+    replacefilter(token: "@@year@@", value: "$todayYear")
 
 
     replacefilter(token: "@@version@@", value: args.version)
