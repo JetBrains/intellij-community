@@ -16,6 +16,15 @@ public interface PyAssignmentStatement extends PyStatement, NameDefiner {
    */
   PyExpression[] getTargets();
 
+  /**
+   * Return all expressions which are considered assignment targets (to the left of the last = sign in the statement).
+   * Doesn't unpack tuples, parentheses or anything.
+   *
+   * @return the list of assignment target expressions
+   */
+  @NotNull
+  PyExpression[] getRawTargets();
+
 
   /**
    * @return right-hand side of the statement; may as well consist of many elements.
