@@ -453,17 +453,17 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Checks Git version and updates the myVersion variable. In the case of exception or unsupported version reports the problem.
+   * Checks Git version and updates the myVersion variable.
+   * In the case of exception or unsupported version reports the problem.
+   * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
    */
   public void checkVersion() {
     final String executable = myAppSettings.getPathToGit();
     try {
-      final GitVersion version = GitVersion.identifyVersion(executable);
-      if (!version.isSupported() && !myProject.isDefault()) {
-        showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN),
+      myVersion = GitVersion.identifyVersion(executable);
+      if (!myVersion.isSupported() && !myProject.isDefault()) {
+        showMessage(GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN),
                     ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-      } else {
-        myVersion = version;
       }
     } catch (Exception e) {
       final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
