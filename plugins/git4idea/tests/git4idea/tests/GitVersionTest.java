@@ -33,12 +33,14 @@ public class GitVersionTest {
   private static final TestGitVersion[] commonTests = {
     new TestGitVersion("git version 1.6.4", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3", 1, 7, 3, 3),
+    new TestGitVersion("git version 1.7.3.5.gb27be", 1, 7, 3, 5)
   };
 
   private static final TestGitVersion[] msysTests = {
     new TestGitVersion("git version 1.6.4.msysgit.0", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3.msysgit.1", 1, 7, 3, 3),
-    new TestGitVersion("git version 1.7.3.2.msysgit", 1, 7, 3, 2)
+    new TestGitVersion("git version 1.7.3.2.msysgit", 1, 7, 3, 2),
+    new TestGitVersion("git version 1.7.3.5.msysgit.gb27be", 1, 7, 3, 5)
   };
 
   /**
