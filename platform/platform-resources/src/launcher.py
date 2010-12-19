@@ -71,4 +71,4 @@ else:
 
 bin_dir, bin_file = os.path.split(RUN_PATH)
 os.chdir(bin_dir)
-os.execv(bin_file, args)
+os.execv(bin_file, [bin_file] + args)
