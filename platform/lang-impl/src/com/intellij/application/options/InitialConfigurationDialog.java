@@ -34,6 +34,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JComboBox myColorSchemeComboBox;
   private JButton myPreviewButton;
   private JCheckBox myCreateScriptCheckbox;
+  private JTextField myScriptPathTextField;
+  private JPanel myCreateScriptPanel;
   private String myColorSettingsPage;
 
   public InitialConfigurationDialog(Component parent, String colorSettingsPage) {
@@ -90,6 +92,10 @@ public class InitialConfigurationDialog extends DialogWrapper {
     final boolean canCreateLauncherScript = SystemInfo.isMac || SystemInfo.isLinux;
     myCreateScriptCheckbox.setVisible(canCreateLauncherScript);
     myCreateScriptCheckbox.setSelected(canCreateLauncherScript);
+    myCreateScriptPanel.setVisible(canCreateLauncherScript);
+    if (canCreateLauncherScript) {
+      myScriptPathTextField.setText("/usr/local/bin/" + CreateLauncherScriptAction.defaultScriptName());
+    }
   }
 
   private void preselectKeyMap(ArrayList<Keymap> keymaps) {
@@ -152,10 +158,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
     TodoConfiguration.getInstance().resetToDefaultTodoPatterns();
 
     if (myCreateScriptCheckbox.isSelected()) {
+      final String pathname = myScriptPathTextField.getText();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          CreateLauncherScriptAction.showDialog(project);
+          CreateLauncherScriptAction.createLauncherScript(project, pathname);
         }
       });
     }

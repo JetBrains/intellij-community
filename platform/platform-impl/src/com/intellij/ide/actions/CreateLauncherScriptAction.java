@@ -57,15 +57,23 @@ public class CreateLauncherScriptAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    createLauncherScript(project, dialog.myNameField.getText(), dialog.myPathField.getText());
+    createLauncherScript(project, dialog.myNameField.getText() + "/" + dialog.myPathField.getText());
   }
 
-  public static void createLauncherScript(Project project, String name, String path) {
+  public static void createLauncherScript(Project project, String pathname) {
     try {
       final File scriptFile = createLauncherScriptFile();
-      if (!scriptFile.renameTo(new File(path, name))) {
-        final String mvCommand = "mv -f " + scriptFile + " " + path + "/" + name;
-        sudo(mvCommand, "In order to create a launcher script in " + path + ", please enter your administrator password:");
+      File scriptTarget = new File(pathname);
+      if (scriptTarget.exists()) {
+        int rc = Messages.showOkCancelDialog(project, "The file " + scriptTarget + " already exists. Would you like to overwrite it?",
+                                             "Create Launcher Script", Messages.getQuestionIcon());
+        if (rc != 0) {
+          return;
+        }
+      }
+      if (!scriptFile.renameTo(scriptTarget)) {
+        final String mvCommand = "mv -f " + scriptFile + " " + pathname;
+        sudo(mvCommand, "In order to create a launcher script in " + scriptTarget.getParent() + ", please enter your administrator password:");
       }
     }
     catch (Exception e) {
@@ -125,6 +133,17 @@ public class CreateLauncherScriptAction extends AnAction {
     return tempFile;
   }
 
+  public static String defaultScriptName() {
+    String productName = ApplicationNamesInfo.getInstance().getProductName();
+    if (productName.equalsIgnoreCase("RubyMine")) {
+      return "mine";
+    }
+    else if (productName.equalsIgnoreCase("PyCharm")) {
+      return "charm";
+    }
+    return "idea";
+  }
+
   @Override
   public void update(AnActionEvent e) {
     boolean canCreateScript = SystemInfo.isUnix || SystemInfo.isMac;
@@ -143,12 +162,7 @@ public class CreateLauncherScriptAction extends AnAction {
       setTitle("Create Launcher Script");
       final String productName = ApplicationNamesInfo.getInstance().getProductName();
       myTitle.setText(myTitle.getText().replace("$APPNAME", productName));
-      if (productName.equalsIgnoreCase("RubyMine")) {
-        myNameField.setText("mine");
-      }
-      else if (productName.equalsIgnoreCase("PyCharm")) {
-        myNameField.setText("charm");
-      }
+      myNameField.setText(defaultScriptName());
     }
 
     @Override
