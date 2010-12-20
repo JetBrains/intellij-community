@@ -580,4 +580,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   public void clearUndoRedoQueueInTests(Document document) {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
   }
+
+  public Set<DocumentReference> getAffectedDocuments() {
+    return myMerger.getAffectedDocuments();
+  }
 }

@@ -274,4 +274,8 @@ public class CommandMerger {
       myValid = false;
     }
   }
+
+  public Set<DocumentReference> getAffectedDocuments() {
+    return new THashSet<DocumentReference>(myAllAffectedDocuments);
+  }
 }
