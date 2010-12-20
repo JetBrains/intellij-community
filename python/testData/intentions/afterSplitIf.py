@@ -1,5 +1,6 @@
 def foo():
     if a + 2 > 3:
+    #comment
         if b < 4:
             a = a and b
             b = 4

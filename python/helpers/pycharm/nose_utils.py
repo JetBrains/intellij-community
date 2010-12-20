@@ -28,9 +28,7 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
         TeamcityTestResult.__init__(self, stream)
 
     def addError(self, test, err):
-        """Overrides normal addError to add support for
-        errorClasses. If the exception is a registered class, the
-        error will be added to the list for that class, not errors.
+        """as in nosetests
         """
         ec, ev, tb = err
         try:

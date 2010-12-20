@@ -1,5 +1,6 @@
 def foo():
     i<caret>f a + 2 > 3 and b < 4:
+    #comment
         a = a and b
         b = 4
     elif a > 20:
