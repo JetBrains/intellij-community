@@ -82,7 +82,7 @@ public class RecursiveFileHolder<T> implements FileHolder {
   }
 
   public synchronized RecursiveFileHolder copy() {
-    final RecursiveFileHolder copyHolder = new RecursiveFileHolder(myProject, myHolderType);
+    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<T>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
     return copyHolder;
   }
