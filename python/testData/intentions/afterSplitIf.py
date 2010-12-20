@@ -1,7 +1,7 @@
 def foo():
     if a + 2 > 3:
-    #comment
         if b < 4:
+        #comment
             a = a and b
             b = 4
         elif a > 20:

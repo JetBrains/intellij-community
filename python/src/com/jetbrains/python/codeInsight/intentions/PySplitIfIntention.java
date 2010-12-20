@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -13,8 +12,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -86,14 +83,21 @@ public class PySplitIfIntention extends BaseIntentionAction {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     
     PyIfStatement subIf = (PyIfStatement) ifStatement.copy();
-    List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(subIf.getIfPart(), PsiComment.class);
-    for (PsiComment comment : comments)
-      comment.delete();
 
     subIf.getIfPart().getCondition().replace(element.getRightExpression());
     ifStatement.getIfPart().getCondition().replace(element.getLeftExpression());
     PyStatementList statementList = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
     statementList.getStatements()[0].replace(subIf);
-    ifStatement.getIfPart().getStatementList().replace(statementList);
+    PyIfStatement newIf = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1");
+    newIf.getIfPart().getCondition().replace(ifStatement.getIfPart().getCondition());
+    newIf.getIfPart().getStatementList().replace(statementList);
+    if (ifStatement.getElifParts() != null) {
+      for (PyIfPart elif : ifStatement.getElifParts())
+        newIf.add(elif);
+    }
+    if (ifStatement.getElsePart() != null) {
+        newIf.add(ifStatement.getElsePart());
+    }
+    ifStatement.replace(newIf);
   }
 }
