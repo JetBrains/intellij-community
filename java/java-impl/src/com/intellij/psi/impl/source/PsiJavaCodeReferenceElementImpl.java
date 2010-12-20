@@ -117,7 +117,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
       }
       else {
-        return CLASS_OR_PACKAGE_NAME_KIND; // uncomplete code
+        return CLASS_OR_PACKAGE_NAME_KIND; // incomplete code
       }
     }
     if (i == JavaElementType.PACKAGE_STATEMENT) {
