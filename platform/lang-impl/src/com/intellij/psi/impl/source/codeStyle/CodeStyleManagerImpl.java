@@ -161,7 +161,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       int caretLine = document.getLineNumber(caretOffset);
       int lineStartOffset = document.getLineStartOffset(caretLine);
       boolean fixCaretPosition = true;
-      for (int i = caretOffset; i>= lineStartOffset; i--) {
+      for (int i = Math.min(caretOffset, text.length() - 1); i>= lineStartOffset; i--) {
         char c = text.charAt(i);
         if (c != ' ' && c != '\t' && c != '\n') {
           fixCaretPosition = false;
