@@ -1,103 +1,14 @@
-import sys, traceback
-from tcmessages import TeamcityServiceMessages
+import sys
 from utrunner import debug
-from tcunittest import strclass
-import datetime
+from nose_utils import TeamcityNoseRunner
 
 try:
   from nose.core import TestProgram
   from nose.plugins.base import Plugin
+  from nose.config import Config
+  from nose.plugins.manager import DefaultPluginManager
 except:
   raise NameError("Please, install nosetests")
-
-class TeamcityPlugin(Plugin):
-  enabled = True
-  name = 'teamcity'
-
-  def __init__(self, stream=sys.stdout):
-    self.output = stream
-    self.current_suite = None
-    self.messages = TeamcityServiceMessages(self.output, prepend_linebreak=True)
-
-  def configure(self, options, conf):
-   if not self.can_configure:
-     return
-   self.conf = conf
-
-  def getTestName(self, test):
-    test_name_full = str(test)
-    ind_1 = test_name_full.rfind('(')
-    if ind_1 != -1:
-      return test_name_full[:ind_1]
-    ind = test_name_full.rfind('.')
-    if ind != -1:
-      return test_name_full[test_name_full.rfind(".") + 1:]
-    return test_name_full
-
-  def getSuiteName(self, test):
-    test_name_full = str(test)
-    ind_1 = test_name_full.rfind('(')
-    if ind_1 != -1:
-      return test_name_full[ind_1+1: -1]
-    ind = test_name_full.rfind('.')
-    if ind != -1:
-      return test_name_full[:test_name_full.rfind(".")]
-    return test_name_full
-
-  def startTest(self, test):
-    location, suite_location = self.__getSuite(test)
-    suite = self.getSuiteName(test)
-    if suite != self.current_suite:
-        if self.current_suite:
-            self.messages.testSuiteFinished(self.current_suite)
-        self.current_suite = suite
-        self.messages.testSuiteStarted(self.current_suite, location=suite_location)
-    setattr(test, "startTime", datetime.datetime.now())
-    self.messages.testStarted(self.getTestName(test), location=location)
-
-  def stopTest(self, test):
-    start = getattr(test, "startTime", datetime.datetime.now())
-    d = datetime.datetime.now() - start
-    duration=d.microseconds / 1000 + d.seconds * 1000 + d.days * 86400000
-    self.messages.testFinished(self.getTestName(test), duration=int(duration))
-
-  def addFailure(self, test, err):
-    err = self.formatErr(err)
-    self.messages.testFailed(self.getTestName(test),
-                             message='Failure', details=err)
-
-  def addSkip(self, test):
-    self.messages.testIgnored(self.getTestName(test))
-
-  def addError(self, test, err):
-    err = self.formatErr(err)
-    self.messages.testFailed(self.getTestName(test),
-                             message='Error', details=err)
-
-  def finalize(self, result):
-    if self.current_suite:
-      self.messages.testSuiteFinished(self.current_suite)
-      self.current_suite = None
-
-  def __getSuite(self, test):
-    if hasattr(test, "suite"):
-      suite = strclass(test.suite)
-      suite_location = test.suite.location
-      location = test.suite.abs_location
-      if hasattr(test, "lineno"):
-        location = location + ":" + str(test.lineno)
-      else:
-        location = location + ":" + str(test.test.lineno)
-    else:
-      suite = strclass(test.__class__)
-      suite_location = "python_uttestid://" + suite
-      location = "python_uttestid://" + str(test.id())
-
-    return (location, suite_location)
-
-  def formatErr(self, err):
-    exctype, value, tb = err
-    return ''.join(traceback.format_exception(exctype, value, tb))
 
 def process_args():
   tests = []
@@ -144,7 +55,11 @@ def process_args():
       argv.extend(options)
 
     argv.extend(tests)
-    TestProgram(argv=argv, addplugins=[TeamcityPlugin()])
+    config = Config(plugins=DefaultPluginManager())
+    config.configure(argv)
+    config.plugins.loadPlugins()
+
+    TestProgram(argv=argv, testRunner=TeamcityNoseRunner(verbosity=config.verbosity, config=config))#, addplugins=[TeamcityPlugin()])
 
 if __name__ == "__main__":
   process_args()
