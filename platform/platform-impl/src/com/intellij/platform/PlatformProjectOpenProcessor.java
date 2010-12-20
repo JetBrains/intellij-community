@@ -18,7 +18,6 @@ package com.intellij.platform;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -137,7 +136,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                     new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
                   }
                   else {
-                    FileEditorManager.getInstance(project).openFile(virtualFile, true);
+                    new OpenFileDescriptor(project, virtualFile).navigate(true);
                   }
                 }
               }
