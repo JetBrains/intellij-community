@@ -42,6 +42,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene.Kudelevsky
@@ -50,6 +51,10 @@ public class AndroidDx1 {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidDx");
 
   @NonNls private static final String DEX_MAIN = "com.android.dx.command.dexer.Main";
+
+  private static final Pattern WARNING_PATTERN = Pattern.compile(".*warning.*");
+  private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
+  private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public Map<CompilerMessageCategory, List<String>> execute(@NotNull Module module,
@@ -116,21 +121,25 @@ public class AndroidDx1 {
 
     final OSProcessHandler handler = new OSProcessHandler(process, "");
     handler.addProcessListener(new ProcessAdapter() {
+      private CompilerMessageCategory myCategory = null;
+
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         String[] msgs = event.getText().split("\\n");
         for (String msg : msgs) {
           msg = msg.trim();
+          String msglc = msg.toLowerCase();
           if (outputType == ProcessOutputTypes.STDERR) {
-            if (msg.toLowerCase().startsWith("warning")) {
-              messages.get(CompilerMessageCategory.WARNING).add(msg);
+            if (WARNING_PATTERN.matcher(msglc).matches()) {
+              myCategory = CompilerMessageCategory.WARNING;
             }
-            else {
-              messages.get(CompilerMessageCategory.ERROR).add(msg);
+            if (ERROR_PATTERN.matcher(msglc).matches() || EXCEPTION_PATTERN.matcher(msglc).matches() || myCategory == null) {
+              myCategory = CompilerMessageCategory.ERROR;
             }
+            messages.get(myCategory).add(msg);
           }
           else if (outputType == ProcessOutputTypes.STDOUT) {
-            if (!msg.toLowerCase().startsWith("processing")) {
+            if (!msglc.startsWith("processing")) {
               messages.get(CompilerMessageCategory.INFORMATION).add(msg);
             }
           }
@@ -141,6 +150,13 @@ public class AndroidDx1 {
 
     handler.startNotify();
     handler.waitFor();
+
+    if (new File(outFile).isFile()) {
+      // if compilation finished correctly, show all errors as warnings
+      List<String> errors = messages.get(CompilerMessageCategory.ERROR);
+      messages.get(CompilerMessageCategory.WARNING).addAll(errors);
+      errors.clear();
+    }
 
     return messages;
   }

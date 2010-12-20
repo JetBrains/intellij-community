@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.android;
 
-package com.intellij.psi.impl.source.parsing;
-
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.ProximityLocation;
+import com.intellij.psi.util.proximity.ProximityWeigher;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated obsolete (ro remove in IDEA 11).
+ * @author Eugene.Kudelevsky
  */
-@SuppressWarnings({"ALL"})
-public class ChameleonTransforming {
-  public static void transformChildren(ASTNode element) {
-  }
-
-  public static void transformChildren(ASTNode element, boolean recursive) {
+public class AndroidProximityWeigher extends ProximityWeigher {
+  @Override
+  public Comparable weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
+    return AndroidCompletionWeighter.doWeigh(element, location.getProject());
   }
 }

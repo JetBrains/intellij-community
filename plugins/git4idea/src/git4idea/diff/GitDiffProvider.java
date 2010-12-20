@@ -123,11 +123,12 @@ public class GitDiffProvider implements DiffProvider {
       for (VcsFileRevision f : GitHistoryUtils.history(myProject, filePath)) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
-          return new GitContentRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
+          return GitContentRevision.createRevision(gitRevision.getPath(), (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
         }
       }
       GitContentRevision candidate =
-        new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, myProject, selectedFile.getCharset());
+        (GitContentRevision) GitContentRevision.createRevision(filePath, (GitRevisionNumber)revisionNumber, myProject,
+                                                              selectedFile.getCharset());
       try {
         candidate.getContent();
         return candidate;

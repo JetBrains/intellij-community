@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +205,7 @@ public class AndroidRootUtil {
   @NotNull
   public static List<VirtualFile> getExternalLibraries(Module module, Library platformLibrary) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    List<VirtualFile> libs = new ArrayList<VirtualFile>();
+    List<VirtualFile> libs = new OrderedSet<VirtualFile>();
     fillExternalLibrariesAndModules(module, files, libs, platformLibrary);
     return libs;
   }

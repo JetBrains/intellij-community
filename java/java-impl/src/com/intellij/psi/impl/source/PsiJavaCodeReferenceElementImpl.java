@@ -76,13 +76,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public void setKindWhenDummy(final int kind) {
-    LOG.assertTrue(getTreeParent().getElementType() == TokenType.DUMMY_HOLDER);
+    LOG.assertTrue(isDummy(getTreeParent().getElementType()));
     myKindWhenDummy = kind;
+  }
+
+  private static boolean isDummy(final IElementType type) {
+    return type == TokenType.DUMMY_HOLDER || type == JavaElementType.DUMMY_ELEMENT;
   }
 
   public int getKind() {
     IElementType i = getTreeParent().getElementType();
-    if (i == TokenType.DUMMY_HOLDER) {
+    if (isDummy(i)) {
       return myKindWhenDummy;
     }
     if (i == JavaElementType.TYPE) {

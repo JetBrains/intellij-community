@@ -43,11 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.ChangeEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The class contains utilities for creating and removing stashes.
@@ -89,7 +85,7 @@ public class GitStashUtils {
     handler.setNoSSH(true);
     handler.addParameters("pop");
     handler.ignoreErrorCode(1);
-    if (QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
+    if (QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("--quiet");
     }
     handler.run();

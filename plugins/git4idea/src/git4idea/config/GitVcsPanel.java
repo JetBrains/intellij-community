@@ -20,7 +20,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +45,7 @@ public class GitVcsPanel {
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
   private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
   private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
+  private GitVcs myVcs;
 
   /**
    * The constructor
@@ -53,6 +53,7 @@ public class GitVcsPanel {
    * @param project the context project
    */
   public GitVcsPanel(@NotNull Project project) {
+    myVcs = GitVcs.getInstance(project);
     myAppSettings = GitVcsApplicationSettings.getInstance();
     myProjectSettings = GitVcsSettings.getInstance(project);
     myProject = project;
@@ -78,22 +79,22 @@ public class GitVcsPanel {
    * Test availability of the connection
    */
   private void testConnection() {
+    final String executable = myGitField.getText();
     if (myAppSettings != null) {
-      myAppSettings.setPathToGit(myGitField.getText());
+      myAppSettings.setPathToGit(executable);
     }
-    final String s;
+    final GitVersion version;
     try {
-      s = GitVcs.version(myProject);
-    }
-    catch (VcsException e) {
+      version = GitVersion.identifyVersion(executable);
+    } catch (Exception e) {
       Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }
-    if (GitVersion.parse(s).isSupported()) {
-      Messages.showInfoMessage(myProject, s, GitBundle.getString("find.git.success.title"));
-    }
-    else {
-      Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", s, GitVersion.MIN),
+
+    if (version.isSupported()) {
+      Messages.showInfoMessage(myProject, version.toString(), GitBundle.getString("find.git.success.title"));
+    } else {
+      Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
                                  GitBundle.getString("find.git.success.title"));
     }
   }
@@ -158,6 +159,7 @@ public class GitVcsPanel {
    */
   public void save(@NotNull GitVcsSettings settings) {
     settings.getAppSettings().setPathToGit(myGitField.getText());
+    myVcs.checkVersion();
     settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
     GitVcsSettings.ConversionPolicy conversionPolicy;

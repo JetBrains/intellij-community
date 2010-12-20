@@ -44,26 +44,32 @@ public class JavaParsingContext extends ParsingContext {
     myJavadocParsing = new JavadocParsing(this);
   }
 
+  @Deprecated
   public StatementParsing getStatementParsing() {
     return myStatementParsing;
   }
 
+  @Deprecated
   public DeclarationParsing getDeclarationParsing() {
     return myDeclarationParsing;
   }
 
+  @Deprecated
   public ExpressionParsing getExpressionParsing() {
     return myExpressionParsing;
   }
 
+  @Deprecated
   public ClassBodyParsing getClassBodyParsing() {
     return myClassBodyParsing;
   }
 
+  @Deprecated
   public ImportsTextParsing getImportsTextParsing() {
     return myImportsParsing;
   }
 
+  @Deprecated
   public FileTextParsing getFileTextParsing() {
     return myFileTextParsing;
   }

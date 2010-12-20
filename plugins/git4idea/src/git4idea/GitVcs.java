@@ -26,17 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.RemoteDifferenceStrategy;
-import com.intellij.openapi.vcs.RepositoryChangeListener;
-import com.intellij.openapi.vcs.TreeDiffProvider;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
-import com.intellij.openapi.vcs.VcsType;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -67,13 +57,7 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCheckinHandlerFactory;
 import git4idea.checkin.GitCommitAndPushExecutor;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitExecutableValidator;
-import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVcsConfigurable;
-import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersion;
+import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
@@ -83,18 +67,10 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.GitConfigListener;
-import git4idea.vfs.GitConfigTracker;
-import git4idea.vfs.GitIgnoreTracker;
-import git4idea.vfs.GitReferenceListener;
-import git4idea.vfs.GitReferenceTracker;
-import git4idea.vfs.GitRootTracker;
-import git4idea.vfs.GitRootsListener;
-import git4idea.vfs.GitVFSListener;
+import git4idea.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -129,9 +105,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private GitVersion myVersion; // The currently detected git version or null.
-  private final Object myCheckingVersion = new Object(); // Checking the version lock (used to prevent infinite recursion)
-  private String myVersionCheckExcecutable = ""; // The path to executable at the time of version check
 
   private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
   private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
@@ -148,6 +121,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitExecutableValidator myExecutableValidator;
   private RepositoryChangeListener myIndexChangeListener;
   private GitBranchWidget myBranchWidget;
+
+  private GitVersion myVersion; // version of Git which this plugin uses.
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -191,23 +166,16 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myVcsManager.registerCheckinHandlerFactory(new GitCheckinHandlerFactory());
   }
 
-  /**
-   * @return the vfs listener instance
-   */
   public GitVFSListener getVFSListener() {
     return myVFSListener;
   }
 
-  /**
-   * @return the command lock
-   */
   public ReadWriteLock getCommandLock() {
     return myCommandLock;
   }
 
   /**
    * Run task in background using the common queue (per project)
-   *
    * @param task the task to run
    */
   public static void runInBackground(Task.Backgroundable task) {
@@ -217,56 +185,26 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  /**
-   * Add listener for git roots
-   *
-   * @param listener the listener to add
-   */
   public void addGitConfigListener(GitConfigListener listener) {
     myConfigListeners.addListener(listener);
   }
 
-  /**
-   * Remove listener for git roots
-   *
-   * @param listener the listener to remove
-   */
   public void removeGitConfigListener(GitConfigListener listener) {
     myConfigListeners.removeListener(listener);
   }
 
-  /**
-   * Add listener for git roots
-   *
-   * @param listener the listener to add
-   */
   public void addGitReferenceListener(GitReferenceListener listener) {
     myReferenceListeners.addListener(listener);
   }
 
-  /**
-   * Remove listener for git roots
-   *
-   * @param listener the listener to remove
-   */
   public void removeGitReferenceListener(GitReferenceListener listener) {
     myReferenceListeners.removeListener(listener);
   }
 
-  /**
-   * Add listener for git roots
-   *
-   * @param listener the listener to add
-   */
   public void addGitRootsListener(GitRootsListener listener) {
     myRootListeners.addListener(listener);
   }
 
-  /**
-   * Remove listener for git roots
-   *
-   * @param listener the listener to remove
-   */
   public void removeGitRootsListener(GitRootsListener listener) {
     myRootListeners.removeListener(listener);
   }
@@ -279,53 +217,35 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myReverseMergeProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
     return myCommittedChangeListProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String getRevisionPattern() {
     // return the full commit hash pattern, possibly other revision formats should be supported as well
     return "[0-9a-fA-F]{40}";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public CheckinEnvironment getCheckinEnvironment() {
     return myCheckinEnvironment;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   @Override
   public MergeProvider getMergeProvider() {
     return myMergeProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public RollbackEnvironment getRollbackEnvironment() {
     return myRollbackEnvironment;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public VcsHistoryProvider getVcsHistoryProvider() {
@@ -337,54 +257,36 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return myHistoryProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public String getDisplayName() {
     return NAME;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {
     return myUpdateEnvironment;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public GitAnnotationProvider getAnnotationProvider() {
     return myAnnotationProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   public DiffProvider getDiffProvider() {
     return myDiffProvider;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @Nullable
   public RevisionSelector getRevisionSelector() {
     return myRevSelector;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
@@ -409,9 +311,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @SuppressWarnings({"deprecation"})
   @Override
   @Nullable
@@ -419,24 +318,15 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return parseRevisionNumber(revision, null);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void start() throws VcsException {
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected void shutdown() throws VcsException {
   }
@@ -446,6 +336,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     isActivated = true;
     myExecutableValidator = new GitExecutableValidator(myProject);
     myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
+    checkVersion();
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
@@ -503,18 +394,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   @Override
   public synchronized Configurable getConfigurable() {
     return myConfigurable;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public ChangeProvider getChangeProvider() {
     return myChangeProvider;
@@ -546,26 +431,20 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Show a plain message in vcs view
-   *
-   * @param message a message to show
+   * Shows a plain message in the Version Control Console.
    */
   public void showMessages(@NotNull String message) {
     if (message.length() == 0) return;
     showMessage(message, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
   }
 
-  /**
-   * @return vcs settings for the current project
-   */
   @NotNull
   public GitVcsApplicationSettings getAppSettings() {
     return myAppSettings;
   }
 
   /**
-   * Show message in the VCS view
-   *
+   * Show message in the Version Control Console
    * @param message a message to show
    * @param style   a style to use
    */
@@ -574,64 +453,32 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * Check version and report problem
+   * Checks Git version and updates the myVersion variable.
+   * In the case of exception or unsupported version reports the problem.
+   * Note that unsupported version is also applied - some functionality might not work (we warn about that), but no need to disable at all.
    */
   public void checkVersion() {
     final String executable = myAppSettings.getPathToGit();
-    synchronized (myCheckingVersion) {
-      if (myVersion != null && myVersionCheckExcecutable.equals(executable)) {
-        return;
-      }
-      myVersionCheckExcecutable = executable;
-      // this assignment is done to prevent recursive version check
-      myVersion = GitVersion.INVALID;
-      final String version;
-      try {
-        version = version(myProject).trim();
-      }
-      catch (VcsException e) {
-        String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-        if (!myProject.isDefault()) {
-          showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-        }
-        return;
-      }
-      myVersion = GitVersion.parse(version);
-      if (!GitVersion.parse(version).isSupported() && !myProject.isDefault()) {
-        showMessage(GitBundle.message("vcs.unsupported.version", version, GitVersion.MIN),
+    try {
+      myVersion = GitVersion.identifyVersion(executable);
+      if (!myVersion.isSupported() && !myProject.isDefault()) {
+        showMessage(GitBundle.message("vcs.unsupported.version", myVersion, GitVersion.MIN),
                     ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      }
+    } catch (Exception e) {
+      final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+      if (!myProject.isDefault()) {
+        showMessage(GitBundle.message("vcs.unable.to.run.git", executable, reason), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       }
     }
   }
 
-  /**
-   * @return the configured version of git
-   */
-  public GitVersion version() {
-    checkVersion();
+  public GitVersion getVersion() {
     return myVersion;
   }
 
   /**
-   * Get the version of configured git
-   *
-   * @param project the project
-   * @return a version of configured git
-   * @throws VcsException an error if there is a problem with running git
-   */
-  public static String version(Project project) throws VcsException {
-    final String s;
-    GitSimpleHandler h = new GitSimpleHandler(project, new File("."), GitCommand.VERSION);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    s = h.run();
-    return s;
-  }
-
-  /**
-   * Show command line
-   *
-   * @param cmdLine a command line text
+   * Shows a command line message in the Version Control Console
    */
   public void showCommandLine(final String cmdLine) {
     SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
@@ -639,25 +486,17 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   /**
-   * The error line
-   *
-   * @param line a line to show
+   * Shows error message in the Version Control Console
    */
   public void showErrorMessages(final String line) {
     showMessage(line, ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public boolean allowsNestedRoots() {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
     Collections.sort(in, new ComparatorDelegate<S, VirtualFile>(convertor, FilePathComparator.getInstance()));
@@ -685,9 +524,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return in;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public RootsConvertor getCustomConvertor() {
     return GitRootConverter.INSTANCE;
@@ -731,9 +567,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return GitChangeUtils.getRevisionChanges(project, vcsRoot, revision.getRevisionNumber().asString(), false);
   }
 
-  /**
-   * @return true if vcs was activated
-   */
   public boolean isActivated() {
     return isActivated;
   }

@@ -26,7 +26,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -294,11 +293,8 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
           return computeConstantValue(visitedVars);
         }
 
-        PsiManager manager = getManager();
-        final FileElement holderElement = DummyHolderFactory.createHolder(manager, this).getTreeElement();
-        CompositeElement expressionElement = ExpressionParsing.parseExpressionText(manager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
-        holderElement.rawAddChildren(expressionElement);
-        initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(expressionElement);
+        final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+        initializer = parserFacade.createExpressionFromText(initializerText, this);
       }
     }
 
