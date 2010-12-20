@@ -16,18 +16,15 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.util.CharTable;
 
 public class JavaSourceUtil {
-  public static void fullyQualifyReference(CompositeElement reference, PsiClass targetClass) {
-    if (((SourceJavaCodeReference)reference).isQualified()) { // qualifed reference
+  private JavaSourceUtil() { }
+
+  public static void fullyQualifyReference(final CompositeElement reference, final PsiClass targetClass) {
+    if (((SourceJavaCodeReference)reference).isQualified()) { // qualified reference
       final PsiClass parentClass = targetClass.getContainingClass();
       if (parentClass == null) return;
       final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
@@ -43,19 +40,20 @@ public class JavaSourceUtil {
       final int i = qName.lastIndexOf('.');
       if (i > 0) {
         final String prefix = qName.substring(0, i);
-        PsiManager manager = reference.getManager();
+        final PsiManager manager = reference.getManager();
+        final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(manager.getProject()).getParserFacade();
 
-        final CharTable table = SharedImplUtil.findCharTableByTree(reference);
-        final CompositeElement qualifier;
+        final TreeElement qualifier;
         if (reference instanceof PsiReferenceExpression) {
-          qualifier = ExpressionParsing.parseExpressionText(manager, prefix, 0, prefix.length(), table);
+          qualifier = (TreeElement)parserFacade.createExpressionFromText(prefix, null).getNode();
         }
         else {
-          qualifier = Parsing.parseJavaCodeReferenceText(manager, prefix, table);
+          qualifier = (TreeElement)parserFacade.createReferenceFromText(prefix, null).getNode();
         }
+
         if (qualifier != null) {
           final CharTable systemCharTab = SharedImplUtil.findCharTableByTree(qualifier);
-          final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
+          final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, systemCharTab, manager);
           qualifier.rawInsertAfterMe(dot);
           reference.addInternal(qualifier, dot, null, Boolean.FALSE);
         }
