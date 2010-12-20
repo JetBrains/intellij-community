@@ -65,7 +65,7 @@ public class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProve
     }
     else if (value instanceof PackageElement) {
       PackageElement packageElement = (PackageElement)value;
-      final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage().getQualifiedName(),
+      final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage(),
                                                                                          packageElement.getModule(),
                                                                                          coverageDataManager);
       data.setLocationString(coverageString);

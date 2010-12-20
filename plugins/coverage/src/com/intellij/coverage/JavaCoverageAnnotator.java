@@ -5,8 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,10 @@ import java.util.Map;
  */
 public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<String, PackageAnnotator.PackageCoverageInfo>();
-  private final Map<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos = new HashMap<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo>();
-  private final Map<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos = new HashMap<Pair<String, Module>, PackageAnnotator.PackageCoverageInfo>();
+  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
+    new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
+  private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
+    new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
 
   public JavaCoverageAnnotator(final Project project) {
@@ -39,19 +42,16 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (psiPackage == null) return null;
 
-    final String packageFQName = psiPackage.getQualifiedName();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
-    final Module module = projectFileIndex.getModuleForFile(directory.getVirtualFile());
-    if (module == null) return null;
+    final VirtualFile virtualFile = directory.getVirtualFile();
 
-    final boolean isInTestContent = projectFileIndex.isInTestSourceContent(directory.getVirtualFile());
+    final boolean isInTestContent = projectFileIndex.isInTestSourceContent(virtualFile);
 
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
-    final Pair<String, Module> qualifiedPair = new Pair<String, Module>(packageFQName, module);
-    return isInTestContent ? getCoverageInformationString(myTestDirCoverageInfos.get(qualifiedPair), coverageDataManager.isSubCoverageActive())
-                           : getCoverageInformationString(myDirCoverageInfos.get(qualifiedPair), coverageDataManager.isSubCoverageActive());
+    return isInTestContent ? getCoverageInformationString(myTestDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive())
+                           : getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
 
   }
 
@@ -95,18 +95,16 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
               myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
             }
 
-            public void annotateSourceDirectory(String packageQualifiedName,
+            public void annotateSourceDirectory(VirtualFile dir,
                                                 PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
                                                 Module module) {
-              final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
-              myDirCoverageInfos.put(p, dirCoverageInfo);
+              myDirCoverageInfos.put(dir, dirCoverageInfo);
             }
 
-            public void annotateTestDirectory(String packageQualifiedName,
+            public void annotateTestDirectory(VirtualFile virtualFile,
                                               PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
                                               Module module) {
-              final Pair<String, Module> p = new Pair<String, Module>(packageQualifiedName, module);
-              myTestDirCoverageInfos.put(p, packageCoverageInfo);
+              myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
             }
 
             public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
@@ -131,38 +129,45 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   /**
-   * @param packageFQName qualified name of a package to obtain coverage information for
+   *
+   * @param psiPackage qualified name of a package to obtain coverage information for
    * @param module optional parameter to restrict coverage to source directories of a certain module
    * @param coverageDataManager
    * @return human-readable coverage information
    */
-  public String getPackageCoverageInformationString(final String packageFQName,
+  @Nullable
+  public String getPackageCoverageInformationString(final PsiPackage psiPackage,
                                                     @Nullable final Module module,
                                                     @NotNull final CoverageDataManager coverageDataManager) {
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
     PackageAnnotator.PackageCoverageInfo info;
     if (module != null) {
-      final Pair<String, Module> p = new Pair<String, Module>(packageFQName, module);
-      info = myDirCoverageInfos.get(p);
-      final PackageAnnotator.PackageCoverageInfo testInfo = myTestDirCoverageInfos.get(p);
-      if (testInfo != null) {
-        if (info == null) {
-          return getCoverageInformationString(testInfo, subCoverageActive);
-        } else {
-          final PackageAnnotator.PackageCoverageInfo coverageInfo = new PackageAnnotator.PackageCoverageInfo();
-          coverageInfo.totalClassCount = info.totalClassCount + testInfo.totalClassCount;
-          coverageInfo.coveredClassCount = info.coveredClassCount + testInfo.coveredClassCount;
-
-          coverageInfo.totalLineCount = info.totalLineCount + testInfo.totalLineCount;
-          coverageInfo.coveredLineCount = info.coveredLineCount + testInfo.coveredLineCount;
-          return getCoverageInformationString(coverageInfo, subCoverageActive);
-        }
+      final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+      PackageAnnotator.PackageCoverageInfo result = null;
+      for (PsiDirectory directory : directories) {
+        final VirtualFile virtualFile = directory.getVirtualFile();
+        result = merge(result, myDirCoverageInfos.get(virtualFile));
+        result = merge(result, myTestDirCoverageInfos.get(virtualFile));
       }
+      return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      info = myPackageCoverageInfos.get(packageFQName);
+      info = myPackageCoverageInfos.get(psiPackage.getQualifiedName());
     }
     return getCoverageInformationString(info, subCoverageActive);
+  }
+
+  private static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
+                                                            final PackageAnnotator.PackageCoverageInfo testInfo) {
+    if (info == null) return testInfo;
+    if (testInfo == null) return info;
+    final PackageAnnotator.PackageCoverageInfo coverageInfo = new PackageAnnotator.PackageCoverageInfo();
+    coverageInfo.totalClassCount = info.totalClassCount + testInfo.totalClassCount;
+    coverageInfo.coveredClassCount = info.coveredClassCount + testInfo.coveredClassCount;
+
+    coverageInfo.totalLineCount = info.totalLineCount + testInfo.totalLineCount;
+    coverageInfo.coveredLineCount = info.coveredLineCount + testInfo.coveredLineCount;
+    return coverageInfo;
   }
 
   /**
