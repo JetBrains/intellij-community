@@ -76,7 +76,20 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                                       final Project projectToClose,
                                       final boolean forceOpenInNewFrame,
                                       final int line) {
-    VirtualFile baseDir = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
+    VirtualFile baseDir = virtualFile;
+    if (!baseDir.isDirectory()) {
+      baseDir = virtualFile.getParent();
+      while (baseDir != null) {
+        if (new File(baseDir.getPath(), ".idea").exists()) {
+          break;
+        }
+        baseDir = baseDir.getParent();
+      }
+      if (baseDir == null) {
+        baseDir = virtualFile.getParent();
+      }
+    }
+
     final File projectDir = new File(baseDir.getPath(), ".idea");
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
