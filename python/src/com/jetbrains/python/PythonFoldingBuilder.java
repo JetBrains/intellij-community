@@ -53,11 +53,17 @@ public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
       if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION) {
         ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
         if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
-          descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, node.getTextRange().getEndOffset())));
+          final CharSequence chars = node.getChars();
+          int nodeStart = node.getTextRange().getStartOffset();
+          int endOffset = node.getTextRange().getEndOffset();
+          while(endOffset > colon.getStartOffset()+2 && endOffset > nodeStart && Character.isWhitespace(chars.charAt(endOffset - nodeStart - 1))) {
+            endOffset--;
+          }
+          descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, endOffset)));
         }
         else {
           TextRange range = node.getTextRange();
-          if (range.getStartOffset() < range.getEndOffset() - 1) { // only for ranges at leas 1 char wide
+          if (range.getStartOffset() < range.getEndOffset() - 1) { // only for ranges at least 1 char wide
             descriptors.add(new FoldingDescriptor(node, range));
           }
         }

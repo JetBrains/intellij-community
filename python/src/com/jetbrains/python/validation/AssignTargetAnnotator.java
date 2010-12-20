@@ -17,8 +17,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-    final PyExpression expression = node.getLeftHandSideExpression();
-    if (expression != null) {
+    for (PyExpression expression : node.getRawTargets()) {
       expression.accept(new ExprVisitor(Operation.Assign));
     }
   }
@@ -53,21 +52,21 @@ public class AssignTargetAnnotator extends PyAnnotator {
   }
 
   private class ExprVisitor extends PyElementVisitor {
-    private final Operation _op;
+    private final Operation myOp;
     private final String DELETING_NONE = message("ANN.deleting.none");
     private final String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
     private final String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
     private final String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
 
     public ExprVisitor(Operation op) {
-      _op = op;
+      myOp = op;
     }
 
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
       String referencedName = node.getReferencedName();
       if (PyNames.NONE.equals(referencedName)) {
-        getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
+        getHolder().createErrorAnnotation(node, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
       }
     }
 
@@ -77,7 +76,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
         if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkType.SKELETON_DIR_NAME + "/")){
-          getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
+          getHolder().createErrorAnnotation(node, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE);
         }
       }
       if (PyNames.DEBUG.equals(targetName)) {
@@ -92,13 +91,13 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyCallExpression(final PyCallExpression node) {
-      getHolder().createErrorAnnotation(node, (_op == Operation.Delete) ? CANT_DELETE_FUNCTION_CALL : CANT_ASSIGN_TO_FUNCTION_CALL);
+      getHolder().createErrorAnnotation(node, (myOp == Operation.Delete) ? CANT_DELETE_FUNCTION_CALL : CANT_ASSIGN_TO_FUNCTION_CALL);
     }
 
     @Override
     public void visitPyGeneratorExpression(final PyGeneratorExpression node) {
       getHolder().createErrorAnnotation(node, message(
-        _op == Operation.AugAssign ? "ANN.cant.aug.assign.to.generator" : "ANN.cant.assign.to.generator"));
+        myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.generator" : "ANN.cant.assign.to.generator"));
     }
 
     @Override
@@ -111,7 +110,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       if (node.getElements().length == 0) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.parens"));
       }
-      else if (_op == Operation.AugAssign) {
+      else if (myOp == Operation.AugAssign) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.tuple.or.generator"));
       }
       else {
@@ -121,7 +120,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
-      if (_op == Operation.AugAssign) {
+      if (myOp == Operation.AugAssign) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.tuple.or.generator"));
       }
       else {
@@ -134,7 +133,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       if (node.getElements().length == 0) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.assign.to.brackets"));
       }
-      else if (_op == Operation.AugAssign) {
+      else if (myOp == Operation.AugAssign) {
         getHolder().createErrorAnnotation(node, message("ANN.cant.aug.assign.to.list.or.comprh"));
       }
       else {
@@ -144,17 +143,17 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyListCompExpression(final PyListCompExpression node) {
-      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
+      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.comprh" : "ANN.cant.assign.to.comprh"));
     }
 
     @Override
     public void visitPyDictCompExpression(PyDictCompExpression node) {
-      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
+      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
     }
 
     @Override
     public void visitPySetCompExpression(PySetCompExpression node) {
-      markError(node, message(_op == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
+      markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
     }
 
     @Override
@@ -184,7 +183,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     }
 
     private void checkLiteral(PyExpression node) {
-      getHolder().createErrorAnnotation(node, message(_op == Operation.Delete? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal"));
+      getHolder().createErrorAnnotation(node, message(myOp == Operation.Delete? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal"));
     }
 
     public void visitPyLambdaExpression(final PyLambdaExpression node) {

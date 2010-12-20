@@ -5,7 +5,7 @@ import org.jetbrains.jps.Jps
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "100.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", "102.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
@@ -163,7 +163,7 @@ target('default': "Build artifacts") {
   }
 
   ant.tstamp() {
-    format(property: "today.year", pattern: "yyyy")
+    format(property: "todayYear", pattern: "yyyy")
   }
 
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
@@ -565,6 +565,7 @@ def layoutMac(Map args, String target) {
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
+    replacefilter(token: "@@year@@", value: "$todayYear")
 
 
     replacefilter(token: "@@version@@", value: args.version)

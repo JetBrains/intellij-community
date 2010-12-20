@@ -22,7 +22,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>PyCharm @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-2010</string>
+    <string>PyCharm @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>
     <string>@@version@@</string>
     <key>CFBundleVersion</key>

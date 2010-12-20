@@ -410,8 +410,24 @@ public class ResolveImportUtil {
     if (elt_psifile != null) {  // formality
       final VirtualFile elt_vfile = elt_psifile.getVirtualFile();
       if (elt_vfile != null) { // reality
-        for (OrderEntry entry : ProjectRootManager.getInstance(elt.getProject()).getFileIndex().getOrderEntriesForFile(elt_vfile)) {
-          if (!visitOrderEntryRoots(visitor, entry)) break;
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(elt.getProject()).getFileIndex();
+        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(elt_vfile);
+        if (orderEntries.size() > 0) {
+          for (OrderEntry entry : orderEntries) {
+            if (!visitOrderEntryRoots(visitor, entry)) break;
+          }
+        }
+        else {
+          // out-of-project file - use roots of SDK assigned to project
+          final Sdk sdk = PyBuiltinCache.findSdkForFile(elt_psifile);
+          if (sdk != null) {
+            final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+            for (VirtualFile root : roots) {
+              if (!visitor.visitRoot(root)) {
+                break;
+              }
+            }
+          }
         }
       }
     }

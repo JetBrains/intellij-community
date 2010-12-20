@@ -6,6 +6,8 @@
 
 <error descr="can't assign to operator">1 + 21</error> = 12
 
+result = <error descr="can't assign to operator">a < c and c</error> = 4
+
 <error descr="can't assign to ()">()</error> = 123
 <error descr="can't assign to []">[]</error> = 1
 [<error descr="can't assign to literal">1</error>] = 1

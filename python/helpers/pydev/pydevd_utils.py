@@ -1,9 +1,11 @@
 from numbers import *
+import pydevd_constants
 
 def to_number(x):
     if isinstance(x, Number):
         return x
-    if (isinstance(x, basestring)):
+
+    if (is_string(x)):
         try:
             n = float(x)
             return n
@@ -23,10 +25,15 @@ def to_number(x):
 
 def compare_object_attrs(x, y):
     try:
+        if (x == y):
+            return 0
         x_num = to_number(x)
         y_num = to_number(y)
         if (x_num is not None and y_num is not None):
-            return int(x_num - y_num)
+            if x_num - y_num<0:
+                return -1
+            else:
+                return 1
         if ('__len__' == x):
             return -1
         if ('__len__' == y):
@@ -34,7 +41,10 @@ def compare_object_attrs(x, y):
 
         return x.__cmp__(y)
     except:
-        return cmp(str(x), str(y))
+        if pydevd_constants.IS_PY3K:
+            return (str(x) > str(y)) - (str(x) < str(y))
+        else:
+            return cmp(str(x), str(y))
 
 def cmp_to_key(mycmp):
     'Convert a cmp= function into a key= function'
@@ -55,3 +65,8 @@ def cmp_to_key(mycmp):
             return mycmp(self.obj, other.obj) != 0
     return K
 
+def is_string(x):
+    if (pydevd_constants.IS_PY3K):
+        return isinstance(x, str)
+    else:
+        return isinstance(x, basestring)

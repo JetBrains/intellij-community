@@ -25,11 +25,17 @@ public class PyQualifiedName {
     myComponents = new ArrayList<String>(count);
   }
 
-  public PyQualifiedName(List<PyReferenceExpression> components) {
-    myComponents = new ArrayList<String>(components.size());
+  @Nullable
+  public static PyQualifiedName fromReferenceChain(List<PyReferenceExpression> components) {
+    PyQualifiedName qName = new PyQualifiedName(components.size());
     for (PyReferenceExpression component : components) {
-      myComponents.add(component.getReferencedName());
+      final String refName = component.getReferencedName();
+      if (refName == null) {
+        return null;
+      }
+      qName.myComponents.add(refName);
     }
+    return qName;
   }
 
   public static PyQualifiedName fromComponents(Collection<String> components) {
