@@ -414,7 +414,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     super.tearDown();
 
     myThreadTracker.checkLeak();
-    checkInjectorsAreDisposed();
+    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
   public static void doTearDown(Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
@@ -501,10 +501,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
       fail("Unreleased editors: " + allEditors.length);
     }
-  }
-
-  private static void checkInjectorsAreDisposed() {
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
   @Override
