@@ -116,8 +116,8 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    super.tearDown();
     myFacet = null;
+    super.tearDown();
   }
 
   @Nullable

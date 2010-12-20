@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitFileUtils;
+import git4idea.history.wholeTree.GitBinaryMultipleContentsRevision;
 import git4idea.history.wholeTree.GitMultipleContentsRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,29 +42,25 @@ public class GitContentRevision implements ContentRevision {
   /**
    * the file path
    */
-  @NotNull private final FilePath myFile;
+  @NotNull protected final FilePath myFile;
   /**
    * the revision number
    */
-  @NotNull private final GitRevisionNumber myRevision;
+  @NotNull protected final GitRevisionNumber myRevision;
   /**
    * the context project
    */
-  @NotNull private final Project myProject;
+  @NotNull protected final Project myProject;
   /**
    * The charset for the file
    */
-  @NotNull private Charset myCharset;
+  private Charset myCharset;
 
-  public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project, Charset charset) {
+  protected GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project, Charset charset) {
     myProject = project;
     myFile = file;
     myRevision = revision;
     myCharset = charset;
-  }
-
-  public GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {
-    this(file, revision, project, null);
   }
 
   @Nullable
@@ -104,11 +101,15 @@ public class GitContentRevision implements ContentRevision {
   public static ContentRevision createMultipleParentsRevision(Project project,
                                                               final FilePath file,
                                                               final List<GitRevisionNumber> revisions) throws VcsException {
-    final GitContentRevision contentRevision = new GitContentRevision(file, revisions.get(0), project);
+    final GitContentRevision contentRevision = createRevisionImpl(file, revisions.get(0), project, null);
     if (revisions.size() == 1) {
       return contentRevision;
     } else {
-      return new GitMultipleContentsRevision(file, revisions, contentRevision);
+      if (contentRevision instanceof GitBinaryContentRevision) {
+        return new GitBinaryMultipleContentsRevision(file, revisions, (GitBinaryContentRevision) contentRevision);
+      } else {
+        return new GitMultipleContentsRevision(file, revisions, contentRevision);
+      }
     }
   }
 
@@ -131,7 +132,7 @@ public class GitContentRevision implements ContentRevision {
                                                boolean isDeleted, final boolean canBeDeleted) throws VcsException {
     final FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted);
     if (revisionNumber != null) {
-      return new GitContentRevision(file, (GitRevisionNumber)revisionNumber, project);
+      return createRevisionImpl(file, (GitRevisionNumber)revisionNumber, project, null);
     }
     else {
       return CurrentContentRevision.create(file);
@@ -150,12 +151,33 @@ public class GitContentRevision implements ContentRevision {
 
   public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project)
     throws VcsException {
+    return createRevision(file, revisionNumber, project, null);
+  }
+
+  public static ContentRevision createRevision(final VirtualFile file, final VcsRevisionNumber revisionNumber, final Project project,
+                                               final Charset charset)
+    throws VcsException {
     final FilePathImpl filePath = new FilePathImpl(file);
+    return createRevision(filePath, revisionNumber, project, charset);
+  }
+
+  public static ContentRevision createRevision(final FilePath filePath, final VcsRevisionNumber revisionNumber, final Project project,
+                                               final Charset charset) {
     if (revisionNumber != null) {
-      return new GitContentRevision(filePath, (GitRevisionNumber)revisionNumber, project);
+      return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
     }
     else {
       return CurrentContentRevision.create(filePath);
+    }
+  }
+
+  private static GitContentRevision createRevisionImpl(FilePath path,
+                                                       GitRevisionNumber revisionNumber,
+                                                       Project project, final Charset charset) {
+    if (path.getFileType().isBinary()) {
+      return new GitBinaryContentRevision(path, revisionNumber, project);
+    } else {
+      return new GitContentRevision(path, revisionNumber, project, charset);
     }
   }
 

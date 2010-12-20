@@ -12,12 +12,10 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,7 @@ import java.util.List;
 public class GitMultipleContentsRevision implements ContentRevision {
   private final FilePath myPath;
   private final List<GitRevisionNumber> myList;
-  private ContentRevision myRevision;
+  protected ContentRevision myRevision;
 
   public GitMultipleContentsRevision(final FilePath path,
                                      final List<GitRevisionNumber> list,

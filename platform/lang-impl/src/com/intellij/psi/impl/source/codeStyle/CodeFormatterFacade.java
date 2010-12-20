@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 public class CodeFormatterFacade {
@@ -382,12 +381,8 @@ public class CodeFormatterFacade {
         selectionModel.setSelection(newSelectionStart, newSelectionEnd);
       }
 
-
-      // There is a possible case that particular line is so long, that its part that exceeds right margin and is wrapped
-      // still exceeds right margin. Hence, we recursively call 'wrap long lines' sub-routine in order to handle that.
-
-      doWrapLongLinesIfNecessary(editor, document, document.getLineStartOffset(line + 1), endOffsetToUse);
-      return;
+      // We know that number of lines is just increased, hence, update the data accordingly.
+      maxLine++;
     }
   }
 }

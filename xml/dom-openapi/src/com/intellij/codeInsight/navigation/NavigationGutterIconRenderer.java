@@ -30,6 +30,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,8 +46,8 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
   private final PsiElementListCellRenderer myCellRenderer;
   private final NotNullLazyValue<List<SmartPsiElementPointer>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, final PsiElementListCellRenderer cellRenderer,
-                                         final NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
+  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull PsiElementListCellRenderer cellRenderer,
+                                         @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
     myCellRenderer = cellRenderer;
