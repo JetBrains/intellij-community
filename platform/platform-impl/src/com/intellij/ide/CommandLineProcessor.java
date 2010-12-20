@@ -131,6 +131,9 @@ public class CommandLineProcessor {
           if (virtualFile != null) {
             lastOpenedProject = doOpenFile(virtualFile, line);
           }
+          else {
+            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot find file");
+          }
         }
         else {
           lastOpenedProject = doOpenFileOrProject(arg);
