@@ -129,6 +129,30 @@ public interface PsiJavaParserFacade extends PsiParserFacade {
   PsiType createTypeFromText(@NotNull @NonNls String text, PsiElement context) throws IncorrectOperationException;
 
   /**
+   * Creates a Java type element from the specified text.
+   *
+   * @param text    the text of the type to create (for example, a primitive type keyword, an array
+   *                declaration or the name of a class).
+   * @param context the PSI element used as context for resolving the reference.
+   * @return the created type element.
+   * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid type.
+   */
+  @NotNull
+  PsiTypeElement createTypeElementFromText(@NotNull @NonNls String text, PsiElement context) throws IncorrectOperationException;
+
+  /**
+   * Creates a Java code reference from the specified text.
+   *
+   * @param text    the text of the type to create (for example, a primitive type keyword, an array
+   *                declaration or the name of a class).
+   * @param context the PSI element used as context for resolving the reference.
+   * @return the created reference element.
+   * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid type.
+   */
+  @NotNull
+  PsiJavaCodeReferenceElement createReferenceFromText(@NotNull @NonNls String text, PsiElement context) throws IncorrectOperationException;
+
+  /**
    * Creates a Java code block from the specified text.
    *
    * @param text    the text of the code block to create.

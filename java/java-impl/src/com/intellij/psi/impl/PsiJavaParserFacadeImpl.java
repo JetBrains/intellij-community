@@ -71,6 +71,13 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     }
   };
 
+  public static final JavaParserUtil.ParserWrapper REFERENCE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+    }
+  };
+
   private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
@@ -224,21 +231,35 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     return createTypeInner(text, context, false);
   }
  
-  protected PsiType createTypeInner(final String text, final PsiElement context, final boolean markAsCopy) throws IncorrectOperationException {
-    final PsiPrimitiveType primitiveType = PRIMITIVE_TYPES.get(text);
-    if (primitiveType != null) return primitiveType;
-
+  @NotNull
+  public PsiTypeElement createTypeElementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeElement)) {
       throw new IncorrectOperationException("Incorrect type \"" + text + "\".");
     }
+    return (PsiTypeElement)element;
+  }
 
+  protected PsiType createTypeInner(final String text, final PsiElement context, final boolean markAsCopy) throws IncorrectOperationException {
+    final PsiPrimitiveType primitiveType = PRIMITIVE_TYPES.get(text);
+    if (primitiveType != null) return primitiveType;
+
+    final PsiTypeElement element = createTypeElementFromText(text, context);
     if (markAsCopy) {
-      holder.getTreeElement().acceptTree(new GeneratedMarkerVisitor());
+      ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
     }
+    return element.getType();
+  }
 
-    return ((PsiTypeElement)element).getType();
+  @NotNull
+  public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, REFERENCE, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiJavaCodeReferenceElement)) {
+      throw new IncorrectOperationException("Incorrect reference \"" + text + "\".");
+    }
+    return (PsiJavaCodeReferenceElement)element;
   }
 
   @NotNull
