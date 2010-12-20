@@ -51,8 +51,10 @@ public class GithubShareAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDefault()){
       e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
+    e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(true);
   }
 
