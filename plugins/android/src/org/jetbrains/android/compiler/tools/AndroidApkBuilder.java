@@ -78,6 +78,8 @@ public class AndroidApkBuilder {
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private static void collectDuplicateEntries(@NotNull String rootFile, @NotNull Set<String> entries, @NotNull Set<String> result)
     throws IOException {
+    final JavaResourceFilter javaResourceFilter = new JavaResourceFilter();
+
     FileInputStream fis = null;
     ZipInputStream zis = null;
     try {
@@ -88,7 +90,7 @@ public class AndroidApkBuilder {
       while ((entry = zis.getNextEntry()) != null) {
         if (!entry.isDirectory()) {
           String name = entry.getName();
-          if (!entries.add(name)) {
+          if (javaResourceFilter.checkEntry(name) && !entries.add(name)) {
             result.add(name);
           }
           zis.closeEntry();
@@ -200,7 +202,7 @@ public class AndroidApkBuilder {
       }
 
       for (String duplicate : duplicates) {
-        result.get(CompilerMessageCategory.WARNING).add("Duplicate entry " + duplicate + ". The files won't be added");
+        result.get(CompilerMessageCategory.WARNING).add("Duplicate entry " + duplicate + ". The file won't be added");
       }
 
       MyResourceFilter filter = new MyResourceFilter(duplicates);
