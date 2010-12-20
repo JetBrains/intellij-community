@@ -21,12 +21,10 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +58,10 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
 
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
-    return (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
+    final PsiJavaCodeReferenceElement result =
+      (PsiJavaCodeReferenceElement)getNode().findChildByRoleAsPsiElement(ChildRole.BASE_CLASS_REFERENCE);
+    assert result != null;
+    return result;
   }
 
   @NotNull
@@ -77,23 +78,20 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
 
     if (!isInQualifiedNew()) {
       final PsiJavaCodeReferenceElement ref;
-      String refText = stub.getBaseClassReferenceText();
-      final DummyHolder holder = DummyHolderFactory
-        .createHolder(getManager(), calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList()));
-      final FileElement holderElement = holder.getTreeElement();
+      final String refText = stub.getBaseClassReferenceText();
+      assert refText != null : stub;
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
 
-      ref = (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(getManager(), refText,
-                                                                                holderElement.getCharTable());
-      if (ref == null) {
+      final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
+      try {
+        ref = factory.createReferenceFromText(refText, context);
+        ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+        type = factory.createType(ref);
+      }
+      catch (IncorrectOperationException e) {
         type = PsiClassType.getJavaLangObject(getManager(), getResolveScope());
-        myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);
-        return type;
       }
 
-      holderElement.rawAddChildren((TreeElement)ref);
-      ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
-
-      type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(ref);
       myCachedBaseType = new PatchedSoftReference<PsiClassType>(type);
       return type;
     }
