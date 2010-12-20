@@ -45,6 +45,7 @@ import java.util.zip.ZipInputStream;
 
 import static com.intellij.openapi.compiler.CompilerMessageCategory.ERROR;
 import static com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION;
+import static com.intellij.openapi.compiler.CompilerMessageCategory.WARNING;
 
 /**
  * @author yole
@@ -148,6 +149,8 @@ public class AndroidApkBuilder {
     final Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
     result.put(ERROR, new ArrayList<String>());
     result.put(INFORMATION, new ArrayList<String>());
+    result.put(WARNING, new ArrayList<String>());
+
     FileOutputStream fos = null;
     try {
       String osKeyPath = DebugKeyProvider.getDefaultKeyStoreOsPath();
@@ -194,6 +197,10 @@ public class AndroidApkBuilder {
       Set<String> entries = new HashSet<String>();
       for (String externalJar : externalJars) {
         collectDuplicateEntries(externalJar, entries, duplicates);
+      }
+
+      for (String duplicate : duplicates) {
+        result.get(CompilerMessageCategory.WARNING).add("Duplicate entry " + duplicate + ". The files won't be added");
       }
 
       MyResourceFilter filter = new MyResourceFilter(duplicates);
