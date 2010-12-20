@@ -78,7 +78,7 @@ public class NavigationGutterIconBuilder<T> {
     }
   };
 
-  protected NavigationGutterIconBuilder(@NotNull final Icon icon, NotNullFunction<T,Collection<? extends PsiElement>> convertor) {
+  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T,Collection<? extends PsiElement>> convertor) {
     myIcon = icon;
     myConvertor = convertor;
   }
@@ -87,7 +87,7 @@ public class NavigationGutterIconBuilder<T> {
     return create(icon, DEFAULT_PSI_CONVERTOR);
   }
 
-  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon, NotNullFunction<T, Collection<? extends PsiElement>> convertor) {
+  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> convertor) {
     return new NavigationGutterIconBuilder<T>(icon, convertor);
   }
 
@@ -162,14 +162,14 @@ public class NavigationGutterIconBuilder<T> {
     return doInstall(holder.createInfoAnnotation(element, null), element.getProject());
   }
 
-  private Annotation doInstall(final Annotation annotation, final Project project) {
+  private Annotation doInstall(@NotNull Annotation annotation, @NotNull Project project) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(project);
     annotation.setGutterIconRenderer(renderer);
     annotation.setNeedsUpdateOnTyping(false);
     return annotation;
   }
 
-  public LineMarkerInfo createLineMarkerInfo(PsiElement element) {
+  public LineMarkerInfo createLineMarkerInfo(@NotNull PsiElement element) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
     return new LineMarkerInfo<PsiElement>(element,
@@ -181,7 +181,12 @@ public class NavigationGutterIconBuilder<T> {
                                           renderer.getAlignment());
   }
 
-  private MyNavigationGutterIconRenderer createGutterIconRenderer(final Project project) {
+  private void checkBuilt() {
+    assert myTargets != null : "Must have called .setTargets() before calling create()";
+  }
+
+  private MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project) {
+    checkBuilt();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     NotNullLazyValue<List<SmartPsiElementPointer>> pointers = new NotNullLazyValue<List<SmartPsiElementPointer>>() {
@@ -234,11 +239,11 @@ public class NavigationGutterIconBuilder<T> {
     private final String myTooltipText;
     private final boolean myEmpty;
 
-    public MyNavigationGutterIconRenderer(final NavigationGutterIconBuilder builder,
+    public MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
                                           final Alignment alignment,
                                           final Icon icon,
                                           final String tooltipText,
-                                          final NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                          @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
                                           boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, builder.myCellRenderer, pointers);
       myAlignment = alignment;
