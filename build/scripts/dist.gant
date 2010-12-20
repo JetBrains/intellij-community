@@ -45,10 +45,6 @@ target(compile: "Compile project") {
     ant.mkdir(dir: it)
   }
 
-  ant.tstamp() {
-    format(property: "todayYear", pattern: "yyyy")
-  }
-
   project["javac"] = "$jdkHome/bin/javac"
   project.targetFolder = "$out/classes"
   project.clean()
@@ -160,6 +156,10 @@ private def layoutMac(Map args, String home, Paths paths) {
   }
 
   def version = isEap() ? p("component.version.codename") : p("component.version.major") + "." +  p("component.version.minor")
+
+  ant.tstamp() {
+    format(property: "todayYear", pattern: "yyyy")
+  }
 
   ant.replace(file: "${paths.distMac}/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildNumber)
