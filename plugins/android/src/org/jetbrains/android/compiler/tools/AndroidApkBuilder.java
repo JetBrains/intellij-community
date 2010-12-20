@@ -40,6 +40,8 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static com.intellij.openapi.compiler.CompilerMessageCategory.ERROR;
 import static com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION;
@@ -48,7 +50,6 @@ import static com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION;
  * @author yole
  */
 public class AndroidApkBuilder {
-  private static final SignedJarBuilder.IZipEntryFilter myJavaResourcesFilter = new JavaResourceFilter();
   private static final String UNALIGNED_SUFFIX = ".unaligned";
   private static final String UNSIGNED_SUFFIX = ".unsigned";
 
@@ -71,6 +72,36 @@ public class AndroidApkBuilder {
       }
     }
     return messages;
+  }
+
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
+  private static void collectDuplicateEntries(@NotNull String rootFile, @NotNull Set<String> entries, @NotNull Set<String> result)
+    throws IOException {
+    FileInputStream fis = null;
+    ZipInputStream zis = null;
+    try {
+      fis = new FileInputStream(rootFile);
+      zis = new ZipInputStream(fis);
+
+      ZipEntry entry;
+      while ((entry = zis.getNextEntry()) != null) {
+        if (!entry.isDirectory()) {
+          String name = entry.getName();
+          if (!entries.add(name)) {
+            result.add(name);
+          }
+          zis.closeEntry();
+        }
+      }
+    }
+    finally {
+      if (zis != null) {
+        zis.close();
+      }
+      if (fis != null) {
+        fis.close();
+      }
+    }
   }
 
   public static Map<CompilerMessageCategory, List<String>> execute(@NotNull String sdkPath,
@@ -159,10 +190,18 @@ public class AndroidApkBuilder {
         writeStandardSourceFolderResources(builder, sourceRoot, sourceRoot, new HashSet<VirtualFile>(), new HashSet<String>());
       }
 
+      Set<String> duplicates = new HashSet<String>();
+      Set<String> entries = new HashSet<String>();
+      for (String externalJar : externalJars) {
+        collectDuplicateEntries(externalJar, entries, duplicates);
+      }
+
+      MyResourceFilter filter = new MyResourceFilter(duplicates);
+
       for (String externalJar : externalJars) {
         try {
           fis = new FileInputStream(externalJar);
-          builder.writeZip(fis, myJavaResourcesFilter);
+          builder.writeZip(fis, filter);
         }
         finally {
           fis.close();
@@ -277,5 +316,21 @@ public class AndroidApkBuilder {
       return JavaResourceFilter.checkFileForPackaging(fileName, file.getExtension());
     }
     return false;
+  }
+
+  private static class MyResourceFilter extends JavaResourceFilter {
+    private final Set<String> myExcludedEntries;
+
+    public MyResourceFilter(@NotNull Set<String> excludedEntries) {
+      myExcludedEntries = excludedEntries;
+    }
+
+    @Override
+    public boolean checkEntry(String name) {
+      if (myExcludedEntries.contains(name)) {
+        return false;
+      }
+      return super.checkEntry(name);
+    }
   }
 }
