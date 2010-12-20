@@ -57,7 +57,7 @@ public class CreateLauncherScriptAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    createLauncherScript(project, dialog.myNameField.getText() + "/" + dialog.myPathField.getText());
+    createLauncherScript(project, new File(dialog.myPathField.getText(), dialog.myNameField.getText()).getPath());
   }
 
   public static void createLauncherScript(Project project, String pathname) {
