@@ -70,13 +70,6 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
               }
             }
           }
-          // filter unusable lookup elements
-          dictCompletion.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-            public void consume(final LookupElement lookupElement) {
-              if (lookupElement.getLookupString().equals("dict key"))
-                dictCompletion.addElement(lookupElement);
-            }
-          });
         }
       }
     );
