@@ -901,7 +901,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       renderer.append(": ");
       renderer.append(message);
       if (isMerge) {
-        renderer.append(GitBundle.getString("push.active.commit.node.merge"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(" " + GitBundle.getString("push.active.commit.node.merge"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
 
