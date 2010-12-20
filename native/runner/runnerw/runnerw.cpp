@@ -121,8 +121,10 @@ int main(int argc, char * argv[]) {
 	std::string app(argv[1]);
 	std::string args("");
 
-	for (int i = 2; i < argc; i++) {
-		args += " ";
+	for (int i = 1; i < argc; i++) {
+                if (i>1) {
+			args += " ";
+		}
 		if (strchr(argv[i], ' ')) {
 			args += "\"";
 			args += argv[i];
@@ -132,9 +134,9 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
-	if (app.length() == 0) {
-		PrintUsage();
-	}
+//	if (app.length() == 0) {
+//		PrintUsage();
+//	}
 
 	STARTUPINFO si;
 	SECURITY_ATTRIBUTES sa;
@@ -160,13 +162,22 @@ int main(int argc, char * argv[]) {
 	si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 	si.hStdInput = newstdin;
 
-	char* c_app = new char[app.size() + 1];
-	strcpy(c_app, app.c_str());
-
 	if (hasEnding(app, std::string(".bat"))) {
-		args = app + " " + args;
-		c_app = NULL;
+//              in MSDN it is said to do so, but actually that doesn't work
+//		args = "/c " + args;
+//		app = "cmd.exe";
+	} else {
+		app = "";
 	}
+
+
+	char* c_app = NULL;
+
+ 	if (app.size()>0) {
+		c_app = new char[app.size() + 1];
+		strcpy(c_app, app.c_str());
+	}
+
 
 	char* c_args = new char[args.size() + 1];
 	strcpy(c_args, args.c_str());
