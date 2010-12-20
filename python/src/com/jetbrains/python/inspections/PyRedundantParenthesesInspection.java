@@ -1,11 +1,9 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiWhiteSpace;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
@@ -45,8 +43,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
-      if (node.getContainedExpression() instanceof PyReferenceExpression ||
-            node.getContainedExpression() instanceof PyStringLiteralExpression
+      if (node.getContainedExpression() instanceof PyReferenceExpression
               || node.getContainedExpression() instanceof PyNumericLiteralExpression) {
         if (myIgnorePercOperator) {
           PsiElement parent = node.getParent();
