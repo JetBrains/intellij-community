@@ -863,6 +863,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int yPositionToLogicalLineNumber(int y) {
     int line = yPositionToVisibleLineNumber(y);
+    if (line <= 0) {
+      return 0;
+    }
     LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
     return logicalPosition.line;
   }
