@@ -47,13 +47,12 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
                 self.printLabel(label, err)
                 return
         self.errors.append((test, exc_info))
-        self.messages.testFailed(test)
         test.passed = False
         self.printLabel('ERROR')
 
         err = self.formatErr(err)
 
-        self.messages.testFailed(self.getTestName(test),
+        self.messages.testError(self.getTestName(test),
             message='Error', details=err)
 
     def is_gen(self, test):

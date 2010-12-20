@@ -46,7 +46,7 @@ class TeamcityDocTestResult(TeamcityTestResult):
             message='Failure', details=err)
 
     def addError(self, test, err = ''):
-        self.messages.testFailed(self.getTestName(test),
+        self.messages.testError(self.getTestName(test),
             message='Error', details=err)
 
 class DocTestRunner(doctest.DocTestRunner):
