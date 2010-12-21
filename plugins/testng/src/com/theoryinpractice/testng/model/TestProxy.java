@@ -26,6 +26,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -122,7 +123,8 @@ public class TestProxy extends AbstractTestProxy {
     }
     if (this.resultMessage == null || this.resultMessage.getResult() == MessageHelper.TEST_STARTED) {
       this.resultMessage = resultMessage;
-      this.name = resultMessage.toDisplayString();
+      final PsiElement psiElement = getPsiElement();
+      this.name = toDisplayText(resultMessage, psiElement != null ? psiElement.getProject() : null);
     }
   }
 
@@ -333,6 +335,36 @@ public class TestProxy extends AbstractTestProxy {
     return printables;
   }
 
+  public static String toDisplayText(TestResultMessage message, Project project) {
+    String name = message.toDisplayString();
+    if (project == null || !Comparing.strEqual(name, project.getName())) {
+      return name;
+    }
+    name = message.getMethod();
+    final String[] parameters = message.getParameters();
+    if (parameters != null && parameters.length > 0) {
+      final String[] parameterTypes = message.getParameterTypes();
+      name += " (";
+      for(int i= 0; i < parameters.length; i++) {
+        if(i > 0) {
+          name += ", ";
+        }
+        if(CommonClassNames.JAVA_LANG_STRING.equals(parameterTypes[i]) && !("null".equals(parameters[i]) || "\"\"".equals(parameters[i]))) {
+          name += "\"" + parameters[i] + "\"";
+        }
+        else {
+          name += parameters[i];
+        }
+
+      }
+      name += ")";
+    }
+    final String testDescription = message.getTestDescription();
+    if (testDescription != null) {
+      name += " [" + testDescription + "]";
+    }
+    return name;
+  }
 
   public static class Chunk implements Printable {
     public String text;

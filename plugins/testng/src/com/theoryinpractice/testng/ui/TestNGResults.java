@@ -92,7 +92,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.project = configuration.getProject();
 
-    model = new TestNGResultsTableModel();
+    model = new TestNGResultsTableModel(project);
     resultsTable = new TableView(model);
     resultsTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -247,7 +247,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     else {
       //do not remember testresultmessage: test hierarchy is not set
-      testCase = new TestProxy(result.toDisplayString());
+      testCase = new TestProxy(TestProxy.toDisplayText(result, project));
       testCase.appendStacktrace(result);
       failedToStart = testCase;
     }
