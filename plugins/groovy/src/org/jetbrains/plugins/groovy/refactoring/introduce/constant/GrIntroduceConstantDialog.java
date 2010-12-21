@@ -314,8 +314,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           String modifier = iterator.next();
 
           try {
-            final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier;
-            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
+            final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier + " ";
+            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + "int xxx;", myTargetClass);
             if (!JavaResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
             }
