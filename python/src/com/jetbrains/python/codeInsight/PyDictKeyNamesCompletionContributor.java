@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -45,7 +46,8 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
           PsiElement original = parameters.getOriginalPosition();
-          final CompletionResultSet dictCompletion = createResult(original, result);
+          int offset = parameters.getOffset();
+          final CompletionResultSet dictCompletion = createResult(original, result, offset);
 
           PsiElement operand = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class).getOperand();
           if (operand != null) {
@@ -68,13 +70,6 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
               }
             }
           }
-          // filter unusable lookup elements
-          dictCompletion.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-            public void consume(final LookupElement lookupElement) {
-              if (lookupElement.getLookupString().equals("dict key"))
-                dictCompletion.addElement(lookupElement);
-            }
-          });
         }
       }
     );
@@ -82,23 +77,25 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
 
   /**
    * create completion result with prefix matcher if needed
+   *
    * @param original is original element
    * @param result is initial completion result
+   * @param offset
    * @return
    */
-  private static CompletionResultSet createResult(PsiElement original, CompletionResultSet result) {
+  private static CompletionResultSet createResult(PsiElement original, CompletionResultSet result, int offset) {
     PsiElement prevElement = original.getPrevSibling();
     if (prevElement != null) {
       ASTNode prevNode = prevElement.getNode();
       if (prevNode != null) {
         if (prevNode.getElementType() != PyTokenTypes.LBRACKET)
-          return result.withPrefixMatcher(findPrefix(prevElement));
+          return result.withPrefixMatcher(findPrefix(prevElement, offset));
       }
     }
     PsiElement parentElement = original.getParent();
     if (parentElement != null) {
       if (parentElement instanceof PyStringLiteralExpression)
-        return result.withPrefixMatcher(findPrefix(parentElement));
+        return result.withPrefixMatcher(findPrefix(parentElement, offset));
     }
     return result;
   }
@@ -108,15 +105,16 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
    * @param element to find prefix of
    * @return prefix
    */
-  private static String findPrefix(final PsiElement element) {
+  private static String findPrefix(final PsiElement element, int offset) {
     if (element instanceof PyStringLiteralExpression) {
-      char[] chs = element.getText().toCharArray();
+      String text = TextRange.create(element.getTextRange().getStartOffset(), offset).substring(element.getContainingFile().getText());
+      char[] chs = text.toCharArray();
       char start = chs[0];
       StringBuilder builder = new StringBuilder();
       builder.append(start);
       for (int i = 1; i != chs.length; ++i) {
         char ch = chs[i];
-        if (ch == ']') break;
+        if (ch == ']' || ch == '\n') break;
         if (ch == start) {
           break;
         }

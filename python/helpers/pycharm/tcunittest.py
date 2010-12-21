@@ -40,7 +40,7 @@ class TeamcityTestResult(TestResult):
 
         err = self.formatErr(err)
 
-        self.messages.testFailed(self.getTestName(test),
+        self.messages.testError(self.getTestName(test),
             message='Error', details=err)
 
     def addFailure(self, test, err):

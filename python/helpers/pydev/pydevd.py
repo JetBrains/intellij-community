@@ -25,6 +25,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_CONSOLE_EXEC, \
                          CMD_ADD_EXCEPTION_BREAK, \
                          CMD_REMOVE_EXCEPTION_BREAK, \
+                         CMD_LOAD_SOURCE, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -203,7 +204,6 @@ class PyDB:
     def FinishDebuggingSession(self):
         self._finishDebuggingSession = True
 
-        
     def acquire(self):
         if PyDBUseLocks:
             self.lock.acquire()
@@ -278,6 +278,16 @@ class PyDB:
             queue = self.getInternalQueue(thread_id)
             queue.put(int_cmd)
 
+    def checkOutputRedirect(self):
+        global bufferStdOutToServer
+        global bufferStdErrToServer
+
+        if bufferStdOutToServer:
+                self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
+
+        if bufferStdErrToServer:
+                self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+
     def checkOutput(self, out, outCtx):
         '''Checks the output to see if we have to send some buffered output to the debug server
         
@@ -287,6 +297,7 @@ class PyDB:
         
         try:
             v = out.getvalue()
+
             if v:
                 self.cmdFactory.makeIoMessage(v, outCtx, self)
         except:
@@ -299,11 +310,8 @@ class PyDB:
         
         self.acquire()
         try:
-            if bufferStdOutToServer:
-                self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
-                    
-            if bufferStdErrToServer:
-                self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
+
+            self.checkOutputRedirect()
 
             currThreadId = GetThreadId(threadingCurrentThread())
             threads = threadingEnumerate()
@@ -609,9 +617,11 @@ class PyDB:
                 elif cmd_id == CMD_ADD_EXCEPTION_BREAK:
                     global exception_set
                     exception, notify_always, notify_on_terminate = text.split('\t', 2)
-                    exc_type = get_class(exception)
+
                     is_notify_always = int(notify_always) == 1
                     is_notify_on_terminate = int(notify_on_terminate) == 1
+
+                    exc_type = get_class(exception)
 
                     if exc_type is not None:
                         exception_set.add(ExceptionBreakpoint(exc_type, is_notify_always, is_notify_on_terminate))
@@ -627,9 +637,21 @@ class PyDB:
                     exception = text
                     exc_type = get_class(exception)
                     if exc_type is not None:
-                        exception_set.remove(exc_type)
-                        always_exception_set.remove(exc_type)
+                        try:
+                            exception_set.remove(exc_type)
+                            always_exception_set.remove(exc_type)
+                        except:
+                            pass
                     update_exception_hook()
+
+                elif cmd_id == CMD_LOAD_SOURCE:
+                    path = text
+                    try:
+                        f = open(path, 'r')
+                        source = f.read()
+                        self.cmdFactory.makeLoadSourceMessage(seq, source, self)
+                    except:
+                        return self.cmdFactory.makeErrorMessage(seq, GetExceptionTracebackStr())
 
                 else:
                     #I have no idea what this is all about
@@ -988,6 +1010,9 @@ def SetTraceForParents(frame, dispatch_func):
         frame = frame.f_back
     del frame
 
+def exit_hook():
+    GetGlobalDebugger().checkOutputRedirect()
+
 def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=True):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
     
@@ -1063,6 +1088,8 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
                 thread.start_new = pydev_start_new_thread
             except:
                 pass
+
+        #sys.exitfunc = exit_hook
         
         PyDBCommandThread(debugger).start()
         

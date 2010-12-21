@@ -13,9 +13,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -75,7 +72,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
           builder.parameter("param");
         }
       }
-      PyFunction function = builder.buildFunction(project);
+      PyFunction function = builder.buildFunction(project, LanguageLevel.getDefault());
 
       // add to the bottom
       function = (PyFunction) myPyFile.add(function);

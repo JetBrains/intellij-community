@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
@@ -41,8 +43,6 @@ import static javax.swing.SwingUtilities.invokeLater;
 // todo: pydevd supports module reloading - look for a way to use the feature
 // todo: smart step into
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
-
-  private final PyPositionConverter myPositionConverter;
   private final RemoteDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;
   private final PyDebuggerEditorsProvider myEditorsProvider;
@@ -58,18 +58,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private boolean myClosing = false;
 
-  public PyDebugProcess(@NotNull XDebugSession session,
+  private PyPositionConverter myPositionConverter;
+
+  public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
                         @NotNull final ExecutionConsole executionConsole,
                         @Nullable final ProcessHandler processHandler) {
-    this(session, serverSocket, executionConsole, processHandler, new PyLocalPositionConverter());
-  }
-
-
-  public PyDebugProcess(@NotNull XDebugSession session,
-                        @NotNull final ServerSocket serverSocket,
-                        @NotNull final ExecutionConsole executionConsole,
-                        @Nullable final ProcessHandler processHandler, @NotNull PyPositionConverter positionConverter) {
     super(session);
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
@@ -80,8 +74,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
+    myPositionConverter = new PyLocalPositionConverter();
+    myDebugger.addCloseListener(new RemoteDebuggerCloseListener() {
+      @Override
+      public void closed() {
+        session.stop();
+      }
+    });
+  }
+
+  public void setPositionConverter(PyPositionConverter positionConverter) {
     myPositionConverter = positionConverter;
   }
+
 
   @Override
   public PyPositionConverter getPositionConverter() {
@@ -120,6 +125,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         try {
           myDebugger.waitForConnect();
           handshake();
+          getSession().rebuildViews();
           registerBreakpoints();
           new RunCommand(myDebugger).execute();
         }
@@ -138,8 +144,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void handshake() throws PyDebuggerException {
-    final String remoteVersion = myDebugger.handshake();
-    printToConsole("Connected to pydevd (version " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    String remoteVersion = myDebugger.handshake();
+    String currentBuild = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
+    if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
+      remoteVersion = currentBuild;
+    }
+    if (remoteVersion.startsWith("PY-")) {
+      remoteVersion = remoteVersion.substring(3);
+    }
+    printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+
+    if (!remoteVersion.equals(currentBuild)) {
+      printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n", ConsoleViewContentType.ERROR_OUTPUT);
+    }
   }
 
   public void printToConsole(String text, ConsoleViewContentType contentType) {
@@ -147,11 +164,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private void registerBreakpoints() {
-    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
-      addBreakpoint(entry.getKey(), entry.getValue());
-    }
+    registerLineBreakpoints();
+    registerExceptionBreakpoints();
+  }
+
+  private void registerExceptionBreakpoints() {
     for (XBreakpoint<PyExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
+    }
+  }
+
+  public void registerLineBreakpoints() {
+    for (Map.Entry<PySourcePosition, XLineBreakpoint> entry : myRegisteredBreakpoints.entrySet()) {
+      addBreakpoint(entry.getKey(), entry.getValue());
     }
   }
 
@@ -264,6 +289,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     final PyStackFrame frame = currentFrame();
     PyDebugValue newValue = myDebugger.changeVariable(frame.getThreadId(), frame.getFrameId(), var, value);
     myNewVariableValue.put(frame.getThreadFrameId(), newValue);
+  }
+
+  @Nullable
+  public String loadSource(String path) {
+    return myDebugger.loadSource(path);
   }
 
   @Override
@@ -404,5 +434,22 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void onTextAvailable(ProcessEvent event, Key outputType) {
+  }
+
+  public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
+    return new PyStackFrame(this, frameInfo);
+  }
+
+  @Override
+  public String getCurrentStateMessage() {
+    if (getSession().isStopped()) {
+      return XDebuggerBundle.message("debugger.state.message.disconnected");
+    }
+    else if (myDebugger.isConnected()) {
+      return XDebuggerBundle.message("debugger.state.message.connected");
+    }
+    else {
+      return "Waiting for connection...";
+    }
   }
 }

@@ -2,7 +2,6 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public abstract class AbstractCommand {
@@ -27,6 +26,7 @@ public abstract class AbstractCommand {
   public static final int CONSOLE_EXEC = 121;
   public static final int ADD_EXCEPTION_BREAKPOINT = 122;
   public static final int REMOVE_EXCEPTION_BREAKPOINT = 123;
+  public static final int LOAD_SOURCE = 124;
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
@@ -39,7 +39,7 @@ public abstract class AbstractCommand {
     myCommandCode = commandCode;
   }
 
-  @Nullable
+  @NotNull
   public final String getPayload() {
     Payload payload = new Payload();
     buildPayload(payload);
@@ -52,7 +52,6 @@ public abstract class AbstractCommand {
     return false;
   }
 
-  // todo: pass debugger to constructor(?)
   public void execute() throws PyDebuggerException {
     int sequence = myDebugger.getNextSequence();
     if (isResponseExpected()) {

@@ -20,8 +20,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.PythonUnitTestConfigurationProducer;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,9 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
+    if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+           PythonTestConfigurationsModel.PY_TEST_NAME))) return null;
+
     PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
     if (file == null) return null;
     myPsiElement = file;
@@ -74,6 +78,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       configuration.setName(name + " in " + configuration.getName());
       myPsiElement = pyFunction;
     }
+    configuration.setName(configuration.suggestedName());
     return result;
   }
 

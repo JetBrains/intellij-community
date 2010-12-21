@@ -25,7 +25,7 @@ public class PyStackFrame extends XStackFrame {
 
   private final PyDebugProcess myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
-  private final XSourcePosition myPosition;
+  private XSourcePosition myPosition;
 
   public PyStackFrame(@NotNull final PyDebugProcess debugProcess, @NotNull final PyStackFrameInfo frameInfo) {
     myDebugProcess = debugProcess;
@@ -108,6 +108,10 @@ public class PyStackFrame extends XStackFrame {
 
   public String getThreadFrameId() {
     return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
+  }
+
+  protected XSourcePosition getPosition() {
+    return myPosition;
   }
 
 }

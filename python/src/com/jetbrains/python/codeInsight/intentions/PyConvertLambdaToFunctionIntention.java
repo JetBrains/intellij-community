@@ -2,9 +2,8 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -57,29 +56,72 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
         functionBuilder.parameter(param.getText());
       }
       functionBuilder.statement("return " + body.getText());
-      PyFunction function = functionBuilder.buildFunction(project);
-      PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression, PyStatement.class);
-      if (statement != null) {
-        PsiElement parentOfStatement = statement.getParent();
-        if (parentOfStatement != null)
-          function = (PyFunction)parentOfStatement.addBefore(function, statement);
+      PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
+
+      PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(lambdaExpression, PyFunction.class);
+      if (parentFunction != null ) {
+        PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
+        if (parentClass != null) {
+          PsiElement classParent = parentClass.getParent();
+          function = (PyFunction)classParent.addBefore(function, parentClass);
+        } else {
+          PsiElement funcParent = parentFunction.getParent();
+          function = (PyFunction)funcParent.addBefore(function, parentFunction);
+        }
+      } else {
+        PyStatement statement = PsiTreeUtil.getTopmostParentOfType(lambdaExpression,
+                                                                   PyStatement.class);
+        if (statement != null) {
+          PsiElement statementParent = statement.getParent();
+          if (statementParent != null)
+            function = (PyFunction)statementParent.addBefore(function, statement);
+        }
       }
+      function = CodeInsightUtilBase
+        .forcePsiPostprocessAndRestoreElement(function);
+
       if (parent instanceof PyAssignmentStatement) {
         parent.delete();
       }
       else {
-        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyFunction.class, PyClass.class, PyFile.class);
+        PyElement parentScope = PsiTreeUtil.getParentOfType(lambdaExpression, PyClass.class, PyFile.class);
         final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(parentScope);
         PsiElement functionName = function.getNameIdentifier();
         functionName = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(functionName);
         lambdaExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(lambdaExpression);
 
+        ReferenceNameExpression refExpr = new ReferenceNameExpression(name);
+
+        ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, refExpr, true);
         ((TemplateBuilderImpl)builder).replaceElement(functionName, name, name, false);
-        ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, name, true);
+
         int textOffSet = functionName.getTextOffset();
+        editor.getCaretModel().moveToOffset(parentScope.getTextRange().getStartOffset());
+
+        Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+        TemplateManager.getInstance(project).startTemplate(editor, template);
         editor.getCaretModel().moveToOffset(textOffSet);
-        builder.run();
       }
+    }
+  }
+  private class ReferenceNameExpression extends Expression {
+    ReferenceNameExpression(String oldReferenceName) {
+      myOldReferenceName = oldReferenceName;
+    }
+
+    private final String myOldReferenceName;
+
+    public Result calculateResult(ExpressionContext context) {
+      return new TextResult(myOldReferenceName);
+    }
+
+    public Result calculateQuickResult(ExpressionContext context) {
+      return null;
+    }
+
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      return null;
     }
   }
 }

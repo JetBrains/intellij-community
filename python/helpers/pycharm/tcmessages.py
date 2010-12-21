@@ -38,6 +38,9 @@ class TeamcityServiceMessages:
         
     def testFailed(self, testName, message='', details=''):
         self.message('testFailed', name=testName, message=message, details=details)
+
+    def testError(self, testName, message='', details=''):
+        self.message('testFailed', name=testName, message=message, details=details, error="true")
         
     def testStdOut(self, testName, out):
         self.message('testStdOut', name=testName, out=out)

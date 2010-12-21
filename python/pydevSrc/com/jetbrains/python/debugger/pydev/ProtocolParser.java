@@ -17,6 +17,10 @@ public class ProtocolParser {
   private ProtocolParser() {
   }
 
+  public static String parseSourceContent(String payload) throws PyDebuggerException {
+    return payload;
+  }
+
   public static String decode(final String value) throws PyDebuggerException {
     try {
       return URLDecoder.decode(value, "UTF-8");
@@ -119,10 +123,6 @@ public class ProtocolParser {
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
-    }
-
-    if (value.startsWith("Traceback (most recent call last):")) {  // convert traceback to exception
-      throw new PyDebuggerException(value);
     }
 
     return new PyDebugValue(name, type, value, "True".equals(isContainer));

@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -124,8 +125,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitPyImportElement(node);
       final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
       PsiFile file = node.getContainingFile();
-      String fileNameWithExt = file.getName();
-      String fileName = fileNameWithExt.substring(0, fileNameWithExt.length() - 3);
+      String fileName = FileUtil.getNameWithoutExtension(file.getName());
       if (fromImport == null && fileName.equals(node.getText())) {
         registerProblem(node, "Import resolves to its containing file.");
       }
@@ -206,6 +206,27 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (containedClass != null) {
             for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
               if (Comparing.strEqual(node.getName(), target.getName())) {
+                actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+              }
+            }
+            for (PyStatement statement : containedClass.getStatementList().getStatements()) {
+              if (statement instanceof PyAssignmentStatement) {
+                if (((PyAssignmentStatement)statement).getLeftHandSideExpression().getText().equals(refex.getText())) {
+                  PyExpression callexpr = ((PyAssignmentStatement)statement).getAssignedValue();
+                  if (callexpr instanceof PyCallExpression) {
+                    PyType type = myTypeEvalContext.getType(callexpr);
+                    if (type != null && type instanceof PyClassType) {
+                      String name = ((PyCallExpression)callexpr).getCallee().getText();
+                      if (name != null && name.equals("property"))
+                        actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+                    }
+                  }
+                }
+              }
+            }
+            for (PyFunction method : containedClass.getMethods()) {
+              Property property = method.getProperty();
+              if (property != null && method.getName().equals(refex.getText())) {
                 actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
               }
             }

@@ -24,6 +24,16 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
 
+  private void doTest3k() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON31);
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
   private PyClass getTopLevelClass(int index) {
     PyFile file = (PyFile) myFixture.getFile();
     return file.getTopLevelClasses().get(index);
@@ -65,12 +75,11 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
   }
 
   public void testPy3k() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON31);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    doTest3k();
+  }
+
+
+  public void testTypeAnnotations() {  // PY-2547
+    doTest3k();
   }
 }

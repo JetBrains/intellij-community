@@ -58,7 +58,7 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
         break;
       case TEST_FOLDER:
 	if (!myConfig.getPattern().isEmpty())
-          specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern() + "$");
+          specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
         else
 	      specs.add(myConfig.getFolderName() + "/");
 	      // TODO[kate]:think about delimiter between folderName and Pattern

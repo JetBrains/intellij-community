@@ -7,4 +7,11 @@ import random
 def foo():
     return random.random()
 
-{foo(): 1, foo():2}    
+{foo(): 1, foo():2}
+
+# PY-2511
+dict = <warning descr="Dictionary contains duplicate keys key">dict([('key', 666), ('key', 123)])</warning>
+dict = <warning descr="Dictionary contains duplicate keys key">dict((('key', 666), ('key', 123)))</warning>
+dict = <warning descr="Dictionary contains duplicate keys key">dict((('key', 666), ('k', 123)), key=4)</warning>
+
+dict([('key', 666), ('ky', 123)])

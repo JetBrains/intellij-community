@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,16 +40,19 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
+    PsiElement element = location.getPsiElement();
+        if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
+          PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME))) return null;
     RunnerAndConfigurationSettings settings;
+    /*Module module = location.getModule();
 
-    Module module = location.getModule();
     if (module != null) {
       for (RunnableUnitTestFilter f : Extensions.getExtensions(RunnableUnitTestFilter.EP_NAME)) {
         if (f.isRunnableUnitTest(location.getPsiElement().getContainingFile(), module)) {
           return null;
         }
       }
-    }
+    }*/
 
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) {
       return null;
@@ -213,7 +215,6 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     }
     return null;
   }
-
 
   public int compareTo(Object o) {
     return PREFERED;

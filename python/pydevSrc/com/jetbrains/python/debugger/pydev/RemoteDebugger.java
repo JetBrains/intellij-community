@@ -5,6 +5,7 @@
  */
 package com.jetbrains.python.debugger.pydev;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +43,9 @@ public class RemoteDebugger {
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<Integer, ProtocolFrame>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
+
+  private final List<RemoteDebuggerCloseListener> myCloseListeners = Lists.newArrayList();
+
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
     myServerSocket = serverSocket;
@@ -55,6 +59,7 @@ public class RemoteDebugger {
   public boolean isConnected() {
     return myConnected;
   }
+
 
   public void waitForConnect() throws Exception {
     try {
@@ -145,6 +150,18 @@ public class RemoteDebugger {
     final ChangeVariableCommand command = new ChangeVariableCommand(this, threadId, frameId, varName, value);
     command.execute();
     return command.getNewValue();
+  }
+
+  @Nullable
+  public String loadSource(String path) {
+    LoadSourceCommand command = new LoadSourceCommand(this, path);
+    try {
+      command.execute();
+      return command.getContent();
+    }
+    catch (PyDebuggerException e) {
+      return "#Couldn't load source of file " + path;
+    }
   }
 
   private static String composeName(final PyDebugValue var) {
@@ -267,8 +284,8 @@ public class RemoteDebugger {
       os.flush();
     }
     catch (SocketException se) {
-      LOG.error(se);
       disconnect();
+      fireCloseEvent();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -303,6 +320,7 @@ public class RemoteDebugger {
       }
     }
     disconnect();
+    fireCloseEvent();
   }
 
 
@@ -322,7 +340,7 @@ public class RemoteDebugger {
         }
       }
       catch (SocketException ignore) {
-        // disconnected
+        fireCloseEvent();
       }
       catch (Exception e) {
         LOG.error(e);
@@ -456,6 +474,20 @@ public class RemoteDebugger {
       if (threadVars != null) {
         threadVars.clear();
       }
+    }
+  }
+
+  public void addCloseListener(RemoteDebuggerCloseListener listener) {
+    myCloseListeners.add(listener);
+  }
+
+  public void remoteCloseListener(RemoteDebuggerCloseListener listener) {
+    myCloseListeners.remove(listener);
+  }
+
+  private void fireCloseEvent() {
+    for (RemoteDebuggerCloseListener listener : myCloseListeners) {
+      listener.closed();
     }
   }
 }

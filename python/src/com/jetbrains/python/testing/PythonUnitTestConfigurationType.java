@@ -11,6 +11,7 @@ import javax.swing.*;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestConfigurationType extends ConfigurationTypeBase {
+
   public static PythonUnitTestConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(PythonUnitTestConfigurationType.class);
   }

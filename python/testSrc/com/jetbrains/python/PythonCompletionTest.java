@@ -247,4 +247,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testElseInCondExpr() {  // PY-2397
     doTest();
   }
+
+  public void testLocalVarInDictKey() {  // PY-2558
+    doTest();
+  }
 }

@@ -77,6 +77,7 @@ import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
 import traceback
+from pydevd_utils import *
 
 from pydevd_tracing import GetExceptionTracebackStr
 
@@ -103,7 +104,8 @@ CMD_RELOAD_CODE = 119
 CMD_GET_COMPLETIONS = 120
 CMD_CONSOLE_EXEC = 121
 CMD_ADD_EXCEPTION_BREAK = 122
-CMD_REMOVE_EXCEPTION_BREAK = 122
+CMD_REMOVE_EXCEPTION_BREAK = 123
+CMD_LOAD_SOURCE = 124
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901 
@@ -140,7 +142,7 @@ ID_TO_MEANING = {
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
                         #this number can be changed if there's need to do so
 
-VERSION_STRING = "1.1"
+VERSION_STRING = "@@BUILD_NUMBER@@"
 
 
 #--------------------------------------------------------------------------------------------------- UTILITIES
@@ -210,6 +212,7 @@ class PyDBDaemonThread(threading.Thread):
     def doKill(self):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
+
             
 #=======================================================================================================================
 # ReaderThread
@@ -231,8 +234,7 @@ class ReaderThread(PyDBDaemonThread):
         except:
             #just ignore that
             pass
-        
-     
+
     def OnRun(self):
         pydevd_tracing.SetTrace(None) # no debugging on this thread
         buffer = ""
@@ -258,7 +260,13 @@ class ReaderThread(PyDBDaemonThread):
                     command, buffer = buffer.split('\n', 1)
                     PydevdLog(1, "received command ", command)
                     args = command.split('\t', 2)
-                    GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
+                    try:
+                        GlobalDebuggerHolder.globalDbg.processNetCommand(int(args[0]), int(args[1]), args[2])
+                    except:
+                        traceback.print_exc()
+                        sys.stderr.write("Can't process net command %" % command)
+                        sys.stderr.flush()
+
         except:
             traceback.print_exc()
             GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
@@ -545,6 +553,14 @@ class NetCommandFactory:
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
+    def makeLoadSourceMessage(self, seq, source, dbg=None):
+        try:
+            net = NetCommand(str(CMD_LOAD_SOURCE), seq, '%s' % source)
+            if dbg:
+                dbg.writer.addCommand(net)
+        except:
+            return self.makeErrorMessage(0, GetExceptionTracebackStr())
+
 INTERNAL_TERMINATE_THREAD = 1
 INTERNAL_SUSPEND_THREAD = 2
 
@@ -600,9 +616,13 @@ class InternalGetVariable(InternalThreadCommand):
             valDict = pydevd_vars.resolveCompoundVariable(self.thread_id, self.frame_id, self.scope, self.attributes)                        
             keys = valDict.keys()
             if hasattr(keys, 'sort'):
-                keys.sort() #Python 3.0 does not have it
+                keys.sort(compare_object_attrs) #Python 3.0 does not have it
             else:
-                keys = sorted(keys, key=str) #Jython 2.1 does not have it (and all must be compared as strings).
+                if (IS_PY3K):
+                    keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+                else:
+                    keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+
             for k in keys:
                 xml += pydevd_vars.varToXML(valDict[k], str(k))
 

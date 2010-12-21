@@ -71,7 +71,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
         List<PyReferenceExpression> parts = PyResolveUtil.unwindQualifiers(node);
         if (parts != null) {
           //Collections.reverse(parts);
-          return new PyQualifiedName(parts);
+          return PyQualifiedName.fromReferenceChain(parts);
         }
       }
       return null;

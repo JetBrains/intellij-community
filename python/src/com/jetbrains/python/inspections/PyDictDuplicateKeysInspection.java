@@ -1,20 +1,15 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.actions.DictCreationQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
  * User: catherine
@@ -57,5 +52,65 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
         }
       }
     }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      if (isDict(node)) {
+        HashSet<String> set = new HashSet<String>();
+        PyExpression[] argumentList = node.getArgumentList().getArguments();
+        for (PyExpression argument : argumentList) {
+          if (argument instanceof PyParenthesizedExpression)
+            argument = ((PyParenthesizedExpression)argument).getContainedExpression();
+          if (argument instanceof PySequenceExpression) {
+            for (PyElement el : ((PySequenceExpression)argument).getElements()) {
+              String key = getKey(el);
+              checkKey(key, set, node);
+            }
+          }
+          else {
+            String key = getKey(argument);
+            checkKey(key, set, node);
+          }
+        }
+      }
+    }
+
+    private void checkKey(String key, Set<String> set, PyCallExpression node) {
+      if (key != null) {
+        if (set.contains(key)) {
+          registerProblem(node, "Dictionary contains duplicate keys " + key);
+        }
+        set.add(key);
+      }
+    }
+
+    @Nullable
+    private String getKey(PyElement argument) {
+      if (argument instanceof PyParenthesizedExpression) {
+        PyExpression expr = ((PyParenthesizedExpression)argument).getContainedExpression();
+        if (expr instanceof PyTupleExpression) {
+          PyElement key = ((PyTupleExpression)expr).getElements()[0];
+          if (key instanceof PyStringLiteralExpression) {
+            return ((PyStringLiteralExpression)key).getStringValue();
+          }
+          else {
+            return key.getText();
+          }
+        }
+      }
+      if (argument instanceof PyKeywordArgument) {
+        return ((PyKeywordArgument)argument).getKeyword();
+      }
+      return null;
+    }
+
+    private boolean isDict(PyCallExpression expression) {
+      String name = expression.getCallee().getText();
+      if ("dict".equals(name)) {
+        return true;
+      }
+      return false;
+    }
+
   }
 }

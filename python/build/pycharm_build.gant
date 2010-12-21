@@ -5,7 +5,7 @@ import org.jetbrains.jps.Jps
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "98.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", "102.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
@@ -13,23 +13,23 @@ setProperty("jdk16", guessJdk())
 setProperty("vmoptions", "-Xms128m -Xmx512m -XX:MaxPermSize=150m -ea")
 
 setProperty("pluginFilter", [
-        "htmltools",
-        "JavaScriptLanguage",
-        "cvsIntegration", "cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src",
-        "PerforceIntegration", "Perforce", "perforce_util",
-        "svn4idea",
-        "git4idea",
-        "CSS", "css-api",
-        "JSInspections",
-        "JSIntentionPowerPack",
-        "SpellChecker", "spellchecker",
-        "sass", "less",
-        "hg4idea",
-        "tasks", "tasks-core", "tasks-api", "jira-connector",
-        "github",
-        "python-spellchecker-common", "pycharm-spellchecker",
-        "webDeployment"
-])
+            "htmltools",
+            "JavaScriptLanguage",
+            "cvsIntegration", "cvs-core", "cvs-plugin", "javacvs-src", "smartcvs-src",
+            "PerforceIntegration", "Perforce", "perforce_util",
+            "svn4idea",
+            "git4idea",
+            "CSS", "css-api",
+            "JSInspections",
+            "JSIntentionPowerPack",
+            "SpellChecker", "spellchecker",
+            "sass", "less",
+            "hg4idea",
+            "tasks", "tasks-core", "tasks-api", "jira-connector",
+            "github",
+            "python-spellchecker-common", "pycharm-spellchecker",
+            "webDeployment"
+            ])
 
 private List platformImplementationModules() {
   return [
@@ -102,27 +102,58 @@ def zipSources() {
 
   ant.mkdir(dir: paths.artifacts)
   ant.delete(file: sources)
-  ant.zip (destfile: sources) {
-    fileset (dir: home) {
+  ant.zip(destfile: sources) {
+    fileset(dir: home) {
       ["java", "ipr", "iml", "form", "xml", "properties"].each {
-        include (name: "**/*.$it")
+        include(name: "**/*.$it")
       }
-      exclude (name: "**/testData/**")
+      exclude(name: "**/testData/**")
     }
   }
+}
+
+def buildDebuggerEgg(paths, buildName) {
+  def eggDir = "$paths.sandbox/pycharm-debug"
+  def egg = "$paths.sandbox/pycharm-debug.egg"
+
+  project.stage("building $egg")
+
+  ant.delete(dir: eggDir)
+  ant.mkdir(dir: eggDir)
+  ant.mkdir(dir:"$eggDir/pydev")
+  ant.copy(todir: "$eggDir/pydev") {
+    fileset(dir: "$home/python/helpers/pydev")
+  }
+  ant.mkdir(dir:"$eggDir/EGG-INFO")
+
+  ant.copy(todir: "$eggDir/EGG-INFO") {
+    fileset(dir: "$home/python/resources/debugger-egg/EGG-INFO")
+  }
+
+  ant.replace(file: "$eggDir/EGG-INFO/PKG-INFO") {
+    replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
+  }
+
+  ant.replace(file: "$eggDir/pydev/pydevd_comm.py") {
+    replacefilter(token: "@@BUILD_NUMBER@@", value: buildName)
+  }
+  ant.zip(destfile: egg) {
+    fileset(dir: eggDir)
+  }
+  ant.copy(file: egg, todir: paths.distAll)
 }
 
 target('default': "Build artifacts") {
 
   def modules = [
-          "python", "python-ide", "python-pydev", platformApiModules(), platformImplementationModules(), pluginFilter
+          "python", "python-ide", "python-pydev", "colorSchemes", platformApiModules(), platformImplementationModules(), pluginFilter
   ].flatten()
-  
+
   loadProject()
 
 //  project.dryRun = true
   project.stage("Cleaning up sandbox folder")
-  
+
   project.targetFolder = "$sandbox/classes"
   project.dryRun = dryRun
 
@@ -131,9 +162,8 @@ target('default': "Build artifacts") {
     ant.mkdir(dir: sandbox)
   }
 
-
   ant.tstamp() {
-    format(property: "today.year", pattern: "yyyy")
+    format(property: "todayYear", pattern: "yyyy")
   }
 
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
@@ -201,6 +231,7 @@ target('default': "Build artifacts") {
   build_searchable_options()
   wire_build_date(buildName)
   layoutFull(paths.distAll, usedJars)
+  buildDebuggerEgg(paths, buildName)
   scramble()
 
   layoutWin(paths.distWin)
@@ -213,7 +244,7 @@ target('default': "Build artifacts") {
             paths.distMac)
 
   buildExe()
-  
+
   ant.echo(message: buildName, file: "$sandbox/layout/build.txt")
 
   def root = isEap ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
@@ -230,8 +261,9 @@ target('default': "Build artifacts") {
     }
   }
   executeExternalAnt("file.name": "pycharm",
+                     "dmg.image.name" : "${home}/python/build/DMG_background.png",
                      "$home/build/buildDmg.xml")
-  
+
   buildTarGz()
 
   def installer = includeFile("$home/build/scripts/nsis_installer.gant")
@@ -242,7 +274,7 @@ target('default': "Build artifacts") {
 }
 
 def build_searchable_options() {
-  def dest_dir = "${project ["platform-resources"].output}/search"
+  def dest_dir = "${project["platform-resources"].output}/search"
   project.stage("Building searchable options")
   ant.mkdir(dir: "${dest_dir}/search")
   ant.copy(file: "$home/build/idea.license", todir: paths.ideaSystem)
@@ -346,11 +378,15 @@ def buildTarGz() {
     }
     tarfileset(dir: "$home/community/bin/linux", prefix: "$tarRoot/bin") {
       exclude(name: "libbreakgen*")
+      exclude(name: "fsnotifier*")
+    }
+    tarfileset(dir: "$home/community/bin/linux", filemode: "755", prefix: "$tarRoot/bin") {
+      include(name: "fsnotifier*")
     }
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
-    tarfileset(dir: "$home/python/build", filemode: "755", prefix: "$paths.distUnix/bin") {
+    tarfileset(dir: "$home/python/build", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "pycharm.sh")
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {
@@ -397,6 +433,7 @@ def layoutFull(String target, Set usedJars) {
       jar("bootstrap.jar") { module("bootstrap")}
       jar("resources.jar") {
         module("platform-resources")
+        module("colorSchemes")
       }
 
       jar("forms_rt.jar") {
@@ -475,8 +512,8 @@ def layoutFull(String target, Set usedJars) {
   }
 
   ant.echo(file: "$target/bin/idea.properties", append: "true", message:
-  isEap() ?
-"""
+           isEap() ?
+           """
 
 #-----------------------------------------------------------------------
 # Change to 'disabled' if you do not need to receive instant visual
@@ -485,8 +522,8 @@ def layoutFull(String target, Set usedJars) {
 idea.fatal.error.notification=enabled
 """
 
-  :
-"""
+           :
+           """
 
 #-----------------------------------------------------------------------
 # Change to 'enabled' if you need to receive instant visual notifications about
@@ -528,6 +565,7 @@ def layoutMac(Map args, String target) {
 
   ant.replace(file: "$target/Contents/Info.plist") {
     replacefilter(token: "@@build@@", value: args.buildName)
+    replacefilter(token: "@@year@@", value: "$todayYear")
 
 
     replacefilter(token: "@@version@@", value: args.version)
@@ -548,8 +586,6 @@ def layoutWin(String target) {
       fileset(dir: "$home/community/bin/win") {
         exclude(name: "breakgen*")
         exclude(name: "idea.bat")
-        include(name: "runnerw.exe")
-        
       }
       fileset(dir: "$home/python/build") {
         include(name: "pycharm.bat")
@@ -557,7 +593,7 @@ def layoutWin(String target) {
     }
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
-  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n') )
+  ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions.replace(' ', '\n'))
 }
 
 def layoutUnix(String target) {
@@ -595,16 +631,16 @@ def executeExternalAnt(Map args, String file) {
 
     classpath {
       fileset(dir: "$home/build/lib") {
-        include (name: "commons-net-1.4.1.jar")
-        include (name: "jsch-0.1.43.jar")
+        include(name: "commons-net-1.4.1.jar")
+        include(name: "jsch-0.1.43.jar")
       }
 
       fileset(dir: "$ch/lib/ant/lib") {
-        include (name: "*.jar")
+        include(name: "*.jar")
       }
 
-      fileset (file: "$jdk16/lib/tools.jar")
-      fileset (file: "$ch/lib/oromatcher.jar")
+      fileset(file: "$jdk16/lib/tools.jar")
+      fileset(file: "$ch/lib/oromatcher.jar")
     }
 
     arg(value: "-f")

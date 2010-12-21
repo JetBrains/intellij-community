@@ -25,3 +25,9 @@ if (A and
 
 if <warning descr="Remove redundant parentheses">("\n")</warning>:
     pass
+
+result = (
+    "int line1 = 1;\n"
+    "\n"
+    "int line2 = 2;\n"
+)

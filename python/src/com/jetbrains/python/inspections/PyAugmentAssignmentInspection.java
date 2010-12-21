@@ -2,11 +2,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.AugmentedAssignmentQuickFix;
-import com.jetbrains.python.actions.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,22 +38,38 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
     @Override
     public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-      if (node.getLeftHandSideExpression() instanceof PyTargetExpression &&
-                            node.getAssignedValue() instanceof PyBinaryExpression) {
-        PyTargetExpression target = ((PyTargetExpression)node.getLeftHandSideExpression());
+      if (node.getAssignedValue() instanceof PyBinaryExpression) {
+        PyExpression target = node.getLeftHandSideExpression();
         PyBinaryExpression expression = (PyBinaryExpression)node.getAssignedValue();
         PyExpression leftExpression = expression.getLeftExpression();
         PyExpression rightExpression = expression.getRightExpression();
-        if (PyTokenTypes.ADDITIVE_OPERATIONS.contains(expression.getOperator()) ||
-              PyTokenTypes.MULTIPLICATIVE_OPERATIONS.contains(expression.getOperator())) {
-          if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
-            if (leftExpression.getText().equals(target.getText())) {
-              if (rightExpression instanceof PyNumericLiteralExpression) {
-                PyElementType op = expression.getOperator();
-                if (op == PyTokenTypes.PLUS || op == PyTokenTypes.MINUS ||
-                      op == PyTokenTypes.MULT || op == PyTokenTypes.DIV) {
+        if (rightExpression != null) {
+          boolean changedParts = false;
+          if (rightExpression.getText().equals(target.getText())) {
+            PyExpression tmp = rightExpression;
+            rightExpression = leftExpression;
+            leftExpression = tmp;
+            changedParts = true;
+          }
+          PyElementType op = expression.getOperator();
+          final TokenSet operations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
+                           PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND, PyTokenTypes.OR,
+                           PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT, PyTokenTypes.EXP);
+          final TokenSet commutativeOperations = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT);
+          if ((operations.contains(op) && !changedParts) || (changedParts && commutativeOperations.contains(op))) {
+            if (leftExpression != null
+                && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
+              if (leftExpression.getText().equals(target.getText())) {
+                if (rightExpression instanceof PyNumericLiteralExpression) {
                   AugmentedAssignmentQuickFix quickFix = new AugmentedAssignmentQuickFix();
                   registerProblem(node, "Assignment can be replaced with augmented assignment", quickFix);
+                }
+                else {
+                  PyType type = rightExpression.getType(myTypeEvalContext);
+                  if (type != null) {
+                    if (type.getName().equals("int") || type.getName().equals("str"))
+                      registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
+                  }
                 }
               }
             }

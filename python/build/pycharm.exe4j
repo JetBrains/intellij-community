@@ -55,7 +55,9 @@
       <archive location="lib/jdom.jar" failOnError="true"/>
       <archive location="lib/extensions.jar" failOnError="true"/>
     </classPath>
-    <nativeLibraryDirectories/>
+    <nativeLibraryDirectories>
+      <directory name="./bin"/>
+    </nativeLibraryDirectories>
   </java>
   <includedFiles/>
 </exe4j>

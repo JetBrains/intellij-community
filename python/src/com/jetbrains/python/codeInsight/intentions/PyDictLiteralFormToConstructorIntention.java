@@ -37,12 +37,22 @@ public class PyDictLiteralFormToConstructorIntention extends BaseIntentionAction
 
     if (dictExpression != null) {
       PyKeyValueExpression[] elements = dictExpression.getElements();
+      boolean canConvert = true;
       if (elements.length != 0) {
         for (PyKeyValueExpression element : elements) {
-          if (! (element.getKey() instanceof PyStringLiteralExpression)) return false;
+          PyExpression key = element.getKey();
+          if (! (key instanceof PyStringLiteralExpression)) return false;
+          String str = ((PyStringLiteralExpression)key).getStringValue();
+          if(Character.isDigit(str.charAt(0))) return false;
+          try {
+            Integer.parseInt(str) ;
+            canConvert = false;
+          } catch (NumberFormatException e) {
+            // pass
+          }
         }
       }
-      return true;
+      if (canConvert) return true;
     }
     return false;
   }

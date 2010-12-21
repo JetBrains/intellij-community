@@ -91,7 +91,14 @@ public class AddImportHelper {
     if (relativeToName == null) {
       return false;
     }
-    ImportPriority relativeToPriority = source == null ? ImportPriority.BUILTIN : getImportPriority(file, source.getContainingFile());
+    final PsiFileSystemItem containingFile;
+    if (source instanceof PsiDirectory) {
+      containingFile = (PsiDirectory) source;
+    }
+    else {
+      containingFile = source != null ? source.getContainingFile() : null;
+    }
+    ImportPriority relativeToPriority = source == null ? ImportPriority.BUILTIN : getImportPriority(file, containingFile);
     final int rc = priority.compareTo(relativeToPriority);
     if (rc < 0) {
       return true;

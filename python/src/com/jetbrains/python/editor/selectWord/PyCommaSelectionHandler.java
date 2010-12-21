@@ -21,7 +21,8 @@ import java.util.List;
 public class PyCommaSelectionHandler implements ExtendWordSelectionHandler {
   public boolean canSelect(final PsiElement e) {
     return e instanceof PyReferenceExpression || e instanceof PyKeyValueExpression || e instanceof PyKeywordArgument 
-      || e instanceof PyNumericLiteralExpression || e instanceof PyStringLiteralExpression;
+      || e instanceof PyNumericLiteralExpression || e instanceof PyStringLiteralExpression || e instanceof PyNamedParameter
+      || e instanceof PyStarArgument;
   }
 
   @Override

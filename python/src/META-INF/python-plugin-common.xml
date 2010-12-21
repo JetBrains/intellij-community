@@ -62,7 +62,7 @@
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
-    <programRunner implementation="com.jetbrains.python.run.remote.PyRemoteDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
@@ -77,6 +77,9 @@
     <configurationType implementation="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
 
+    <configurationType implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
+
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
@@ -85,7 +88,8 @@
     <typeHierarchyProvider language="Python" implementationClass="com.jetbrains.python.hierarchy.PyTypeHierachyProvider"/>
     <highlightUsagesHandlerFactory implementation="com.jetbrains.python.codeInsight.highlighting.PyHighlightExitPointsHandlerFactory"/>
 
-    <configurationType implementation="com.jetbrains.python.run.remote.PyRemoteDebugConfigurationType"/>
+    <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
+    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
@@ -355,6 +359,9 @@
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
     <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
+    <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
+    <projectService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
+                        serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
   </extensions>
 
   <extensionPoints>

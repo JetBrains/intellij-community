@@ -7,8 +7,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -56,13 +54,20 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
         functionBuilder.parameter("param");
       }
     }
-    PyFunction function = functionBuilder.buildFunction(project);
+    PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
     PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
     if (parentFunction != null ) {
-      PsiFile file = myElement.getContainingFile();
-      function = (PyFunction)file.addBefore(function, parentFunction);
+      PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
+      if (parentClass != null) {
+        PsiElement parent = parentClass.getParent();
+        function = (PyFunction)parent.addBefore(function, parentClass);
+      } else {
+        PsiElement parent = parentFunction.getParent();
+        function = (PyFunction)parent.addBefore(function, parentFunction);
+      }
     } else {
-      PyStatement statement = PsiTreeUtil.getParentOfType(myElement, PyStatement.class);
+      PyStatement statement = PsiTreeUtil.getTopmostParentOfType(myElement,
+                                                                 PyStatement.class);
       if (statement != null) {
         PsiElement parent = statement.getParent();
         if (parent != null)

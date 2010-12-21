@@ -9,9 +9,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * User: catherine
  *
@@ -36,25 +33,30 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
 
-    if (element != null && element instanceof PyAssignmentStatement && element.isWritable()) {
+    if (element instanceof PyAssignmentStatement && element.isWritable()) {
       PyAssignmentStatement statement = (PyAssignmentStatement)element;
 
-      PyTargetExpression target = ((PyTargetExpression)statement.getLeftHandSideExpression());
+      PyExpression target = statement.getLeftHandSideExpression();
       PyBinaryExpression expression = (PyBinaryExpression)statement.getAssignedValue();
       PyExpression leftExpression = expression.getLeftExpression();
       PyExpression rightExpression = expression.getRightExpression();
-
-      if (leftExpression != null && leftExpression instanceof PyReferenceExpression) {
-        if (leftExpression.getName().equals(target.getName())) {
+      if (rightExpression.getText().equals(target.getText())) {
+        PyExpression tmp = rightExpression;
+        rightExpression = leftExpression;
+        leftExpression = tmp;
+      }
+      if (leftExpression != null
+          && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
+        if (leftExpression.getText().equals(target.getText())) {
           if (rightExpression instanceof PyNumericLiteralExpression ||
                     rightExpression instanceof PyStringLiteralExpression
                           || rightExpression instanceof PyReferenceExpression) {
 
             PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(target.getName()).append(" ").
+            stringBuilder.append(target.getText()).append(" ").
                 append(expression.getPsiOperator().getText()).append("= ").append(rightExpression.getText());
-            PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.getDefault(),
+            PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.forElement(element),
                                                           PyAugAssignmentStatementImpl.class, stringBuilder.toString());
             statement.replace(augAssignment);
           }

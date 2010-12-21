@@ -36,12 +36,18 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   public PyExpression[] getTargets() {
     if (myTargets == null) {
-      myTargets = calcTargets();
+      myTargets = calcTargets(false);
     }
     return myTargets;
   }
 
-  private PyExpression[] calcTargets() {
+  @NotNull
+  @Override
+  public PyExpression[] getRawTargets() {
+    return calcTargets(true);
+  }
+
+  private PyExpression[] calcTargets(boolean raw) {
     final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
     if (eqSigns.length == 0) {
       return PyExpression.EMPTY_ARRAY;
@@ -52,13 +58,19 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     while (node != null && node != lastEq) {
       final PsiElement psi = node.getPsi();
       if (psi instanceof PyExpression) {
-        addCandidate(candidates, (PyExpression)psi);
+        if (raw) {
+          candidates.add((PyExpression) psi);
+        }
+        else {
+          addCandidate(candidates, (PyExpression)psi);
+        }
       }
       node = node.getTreeNext();
     }
     List<PyExpression> targets = new ArrayList<PyExpression>();
     for (PyExpression expr : candidates) { // only filter out targets
-      if (expr instanceof PyTargetExpression ||
+      if (raw ||
+          expr instanceof PyTargetExpression ||
           expr instanceof PyReferenceExpression ||
           expr instanceof PySubscriptionExpression ||
           expr instanceof PySliceExpression) {

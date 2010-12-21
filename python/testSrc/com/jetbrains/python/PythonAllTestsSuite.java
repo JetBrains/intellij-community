@@ -63,7 +63,8 @@ public class PythonAllTestsSuite {
     PySuppressInspectionsTest.class,
     PyPropertyTestSuite.PyClassicPropertyTest.class,
     PyPropertyTestSuite.PyDecoratedPropertyTest.class,
-    PythonRunConfigurationTest.class
+    PythonRunConfigurationTest.class,
+    PyFoldingTest.class
   };
 
   public static TestSuite suite() {

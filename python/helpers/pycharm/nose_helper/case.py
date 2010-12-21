@@ -87,8 +87,13 @@ class FunctionTestCase(TestBase):
         self.suite = TestBase.Suite()
         self.suite.__module__ = self.__get_module()
         self.suite.__name__ = ""
-        self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
-        self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
+        if sys.version.find("IronPython") != -1:
+          # Iron Python doesn't fully support imp
+          self.suite.abs_location = ""
+          self.suite.location = ""
+        else:
+          self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
+          self.suite.location = "file://" + imp.find_module(self.suite.__module__)[1]
 
     def _context(self):
         return resolve_name(self.test.__module__)
@@ -165,7 +170,12 @@ class MethodTestCase(TestBase):
         
         self.suite = TestBase.Suite()
         self.suite.__module__, self.suite.__name__ = self.__get_module()
-        self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
+
+        if sys.version.find("IronPython") != -1:
+          # Iron Python doesn't fully support imp
+          self.suite.abs_location = ""
+        else:
+          self.suite.abs_location = "file://" + imp.find_module(self.suite.__module__)[1]
         self.suite.location = "python_uttestid://" + self.suite.__module__ + "." + self.suite.__name__
 
     def __get_module(self):
