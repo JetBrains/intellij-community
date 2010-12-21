@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
@@ -28,7 +29,7 @@ import com.intellij.openapi.util.IconLoader;
 public class ScrollToTheEndToolbarAction extends AnAction {
   private final Editor myEditor;
 
-  public ScrollToTheEndToolbarAction(Editor editor) {
+  public ScrollToTheEndToolbarAction(@NotNull final Editor editor) {
     super();
     myEditor = editor;
     final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");

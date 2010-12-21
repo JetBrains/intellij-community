@@ -35,16 +35,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,14 +68,12 @@ public class EditorsSplitters extends JPanel {
   private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
-  private DockManager myDockManager;
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
     myManager = manager;
-    myDockManager = dockManager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
@@ -87,7 +82,7 @@ public class EditorsSplitters extends JPanel {
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), dockManager, this, false);
       Disposer.register(manager.getProject(), dockable);
-      myDockManager.register(dockable);
+      dockManager.register(dockable);
     }
   }
 

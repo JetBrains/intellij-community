@@ -22,7 +22,6 @@ import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -145,11 +144,6 @@ public interface EditorEx extends Editor {
 
   @NotNull
   VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos, boolean softWrapAware);
-
-  /**
-   * @return true if caret cursor is blinking in this editor
-   */
-  boolean isCaretActive();
 
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
