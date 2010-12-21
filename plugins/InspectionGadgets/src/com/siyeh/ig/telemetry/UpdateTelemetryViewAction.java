@@ -23,18 +23,21 @@ import com.siyeh.InspectionGadgetsBundle;
 
 class UpdateTelemetryViewAction extends AnAction{
 
+    private final InspectionGadgetsTelemetry telemetry;
     private final TelemetryDisplay telemetryDisplay;
 
-    UpdateTelemetryViewAction(TelemetryDisplay telemetryDisplay){
+    UpdateTelemetryViewAction(InspectionGadgetsTelemetry telemetry,
+                              TelemetryDisplay telemetryDisplay){
         super(CommonBundle.message("action.refresh"),
                 InspectionGadgetsBundle.message(
                         "action.telemetry.refresh.description"),
                 IconLoader.getIcon("/actions/sync.png"));
+        this.telemetry = telemetry;
         this.telemetryDisplay = telemetryDisplay;
     }
 
     @Override
     public void actionPerformed(AnActionEvent event){
-        telemetryDisplay.update();
+        telemetryDisplay.update(telemetry.buildList());
     }
 }
