@@ -22,6 +22,7 @@ import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -54,7 +55,7 @@ import java.util.List;
  * </code>
  * @author ven
  */
-public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> extends SettingsEditor<T> {
+public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageConfigurable.class.getName());
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
@@ -69,7 +70,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
 
   private JRadioButton myTracingRb;
   private JRadioButton mySamplingRb;
-  private final T myConfig;
+  private final RunConfigurationBase myConfig;
 
   private static class MyClassFilterEditor extends ClassFilterEditor {
     public MyClassFilterEditor(Project project) {
@@ -101,13 +102,20 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     }
   }
 
-  public CoverageConfigurable(T config) {
+  public CoverageConfigurable(RunConfigurationBase config) {
     myConfig = config;
     myProject = config.getProject();
   }
 
-  protected void resetEditorFrom(final T runConfiguration) {
-    final boolean isJre50 = myVersionDetector.isJre50Configured(runConfiguration);
+  protected void resetEditorFrom(final RunConfigurationBase runConfiguration) {
+    final boolean isJre50;
+    if (runConfiguration instanceof CommonJavaRunConfigurationParameters && myVersionDetector.isJre50Configured((CommonJavaRunConfigurationParameters)runConfiguration)) {
+      isJre50 = true;
+    } else if (runConfiguration instanceof ModuleBasedConfiguration){
+      isJre50 = myVersionDetector.isModuleJre50Configured((ModuleBasedConfiguration)runConfiguration);
+    } else {
+      isJre50 = true;
+    }
 
     myCoverageNotSupportedLabel.setVisible(!isJre50);
 
@@ -151,7 +159,7 @@ public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJav
     return CoverageEnabledConfiguration.getOrCreate(myConfig).canHavePerTestCoverage();
   }
 
-  protected void applyEditorTo(final T runConfiguration) throws ConfigurationException {
+  protected void applyEditorTo(final RunConfigurationBase runConfiguration) throws ConfigurationException {
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     configuration.setCoverageEnabled(myCoverageEnabledCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());

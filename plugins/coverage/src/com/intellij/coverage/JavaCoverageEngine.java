@@ -3,11 +3,12 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -70,12 +71,12 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   @Override
-  public boolean isApplicableTo(@Nullable final ModuleBasedConfiguration conf) {
+  public boolean isApplicableTo(@Nullable final RunConfigurationBase conf) {
     return conf instanceof CommonJavaRunConfigurationParameters;
   }
 
   @Override
-  public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final ModuleBasedConfiguration conf) {
+  public CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf) {
     if (isApplicableTo(conf)) {
       return new JavaCoverageEnabledConfiguration(conf, this);
     }
@@ -499,7 +500,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   protected static void generateJavaReport(@NotNull final Project project,
                                            final boolean trackTestFolders,
-                                           @NotNull final String coverageDataFileName,
+                                           @NotNull final ProjectData projectData,
                                            final String outputDir,
                                            final boolean openInBrowser) {
 
@@ -510,7 +511,7 @@ public class JavaCoverageEngine extends CoverageEngine {
         try {
           final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
           builder.setReportDir(new File(outputDir));
-          builder.generateReport(new IDEACoverageData(coverageDataFileName, new SourceCodeProvider() {
+          final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
               return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                 public String compute() {
@@ -519,7 +520,8 @@ public class JavaCoverageEngine extends CoverageEngine {
                 }
               });
             }
-          }) {
+          };
+          builder.generateReport(new IDEACoverageData(projectData, sourceCodeProvider) {
             @NotNull
             @Override
             public Collection<ClassInfo> getClasses() {
@@ -575,7 +577,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
       generateJavaReport(project,
                          currentSuite.isTrackTestFolders(),
-                         tempFile.getCanonicalPath(),
+                         projectData,
                          settings.OUTPUT_DIRECTORY,
                          settings.OPEN_IN_BROWSER);
     }

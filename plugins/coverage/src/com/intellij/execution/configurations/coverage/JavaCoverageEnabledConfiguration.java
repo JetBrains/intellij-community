@@ -20,7 +20,7 @@ import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
@@ -55,14 +55,14 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   private JavaCoverageEngine myCoverageProvider;
 
-  public JavaCoverageEnabledConfiguration(final ModuleBasedConfiguration configuration,
+  public JavaCoverageEnabledConfiguration(final RunConfigurationBase configuration,
                                           final JavaCoverageEngine coverageProvider) {
     super(configuration);
     myCoverageProvider = coverageProvider;
   }
 
   @Nullable
-  public static JavaCoverageEnabledConfiguration getFrom(final ModuleBasedConfiguration configuration) {
+  public static JavaCoverageEnabledConfiguration getFrom(final RunConfigurationBase configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;

@@ -4,6 +4,7 @@
   <depends optional="true">JUnit</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="j2ee-plugin.xml">com.intellij.javaee</depends>
   <description>This plugin supports gathering coverage information and presenting it right in the editor as well as in the project view.
     It is also possible to generate standalone HTML reports for external use.
   </description>

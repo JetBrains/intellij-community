@@ -27,7 +27,7 @@ import javax.swing.*;
  * Registers "Coverage" tab in Java run configurations
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-  public void handleStartProcess(final ModuleBasedConfiguration configuration, OSProcessHandler handler) {
+  public void handleStartProcess(final RunConfigurationBase configuration, OSProcessHandler handler) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -36,11 +36,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Nullable
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> SettingsEditor createEditor(T configuration) {
+  public SettingsEditor createEditor(RunConfigurationBase configuration) {
     if (!isApplicableFor(configuration)) {
       return null;
     }
-    return new CoverageConfigurable<T>(configuration);
+    return new CoverageConfigurable(configuration);
   }
 
   public String getEditorTitle() {
@@ -53,14 +53,14 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Nullable
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> Icon getIcon(T runConfiguration) {
+  public Icon getIcon(RunConfigurationBase runConfiguration) {
     if (!isApplicableFor(runConfiguration)) {
       return null;
     }
     return CoverageEngine.getIcon(runConfiguration);
   }
 
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -78,7 +78,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void readExternal(final ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException {
+  public void readExternal(final RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
      if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -88,7 +88,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
+  public void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException {
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -97,17 +97,20 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void patchConfiguration(T runJavaConfiguration) {
+  public void patchConfiguration(RunConfigurationBase runJavaConfiguration) {
     if (!isApplicableFor(runJavaConfiguration)) {
       return;
     }
     final JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
     assert coverageEnabledConfiguration != null;
-    coverageEnabledConfiguration.setUpCoverageFilters(runJavaConfiguration.getRunClass(), runJavaConfiguration.getPackage());
+    if (runJavaConfiguration instanceof CommonJavaRunConfigurationParameters) {
+      coverageEnabledConfiguration.setUpCoverageFilters(((CommonJavaRunConfigurationParameters)runJavaConfiguration).getRunClass(),
+                                                        ((CommonJavaRunConfigurationParameters)runJavaConfiguration).getPackage());
+    }
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void checkConfiguration(T runJavaConfiguration)
+  public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
     throws RuntimeConfigurationException {
     if (!isApplicableFor(runJavaConfiguration)) {
       return;
@@ -122,7 +125,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isListenerDisabled(T configuration, Object listener) {
+  public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener) {
     if (listener instanceof CoverageListener) {
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
       return !(coverageEnabledConfiguration.isCoverageEnabled() && coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
@@ -130,7 +133,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return false;
   }
 
-  private boolean isApplicableFor(final ModuleBasedConfiguration configuration) {
-    return JavaCoverageEnabledConfiguration.getFrom(configuration) != null;
+  private static boolean isApplicableFor(final RunConfigurationBase configuration) {
+    return JavaCoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 }
