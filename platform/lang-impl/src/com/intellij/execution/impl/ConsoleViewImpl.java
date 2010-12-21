@@ -192,7 +192,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       this.endOffset = endOffset;
       attributes = contentType.getAttributes();
     }
-    
+
     public int getLength() {
       return endOffset - startOffset;
     }
@@ -256,7 +256,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * Target offsets are anchored to the {@link #myDeferredOutput deferred buffer}.
    */
   private final List<TokenInfo> myDeferredTokens = new ArrayList<TokenInfo>();
-  
+
   private final Hyperlinks myHyperlinks = new Hyperlinks();
   private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
 
@@ -529,13 +529,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * IJ console works as follows - it receives managed process outputs from dedicated thread that serves that process and
    * pushes it to the {@link Document document} of editor used to represent process console. Important point here is that process
-   * output is received in a control flow of the thread over than EDT but push to the document is performed from EDT. Hence, we 
+   * output is received in a control flow of the thread over than EDT but push to the document is performed from EDT. Hence, we
    * have a potential situation when particular process outputs a lot and EDT is busy or push to the document is performed slowly.
    * <p/>
    * We don't want to keep too many information from the underlying process then and want to trim text buffer that holds text
    * to push to the document then. Current method serves exactly that purpose, i.e. it's expected to be called when new chunk of
    * text is received from the underlying process and trims existing text buffer if necessary.
-   * 
+   *
    * @param numberOfNewSymbols    number of symbols read from the managed process output
    * @return                      number of newly read symbols that should be accepted
    */
@@ -543,15 +543,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!USE_CYCLIC_BUFFER || myDeferredOutput.length() <= 0 || myDeferredOutput.length() + numberOfNewSymbols <= CYCLIC_BUFFER_SIZE) {
       return numberOfNewSymbols;
     }
-    
+
     final int numberOfSymbolsToRemove = myDeferredOutput.length() + numberOfNewSymbols - CYCLIC_BUFFER_SIZE;
     myDeferredTypes.clear();
-    
+
     int removedSymbolsNumber = 0;
     int endIndex = -1;
     for (int i = 0; i < myDeferredTokens.size(); i++) {
       TokenInfo tokenInfo = myDeferredTokens.get(i);
-      
+
       if (removedSymbolsNumber < numberOfSymbolsToRemove) {
         int tokenLength = tokenInfo.getLength();
 
@@ -562,7 +562,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           removedSymbolsNumber += tokenLength;
           continue;
         }
-        
+
         int remainingNumberOfSymbolsToRemove = numberOfSymbolsToRemove - removedSymbolsNumber;
         if (remainingNumberOfSymbolsToRemove >= tokenLength) {
           // We assume here that token construction is smart enough to extend end index in case of subsequent tokens of the same type,
@@ -581,11 +581,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           removedSymbolsNumber = numberOfSymbolsToRemove;
         }
       }
-            
+
       if (removedSymbolsNumber < numberOfSymbolsToRemove) {
         continue;
       }
-      
+
       if (endIndex < 0) {
         endIndex = i;
       }
@@ -594,7 +594,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       tokenInfo.endOffset -= numberOfSymbolsToRemove;
       myDeferredTypes.add(tokenInfo.contentType);
     }
-    
+
     if (endIndex < 0) {
       myDeferredTokens.clear();
     }
@@ -622,7 +622,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     return numberOfNewSymbols;
   }
-  
+
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
     myContentSize+=length;
     addToken(length, null, contentType);
@@ -1698,11 +1698,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         if (state && placeholder == null) {
           return;
         }
-        
+
         final FoldingModel foldingModel = myEditor.getFoldingModel();
         FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
         Runnable foldTask = null;
-        
+
         final int endFoldRegionOffset = myEditor.getDocument().getLineEndOffset(0);
         Runnable addCollapsedFoldRegionTask = new Runnable() {
           @Override
@@ -1733,7 +1733,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             foldTask = addCollapsedFoldRegionTask;
           }
         }
-        
+
         if (foldTask != null) {
           foldingModel.runBatchFoldingOperation(foldTask);
         }
@@ -1955,6 +1955,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       endOffset = offset;
     }
     return endOffset;
+  }
+
+  public boolean isRunning() {
+    return myState.isRunning();
   }
 
   /**
