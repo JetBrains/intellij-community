@@ -60,10 +60,8 @@ public class ChooseItemReplaceAction extends EditorAction {
           return true;
         }
 
-        if (lookup.isCompletion()) {
-          lookup.refreshUi(); // to bring the list model up to date
-          return !lookup.getItems().isEmpty();
-        }
+        lookup.refreshUi(); // to bring the list model up to date
+        return !lookup.getItems().isEmpty();
       }
       return false;
     }
