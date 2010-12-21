@@ -20,8 +20,6 @@
  */
 package com.siyeh.ig.fixes.bugs;
 
-import org.junit.Test;
-
 public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
 
 

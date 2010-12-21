@@ -574,8 +574,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
                                                     final boolean isVoidValid,
                                                     final boolean isPhysical,
                                                     final boolean allowEllipsis) {
-    final PsiTypeCodeFragmentImpl result
-      = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, allowEllipsis, "fragment.java", text);
+    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, allowEllipsis, "fragment.java", text);
     result.setContext(context);
     if (isVoidValid) {
       result.putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);

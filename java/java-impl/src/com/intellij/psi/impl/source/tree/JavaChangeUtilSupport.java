@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,18 +31,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.light.LightTypeElement;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
-import com.intellij.psi.impl.source.parsing.Parsing;
+import com.intellij.psi.impl.source.parsing.ParseUtilBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -54,11 +44,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/*
+ * @author max
+ */
 public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaTreeGenerator");
 
+  private static final JavaParserUtil.ParserWrapper MOD_LIST = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseModifierList(builder);
+    }
+  };
+
   static {
-    JavaChangeUtilSupport instance = new JavaChangeUtilSupport();
+    final JavaChangeUtilSupport instance = new JavaChangeUtilSupport();
     ChangeUtil.registerCopyHandler(instance);
     ChangeUtil.registerTreeGenerator(instance);
   }
@@ -76,15 +76,13 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     if (original instanceof PsiModifierList) {
       final String text = original.getText();
       assert text != null : "Text is null for " + original + "; " + original.getClass();
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(original);
-      JavaLexer lexer = new JavaLexer(languageLevel);
-      lexer.start(text);
-      TreeElement modifierListElement = new JavaParsingContext(table, languageLevel).getDeclarationParsing().parseModifierList(lexer);
+      final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), new JavaDummyElement(text, MOD_LIST, false), null);
+      final TreeElement modifierListElement = holder.getTreeElement().getFirstChildNode();
       if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
       return modifierListElement;
     }
     if (original instanceof PsiReferenceExpression) {
-      TreeElement element = createReferenceExpression(original.getManager(), original.getText(), table);
+      TreeElement element = createReferenceExpression(original.getProject(), original.getText(), original);
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
       if (refElement instanceof PsiClass) {
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
@@ -121,12 +119,12 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
           }
         }
 
-        String text = isFQ ? ((PsiClass)refElement).getQualifiedName() : original.getText();
-        TreeElement element = createReference(original.getManager(), text, table, generated);
+        final String text = isFQ ? ((PsiClass)refElement).getQualifiedName() : original.getText();
+        final TreeElement element = createReference(original.getProject(), text, generated);
         element.putCopyableUserData(REFERENCED_CLASS_KEY, (PsiClass)refElement);
         return element;
       }
-      return createReference(original.getManager(), original.getText(), table, generated);
+      return createReference(original.getProject(), original.getText(), generated);
     }
     if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
@@ -170,7 +168,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         if (text.equals("null")) return null;
         Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
         lexer.start(text);
-        TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
+        TreeElement keyword = ParseUtilBase.createTokenElement(lexer, table);
         CodeEditUtil.setNodeGenerated(keyword, generated);
         CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
@@ -178,10 +176,8 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         return element;
       }
       if (type instanceof PsiWildcardType) {
-        String originalText = original.getText();
-        final CompositeElement element = Parsing.parseTypeText(original.getManager(), originalText, 0, originalText.length(), table);
-        if(generated) element.getTreeParent().acceptTree(new GeneratedMarkerVisitor());
-        return element;
+        final String originalText = original.getText();
+        return createType(original.getProject(), originalText, null, generated);
       }
       if (type instanceof PsiIntersectionType) {
         PsiIntersectionType intersectionType = (PsiIntersectionType)type;
@@ -190,14 +186,12 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
       }
       PsiClassType classType = (PsiClassType)type;
 
-      final FileElement holderElement = DummyHolderFactory.createHolder(manager, original).getTreeElement();
       String text = classType.getPresentableText();
-      CompositeElement fromT = Parsing.parseTypeText(manager, text, 0, text.length(), holderElement.getCharTable());
-      holderElement.rawAddChildren(fromT);
-      PsiTypeElementImpl result = (PsiTypeElementImpl)SourceTreeToPsiMap.treeElementToPsi(fromT);
+      final TreeElement element = createType(original.getProject(), text, original, false);
+      PsiTypeElementImpl result = (PsiTypeElementImpl)SourceTreeToPsiMap.treeElementToPsi(element);
 
       CodeEditUtil.setNodeGenerated(result, generated);
-      if(generated) {
+      if (generated) {
         PsiJavaCodeReferenceElement ref = result.getInnermostComponentReferenceElement();
         if (ref != null) ((CompositeElement)ref.getNode()).acceptTree(new GeneratedMarkerVisitor());
       }
@@ -215,17 +209,24 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     return Factory.createSingleLeafElement(type, text, 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
   }
 
-  private static CompositeElement createReference(PsiManager manager, String text, CharTable table, boolean generatedFlag) {
-    final CompositeElement element = Parsing.parseJavaCodeReferenceText(manager, text, table);
-    if (element == null) {
-      throw new IllegalArgumentException("Failed to create reference element from text '" + text + "'");
-    }
-    if(generatedFlag) element.acceptTree(new GeneratedMarkerVisitor());
+  private static TreeElement createReference(final Project project, final String text, boolean mark) {
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
+    final TreeElement element = (TreeElement)parserFacade.createReferenceFromText(text, null).getNode();
+    if (mark) element.acceptTree(new GeneratedMarkerVisitor());
     return element;
   }
 
-  private static TreeElement createReferenceExpression(PsiManager manager, String text, CharTable table) {
-    return ExpressionParsing.parseExpressionText(manager, text, 0, text.length(), table);
+  private static TreeElement createReferenceExpression(final Project project, final String text, final PsiElement context) {
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
+    final PsiExpression expression = parserFacade.createExpressionFromText(text, context);
+    return (TreeElement)expression.getNode();
+  }
+
+  private static TreeElement createType(final Project project, final String text, final PsiElement context, final boolean mark) {
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
+    final TreeElement element = (TreeElement)parserFacade.createTypeElementFromText(text, context).getNode();
+    if (mark) element.acceptTree(new GeneratedMarkerVisitor());
+    return element;
   }
 
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
@@ -286,11 +287,8 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
               modifierList.setModifierProperty(PsiModifier.STATIC, true);
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
-            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD) {
-              modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-              modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
-            }
-            else if (element.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD) {
+            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD ||
+                     element.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);
             }
