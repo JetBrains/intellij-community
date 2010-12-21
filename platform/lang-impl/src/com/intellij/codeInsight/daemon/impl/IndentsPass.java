@@ -113,7 +113,42 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
       final EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(selected ? scheme.getColor(EditorColors.SELECTED_INDENT_GUIDE_COLOR) : scheme.getColor(EditorColors.INDENT_GUIDE_COLOR));
-      g.drawLine(start.x + 2, start.y, start.x + 2, end.y);
+      
+      // There is a possible case that indent line intersects soft wrap-introduced text. Example:
+      //     this is a long line <soft-wrap>
+      // that| is soft-wrapped
+      //     |
+      //     | <- vertical indent
+      //
+      // Also it's possible that no additional intersections are added because of soft wrap:
+      //     this is a long line <soft-wrap>
+      //     |   that is soft-wrapped
+      //     |
+      //     | <- vertical indent   
+      // We want to use the following approach then:
+      //     1. Show only active indent if it crosses soft wrap-introduced text;
+      //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
+      if (selected) {
+        g.drawLine(start.x + 2, start.y, start.x + 2, end.y);
+      }
+      else {
+        int y = start.y;
+        SoftWrapModel softWrapModel = editor.getSoftWrapModel();
+        for (int visualLine = startPosition.line + 1, column = startPosition.column; visualLine <= endPosition.line; visualLine++) {
+          VisualPosition visualPosition = new VisualPosition(visualLine, 0);
+          LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+          int offset = editor.logicalPositionToOffset(logicalPosition);
+          SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
+          if (softWrap != null && column >= softWrap.getIndentInColumns()) {
+            int newY = editor.visualPositionToXY(visualPosition).y;
+            g.drawLine(start.x + 2, y, start.x + 2, newY);
+            y = newY + editor.getLineHeight();
+          }
+        }
+        if (y < end.y) {
+          g.drawLine(start.x + 2, y, start.x + 2, end.y);
+        }
+      }
     }
   };
 
