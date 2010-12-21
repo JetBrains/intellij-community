@@ -232,7 +232,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public boolean addChangeToList(@NotNull final String name, final Change change, final VcsKey vcsKey) {
-    LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
+    LOG.info("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
               (vcsKey == null ? null : vcsKey.getName()));
     final LocalChangeList changeList = myMap.get(name);
     if (changeList != null) {
@@ -243,16 +243,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void addChangeToCorrespondingList(final Change change, final VcsKey vcsKey) {
-    final String path = LOG.isDebugEnabled() ? ChangesUtil.getFilePath(change).getPath() : "";
-    LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+    final String path = ChangesUtil.getFilePath(change).getPath();
+    LOG.info("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     assert myDefault != null;
     for (LocalChangeList list : myMap.values()) {
       if (list.isDefault()) {
-        LOG.debug("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+        LOG.info("[addChangeToCorrespondingList] skip default list: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         continue;
       }
       if (((LocalChangeListImpl) list).processChange(change)) {
-        LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
+        LOG.info("[addChangeToCorrespondingList] matched: " + list.getName()  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
         myIdx.changeAdded(change, vcsKey);
         return;
       }
