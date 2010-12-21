@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -288,7 +289,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
 
     //to initialize caches
-    myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
+    if (!DumbService.isDumb(getProject())) {
+      myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true);
+    }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
       facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter); // check repository work

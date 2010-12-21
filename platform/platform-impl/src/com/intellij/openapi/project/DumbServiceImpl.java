@@ -39,8 +39,8 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.lang.reflect.InvocationHandler;
@@ -77,6 +77,17 @@ public class DumbServiceImpl extends DumbService {
 
   public boolean isDumb() {
     return myDumb;
+  }
+
+  @TestOnly
+  public void setDumb(boolean dumb) {
+    if (dumb) {
+      myDumb = true;
+      myPublisher.enteredDumbMode();
+    }
+    else {
+      updateFinished();
+    }
   }
 
   @Override
@@ -159,7 +170,7 @@ public class DumbServiceImpl extends DumbService {
 
     final IndexUpdateRunnable updateRunnable = new IndexUpdateRunnable(runner);
 
-    invokeOnEDT(new DumbAwareRunnable() {
+    UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
       public void run() {
         if (myProject.isDisposed()) {
           return;
@@ -183,15 +194,6 @@ public class DumbServiceImpl extends DumbService {
         }
       }
     });
-  }
-
-  private static void invokeOnEDT(DumbAwareRunnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      SwingUtilities.invokeLater(runnable);
-    }
   }
 
   private void updateFinished() {
@@ -359,7 +361,7 @@ public class DumbServiceImpl extends DumbService {
             }
             finally {
               myProcessedItems += count;
-              invokeOnEDT(new DumbAwareRunnable() {
+              UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
                 public void run() {
                   if (myUpdatesQueue.isEmpty()) {
                     // really terminate the task
