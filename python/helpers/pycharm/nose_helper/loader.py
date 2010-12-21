@@ -112,7 +112,6 @@ class TestLoader(unittest.TestLoader):
             raise
         except:
             exc = sys.exc_info()
-            print ("1", obj, parent)
             return Failure(exc[0], exc[1])
 
     def _makeTest(self, obj, parent=None):
