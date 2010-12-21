@@ -30,7 +30,7 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    return (element instanceof PomTarget || element instanceof PomTargetPsiElement) && element.isWritable();
+    return element instanceof PomTarget || element instanceof PomTargetPsiElement;
   }
 
   @Override
