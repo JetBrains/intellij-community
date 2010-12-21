@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -150,6 +151,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   @Override
   public OrderRootsEnumerator roots(@NotNull OrderRootType rootType) {
     return new OrderRootsEnumeratorImpl(this, rootType);
+  }
+
+  @Override
+  public OrderRootsEnumerator roots(@NotNull NotNullFunction<OrderEntry, OrderRootType> rootTypeProvider) {
+    return new OrderRootsEnumeratorImpl(this, rootTypeProvider);
   }
 
   ModuleRootModel getRootModel(Module module) {
@@ -301,10 +307,11 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return processor.myValue;
   }
 
-  boolean addCustomOutput(ModuleOrderEntry moduleOrderEntry, Collection<VirtualFile> result) {
+  boolean addCustomOutput(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<VirtualFile> result) {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
       final List<String> urls = new ArrayList<String>();
-      final boolean added = handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
+      final boolean added =
+        handler.addCustomOutput(forModule, orderEntryRootModel, type, myProductionOnly, myRuntimeOnly, myCompileOnly, urls);
       for (String url : urls) {
         ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
       }
@@ -315,9 +322,9 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     return false;
   }
 
-  boolean addCustomOutputUrls(ModuleOrderEntry moduleOrderEntry, Collection<String> result) {
+  boolean addCustomOutputUrls(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<String> result) {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
-      if (handler.addCustomOutput(moduleOrderEntry, myProductionOnly, myRuntimeOnly, myCompileOnly, result)) {
+      if (handler.addCustomOutput(forModule, orderEntryRootModel, type, myProductionOnly, myRuntimeOnly, myCompileOnly, result)) {
         return true;
       }
     }

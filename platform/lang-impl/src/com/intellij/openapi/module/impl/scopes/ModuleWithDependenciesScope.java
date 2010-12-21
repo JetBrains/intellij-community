@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,189 +15,174 @@
  */
 package com.intellij.openapi.module.impl.scopes;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
-/**
- * @author max
- */
 public class ModuleWithDependenciesScope extends GlobalSearchScope {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope");
-
   private final Module myModule;
+
+  private final boolean myCompileClasspath;
   private final boolean myIncludeLibraries;
   private final boolean myIncludeOtherModules;
   private final boolean myIncludeTests;
 
-  private final ModuleFileIndex myFileIndex;
   private final ProjectFileIndex myProjectFileIndex;
-  private final Set<Module> myModules;
 
-  public ModuleWithDependenciesScope(Module module, boolean includeLibraries, boolean includeOtherModules, boolean includeTests) {
+  private final Set<Module> myModules = new LinkedHashSet<Module>();
+  private final Set<VirtualFile> myRoots = new LinkedHashSet<VirtualFile>();
+
+  public ModuleWithDependenciesScope(Module module,
+                                     boolean compileClasspath,
+                                     boolean includeLibraries,
+                                     boolean includeOtherModules,
+                                     boolean includeTests) {
     super(module.getProject());
     myModule = module;
+
+    myCompileClasspath = compileClasspath;
     myIncludeLibraries = includeLibraries;
     myIncludeOtherModules = includeOtherModules;
     myIncludeTests = includeTests;
 
-    myFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
     myProjectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
 
-    if (myIncludeOtherModules) {
-      myModules = new LinkedHashSet<Module>();
-      myModules.add(myModule);
-      Module[] dependencies = ModuleRootManager.getInstance(myModule).getDependencies(myIncludeTests);
-      ContainerUtil.addAll(myModules, dependencies);
-      for (Module dependency : dependencies) {
-        addExportedModules(dependency);
-      }
+    OrderEnumerator en = ModuleRootManager.getInstance(module).orderEntries();
+    en.recursively();
+
+    if (myCompileClasspath) {
+      en.exportedOnly().compileOnly();
     }
     else {
-      myModules = null;
+      en.runtimeOnly();
     }
-  }
+    if (!myIncludeLibraries) en.withoutLibraries();
+    if (!myIncludeOtherModules) en.withoutDepModules();
+    if (!myIncludeTests) en.productionOnly();
 
-  private void addExportedModules(Module module) {
-    OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-    for (OrderEntry orderEntry : orderEntries) {
-      if (!orderEntry.isValid()) {
-        continue;
+    en.forEach(new Processor<OrderEntry>() {
+      @Override
+      public boolean process(OrderEntry each) {
+        if (each instanceof ModuleOrderEntry) {
+          myModules.add(((ModuleOrderEntry)each).getModule());
+        }
+        else if (each instanceof ModuleSourceOrderEntry) {
+          myModules.add(each.getOwnerModule());
+        }
+        return true;
       }
-      if (orderEntry instanceof ModuleOrderEntry && ((ModuleOrderEntry)orderEntry).isExported()) {
-        if (!myIncludeTests) {
-          final DependencyScope scope = ((ModuleOrderEntry)orderEntry).getScope();
-          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
-            continue;
-          }
-        }
-        Module exportedModule = ((ModuleOrderEntry)orderEntry).getModule();
-        if (!myModules.contains(exportedModule)) { //could be true in case of circular dependencies
-          myModules.add(exportedModule);
-          addExportedModules(exportedModule);
-        }
+    });
+
+    Collections.addAll(myRoots, en.roots(new NotNullFunction<OrderEntry, OrderRootType>() {
+      @NotNull
+      @Override
+      public OrderRootType fun(OrderEntry entry) {
+        if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
+        return OrderRootType.CLASSES;
       }
-    }
-  }
-
-  public boolean contains(VirtualFile file) {
-    if (!myIncludeTests && myFileIndex.isInTestSourceContent(file)) return false;
-
-    if (myModules != null) {
-      final Module module = myProjectFileIndex.getModuleForFile(file);
-      if (module != null) return myModules.contains(module) &&
-                                 myFileIndex.getOrderEntryForFile(file) != null &&
-                                 (myIncludeTests || !myProjectFileIndex.isInTestSourceContent(file));
-    }
-
-    final List<OrderEntry> entries = myFileIndex.getOrderEntriesForFile(file);
-    for (OrderEntry orderEntry : entries) {
-      if (myIncludeLibraries) {
-        if (orderEntry instanceof LibraryOrderEntry ||
-            orderEntry instanceof JdkOrderEntry) {
-          if (!myProjectFileIndex.isInLibraryClasses(file)) {
-            continue;
-          }
-        }
-        if (orderEntry instanceof ExportableOrderEntry) {
-          DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
-          if (!myIncludeTests && !scope.isForProductionCompile()) {
-            continue;
-          }
-        }
-        if (myIncludeOtherModules) {
-          return true;
-        }
-        else {
-          if (!(orderEntry instanceof ModuleOrderEntry)) return true;
-        }
-      }
-      else {
-        if (myIncludeOtherModules) {
-          if (orderEntry instanceof ModuleSourceOrderEntry || orderEntry instanceof ModuleOrderEntry) return true;
-        }
-        else {
-          if (orderEntry instanceof ModuleSourceOrderEntry) return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  public int compare(VirtualFile file1, VirtualFile file2) {
-    OrderEntry orderEntry1 = myFileIndex.getOrderEntryForFile(file1);
-    LOG.assertTrue(orderEntry1 != null);
-    OrderEntry orderEntry2 = myFileIndex.getOrderEntryForFile(file2);
-    LOG.assertTrue(orderEntry2 != null);
-    int ret = orderEntry2.compareTo(orderEntry1);
-    if (ret != 0) return ret;
-    //prefer file which is closer to our module
-    if (myModules != null) {
-      for (Module module : myModules) {
-        ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-        ret = fileIndex.isInContent(file1) ? fileIndex.isInContent(file2) ? 0 : 1 : fileIndex.isInContent(file2) ? -1 : 0;
-        if (ret != 0) return ret;
-      }
-    }
-    return 0;
-  }
-
-  public boolean isSearchInModuleContent(@NotNull Module aModule) {
-    if (myIncludeOtherModules) {
-      return myModules.contains(aModule);
-    }
-    else {
-      return aModule == myModule;
-    }
-  }
-
-  public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
-    return isSearchInModuleContent(aModule) && (myIncludeTests || !testSources);
-  }
-
-  public boolean isSearchInLibraries() {
-    return myIncludeLibraries;
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ModuleWithDependenciesScope)) return false;
-
-    final ModuleWithDependenciesScope moduleWithDependenciesScope = (ModuleWithDependenciesScope)o;
-
-    if (!myModule.equals(moduleWithDependenciesScope.myModule)) return false;
-    if (myIncludeLibraries != moduleWithDependenciesScope.myIncludeLibraries) return false;
-    if (myIncludeOtherModules != moduleWithDependenciesScope.myIncludeOtherModules) return false;
-    if (myIncludeTests != moduleWithDependenciesScope.myIncludeTests) return false;
-
-    return true;
-  }
-
-  public int hashCode() {
-    return myModule.hashCode();
-  }
-
-  @NonNls
-  public String toString() {
-    return "Module with dependencies:" + myModule.getName() +
-           " include libraries:" + myIncludeLibraries +
-           " include other modules:" + myIncludeOtherModules +
-           " include tests:" + myIncludeTests;
+    }).getRoots());
   }
 
   @Override
   public String getDisplayName() {
-    return PsiBundle.message("psi.search.scope.module", myModule.getName());
+    return myCompileClasspath ? PsiBundle.message("search.scope.module", myModule.getName())
+                              : PsiBundle.message("search.scope.module.runtime", myModule.getName());
+  }
+
+  @Override
+  public boolean isSearchInModuleContent(@NotNull Module aModule) {
+    return myModules.contains(aModule);
+  }
+
+  @Override
+  public boolean isSearchInModuleContent(@NotNull Module aModule, boolean testSources) {
+    return isSearchInModuleContent(aModule) && (myIncludeTests || !testSources);
+  }
+
+  @Override
+  public boolean isSearchInLibraries() {
+    return myIncludeLibraries;
+  }
+
+  @Override
+  public boolean contains(VirtualFile file) {
+    return myRoots.contains(getFileRoot(file));
+  }
+
+  @Override
+  public int compare(VirtualFile file1, VirtualFile file2) {
+    VirtualFile r1 = getFileRoot(file1);
+    VirtualFile r2 = getFileRoot(file2);
+    if (r1 == r2) return 0;
+
+    if (r1 == null) return -1;
+    if (r2 == null) return 1;
+
+    for (VirtualFile root : myRoots) {
+      if (r1 == root) return 1;
+      if (r2 == root) return -1;
+    }
+    return 0;
+  }
+
+  @Nullable
+  private VirtualFile getFileRoot(VirtualFile file) {
+    if (myProjectFileIndex.isInContent(file)) {
+      return myProjectFileIndex.getSourceRootForFile(file);
+    }
+    return myProjectFileIndex.getClassRootForFile(file);
+  }
+
+  @TestOnly
+  public Collection<VirtualFile> getRoots() {
+    return Collections.unmodifiableSet(myRoots);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ModuleWithDependenciesScope that = (ModuleWithDependenciesScope)o;
+
+    if (myCompileClasspath != that.myCompileClasspath) return false;
+    if (myIncludeLibraries != that.myIncludeLibraries) return false;
+    if (myIncludeOtherModules != that.myIncludeOtherModules) return false;
+    if (myIncludeTests != that.myIncludeTests) return false;
+    if (myModule != null ? !myModule.equals(that.myModule) : that.myModule != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myModule != null ? myModule.hashCode() : 0);
+    result = 31 * result + (myIncludeLibraries ? 1 : 0);
+    result = 31 * result + (myIncludeOtherModules ? 1 : 0);
+    result = 31 * result + (myIncludeTests ? 1 : 0);
+    result = 31 * result + (myCompileClasspath ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "Module with dependencies:" + myModule.getName() +
+           " compile:" + myCompileClasspath +
+           " include libraries:" + myIncludeLibraries +
+           " include other modules:" + myIncludeOtherModules +
+           " include tests:" + myIncludeTests;
   }
 }
