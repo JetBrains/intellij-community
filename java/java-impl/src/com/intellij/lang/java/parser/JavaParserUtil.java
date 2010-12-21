@@ -334,6 +334,16 @@ public class JavaParserUtil {
       return myDelegate.lookAhead(steps);
     }
 
+    @Override
+    public IElementType justLookup(int steps) {
+      return myDelegate.justLookup(steps);
+    }
+
+    @Override
+    public int tokenTypeStart(int steps) {
+      return myDelegate.tokenTypeStart(steps);
+    }
+
     @Nullable @NonNls
     public String getTokenText() {
       return myDelegate.getTokenText();
