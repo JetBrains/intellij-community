@@ -1011,7 +1011,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         int diff = px - x;
         column += diff / spaceSize;
-        if ((diff % spaceSize) * 2 >= spaceSize) {
+        if (diff % spaceSize * 2 >= spaceSize) {
           column++;
         }
       }
@@ -1059,13 +1059,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = calcLogicalLineNumber(offset, false);
     int column = calcColumnNumber(offset, line, false);
     return new LogicalPosition(line, column);
-  }
-
-  @Override
-  public boolean isCaretActive() {
-    synchronized (ourCaretBlinkingCommand) {
-      return ourCaretBlinkingCommand.myEditor == this;
-    }
   }
 
   @TestOnly
@@ -2005,7 +1998,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     // Check if the first soft wrap line is within the visual selection.
     if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
-        || (currentVisualLine == selectionEndPosition.line && selectionEndPosition.column <= lastColumn)) {
+        || currentVisualLine == selectionEndPosition.line && selectionEndPosition.column <= lastColumn) {
       return;
     }
     
@@ -2062,7 +2055,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     // Check if the second soft wrap line is within the visual selection.
     if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
-        || (currentVisualLine == selectionStartPosition.line && selectionStartPosition.column >= softWrap.getIndentInColumns())) {
+        || currentVisualLine == selectionStartPosition.line && selectionStartPosition.column >= softWrap.getIndentInColumns()) {
       return;
     }
 
@@ -3054,9 +3047,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (i >= 0) {
           return topLevelCollapsed[i];
         }
-        else {
-          return null;
-        }
+        return null;
       }
       return region;
     }

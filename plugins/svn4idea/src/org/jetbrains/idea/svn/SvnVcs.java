@@ -591,7 +591,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return mySvnIntegrateEnvironment;
   }
 
-  public UpdateEnvironment getUpdateEnvironment() {
+  public UpdateEnvironment createUpdateEnvironment() {
     if (mySvnUpdateEnvironment == null) {
       mySvnUpdateEnvironment = new SvnUpdateEnvironment(this);
     }
@@ -618,7 +618,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  public CheckinEnvironment getCheckinEnvironment() {
+  public CheckinEnvironment createCheckinEnvironment() {
     if (myCheckinEnvironment == null) {
       myCheckinEnvironment = new SvnCheckinEnvironment(this);
     }
@@ -626,7 +626,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  public RollbackEnvironment getRollbackEnvironment() {
+  public RollbackEnvironment createRollbackEnvironment() {
     if (myRollbackEnvironment == null) {
       myRollbackEnvironment = new SvnRollbackEnvironment(this);
     }

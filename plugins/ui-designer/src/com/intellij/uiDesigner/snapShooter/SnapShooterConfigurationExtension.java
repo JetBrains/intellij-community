@@ -16,11 +16,10 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.OSProcessHandler;
@@ -56,7 +55,7 @@ import java.util.TreeSet;
  */
 public class SnapShooterConfigurationExtension extends RunConfigurationExtension {
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (!(configuration instanceof ApplicationConfiguration)) {
       return;
     }
@@ -102,7 +101,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     }
   }
 
-  public void handleStartProcess(final ModuleBasedConfiguration configuration, final OSProcessHandler handler) {
+  public void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler) {
     SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
       final Runnable runnable = settings.getNotifyRunnable();
@@ -118,7 +117,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> SettingsEditor createEditor(T configuration) {
+  public SettingsEditor createEditor(RunConfigurationBase configuration) {
     return null;
   }
 
@@ -133,26 +132,26 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> Icon getIcon(T runConfiguration) {
+  public Icon getIcon(RunConfigurationBase runConfiguration) {
     return null;
   }
 
   @Override
-  public void readExternal(ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException {
+  public void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
 
   }
 
   @Override
-  public void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
+  public void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void patchConfiguration(T runJavaConfiguration) {
+  public void patchConfiguration(RunConfigurationBase runJavaConfiguration) {
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void checkConfiguration(T runJavaConfiguration)
+  public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
     throws RuntimeConfigurationException {
 
   }

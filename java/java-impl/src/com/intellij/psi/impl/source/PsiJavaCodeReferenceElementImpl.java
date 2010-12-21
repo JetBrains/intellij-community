@@ -28,7 +28,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
@@ -118,7 +117,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return qualifier != null ? CLASS_IN_QUALIFIED_NEW_KIND : CLASS_NAME_KIND;
       }
       else {
-        return CLASS_OR_PACKAGE_NAME_KIND; // uncomplete code
+        return CLASS_OR_PACKAGE_NAME_KIND; // incomplete code
       }
     }
     if (i == JavaElementType.PACKAGE_STATEMENT) {
@@ -524,10 +523,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           if (name == null) {
             throw new IncorrectOperationException(aClass.toString());
           }
-          final TreeElement ref =
-            Parsing.parseJavaCodeReferenceText(aClass.getManager(), name, SharedImplUtil.findCharTableByTree(this));
-          getTreeParent().replaceChildInternal(this, ref);
-          return SourceTreeToPsiMap.treeElementToPsi(ref);
+          final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+          final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(name, null);
+          getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+          return ref;
         }
         else {
           throw cannotBindError(element);
@@ -563,16 +562,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final PsiManager manager = aClass.getManager();
     final PsiReferenceParameterList parameterList = getParameterList();
     String text = (parameterList != null ? qName + parameterList.getText() : qName);
-    ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, text, SharedImplUtil.findCharTableByTree(this));
-    LOG.assertTrue(ref != null, "Failed to parse reference from text '" + text + "'");
-    getTreeParent().replaceChildInternal(this, (TreeElement)ref);
+    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, null);
+    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
-      ref = SourceTreeToPsiMap.psiElementToTree(
-        codeStyleManager.shortenClassReferences(SourceTreeToPsiMap.treeElementToPsi(ref), JavaCodeStyleManager.UNCOMPLETE_CODE)
-      );
+      ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.UNCOMPLETE_CODE);
     }
-    return SourceTreeToPsiMap.treeElementToPsi(ref);
+    return ref;
   }
 
   private boolean isFullyQualified() {
@@ -608,9 +604,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (qName.length() == 0) {
       throw new IncorrectOperationException("Cannot bind to default package: "+aPackage);
     }
-    final TreeElement ref = Parsing.parseJavaCodeReferenceText(getManager(), qName, SharedImplUtil.findCharTableByTree(this));
-    getTreeParent().replaceChildInternal(this, ref);
-    return SourceTreeToPsiMap.treeElementToPsi(ref);
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+    final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(qName, null);
+    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+    return ref;
   }
 
   public boolean isReferenceTo(final PsiElement element) {

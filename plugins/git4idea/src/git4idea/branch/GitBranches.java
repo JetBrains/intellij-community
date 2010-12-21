@@ -93,8 +93,7 @@ public class GitBranches implements GitReferenceListener {
     if (vcs == null || !(vcs instanceof GitVcs)) { return null; }
     final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(file);
     if (vcsRoot == null) { return null; }
-    if (myChangeListManager.isUnversioned(file)) { return null; }
-    
+
     synchronized (myCurrentBranchesLock) {
       return myCurrentBranches.get(vcsRoot);
     }

@@ -92,6 +92,14 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   public void initComponent() {
     final FacetManagerListener facetListener = new FacetManagerAdapter() {
+      @Override
+      public void beforeFacetRenamed(@NotNull Facet facet) {
+        final FacetPointerImpl pointer = myPointers.get(constructId(facet));
+        if (pointer != null) {
+          pointer.refresh();
+        }
+      }
+
       public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
         refreshPointers(facet.getModule());
       }

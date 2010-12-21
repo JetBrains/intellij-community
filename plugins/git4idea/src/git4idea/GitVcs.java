@@ -230,7 +230,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public CheckinEnvironment getCheckinEnvironment() {
+  public CheckinEnvironment createCheckinEnvironment() {
     return myCheckinEnvironment;
   }
 
@@ -242,7 +242,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @NotNull
-  public RollbackEnvironment getRollbackEnvironment() {
+  public RollbackEnvironment createRollbackEnvironment() {
     return myRollbackEnvironment;
   }
 
@@ -265,7 +265,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   @Nullable
-  public UpdateEnvironment getUpdateEnvironment() {
+  public UpdateEnvironment createUpdateEnvironment() {
     return myUpdateEnvironment;
   }
 

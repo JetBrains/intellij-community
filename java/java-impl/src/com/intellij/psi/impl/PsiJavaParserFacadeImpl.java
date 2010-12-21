@@ -78,6 +78,13 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     }
   };
 
+  public static final JavaParserUtil.ParserWrapper STATIC_IMPORT_REF = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseImportCodeReference(builder, true);
+    }
+  };
+
   private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
@@ -254,7 +261,9 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, REFERENCE, false), context);
+    final boolean isStaticImport = context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand();
+    final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : REFERENCE;
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       throw new IncorrectOperationException("Incorrect reference \"" + text + "\".");

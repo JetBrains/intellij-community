@@ -16,34 +16,78 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowShortenNames extends ToggleAction {
+public class ShowShortenNames extends ActionGroup {
   public static final String KEY = "annotate.show.short.names";
-  private final EditorGutterComponentEx myGutter;
 
-  public ShowShortenNames(EditorGutterComponentEx gutter) {
-    super("Short names");
-    myGutter = gutter;
+  private final AnAction[] myChildren;
+  public ShowShortenNames(final EditorGutterComponentEx gutter) {
+    super("Names", true);
+    final ArrayList<AnAction> kids = new ArrayList<AnAction>(ShortNameType.values().length);
+    for (ShortNameType type : ShortNameType.values()) {
+      kids.add(new SetShortNameTypeAction(type, gutter));
+    }
+    myChildren = kids.toArray(new AnAction[kids.size()]);
   }
-
+  @NotNull
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    return isSet();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    PropertiesComponent.getInstance().setValue(KEY, String.valueOf(state));
-    myGutter.revalidateMarkup();
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myChildren;
   }
 
   public static boolean isSet() {
-    return PropertiesComponent.getInstance().getBoolean(KEY, true);
+    return getType() != ShortNameType.NONE;
+  }
+
+  public static ShortNameType getType() {
+    for (ShortNameType type : ShortNameType.values()) {
+      if (type.isSet()) {
+        return type;
+      }
+    }
+    return ShortNameType.LASTNAME;
+  }
+
+  public static class SetShortNameTypeAction extends ToggleAction {
+    private final ShortNameType myType;
+    private final EditorGutterComponentEx myGutter;
+
+    public SetShortNameTypeAction(ShortNameType type, EditorGutterComponentEx gutter) {
+      super(type.getDescription());
+      myType = type;
+      myGutter = gutter;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myType == getType();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean enabled) {
+      PropertiesComponent.getInstance().unsetValue(KEY);
+      if (enabled) {
+        myType.set(enabled);
+      } else {
+        if (myType == ShortNameType.NONE) {
+          ShortNameType.LASTNAME.set(true);
+        } else {
+          ShortNameType.NONE.set(true);
+        }
+      }
+      myGutter.revalidateMarkup();
+    }
   }
 }

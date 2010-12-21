@@ -71,6 +71,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     if (psiElement == null || !psiElement.isValid()) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
 
+    if (psiElement instanceof PsiWhiteSpace) psiElement = PsiTreeUtil.prevLeaf(psiElement);
     if (psiElement instanceof XmlToken) {
       final IElementType tokenType = ((XmlToken)psiElement).getTokenType();
       if (tokenType != XmlTokenType.XML_NAME) {

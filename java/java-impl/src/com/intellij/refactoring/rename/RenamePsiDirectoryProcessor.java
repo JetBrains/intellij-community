@@ -33,7 +33,7 @@ import java.util.Collection;
  * @author yole
  */
 public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiDirectory;
   }
 

@@ -297,11 +297,6 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
-  public boolean isCaretActive() {
-    return myDelegate.isCaretActive();
-  }
-
-  @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
     return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
   }

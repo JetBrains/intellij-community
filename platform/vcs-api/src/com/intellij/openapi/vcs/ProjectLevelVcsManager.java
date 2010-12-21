@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
+import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -275,4 +276,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
   public static Topic<VcsListener> VCS_CONFIGURATION_CHANGED = Topic.create("VCS configuration changed", VcsListener.class);
+
+  public abstract VcsEventsListenerManager getVcsEventsListenerManager();
+  protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
 }
