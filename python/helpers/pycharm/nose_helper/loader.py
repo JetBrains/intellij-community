@@ -112,7 +112,6 @@ class TestLoader(unittest.TestLoader):
             raise
         except:
             exc = sys.exc_info()
-            print ("1", obj, parent)
             return Failure(exc[0], exc[1])
 
     def _makeTest(self, obj, parent=None):
@@ -158,6 +157,25 @@ class TestLoader(unittest.TestLoader):
         else:
             return Failure(TypeError,
                            "Can't make a test from %s" % obj)
+
+    def loadTestsFromTestCase(self, testCaseClass):
+       """Return a suite of all tests cases contained in testCaseClass"""
+       try:
+           # PY-2412
+           # because of Twisted overrides runTest function and we don't need to harvest them
+           import twisted.trial.unittest
+           if issubclass(testCaseClass, twisted.trial.unittest.TestCase):
+               testCaseNames = self.getTestCaseNames(testCaseClass)
+               return self.suiteClass(map(testCaseClass, testCaseNames))
+       except ImportError:
+           pass
+
+       if issubclass(testCaseClass, unittest.TestSuite):
+           raise TypeError("Test cases should not be derived from TestSuite. Maybe you meant to derive from TestCase?")
+       testCaseNames = self.getTestCaseNames(testCaseClass)
+       if not testCaseNames and hasattr(testCaseClass, 'runTest'):
+           testCaseNames = ['runTest']
+       return self.suiteClass(map(testCaseClass, testCaseNames))
 
     def parseGeneratedTest(self, test):
         """Given the yield value of a test generator, return a func and args.
