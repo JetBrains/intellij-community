@@ -83,7 +83,6 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
     private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
 
-        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
@@ -114,7 +113,6 @@ public class EmptyCatchBlockInspection extends BaseInspection {
             identifier.replace(newIdentifier);
         }
     }
-
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
