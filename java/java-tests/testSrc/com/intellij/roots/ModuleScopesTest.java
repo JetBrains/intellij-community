@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * @author yole
  */
-public class DependencyScopeTest extends ModuleTestCase {
+public class ModuleScopesTest extends ModuleTestCase {
   private LightTempDirTestFixtureImpl myFixture;
 
   @Override
@@ -28,6 +28,30 @@ public class DependencyScopeTest extends ModuleTestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
     myFixture.deleteAll();
+  }
+
+  public void testBasics() throws Exception {
+    Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
+    Module moduleB = addDependentModule(moduleA, DependencyScope.COMPILE);
+    VirtualFile libraryRoot = addLibrary(moduleA, DependencyScope.COMPILE);
+
+    VirtualFile classB = myFixture.createFile("b/Test.java", "public class Test { }");
+    VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
+
+    assertFalse(moduleA.getModuleScope().contains(classB));
+    assertFalse(moduleA.getModuleScope().contains(libraryClass));
+
+    assertFalse(moduleA.getModuleWithLibrariesScope().contains(classB));
+    assertTrue(moduleA.getModuleWithLibrariesScope().contains(libraryClass));
+
+    assertTrue(moduleA.getModuleWithDependenciesScope().contains(classB));
+    assertFalse(moduleA.getModuleWithDependenciesScope().contains(libraryClass));
+
+    assertTrue(moduleA.getModuleWithDependenciesAndLibrariesScope(true).contains(classB));
+    assertTrue(moduleA.getModuleWithDependenciesAndLibrariesScope(true).contains(libraryClass));
+
+    assertTrue(moduleA.getModuleRuntimeScope(true).contains(classB));
+    assertTrue(moduleA.getModuleRuntimeScope(true).contains(libraryClass));
   }
 
   public void testTestOnlyModuleDependency() throws Exception {

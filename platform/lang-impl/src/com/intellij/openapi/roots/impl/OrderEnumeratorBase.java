@@ -202,12 +202,13 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {
-      if (myWithoutJdk && entry instanceof JdkOrderEntry
-          || myWithoutLibraries && entry instanceof LibraryOrderEntry
-          || (myWithoutDepModules && !myRecursively) && entry instanceof ModuleOrderEntry
-          || myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) {
-        continue;
+      if (myWithoutJdk && entry instanceof JdkOrderEntry) continue;
+      if (myWithoutLibraries && entry instanceof LibraryOrderEntry) continue;
+      if (myWithoutDepModules) {
+        if (!myRecursively && entry instanceof ModuleOrderEntry) continue;
+        if (entry instanceof ModuleSourceOrderEntry && !isMainModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
       }
+      if (myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
 
       OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
       for (OrderEnumerationHandler handler : myCustomHandlers) {

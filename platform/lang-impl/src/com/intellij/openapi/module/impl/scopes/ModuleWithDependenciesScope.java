@@ -68,7 +68,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     else {
       en.runtimeOnly();
     }
-    if (!myIncludeLibraries) en.withoutLibraries();
+    if (!myIncludeLibraries) en.withoutLibraries().withoutSdk();
     if (!myIncludeOtherModules) en.withoutDepModules();
     if (!myIncludeTests) en.productionOnly();
 

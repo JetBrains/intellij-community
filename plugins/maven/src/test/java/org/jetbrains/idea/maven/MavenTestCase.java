@@ -52,7 +52,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   // should not be static
