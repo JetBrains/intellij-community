@@ -34,13 +34,12 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
-class AnnotationFieldGutter implements ActiveAnnotationGutter {
+public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   protected final FileAnnotation myAnnotation;
   private final Editor myEditor;
   protected final LineAnnotationAspect myAspect;
@@ -75,56 +74,38 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   public String getLineText(int line, Editor editor) {
     final String value = isAvailable() ? myAspect.getValue(line) : "";
     if (myAspect.getId() == LineAnnotationAspect.AUTHOR && ShowShortenNames.isSet()) {
-      return shorten(value);
+      return shorten(value, ShowShortenNames.getType());
     }
     return value;
   }
 
   @Nullable
-  private static String shorten(String value) {
-    if (value != null) {
-      // Vasya Pupkin <vasya.pupkin@jetbrains.com>
-      final int[] ind = {value.indexOf('<'), value.indexOf('@'), value.indexOf('>')};
+  public static String shorten(String name, ShortNameType type) {
+    if (name != null) {
+      // Vasya Pupkin <vasya.pupkin@jetbrains.com> -> Vasya Pupkin
+      final int[] ind = {name.indexOf('<'), name.indexOf('@'), name.indexOf('>')};
       if (0 < ind[0] && ind[0] < ind[1] && ind[1] < ind[2]) {
-        return shorten(value.substring(0, ind[0]).trim());
+        return shorten(name.substring(0, ind[0]).trim(), type);
       }
 
       // vasya.pupkin@email.com --> vasya pupkin
-      if (isEmail(value)) {
-        final String firstPart = value.substring(0, value.indexOf('@')).replace('.', ' ').replace('_', ' ').replace('-', ' ');
-        if (firstPart.length() < value.length()) {
-          return shorten(firstPart);
+      if (!name.contains(" ") && name.contains("@")) { //simple e-mail check. john@localhost
+        final String firstPart = name.substring(0, name.indexOf('@')).replace('.', ' ').replace('_', ' ').replace('-', ' ');
+        if (firstPart.length() < name.length()) {
+          return shorten(firstPart, type);
         } else {
           return firstPart;
         }
       }
 
-      final List<String> strings = StringUtil.split(value, " ");
+      final List<String> strings = StringUtil.split(name.replace('.', ' ').replace('_', ' ').replace('-', ' '), " ");
       if (strings.size() > 1) {
         //Middle name check: Vasya S. Pupkin
-        return strings.get(1).length() < 3 && strings.size() > 2 && strings.get(2).length() > 1 ? strings.get(2) : strings.get(1);
-      }
-      if (value.contains(".")) {
-        strings.clear();
-        strings.addAll(StringUtil.split(value, "."));
-        // vasya.pupkin case
-        if (strings.size() > 1) {
-          //Middle name check: Vasya.S.Pupkin
-          return strings.get(1).length() == 1 && strings.size() > 2 && strings.get(2).length() > 1 ? strings.get(2) : strings.get(1);
-        }
+        return StringUtil.capitalize(type == ShortNameType.FIRSTNAME ? strings.get(0) : strings.get(strings.size() - 1));
       }
     }
-    return value;
+    return name;
   }
-
-  private static final Pattern EMAIL = Pattern.compile("^[\\w\\.-]+@([\\w\\-]+\\.)+[a-z]{2,15}$");
-  public static boolean isEmail(String s) {
-    if (!StringUtil.isEmpty(s)) {
-      return EMAIL.matcher(s).matches();
-    }
-    return false;
-  }
-
 
   @Nullable
   public String getToolTip(final int line, final Editor editor) {
@@ -210,5 +191,15 @@ class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @Nullable
   public String getID() {
     return myAspect == null ? null : myAspect.getId();
+  }
+
+
+  public static void main(String[] args) {
+    assert shorten("Vasya Pavlovich Pupkin <asdasd@localhost>", ShortNameType.FIRSTNAME).equals("Vasya");
+    assert shorten("Vasya Pavlovich Pupkin <asdasd@localhost>", ShortNameType.LASTNAME).equals("Pupkin");
+    assert shorten("Vasya Pavlovich Pupkin", ShortNameType.FIRSTNAME).equals("Vasya");
+    assert shorten("Vasya Pavlovich Pupkin", ShortNameType.LASTNAME).equals("Pupkin");
+    assert shorten("vasya.pupkin@localhost.com", ShortNameType.LASTNAME).equals("Pupkin");
+    assert shorten("vasya.pupkin@localhost.com", ShortNameType.FIRSTNAME).equals("Vasya");
   }
 }

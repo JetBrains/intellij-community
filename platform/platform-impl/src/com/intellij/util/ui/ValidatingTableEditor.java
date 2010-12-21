@@ -91,6 +91,11 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     public Class getColumnClass() {
       return myDelegate.getColumnClass();
     }
+
+    @Override
+    public TableCellRenderer getRenderer(Item item) {
+      return myDelegate.getRenderer(item);
+    }
   }
 
   private JPanel myContentPane;
@@ -99,6 +104,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   private JButton myRemoveButton;
   private JLabel myMessageLabel;
   private HoverHyperlinkLabel myFixLink;
+  private JButton myExtraButton;
   private final List<String> myWarnings = new ArrayList<String>();
   private Fix myFixRunnable;
 
@@ -211,6 +217,19 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
         removeSelected();
       }
     });
+
+    myExtraButton.setVisible(false);
+  }
+
+  protected ValidatingTableEditor(final ActionListener actionListener, String buttonText) {
+    this();
+    myExtraButton.setVisible(true);
+    myExtraButton.setText(buttonText);
+    myExtraButton.addActionListener(actionListener);
+  }
+
+  public List<Item> getSelectedItems() {
+    return myTable.getSelectedObjects();
   }
 
   private void removeSelected() {
@@ -379,5 +398,4 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       header.setReorderingAllowed(value);
     }
   }
-
 }
