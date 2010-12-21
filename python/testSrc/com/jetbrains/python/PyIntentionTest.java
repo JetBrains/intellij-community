@@ -5,6 +5,8 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
+import java.util.List;
+
 /**
  * @author Alexey.Ivanov
  */
@@ -25,6 +27,16 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     finally {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
     }
+  }
+
+  /**
+   * Ensures that intention with given hint <i>is not</i> active.
+   * @param hint
+   */
+  private void doNegativeTest(String hint) {
+    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
+    List<IntentionAction> ints = myFixture.filterAvailableIntentions(hint);
+    assertEmpty(ints);
   }
 
   public void testConvertDictComp() {
@@ -111,6 +123,10 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
 
   public void testJoinIf() {
     doTest(PyBundle.message("INTN.join.if.text"));
+  }
+
+  public void testJoinIfElse() {
+    doNegativeTest(PyBundle.message("INTN.join.if.text"));
   }
 
   public void testDictConstructorToLiteralForm() {
