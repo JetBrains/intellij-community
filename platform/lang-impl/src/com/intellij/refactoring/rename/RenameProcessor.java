@@ -114,7 +114,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super.doRun();
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
     final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {

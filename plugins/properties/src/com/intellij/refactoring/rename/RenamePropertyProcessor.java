@@ -19,12 +19,13 @@ import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
 public class RenamePropertyProcessor extends RenamePsiElementProcessor {
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof Property;
   }
 

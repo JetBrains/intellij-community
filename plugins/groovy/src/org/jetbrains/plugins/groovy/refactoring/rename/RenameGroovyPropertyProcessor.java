@@ -190,7 +190,7 @@ public class RenameGroovyPropertyProcessor extends RenameJavaVariableProcessor {
   }
 
   @Override
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof GrField && ((GrField)element).isProperty();
   }
 

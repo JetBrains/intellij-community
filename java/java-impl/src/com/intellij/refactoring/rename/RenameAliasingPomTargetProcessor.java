@@ -22,15 +22,15 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor {
 
   @Override
-  public boolean canProcessElement(@Nullable PsiElement element) {
-    return element instanceof PomTarget || element instanceof PomTargetPsiElement;
+  public boolean canProcessElement(@NotNull PsiElement element) {
+    return (element instanceof PomTarget || element instanceof PomTargetPsiElement) && element.isWritable();
   }
 
   @Override

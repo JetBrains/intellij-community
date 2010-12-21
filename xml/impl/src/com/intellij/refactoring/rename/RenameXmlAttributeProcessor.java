@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
 
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof XmlAttribute || element instanceof XmlAttributeValue;
   }
 
