@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class RenamePyClassProcessor extends RenamePsiElementProcessor {
   @Override
-  public boolean canProcessElement(PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyClass;
   }
 

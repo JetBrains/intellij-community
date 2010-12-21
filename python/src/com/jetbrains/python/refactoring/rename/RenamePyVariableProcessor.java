@@ -4,13 +4,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class RenamePyVariableProcessor extends RenamePsiElementProcessor {
   @Override
-  public boolean canProcessElement(PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     // extension ordering in python-plugin-common.xml ensures that classes and variables are handled by their own processors
     return element instanceof PyElement;
   }

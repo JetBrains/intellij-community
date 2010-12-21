@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Map;
  */
 public class RenamePyFunctionProcessor extends RenamePsiElementProcessor {
   @Override
-  public boolean canProcessElement(PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFunction;
   }
 
