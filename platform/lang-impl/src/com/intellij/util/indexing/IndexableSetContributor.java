@@ -5,9 +5,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.apache.commons.collections.SetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +17,9 @@ import java.util.Set;
  * @author peter
  */
 public abstract class IndexableSetContributor implements IndexedRootsProvider {
+  
+  protected static final Set<VirtualFile> EMPTY_FILE_SET = Collections.unmodifiableSet(new HashSet<VirtualFile>());
+  
   @Override
   public final Set<String> getRootsToIndex() {
     return ContainerUtil.map2Set(getAdditionalRootsToIndex(), new NotNullFunction<VirtualFile, String>() {
@@ -26,13 +31,17 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
     });
   }
 
-  public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider) {
-    return getRootsToIndex(provider, null);
+  @NotNull
+  public static Set<VirtualFile> getProjectRootsToIndex(IndexedRootsProvider provider, Project project) {
+    if (provider instanceof IndexableSetContributor) {
+      return ((IndexableSetContributor)provider).getAdditionalProjectRootsToIndex(project);
+    }
+    return EMPTY_FILE_SET;
   }
 
-  public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider, @Nullable Project project) {
+  public static Set<VirtualFile> getRootsToIndex(IndexedRootsProvider provider) {
     if (provider instanceof IndexableSetContributor) {
-      return ((IndexableSetContributor)provider).getAdditionalRootsToIndex(project);
+      return ((IndexableSetContributor)provider).getAdditionalRootsToIndex();
     }
 
     final HashSet<VirtualFile> result = new HashSet<VirtualFile>();
@@ -43,8 +52,9 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
     return result;
   }
 
-  public Set<VirtualFile> getAdditionalRootsToIndex(@Nullable Project project) {
-    return getAdditionalRootsToIndex();
+  @NotNull
+  public Set<VirtualFile> getAdditionalProjectRootsToIndex(@Nullable Project project) {
+    return EMPTY_FILE_SET;
   }
 
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();
