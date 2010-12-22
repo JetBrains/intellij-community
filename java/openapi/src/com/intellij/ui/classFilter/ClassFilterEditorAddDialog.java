@@ -48,23 +48,14 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    Box box = Box.createVerticalBox();
-
-    JPanel _panel = new JPanel(new BorderLayout());
-    myClassName = new TextFieldWithBrowseButton();
-    _panel.add(new JLabel(UIBundle.message("label.class.filter.editor.add.dialog.filter.pattern")), BorderLayout.NORTH);
-    _panel.add(myClassName, BorderLayout.CENTER);
-    box.add(_panel);
-
-    box.add(Box.createVerticalBox());
-
-
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.setPreferredSize(new Dimension(310, -1));
-
-    JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
-    panel.add(iconLabel, BorderLayout.WEST);
-    panel.add(box, BorderLayout.CENTER);
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final JLabel header = new JLabel(UIBundle.message("label.class.filter.editor.add.dialog.filter.pattern"));
+    myClassName = new TextFieldWithBrowseButton(new JTextField(35));
+    final JLabel iconLabel = new JLabel(Messages.getQuestionIcon());
+    
+    panel.add(header, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 10, 0, 0), 0, 0));
+    panel.add(myClassName, new GridBagConstraints(1, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 10, 0, 0), 0, 0));
+    panel.add(iconLabel, new GridBagConstraints(0, 0, 1, 2, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(15, 0, 0, 0), 0, 0));
 
     myClassName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
