@@ -25,6 +25,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,6 +42,7 @@ import java.util.List;
  */
 public class PluginManagerConfigurable extends BaseConfigurable implements SearchableConfigurable {
 
+  @NonNls private static final String POSTPONE = "&Postpone";
   public boolean EXPANDED = false;
   public String FIND = "";
   public boolean TREE_VIEW = false;
@@ -172,15 +174,13 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
   private static int showShutDownIDEADialog() {
     String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
     String title = IdeBundle.message("title.plugins.changed");
-    String cancel = IdeBundle.message("button.cancel");
-    return Messages.showDialog(message, title, new String[]{"Shut Down", cancel},0,0,Messages.getQuestionIcon());
+    return Messages.showDialog(message, title, new String[]{"Shut Down", POSTPONE},0,0,Messages.getQuestionIcon());
   }
 
   public static int showRestartIDEADialog() {
     String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName());
     String title = IdeBundle.message("title.plugins.changed");
-    String cancel = IdeBundle.message("button.cancel");
-    return Messages.showDialog(message, title, new String[]{"Restart", cancel},0,0,Messages.getQuestionIcon());
+    return Messages.showDialog(message, title, new String[]{"Restart", POSTPONE},0,0,Messages.getQuestionIcon());
   }
 
   public boolean isModified() {

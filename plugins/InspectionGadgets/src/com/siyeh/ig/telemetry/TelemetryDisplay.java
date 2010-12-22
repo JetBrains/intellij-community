@@ -16,31 +16,153 @@
 package com.siyeh.ig.telemetry;
 
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
+import java.text.NumberFormat;
+import java.util.Comparator;
+import java.util.List;
 
 public class TelemetryDisplay {
 
-    private final JTable table;
     private final JScrollPane scrollPane;
-    private final TableSorter model;
+    private final ListTableModel<InspectionRunTime> tableModel;
 
     public TelemetryDisplay(InspectionGadgetsTelemetry telemetry){
-        model = new TableSorter(new TelemetryTableModel(telemetry));
-        table = new JBTable(model);
-        final JTableHeader tableHeader = table.getTableHeader();
-        model.setTableHeader(tableHeader);
+        tableModel = new ListTableModel<InspectionRunTime>(createColumns(),
+                telemetry.buildList(), 0);
+        final JTable table = new JBTable(tableModel);
+        new TableSpeedSearch(table);
         scrollPane = ScrollPaneFactory.createScrollPane(table);
+    }
+
+    private static ColumnInfo[] createColumns() {
+        final Comparator<InspectionRunTime> nameComparator =
+                new Comparator<InspectionRunTime>() {
+
+                    public int compare(InspectionRunTime runTime1,
+                                       InspectionRunTime runTime2) {
+                        return runTime1.getInspectionName().compareToIgnoreCase(
+                                runTime2.getInspectionName());
+                    }
+                };
+        final Comparator<InspectionRunTime> runCountComparator =
+                new Comparator<InspectionRunTime>() {
+
+            public int compare(InspectionRunTime runTime1,
+                               InspectionRunTime runTime2) {
+                return runTime1.getRunCount() - runTime2.getRunCount();
+            }
+        };
+        final Comparator<InspectionRunTime> totalRunTimeComparator =
+                new Comparator<InspectionRunTime>() {
+
+            public int compare(InspectionRunTime runTime1,
+                               InspectionRunTime runTime2) {
+                final long totalRunTime1 = runTime1.getTotalRunTime();
+                final long totalRunTime2 = runTime2.getTotalRunTime();
+                if (totalRunTime1 < totalRunTime2) {
+                    return -1;
+                } else if (totalRunTime1 > totalRunTime2) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        };
+        final Comparator<InspectionRunTime> averageRunTimeComparator =
+                new Comparator<InspectionRunTime>() {
+
+                    public int compare(InspectionRunTime runTime1,
+                                       InspectionRunTime runTime2) {
+                        final double averageRunTime1 =
+                                runTime1.getAverageRunTime();
+                        final double averageRunTime2 =
+                                runTime2.getAverageRunTime();
+                        if (averageRunTime1 < averageRunTime2) {
+                            return -1;
+                        } else if (averageRunTime1 > averageRunTime2) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }
+                };
+        return new ColumnInfo[] {
+                new ColumnInfo<InspectionRunTime, String>(
+                        InspectionGadgetsBundle.message(
+                                "telemetry.table.column.inspection.name")) {
+                    @Override
+                    public String valueOf(InspectionRunTime inspectionRunTime) {
+                        return inspectionRunTime.getInspectionName();
+                    }
+
+                    @Override
+                    public Comparator<InspectionRunTime> getComparator() {
+                        return nameComparator;
+                    }
+                },
+                new ColumnInfo<InspectionRunTime, Integer>(
+                        InspectionGadgetsBundle.message(
+                                "telemetry.table.column.run.count")) {
+                    @Override
+                    public Integer valueOf(
+                            InspectionRunTime inspectionRunTime) {
+                        return Integer.valueOf(inspectionRunTime.getRunCount());
+                    }
+
+                    @Override
+                    public Comparator<InspectionRunTime> getComparator() {
+                        return runCountComparator;
+                    }
+                },
+                new ColumnInfo<InspectionRunTime, Long>(
+                        InspectionGadgetsBundle.message(
+                                "telemetry.table.column.total.time")) {
+                    @Override
+                    public Long valueOf(InspectionRunTime inspectionRunTime) {
+                        return Long.valueOf(
+                                inspectionRunTime.getTotalRunTime());
+                    }
+
+                    @Override
+                    public Comparator<InspectionRunTime> getComparator() {
+                        return totalRunTimeComparator;
+                    }
+                },
+                new ColumnInfo<InspectionRunTime, String>(
+                        InspectionGadgetsBundle.message(
+                                "telemetry.table.column.average.time")) {
+
+                    private final NumberFormat format =
+                            NumberFormat.getNumberInstance();
+                    {
+                        format.setMaximumFractionDigits(2);
+                        format.setMinimumFractionDigits(2);
+                    }
+
+                    @Override
+                    public String valueOf(InspectionRunTime inspectionRunTime) {
+                        return format.format(inspectionRunTime.getAverageRunTime());
+                    }
+
+                    @Override
+                    public Comparator<InspectionRunTime> getComparator() {
+                        return averageRunTimeComparator;
+                    }
+                }
+        };
     }
 
     public JComponent getContentPane(){
         return scrollPane;
     }
 
-    public void update(){
-        table.setModel(model);
-        table.repaint();
+    public void update(List<InspectionRunTime> inspectionRunTimes){
+        tableModel.setItems(inspectionRunTimes);
     }
 }

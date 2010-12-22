@@ -37,27 +37,27 @@ import static org.testng.Assert.fail;
  * @author Kirill Likhodedov
  */
 public class GitTestRepository {
-  @NotNull private final GitTestCase myTest;
+  @NotNull private final GitTest myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
   private VirtualFile myDir;
 
-  public GitTestRepository(@NotNull GitTestCase test, @NotNull TempDirTestFixture fixture) {
+  public GitTestRepository(@NotNull GitTest test, @NotNull TempDirTestFixture fixture) {
     myTest = test;
     myDirFixture = fixture;
   }
 
   /**
    * Creates a new Mercurial repository in a new temporary test directory.
-   * @param testCase   reference to the test case instance.
+   * @param test   reference to the test case instance.
    * @param parameters optional array of parameters passed to 'git init'
    * @return created repository.
    */
-  public static GitTestRepository create(GitTestCase testCase, String... parameters) throws Exception {
+  public static GitTestRepository create(GitTest test, String... parameters) throws Exception {
     final TempDirTestFixture dirFixture = createFixtureDir();
     final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = testCase.executeCommand(repo, join("init", parameters));
+    final ProcessOutput processOutput = test.executeCommand(repo, join("init", parameters));
     AbstractVcsTestCase.verify(processOutput);
-    return new GitTestRepository(testCase, dirFixture);
+    return new GitTestRepository(test, dirFixture);
   }
 
   public static GitTestRepository cloneFrom(GitTestRepository parent) throws Exception {
@@ -307,7 +307,7 @@ public class GitTestRepository {
   }
 
   @NotNull
-  public GitTestCase getTest() {
+  public GitTest getTest() {
     return myTest;
   }
 }

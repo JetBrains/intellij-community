@@ -93,10 +93,6 @@ public class TestData implements Cloneable
     return OUTPUT_DIRECTORY == null ? "" : OUTPUT_DIRECTORY;
   }
 
-  public String getAnnotationType() {
-    return ANNOTATION_TYPE == null ? "" : ANNOTATION_TYPE;
-  }
-
   public void setVMParameters(String value) {
     VM_PARAMETERS = value;
   }

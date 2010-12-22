@@ -22,6 +22,7 @@
  */
 package com.theoryinpractice.testng.model;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -36,8 +37,8 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
 
   private final List<TestResultMessage> testResults;
 
-  public TestNGResultsTableModel() {
-    super(new StatusColumnInfo(), new TestNameColumnInfo(), new TestClassNameColumnInfo(), new DurationColumnInfo());
+  public TestNGResultsTableModel(Project project) {
+    super(new StatusColumnInfo(), new TestNameColumnInfo(project), new TestClassNameColumnInfo(project), new DurationColumnInfo());
     testResults = new ArrayList<TestResultMessage>();
   }
 
@@ -80,12 +81,15 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
   }
 
   private static class TestNameColumnInfo extends ColumnInfo<TestResultMessage, String> {
-    public TestNameColumnInfo() {
+    private final Project project;
+
+    public TestNameColumnInfo(Project project) {
       super("Test");
+      this.project = project;
     }
 
     public String valueOf(final TestResultMessage result) {
-      final String displayString = result.toDisplayString();
+      final String displayString = TestProxy.toDisplayText(result, project);
       final String description = result.getTestDescription();
       if (description != null && description.startsWith(displayString)) return description;
       return displayString;
@@ -101,14 +105,17 @@ public class TestNGResultsTableModel extends ListTableModel<TestResultMessage> {
   }
 
   private static class TestClassNameColumnInfo extends ColumnInfo<TestResultMessage, String> {
-    public TestClassNameColumnInfo() {
+    private final Project project;
+
+    public TestClassNameColumnInfo(Project project) {
       super("Test Class");
+      this.project = project;
     }
 
     public String valueOf(final TestResultMessage result) {
       final String description = result.getTestClass();
       if (description != null) return description;
-      return result.toDisplayString();
+      return TestProxy.toDisplayText(result, project);
     }
 
     public Comparator<TestResultMessage> getComparator() {

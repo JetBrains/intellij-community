@@ -18,7 +18,7 @@ package git4idea.tests;
 /**
  * @author Kirill Likhodedov
  */
-public class GitSingleUserTestCase extends GitTestCase {
+public class GitSingleUserTest extends GitTest {
   public static final String CONFIG_USER_NAME = "John Smith";
   public static final String CONFIG_USER_EMAIL = "john.smith@email.com";
 

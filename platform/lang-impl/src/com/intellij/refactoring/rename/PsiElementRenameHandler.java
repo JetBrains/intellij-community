@@ -84,7 +84,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor);
   }
 
-  static boolean canRename(Project project, Editor editor, PsiElement element) {
+  public static boolean canRename(Project project, Editor editor, PsiElement element) {
     if (element == null) return false;
     if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return false;
 
