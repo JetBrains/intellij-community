@@ -59,12 +59,12 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleType myModuleType = null;
   private boolean isModuleAdded;
 
-  private GlobalSearchScope myModuleScope = null;
-
   @NonNls private static final String MODULE_LAYER = "module-components";
+
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls public static final String ELEMENT_TYPE = "type";
 
+  private GlobalSearchScope myModuleScope;
   private GlobalSearchScope myModuleWithLibrariesScope;
   private GlobalSearchScope myModuleWithDependenciesScope;
   private GlobalSearchScope myModuleWithDependenciesAndLibrariesScope;
@@ -73,6 +73,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private GlobalSearchScope myModuleTestsWithDependentsScope;
   private GlobalSearchScope myModuleTestsRuntimeClasspathScope;
   private GlobalSearchScope myModuleRuntimeClasspathScope;
+
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
@@ -247,7 +248,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     if (myModuleScope == null) {
       myModuleScope = new ModuleWithDependenciesScope(this, true, false, false, true);
     }
-
     return myModuleScope;
   }
 
@@ -310,6 +310,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   public void clearScopesCache() {
+    myModuleScope = null;
     myModuleWithLibrariesScope = null;
     myModuleWithDependenciesScope = null;
     myModuleWithDependenciesAndLibrariesScope = null;
