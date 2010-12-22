@@ -4,8 +4,9 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="library" name="Gant" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
   </component>
 </module>
 
