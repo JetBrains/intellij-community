@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -685,6 +686,9 @@ public class PythonSdkType extends SdkType {
       commandLine.add("-c");
       commandLine.add(StringUtil.join(assemblyRefs, ";"));
     }
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      commandLine.add("-x");
+    }
     commandLine.add(modname);
 
     final ProcessOutput gen_result = SdkUtil.getProcessOutput(
@@ -698,7 +702,12 @@ public class PythonSdkType extends SdkType {
       sb.append(modname).append(" failed. stderr: --");
       for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
       sb.append("--");
-      LOG.warn(sb.toString());
+      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        LOG.error(sb.toString());
+      }
+      else {
+        LOG.warn(sb.toString());
+      }
     }
   }
 
