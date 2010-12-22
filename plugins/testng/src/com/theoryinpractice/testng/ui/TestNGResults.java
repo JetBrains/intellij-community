@@ -384,6 +384,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return failedToStart;
   }
 
+  public void setFailedToStart(TestProxy failedToStart) {
+    this.failedToStart = failedToStart;
+  }
+
   private class OpenSourceSelectionListener implements TreeSelectionListener {
 
     public void valueChanged(TreeSelectionEvent e) {
