@@ -120,28 +120,6 @@ def transplant_class(cls, module):
     C.__name__ = cls.__name__
     return C
 
-def add_path(path, config=None):
-    """Ensure that the path, or the root of the current package (if
-    path is in a package), is in sys.path.
-    """
-    if not path:
-        return []
-    added = []
-    parent = os.path.dirname(path)
-    if (parent
-        and os.path.exists(os.path.join(path, '__init__.py'))):
-        added.extend(add_path(parent, config))
-    elif not path in sys.path:
-        sys.path.insert(0, path)
-        added.append(path)
-    if config and config.srcDirs:
-        for dirname in config.srcDirs:
-            dirpath = os.path.join(path, dirname)
-            if os.path.isdir(dirpath):
-                sys.path.insert(0, dirpath)
-                added.append(dirpath)
-    return added
-
 def transplant_func(func, module = None):
     """
     Make a function imported from module A appear as if it is located
