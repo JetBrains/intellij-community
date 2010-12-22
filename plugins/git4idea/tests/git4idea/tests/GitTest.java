@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import javax.swing.SwingUtilities;
-import java.awt.EventQueue;
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -38,7 +38,7 @@ import java.io.IOException;
  * contains git executable.
  * @author Kirill Likhodedov
  */
-public abstract class GitTestCase extends AbstractVcsTestCase {
+public abstract class GitTest extends AbstractVcsTestCase {
 
   public static final String GIT_EXECUTABLE_PATH = "IDEA_TEST_GIT_EXECUTABLE_PATH";
 
@@ -84,7 +84,7 @@ public abstract class GitTestCase extends AbstractVcsTestCase {
   }
 
   /**
-   * Different implementations for {@link git4idea.tests.GitSingleUserTestCase} and {@link git4idea.tests.GitCollaborativeTestCase}:
+   * Different implementations for {@link GitSingleUserTest} and {@link GitCollaborativeTest}:
    * create a single or several repositories, which will be used in tests.
    * @return main repository which IDEA project will be bound to.
    */
