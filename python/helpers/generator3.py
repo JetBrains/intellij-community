@@ -1219,16 +1219,17 @@ class ModuleRedeclarator(object):
                 if i >= 0:
                     overloads.append(l[i+len(signature):])
             if len(overloads) > 1:
-                param_lists = [self.restoreByDocString(s, class_name, deco)[0] for s in overloads]
+                docstring_results = [self.restoreByDocString(s, class_name, deco) for s in overloads]
                 ret_types = []
-                for pl in param_lists:
-                    rt = pl[1]
+                for result in docstring_results:
+                    rt = result[1]
                     if rt and rt not in ret_types:
                         ret_types.append(rt)
                 if ret_types:
                     ret_literal = " or ".join(ret_types)
                 else:
                     ret_literal = None
+                param_lists = [result[0] for result in docstring_results]
                 spec = self.buildSignature(func_name, self.restoreParametersForOverloads(param_lists))
                 return (spec, ret_literal, "restored from __doc__ with multiple overloads")
 
