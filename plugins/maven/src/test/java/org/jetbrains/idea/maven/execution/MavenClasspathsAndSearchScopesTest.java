@@ -1013,11 +1013,17 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private void assertPaths(String[] expectedPaths, List<String> actualPaths) {
-    List<String> systemPaths = new ArrayList<String>();
-    for (String each : expectedPaths) {
-      systemPaths.add(FileUtil.toSystemDependentName(each));
+    List<String> normalizedActualPaths = new ArrayList<String>();
+    List<String> normalizedExpectedPaths = new ArrayList<String>();
+
+    for (String each : actualPaths) {
+      normalizedActualPaths.add(FileUtil.toSystemDependentName(each));
     }
-    assertOrderedElementsAreEqual(actualPaths, systemPaths);
+    for (String each : expectedPaths) {
+      normalizedExpectedPaths.add(FileUtil.toSystemDependentName(each));
+    }
+
+    assertOrderedElementsAreEqual(normalizedActualPaths, normalizedExpectedPaths);
   }
 
   private void createRepositoryFile(String filePath) throws IOException {
