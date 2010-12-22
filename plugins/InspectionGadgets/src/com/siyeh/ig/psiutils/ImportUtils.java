@@ -535,7 +535,7 @@ public class ImportUtils{
                 PsiTreeUtil.getParentOfType(context, PsiClass.class);
         if (InheritanceUtil.isCorrectDescendant(containingClass, memberClass,
                 true)) {
-            return true;
+            return false;
         }
         final PsiFile psiFile = context.getContainingFile();
         if (!(psiFile instanceof PsiJavaFile)) {
