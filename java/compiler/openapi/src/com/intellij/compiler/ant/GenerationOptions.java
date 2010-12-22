@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
  * @author anna
  */
 public abstract class GenerationOptions {
-    /**
+  /**
      * This option specifies whether mulitfile or single file ant script is created.
      */
     public final boolean generateSingleFile;
@@ -146,4 +146,7 @@ public abstract class GenerationOptions {
     public abstract boolean isIdeaHomeGenerated();
 
 
+  public abstract String getBuildFileName();
+  
+  public abstract String getPropertiesFileName();
 }
