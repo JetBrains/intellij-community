@@ -1,4 +1,6 @@
-def foo():
-    pass
+class klass:
+    def foo(self):
+        pass
 
-foo()
+var = klass()
+var.foo()

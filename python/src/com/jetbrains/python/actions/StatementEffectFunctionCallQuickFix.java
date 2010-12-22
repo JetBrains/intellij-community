@@ -5,10 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +33,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     PsiElement expression = descriptor.getPsiElement();
     if (expression != null && expression.isWritable() && expression instanceof PyReferenceExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      expression.replace(elementGenerator.createCallExpression(((PyReferenceExpression)expression).getName()));
+      expression.replace(elementGenerator.createCallExpression(expression.getText()));
     }
   }
 }

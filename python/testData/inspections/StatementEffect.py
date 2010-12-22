@@ -1,4 +1,6 @@
-def foo():
-    pass
+class klass:
+    def foo(self):
+        pass
 
-<warning descr="Statement seems to have no effect and can be replaced with function call to have effect">f<caret>oo</warning>
+var = klass()
+<warning descr="Statement seems to have no effect and can be replaced with function call to have effect">var.f<caret>oo</warning>
