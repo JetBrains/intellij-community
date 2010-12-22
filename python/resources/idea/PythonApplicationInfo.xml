@@ -2,7 +2,7 @@
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
   <version codename="1.1 Early Access Preview" major="1" minor="0" eap="true" update-channel="pycharm"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/pycharm_logo.png" textcolor="FFCC00"/>
+  <logo url="/pycharm_logo.png" textcolor="B7C9B5"/>
   <about url="/pycharm_about.png"/>
   <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_12.png"/>
   <package code="__PACKAGE_CODE__"/>

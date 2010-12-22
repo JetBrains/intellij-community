@@ -3,6 +3,7 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 
 import java.io.File;
@@ -56,11 +57,13 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
         specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-	    if (!myConfig.getPattern().isEmpty())
+        if (!StringUtil.isEmpty(myConfig.getPattern())) {
           specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
-        else
-	      specs.add(myConfig.getFolderName() + "/");
-	      // TODO[kate]:think about delimiter between folderName and Pattern
+        }
+        else {
+          specs.add(myConfig.getFolderName() + "/");
+        }
+        // TODO[kate]:think about delimiter between folderName and Pattern
         break;
       case TEST_FUNCTION:
         specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());

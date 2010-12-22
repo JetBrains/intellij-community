@@ -251,4 +251,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }
+
+  public void testDictKeyPrefix() {
+    doTest();
+  }
 }
