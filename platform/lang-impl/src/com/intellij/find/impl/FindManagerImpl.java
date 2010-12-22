@@ -508,18 +508,8 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
-    String toFind = model.getStringToFind();
-
-    Pattern pattern;
-    try {
-      pattern = Pattern.compile(toFind, model.isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-    }
-    catch(PatternSyntaxException e){
-      LOG.error(e);
-      return null;
-    }
-
-    return pattern.matcher(text);
+    Pattern pattern = model.compileRegExp();
+    return pattern == null ? null : pattern.matcher(text);
   }
 
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) {
