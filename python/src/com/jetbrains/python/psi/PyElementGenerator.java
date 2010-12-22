@@ -46,7 +46,7 @@ public abstract class PyElementGenerator {
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;
   
-  public abstract PyCallExpression createCallExpression(String functionName);
+  public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
   public abstract PyImportStatement createImportStatementFromText(String text);
 

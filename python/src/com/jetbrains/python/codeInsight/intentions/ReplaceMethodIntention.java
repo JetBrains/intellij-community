@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,7 @@ public class ReplaceMethodIntention implements IntentionAction {
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
     if (problemElement != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      problemElement.getCallee().replace(elementGenerator.createCallExpression(myNewName).getCallee());
+      problemElement.getCallee().replace(elementGenerator.createCallExpression(LanguageLevel.forElement(problemElement), myNewName).getCallee());
     }
   }
 

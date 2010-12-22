@@ -196,8 +196,8 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return expressionStatement.getExpression();
   }
 
-  public PyCallExpression createCallExpression(String functionName) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), functionName + "()");
+  public PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName) {
+    final PsiFile dummyFile = createDummyFile(langLevel, functionName + "()");
     final PsiElement element = dummyFile.getFirstChild().getFirstChild();
     if (!(element instanceof PyCallExpression)) {
       throw new IllegalArgumentException("Invalid call expression text " + functionName);
