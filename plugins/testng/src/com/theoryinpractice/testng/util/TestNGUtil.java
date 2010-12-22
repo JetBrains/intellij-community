@@ -134,6 +134,7 @@ public class TestNGUtil
     if (element instanceof PsiClass) {
       methods = ((PsiClass) element).getMethods();
     } else {
+      if (!(element instanceof PsiMethod)) return false;
       methods = new PsiMethod[] {(PsiMethod) element};
     }
 
