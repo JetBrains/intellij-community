@@ -623,6 +623,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int cur = myCurrentLexeme;
 
     while (steps > 0) {
+      ++cur;
       while (cur < myLexemeCount && whitespaceOrComment(myLexTypes[cur])) {
         cur++;
       }
@@ -631,6 +632,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     return cur < myLexemeCount ? myLexTypes[cur] : null;
+  }
+
+  @Override
+  public IElementType justLookup(int steps) {
+    int cur = myCurrentLexeme + steps;
+    return cur < myLexemeCount && cur >= 0 ? myLexTypes[cur] : null;
+  }
+
+  @Override
+  public int tokenTypeStart(int steps) {
+    int cur = myCurrentLexeme + steps;
+    if (cur < 0) return -1;
+    if (cur >= myLexemeCount) return getOriginalText().length();
+    return myLexStarts[cur];
   }
 
   @Override
