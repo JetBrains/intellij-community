@@ -127,15 +127,27 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
         ComprhForComponent comp = forComps.get(0);
         PyForStatement pyForStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
                                "for " + comp.getIteratorVariable().getText()  + " in "+ comp.getIteratedList().getText() + ":\n  a+1");
+
         List<ComprhIfComponent> ifComps = ((PyListCompExpression)expression).getIfComponents();
         if (ifComps.size() != 0) {
           addIfComponents(pyForStatement, ifComps, elementGenerator);
         }
+        PyStatement toReplace = pyForStatement.getForPart().getStatementList().getStatements()[0];
+        while (toReplace instanceof PyIfStatement) {
+          toReplace = ((PyIfStatement)toReplace).getIfPart().getStatementList().getStatements()[0];
+        }
+        toReplace.replace(statement);
         addForComponents(pyForStatement, ((PyListCompExpression)expression).getResultExpression(), elementGenerator, result);
-        pyStatement.replace(pyForStatement);
+        statement.getForPart().replace(pyForStatement);
       }
     }
     else {
+      while (pyStatement instanceof PyForStatement) {
+        pyStatement = ((PyForStatement)pyStatement).getForPart().getStatementList().getStatements()[0];
+        while (pyStatement instanceof PyIfStatement) {
+          pyStatement = ((PyIfStatement)pyStatement).getIfPart().getStatementList().getStatements()[0];
+        }
+      }
       pyStatement.replace(result);
     }
   }
