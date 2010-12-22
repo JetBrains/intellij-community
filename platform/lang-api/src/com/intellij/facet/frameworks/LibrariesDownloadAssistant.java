@@ -28,7 +28,7 @@ public class LibrariesDownloadAssistant {
   private LibrariesDownloadAssistant() {
   }
 
-  @Nullable
+  @NotNull
   public static Artifact[] getVersions(@NotNull String groupId, @NotNull URL... localUrls) {
     final Artifact[] versions = getDownloadServiceVersions(groupId);
     return versions == null ? getVersions(localUrls) : versions;
