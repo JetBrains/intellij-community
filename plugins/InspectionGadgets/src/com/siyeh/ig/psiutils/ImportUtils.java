@@ -52,7 +52,8 @@ public class ImportUtils{
         @NonNls final String packageName =
                 ClassUtil.extractPackageName(qualifiedName);
         if (containingPackageName.equals(packageName) ||
-                importList.findSingleClassImportStatement(qualifiedName) != null) {
+                importList.findSingleClassImportStatement(qualifiedName) !=
+                        null) {
             return;
         }
         if (importList.findOnDemandImportStatement(packageName) != null &&
@@ -80,7 +81,8 @@ public class ImportUtils{
         if (ClassUtils.isSubclass(containingClass, fqName)) {
             return true;
         }
-        final PsiField field = containingClass.findFieldByName(memberName, true);
+        final PsiField field =
+                containingClass.findFieldByName(memberName, true);
         if (field != null) {
             return false;
         }
@@ -89,7 +91,8 @@ public class ImportUtils{
         if (methods.length > 0) {
             return false;
         }
-        if (hasOnDemandImportStaticConflict(fqName, memberName, context, true)) {
+        if (hasOnDemandImportStaticConflict(fqName, memberName, context,
+                true)) {
             return false;
         }
         if (hasExactImportStaticConflict(fqName, memberName, context)) {
@@ -107,13 +110,15 @@ public class ImportUtils{
                 return true;
             }
             final String shortName = ClassUtil.extractClassName(fqName);
-            final PsiClass[] innerClasses = containingClass.getAllInnerClasses();
+            final PsiClass[] innerClasses =
+                    containingClass.getAllInnerClasses();
             for (PsiClass innerClass : innerClasses) {
                 if (innerClass.hasModifierProperty(PsiModifier.PRIVATE)) {
                     continue;
                 }
                 if (innerClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-                    if (!ClassUtils.inSamePackage(innerClass, containingClass)) {
+                    if (!ClassUtils.inSamePackage(innerClass,
+                            containingClass)) {
                         continue;
                     }
                 }
@@ -194,7 +199,8 @@ public class ImportUtils{
         }
         final PsiImportStaticStatement[] importStaticStatements =
                 importList.getImportStaticStatements();
-        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        for (PsiImportStaticStatement importStaticStatement :
+                importStaticStatements) {
             if (importStaticStatement.isOnDemand()) {
                 continue;
             }
@@ -298,7 +304,8 @@ public class ImportUtils{
         }
         final PsiImportStaticStatement[] importStaticStatements =
                 importList.getImportStaticStatements();
-        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        for (PsiImportStaticStatement importStaticStatement :
+                importStaticStatements) {
             if (!importStaticStatement.isOnDemand()) {
                 continue;
             }
@@ -441,7 +448,8 @@ public class ImportUtils{
             return;
         } else {
             final PsiImportStaticStatement onDemandImportStatement =
-                    findOnDemandImportStaticStatement(importList, qualifierClass);
+                    findOnDemandImportStaticStatement(importList,
+                            qualifierClass);
             if (onDemandImportStatement != null) {
                 if (!hasOnDemandImportStaticConflict(qualifierClass,
                         memberName, context)) {
@@ -465,14 +473,16 @@ public class ImportUtils{
         final CodeStyleSettings codeStyleSettings =
                 CodeStyleSettingsManager.getSettings(project);
         final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-        if (imports.size() < codeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+        if (imports.size() <
+                codeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
             importList.add(elementFactory.createImportStaticStatement(aClass,
                     memberName));
         } else {
             for (PsiImportStaticStatement importStatement : imports) {
                 importStatement.delete();
             }
-            importList.add(elementFactory.createImportStaticStatement(aClass, "*"));
+            importList.add(
+                    elementFactory.createImportStaticStatement(aClass, "*"));
         }
     }
 
@@ -480,7 +490,8 @@ public class ImportUtils{
             PsiImportList importList, String qualifierClass) {
         final PsiImportStaticStatement[] importStaticStatements =
                 importList.getImportStaticStatements();
-        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
+        for (PsiImportStaticStatement importStaticStatement :
+                importStaticStatements) {
             if (!importStaticStatement.isOnDemand()) {
                 continue;
             }
@@ -500,7 +511,8 @@ public class ImportUtils{
     private static List<PsiImportStaticStatement> getMatchingImports(
             @NotNull PsiImportList importList, @NotNull String className){
         final List<PsiImportStaticStatement> imports = new ArrayList();
-        for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
+        for (PsiImportStaticStatement staticStatement :
+                importList.getImportStaticStatements()) {
             final PsiClass psiClass = staticStatement.resolveTargetClass();
             if (psiClass == null) {
                 continue;
@@ -523,7 +535,7 @@ public class ImportUtils{
                 PsiTreeUtil.getParentOfType(context, PsiClass.class);
         if (InheritanceUtil.isCorrectDescendant(containingClass, memberClass,
                 true)) {
-            return true;
+            return false;
         }
         final PsiFile psiFile = context.getContainingFile();
         if (!(psiFile instanceof PsiJavaFile)) {
@@ -539,18 +551,16 @@ public class ImportUtils{
                 importList.findSingleImportStatement(memberName);
         if (existingImportStatement != null &&
                 existingImportStatement instanceof PsiImportStaticStatement) {
-            final PsiElement target = existingImportStatement.resolve();
-            return member.equals(target);
-        } else {
-            final String memberClassName = memberClass.getQualifiedName();
-            final PsiImportStaticStatement onDemandImportStatement =
-                    findOnDemandImportStaticStatement(importList,
-                            memberClassName);
-            if (onDemandImportStatement != null) {
-                if (!hasOnDemandImportStaticConflict(memberClassName,
-                        memberName, context)) {
-                    return true;
-                }
+            return true;
+        }
+        final String memberClassName = memberClass.getQualifiedName();
+        final PsiImportStaticStatement onDemandImportStatement =
+                findOnDemandImportStaticStatement(importList,
+                        memberClassName);
+        if (onDemandImportStatement != null) {
+            if (!hasOnDemandImportStaticConflict(memberClassName,
+                    memberName, context)) {
+                return true;
             }
         }
         return false;
@@ -587,7 +597,8 @@ public class ImportUtils{
         }
 
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
             if (referenceFound) {
                 return;
             }
