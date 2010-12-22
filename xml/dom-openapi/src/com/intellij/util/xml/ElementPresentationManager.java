@@ -78,6 +78,10 @@ public abstract class ElementPresentationManager {
     return createVariants(elements, namer, 0);
   }
 
+  /**
+   * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
+   */
+  @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   @NotNull

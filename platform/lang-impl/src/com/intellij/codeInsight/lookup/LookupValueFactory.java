@@ -25,7 +25,9 @@ import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
+ * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
  */
+@Deprecated
 public class LookupValueFactory {
   
   private LookupValueFactory() {
