@@ -228,9 +228,21 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
               }
             }
         );
-        if (methods.length > 0 && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
-          testCase = testStarted(result);
-          testCase.appendStacktrace(result);
+        if (methods.length > 0 && methods[0] != null && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
+          for (List<TestProxy> proxies : started.values()) {
+            if (proxies != null) {
+              for (TestProxy proxy : proxies) {
+                if (methods[0].equals(proxy.getPsiElement())) {
+                  testCase = proxy;
+                  break;
+                }
+              }
+            }
+          }
+          if (testCase == null) {
+            testCase = testStarted(result);
+            testCase.appendStacktrace(result);
+          }
         }
       }
     }
