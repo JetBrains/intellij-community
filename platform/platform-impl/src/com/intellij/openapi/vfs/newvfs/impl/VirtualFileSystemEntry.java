@@ -208,7 +208,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int hashCode() {
-    return myId >= 0 ? myId : -myId;
+    int id = myId;
+    return id >= 0 ? id : -id;
   }
 
   @NotNull

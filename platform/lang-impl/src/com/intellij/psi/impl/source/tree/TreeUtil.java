@@ -118,8 +118,7 @@ public class TreeUtil {
   }
 
   public static boolean isLeafOrCollapsedChameleon(ASTNode node) {
-    return node instanceof LeafElement ||
-           node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
+    return node instanceof LeafElement || isCollapsedChameleon(node);
   }
 
   @Nullable
