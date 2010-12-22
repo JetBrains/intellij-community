@@ -12,7 +12,7 @@ from nose_helper.case import FunctionTestCase, MethodTestCase
 from nose_helper.failure import Failure
 from nose_helper.config import Config
 from nose_helper.selector import defaultSelector
-from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, add_path, ismethod, isunboundmethod
+from nose_helper.util import cmp_lineno, func_lineno, isclass, isgenerator, ismethod, isunboundmethod
 from nose_helper.util import transplant_class, transplant_func
 from nose_helper.suite import ContextSuiteFactory, ContextList
 
@@ -39,7 +39,6 @@ class TestLoader(unittest.TestLoader):
         self.config = Config()
         self.selector = defaultSelector(self.config)
         self.workingDir = op_normpath(op_abspath(self.config.workingDir))
-        add_path(self.workingDir, self.config)
         self.suiteClass = ContextSuiteFactory(config=self.config)
         unittest.TestLoader.__init__(self)     
 
