@@ -39,7 +39,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,6 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -131,6 +129,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<Runnable> myReady = new HashSet<Runnable>();
   private boolean myKeyboardBusy;
+  private boolean myDispatchingFocusEvent;
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -649,6 +648,7 @@ public class IdeEventQueue extends EventQueue {
 
   private void defaultDispatchEvent(final AWTEvent e) {
     try {
+      myDispatchingFocusEvent = e instanceof FocusEvent;
       super.dispatchEvent(e);
     }
     catch (ProcessCanceledException pce) {
@@ -658,7 +658,13 @@ public class IdeEventQueue extends EventQueue {
       if (!myToolkitBugsProcessor.process(exc)) {
         LOG.error("Error during dispatching of " + e, exc);
       }
+    } finally {
+      myDispatchingFocusEvent = false;
     }
+  }
+
+  public boolean isDispatchingFocusEvent() {
+    return myDispatchingFocusEvent;
   }
 
   private static boolean typeAheadDispatchToFocusManager(AWTEvent e) {
@@ -787,7 +793,7 @@ public class IdeEventQueue extends EventQueue {
     return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
   }
 
-  private boolean isReady() {
+  public boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
   }
 
