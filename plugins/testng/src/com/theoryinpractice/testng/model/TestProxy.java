@@ -336,11 +336,11 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   public static String toDisplayText(TestResultMessage message, Project project) {
-    String name = message.toDisplayString();
-    if (project == null || !Comparing.strEqual(name, project.getName())) {
-      return name;
+    String name = message.getName();
+    if (project != null && Comparing.strEqual(name, project.getName())) {
+      name = message.getMethod();
     }
-    name = message.getMethod();
+    final String mainNamePart = name;
     final String[] parameters = message.getParameters();
     if (parameters != null && parameters.length > 0) {
       final String[] parameterTypes = message.getParameterTypes();
@@ -360,7 +360,7 @@ public class TestProxy extends AbstractTestProxy {
       name += ")";
     }
     final String testDescription = message.getTestDescription();
-    if (testDescription != null) {
+    if (testDescription != null && !Comparing.strEqual(testDescription, mainNamePart)) {
       name += " [" + testDescription + "]";
     }
     return name;
