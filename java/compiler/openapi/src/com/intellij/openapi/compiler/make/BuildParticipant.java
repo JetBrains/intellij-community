@@ -19,6 +19,9 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use interfaces from {@link com.intellij.openapi.compiler.Compiler}'s hierarchy instead
+ */
 public abstract class BuildParticipant {
   public static final BuildParticipant[] EMPTY_ARRAY = new BuildParticipant[0];
 
