@@ -141,6 +141,9 @@ class TestLoader(unittest.TestLoader):
             if issubclass(parent, unittest.TestCase):
                 return parent(obj.__name__)
             else:
+              if PYTHON_VERSION_MAJOR > 2:
+                setattr(obj, "im_class", parent)
+                setattr(obj, "im_self", parent)
               test_case = MethodTestCase(obj)
               test_case.lineno = lineno[1]
               return test_case
