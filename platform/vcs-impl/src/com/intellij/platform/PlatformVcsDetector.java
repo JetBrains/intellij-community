@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +45,7 @@ public class PlatformVcsDetector implements ProjectComponent {
         if (myVcsManager.needAutodetectMappings()) {
           AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
           if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
+            myVcsManager.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
             myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
             myVcsManager.cleanupMappings();
             myVcsManager.updateActiveVcss();

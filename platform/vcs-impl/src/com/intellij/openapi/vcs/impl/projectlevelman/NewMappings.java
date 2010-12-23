@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +267,7 @@ public class NewMappings {
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
         // todo callback here; don't like it
-        myDefaultVcsRootPolicy.addDefaultVcsRoots(this, vcs, result);
+        myDefaultVcsRootPolicy.addDefaultVcsRoots(this, vcsName, result);
       } else {
         final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
         if (file != null) {
@@ -586,4 +585,21 @@ public class NewMappings {
   private @interface Modification {
   }
 
+  public List<VirtualFile> getDefaultRoots() {
+    synchronized (myLock) {
+      final String defaultVcs = haveDefaultMapping();
+      if (defaultVcs == null) return Collections.emptyList();
+      final List<VirtualFile> list = new ArrayList<VirtualFile>();
+      myDefaultVcsRootPolicy.addDefaultVcsRoots(this, defaultVcs, list);
+      if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
+        return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+      } else {
+        final AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(defaultVcs);
+        if (vcs == null) {
+          return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+        }
+        return vcs.filterUniqueRoots(list, Convertor.SELF);
+      }
+    }
+  }
 }
