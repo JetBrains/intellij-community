@@ -35,12 +35,13 @@ import org.jetbrains.annotations.Nullable;
  * @author lesya
  */
 public class DocumentBasedFormattingModel implements FormattingModel {
-  private final Block myRootBlock;
+  private final Block                   myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
-  private final Document myDocument;
-  private final Project myProject;
-  private final CodeStyleSettings mySettings;
-  private final FileType myFileType;
+  private final Document                myDocument;
+  private final Project                 myProject;
+  private final CodeStyleSettings       mySettings;
+  private final FileType                myFileType;
+  private final PsiFile                 myFile;
 
   public DocumentBasedFormattingModel(final Block rootBlock,
                                       final Document document,
@@ -53,6 +54,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myProject = project;
     mySettings = settings;
     myFileType = fileType;
+    myFile = file;
     myDocumentModel = new FormattingDocumentModelImpl(document,file);
   }
 
@@ -65,6 +67,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     myProject = project;
     mySettings = settings;
     myFileType = fileType;
+    myFile = file;
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myDocument = myDocumentModel.getDocument();
   }
@@ -211,6 +214,10 @@ public class DocumentBasedFormattingModel implements FormattingModel {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public PsiFile getFile() {
+    return myFile;
   }
 
   @Nullable
