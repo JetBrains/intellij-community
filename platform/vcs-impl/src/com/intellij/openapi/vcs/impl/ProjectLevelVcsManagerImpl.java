@@ -462,6 +462,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+    myHaveLegacyVcsConfiguration = true;
     myMappings.setDirectoryMappings(items);
   }
 
