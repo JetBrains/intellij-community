@@ -115,4 +115,8 @@ public class GroovyDslScript {
     return false;
   }
 
+  @Override
+  public String toString() {
+    return "GroovyDslScript: " + file.getPath();
+  }
 }

@@ -84,15 +84,14 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor);
   }
 
-  public static boolean canRename(Project project, Editor editor, PsiElement element) {
+  static boolean canRename(Project project, Editor editor, PsiElement element) {
     if (element == null) return false;
     if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return false;
 
     if (!element.isWritable()) {
       String message = RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        showErrorMessage(project, editor, message);
-      }
+      showErrorMessage(project, editor, message);
+
       return false;
     }
 

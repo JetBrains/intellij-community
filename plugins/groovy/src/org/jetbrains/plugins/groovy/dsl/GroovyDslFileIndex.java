@@ -22,10 +22,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -34,6 +31,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -93,6 +93,19 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
 
+  public GroovyDslFileIndex() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+
+      @Override
+      public void contentsChanged(VirtualFileEvent event) {
+        if (event.getFileName().endsWith(".gdsl")) {
+          disableFile(event.getFile());
+        }
+      }
+
+    });
+  }
+
   public ID<String, Void> getName() {
     return NAME;
   }
@@ -132,17 +145,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   public static void activateUntilModification(final VirtualFile vfile) {
-    final Document document = FileDocumentManager.getInstance().getDocument(vfile);
-    if (document != null) {
-      document.addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void beforeDocumentChange(DocumentEvent e) {
-          disableFile(vfile);
-          document.removeDocumentListener(this);
-        }
-      });
-    }
-
     try {
       ENABLED.writeAttributeBytes(vfile, ENABLED_FLAG);
     }
@@ -237,15 +239,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
             }
           }
 
-          final PsiFile psiFile = PsiManager.getInstance(project).findFile(vfile);
-          if (psiFile == null) {
-            continue;
-          }
-
           final long stamp = vfile.getModificationStamp();
           final GroovyDslExecutor cached = getCachedExecutor(vfile, stamp);
           if (cached == null) {
-            scheduleParsing(queue, project, vfile, stamp, psiFile.getText());
+            scheduleParsing(queue, project, vfile, stamp, LoadTextUtil.loadText(vfile).toString());
             count++;
           }
           else {

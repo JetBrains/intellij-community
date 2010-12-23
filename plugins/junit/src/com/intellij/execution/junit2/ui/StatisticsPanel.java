@@ -79,9 +79,9 @@ class StatisticsPanel extends JPanel implements DataProvider{
   private void updateStatistics() {
     myTable.setVisible(true);
 //    myTestCaseInfo.setVisible(false);
-    TestProxy proxy = myCurrentTest;
-    if (myCurrentTest.isLeaf() && myCurrentTest.getParent() != null) {
-      proxy = myCurrentTest.getParent();
+    TestProxy proxy = myCurrentTest != null ? myCurrentTest : myModel.getRoot();
+    if (proxy.isLeaf() && proxy.getParent() != null) {
+      proxy = proxy.getParent();
     }
     myChildInfo.updateStatistics(proxy);
     myTotalLabel.clear();
@@ -113,7 +113,10 @@ class StatisticsPanel extends JPanel implements DataProvider{
   private class MyJUnitListener extends JUnitAdapter {
     public void onTestChanged(final TestEvent event) {
       if (!StatisticsPanel.this.isShowing()) return;
-      if (myCurrentTest == event.getSource()) updateStatistics();
+      final TestProxy source = event.getSource();
+      if (myCurrentTest == source || myCurrentTest == null && source == myModel.getRoot()) {
+        updateStatistics();
+      }
     }
 
     public void onTestSelected(final TestProxy test) {

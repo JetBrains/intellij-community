@@ -209,7 +209,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
         int len = statements.length;
         if (len > 0) {
-          if (statements[len - 1] instanceof PsiReturnStatement) len--;
+          //if (statements[len - 1] instanceof PsiReturnStatement) len--;
           if (len > 0) {
             PsiElement firstElement = statements [0];
             while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {

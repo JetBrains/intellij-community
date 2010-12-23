@@ -29,7 +29,7 @@ import static org.testng.Assert.*;
 /**
  * @author Kirill Likhodedov
  */
-public class GitBranchTest extends GitCollaborativeTestCase {
+public class GitBranchTest extends GitCollaborativeTest {
 
   private List<TestBranch> myBranches;
   private VirtualFile myDir;

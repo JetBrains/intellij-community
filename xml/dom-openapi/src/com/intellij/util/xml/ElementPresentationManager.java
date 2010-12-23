@@ -78,6 +78,10 @@ public abstract class ElementPresentationManager {
     return createVariants(elements, namer, 0);
   }
 
+  /**
+   * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
+   */
+  @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   @NotNull
@@ -102,8 +106,6 @@ public abstract class ElementPresentationManager {
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
-
-  public static void unregisterNameProvider(Function<Object, String> function) { ourNameProviders.remove(function); }
 
   /** Use extension point {@code com.intellij.typeIcon} instead. */
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }

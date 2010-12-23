@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexableSetContributor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -34,15 +35,13 @@ import java.util.Set;
  */
 public abstract class ScriptingIndexableSetContributor extends IndexableSetContributor {
 
+  @NotNull
   @Override
-  public Set<VirtualFile> getAdditionalRootsToIndex(@Nullable Project project) {
-    final Set<VirtualFile> predefinedFiles = getPredefinedFilesToIndex();
-    final THashSet<VirtualFile> filesToIndex = new THashSet<VirtualFile>();
-    filesToIndex.addAll(predefinedFiles);
-    filesToIndex.addAll(getLibraryFiles(project));
-    return filesToIndex;
+  public Set<VirtualFile> getAdditionalProjectRootsToIndex(@Nullable Project project) {
+    return getLibraryFiles(project);
   }
 
+  @NotNull
   public Set<VirtualFile> getLibraryFiles(Project project) {
     final THashSet<VirtualFile> libFiles = new THashSet<VirtualFile>();
     LibraryType libType = getLibraryType();
@@ -67,8 +66,8 @@ public abstract class ScriptingIndexableSetContributor extends IndexableSetContr
   }
 
   @Override
-  public Set<VirtualFile> getAdditionalRootsToIndex() {
-    return getAdditionalRootsToIndex(null);
+  public final Set<VirtualFile> getAdditionalRootsToIndex() {
+    return getPredefinedFilesToIndex();
   }
 
   public abstract Set<VirtualFile> getPredefinedFilesToIndex();

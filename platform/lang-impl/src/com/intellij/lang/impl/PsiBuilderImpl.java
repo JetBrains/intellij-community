@@ -635,13 +635,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @Override
-  public IElementType justLookup(int steps) {
+  public IElementType rawLookup(int steps) {
     int cur = myCurrentLexeme + steps;
     return cur < myLexemeCount && cur >= 0 ? myLexTypes[cur] : null;
   }
 
   @Override
-  public int tokenTypeStart(int steps) {
+  public int rawTokenTypeStart(int steps) {
     int cur = myCurrentLexeme + steps;
     if (cur < 0) return -1;
     if (cur >= myLexemeCount) return getOriginalText().length();

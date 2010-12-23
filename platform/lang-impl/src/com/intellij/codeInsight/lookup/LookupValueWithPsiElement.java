@@ -20,7 +20,9 @@ import com.intellij.psi.PsiElement;
 
 /**
  * @author Maxim.Mossienko
+ * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
  */
+@Deprecated
 public interface LookupValueWithPsiElement {
   PsiElement getElement();
 }

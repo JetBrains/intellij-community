@@ -17,6 +17,9 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -30,9 +33,9 @@ public class HighlightDisplayLevel {
   private static final Map<HighlightSeverity, HighlightDisplayLevel> ourMap = new HashMap<HighlightSeverity, HighlightDisplayLevel>();
 
   public static final HighlightDisplayLevel GENERIC_SERVER_ERROR_OR_WARNING = new HighlightDisplayLevel(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-                                                                                                        createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING.getDefaultAttributes().getErrorStripeColor())); 
-  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
-  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes().getErrorStripeColor()));
+                                                                                                        createIconByMask(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
+  public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES));
+  public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(CodeInsightColors.WARNINGS_ATTRIBUTES));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(new Color(30, 160, 0)));
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, DO_NOT_SHOW.getIcon());
 
@@ -89,6 +92,17 @@ public class HighlightDisplayLevel {
   }
 
   private static final int EMPTY_ICON_DIM = 12;
+
+  public static Icon createIconByMask(TextAttributesKey key) {
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
+    if (manager != null) {
+      final EditorColorsScheme globalScheme = manager.getGlobalScheme();
+      return createIconByMask(globalScheme.getAttributes(key).getErrorStripeColor());
+    }
+
+    return createIconByMask(key.getDefaultAttributes().getErrorStripeColor());
+  }
+
   public static Icon createIconByMask(final Color renderColor) {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {

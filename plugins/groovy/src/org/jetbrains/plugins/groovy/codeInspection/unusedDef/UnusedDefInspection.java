@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -156,7 +157,10 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     if (var != null) {
       final GroovyPsiElement scope = getScope(var);
-      LOG.assertTrue(scope != null, DebugUtil.psiToString(var.getContainingFile(), true, false));
+      if (scope == null) {
+        PsiFile file = var.getContainingFile();
+        LOG.error(file == null ? "no file???" : DebugUtil.psiToString(file, true, false));
+      }
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {

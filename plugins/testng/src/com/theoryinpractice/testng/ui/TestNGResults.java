@@ -92,7 +92,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.project = configuration.getProject();
 
-    model = new TestNGResultsTableModel();
+    model = new TestNGResultsTableModel(project);
     resultsTable = new TableView(model);
     resultsTable.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -228,9 +228,21 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
               }
             }
         );
-        if (methods.length > 0 && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
-          testCase = testStarted(result);
-          testCase.appendStacktrace(result);
+        if (methods.length > 0 && methods[0] != null && !AnnotationUtil.isAnnotated(methods[0], Arrays.asList(TestNGUtil.CONFIG_ANNOTATIONS_FQN))) {
+          for (List<TestProxy> proxies : started.values()) {
+            if (proxies != null) {
+              for (TestProxy proxy : proxies) {
+                if (methods[0].equals(proxy.getPsiElement())) {
+                  testCase = proxy;
+                  break;
+                }
+              }
+            }
+          }
+          if (testCase == null) {
+            testCase = testStarted(result);
+            testCase.appendStacktrace(result);
+          }
         }
       }
     }
@@ -247,7 +259,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     else {
       //do not remember testresultmessage: test hierarchy is not set
-      testCase = new TestProxy(result.toDisplayString());
+      testCase = new TestProxy(TestProxy.toDisplayText(result, project));
       testCase.appendStacktrace(result);
       failedToStart = testCase;
     }
@@ -382,6 +394,10 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public TestProxy getFailedToStart() {
     return failedToStart;
+  }
+
+  public void setFailedToStart(TestProxy failedToStart) {
+    this.failedToStart = failedToStart;
   }
 
   private class OpenSourceSelectionListener implements TreeSelectionListener {

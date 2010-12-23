@@ -130,5 +130,5 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
 
-  void updateExecutionPosition(boolean updateBreakpoints);
+  void updateExecutionPosition();
 }
