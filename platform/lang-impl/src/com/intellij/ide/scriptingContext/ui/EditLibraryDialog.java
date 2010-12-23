@@ -419,19 +419,42 @@ public class EditLibraryDialog extends DialogWrapper {
       fireIntervalRemoved(this, index, index);
     }
     
+    public boolean contains(String url) {
+      return myDocUrls.contains(url);
+    }
+    
     public String[] getDocUrls() {
       return ArrayUtil.toStringArray(myDocUrls);
     }
   }
   
   private void specifyDocUrl() {
-    VirtualFile vf = Util.showSpecifyJavadocUrlDialog(contentPane);
+    String defaultUrl = findUnspecifiedMatchingDocUrl(myFileTableModel.getSourceFiles());
+    if (defaultUrl == null) {
+      defaultUrl = findUnspecifiedMatchingDocUrl(myFileTableModel.getCompactFiles());
+    }
+    VirtualFile vf = Util.showSpecifyJavadocUrlDialog(contentPane, defaultUrl != null ? defaultUrl : "");
     if (vf != null && vf.isValid()) {
       String url = vf.getUrl();
       int index = myDocUrlListModel.addUrl(url);
       myDocUrlList.ensureIndexIsVisible(index);
       myDocUrlList.setSelectedIndex(index);
     }
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myLibName;
+  }
+
+  @Nullable
+  private String findUnspecifiedMatchingDocUrl(VirtualFile[] files) {
+    String docUrl;
+    for (VirtualFile file : files) {
+      docUrl = myProvider.getDefaultDocUrl(file);
+      if (docUrl != null && !myDocUrlListModel.contains(docUrl)) return docUrl;
+    }
+    return null;
   }
   
   private void removeDocUrl() {
