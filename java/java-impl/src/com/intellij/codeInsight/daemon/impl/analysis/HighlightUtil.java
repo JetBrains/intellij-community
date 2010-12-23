@@ -374,10 +374,12 @@ public class HighlightUtil {
     IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
     if (opSign == null) return null;
     HighlightInfo errorResult = null;
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true)) {
+    final PsiType lType = assignment.getLExpression().getType();
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true) ||
+        PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
-                                                 formatType(assignment.getLExpression().getType()),
+                                                 formatType(lType),
                                                  formatType(assignment.getRExpression().getType()));
 
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, assignment, message);

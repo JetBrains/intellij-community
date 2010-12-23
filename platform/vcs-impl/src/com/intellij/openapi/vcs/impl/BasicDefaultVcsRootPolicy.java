@@ -19,12 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
-import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.changes.FilePathUnderVcs;
+import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -41,9 +42,9 @@ public class BasicDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myBaseDir = project.getBaseDir();
   }
 
-  public void addDefaultVcsRoots(final NewMappings mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
+  public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myBaseDir);
-    if (baseDir != null && vcs.getName().equals(mappingList.getVcsFor(baseDir))) {
+    if (baseDir != null && vcsName.equals(mappingList.getVcsFor(baseDir))) {
       result.add(baseDir);
     }
   }

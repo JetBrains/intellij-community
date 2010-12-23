@@ -335,13 +335,13 @@ public class JavaParserUtil {
     }
 
     @Override
-    public IElementType justLookup(int steps) {
-      return myDelegate.justLookup(steps);
+    public IElementType rawLookup(int steps) {
+      return myDelegate.rawLookup(steps);
     }
 
     @Override
-    public int tokenTypeStart(int steps) {
-      return myDelegate.tokenTypeStart(steps);
+    public int rawTokenTypeStart(int steps) {
+      return myDelegate.rawTokenTypeStart(steps);
     }
 
     @Nullable @NonNls

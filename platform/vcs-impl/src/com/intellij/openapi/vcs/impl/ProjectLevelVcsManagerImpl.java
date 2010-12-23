@@ -59,6 +59,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EditorAdapter;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +73,8 @@ import java.util.List;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
-  
+  public static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
+
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
@@ -454,6 +457,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
+    final List<VirtualFile> defaultRoots = myMappings.getDefaultRoots();
+    if (defaultRoots.size() == 1 && "".equals(myMappings.haveDefaultMapping())) {
+      myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
+    }
     myMappings.setMapping(path, activeVcsName);
   }
 
@@ -462,6 +469,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+    myHaveLegacyVcsConfiguration = true;
     myMappings.setDirectoryMappings(items);
   }
 
@@ -471,10 +479,20 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public void readExternal(Element element) throws InvalidDataException {
     mySerialization.readExternalUtil(element, myOptionsAndConfirmations);
+    final Attribute attribute = element.getAttribute(SETTINGS_EDITED_MANUALLY);
+    if (attribute != null) {
+      try {
+        myHaveLegacyVcsConfiguration = attribute.getBooleanValue();
+      }
+      catch (DataConversionException e) {
+        //
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    element.setAttribute(SETTINGS_EDITED_MANUALLY, String.valueOf(myHaveLegacyVcsConfiguration));
   }
 
   @NotNull

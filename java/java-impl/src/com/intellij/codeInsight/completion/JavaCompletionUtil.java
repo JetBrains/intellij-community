@@ -921,7 +921,18 @@ public class JavaCompletionUtil {
     return toDelete;
   }
 
-  public static void insertParentheses(final InsertionContext context, final LookupElement item, boolean overloadsMatter, boolean hasParams) {
+  public static void insertParentheses(final InsertionContext context,
+                                       final LookupElement item,
+                                       boolean overloadsMatter,
+                                       boolean hasParams) {
+    insertParentheses(context, item, overloadsMatter, hasParams, false);
+  }
+
+  public static void insertParentheses(final InsertionContext context,
+                                       final LookupElement item,
+                                       boolean overloadsMatter,
+                                       boolean hasParams,
+                                       final boolean forceClosingParenthesis) {
     final Editor editor = context.getEditor();
     final char completionChar = context.getCompletionChar();
     final PsiFile file = context.getFile();
@@ -933,28 +944,25 @@ public class JavaCompletionUtil {
     final boolean addCompletionChar = context.shouldAddCompletionChar();
     context.setAddCompletionChar(false);
 
-    final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean needRightParenth = !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET || hasTail);
+    final boolean needRightParenth = forceClosingParenthesis || !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET || hasTail);
     if (hasTail) {
       hasParams = false;
     }
 
-    if (needLeftParenth) {
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
-      ParenthesesInsertHandler.getInstance(hasParams,
-                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           needRightParenth,
-                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
-      ).handleInsert(context, item);
-    }
+    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+    ParenthesesInsertHandler.getInstance(hasParams,
+                                         styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                         styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
+                                         needRightParenth,
+                                         styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+    ).handleInsert(context, item);
 
-    if (needLeftParenth && hasParams) {
+    if (hasParams) {
       // Invoke parameters popup
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (smart || needLeftParenth && needRightParenth && addCompletionChar) {
+    if (smart || needRightParenth && addCompletionChar) {
       TailType toInsert = tailType;
       LookupItem lookupItem = item.as(LookupItem.class);
       if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
@@ -968,11 +976,6 @@ public class JavaCompletionUtil {
       }
       toInsert.processTail(editor, context.getTailOffset());
     }
-  }
-
-  public static boolean isToInsertParenth(PsiElement place){
-    if (place == null) return true;
-    return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
 
   //need to shorten references in type argument list

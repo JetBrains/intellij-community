@@ -574,6 +574,7 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
+  // Hours spent fixing code : 1
   private void calcResults(final boolean isQuick) {
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
@@ -619,6 +620,7 @@ public class TemplateState implements Disposable {
                 }
                 mySelectionCalculated = true;
               }
+              if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
               String newValue = getVariableValue(variableName).getText();
               int start = mySegments.getSegmentStart(i);
               int end = mySegments.getSegmentEnd(i);

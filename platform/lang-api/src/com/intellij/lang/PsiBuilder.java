@@ -93,7 +93,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    * @return type element ahead or behind, including whitespace / comment tokens
    */
   @Nullable
-  IElementType justLookup(int steps);
+  IElementType rawLookup(int steps);
 
   /**
    * See what token type is in <code>steps</code> ahead / behind current position
@@ -101,7 +101,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    * @return offset type element ahead or behind, including whitespace / comment tokens, -1 if first token,
    * getOriginalText().getLength() at end
    */
-  int tokenTypeStart(int steps);
+  int rawTokenTypeStart(int steps);
 
   /**
    * Returns the text of the current token from the lexer.

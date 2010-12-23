@@ -15,9 +15,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,5 +49,19 @@ public class AppUIUtil {
 
   public static void updateDialogIcon(final JDialog dialog) {
     UIUtil.updateDialogIcon(dialog, getAppIconImages());
+  }
+
+  public static void invokeLaterIfProjectAlive(@NotNull final Project project, @NotNull final Runnable runnable) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable, new Condition() {
+        @Override
+        public boolean value(Object o) {
+          return (! project.isOpen()) || project.isDisposed();
+        }
+      });
+    }
   }
 }

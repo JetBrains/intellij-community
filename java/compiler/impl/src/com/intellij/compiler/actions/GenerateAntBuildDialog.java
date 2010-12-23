@@ -17,6 +17,7 @@ package com.intellij.compiler.actions;
 
 import com.intellij.compiler.HelpID;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.help.HelpManager;
@@ -51,178 +52,197 @@ import java.util.List;
  *         Date: Mar 29, 2004
  */
 public class GenerateAntBuildDialog extends DialogWrapper {
-    private JPanel myPanel;
-    private JRadioButton myRbGenerateSingleFileBuild;
-    private JRadioButton myRbGenerateMultipleFilesBuild;
-    private JCheckBox myCbEnableUIFormsCompilation;
-    private JRadioButton myRbBackupFiles;
-    private JRadioButton myRbOverwriteFiles;
-    private JCheckBox myCbForceTargetJdk;
-    private JCheckBox myCbInlineRuntimeClasspath;
-    private JPanel myChunksPanel;
-    private JCheckBox myGenerateIdeaHomeProperty;
-    private final Project myProject;
-    @NonNls private static final String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
-    @NonNls private static final String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
-    @NonNls private static final String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
-    @NonNls private static final String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
-    @NonNls private static final String INLINE_RUNTIME_CLASSPATH_PROPERTY = "GenerateAntBuildDialog.inclineRuntiemClasspath";
-    @NonNls private static final String GENERATE_IDEA_HOME_PROPERTY = "GenerateAntBuildDialog.generateIdeaHomeProperty";
-    private MyTableModel myTableModel;
-    private Table myTable;
+  private JPanel myPanel;
+  private JRadioButton myRbGenerateSingleFileBuild;
+  private JRadioButton myRbGenerateMultipleFilesBuild;
+  private JCheckBox myCbEnableUIFormsCompilation;
+  private JRadioButton myRbBackupFiles;
+  private JRadioButton myRbOverwriteFiles;
+  private JCheckBox myCbForceTargetJdk;
+  private JCheckBox myCbInlineRuntimeClasspath;
+  private JPanel myChunksPanel;
+  private JCheckBox myGenerateIdeaHomeProperty;
+  private JTextField myOutputFileNameField;
+  private final Project myProject;
+  @NonNls private static final String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
+  @NonNls private static final String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
+  @NonNls private static final String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
+  @NonNls private static final String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
+  @NonNls private static final String INLINE_RUNTIME_CLASSPATH_PROPERTY = "GenerateAntBuildDialog.inclineRuntiemClasspath";
+  @NonNls private static final String GENERATE_IDEA_HOME_PROPERTY = "GenerateAntBuildDialog.generateIdeaHomeProperty";
+  @NonNls private static final String OUTPUT_FILE_NAME_PROPERTY = "GenerateAntBuildDialog.outputFileNameProperty";
+  private MyTableModel myTableModel;
+  private Table myTable;
 
-    public GenerateAntBuildDialog(Project project) {
-        super(project, false);
-        myProject = project;
-        setTitle(CompilerBundle.message("generate.ant.build.title"));
-        init();
-        loadSettings();
-    }
+  public GenerateAntBuildDialog(Project project) {
+    super(project, false);
+    myProject = project;
+    setTitle(CompilerBundle.message("generate.ant.build.title"));
+    init();
+    loadSettings();
+  }
 
-    private List<Chunk<Module>> getCycleChunks() {
-      List<Chunk<Module>> chunks =
-        ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-      for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
-        final Chunk<Module> chunk = it.next();
-        if (chunk.getNodes().size() == 1) {
-          it.remove();
-        }
+  private List<Chunk<Module>> getCycleChunks() {
+    List<Chunk<Module>> chunks =
+      ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
+    for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
+      final Chunk<Module> chunk = it.next();
+      if (chunk.getNodes().size() == 1) {
+        it.remove();
       }
-      return chunks;
     }
+    return chunks;
+  }
 
-    private void loadSettings() {
-        final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-        if (properties.isValueSet(SINGLE_FILE_PROPERTY)) {
-            final boolean singleFile = properties.isTrueValue(SINGLE_FILE_PROPERTY);
-            myRbGenerateSingleFileBuild.setSelected(singleFile);
-            myRbGenerateMultipleFilesBuild.setSelected(!singleFile);
-        }
-        if (properties.isValueSet(UI_FORM_PROPERTY)) {
-            myCbEnableUIFormsCompilation.setSelected(properties.isTrueValue(UI_FORM_PROPERTY));
-        }
-        if (properties.isValueSet(FORCE_TARGET_JDK_PROPERTY)) {
-            myCbForceTargetJdk.setSelected(properties.isTrueValue(FORCE_TARGET_JDK_PROPERTY));
-        }
-        if (properties.isValueSet(BACKUP_FILES_PROPERTY)) {
-            final boolean backup = properties.isTrueValue(BACKUP_FILES_PROPERTY);
-            myRbBackupFiles.setSelected(backup);
-            myRbOverwriteFiles.setSelected(!backup);
-        }
-        if (properties.isValueSet(INLINE_RUNTIME_CLASSPATH_PROPERTY)) {
-            myCbInlineRuntimeClasspath.setSelected(properties.isTrueValue(INLINE_RUNTIME_CLASSPATH_PROPERTY));
-        }
-        if (properties.isValueSet(GENERATE_IDEA_HOME_PROPERTY)) {
-            myGenerateIdeaHomeProperty.setSelected(properties.isTrueValue(GENERATE_IDEA_HOME_PROPERTY));
-        }
+  private void loadSettings() {
+    final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
+    if (properties.isValueSet(SINGLE_FILE_PROPERTY)) {
+      final boolean singleFile = properties.isTrueValue(SINGLE_FILE_PROPERTY);
+      myRbGenerateSingleFileBuild.setSelected(singleFile);
+      myRbGenerateMultipleFilesBuild.setSelected(!singleFile);
     }
-
-    private void saveSettings() {
-        final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-        properties.setValue(SINGLE_FILE_PROPERTY, Boolean.toString(myRbGenerateSingleFileBuild.isSelected()));
-        properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myCbEnableUIFormsCompilation.isSelected()));
-        properties.setValue(FORCE_TARGET_JDK_PROPERTY, Boolean.toString(myCbForceTargetJdk.isSelected()));
-        properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
-        properties.setValue(INLINE_RUNTIME_CLASSPATH_PROPERTY, Boolean.toString(myCbInlineRuntimeClasspath.isSelected()));
-        properties.setValue(GENERATE_IDEA_HOME_PROPERTY, Boolean.toString(myGenerateIdeaHomeProperty.isSelected()));
+    if (properties.isValueSet(UI_FORM_PROPERTY)) {
+      myCbEnableUIFormsCompilation.setSelected(properties.isTrueValue(UI_FORM_PROPERTY));
     }
-
-    public void dispose() {
-        saveSettings();
-        super.dispose();
+    if (properties.isValueSet(FORCE_TARGET_JDK_PROPERTY)) {
+      myCbForceTargetJdk.setSelected(properties.isTrueValue(FORCE_TARGET_JDK_PROPERTY));
     }
-
-    protected JComponent createCenterPanel() {
-        final ButtonGroup group = new ButtonGroup();
-        group.add(myRbGenerateMultipleFilesBuild);
-        group.add(myRbGenerateSingleFileBuild);
-
-        final ButtonGroup group1 = new ButtonGroup();
-        group1.add(myRbBackupFiles);
-        group1.add(myRbOverwriteFiles);
-
-        myRbGenerateMultipleFilesBuild.setSelected(true);
-        myRbBackupFiles.setSelected(true);
-        myCbEnableUIFormsCompilation.setSelected(true);
-        myCbForceTargetJdk.setSelected(true);
-        myCbInlineRuntimeClasspath.setSelected(false);
-
-        initChunksPanel();
-
-        return myPanel;
+    if (properties.isValueSet(BACKUP_FILES_PROPERTY)) {
+      final boolean backup = properties.isTrueValue(BACKUP_FILES_PROPERTY);
+      myRbBackupFiles.setSelected(backup);
+      myRbOverwriteFiles.setSelected(!backup);
     }
-
-    private void initChunksPanel() {
-        List<Chunk<Module>> chunks = getCycleChunks();
-        if (chunks.isEmpty()) {
-            return;
-        }
-        myChunksPanel.setLayout(new BorderLayout());
-        myChunksPanel.setBorder(
-                IdeBorderFactory.createTitledBorder(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.title")));
-        JLabel textLabel = new JLabel(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.description"));
-        textLabel.setUI(new MultiLineLabelUI());
-        textLabel.setBorder(IdeBorderFactory.createEmptyBorder(4, 4, 6, 4));
-        myChunksPanel.add(textLabel, BorderLayout.NORTH);
-
-        myTableModel = new MyTableModel(chunks);
-        myTable = new Table(myTableModel);
-        final MyTableCellRenderer cellRenderer = new MyTableCellRenderer();
-        final TableColumn nameColumn = myTable.getColumnModel().getColumn(MyTableModel.NAME_COLUMN);
-        nameColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
-        nameColumn.setCellRenderer(cellRenderer);
-        final TableColumn labelColumn = myTable.getColumnModel().getColumn(MyTableModel.NUMBER_COLUMN);
-        labelColumn.setCellRenderer(cellRenderer);
-
-        final Dimension preferredSize = new Dimension(myTable.getPreferredSize());
-        preferredSize.height = (myTableModel.getRowCount() + 2) * myTable.getRowHeight() + myTable.getTableHeader().getHeight();
-
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-        scrollPane.setPreferredSize(preferredSize);
-        myChunksPanel.add(scrollPane, BorderLayout.CENTER);
+    if (properties.isValueSet(INLINE_RUNTIME_CLASSPATH_PROPERTY)) {
+      myCbInlineRuntimeClasspath.setSelected(properties.isTrueValue(INLINE_RUNTIME_CLASSPATH_PROPERTY));
     }
-
-    protected void doOKAction() {
-        if (myTable != null) {
-            TableCellEditor cellEditor = myTable.getCellEditor();
-            if (cellEditor != null) {
-                cellEditor.stopCellEditing();
-            }
-        }
-        super.doOKAction();
+    if (properties.isValueSet(GENERATE_IDEA_HOME_PROPERTY)) {
+      myGenerateIdeaHomeProperty.setSelected(properties.isTrueValue(GENERATE_IDEA_HOME_PROPERTY));
     }
-
-    public boolean isGenerateSingleFileBuild() {
-        return myRbGenerateSingleFileBuild.isSelected();
+    if (properties.isValueSet(OUTPUT_FILE_NAME_PROPERTY)) {
+      myOutputFileNameField.setText(properties.getValue(OUTPUT_FILE_NAME_PROPERTY));
     }
-
-    public boolean isFormsCompilationEnabled() {
-        return myCbEnableUIFormsCompilation.isSelected();
+    else {
+      myOutputFileNameField.setText(BuildProperties.getProjectBuildFileName(myProject));
     }
+  }
 
-    public boolean isForceTargetJdk() {
-        return myCbForceTargetJdk.isSelected();
+  private void saveSettings() {
+    final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
+    properties.setValue(SINGLE_FILE_PROPERTY, Boolean.toString(myRbGenerateSingleFileBuild.isSelected()));
+    properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myCbEnableUIFormsCompilation.isSelected()));
+    properties.setValue(FORCE_TARGET_JDK_PROPERTY, Boolean.toString(myCbForceTargetJdk.isSelected()));
+    properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
+    properties.setValue(INLINE_RUNTIME_CLASSPATH_PROPERTY, Boolean.toString(myCbInlineRuntimeClasspath.isSelected()));
+    properties.setValue(GENERATE_IDEA_HOME_PROPERTY, Boolean.toString(myGenerateIdeaHomeProperty.isSelected()));
+    final String outputFileName = getOutputFileName();
+    if (outputFileName.length() > 0) {
+      properties.setValue(OUTPUT_FILE_NAME_PROPERTY, outputFileName);
     }
-
-    public boolean isBackupFiles() {
-        return myRbBackupFiles.isSelected();
+    else {
+      properties.unsetValue(OUTPUT_FILE_NAME_PROPERTY);
     }
+  }
 
-    public boolean isRuntimeClasspathInlined() {
-        return myCbInlineRuntimeClasspath.isSelected();
+  public void dispose() {
+    saveSettings();
+    super.dispose();
+  }
+
+  protected JComponent createCenterPanel() {
+    final ButtonGroup group = new ButtonGroup();
+    group.add(myRbGenerateMultipleFilesBuild);
+    group.add(myRbGenerateSingleFileBuild);
+
+    final ButtonGroup group1 = new ButtonGroup();
+    group1.add(myRbBackupFiles);
+    group1.add(myRbOverwriteFiles);
+
+    myRbGenerateMultipleFilesBuild.setSelected(true);
+    myRbBackupFiles.setSelected(true);
+    myCbEnableUIFormsCompilation.setSelected(true);
+    myCbForceTargetJdk.setSelected(true);
+    myCbInlineRuntimeClasspath.setSelected(false);
+
+    initChunksPanel();
+
+    return myPanel;
+  }
+
+  private void initChunksPanel() {
+    List<Chunk<Module>> chunks = getCycleChunks();
+    if (chunks.isEmpty()) {
+      return;
     }
+    myChunksPanel.setLayout(new BorderLayout());
+    myChunksPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.title")));
+    JLabel textLabel = new JLabel(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.description"));
+    textLabel.setUI(new MultiLineLabelUI());
+    textLabel.setBorder(IdeBorderFactory.createEmptyBorder(4, 4, 6, 4));
+    myChunksPanel.add(textLabel, BorderLayout.NORTH);
 
-    public String[] getRepresentativeModuleNames() {
-        return myTableModel != null ? myTableModel.getModuleRepresentatives() : ArrayUtil.EMPTY_STRING_ARRAY;
+    myTableModel = new MyTableModel(chunks);
+    myTable = new Table(myTableModel);
+    final MyTableCellRenderer cellRenderer = new MyTableCellRenderer();
+    final TableColumn nameColumn = myTable.getColumnModel().getColumn(MyTableModel.NAME_COLUMN);
+    nameColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
+    nameColumn.setCellRenderer(cellRenderer);
+    final TableColumn labelColumn = myTable.getColumnModel().getColumn(MyTableModel.NUMBER_COLUMN);
+    labelColumn.setCellRenderer(cellRenderer);
+
+    final Dimension preferredSize = new Dimension(myTable.getPreferredSize());
+    preferredSize.height = (myTableModel.getRowCount() + 2) * myTable.getRowHeight() + myTable.getTableHeader().getHeight();
+
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
+    scrollPane.setPreferredSize(preferredSize);
+    myChunksPanel.add(scrollPane, BorderLayout.CENTER);
+  }
+
+  protected void doOKAction() {
+    if (myTable != null) {
+      TableCellEditor cellEditor = myTable.getCellEditor();
+      if (cellEditor != null) {
+        cellEditor.stopCellEditing();
+      }
     }
+    super.doOKAction();
+  }
 
-    /**
-     * @return true if user has selected to generate IDEA_HOME property
-     */
-    public boolean isIdeaHomeGenerated() {
-        return myGenerateIdeaHomeProperty.isSelected();
-    }
+  public boolean isGenerateSingleFileBuild() {
+    return myRbGenerateSingleFileBuild.isSelected();
+  }
 
+  public boolean isFormsCompilationEnabled() {
+    return myCbEnableUIFormsCompilation.isSelected();
+  }
+
+  public boolean isForceTargetJdk() {
+    return myCbForceTargetJdk.isSelected();
+  }
+
+  public boolean isBackupFiles() {
+    return myRbBackupFiles.isSelected();
+  }
+
+  public boolean isRuntimeClasspathInlined() {
+    return myCbInlineRuntimeClasspath.isSelected();
+  }
+
+  public String[] getRepresentativeModuleNames() {
+    return myTableModel != null ? myTableModel.getModuleRepresentatives() : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  /**
+   * @return true if user has selected to generate IDEA_HOME property
+   */
+  public boolean isIdeaHomeGenerated() {
+    return myGenerateIdeaHomeProperty.isSelected();
+  }
+  
+  public String getOutputFileName() {
+    return myOutputFileNameField.getText().trim();
+  }
+  
   private static class MyTableModel extends AbstractTableModel {
     private static final int NUMBER_COLUMN = 0;
     private static final int NAME_COLUMN = 1;

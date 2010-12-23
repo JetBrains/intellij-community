@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 /**
  * Represents the settings of a Find, Replace, Find in Path or Replace in Path
  * operations.
@@ -132,6 +135,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   public void setStringToFind(@NotNull String s) {
     LOG.assertTrue(s.length() > 0);
     myStringToFind = s;
+    myPattern = NO_PATTERN;
   }
 
   /**
@@ -617,5 +621,25 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void setInCommentsOnly(boolean inCommentsOnly) {
     isInCommentsOnly = inCommentsOnly;
+  }
+
+  private static final Pattern NO_PATTERN = Pattern.compile("");
+  private Pattern myPattern = NO_PATTERN;
+  public Pattern compileRegExp() {
+    String toFind = getStringToFind();
+
+    Pattern pattern = myPattern;
+    if (pattern == NO_PATTERN) {
+      try {
+        myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+      }
+      catch(PatternSyntaxException e){
+        LOG.error(e);
+        myPattern = null;
+        return null;
+      }
+    }
+
+    return pattern;
   }
 }

@@ -73,11 +73,6 @@ public abstract class BuildProperties extends CompositeGenerator {
   }
 
   @NonNls
-  public static String getPropertyFileName(Project project) {
-    return getProjectBuildFileName(project) + ".properties";
-  }
-
-  @NonNls
   public static String getJdkPathId(@NonNls final String jdkName) {
     return "jdk.classpath." + convertName(jdkName);
   }

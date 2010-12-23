@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -148,14 +149,14 @@ public class GitVFSListener extends VcsVFSListener {
               });
             }
           }
-          addedFiles.retainAll(retainedFiles);
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              originalExecuteAdd(addedFiles, copiedFiles);
-            }
-          });
         }
+        addedFiles.retainAll(retainedFiles);
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+          @Override
+          public void run() {
+            originalExecuteAdd(addedFiles, copiedFiles);
+          }
+        });
       }
     });
   }

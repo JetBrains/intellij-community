@@ -18,7 +18,9 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.softwrap.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +34,16 @@ import java.util.*;
 
 class FormatProcessor {
 
+  /**
+   * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
+   * big enough for that their subsequent appliance is much slower than direct replacing of the whole document text.
+   * <p/>
+   * Current constant holds minimum number of changes that should trigger such <code>'replace whole text'</code> optimization.
+   */
+  private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
+  private static final BulkChangesMerger ourBulkChangesMerger = new BulkChangesMerger();
 
   private LeafBlockWrapper myCurrentBlock;
 
@@ -74,7 +85,7 @@ class FormatProcessor {
 
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
-
+  
   private SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependencies =
     new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
       public int compare(final TextRange o1, final TextRange o2) {
@@ -91,6 +102,8 @@ class FormatProcessor {
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
   private CodeStyleSettings.IndentOptions myJavaIndentOptions;
+  private BulkReformatListener myBulkReformatListener;
+
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -198,15 +211,31 @@ class FormatProcessor {
     myJavaIndentOptions = javaIndentOptions;
   }
 
-  private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+  /**
+   * @param bulkReformatListener    new listener to use; <code>null</code> to reset any listener registered before
+   */
+  public void setBulkReformatListener(@Nullable BulkReformatListener bulkReformatListener) {
+    myBulkReformatListener = bulkReformatListener;
+  }
+
+  private void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
                                CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
     final int blocksToModifyCount = blocksToModify.size();
-    final boolean bulkReformat = blocksToModifyCount > 50;
-    final DocumentEx updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
-    if (updatedDocument != null) {
-      updatedDocument.setInBulkUpdate(true);
-    }
+    DocumentEx updatedDocument = null;
+
     try {
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
+        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
+          return;
+        }
+      }
+
+      final boolean bulkReformat = blocksToModifyCount > 50;
+      updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
+      if (updatedDocument != null) {
+        updatedDocument.setInBulkUpdate(true);
+      }
+      
       int shift = 0;
       for (int i = 0; i < blocksToModifyCount; ++i) {
         final LeafBlockWrapper block = blocksToModify.get(i);
@@ -226,6 +255,54 @@ class FormatProcessor {
     }
   }
 
+  /**
+   * Decides whether applying formatter changes should be applied incrementally one-by-one or merge result should be
+   * constructed locally and the whole document text should be replaced. Performs such single bulk change if necessary.
+   * 
+   * @param blocksToModify        changes introduced by formatter
+   * @param model                 current formatting model
+   * @param indentOption          indent options to use
+   * @return                      <code>true</code> if given changes are applied to the document (i.e. no further processing is required);
+   *                              <code>false</code> otherwise
+   * @see BulkReformatListener
+   */
+  private boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+                                             CodeStyleSettings.IndentOptions indentOption) 
+  {
+    FormattingDocumentModel documentModel = model.getDocumentModel();
+    Document document = documentModel.getDocument();
+    if (document == null) {
+      return false;
+    }
+
+    List<TextChange> changes = new ArrayList<TextChange>();
+    for (LeafBlockWrapper block : blocksToModify) {
+      WhiteSpace whiteSpace = block.getWhiteSpace();
+      CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
+        whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset()
+      );
+      changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
+    }
+    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), changes);
+    if (myBulkReformatListener != null) {
+      myBulkReformatListener.beforeProcessing(document, mergeResult);
+    }
+    document.replaceString(0, document.getTextLength(), mergeResult);
+    cleanupBlocks(blocksToModify);
+    if (myBulkReformatListener != null) {
+      myBulkReformatListener.afterProcessing();
+    }
+    return true;
+  }
+
+  private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
+    for (LeafBlockWrapper block : blocks) {
+      block.getParent().dispose();
+      block.dispose();
+    }
+    blocks.clear();
+  }
+  
   @Nullable
   private static DocumentEx getAffectedDocument(final FormattingModel model) {
     if (model instanceof DocumentBasedFormattingModel) {

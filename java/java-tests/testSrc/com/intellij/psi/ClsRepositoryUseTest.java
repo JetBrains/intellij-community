@@ -31,8 +31,6 @@ public class ClsRepositoryUseTest extends PsiTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    RESOLVE_SCOPE = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
-
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         @Override
@@ -49,6 +47,8 @@ public class ClsRepositoryUseTest extends PsiTestCase{
         }
       }
     );
+
+    RESOLVE_SCOPE = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
   }
 
   @Override

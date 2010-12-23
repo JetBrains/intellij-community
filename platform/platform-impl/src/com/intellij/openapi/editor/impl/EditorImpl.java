@@ -147,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
 
-  private final DocumentListener myEditorDocumentAdapter;
+  private final DocumentListener           myEditorDocumentAdapter;
 
   private final SettingsImpl mySettings;
 
@@ -270,6 +270,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
+    if (project != null) {
+      project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
+    }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
@@ -1316,13 +1319,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
   }
 
-  private void beforeChangedUpdate(DocumentEvent e) {
-    if (!myDocument.isInBulkUpdate()) {
-      Rectangle visibleArea = getScrollingModel().getVisibleArea();
-      Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-      myCaretUpdateVShift = pos.y - visibleArea.y;
+  private void bulkUpdateStarted() {
+  }
+
+  private void bulkUpdateFinished() {
+    if (myScrollPane == null) {
+      return;
     }
+
+    stopOptimizedScrolling();
+    mySelectionModel.removeBlockSelection();
     
+    mySizeContainer.reset();
+    validateSize();
+
+    updateGutterSize();
+    repaintToScreenBottom(0);
+    updateCaretCursor();
+  }
+  
+  private void beforeChangedUpdate(DocumentEvent e) {
+    if (myDocument.isInBulkUpdate()) {
+      // Assuming that the job is done at bulk listener callback methods.
+      return;
+    }
+
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+    myCaretUpdateVShift = pos.y - visibleArea.y;
+
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
       mySizeContainer.beforeChange(e);
@@ -1330,7 +1355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void changedUpdate(DocumentEvent e) {
-    if (myScrollPane == null) return;
+    if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
@@ -5129,6 +5154,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
+    @Override
+    public void updateStarted(Document doc) {
+      bulkUpdateStarted();
+    }
+
+    @Override
+    public void updateFinished(Document doc) {
+      bulkUpdateFinished();
+    }
+  }
+  
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private class EditorSizeContainer {
 

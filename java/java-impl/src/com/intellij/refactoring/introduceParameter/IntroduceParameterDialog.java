@@ -300,11 +300,13 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myCbGenerateDelegate = new NonFocusableCheckBox(RefactoringBundle.message("delegation.panel.delegate.via.overloading.method"));
     panel.add(myCbGenerateDelegate, gbConstraints);
 
+    final JCheckBox[] removeParamsCb = new JCheckBox[myParametersToRemove.length];
     for (int i = 0; i < myParametersToRemove.length; i++) {
       PsiParameter parameter = myParametersToRemove[i];
       if (parameter == null) continue;
       final NonFocusableCheckBox cb = new NonFocusableCheckBox(RefactoringBundle.message("remove.parameter.0.no.longer.used",
                                                                                          parameter.getName()));
+      removeParamsCb[i] = cb;
       cb.setSelected(true);
       gbConstraints.gridy++;
       panel.add(cb, gbConstraints);
@@ -317,12 +319,13 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myParametersToRemoveChecked[i] = true;
     }
 
-    updateControls();
+    updateControls(removeParamsCb);
     if (myCbReplaceAllOccurences != null) {
       myCbReplaceAllOccurences.addItemListener(
               new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
-                  updateControls();
+                  updateControls(removeParamsCb);
+
                 }
               }
       );
@@ -330,8 +333,13 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     return panel;
   }
 
-  private void updateControls() {
-    if(myCbReplaceAllOccurences != null) {
+  private void updateControls(JCheckBox[] removeParamsCb) {
+    if (myCbReplaceAllOccurences != null) {
+      for (JCheckBox box : removeParamsCb) {
+        if (box != null) {
+          box.setEnabled(myCbReplaceAllOccurences.isSelected());
+        }
+      }
       myTypeSelectorManager.setAllOccurences(myCbReplaceAllOccurences.isSelected());
       if(myCbReplaceAllOccurences.isSelected()) {
         if (myCbDeleteLocalVariable != null) {

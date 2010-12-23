@@ -1095,7 +1095,7 @@ public class MavenProjectsTree {
                                   @NotNull MavenProgressIndicator process,
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
-    embedder.customizeForStrictResolve(getWorkspaceMap(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process);
     embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);

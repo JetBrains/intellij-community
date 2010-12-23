@@ -19,11 +19,11 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.common.ReceivedFileProcessor;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 
 import java.io.File;
@@ -65,7 +65,8 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
 
   private static boolean isProjectOrModuleFile(VirtualFile virtualFile) {
     if (virtualFile == null) return false;
-    if (ProjectOpenProcessor.getImportProvider(virtualFile) != null) return true;
+    final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(virtualFile);
+    if (importProvider != null && importProvider.isProjectFile(virtualFile)) return true;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
     return
       fileType == StdFileTypes.IDEA_PROJECT

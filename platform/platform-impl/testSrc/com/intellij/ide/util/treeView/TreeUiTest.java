@@ -1013,6 +1013,31 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
 
+  public void testUpdateWithNewDescriptor() throws Exception {
+    buildStructure(myRoot);
+
+    expand(getPath("/"));
+
+    assertTree(
+      "-/\n" +
+      " +com\n" +
+      " +jetbrains\n" +
+      " +org\n" +
+      " +xunit\n");
+
+    Node google = myStructure.getNodeFor(new NodeElement("jetbrains"));
+    google.myElement.myName = "google";
+
+    updateFromRoot();
+
+    assertTree(
+      "-/\n" +
+      " +com\n" +
+      " +google\n" +
+      " +org\n" +
+      " +xunit\n");
+  }
+
   public void testDeferredSelection() throws Exception {
     buildStructure(myRoot, false);
 
