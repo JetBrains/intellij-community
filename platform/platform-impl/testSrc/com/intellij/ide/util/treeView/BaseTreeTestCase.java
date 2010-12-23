@@ -494,7 +494,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   public static class NodeElement extends ComparableObject.Impl implements Comparable<NodeElement>{
 
-    final String myName;
+    String myName;
     private NodeElement myForcedParent;
 
     public NodeElement(String name) {

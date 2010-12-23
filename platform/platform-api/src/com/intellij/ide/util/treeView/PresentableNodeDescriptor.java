@@ -110,7 +110,9 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return true;
   }
 
-  public abstract PresentableNodeDescriptor getChildToHighlightAt(int index);
+  public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+    return null;
+  }
 
   public boolean isParentOf(NodeDescriptor eachNode) {
     NodeDescriptor eachParent = eachNode.getParentDescriptor();
