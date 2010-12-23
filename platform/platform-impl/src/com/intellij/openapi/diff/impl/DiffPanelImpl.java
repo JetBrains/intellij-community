@@ -329,6 +329,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myDataProvider.putData(myDiffRequest.getGenericData());
 
     IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+    boolean isEditor1Focused = getEditor1() != null
+                               && fm.getFocusedDescendantFor(getEditor1().getComponent()) != null;
+
     boolean isEditor2Focused = myData.getContent2() != null
                                && getEditor2() != null
                                && fm.getFocusedDescendantFor(getEditor2().getComponent()) != null;
@@ -348,7 +351,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.setBottomComponent(newBottomComponent);
 
 
-    fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
+    if (isEditor1Focused || isEditor2Focused) {
+      fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
+    }
 
     myPanel.requestScrollEditors();
   }
