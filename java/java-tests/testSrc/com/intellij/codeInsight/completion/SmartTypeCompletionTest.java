@@ -429,6 +429,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayIndexTailType() throws Throwable { doTest(); }
 
+  public void testPrivateOverloads() throws Throwable { doTest(); }
+
   public void testHonorSelection() throws Throwable {
     configureByTestName();
     select();
