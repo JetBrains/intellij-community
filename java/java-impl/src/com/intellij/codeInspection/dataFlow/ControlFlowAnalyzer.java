@@ -238,6 +238,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PopInstruction());
   }
 
+  @Override
+  public void visitCodeFragment(JavaCodeFragment codeFragment) {
+    startElement(codeFragment);
+    if (codeFragment instanceof PsiExpressionCodeFragment) {
+      PsiExpression expression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
+      if (expression != null) {
+        expression.accept(this);
+      }
+    }
+    finishElement(codeFragment);
+  }
+
   @Override public void visitCodeBlock(PsiCodeBlock block) {
     startElement(block);
 
