@@ -5,6 +5,7 @@ import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,9 +36,8 @@ public class PyExceptionBreakpointType
 
   @Override
   public PyExceptionBreakpointProperties createProperties() {
-    return p();
-  }private PyExceptionBreakpointProperties p() {
-  return new PyExceptionBreakpointProperties(BASE_EXCEPTION);}
+    return new PyExceptionBreakpointProperties(BASE_EXCEPTION);
+  }
 
   @Override
   public boolean isAddBreakpointButtonVisible() {
@@ -149,11 +149,11 @@ public class PyExceptionBreakpointType
       notificationsBox.add(panel);
 
       panel = new JPanel(new BorderLayout());
-      JPanel innterPanel = new JPanel(new BorderLayout());
-      innterPanel.add(notificationsBox, BorderLayout.CENTER);
-      innterPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
-      innterPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
-      panel.add(innterPanel, BorderLayout.NORTH);
+      JPanel innerPanel = new JPanel(new BorderLayout());
+      innerPanel.add(notificationsBox, BorderLayout.CENTER);
+      innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
+      innerPanel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
+      panel.add(innerPanel, BorderLayout.NORTH);
       panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Notifications"));
 
       ActionListener listener = new ActionListener() {

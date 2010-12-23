@@ -14,6 +14,7 @@ import java.util.List;
 public class PyDebugValue extends XValue {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
+  public static final int MAX_VALUE = 512;
 
   private final String myName;
   private String myTempName = null;
@@ -111,11 +112,13 @@ public class PyDebugValue extends XValue {
 
   @Override
   public void computePresentation(@NotNull final XValueNode node) {
-    String s = PyTypeHandler.format(this);
-    node.setPresentation(myName, getValueIcon(), myType, s, myContainer);
-    if (s.length() >= 1000) {
+    String value = PyTypeHandler.format(this);
+
+    if (value.length() >= MAX_VALUE) {
       node.setFullValueEvaluator(new PyFullValueEvaluator("Show full value", myDebugProcess, myName));
+      value = value.substring(0, MAX_VALUE) + "...";
     }
+    node.setPresentation(myName, getValueIcon(), myType, value, myContainer);
   }
 
   @Override
