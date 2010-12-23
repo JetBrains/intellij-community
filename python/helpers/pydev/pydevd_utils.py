@@ -1,11 +1,7 @@
-from numbers import *
 import pydevd_constants
 
 def to_number(x):
-    if isinstance(x, Number):
-        return x
-
-    if (is_string(x)):
+    if is_string(x):
         try:
             n = float(x)
             return n
@@ -13,7 +9,7 @@ def to_number(x):
             pass
 
         l = x.find('(')
-        if (l != -1):
+        if l != -1:
             y = x[0:l-1]
             #print y
             try:
@@ -25,18 +21,18 @@ def to_number(x):
 
 def compare_object_attrs(x, y):
     try:
-        if (x == y):
+        if x == y:
             return 0
         x_num = to_number(x)
         y_num = to_number(y)
-        if (x_num is not None and y_num is not None):
+        if x_num is not None and y_num is not None:
             if x_num - y_num<0:
                 return -1
             else:
                 return 1
-        if ('__len__' == x):
+        if '__len__' == x:
             return -1
-        if ('__len__' == y):
+        if '__len__' == y:
             return 1
 
         return x.__cmp__(y)
@@ -66,7 +62,7 @@ def cmp_to_key(mycmp):
     return K
 
 def is_string(x):
-    if (pydevd_constants.IS_PY3K):
+    if pydevd_constants.IS_PY3K:
         return isinstance(x, str)
     else:
         return isinstance(x, basestring)
