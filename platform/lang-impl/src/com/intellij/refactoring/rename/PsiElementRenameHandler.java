@@ -84,47 +84,44 @@ public class PsiElementRenameHandler implements RenameHandler {
     rename(element, project, nameSuggestionContext, editor);
   }
 
-  static boolean canRename(Project project, Editor editor, PsiElement element) {
-    if (element == null) return false;
-    if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return false;
-
-    if (!element.isWritable()) {
-      String message = RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        showErrorMessage(project, editor, message);
-      }
+  static boolean canRename(Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
+    String message = renameabilityStatus(project, element);
+    if (message != null) {
+      if (message.length() > 0) showErrorMessage(project, editor, message);
 
       return false;
+    }
+    return true;
+  }
+
+  static @Nullable String renameabilityStatus(Project project, PsiElement element) {
+    if (element == null) return "";
+    if (!(element instanceof PsiFile) && CollectHighlightsUtil.isOutsideSourceRootJavaFile(element.getContainingFile())) return "";
+
+    if (!element.isWritable()) {
+      return RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
     }
 
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
     if (!hasRenameProcessor && !hasWritableMetaData && !(element instanceof PsiNamedElement)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.rename"));
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        showErrorMessage(project, editor, message);
-      }
-      return false;
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.rename"));
     }
 
     if (!PsiManager.getInstance(project).isInProject(element) && element.isPhysical()) {
-      String message = RefactoringBundle
+      return RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("error.out.of.project.element", UsageViewUtil.getType(element)));
-      showErrorMessage(project, editor, message);
-      return false;
     }
 
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
-      showErrorMessage(project, editor, message);
-      return false;
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element)));
     }
 
-    return true;//CommonRefactoringUtil.checkReadOnlyStatus(project, element);
+    return null;
   }
 
-  private static void showErrorMessage(Project project, @Nullable Editor editor, String message) {
+  static void showErrorMessage(Project project, @Nullable Editor editor, String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 

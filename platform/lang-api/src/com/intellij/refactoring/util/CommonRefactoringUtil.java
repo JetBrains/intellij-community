@@ -50,6 +50,9 @@ public class CommonRefactoringUtil {
     dialog.show();
   }
 
+  /**
+   * Fatal refactoring problem during unit test run. Corresponds to message of modal dialog shown during user driven refactoring.
+   */
   public static class RefactoringErrorHintException extends RuntimeException {
     public RefactoringErrorHintException(String message) {
       super(message);
