@@ -48,13 +48,16 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
     final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
 
-    insertParentheses(context, delegate, delegate.getObject());
+    boolean withTail = item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous;
+    boolean isAbstract = ((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT);
+
+    insertParentheses(context, delegate, delegate.getObject(), withTail && isAbstract);
 
     DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), delegate);
 
 
-    if (item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous) {
-      if (((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (withTail) {
+      if (isAbstract) {
         if (mySmart) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
         }
@@ -83,7 +86,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     }
   }
 
-  public static boolean insertParentheses(InsertionContext context, LookupItem delegate, final PsiClass psiClass) {
+  public static boolean insertParentheses(InsertionContext context,
+                                          LookupItem delegate,
+                                          final PsiClass psiClass,
+                                          final boolean forAnonymous) {
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;
@@ -96,7 +102,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
 
-    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams);
+    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
     return hasParams;
   }
 
