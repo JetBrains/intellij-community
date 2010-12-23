@@ -855,7 +855,7 @@ class PyDB:
             if hasattr(sys, 'exc_clear'): #jython does not have it
                 sys.exc_clear() #don't keep the traceback (let's keep it clear for when we go to the point of executing client code)
                 
-            if not IS_PY3K and not IS_PY27 and not IS_WIN64 and not sys.platform.startswith("java") and not sys.platform.startswith("cli"):
+            if not IS_PY3K and not IS_PY27 and not IS_64_BITS and not sys.platform.startswith("java") and not sys.platform.startswith("cli"):
                 sys.stderr.write("pydev debugger: warning: psyco not available for speedups (the debugger will still work correctly, but a bit slower)\n")
                 sys.stderr.flush()
             
