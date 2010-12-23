@@ -1570,7 +1570,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       return getOffset() < o.getOffset() ? 1 : -1;
     }
   }
-  private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName) {
+  private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
+                                       boolean doCheckCollapseStatus) {
     configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myEditor);
 
@@ -1586,13 +1587,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
-      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? "<fold text=\'" + border.getText() + "\'>" : END_FOLD);
+      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? ("<fold text=\'" + border.getText() + "\'" +
+             (doCheckCollapseStatus ? (" expand=\'" + border.isExpanded() + "\'") : "") +
+                                  ">") : END_FOLD);
     }
 
     return result.toString();
   }
 
-  public void testFolding(final String verificationFileName) {
+  private void testFoldingRegions(final String verificationFileName, boolean doCheckCollapseStatus) {
     String expectedContent = null;
     try {
       expectedContent = new String(FileUtil.loadFileText(new File(verificationFileName)));
@@ -1604,8 +1607,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
     final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
-    final String actual = getFoldingDescription(cleanContent, verificationFileName);
+    final String actual = getFoldingDescription(cleanContent, verificationFileName, doCheckCollapseStatus);
 
     assertEquals(expectedContent, actual);
+  }
+
+  public void testFoldingWithCollapseStatus(final String verificationFileName) {
+    testFoldingRegions(verificationFileName, true);
+  }
+
+  public void testFolding(final String verificationFileName) {
+    testFoldingRegions(verificationFileName, false);
   }
 }
