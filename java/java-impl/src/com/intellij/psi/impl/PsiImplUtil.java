@@ -128,12 +128,26 @@ public class PsiImplUtil {
 
   public static int getParameterIndex(@NotNull PsiParameter parameter, @NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
+    String name = parameter.getName();
+    PsiParameter suspect = null;
     for (int i = 0; i < parameters.length; i++) {
-      if (parameter.equals(parameters[i])) return i;
+      PsiParameter paramInList = parameters[i];
+      if (parameter.equals(paramInList)) return i;
+      if (name.equals(paramInList.getName())) {
+        suspect = paramInList;
+      }
     }
-    LOG.error("Parameter " + parameter + " not found among parameters: " + Arrays.asList(parameters)+
-              ". parameterList' parent: "+parameterList.getParent()+"; parameter.getParent()==paramList: "+(parameter.getParent()==parameterList)
-              +"; "+parameterList.getClass() + "; parameter.isValid()="+parameter.isValid()+"; parameterList.isValid()= "+parameterList.isValid());
+    String message = parameter + " not found among parameters: " + Arrays.asList(parameters) + "." +
+                     " parameterList' parent: " + parameterList.getParent() + ";" +
+                     " parameter.getParent()==paramList: " + (parameter.getParent() == parameterList) + ";" +
+                     " " + parameterList.getClass() + ";" +
+                     " parameter.isValid()=" + parameter.isValid() + ";" +
+                     " parameterList.isValid()= " + parameterList.isValid() + ";" +
+                     " parameter stub: "+(parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameter).getStub() : "---") + ";" +
+                     " suspect stub: "+(suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement)suspect).getStub() : suspect == null ? "-null-" : "---"+suspect.getClass()) + ";" +
+                     "."
+      ;
+    LOG.error(message);
     return -1;
   }
 
