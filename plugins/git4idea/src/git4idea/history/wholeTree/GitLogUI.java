@@ -1063,6 +1063,7 @@ public class GitLogUI implements Disposable {
   private void reloadRequest() {
     myState = StepType.CONTINUE;
     final int was = myTableModel.getRowCount();
+    myDetailsCache.resetBranchesCache();
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
     myDescriptionRenderer.resetIcons();
     if (StringUtil.isEmptyOrSpaces(myPreviousFilter)) {
