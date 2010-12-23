@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import gnu.trove.TIntArrayList;
@@ -253,6 +254,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, true, true, true);
   }
 
+  public void testReplaceAllAndDeleteUnused() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
@@ -296,8 +301,17 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     else {
       methodToSearchFor = method;
     }
-    PsiExpression initializer = expr == null ? localVariable.getInitializer() : expr;
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer) : new TIntArrayList();
+    PsiExpression[] occurences = null;
+    PsiExpression initializer;
+    if (expr == null) {
+      initializer = localVariable.getInitializer();
+      occurences = CodeInsightUtil.findReferenceExpressions(method, localVariable);
+    }
+    else {
+      initializer = expr;
+      occurences = new ExpressionOccurenceManager(expr, method, null).findExpressionOccurrences();
+    }
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, occurences) : new TIntArrayList();
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor, initializer, expr, localVariable, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
@@ -325,7 +339,7 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     assertNotNull(methodToSearchFor);
     final PsiLocalVariable localVariable = (PsiLocalVariable)element;
     final PsiExpression parameterInitializer = localVariable.getInitializer();
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, parameterInitializer) : new TIntArrayList();
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, parameterInitializer, null) : new TIntArrayList();
 
     new IntroduceParameterProcessor(
       getProject(), method, methodToSearchFor,

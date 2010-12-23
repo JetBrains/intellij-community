@@ -27,7 +27,7 @@ class ResetTelemetryAction extends AnAction{
     private final TelemetryDisplay display;
 
     ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
-                                TelemetryDisplay display){
+                         TelemetryDisplay display){
         super(CommonBundle.message("button.reset"),
                 InspectionGadgetsBundle.message(
                         "action.reset.telemetry.description"),
@@ -39,6 +39,6 @@ class ResetTelemetryAction extends AnAction{
     @Override
     public void actionPerformed(AnActionEvent event){
         telemetry.reset();
-        display.update();
+        display.update(telemetry.buildList());
     }
 }

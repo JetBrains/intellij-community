@@ -97,7 +97,7 @@ public class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }
 
     PsiExpression initializer = (expr == null) ? localVariable.getInitializer() : expr;
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer) : new TIntArrayList();
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer, null) : new TIntArrayList();
     final Project project = myFixture.getProject();
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(project, method, methodToSearchFor, initializer, expr, localVariable, true, parameterName,

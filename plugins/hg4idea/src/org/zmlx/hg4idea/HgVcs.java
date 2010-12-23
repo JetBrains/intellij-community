@@ -25,11 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.RepositoryChangeListener;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -48,12 +44,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
-import org.zmlx.hg4idea.provider.HgChangeProvider;
-import org.zmlx.hg4idea.provider.HgDiffProvider;
-import org.zmlx.hg4idea.provider.HgHistoryProvider;
-import org.zmlx.hg4idea.provider.HgMergeProvider;
-import org.zmlx.hg4idea.provider.HgRollbackEnvironment;
+import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
@@ -61,7 +52,7 @@ import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
 import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -152,8 +143,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return changeProvider;
   }
 
+  @Nullable
   @Override
-  public RollbackEnvironment getRollbackEnvironment() {
+  public RollbackEnvironment createRollbackEnvironment() {
     if (!started) {
       return null;
     }
@@ -184,8 +176,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return getVcsHistoryProvider();
   }
 
+  @Nullable
   @Override
-  public CheckinEnvironment getCheckinEnvironment() {
+  public CheckinEnvironment createCheckinEnvironment() {
     if (!started) {
       return null;
     }
@@ -207,8 +200,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return myMergeProvider;
   }
 
+  @Nullable
   @Override
-  public UpdateEnvironment getUpdateEnvironment() {
+  public UpdateEnvironment createUpdateEnvironment() {
     if (!started) {
       return null;
     }

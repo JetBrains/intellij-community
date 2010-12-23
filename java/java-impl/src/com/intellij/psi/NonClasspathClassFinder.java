@@ -31,16 +31,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
+  private final AtomicLong myLastStamp = new AtomicLong();
   protected final Project myProject;
+  private volatile List<VirtualFile> myCache;
 
   public NonClasspathClassFinder(Project project) {
     myProject = project;
+  }
+
+  protected List<VirtualFile> getClassRoots() {
+    List<VirtualFile> cache = myCache;
+    long stamp = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+    if (myLastStamp.get() != stamp) {
+      cache = null;
+    }
+
+    if (cache != null && !cache.isEmpty()) {
+      for (VirtualFile file : cache) {
+        if (!file.isValid()) {
+          cache = null;
+          break;
+        }
+      }
+    }
+
+    if (cache == null) {
+      myCache = cache = calcClassRoots();
+      myLastStamp.set(stamp);
+    }
+    return cache;
   }
 
   @Override
@@ -71,7 +97,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return null;
   }
 
-  protected abstract List<VirtualFile> getClassRoots();
+  protected abstract List<VirtualFile> calcClassRoots();
 
   @NotNull
   @Override

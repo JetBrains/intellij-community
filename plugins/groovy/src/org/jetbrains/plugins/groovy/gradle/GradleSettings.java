@@ -33,6 +33,9 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
     }
 )
 public class GradleSettings extends SdkHomeSettings {
+  public GradleSettings(Project project) {
+    super(project);
+  }
 
   public static GradleSettings getInstance(Project project) {
     return ServiceManager.getService(project, GradleSettings.class);

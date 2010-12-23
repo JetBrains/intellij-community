@@ -849,7 +849,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public Dimension getPreferredSize() {
-    return new Dimension(700, -1);
+    return new Dimension(700, 500);
   }
 
   public void disposeUI() {

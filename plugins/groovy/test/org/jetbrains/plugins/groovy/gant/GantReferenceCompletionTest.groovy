@@ -164,10 +164,10 @@ target (default : '') {
 
     myFixture.configureByText "a.gant", """
 target (default : '') {
-  echo<warning descr="'echo' cannot be applied to '(java.io.FileInputStream)'">(new FileInputStream<warning descr="Ambiguous constructor call">()</warning>)</warning>
   echo("hello2")
   echo(message: 'Echo task.')
   ant.fail('Failure reason')
+  ant.junit(fork:'yes') {}
 }"""
     myFixture.checkHighlighting(true, false, false)
   }

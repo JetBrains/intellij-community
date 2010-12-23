@@ -56,7 +56,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
         public void run() {
           genOptions[0] = new GenerationOptionsImpl(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(),
                                                     dialog.isBackupFiles(), dialog.isForceTargetJdk(), dialog.isRuntimeClasspathInlined(),
-                                                    dialog.isIdeaHomeGenerated(), names);
+                                                    dialog.isIdeaHomeGenerated(), names, dialog.getOutputFileName());
         }
       };
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Analyzing project structure...", true, project)) {
@@ -118,8 +118,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
     try {
       if (genOptions.generateSingleFile) {
         final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
-        final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
-        final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
+        final File destFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
+        final File propertiesFile = new File(projectBuildFileDestDir, genOptions.getPropertiesFileName());
 
         ensureFilesWritable(project, new File[]{destFile, propertiesFile});
       }
@@ -127,8 +127,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
         final List<File> allFiles = new ArrayList<File>();
 
         final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
-        allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION));
-        allFiles.add(new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project)));
+        allFiles.add(new File(projectBuildFileDestDir, genOptions.getBuildFileName()));
+        allFiles.add(new File(projectBuildFileDestDir, genOptions.getPropertiesFileName()));
 
         final ModuleChunk[] chunks = genOptions.getModuleChunks();
         for (final ModuleChunk chunk : chunks) {
@@ -218,8 +218,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
   private File[] generateSingleFileBuild(Project project, GenerationOptions genOptions, List<File> filesToRefresh) throws IOException {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
-    final File destFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
-    final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
+    final File destFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
+    final File propertiesFile = new File(projectBuildFileDestDir, genOptions.getPropertiesFileName());
 
     if (!backup(destFile, project, genOptions, filesToRefresh)) {
       return null;
@@ -289,8 +289,8 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final File projectBuildFileDestDir = VfsUtil.virtualToIoFile(project.getBaseDir());
     projectBuildFileDestDir.mkdirs();
     final List<File> generated = new ArrayList<File>();
-    final File projectBuildFile = new File(projectBuildFileDestDir, BuildProperties.getProjectBuildFileName(project) + XML_EXTENSION);
-    final File propertiesFile = new File(projectBuildFileDestDir, BuildProperties.getPropertyFileName(project));
+    final File projectBuildFile = new File(projectBuildFileDestDir, genOptions.getBuildFileName());
+    final File propertiesFile = new File(projectBuildFileDestDir, genOptions.getPropertiesFileName());
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
 
     final File[] chunkFiles = new File[chunks.length];

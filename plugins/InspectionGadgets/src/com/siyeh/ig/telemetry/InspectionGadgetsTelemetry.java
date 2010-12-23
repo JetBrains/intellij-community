@@ -15,85 +15,39 @@
  */
 package com.siyeh.ig.telemetry;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class InspectionGadgetsTelemetry implements InspectionRunListener {
+public class InspectionGadgetsTelemetry {
 
-    private final Map<String, Integer> totalRunCount =
-            new HashMap<String, Integer>(400);
-    private final Map<String, Long> totalRunTime =
-            new HashMap<String, Long>(400);
-    private final Object lock = new Object();
+    private final ConcurrentHashMap<String, InspectionRunTime> inspectionRunTimes =
+            new ConcurrentHashMap();
+
+    public List<InspectionRunTime> buildList() {
+        if (inspectionRunTimes.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        return new ArrayList(inspectionRunTimes.values());
+    }
 
     public void reportRun(String inspectionID, long runTime) {
-        synchronized (lock) {
-            final Integer count = totalRunCount.get(inspectionID);
-            if (count == null) {
-                totalRunCount.put(inspectionID, Integer.valueOf(1));
-            } else {
-                totalRunCount.put(inspectionID,
-                        Integer.valueOf(count.intValue() + 1));
-            }
-            final Long runTimeSoFar = totalRunTime.get(inspectionID);
-            if (runTimeSoFar == null) {
-                totalRunTime.put(inspectionID, Long.valueOf(runTime));
-            } else {
-                totalRunTime.put(inspectionID,
-                        Long.valueOf(runTimeSoFar.longValue() + runTime));
+        InspectionRunTime inspectionRunTime =
+                inspectionRunTimes.get(inspectionID);
+        if (inspectionRunTime == null) {
+            inspectionRunTime = new InspectionRunTime(inspectionID);
+            final InspectionRunTime oldValue =
+                    inspectionRunTimes.putIfAbsent(inspectionID,
+                            inspectionRunTime);
+            if (oldValue != null) {
+                inspectionRunTime = oldValue;
             }
         }
+        inspectionRunTime.addRunTime(runTime);
     }
 
     public void reset() {
-        synchronized (lock) {
-            totalRunCount.clear();
-            totalRunTime.clear();
-        }
-    }
-
-    public long getRunTimeForInspection(String inspectionID) {
-        synchronized (lock) {
-            final Long runTime = totalRunTime.get(inspectionID);
-            if (runTime == null) {
-                return 0L;
-            }
-            return runTime.longValue();
-        }
-    }
-
-    public int getRunCountForInspection(String inspectionID) {
-        synchronized (lock) {
-            final Integer runCount = totalRunCount.get(inspectionID);
-            if (runCount == null) {
-                return 0;
-            }
-            return runCount.intValue();
-        }
-    }
-
-    public String[] getInspections() {
-        synchronized (lock) {
-            final Set<String> inspections = totalRunCount.keySet();
-            final int numInspections = inspections.size();
-            final String[] inspectionArray =
-                    inspections.toArray(new String[numInspections]);
-            Arrays.sort(inspectionArray);
-            return inspectionArray;
-        }
-    }
-
-    public double getAverageRunTimeForInspection(String inspectionID) {
-        synchronized (lock) {
-            final Integer runCount = totalRunCount.get(inspectionID);
-            if (runCount == null) {
-                return 0.0;
-            }
-            final Long runTime = totalRunTime.get(inspectionID);
-
-            return (double)runTime / (double)runCount;
-        }
+        inspectionRunTimes.clear();
     }
 }

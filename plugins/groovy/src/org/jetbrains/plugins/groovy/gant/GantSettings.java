@@ -33,6 +33,9 @@ import org.jetbrains.plugins.groovy.util.SdkHomeSettings;
     }
 )
 public class GantSettings extends SdkHomeSettings {
+  public GantSettings(Project project) {
+    super(project);
+  }
 
   public static GantSettings getInstance(Project project) {
     return ServiceManager.getService(project, GantSettings.class);

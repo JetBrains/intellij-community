@@ -48,7 +48,7 @@ import static org.testng.Assert.*;
  *
  * @author Kirill Likhodedov
  */
-public class GitHistoryUtilsTestCase extends GitSingleUserTestCase {
+public class GitHistoryUtilsTest extends GitSingleUserTest {
 
   private VirtualFile afile;
   private FilePath bfilePath;

@@ -53,7 +53,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
@@ -105,6 +104,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+  private VcsEventsListenerManagerImpl myVcsEventListenerManager;
 
   public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus) {
     myProject = project;
@@ -118,6 +118,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+
+    if (! myProject.isDefault()) {
+      myVcsEventListenerManager = new VcsEventsListenerManagerImpl();
+    }
   }
 
   public void initComponent() {
@@ -660,6 +664,11 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return new CompositeCheckoutListener(myProject);
   }
 
+  @Override
+  public VcsEventsListenerManager getVcsEventsListenerManager() {
+    return myVcsEventListenerManager;
+  }
+
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && (! myProject.isDisposed())) {
       myMappings.mappingsChanged();
@@ -668,6 +677,11 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
+  }
+
+  @Override
+  protected VcsEnvironmentsProxyCreator getProxyCreator() {
+    return myVcsEventListenerManager;
   }
 
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {

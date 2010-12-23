@@ -148,14 +148,14 @@ public class GitVFSListener extends VcsVFSListener {
               });
             }
           }
-          addedFiles.retainAll(retainedFiles);
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              originalExecuteAdd(addedFiles, copiedFiles);
-            }
-          });
         }
+        addedFiles.retainAll(retainedFiles);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            originalExecuteAdd(addedFiles, copiedFiles);
+          }
+        });
       }
     });
   }

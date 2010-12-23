@@ -32,7 +32,7 @@ import java.util.Collections;
  */
 public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
   @Override
-  public boolean canProcessElement(@Nullable PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiFile;
   }
 

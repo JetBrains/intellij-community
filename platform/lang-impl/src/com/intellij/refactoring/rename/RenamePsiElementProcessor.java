@@ -46,7 +46,7 @@ import java.util.Map;
 public abstract class RenamePsiElementProcessor {
   private static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
-  public abstract boolean canProcessElement(@Nullable PsiElement element);
+  public abstract boolean canProcessElement(@NotNull PsiElement element);
 
   public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     return new RenameDialog(project, element, nameSuggestionContext, editor);
@@ -85,7 +85,7 @@ public abstract class RenamePsiElementProcessor {
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {
   }
 
-  public static List<RenamePsiElementProcessor> allForElement(PsiElement element) {
+  public static List<RenamePsiElementProcessor> allForElement(@NotNull PsiElement element) {
     final List<RenamePsiElementProcessor> result = new ArrayList<RenamePsiElementProcessor>();
     for (RenamePsiElementProcessor processor : EP_NAME.getExtensions()) {
       if (processor.canProcessElement(element)) {
@@ -96,7 +96,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @NotNull
-  public static RenamePsiElementProcessor forElement(PsiElement element) {
+  public static RenamePsiElementProcessor forElement(@NotNull PsiElement element) {
     for(RenamePsiElementProcessor processor: Extensions.getExtensions(EP_NAME)) {
       if (processor.canProcessElement(element)) {
         return processor;
@@ -161,7 +161,7 @@ public abstract class RenamePsiElementProcessor {
   }
   
   public static final RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
-    public boolean canProcessElement(final PsiElement element) {
+    public boolean canProcessElement(@NotNull final PsiElement element) {
       return true;
     }
   };

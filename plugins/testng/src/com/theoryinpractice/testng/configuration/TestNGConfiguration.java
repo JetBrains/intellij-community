@@ -295,7 +295,9 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       try {
         FileInputStream in = new FileInputStream(data.getSuiteName());
         try {
-          new Parser(in).parse();//try to parse suite.xml
+          final Parser parser = new Parser(in);
+          parser.setLoadClasses(false);
+          parser.parse();//try to parse suite.xml
         }
         finally {
           in.close();

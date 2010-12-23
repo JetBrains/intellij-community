@@ -25,4 +25,9 @@ public class ListTemplatesAction extends BaseCodeInsightAction{
   protected CodeInsightActionHandler getHandler() {
     return new ListTemplatesHandler();
   }
+
+  @Override
+  protected boolean isValidForLookup() {
+    return true;
+  }
 }
