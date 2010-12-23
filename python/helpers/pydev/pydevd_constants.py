@@ -30,7 +30,7 @@ GetFrame = sys._getframe
 #Used to determine the maximum size of each variable passed to eclipse -- having a big value here may make
 #the communication slower -- as the variables are being gathered lazily in the latest version of eclipse,
 #this value was raised from 200 to 1000.
-MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
+MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 500
 
 import threading 
 import os
@@ -41,9 +41,18 @@ _nextThreadIdLock = threading.Lock()
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = False
+IS_PY27 = False
 try:
     if sys.version_info[0] >= 3:
-        IS_PY3K = True            
+        IS_PY3K = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
+        IS_PY27 = True
+except AttributeError:
+    pass #Not all versions have sys.version_info
+IS_WIN64 = False
+try:
+    if sys.platform == 'win64':
+        IS_WIN64 = True
 except AttributeError:
     pass #Not all versions have sys.version_info
 
