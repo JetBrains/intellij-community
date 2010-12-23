@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -52,15 +53,18 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 
-  public void addDefaultVcsRoots(final NewMappings mappingList, final AbstractVcs vcs, final List<VirtualFile> result) {
+  public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    if (myBaseDir != null && vcs.getName().equals(mappingList.getVcsFor(myBaseDir)) && (vcs.equals(vcsManager.getVcsFor(myBaseDir)))) {
-      result.add(myBaseDir);
+    if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
+      final AbstractVcs vcsFor = vcsManager.getVcsFor(myBaseDir);
+      if (vcsFor != null && vcsName.equals(vcsFor.getName())) {
+        result.add(myBaseDir);
+      }
     }
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme) && (myBaseDir != null)) {
       final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && vcs.equals(vcsManager.getVcsFor(ideaDir))) {
+      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && vcsName.equals(vcsManager.getVcsFor(ideaDir))) {
         result.add(ideaDir);
       }
     }
@@ -77,7 +81,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
         final String mappingVcs = mapping != null ? mapping.getVcs() : null;
-        if (vcs.getName().equals(mappingVcs)) {
+        if (vcsName.equals(mappingVcs)) {
           result.add(file);
         }
       }

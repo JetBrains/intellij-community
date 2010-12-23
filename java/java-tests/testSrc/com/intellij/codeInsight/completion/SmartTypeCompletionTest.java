@@ -481,6 +481,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoTailWhenNoPairBracket2() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
 
+  public void testAnonymousNoPairBracket() throws Throwable { doTestNoPairBracket(Lookup.NORMAL_SELECT_CHAR); }
+
   private void doTestNoPairBracket(final char c) throws Exception {
     boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;

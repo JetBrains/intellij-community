@@ -19,9 +19,12 @@ package com.intellij.formatting;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
@@ -131,13 +134,40 @@ public class FormatterImpl extends FormatterEx
                      FormatTextRanges affectedRanges) throws IncorrectOperationException {
     disableFormatting();
     try {
-      new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges).format(model);
+      FormatProcessor processor =
+        new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges);
+      setupFormatProcessorIfPossible(processor, model);
+      processor.format(model);
     } finally {
       enableFormatting();
     }
 
   }
 
+  private static void setupFormatProcessorIfPossible(@NotNull FormatProcessor processor, @NotNull FormattingModel model) {
+    if (!(model instanceof DocumentBasedFormattingModel)) {
+      return;
+    }
+
+    DocumentBasedFormattingModel formattingModel = (DocumentBasedFormattingModel)model;
+    Project project = formattingModel.getProject();
+    if (project == null) {
+      return;
+    }
+
+    PsiFile file = formattingModel.getFile();
+    if (file == null) {
+      return;
+    }
+
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return;
+    }
+    
+    processor.setBulkReformatListener(new BulkReformatListener(project, virtualFile));
+  }
+  
   public void formatWithoutModifications(FormattingDocumentModel model,
                                          Block rootBlock,
                                          CodeStyleSettings settings,

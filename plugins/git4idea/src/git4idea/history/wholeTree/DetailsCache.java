@@ -93,4 +93,10 @@ public class DetailsCache {
       return myBranches.get(new Pair<VirtualFile, AbstractHash>(root, hash));
     }
   }
+
+  public void resetBranchesCache() {
+    synchronized (myLock) {
+      myBranches.clear();
+    }
+  }
 }
