@@ -270,8 +270,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
-    DocumentBulkUpdateListener editorDocumentBulkAdapter = new EditorDocumentBulkUpdateAdapter();
-    project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, editorDocumentBulkAdapter);
+    if (project != null) {
+      project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
+    }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
