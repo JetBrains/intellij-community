@@ -546,6 +546,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
 
+  public void testSpacesAroundEq() throws Throwable { doTest('='); }
+
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");
     assertEmpty(myItems);

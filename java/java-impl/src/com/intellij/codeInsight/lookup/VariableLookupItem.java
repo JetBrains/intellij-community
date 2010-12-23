@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -27,4 +29,13 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     setAttribute(SUBSTITUTOR, substitutor);
   }
 
+  @Override
+  public void handleInsert(InsertionContext context) {
+    super.handleInsert(context);
+
+    if (context.getCompletionChar() == '=') {
+      context.setAddCompletionChar(false);
+      TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
+    }
+  }
 }
