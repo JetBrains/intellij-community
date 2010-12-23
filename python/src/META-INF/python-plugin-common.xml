@@ -362,6 +362,8 @@
     <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
     <projectService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
                         serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
+
+    <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
   </extensions>
 
   <extensionPoints>
