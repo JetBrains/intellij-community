@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.impl.scopes.ModuleRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
@@ -60,20 +59,21 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleType myModuleType = null;
   private boolean isModuleAdded;
 
-  private GlobalSearchScope myModuleScope = null;
-
   @NonNls private static final String MODULE_LAYER = "module-components";
+
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls public static final String ELEMENT_TYPE = "type";
 
-  private ModuleWithDependenciesScope myModuleWithLibrariesScope;
-  private ModuleWithDependenciesScope myModuleWithDependenciesScope;
-  private ModuleWithDependenciesScope myModuleWithDependenciesAndLibrariesScope;
-  private ModuleWithDependenciesScope myModuleWithDependenciesAndLibrariesNoTestsScope;
-  private ModuleWithDependentsScope   myModuleWithDependentsScope;
-  private ModuleWithDependentsScope   myModuleTestsWithDependentsScope;
-  private ModuleRuntimeClasspathScope myModuleTestsRuntimeClasspathScope;
-  private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
+  private GlobalSearchScope myModuleScope;
+  private GlobalSearchScope myModuleWithLibrariesScope;
+  private GlobalSearchScope myModuleWithDependenciesScope;
+  private GlobalSearchScope myModuleWithDependenciesAndLibrariesScope;
+  private GlobalSearchScope myModuleWithDependenciesAndLibrariesNoTestsScope;
+  private GlobalSearchScope myModuleWithDependentsScope;
+  private GlobalSearchScope myModuleTestsWithDependentsScope;
+  private GlobalSearchScope myModuleTestsRuntimeClasspathScope;
+  private GlobalSearchScope myModuleRuntimeClasspathScope;
+
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
   private String myName;
@@ -105,7 +105,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     myName = moduleNameByFileName(PathUtil.getFileName(filePath));
 
     MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener,this);
+    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, this);
   }
 
   public void loadModuleComponents() {
@@ -116,14 +116,14 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     }
   }
 
-  protected boolean isComponentSuitable(Map<String,String> options) {
+  protected boolean isComponentSuitable(Map<String, String> options) {
     if (!super.isComponentSuitable(options)) return false;
     if (options == null) return true;
 
     Set<String> optionNames = options.keySet();
     for (String optionName : optionNames) {
       if (Comparing.equal(OPTION_WORKSPACE, optionName)) continue;
-      if (!parseOptionValue(options.get(optionName)).contains( getOptionValue(optionName))) return false;
+      if (!parseOptionValue(options.get(optionName)).contains(getOptionValue(optionName))) return false;
     }
 
     return true;
@@ -246,22 +246,21 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public GlobalSearchScope getModuleScope() {
     if (myModuleScope == null) {
-      myModuleScope = new ModuleWithDependenciesScope(this, false, false, true);
+      myModuleScope = new ModuleWithDependenciesScope(this, true, false, false, true);
     }
-
     return myModuleScope;
   }
 
   public GlobalSearchScope getModuleWithLibrariesScope() {
     if (myModuleWithLibrariesScope == null) {
-      myModuleWithLibrariesScope = new ModuleWithDependenciesScope(this, true, false, true);
+      myModuleWithLibrariesScope = new ModuleWithDependenciesScope(this, true, true, false, true);
     }
     return myModuleWithLibrariesScope;
   }
 
   public GlobalSearchScope getModuleWithDependenciesScope() {
     if (myModuleWithDependenciesScope == null) {
-      myModuleWithDependenciesScope = new ModuleWithDependenciesScope(this, false, true, true);
+      myModuleWithDependenciesScope = new ModuleWithDependenciesScope(this, true, false, true, true);
     }
     return myModuleWithDependenciesScope;
   }
@@ -269,13 +268,13 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     if (includeTests) {
       if (myModuleWithDependenciesAndLibrariesScope == null) {
-        myModuleWithDependenciesAndLibrariesScope = new ModuleWithDependenciesScope(this, true, true, true);
+        myModuleWithDependenciesAndLibrariesScope = new ModuleWithDependenciesScope(this, true, true, true, true);
       }
       return myModuleWithDependenciesAndLibrariesScope;
     }
     else {
       if (myModuleWithDependenciesAndLibrariesNoTestsScope == null) {
-        myModuleWithDependenciesAndLibrariesNoTestsScope = new ModuleWithDependenciesScope(this, true, true, false);
+        myModuleWithDependenciesAndLibrariesNoTestsScope = new ModuleWithDependenciesScope(this, true, true, true, false);
       }
       return myModuleWithDependenciesAndLibrariesNoTestsScope;
     }
@@ -298,19 +297,20 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     if (includeTests) {
       if (myModuleTestsRuntimeClasspathScope == null) {
-        myModuleTestsRuntimeClasspathScope = new ModuleRuntimeClasspathScope(this, true);
+        myModuleTestsRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, true);
       }
       return myModuleTestsRuntimeClasspathScope;
     }
     else {
       if (myModuleRuntimeClasspathScope == null) {
-        myModuleRuntimeClasspathScope = new ModuleRuntimeClasspathScope(this, false);
+        myModuleRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, false);
       }
       return myModuleRuntimeClasspathScope;
     }
   }
 
   public void clearScopesCache() {
+    myModuleScope = null;
     myModuleWithLibrariesScope = null;
     myModuleWithDependenciesScope = null;
     myModuleWithDependenciesAndLibrariesScope = null;
@@ -324,7 +324,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myName == null) return "Module"; // was called before initialized
-    return "Module: '" + getName() + "' path: '" + getModuleFilePath()+"'";
+    return "Module: '" + getName() + "' path: '" + getModuleFilePath() + "'";
   }
 
   private static String moduleNameByFileName(@NotNull String fileName) {
@@ -348,12 +348,9 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
         ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this);
       }
     }
-
   }
 
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();
   }
-
-
 }

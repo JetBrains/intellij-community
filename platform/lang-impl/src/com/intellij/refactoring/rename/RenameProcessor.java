@@ -405,8 +405,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected void prepareTestRun() {
-    if (!PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement)) return;
-    prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+    try {
+      if (!PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement)) return;
+      prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) { // unit test mode
+    }
   }
 
   public Collection<String> getNewNames() {

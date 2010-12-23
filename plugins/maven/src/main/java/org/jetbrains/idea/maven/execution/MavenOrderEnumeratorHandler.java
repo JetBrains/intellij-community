@@ -95,20 +95,18 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   @Override
-  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
+  public boolean addCustomOutput(@NotNull Module forModule,
+                                 @NotNull ModuleRootModel orderEntryRootModel,
+                                 OrderRootType type,
                                  boolean productionOnly,
                                  boolean runtimeOnly,
                                  boolean compileOnly,
                                  @NotNull Collection<String> urls) {
-    Module ownerModule = orderEntry.getOwnerModule();
-
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(ownerModule.getProject());
-    MavenProject project = manager.findProject(ownerModule);
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(forModule.getProject());
+    MavenProject project = manager.findProject(forModule);
     if (project == null) return false;
 
-    Module depModule = orderEntry.getModule();
-    if (depModule == null) return false;
-
+    Module depModule = orderEntryRootModel.getModule();
     MavenProject depProject = manager.findProject(depModule);
     if (depProject == null) return false;
 
@@ -116,18 +114,29 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
       if (!shouldAddArtifact(each, productionOnly, runtimeOnly, compileOnly)) continue;
 
       boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(each.getType()) || "tests".equals(each.getClassifier());
-      addOutput(depModule, isTestJar, urls);
+      addRoots(orderEntryRootModel, type, isTestJar, urls);
     }
     return true;
   }
 
-  private static void addOutput(Module module, boolean tests, Collection<String> urls) {
-    CompilerModuleExtension ex = CompilerModuleExtension.getInstance(module);
-    if (ex == null) return;
+  private static void addRoots(ModuleRootModel rootModel, OrderRootType type, boolean tests, Collection<String> result) {
+    if (type == OrderRootType.CLASSES) {
+      CompilerModuleExtension ex = rootModel.getModuleExtension(CompilerModuleExtension.class);
+      if (ex == null) return;
 
-    String output = tests ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
-    if (output != null) {
-      urls.add(output);
+      String output = tests ? ex.getCompilerOutputUrlForTests() : ex.getCompilerOutputUrl();
+      if (output != null) {
+        result.add(output);
+      }
+    }
+    else if (type == OrderRootType.SOURCES) {
+      for (ContentEntry eachEntry : rootModel.getContentEntries()) {
+        for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
+          if (eachFolder.isTestSource() == tests) {
+            result.add(eachFolder.getUrl());
+          }
+        }
+      }
     }
   }
 

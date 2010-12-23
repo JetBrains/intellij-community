@@ -90,7 +90,9 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (!element.isWritable()) {
       String message = RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed.");
-      showErrorMessage(project, editor, message);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        showErrorMessage(project, editor, message);
+      }
 
       return false;
     }

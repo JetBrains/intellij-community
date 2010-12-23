@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -128,6 +129,12 @@ public abstract class OrderEnumerator {
    * @return {@link OrderRootsEnumerator} instance for processing roots of the specified type
    */
   public abstract OrderRootsEnumerator roots(@NotNull OrderRootType rootType);
+
+  /**
+   * @param rootTypeProvider custom root type provider
+   * @return {@link OrderRootsEnumerator} instance for processing roots of the provided type
+   */
+  public abstract OrderRootsEnumerator roots(@NotNull NotNullFunction<OrderEntry, OrderRootType> rootTypeProvider);
 
   /**
    * @return classes roots for all entries processed by this enumerator

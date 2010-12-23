@@ -60,7 +60,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");
 
   private final DebugProcessImpl myDebugProcess;
-  private final HashMap<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
+  private final Map<Requestor, String> myRequestWarnings = new HashMap<Requestor, String>();
 
   private final Map<Requestor, Set<EventRequest>> myRequestorToBelongedRequests = new HashMap<Requestor, Set<EventRequest>>();
   private EventRequestManager myEventRequestManager;
@@ -245,6 +245,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     BreakpointRequest req = myEventRequestManager.createBreakpointRequest(location);
     addLocatableRequest(requestor, req);
+    myRequestWarnings.remove(requestor);
     return req;
   }
 
@@ -356,9 +357,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    deleteRequest(requestor);
-    myRequestorToBelongedRequests.remove(requestor); // clear any mapping to empty set if any
-    myRequestWarnings.put(requestor, message);
+    //deleteRequest(requestor);
+    //myRequestorToBelongedRequests.remove(requestor); // clear any mapping to empty set if any
+    if (!isVerified(requestor)) {
+      myRequestWarnings.put(requestor, message);
+    }
   }
   
   public @Nullable String getWarning(Requestor requestor) {

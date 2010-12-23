@@ -34,7 +34,7 @@ public abstract class SearchScope {
   }
 
   public String getDisplayName() {
-    return PsiBundle.message("psi.search.scope.unknown");
+    return PsiBundle.message("search.scope.unknown");
   }
 
   @NotNull public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
