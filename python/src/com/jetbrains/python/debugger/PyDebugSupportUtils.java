@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebugSupportUtils {
 
-  private PyDebugSupportUtils() { }
+  private PyDebugSupportUtils() {
+  }
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {
@@ -25,27 +26,30 @@ public class PyDebugSupportUtils {
 
         final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(LanguageLevel.getDefault(), expression);
         return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
-
       }
     });
   }
 
+  @Nullable
   public static TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
     return ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
-      @Nullable public TextRange compute() {
+      @Nullable
+      public TextRange compute() {
 
         final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
         if (psiFile != null) {
           PsiElement element = psiFile.findElementAt(offset);
-          if (!(element instanceof PyExpression)) {
+          if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
             element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
+          }
+          if (element != null && element instanceof PyLiteralExpression) {
+            return null;
           }
           if (element != null && isSimpleEnough(element)) {
             return element.getTextRange();
           }
         }
         return null;
-
       }
     });
   }
@@ -75,9 +79,17 @@ public class PyDebugSupportUtils {
                root.getFirstChild().getFirstChild().getNode().getElementType() == PyTokenTypes.IDENTIFIER &&
                root.getFirstChild().getFirstChild() == root.getFirstChild().getLastChild() &&
                root.getFirstChild().getFirstChild().getFirstChild() == null;
-
       }
     });
   }
 
+  public static boolean isContinuationLine(Document document, int line) {
+    if (line > 0 && line < document.getLineCount()) {
+      String text = document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
+      if (text.trim().endsWith("\\")) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
