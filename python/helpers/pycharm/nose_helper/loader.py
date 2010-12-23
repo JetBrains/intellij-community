@@ -99,7 +99,7 @@ class TestLoader(unittest.TestLoader):
             item = getattr(cls, attr, None)
             if isfunction(item):
                 item = unbound_method(cls, item)
-            elif not ismethod(item):
+            if not ismethod(item):
                 return False
             return sel.wantMethod(item)
         cases = [self.makeTest(getattr(cls, case), cls)
@@ -141,6 +141,8 @@ class TestLoader(unittest.TestLoader):
             if issubclass(parent, unittest.TestCase):
                 return parent(obj.__name__)
             else:
+              setattr(obj, "im_class", parent)
+              setattr(obj, "im_self", obj)
               test_case = MethodTestCase(obj)
               test_case.lineno = lineno[1]
               return test_case
