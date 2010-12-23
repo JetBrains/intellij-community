@@ -5,9 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -38,6 +36,10 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
             return false;
           }
         });
+
+        if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
+          stoppable.set(false);
+        }
       }
     }
     return stoppable.get();

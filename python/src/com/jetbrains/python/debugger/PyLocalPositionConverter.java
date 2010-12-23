@@ -1,5 +1,7 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -35,7 +37,15 @@ public class PyLocalPositionConverter implements PyPositionConverter {
 
   @NotNull
   public PySourcePosition convert(@NotNull final XSourcePosition position) {
-    return new PyLocalSourcePosition(position.getFile().getPath(), position.getLine() + 1);
+    return new PyLocalSourcePosition(position.getFile().getPath(), convertLocalLineToRemote(position.getFile(), position.getLine()));
+  }
+
+  protected int convertLocalLineToRemote(VirtualFile file, int line) {
+    final Document document = FileDocumentManager.getInstance().getDocument(file);
+    while (PyDebugSupportUtils.isContinuationLine(document, line)) {
+      line++;
+    }
+    return line + 1;
   }
 
   @Nullable
@@ -47,10 +57,19 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   @Nullable
   protected static XSourcePosition createXSourcePosition(VirtualFile vFile, int line) {
     if (vFile != null) {
-      return XDebuggerUtil.getInstance().createPosition(vFile, line - 1);
+      return XDebuggerUtil.getInstance().createPosition(vFile, convertRemoteLineToLocal(vFile, line));
     }
     else {
       return null;
     }
+  }
+
+  private static int convertRemoteLineToLocal(VirtualFile vFile, int line) {
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    line--;
+    while (PyDebugSupportUtils.isContinuationLine(document, line-1)) {
+      line--;
+    }
+    return line;
   }
 }
