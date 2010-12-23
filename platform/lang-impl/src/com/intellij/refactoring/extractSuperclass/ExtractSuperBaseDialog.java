@@ -207,7 +207,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   public boolean isExtractSuperclass() {
-    return myRbExtractSuperclass.isSelected();
+    return myRbExtractSuperclass != null && myRbExtractSuperclass.isSelected();
   }
 
   protected void doAction() {
