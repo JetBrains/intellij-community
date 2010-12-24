@@ -102,16 +102,20 @@ public class IdeaProjectLoader {
     def librariesFolder = new File(dir, "libraries")
     if (librariesFolder.isDirectory()) {
       librariesFolder.eachFile {File file ->
-        Node librariesComponent = new XmlParser(false, false).parse(file)
-        loadProjectLibraries(librariesComponent)
+        if (file.isFile()) {
+          Node librariesComponent = new XmlParser(false, false).parse(file)
+          loadProjectLibraries(librariesComponent)
+        }
       }
     }
 
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
       artifactsFolder.eachFile {File file ->
-        def artifactsComponent = new XmlParser(false, false).parse(file)
-        loadArtifacts(artifactsComponent)
+        if (file.isFile()) {
+          def artifactsComponent = new XmlParser(false, false).parse(file)
+          loadArtifacts(artifactsComponent)
+        }
       }
     }
   }
