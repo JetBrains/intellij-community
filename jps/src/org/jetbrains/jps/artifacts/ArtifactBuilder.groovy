@@ -146,5 +146,51 @@ class ArtifactBuilder {
       }
     } as ArtifactBuildTask)
   }
+
+  def cleanOutput(Artifact artifact) {
+    String outputPath = artifact.outputPath
+    if (outputPath == null) return
+
+    def ant = project.binding.ant
+    LayoutElement root = artifact.rootElement
+    if (root instanceof ArchiveElement) {
+      ant.delete(file: "$outputPath/${root.name}")
+    }
+    else {
+      checkCanCleanDirectory(outputPath)
+      ant.delete(dir: outputPath)
+    }
+  }
+
+  def checkCanCleanDirectory(String path) {
+    project.modules.values().each {Module module ->
+      (module.sourceRoots + module.testRoots).each {
+        if (isAncestor(path, it)) {
+          project.error("Cannot clean directory $path: it contains source root $it")
+        }
+      }
+    }
+  }
+
+  boolean isAncestor(String ancestorPath, String path) {
+    File ancestor = getCanonicalFile(ancestorPath)
+    File file = getCanonicalFile(path)
+    while (file != null) {
+      if (file == ancestor) {
+        return true;
+      }
+      file = file.parentFile
+    }
+    return false;
+  }
+
+  def getCanonicalFile(String path) {
+    File file = new File(path)
+    try {
+      return file.getCanonicalFile()
+    } catch (IOException e) {
+      return file.getAbsoluteFile()
+    }
+  }
 }
 

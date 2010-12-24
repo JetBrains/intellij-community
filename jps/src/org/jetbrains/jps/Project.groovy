@@ -168,7 +168,7 @@ class Project {
         }
         stage("Cleaning output folders for ${artifacts.size()} artifacts")
         artifacts.values().each {
-          binding.ant.delete(dir: it.outputPath)
+          artifactBuilder.cleanOutput(it)
         }
       }
     }
