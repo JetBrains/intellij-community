@@ -86,7 +86,7 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
             if (rhs == null) {
                 return;
             }
-            parent.addAfter(rhs, binaryExpression);
+            parent.add(rhs);
             parent.addAfter(lhs, binaryExpression);
             binaryExpression.delete();
         }
