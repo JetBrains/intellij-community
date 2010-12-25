@@ -44,8 +44,8 @@ import java.util.List;
  * <code>VirtualFile</code> instance for the entire lifetime of the IntelliJ IDEA process, unless the file
  * is deleted, in which case {@link #isValid()} for the instance will return <code>false</code>.
  * <p/>
- * If an in-memory implementation of VirtualFile is required, LightVirtualFile from the com.intellij.testFramework
- * package (Extended API) can be used.
+ * If an in-memory implementation of VirtualFile is required, {@link com.intellij.testFramework.LightVirtualFile}
+ * (Extended API) can be used.
  * <p/>
  * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Virtual+File+System">IntelliJ IDEA Virtual File System</a>
  * for high-level overview.
