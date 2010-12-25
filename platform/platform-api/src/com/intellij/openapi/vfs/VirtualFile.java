@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,9 @@ import java.util.List;
  * <p/>
  * If an in-memory implementation of VirtualFile is required, LightVirtualFile from the com.intellij.testFramework
  * package (Extended API) can be used.
+ * <p/>
+ * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Virtual+File+System">IntelliJ IDEA Virtual File System</a>
+ * for high-level overview.
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
