@@ -24,25 +24,28 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.FormatUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class StringConcatenationInFormatCallInspection extends BaseInspection {
+public class StringConcatenationInMessageFormatCallInspection
+        extends BaseInspection {
 
     @Nls
     @NotNull
     @Override
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
-                "string.concatenation.in.format.call.display.name");
+                "string.concatenation.in.message.format.call.display.name");
     }
 
     @NotNull
     @Override
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
-                "string.concatenation.in.format.call.problem.descriptor");
+                "string.concatenation.in.message.format.call.problem.descriptor");
     }
 
     @Override
@@ -81,14 +84,62 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
             if (!(parent instanceof PsiExpressionList)) {
                 return;
             }
+            final PsiExpressionList expressionList = (PsiExpressionList) parent;
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {
                 return;
             }
-            parent.add(rhs);
-            parent.addAfter(lhs, binaryExpression);
+            final PsiExpression[] expressions = expressionList.getExpressions();
+            final int parameter = expressions.length - 1;
+            expressionList.add(rhs);
+            final Object constant =
+                    ExpressionUtils.computeConstantExpression(lhs);
+            if (constant instanceof String) {
+                final PsiExpression newExpression =
+                        addParameter(lhs, parameter);
+                if (newExpression == null) {
+                    expressionList.addAfter(lhs, binaryExpression);
+                } else {
+                    expressionList.addAfter(newExpression, binaryExpression);
+                }
+            } else {
+                expressionList.addAfter(lhs, binaryExpression);
+            }
             binaryExpression.delete();
+        }
+
+        private static PsiExpression addParameter(PsiExpression expression,
+                                                  int parameterNumber) {
+            if (expression instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) expression;
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs == null) {
+                    return null;
+                }
+                final PsiExpression newExpression =
+                        addParameter(rhs, parameterNumber);
+                if (newExpression == null) {
+                    return null;
+                }
+                rhs.replace(newExpression);
+                return expression;
+            } else if (expression instanceof PsiLiteralExpression) {
+                final PsiLiteralExpression literalExpression =
+                        (PsiLiteralExpression) expression;
+                final Object value = literalExpression.getValue();
+                if (!(value instanceof String)) {
+                    return null;
+                }
+                final Project project = expression.getProject();
+                final PsiElementFactory factory =
+                        JavaPsiFacade.getElementFactory(project);
+                return factory.createExpressionFromText("\"" + value + '{' +
+                        parameterNumber + "}\"", null);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -104,9 +155,12 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-            if (!FormatUtils.isFormatCall(expression)) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            if (!isMessageFormatCall(methodExpression)) {
                 return;
             }
+
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             if(arguments.length == 0){
@@ -149,6 +203,28 @@ public class StringConcatenationInFormatCallInspection extends BaseInspection {
                 return;
             }
             registerError(formatArgument, rhs);
+        }
+
+        private static boolean isMessageFormatCall(
+                PsiReferenceExpression methodExpression) {
+            @NonNls final String referenceName =
+                    methodExpression.getReferenceName();
+            if (!"format".equals(referenceName)) {
+                return false;
+            }
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+                return false;
+            }
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression) qualifierExpression;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiClass)) {
+                return false;
+            }
+            final PsiClass aClass = (PsiClass) target;
+            return ClassUtils.isSubclass(aClass, "java.text.MessageFormat");
         }
     }
 }
