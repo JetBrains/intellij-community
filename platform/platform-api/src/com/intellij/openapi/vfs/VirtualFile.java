@@ -83,7 +83,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Gets the path of this file. Path is a string which uniquely identifies file within given
    * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>{@link LocalFileSystem}</code> it is an absoulute file path with file separator characters
+   * For <code>{@link LocalFileSystem}</code> it is an absolute file path with file separator characters
    * (File.separatorChar) replaced to the forward slash ('/').
    *
    * @return the path
@@ -205,7 +205,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this file is a directory.
    *
-   * @return <code>true</code> if this file is a directory, <code>fasle</code> otherwise
+   * @return <code>true</code> if this file is a directory, <code>false</code> otherwise
    */
   public abstract boolean isDirectory();
 
@@ -214,9 +214,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * parents with {@link #delete} method or by an external change.
    * If file is not valid only {@link #equals}, {@link #hashCode} and methods from
    * {@link UserDataHolder} can be called for it. Using any other methods for an invalid {@link VirtualFile} instance
-   * produce inpredictable results.
+   * produce unpredictable results.
    *
-   * @return <code>true</code> if this is a valid file, <code>fasle</code> otherwise
+   * @return <code>true</code> if this is a valid file, <code>false</code> otherwise
    */
   public abstract boolean isValid();
 
@@ -432,7 +432,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return Retreive the charset file have been loaded with (if loaded) and would be saved with (if would).
+   * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
   public Charset getCharset() {
     Charset charset = getUserData(CHARSET_KEY);
@@ -594,7 +594,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * The same as {@link #refresh(boolean asynchronous, boolean recursive)} but also runs <code>postRunnable</code>
+   * The same as {@link #refresh(boolean, boolean)} but also runs <code>postRunnable</code>
    * after the operation is completed.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable);
