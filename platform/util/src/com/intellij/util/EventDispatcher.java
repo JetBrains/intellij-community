@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -37,11 +38,11 @@ public class EventDispatcher <T extends EventListener>{
 
   private final List<T> myListeners = ContainerUtil.createEmptyCOWList();
 
-  public static <T extends EventListener> EventDispatcher<T> create(Class<T> listenerClass) {
+  public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
     return new EventDispatcher<T>(listenerClass);
   }
 
-  private EventDispatcher(Class<T> listenerClass) {
+  private EventDispatcher(@NotNull Class<T> listenerClass) {
     InvocationHandler handler = new InvocationHandler() {
       @NonNls public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
@@ -75,6 +76,7 @@ public class EventDispatcher <T extends EventListener>{
     );
   }
 
+  @NotNull
   public T getMulticaster() {
     return myMulticaster;
   }
@@ -102,11 +104,11 @@ public class EventDispatcher <T extends EventListener>{
     }
   }
 
-  public void addListener(T listener) {
+  public void addListener(@NotNull T listener) {
     myListeners.add(listener);
   }
 
-  public void addListener(final T listener, Disposable parentDisposable) {
+  public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     addListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
@@ -115,7 +117,7 @@ public class EventDispatcher <T extends EventListener>{
     });
   }
 
-  public void removeListener(T listener) {
+  public void removeListener(@NotNull T listener) {
     myListeners.remove(listener);
   }
 
@@ -123,6 +125,7 @@ public class EventDispatcher <T extends EventListener>{
     return !myListeners.isEmpty();
   }
 
+  @NotNull
   public List<T> getListeners() {
     return myListeners;
   }
