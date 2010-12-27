@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -55,7 +56,7 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   /**
    * Invoked by reflection
    */
-  TodoConfiguration(MessageBus messageBus) {
+  TodoConfiguration(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
     resetToDefaultTodoPatterns();
   }
@@ -89,19 +90,21 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   public void disposeComponent() {
   }
 
+  @NotNull
   public TodoPattern[] getTodoPatterns() {
     return myTodoPatterns;
   }
 
-  @NotNull public IndexPattern[] getIndexPatterns() {
+  @NotNull
+  public IndexPattern[] getIndexPatterns() {
     return myIndexPatterns;
   }
 
-  public void setTodoPatterns(TodoPattern[] todoPatterns) {
+  public void setTodoPatterns(@NotNull TodoPattern[] todoPatterns) {
     doSetTodoPatterns(todoPatterns, true);
   }
 
-  private void doSetTodoPatterns(TodoPattern[] todoPatterns, final boolean shouldNotifyIndices) {
+  private void doSetTodoPatterns(@NotNull TodoPattern[] todoPatterns, final boolean shouldNotifyIndices) {
     TodoPattern[] oldTodoPatterns = myTodoPatterns;
     IndexPattern[] oldIndexPatterns = myIndexPatterns;
 
@@ -138,21 +141,24 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   /**
    * @return all <code>TodoFilter</code>s.
    */
+  @NotNull
   public TodoFilter[] getTodoFilters() {
     return myTodoFilters;
   }
 
-  public void setTodoFilters(TodoFilter[] filters) {
+  public void setTodoFilters(@NotNull TodoFilter[] filters) {
     TodoFilter[] oldFilters = myTodoFilters;
     myTodoFilters = filters;
     myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_TODO_FILTERS, oldFilters, filters));
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.addListener(listener);
   }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    myPropertyChangeMulticaster.addListener(listener,parentDisposable);
+  }
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.removeListener(listener);
   }
 

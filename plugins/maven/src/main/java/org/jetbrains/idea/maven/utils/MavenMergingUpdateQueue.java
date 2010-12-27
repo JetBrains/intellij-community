@@ -16,9 +16,11 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.DumbService;
@@ -26,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -140,15 +141,10 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
             }
           }
         };
-        LaterInvocator.addModalityStateListener(listener);
+        LaterInvocator.addModalityStateListener(listener,MavenMergingUpdateQueue.this);
         if (MavenUtil.isInModalContext()) {
           suspend();
         }
-        Disposer.register(MavenMergingUpdateQueue.this, new Disposable() {
-          public void dispose() {
-            LaterInvocator.removeModalityStateListener(listener);
-          }
-        });
       }
     });
   }
