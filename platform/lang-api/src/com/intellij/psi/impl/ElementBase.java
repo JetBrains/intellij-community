@@ -18,6 +18,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.NativeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -48,7 +51,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private TIntObjectHashMap<Icon> myBaseIcon;
 
   private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
-  private static final Icon ICON_PLACHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
+  public static final Icon ICON_PLACHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -120,7 +123,19 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   protected Icon getBaseIcon() {
+    if (this instanceof PsiElement) {
+      PsiFile file = ((PsiElement)this).getContainingFile();
+      if (file != null) {
+        if (!isNativeFileType(file.getFileType())) {
+          return file.getFileType().getIcon();
+        }
+      }
+    }
     return ICON_PLACHOLDER;
+  }
+
+  public static boolean isNativeFileType(FileType fileType) {
+    return fileType instanceof NativeFileType || fileType instanceof UnknownFileType;
   }
 
   protected Icon getAdjustedBaseIcon(Icon icon, int flags) {
