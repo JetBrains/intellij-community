@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
@@ -41,25 +40,33 @@ public abstract class NonCodeMembersContributor {
                                          PsiScopeProcessor processor,
                                          final GroovyPsiElement place,
                                          final ResolveState state) {
-    final Ref<Boolean> result = Ref.create(true);
-    final PsiScopeProcessor wrapper = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(PsiElement element, ResolveState state) {
-        if (!result.get()) {
-          return false;
-        }
-        final boolean wantMore = super.execute(element, state);
-        result.set(wantMore);
-        return wantMore;
-      }
-    };
+
+    MyDelegatingScopeProcessor delegatingProcessor = new MyDelegatingScopeProcessor(processor);
+
     for (final NonCodeMembersContributor contributor : EP_NAME.getExtensions()) {
-      contributor.processDynamicElements(qualifierType, wrapper, place, state);
-      if (!result.get()) {
+      contributor.processDynamicElements(qualifierType, delegatingProcessor, place, state);
+      if (!delegatingProcessor.wantMore) {
         return false;
       }
     }
     return true;
+  }
+
+  private static class MyDelegatingScopeProcessor extends DelegatingScopeProcessor {
+    public boolean wantMore = true;
+
+    public MyDelegatingScopeProcessor(PsiScopeProcessor delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public boolean execute(PsiElement element, ResolveState state) {
+      if (!wantMore) {
+        return false;
+      }
+      wantMore = super.execute(element, state);
+      return wantMore;
+    }
   }
 
 }
