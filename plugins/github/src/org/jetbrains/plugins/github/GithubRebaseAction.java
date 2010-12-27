@@ -47,7 +47,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my fork", "Rebase your forked repository relative to the origin", ICON);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", ICON);
   }
 
   public void update(AnActionEvent e) {
