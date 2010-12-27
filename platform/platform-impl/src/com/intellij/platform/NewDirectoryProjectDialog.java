@@ -146,12 +146,12 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
       }
 
       public void validate() {
-        doValidate();
+        checkValid();
       }
     });
   }
 
-  private void doValidate() {
+  private void checkValid() {
     String projectName = myProjectNameTextField.getText();
     if (projectName.trim().isEmpty()) {
       setOKActionEnabled(false);
