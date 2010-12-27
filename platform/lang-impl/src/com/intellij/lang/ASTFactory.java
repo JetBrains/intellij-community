@@ -20,6 +20,7 @@ import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
+import com.intellij.psi.impl.source.DummyHolderElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.*;
@@ -39,14 +40,18 @@ public abstract class ASTFactory {
 
   @Nullable
   public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
-    return DEFAULT.createLazy(type, text);
+    return null;
   }
 
   @Nullable
-  public abstract CompositeElement createComposite(final IElementType type);
+  public CompositeElement createComposite(final IElementType type) {
+    return null;
+  }
 
   @Nullable
-  public abstract LeafElement createLeaf(final IElementType type, final CharSequence text);
+  public LeafElement createLeaf(final IElementType type, final CharSequence text) {
+    return null;
+  }
 
   // factory methods
 
@@ -58,6 +63,9 @@ public abstract class ASTFactory {
     if (type == TokenType.CODE_FRAGMENT) {
       return new CodeFragmentElement(null);
     }
+    else if (type == TokenType.DUMMY_HOLDER) {
+      return new DummyHolderElement(text);
+    }
 
     final LazyParseableElement customLazy = factory(type).createLazy(type, text);
     return customLazy != null ? customLazy : DEFAULT.createLazy(type, text);
@@ -67,10 +75,6 @@ public abstract class ASTFactory {
   public static CompositeElement composite(final IElementType type) {
     if (type instanceof ICompositeElementType) {
       return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
-    }
-
-    if (type == TokenType.CODE_FRAGMENT) {
-      return new CodeFragmentElement(null);
     }
 
     final CompositeElement customComposite = factory(type).createComposite(type);
@@ -159,6 +163,7 @@ public abstract class ASTFactory {
           return new PsiCommentImpl(type, text);
         }
       }
+
       return new LeafPsiElement(type, text);
     }
   }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -25,11 +24,13 @@ import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -39,6 +40,12 @@ import java.io.IOException;
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
   public JavaAnnotationElementType() {
     super("ANNOTATION");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new AnnotationElement();
   }
 
   public PsiAnnotation createPsi(final PsiAnnotationStub stub) {

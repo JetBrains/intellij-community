@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -49,7 +48,7 @@ import java.util.List;
 /*
  * @author max
  */
-public class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
   public JavaMethodElementType(@NonNls final String name) {
     super(name);
   }

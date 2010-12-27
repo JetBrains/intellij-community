@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -22,10 +21,12 @@ import com.intellij.lang.LighterAST;
 import com.intellij.psi.PsiClassInitializer;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
+import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -35,6 +36,12 @@ import java.io.IOException;
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer> {
   public JavaClassInitializerElementType() {
     super("CLASS_INITIALIZER");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new ClassInitializerElement();
   }
 
   public PsiClassInitializer createPsi(final PsiClassInitializerStub stub) {

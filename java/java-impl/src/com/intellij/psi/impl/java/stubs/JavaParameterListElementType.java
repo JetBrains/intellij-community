@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -23,10 +22,12 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.compiled.ClsParameterListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterListStubImpl;
 import com.intellij.psi.impl.source.PsiParameterListImpl;
+import com.intellij.psi.impl.source.tree.java.ParameterListElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -36,6 +37,12 @@ import java.io.IOException;
 public class JavaParameterListElementType extends JavaStubElementType<PsiParameterListStub, PsiParameterList> {
   public JavaParameterListElementType() {
     super("PARAMETER_LIST");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new ParameterListElement();
   }
 
   public PsiParameterList createPsi(final PsiParameterListStub stub) {
