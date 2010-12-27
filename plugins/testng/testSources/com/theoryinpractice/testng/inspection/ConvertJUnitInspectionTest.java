@@ -21,7 +21,6 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.theoryinpractice.testng.inspection.JUnitConvertTool;
 import org.testng.annotations.Test;
 
 public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest{

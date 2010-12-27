@@ -84,7 +84,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
   private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
   private final TestNGConfiguration config;
   private final RunnerSettings runnerSettings;
-  private final IDEARemoteTestRunnerClient client;
+  protected final IDEARemoteTestRunnerClient client;
   private int port;
   private String debugPort;
   private File myTempFile;
@@ -139,7 +139,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
-        client.stopTest();
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -167,7 +166,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
       @Override
       public void startNotified(final ProcessEvent event) {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
-        client.startListening(listener, listener, port);
+        client.prepareListening(listener, port);
 
       }
 
@@ -371,6 +370,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
   protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket, boolean is15,
                                                               final TestNGConfiguration config,
                                                               final File tempFile) {
-    return new SearchingForTestsTask(serverSocket, is15, config, tempFile);
+    return new SearchingForTestsTask(serverSocket, is15, config, tempFile, client);
   }
 }

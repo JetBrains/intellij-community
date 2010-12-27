@@ -196,6 +196,9 @@ public class TypesDistinctProver {
     else if (bound instanceof PsiClassType) {
       return !possibleClasses.contains(((PsiClassType)bound).resolve());
     }
+    else if (bound instanceof PsiWildcardType && !((PsiWildcardType)bound).isBounded()) {
+      return false;
+    }
     return true;
   }
 }

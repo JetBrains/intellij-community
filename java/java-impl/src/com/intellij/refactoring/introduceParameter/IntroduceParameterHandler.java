@@ -141,12 +141,6 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     if (methodToSearchFor == null) return false;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
 
-    PsiExpression expressionToRemoveParamFrom = expr;
-    if (expr == null) {
-      expressionToRemoveParamFrom = localVar.getInitializer();
-    }
-    TIntArrayList parametersToRemove = expressionToRemoveParamFrom == null ? new TIntArrayList() : Util.findParametersToRemove(method, expressionToRemoveParamFrom);
-
     PsiExpression[] occurences;
     if (expr != null) {
       occurences = new ExpressionOccurenceManager(expr, method, null).findExpressionOccurrences();
@@ -154,6 +148,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     else { // local variable
       occurences = CodeInsightUtil.findReferenceExpressions(method, localVar);
     }
+    PsiExpression expressionToRemoveParamFrom = expr;
+    if (expr == null) {
+      expressionToRemoveParamFrom = localVar.getInitializer();
+    }
+    TIntArrayList parametersToRemove = expressionToRemoveParamFrom == null ? new TIntArrayList() : Util.findParametersToRemove(method, expressionToRemoveParamFrom, occurences);
     if (editor != null) {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }

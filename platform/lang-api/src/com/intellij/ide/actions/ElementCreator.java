@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -90,6 +91,11 @@ public abstract class ElementCreator {
         finally {
           action.finish();
         }
+      }
+
+      @Override
+      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+        return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
       }
     }.execute();
 

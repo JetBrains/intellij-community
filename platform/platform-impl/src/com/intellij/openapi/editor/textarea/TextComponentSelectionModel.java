@@ -20,10 +20,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +46,20 @@ public class TextComponentSelectionModel implements SelectionModel {
     return myTextComponent.getSelectionStart();
   }
 
+  @Nullable
+  @Override
+  public VisualPosition getSelectionStartPosition() {
+    return null;
+  }
+
   public int getSelectionEnd() {
     return myTextComponent.getSelectionEnd();
+  }
+
+  @Nullable
+  @Override
+  public VisualPosition getSelectionEndPosition() {
+    return null;
   }
 
   @Nullable
@@ -59,6 +72,12 @@ public class TextComponentSelectionModel implements SelectionModel {
     final int start = myTextComponent.getSelectionStart();
     final int end = myTextComponent.getSelectionEnd();
     return caretPosition == start ? end : start;
+  }
+
+  @Nullable
+  @Override
+  public VisualPosition getLeadSelectionPosition() {
+    return null;
   }
 
   public boolean hasSelection() {
@@ -74,6 +93,11 @@ public class TextComponentSelectionModel implements SelectionModel {
       myTextComponent.setCaretPosition(startOffset);
       myTextComponent.moveCaretPosition(endOffset);
     }
+  }
+
+  @Override
+  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
+    setSelection(startOffset, endOffset);
   }
 
   public void removeSelection() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.util.xml;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
 /**
- * Annotates DOM methods that are shoutcuts to long call chains. For example, if you often need
+ * Annotates DOM methods that are shortcuts to long call chains. For example, if you often need
  * to write getFoo().getBar().getZip(), you can instead create a method getFBZ() and annotate it
  * with @PropertyAccessor({"foo", "bar", "zip"}).
  *

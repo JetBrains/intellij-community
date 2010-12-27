@@ -28,8 +28,8 @@ import java.util.Collection;
  */
 public class RenameAliasImportedClassProcessor extends RenameJavaClassProcessor {
   @Override
-  public boolean canProcessElement(PsiElement element) {
-    return super.canProcessElement(element) && element instanceof GroovyPsiElement;
+  public boolean canProcessElement(@NotNull PsiElement element) {
+    return element instanceof GroovyPsiElement && super.canProcessElement(element);
   }
 
   @NotNull

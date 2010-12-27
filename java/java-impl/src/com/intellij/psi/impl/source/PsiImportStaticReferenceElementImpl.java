@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -132,10 +131,11 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return (PsiJavaCodeReferenceElement)findChildByRoleAsPsiElement(ChildRole.QUALIFIER);
   }
 
-  public PsiImportStaticStatement bindToTargetClass(PsiClass aClass) throws IncorrectOperationException {
+  public PsiImportStaticStatement bindToTargetClass(final PsiClass aClass) throws IncorrectOperationException {
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) throw new IncorrectOperationException();
-    final CompositeElement newRef = Parsing.parseJavaCodeReferenceText(getManager(), qualifiedName, SharedImplUtil.findCharTableByTree(this));
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+    final CompositeElement newRef = (CompositeElement)parserFacade.createReferenceFromText(qualifiedName, null).getNode();
     if (getQualifier() != null) {
       replaceChildInternal(findChildByRole(ChildRole.QUALIFIER), newRef);
       return (PsiImportStaticStatement)getParent();
@@ -143,8 +143,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     else {
       final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       newRef.rawInsertAfterMe(dot);
-      final CompositeElement errorElement =
-        Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
+      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
       dot.rawInsertAfterMe(errorElement);
       final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);

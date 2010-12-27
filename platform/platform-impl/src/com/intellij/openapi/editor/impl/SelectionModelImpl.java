@@ -50,6 +50,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -70,15 +71,47 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private DocumentEvent myIsInUpdate;
 
   private class MyRangeMarker extends RangeMarkerImpl {
+    
+    private VisualPosition myStartPosition;
+    private VisualPosition myEndPosition;
+    private boolean myEndPositionIsLead;
     private boolean myIsReleased;
 
-    private MyRangeMarker(DocumentEx document, int start, int end) {
+    MyRangeMarker(DocumentEx document, int start, int end) {
       super(document, start, end);
       myIsReleased = false;
     }
 
     public void release() {
       myIsReleased = true;
+    }
+
+    @Nullable
+    public VisualPosition getStartPosition() {
+      invalidateVisualPositions();
+      return myStartPosition;
+    }
+
+    public void setStartPosition(@NotNull VisualPosition startPosition) {
+      myStartPosition = startPosition;
+    }
+
+    @Nullable
+    public VisualPosition getEndPosition() {
+      invalidateVisualPositions();
+      return myEndPosition;
+    }
+
+    public void setEndPosition(@NotNull VisualPosition endPosition) {
+      myEndPosition = endPosition;
+    }
+
+    public boolean isEndPositionIsLead() {
+      return myEndPositionIsLead;
+    }
+
+    public void setEndPositionIsLead(boolean endPositionIsLead) {
+      myEndPositionIsLead = endPositionIsLead;
     }
 
     @Override
@@ -102,6 +135,16 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
 
     protected void registerInDocument() {
+    }
+    
+    private void invalidateVisualPositions() {
+      SoftWrapModelImpl model = myEditor.getSoftWrapModel();
+      if ((!myEditor.offsetToVisualPosition(myStart).equals(myStartPosition) && model.getSoftWrap(myStart) == null) 
+          || (!myEditor.offsetToVisualPosition(myEnd).equals(myEndPosition) && model.getSoftWrap(myEnd) == null)) 
+      {
+        myStartPosition = null;
+        myEndPosition = null;
+      }
     }
   }
 
@@ -138,6 +181,23 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return myEditor.getCaretModel().getOffset();
   }
 
+  @NotNull
+  @Override
+  public VisualPosition getSelectionStartPosition() {
+    VisualPosition defaultPosition = myEditor.offsetToVisualPosition(getSelectionStart());
+    if (!hasSelection()) {
+      return defaultPosition;
+    }
+
+    MyRangeMarker marker = mySelectionMarker.get();
+    if (marker == null) {
+      return defaultPosition;
+    }
+
+    VisualPosition result = marker.getStartPosition();
+    return result == null ? defaultPosition : result;
+  }
+
   private void validateContext(boolean isWrite) {
     if (isWrite) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -162,6 +222,23 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return myEditor.getCaretModel().getOffset();
   }
 
+  @NotNull
+  @Override
+  public VisualPosition getSelectionEndPosition() {
+    VisualPosition defaultPosition = myEditor.offsetToVisualPosition(getSelectionEnd());
+    if (!hasSelection()) {
+      return defaultPosition;
+    }
+
+    MyRangeMarker marker = mySelectionMarker.get();
+    if (marker == null) {
+      return defaultPosition;
+    }
+
+    VisualPosition result = marker.getEndPosition();
+    return result == null ? defaultPosition : result;
+  }
+  
   public boolean hasSelection() {
     validateContext(false);
     MyRangeMarker marker = mySelectionMarker.get();
@@ -173,6 +250,17 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void setSelection(int startOffset, int endOffset) {
+    doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false);
+  }
+  
+  @Override
+  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
+    doSetSelection(startPosition, startOffset, endPosition, endOffset, true);
+  }
+
+  private void doSetSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition,
+                              int endOffset, boolean visualPositionAware)
+  {
     validateContext(true);
 
     removeBlockSelection();
@@ -186,7 +274,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
 
     myLastSelectionStart = startOffset;
-    if (startOffset == endOffset) {
+    if (!visualPositionAware && startOffset == endOffset) {
       removeSelection();
       return;
     }
@@ -204,7 +292,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     if (hasSelection()) {
       oldSelectionStart = getSelectionStart();
       oldSelectionEnd = getSelectionEnd();
-      if (oldSelectionStart == startOffset && oldSelectionEnd == endOffset) return;
+      if (oldSelectionStart == startOffset && oldSelectionEnd == endOffset && !visualPositionAware) return;
     }
     else {
       oldSelectionStart = oldSelectionEnd = myEditor.getCaretModel().getOffset();
@@ -215,7 +303,20 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       marker.release();
     }
 
-    mySelectionMarker.set(new MyRangeMarker((DocumentEx)doc, startOffset, endOffset));
+    marker = new MyRangeMarker((DocumentEx)doc, startOffset, endOffset);
+    if (visualPositionAware) {
+      if (endPosition.after(startPosition)) {
+        marker.setStartPosition(startPosition);
+        marker.setEndPosition(endPosition);
+        marker.setEndPositionIsLead(false);
+      }
+      else {
+        marker.setStartPosition(endPosition);
+        marker.setEndPosition(startPosition);
+        marker.setEndPositionIsLead(true);
+      }
+    }
+    mySelectionMarker.set(marker);
 
     fireSelectionChanged(oldSelectionStart, oldSelectionEnd, startOffset, endOffset);
 
@@ -432,7 +533,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     int selectionEnd = getSelectionEnd();
     return text.subSequence(selectionStart, selectionEnd).toString();
   }
-
+  
   private static void appendCharSequence(@NotNull StringBuffer buf, @NotNull CharSequence s, int srcOffset, int len) {
     if (srcOffset < 0 || len < 0 || srcOffset > s.length() - len) {
       throw new IndexOutOfBoundsException("srcOffset " + srcOffset + ", len " + len + ", s.length() " + s.length());
@@ -445,7 +546,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       buf.append(s.charAt(i));
     }
   }
-
 
   public int getLeadSelectionOffset() {
     validateContext(false);
@@ -464,6 +564,24 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       }
     }
     return caretOffset;
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition getLeadSelectionPosition() {
+    MyRangeMarker marker = mySelectionMarker.get();
+    VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+    if (marker == null) {
+      return caretPosition;
+    }
+
+    VisualPosition startPosition = marker.getStartPosition();
+    VisualPosition endPosition = marker.getEndPosition();
+    if (startPosition == null || endPosition == null) {
+      return caretPosition;
+    }
+    
+    return marker.isEndPositionIsLead() ? endPosition : startPosition;
   }
 
   public void selectLineAtCaret() {

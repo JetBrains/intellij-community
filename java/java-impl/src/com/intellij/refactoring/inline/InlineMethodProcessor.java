@@ -291,16 +291,24 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
         else {
           List<PsiReferenceExpression> refExprList = new ArrayList<PsiReferenceExpression>();
+          final List<PsiElement> imports2Delete = new ArrayList<PsiElement>();
           for (final UsageInfo usage : usages) {
             final PsiElement element = usage.getElement();
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
+            } else if (element instanceof PsiImportStaticReferenceElement) {
+              imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
             }
           }
           PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
             inlineMethodCall(ref);
+          }
+          for (PsiElement psiElement : imports2Delete) {
+            if (psiElement != null && psiElement.isValid()) {
+              psiElement.delete();
+            }
           }
           myMethod.delete();
         }

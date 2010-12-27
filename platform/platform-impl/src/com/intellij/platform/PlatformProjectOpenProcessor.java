@@ -18,7 +18,7 @@ package com.intellij.platform;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -58,7 +58,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public boolean canOpenProject(final VirtualFile file) {
-    return file.isDirectory() || !file.getFileType().isBinary();
+    return file.isDirectory() || ! file.getFileType().isBinary();
+  }
+
+  @Override
+  public boolean isProjectFile(VirtualFile file) {
+    return false;
   }
 
   @Override
@@ -68,7 +73,28 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
-    VirtualFile baseDir = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
+    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1);
+  }
+
+  @Nullable
+  public static Project doOpenProject(@NotNull final VirtualFile virtualFile,
+                                      final Project projectToClose,
+                                      final boolean forceOpenInNewFrame,
+                                      final int line) {
+    VirtualFile baseDir = virtualFile;
+    if (!baseDir.isDirectory()) {
+      baseDir = virtualFile.getParent();
+      while (baseDir != null) {
+        if (new File(baseDir.getPath(), ".idea").exists()) {
+          break;
+        }
+        baseDir = baseDir.getParent();
+      }
+      if (baseDir == null) {
+        baseDir = virtualFile.getParent();
+      }
+    }
+
     final File projectDir = new File(baseDir.getPath(), ".idea");
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -110,13 +136,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
     }
 
-    openFileFromCommandLine(project, virtualFile);
+    openFileFromCommandLine(project, virtualFile, line);
     projectManager.openProject(project);
 
     return project;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile) {
+  private static void openFileFromCommandLine(final Project project, final VirtualFile virtualFile, final int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
@@ -124,7 +150,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               public void run() {
                 if (!virtualFile.isDirectory()) {
-                  FileEditorManager.getInstance(project).openFile(virtualFile, true);
+                  if (line > 0) {
+                    new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
+                  }
+                  else {
+                    new OpenFileDescriptor(project, virtualFile).navigate(true);
+                  }
                 }
               }
             });

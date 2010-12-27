@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
@@ -56,7 +57,7 @@ public class VcsEP extends AbstractExtensionPointBean {
             return myVcs;
           }
         }
-        myVcs = instantiate(vcsClass, project.getPicoContainer());
+        myVcs = VcsActiveEnvironmentsProxy.proxyVcs((AbstractVcs)instantiate(vcsClass, project.getPicoContainer()));
       }
       catch(Exception e) {
         LOG.error(e);

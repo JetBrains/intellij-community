@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Manages language-specific access to PSI for a single file.
+ * <p/>
+ * Custom providers are registered via {@link FileViewProviderFactory}.
+ *
+ * @see com.intellij.psi.PsiFile#getViewProvider()
+ * @see PsiManager#findViewProvider(com.intellij.openapi.vfs.VirtualFile)
+ */
 public interface FileViewProvider extends Cloneable, UserDataHolder {
   @NotNull PsiManager getManager();
 

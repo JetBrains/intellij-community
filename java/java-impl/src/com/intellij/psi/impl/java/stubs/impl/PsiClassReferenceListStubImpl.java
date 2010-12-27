@@ -24,15 +24,13 @@ import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
-import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.StringRef;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
@@ -73,36 +71,32 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     else {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
 
-      int nullcount = 0;
+      int nullCount = 0;
       final PsiReferenceList psi = getPsi();
-      PsiManager manager = psi.getManager();
       for (int i = 0; i < types.length; i++) {
         PsiElement context = psi;
         if (getParentStub() instanceof PsiClassStub) {
           context = ((PsiClassImpl)getParentStub().getPsi()).calcBasesResolveContext(PsiNameHelper.getShortClassName(StringRef.toString(myNames[i])), psi);
         }
 
-        final FileElement holderElement = DummyHolderFactory.createHolder(manager, context).getTreeElement();
-        final PsiJavaCodeReferenceElementImpl ref =
-            (PsiJavaCodeReferenceElementImpl)Parsing.parseJavaCodeReferenceText(manager, StringRef.toString(myNames[i]), holderElement.getCharTable());
-        if (ref != null) {
-          holderElement.rawAddChildren(ref);
-          ref.setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+        try {
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(StringRef.toString(myNames[i]), context);
+          ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }
-        else {
+        catch (IncorrectOperationException e) {
           types[i] = null;
-          nullcount++;
+          nullCount++;
         }
       }
 
-      if (nullcount > 0) {
-        PsiClassType[] newtypes = new PsiClassType[types.length - nullcount];
+      if (nullCount > 0) {
+        PsiClassType[] newTypes = new PsiClassType[types.length - nullCount];
         int cnt = 0;
         for (PsiClassType type : types) {
-          if (type != null) newtypes[cnt++] = type;
+          if (type != null) newTypes[cnt++] = type;
         }
-        types = newtypes;
+        types = newTypes;
       }
     }
 

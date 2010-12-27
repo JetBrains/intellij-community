@@ -26,6 +26,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -36,7 +37,7 @@ import java.util.Map;
 public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   private final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenamePsiPackageProcessor");
 
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiPackage;
   }
 

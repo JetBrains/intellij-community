@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.telemetry;
+package com.intellij.openapi.vcs;
 
-public interface InspectionRunListener{
-    
-    void reportRun(String inspectionID, long runTime);
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
+
+/**
+* @author irengrig
+*         Date: 12/21/10
+*         Time: 2:15 PM
+*/
+public class ForwardingListener<T> implements Consumer<Pair<VcsKey, Consumer<T>>> {
+  private final T myT;
+
+  public ForwardingListener(T t) {
+    myT = t;
+  }
+
+  @Override
+  public void consume(Pair<VcsKey, Consumer<T>> vcsKeyConsumerPair) {
+    vcsKeyConsumerPair.getSecond().consume(myT);
+  }
 }

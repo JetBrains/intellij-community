@@ -25,7 +25,11 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -51,10 +55,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -72,7 +73,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -498,10 +499,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletion(final String[] filesBefore, final String fileAfter) {
     assertInitialized();
     configureByFiles(filesBefore);
-    final LookupElement[] items = complete(CompletionType.BASIC);
-    if (items != null) {
-      System.out.println("items = " + Arrays.toString(items));
-    }
+    complete(CompletionType.BASIC);
     checkResultByFile(fileAfter);
   }
 
@@ -518,6 +516,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testCompletionVariants(final String fileBefore, final String... expectedItems) {
     assertInitialized();
     final List<String> result = getCompletionVariants(fileBefore);
+    UsefulTestCase.assertNotNull(result);
     UsefulTestCase.assertSameElements(result, expectedItems);
   }
 
@@ -1311,9 +1310,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public static void ensureIndexesUpToDate(Project project) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
-    FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
-    assertTrue(!DumbServiceImpl.getInstance(project).isDumb());
+    if (!DumbService.isDumb(project)) {
+      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, null);
+      FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, project, null);
+    }
   }
 
   @Override
@@ -1530,5 +1530,93 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public void canChangeDocumentDuringHighlighting(boolean canI) {
     myAllowDirt = canI;
+  }
+
+  private static final String START_FOLD = "<fold\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>";
+  private static final String END_FOLD = "</fold>";
+
+  private class Border implements Comparable<Border> {
+    public static final boolean LEFT = true;
+    public static final boolean RIGHT = false;
+    public boolean mySide;
+    public int myOffset;
+    public String myText;
+    public boolean myIsExpanded;
+
+    private Border(boolean side, int offset, String text, boolean isExpanded) {
+      mySide = side;
+      myOffset = offset;
+      myText = text;
+      myIsExpanded = isExpanded;
+    }
+
+    public boolean isExpanded() {
+      return myIsExpanded;
+    }
+
+    public boolean isSide() {
+      return mySide;
+    }
+
+    public int getOffset() {
+      return myOffset;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    public int compareTo(Border o) {
+      return getOffset() < o.getOffset() ? 1 : -1;
+    }
+  }
+  private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
+                                       boolean doCheckCollapseStatus) {
+    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myEditor);
+
+    final FoldingModel model = myEditor.getFoldingModel();
+    final FoldRegion[] foldingRegions = model.getAllFoldRegions();
+    final List<Border> borders = new LinkedList<Border>();
+
+    for (FoldRegion region : foldingRegions) {
+      borders.add(new Border(Border.LEFT, region.getStartOffset(), region.getPlaceholderText(), region.isExpanded()));
+      borders.add(new Border(Border.RIGHT, region.getEndOffset(), "", region.isExpanded()));
+    }
+    Collections.sort(borders);
+
+    StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
+    for (Border border : borders) {
+      result.insert(border.getOffset(), border.isSide() == Border.LEFT ? ("<fold text=\'" + border.getText() + "\'" +
+             (doCheckCollapseStatus ? (" expand=\'" + border.isExpanded() + "\'") : "") +
+                                  ">") : END_FOLD);
+    }
+
+    return result.toString();
+  }
+
+  private void testFoldingRegions(final String verificationFileName, boolean doCheckCollapseStatus) {
+    String expectedContent = null;
+    try {
+      expectedContent = new String(FileUtil.loadFileText(new File(verificationFileName)));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    Assert.assertNotNull(expectedContent);
+
+    expectedContent = StringUtil.replace(expectedContent, "\r", "");
+    final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
+    final String actual = getFoldingDescription(cleanContent, verificationFileName, doCheckCollapseStatus);
+
+    assertEquals(expectedContent, actual);
+  }
+
+  public void testFoldingWithCollapseStatus(final String verificationFileName) {
+    testFoldingRegions(verificationFileName, true);
+  }
+
+  public void testFolding(final String verificationFileName) {
+    testFoldingRegions(verificationFileName, false);
   }
 }

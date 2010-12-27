@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.IllegalStateProxy;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -60,6 +61,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   private final VcsKey myKey;
   private VcsShowSettingOption myUpdateOption;
   private VcsShowSettingOption myStatusOption;
+
+  private CheckinEnvironment myCheckinEnvironment;
+  private UpdateEnvironment myUpdateEnvironment;
+  private RollbackEnvironment myRollbackEnvironment;
 
   public AbstractVcs(final Project project, final String name) {
     super(project);
@@ -124,23 +129,43 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
+   * creates the object for performing checkin / commit / submit operations.
+   */
+  @Nullable
+  protected CheckinEnvironment createCheckinEnvironment() {
+    return IllegalStateProxy.create(CheckinEnvironment.class);
+  }
+
+  /**
+   * !!! concrete VCS should define {@link #createCheckinEnvironment} method
+   * this method wraps created environment with a listener
+   *
    * Returns the interface for performing checkin / commit / submit operations.
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
    */
   @Nullable
   public CheckinEnvironment getCheckinEnvironment() {
-    return null;
+    return myCheckinEnvironment;
   }
 
   /**
    * Returns the interface for performing revert / rollback operations.
+   */
+  @Nullable
+  protected RollbackEnvironment createRollbackEnvironment() {
+    return IllegalStateProxy.create(RollbackEnvironment.class);
+  }
+
+  /**
+   * !!! concrete VCS should define {@link #createRollbackEnvironment()} method
+   * this method wraps created environment with a listener
    *
    * @return the rollback interface, or null if rollbacks are not supported by the VCS.
    */
   @Nullable
   public RollbackEnvironment getRollbackEnvironment() {
-    return null;
+    return myRollbackEnvironment;
   }
 
   @Nullable
@@ -159,12 +184,21 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   /**
    * Returns the interface for performing update/sync operations.
+   */
+  @Nullable
+  protected UpdateEnvironment createUpdateEnvironment() {
+    return IllegalStateProxy.create(UpdateEnvironment.class);
+  }
+
+  /**
+   * !!! concrete VCS should define {@link #createUpdateEnvironment()} method
+   * this method wraps created environment with a listener
    *
    * @return the update interface, or null if the updates are not supported by the VCS.
    */
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {
-    return null;
+    return myUpdateEnvironment;
   }
 
   /**
@@ -493,6 +527,21 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @CalledInAwt
   public void generalPreConfigurationStep() {
+  }
+
+  public void setCheckinEnvironment(CheckinEnvironment checkinEnvironment) {
+    if (myCheckinEnvironment != null) throw new IllegalStateException("Attempt to redefine checkin environment");
+    myCheckinEnvironment = checkinEnvironment;
+  }
+
+  public void setUpdateEnvironment(UpdateEnvironment updateEnvironment) {
+    if (myUpdateEnvironment != null) throw new IllegalStateException("Attempt to redefine update environment");
+    myUpdateEnvironment = updateEnvironment;
+  }
+
+  public void setRollbackEnvironment(RollbackEnvironment rollbackEnvironment) {
+    if (myRollbackEnvironment != null) throw new IllegalStateException("Attempt to redefine rollback environment");
+    myRollbackEnvironment = rollbackEnvironment;
   }
 }
 

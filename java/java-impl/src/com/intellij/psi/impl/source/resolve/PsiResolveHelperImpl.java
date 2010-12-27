@@ -18,12 +18,6 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
@@ -34,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,13 +76,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return processor.getResult();
   }
 
-  public PsiClass resolveReferencedClass(@NotNull String referenceText, PsiElement context) {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
-    if (ref == null) return null;
-    holderElement.rawAddChildren(ref);
-
-    return ResolveClassUtil.resolveClass((PsiJavaCodeReferenceElement)ref.getPsi());
+  public PsiClass resolveReferencedClass(@NotNull final String referenceText, final PsiElement context) {
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
+    try {
+      final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
+      return ResolveClassUtil.resolveClass(ref);
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
   }
 
   public PsiVariable resolveReferencedVariable(@NotNull String referenceText, PsiElement context) {
@@ -102,13 +99,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   @Nullable
-  private PsiVariable resolveVar(String referenceText, PsiElement context, boolean[] problemWithAccess) {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, context).getTreeElement();
-    TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
-    if (ref == null) return null;
-    holderElement.rawAddChildren(ref);
-    PsiJavaCodeReferenceElement psiRef = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(ref);
-    return ResolveVariableUtil.resolveVariable(psiRef, problemWithAccess, null);
+  private PsiVariable resolveVar(final String referenceText, final PsiElement context, final boolean[] problemWithAccess) {
+    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade();
+    try {
+      final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(referenceText, context);
+      return ResolveVariableUtil.resolveVariable(ref, problemWithAccess, null);
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
   }
 
   public boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {

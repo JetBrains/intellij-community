@@ -48,7 +48,7 @@ import java.util.*;
 public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
 
-  public boolean canProcessElement(final PsiElement element) {
+  public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiMethod;
   }
 

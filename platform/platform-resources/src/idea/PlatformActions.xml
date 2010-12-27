@@ -122,8 +122,10 @@
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
           <group id="FileOtherSettingsGroup" popup="true">
-              <group id="FileSettingsGroup"/>
+             <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+             <group id="FileSettingsGroup"/>
           </group>
+          <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>

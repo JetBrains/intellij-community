@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -67,6 +68,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
@@ -163,6 +165,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ourTestCase = this;
     if (myProject != null) {
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
+      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
     }
   }
 
@@ -318,7 +321,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     Set<VirtualFile> survivors = new HashSet<VirtualFile>();
 
-    for (IndexedRootsProvider provider : IndexableSetContributor.EP_NAME.getExtensions()) {
+    for (IndexedRootsProvider provider : IndexedRootsProvider.EP_NAME.getExtensions()) {
       for (VirtualFile file : IndexableSetContributor.getRootsToIndex(provider)) {
         registerSurvivor(survivors, file);
       }
@@ -342,9 +345,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     try {
       checkForSettingsDamage();
 
+      InjectedLanguageManagerImpl injectedLanguageManager = null;
+      if (myProject != null) {
+        injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
+      }
+
       try {
         disposeProject();
 
+        if (injectedLanguageManager != null) {
+          injectedLanguageManager.checkInjectorsAreDisposed();
+        }
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }

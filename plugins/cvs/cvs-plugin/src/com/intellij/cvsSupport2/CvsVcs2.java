@@ -265,11 +265,11 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   }
 
   @NotNull
-  public CheckinEnvironment getCheckinEnvironment() {
+  public CheckinEnvironment createCheckinEnvironment() {
     return myCvsCheckinEnvironment;
   }
 
-  public RollbackEnvironment getRollbackEnvironment() {
+  public RollbackEnvironment createRollbackEnvironment() {
     if (myCvsRollbackEnvironment == null) {
       myCvsRollbackEnvironment = new CvsRollbackEnvironment(myProject);
     }
@@ -289,7 +289,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return CvsBundle.message("menu.text.cvsGroup");
   }
 
-  public UpdateEnvironment getUpdateEnvironment() {
+  public UpdateEnvironment createUpdateEnvironment() {
     return myCvsUpdateEnvironment;
   }
 

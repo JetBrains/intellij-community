@@ -125,8 +125,9 @@ public class EditorUtil {
     }
 
     assert false : String.format(
-      "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: %s-%s%nDocument text: '%s'",
-      line, resultLogLine, resVisStart, resVisEnd, editor.getDocument().getText()
+      "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
+      + "the target logical line: %s%nDocument text: '%s'",
+      line, resultLogLine, resVisStart, resVisEnd, softWraps, editor.getDocument().getText()
     );
     return resVisEnd.column;
   }

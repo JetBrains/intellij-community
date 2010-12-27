@@ -20,15 +20,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.newvfs.RefreshSessionImpl;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.SLRUCache;
 import git4idea.GitVcs;
 
 import java.util.*;
@@ -67,13 +65,13 @@ public class CherryPicker {
     // remove those that are in newer lists
     checkListsForSamePaths();
 
-    final RefreshSessionImpl refreshSession = new RefreshSessionImpl(true, false, new Runnable() {
-      public void run() {
-        findAndProcessChangedForVcs();
+    for (FilePath file : myDirtyFiles) {
+      VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getPath());
+      if (vf != null) {
+        vf.refresh(false, false);
       }
-    });
-    refreshSession.addAllFiles(ObjectsConvertor.convert(myDirtyFiles, ObjectsConvertor.FILEPATH_TO_VIRTUAL, ObjectsConvertor.NOT_NULL));
-    refreshSession.launch();
+    }
+    findAndProcessChangedForVcs();
 
     showResults();
   }

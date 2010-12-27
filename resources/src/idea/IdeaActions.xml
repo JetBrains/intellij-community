@@ -73,9 +73,6 @@
       <add-to-group group-id="ExportImportGroup" anchor="first"/>
     </action>
 
-    <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-    </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </action>

@@ -64,6 +64,7 @@ public class TipUIUtil {
       updateShortcuts(text);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
+      replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
       browser.read(new StringReader(replaced), null);
       final Document document = browser.getDocument();
       if (document instanceof HTMLDocument) {

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -34,10 +37,10 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,19 +139,15 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return true;
     }
 
-    Editor editor = ContainerUtil.find(EditorFactory.getInstance().getEditors(this), new Condition<Editor>() {
-      @Override
-      public boolean value(Editor editor) {
-        return ((EditorEx)editor).isCaretActive();
-      }
-    });
+    DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
+    Editor activeEditor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     // when virtual space enabled, we can strip whitespace anywhere
-    boolean isVirtualSpaceEnabled = editor == null || editor.getSettings().isVirtualSpace();
+    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
 
-    VisualPosition visualCaret = editor == null ? null : editor.getCaretModel().getVisualPosition();
-    int caretLine = editor == null ? -1 : editor.getCaretModel().getLogicalPosition().line;
-    int caretOffset = editor == null ? -1 : editor.getCaretModel().getOffset();
+    VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
+    int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
+    int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText.getCharArray();
@@ -172,7 +171,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
       else {
         final int finalStart = whiteSpaceStart;
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, editor == null ? null : editor.getProject()) {
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, activeEditor == null ? null : activeEditor.getProject()) {
           public void run() {
             CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
               public void run() {
@@ -185,8 +184,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
 
-    if (!ShutDownTracker.isShutdownHookRunning() && editor != null) {
-      editor.getCaretModel().moveToVisualPosition(visualCaret);
+    if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
+      activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
     }
     return !markAsNeedsStrippingLater;
   }

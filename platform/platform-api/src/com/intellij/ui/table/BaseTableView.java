@@ -84,7 +84,10 @@ public class BaseTableView extends Table {
     }
     index = 0;
     for (final String columnIndex : columnIndices) {
-      columnModel.moveColumn(indexbyModelIndex(columnModel, Integer.parseInt(columnIndex)), index);
+      final int modelColumnIndex = indexbyModelIndex(columnModel, Integer.parseInt(columnIndex));
+      if (modelColumnIndex > 0 && modelColumnIndex < columnModel.getColumnCount()) {
+        columnModel.moveColumn(modelColumnIndex, index);
+      }
       index++;
     }
     for (int i = 0; i < columnIndices.size(); i++) {

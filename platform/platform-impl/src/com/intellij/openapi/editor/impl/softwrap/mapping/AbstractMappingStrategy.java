@@ -171,7 +171,7 @@ abstract class AbstractMappingStrategy<T> implements MappingStrategy<T> {
         collapsedSymbolsWidthInColumns = foldingData.getCollapsedSymbolsWidthInColumns();
       }
       else {
-        assert false;
+        assert false : String.format("Problem fold region: %s. Soft wraps cache: %s", foldRegion, myCache);
       }
     }
     else {

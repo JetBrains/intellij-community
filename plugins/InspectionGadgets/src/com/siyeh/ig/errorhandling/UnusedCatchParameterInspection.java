@@ -85,7 +85,6 @@ public class UnusedCatchParameterInspection extends BaseInspection {
 
     private static class UnusedCatchParameterFix extends InspectionGadgetsFix {
 
-        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(

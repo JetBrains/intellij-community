@@ -16,11 +16,14 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +35,12 @@ import java.util.List;
  * @author peter
  */
 public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHomeConfigurable.SdkHomeBean> {
+  private final PsiModificationTrackerImpl myTracker;
   private SdkHomeConfigurable.SdkHomeBean mySdkPath;
-  private volatile VirtualFile mySdkHome;
-  private volatile List<VirtualFile> myClassRoots;
+
+  protected SdkHomeSettings(Project project) {
+    myTracker = (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
+  }
 
   public SdkHomeConfigurable.SdkHomeBean getState() {
     return mySdkPath;
@@ -42,16 +48,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
 
   public void loadState(SdkHomeConfigurable.SdkHomeBean state) {
     mySdkPath = state;
-    myClassRoots = null;
-    mySdkHome = null;
-  }
-
-  private synchronized void calculateRoots() {
-    if (myClassRoots != null) {
-      return;
-    }
-    mySdkHome = calcHome(mySdkPath);
-    myClassRoots = calcRoots(mySdkHome);
+    myTracker.incCounter();
   }
 
   @Nullable
@@ -70,17 +67,11 @@ public abstract class SdkHomeSettings implements PersistentStateComponent<SdkHom
 
   @Nullable
   public VirtualFile getSdkHome() {
-    if (myClassRoots == null) {
-      calculateRoots();
-    }
-    return mySdkHome;
+    return calcHome(mySdkPath);
   }
 
   public List<VirtualFile> getClassRoots() {
-    if (myClassRoots == null) {
-      calculateRoots();
-    }
-    return myClassRoots;
+    return calcRoots(getSdkHome());
   }
 
   private static List<VirtualFile> calcRoots(@Nullable VirtualFile home) {

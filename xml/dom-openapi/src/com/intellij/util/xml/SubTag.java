@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.util.xml;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
 /**
  * Annotates DOM attribute children getters, that should return {@link DomElement}.
@@ -39,7 +39,7 @@ public @interface SubTag {
 
   /**
    * @return for methods returning {@link com.intellij.util.xml.GenericDomValue}<{@link Boolean}>, defines, whether the Boolean.TRUE should
-   * correspond just to empty tag existence, and Boolean.FALSE - to unexistence. {@link #index()} should be always 0 in such a case.
+   * correspond just to empty tag existence, and Boolean.FALSE - to non-existence. {@link #index()} should be always 0 in such a case.
    */
   boolean indicator() default false;
 }

@@ -17,7 +17,7 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.*;
@@ -29,7 +29,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.*;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChannel;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -220,7 +223,7 @@ public class IdeaApplication {
   private void loadProject() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      project = ProjectUtil.openOrImport(myArgs[0], null, false);
+      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs));
     }
 
     final MessageBus bus = ApplicationManager.getApplication().getMessageBus();

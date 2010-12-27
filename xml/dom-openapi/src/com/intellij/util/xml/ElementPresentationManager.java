@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.util.xml;
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -79,6 +78,10 @@ public abstract class ElementPresentationManager {
     return createVariants(elements, namer, 0);
   }
 
+  /**
+   * Use {@link com.intellij.codeInsight.lookup.LookupElementBuilder}
+   */
+  @Deprecated
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   @NotNull
@@ -99,12 +102,12 @@ public abstract class ElementPresentationManager {
     });
   }
 
+  /** Use extension point {@code com.intellij.typeName} for static names. */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 
-  public static void unregisterNameProvider(Function<Object, String> function) { ourNameProviders.remove(function); }
-
+  /** Use extension point {@code com.intellij.typeIcon} instead. */
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 

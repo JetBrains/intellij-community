@@ -26,7 +26,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
@@ -57,7 +56,8 @@ public class TestNGEntryPoint extends EntryPoint {
   public boolean isEntryPoint(PsiElement psiElement) {
     if (ADD_TESTNG_TO_ENTRIES) {
       if (psiElement instanceof PsiModifierListOwner) {
-        return TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false) || (psiElement instanceof PsiMethod && TestNGUtil.hasConfig((PsiModifierListOwner)psiElement));
+        if (TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false)) return true;
+        return TestNGUtil.hasConfig((PsiModifierListOwner)psiElement);
       }
     }
     return false;

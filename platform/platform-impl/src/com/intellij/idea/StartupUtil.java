@@ -121,9 +121,9 @@ public class StartupUtil {
       ourLock = new SocketLock();
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(false), args);
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(false), true, args);
     if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
-      activateStatus = ourLock.lock(PathManager.getSystemPath());
+      activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
     }
 
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {

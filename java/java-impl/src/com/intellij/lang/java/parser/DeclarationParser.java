@@ -363,7 +363,7 @@ public class DeclarationParser {
   }
 
   @NotNull
-  private static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
+  public static Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
     return parseModifierList(builder, ElementType.MODIFIER_BIT_SET);
   }
 
@@ -782,7 +782,7 @@ public class DeclarationParser {
   }
 
   @NotNull
-  private static PsiBuilder.Marker parseAnnotationValue(final PsiBuilder builder) {
+  public static PsiBuilder.Marker parseAnnotationValue(final PsiBuilder builder) {
     PsiBuilder.Marker result;
 
     final IElementType tokenType = builder.getTokenType();

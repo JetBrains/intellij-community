@@ -765,9 +765,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           if (identifier != null) {
             String name = identifier.getText();
             if (name != null) {
-              name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-              String[] names = getSuggestionsByName(name, variableKind, false);
-              return new NamesByExprInfo(name, names);
+              if (TypeConversionUtil.areTypesAssignmentCompatible(parms[index].getType(), expr)) {
+                name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+                String[] names = getSuggestionsByName(name, variableKind, false);
+                return new NamesByExprInfo(name, names);
+              }
             }
           }
         }

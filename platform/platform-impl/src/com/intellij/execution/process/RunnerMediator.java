@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -33,6 +34,7 @@ public class RunnerMediator {
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
+  private static final String STANDARD_RUNNERW = "runnerw.exe";
 
   /**
    * Creates default runner mediator
@@ -84,10 +86,17 @@ public class RunnerMediator {
     return new CustomDestroyProcessHandler(process, commandLine);
   }
 
-
+  @Nullable
   private String getRunnerPath() {
-    if (File.separatorChar == '\\') {
-      return "runnerw.exe";
+    if (isWindows()) {
+      final String path = System.getenv("IDEA_RUNNERW");
+      if (path != null && new File(path).exists()) {
+        return path;
+      }
+      if (new File(STANDARD_RUNNERW).exists()) {
+        return STANDARD_RUNNERW;
+      }
+      return null;
     }
     else {
       throw new IllegalStateException("There is no need of runner under unix based OS");
@@ -95,8 +104,11 @@ public class RunnerMediator {
   }
 
   private void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
-    commandLine.getParametersList().addAt(0, commandLine.getExePath());
-    commandLine.setExePath(getRunnerPath());
+    final String path = getRunnerPath();
+    if (path != null) {
+      commandLine.getParametersList().addAt(0, commandLine.getExePath());
+      commandLine.setExePath(path);
+    }
   }
 
   public static boolean isUnix() {

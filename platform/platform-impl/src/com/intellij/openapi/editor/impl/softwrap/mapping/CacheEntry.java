@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -218,7 +219,8 @@ class CacheEntry implements Comparable<CacheEntry>, Cloneable {
 
   @Override
   public String toString() {
-    return "visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset;
+    return "visual line: " + visualLine + ", offsets: " + startOffset + "-" + endOffset + ", fold regions: " 
+           + Arrays.toString(myFoldingData.getValues());
   }
 
   @Override

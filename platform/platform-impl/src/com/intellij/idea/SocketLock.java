@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
@@ -77,13 +78,13 @@ public class SocketLock {
     }
   }
 
-  public synchronized ActivateStatus lock(String path, String... args) {
+  public synchronized ActivateStatus lock(String path, boolean markPort, String... args) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: lock(path='" + path + "')");
     }
 
     ActivateStatus status = ActivateStatus.NO_INSTANCE;
-    acquireSocket();
+    int port = acquireSocket();
     if (mySocket == null) {
       if (!myIsDialogShown) {
         final String productName = ApplicationNamesInfo.getInstance().getProductName();
@@ -102,6 +103,15 @@ public class SocketLock {
       return status;
     }
 
+    if (markPort && port != -1) {
+      File portMarker = new File(path, "port");
+      try {
+        FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes());
+      }
+      catch (IOException e) {
+        FileUtil.asyncDelete(portMarker);
+      }
+    }
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
@@ -128,14 +138,14 @@ public class SocketLock {
 
     try {
       try {
-        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getLocalHost());
+        ServerSocket serverSocket = new ServerSocket(portNumber, 50, InetAddress.getByName("127.0.0.1"));
         serverSocket.close();
         return ActivateStatus.NO_INSTANCE;
       }
       catch (IOException e) {
       }
 
-      Socket socket = new Socket(InetAddress.getLocalHost(), portNumber);
+      Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), portNumber);
       socket.setSoTimeout(300);
 
       DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -172,14 +182,17 @@ public class SocketLock {
     return ActivateStatus.NO_INSTANCE;
   }
 
-  private void acquireSocket() {
-    if (mySocket != null) return;
+  private int acquireSocket() {
+    if (mySocket != null) return -1;
+
+    int port = -1;
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
       try {
         if (isPortForbidden(i)) continue;
 
-        mySocket = new ServerSocket(i, 50, InetAddress.getLocalHost());
+        mySocket = new ServerSocket(i, 50, InetAddress.getByName("127.0.0.1"));
+        port = i;
         break;
       }
       catch (IOException e) {
@@ -191,6 +204,7 @@ public class SocketLock {
     final Thread thread = new Thread(new MyRunnable(), LOCK_THREAD_NAME);
     thread.setPriority(Thread.MIN_PRIORITY);
     thread.start();
+    return port;
   }
 
   private class MyRunnable implements Runnable {

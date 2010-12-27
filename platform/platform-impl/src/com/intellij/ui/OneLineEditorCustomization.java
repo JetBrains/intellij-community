@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package com.intellij.ui;
+
+import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * @author Kirill Likhodedov
  */
-public class GitSingleUserTestCase extends GitTestCase {
-  public static final String CONFIG_USER_NAME = "John Smith";
-  public static final String CONFIG_USER_EMAIL = "john.smith@email.com";
-
-  protected GitTestRepository myRepo;
-
-  @Override
-  protected GitTestRepository initRepositories() throws Exception {
-    myRepo = GitTestRepository.create(this);
-    myRepo.setName(CONFIG_USER_NAME, CONFIG_USER_EMAIL);
-    return myRepo;
+public class OneLineEditorCustomization  implements EditorCustomization {
+  public Set<Feature> getSupportedFeatures() {
+    return EnumSet.of(Feature.ONE_LINE);
   }
 
-  @Override
-  protected void tearDownRepositories() throws Exception {
-    myRepo.getDirFixture().tearDown();
+  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+    if (Feature.ONE_LINE.equals(feature)) {
+      editor.setOneLineMode(true);
+    }
   }
 }

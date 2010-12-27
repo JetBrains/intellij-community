@@ -23,11 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResult;
+import git4idea.commands.*;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +111,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
    */
   public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
     GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.CLONE);
-    if (VERBOSE_CLONE_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version())) {
+    if (VERBOSE_CLONE_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("-v");
     }
     if (originName != null && originName.length() > 0) {

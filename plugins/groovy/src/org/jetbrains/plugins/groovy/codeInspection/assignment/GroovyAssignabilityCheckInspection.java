@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -336,6 +337,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     private boolean checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place) {
       final PsiElement element = methodResolveResult.getElement();
       if (!(element instanceof PsiMethod)) return true;
+      if (element instanceof GrBuilderMethod) return true;
 
       final PsiMethod method = (PsiMethod)element;
       PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);

@@ -47,7 +47,9 @@ public abstract class OrderEnumerationHandler {
     return true;
   }
 
-  public boolean addCustomOutput(@NotNull ModuleOrderEntry orderEntry,
+  public boolean addCustomOutput(@NotNull Module forModule,
+                                 @NotNull ModuleRootModel orderEntryRootModel,
+                                 OrderRootType type,
                                  boolean productionOnly,
                                  boolean runtimeOnly,
                                  boolean compileOnly,

@@ -1912,7 +1912,12 @@ public class FileBasedIndex implements ApplicationComponent {
       if (project.isDisposed()) {
         return;
       }
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider, project)) {
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
+        if (visitedRoots.add(root)) {
+          iterateRecursively(root, processor, indicator);
+        }
+      }
+      for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
         if (visitedRoots.add(root)) {
           iterateRecursively(root, processor, indicator);
         }

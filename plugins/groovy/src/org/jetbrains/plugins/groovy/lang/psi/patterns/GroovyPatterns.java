@@ -68,15 +68,20 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
         if (!names.accepts(refExpression.getName(), context)) return false;
 
-        PsiElement element = refExpression.resolve();
+        for (GroovyResolveResult result : refExpression.multiResolve(false)) {
+          PsiElement element = result.getElement();
 
-        if (!(element instanceof PsiMethod)) return false;
+          if (element instanceof PsiMethod) {
+            PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+            if (containingClass != null) {
+              if (InheritanceUtil.isInheritor(containingClass, className)) {
+                return true;
+              }
+            }
+          }
+        }
 
-        PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-
-        if (containingClass == null) return false;
-
-        return InheritanceUtil.isInheritor(containingClass, className);
+        return false;
       }
     });
   }

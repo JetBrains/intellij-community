@@ -17,6 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
@@ -47,6 +49,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
 
     LightPlatformTestCase.initApplication(new MyDataProvider());
     LightPlatformTestCase.doSetup(myProjectDescriptor, new LocalInspectionTool[0], null);
+    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
     storeSettings();
   }
 
@@ -73,6 +76,7 @@ class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixtu
     checkForSettingsDamage();
     LightPlatformTestCase.doTearDown(getProject(), LightPlatformTestCase.getApplication(), true);
     super.tearDown();
+    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
   }
 
   @Override

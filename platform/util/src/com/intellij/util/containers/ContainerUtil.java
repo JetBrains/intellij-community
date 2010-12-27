@@ -827,7 +827,7 @@ public class ContainerUtil {
 
   @NotNull
   public static <T> List<T> createMaybeSingletonList(@Nullable T element) {
-    return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
+    return element == null ? Collections.<T>emptyList() : Collections.singletonList(element);
   }
 
   public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, final V defaultValue) {
@@ -955,7 +955,7 @@ public class ContainerUtil {
     if ((s = d - c) > 1) quickSort(x, comparator, n - s, s);
   }
 
-  /**
+  /*
    * Returns the index of the median of the three indexed longs.
    */
   private static <T> int med3(@NotNull List<T> x, Comparator<? super T> comparator, int a, int b, int c) {
@@ -967,7 +967,7 @@ public class ContainerUtil {
                                                         : comparator.compare(x.get(c), x.get(a)) < 0 ? c : a;
   }
 
-  /**
+  /*
    * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
    */
   private static <T> void vecswap(List<T> x, int a, int b, int n) {

@@ -24,43 +24,25 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckboxTreeBase;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Processor;
+import com.intellij.ui.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTree;
-import java.awt.Color;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This dialog allows converting the specified files before committing them.
@@ -271,59 +253,31 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * @throws VcsException if there is problem with running git
    */
   private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
-    boolean stdin = CHECK_ATTR_STDIN_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).version());
-    stdin = false;
     for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
       final VirtualFile r = e.getKey();
-      GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);
-      if (stdin) {
-        h.addParameters("--stdin", "-z");
-      }
-      h.addParameters("crlf");
-      h.setSilent(true);
-      h.setNoSSH(true);
+
       final HashMap<String, VirtualFile> filesToCheck = new HashMap<String, VirtualFile>();
       Set<VirtualFile> fileSet = e.getValue();
       for (VirtualFile file : fileSet) {
         filesToCheck.put(GitUtil.relativePath(r, file), file);
       }
-      if (stdin) {
-        h.setInputProcessor(new Processor<OutputStream>() {
-          public boolean process(OutputStream outputStream) {
-            try {
-              OutputStreamWriter out = new OutputStreamWriter(outputStream, GitUtil.UTF8_CHARSET);
-              try {
-                for (String file : filesToCheck.keySet()) {
-                  out.write(file);
-                  out.write("\u0000");
-                }
-              }
-              finally {
-                out.close();
-              }
-            }
-            catch (IOException ex) {
-              try {
-                outputStream.close();
-              }
-              catch (IOException ioe) {
-                // ignore exception
-              }
-            }
-            return true;
-          }
-        });
-      }
-      else {
+
+      final List<List<String>> chunkedFiles = GitFileUtils.chunkFiles(r, filesToCheck.values());
+      for (List<String> list : chunkedFiles) {
+        GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);
+        h.addParameters("crlf");
+        h.setSilent(true);
+        h.setNoSSH(true);
         h.endOptions();
-        h.addRelativeFiles(filesToCheck.values());
-      }
-      StringScanner output = new StringScanner(h.run());
-      String unsetIndicator = ": crlf: unset";
-      while (output.hasMoreData()) {
-        String l = output.line();
-        if (l.endsWith(unsetIndicator)) {
-          fileSet.remove(filesToCheck.get(GitUtil.unescapePath(l.substring(0, l.length() - unsetIndicator.length()))));
+        h.addParameters(list);
+        StringScanner output = new StringScanner(h.run());
+        String unsetIndicator = ": crlf: unset";
+        
+        while (output.hasMoreData()) {
+          String l = output.line();
+          if (l.endsWith(unsetIndicator)) {
+            fileSet.remove(filesToCheck.get(GitUtil.unescapePath(l.substring(0, l.length() - unsetIndicator.length()))));
+          }
         }
       }
     }

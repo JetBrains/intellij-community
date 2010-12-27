@@ -47,7 +47,6 @@ import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.TestNG;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -94,7 +93,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton addListener;
   private JList listenersTable;
   private JButton removeListener;
-  private LabeledComponent<JComboBox> annotationType;
   private JCheckBox myUseDefaultReportersCheckBox;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private ArrayList<Map.Entry> propertiesList;
@@ -232,9 +230,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     listenerModel.setListenerList(data.TEST_LISTENERS);
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
 
-
-    annotationType.getComponent().setSelectedItem(data.ANNOTATION_TYPE);
-  }
+ }
 
   @Override
   public void applyEditorTo(TestNGConfiguration config) {
@@ -254,7 +250,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();
 
-    data.ANNOTATION_TYPE = (String) annotationType.getComponent().getSelectedItem();
     data.TEST_PROPERTIES.clear();
     for (Map.Entry<String, String> entry : propertiesList) {
       data.TEST_PROPERTIES.put(entry.getKey(), entry.getValue());
@@ -305,8 +300,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     packageField.setEnabled(true);
     packageField.setComponent(new TextFieldWithBrowseButton());
 
-    JComboBox annotationTypeCombo = new JComboBox(new Object[] {"", TestNG.JDK_ANNOTATION_TYPE, TestNG.JAVADOC_ANNOTATION_TYPE});
-    annotationType.setComponent(annotationTypeCombo);
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);

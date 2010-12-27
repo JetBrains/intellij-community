@@ -19,7 +19,7 @@ package git4idea.tests;
  * 
  * @author Kirill Likhodedov
  */
-public class GitCollaborativeTestCase extends GitTestCase {
+public class GitCollaborativeTest extends GitTest {
   public static final String MAIN_USER_NAME = "John Smith";
   public static final String MAIN_USER_EMAIL = "john.smith@email.com";
   public static final String BROTHER_USER_NAME = "Bob Doe";

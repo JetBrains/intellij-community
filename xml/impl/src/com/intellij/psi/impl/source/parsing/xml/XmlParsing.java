@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
@@ -25,17 +21,21 @@ import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlElementType;
-import static com.intellij.psi.xml.XmlElementType.*;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.xml.XmlElementType.*;
 
+/*
+ * @author max
+ */
 public class XmlParsing {
+  private static final int BALANCING_DEPTH_THRESHOLD = 1000;
+
   private final PsiBuilder myBuilder;
   private final Stack<String> myTagNamesStack = new Stack<String>();
-  private static final int BALANCING_DEPTH_THRESHOULD = 1000;
 
   public XmlParsing(final PsiBuilder builder) {
     myBuilder = builder;
@@ -79,7 +79,6 @@ public class XmlParsing {
 
     if (error != null) {
       error.error(XmlErrorMessages.message("top.level.element.is.not.completed"));
-      error = null;
     }
 
     if (rootTagCount == 0) {
@@ -220,7 +219,7 @@ public class XmlParsing {
       return null;
     }
 
-    if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOULD) {
+    if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
       error(XmlErrorMessages.message("way.too.unbalanced"));
       tag.done(XmlElementType.XML_TAG);
       return null;
@@ -469,6 +468,7 @@ public class XmlParsing {
     pi.done(XML_PROCESSING_INSTRUCTION);
   }
 
+  @Nullable
   protected final IElementType token() {
     return myBuilder.getTokenType();
   }

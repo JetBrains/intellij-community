@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobUtil;
@@ -40,6 +41,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -102,7 +105,6 @@ public abstract class PassExecutorService implements Disposable {
     // null keys are ok
     Map<Document, List<FileEditor>> documentToEditors = new HashMap<Document, List<FileEditor>>();
     Map<FileEditor, List<TextEditorHighlightingPass>> textPasses = new HashMap<FileEditor, List<TextEditorHighlightingPass>>(passesMap.size());
-    final boolean dumb = DumbService.getInstance(myProject).isDumb();
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
       FileEditor fileEditor = entry.getKey();
       HighlightingPass[] passes = entry.getValue();
@@ -115,9 +117,6 @@ public abstract class PassExecutorService implements Disposable {
 
       for (int i = 0; i < passes.length; i++) {
         final HighlightingPass pass = passes[i];
-        if (dumb && !DumbService.isDumbAware(pass)) {
-          continue;
-        }
 
         TextEditorHighlightingPass textEditorHighlightingPass;
         if (pass instanceof TextEditorHighlightingPass) {
@@ -375,10 +374,10 @@ public abstract class PassExecutorService implements Disposable {
     }
   }
 
-  protected void applyInformationToEditors(@NotNull final List<FileEditor> fileEditors,
-                                           @NotNull final TextEditorHighlightingPass pass,
-                                           @NotNull final DaemonProgressIndicator updateProgress,
-                                           @NotNull final AtomicInteger threadsToStartCountdown) {
+  private void applyInformationToEditors(@NotNull final List<FileEditor> fileEditors,
+                                         @NotNull final TextEditorHighlightingPass pass,
+                                         @NotNull final DaemonProgressIndicator updateProgress,
+                                         @NotNull final AtomicInteger threadsToStartCountdown) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       public void run() {

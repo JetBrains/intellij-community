@@ -28,7 +28,7 @@ import java.util.Collection;
  */
 public class RenameAliasImportedFieldProcessor extends RenameJavaVariableProcessor{
   @Override
-  public boolean canProcessElement(PsiElement element) {
+  public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof GrField && !((GrField)element).isProperty();
   }
 

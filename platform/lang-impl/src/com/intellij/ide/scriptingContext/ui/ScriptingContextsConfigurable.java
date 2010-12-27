@@ -16,6 +16,7 @@
 package com.intellij.ide.scriptingContext.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.scriptingContext.LangScriptingContextConfigurable;
 import com.intellij.ide.scriptingContext.ScriptingLibraryMappings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
@@ -32,14 +33,16 @@ import javax.swing.*;
 public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<ScriptingLibraryTable.LibraryModel> {
 
   private final ScriptingLibraryMappings myScriptingLibraryMappings;
+  private final LangScriptingContextConfigurable myParent;
 
-  public ScriptingContextsConfigurable(final Project project, final ScriptingLibraryMappings mappings) {
+  public ScriptingContextsConfigurable(final LangScriptingContextConfigurable parent, final Project project, final ScriptingLibraryMappings mappings) {
     super(project, ScriptingLibraryTable.LibraryModel.class, mappings,
           IdeBundle.message("scripting.lib.usageScope.caption"),
           IdeBundle.message("scripting.lib.usageScope.tableTitle"),
           IdeBundle.message("scripting.lib.usageScope.override.question"),
           IdeBundle.message("scripting.lib.usageScope.override.title"));
     myScriptingLibraryMappings = mappings;
+    myParent = parent;
   }
 
   public void resetMappings() {
@@ -81,6 +84,6 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
 
   @Override
   public String getHelpTopic() {
-    return null;
+    return myParent.getUsageScopeHelpTopic();
   }
 }

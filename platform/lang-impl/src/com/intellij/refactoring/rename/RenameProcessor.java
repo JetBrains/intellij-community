@@ -114,7 +114,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super.doRun();
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull final PsiElement element, final String newName, final LinkedHashMap<PsiElement, String> allRenames) {
     final List<RenamePsiElementProcessor> processors = RenamePsiElementProcessor.allForElement(element);
     myForceShowPreview = false;
     for (RenamePsiElementProcessor processor : processors) {
@@ -405,9 +405,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected void prepareTestRun() {
-    if (!PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement)) return;
+    String s = PsiElementRenameHandler.renameabilityStatus(myProject, myPrimaryElement);
+    if (!StringUtil.isEmpty(s)) {
+      if (inTestsProduceExceptionOnBadRenameabilityStatus()) {
+        PsiElementRenameHandler.showErrorMessage(myProject, null, s);
+      }
+      return;
+    }
     prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
   }
+
+  protected boolean inTestsProduceExceptionOnBadRenameabilityStatus() { return false; }
 
   public Collection<String> getNewNames() {
     return myAllRenames.values();

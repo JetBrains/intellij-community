@@ -97,7 +97,10 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
       if (flavor != null) {
-        indentData = (IndentTransferableData)content.getTransferData(flavor);
+        final Object transferData = content.getTransferData(flavor);
+        if (transferData instanceof IndentTransferableData) {
+          indentData = (IndentTransferableData)transferData;
+        }
       }
     }
     catch (UnsupportedFlavorException e) {

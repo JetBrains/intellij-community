@@ -19,27 +19,40 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import org.testng.remote.strprotocol.*;
 
+import java.net.SocketTimeoutException;
+
 /**
  * The client side of the RemoteTestRunner. Handles the marshaling of the different messages.
  */
 public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
 {
 
-    public synchronized void startListening(IRemoteSuiteListener suiteListener,
-                                            IRemoteTestListener testListener,
-                                            int port) {
-        ServerConnection srvConnection = new ServerConnection(port)
-        {
-            @Override
-            protected void handleThrowable(Throwable cause) {
-                cause.printStackTrace();
-            }
-        };
+  private TestNGRemoteListener myListener;
+  private int myPort;
 
-        startListening(new IRemoteSuiteListener[] {suiteListener},
-                       new IRemoteTestListener[] {testListener},
-                       srvConnection
-        );
+  public synchronized void startListening() {
+      final StringMessageSender messageSender = new StringMessageSender("localhost", myPort);
+      final ServerConnection srvConnection = new ServerConnection(messageSender) {
+        @Override
+        protected void handleThrowable(Throwable cause) {
+          cause.printStackTrace();
+        }
+      };
+      new Thread() {
+        @Override
+        public void run() {
+          try {
+            messageSender.initReceiver();
+          }
+          catch (SocketTimeoutException e) {
+            e.printStackTrace();
+          }
+          startListening(new IRemoteSuiteListener[]{myListener},
+                         new IRemoteTestListener[]{myListener},
+                         srvConnection
+          );
+        }
+      }.start();
     }
 
     @Override
@@ -113,4 +126,10 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
             }
         }, ModalityState.NON_MODAL);
     }
+
+  public void prepareListening(TestNGRemoteListener listener, int port) {
+    myListener = listener;
+    myPort = port;
+  }
+
 }

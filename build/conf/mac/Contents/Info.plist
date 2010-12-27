@@ -34,7 +34,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
-    <string>IntelliJ IDEA @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-2009</string>
+    <string>IntelliJ IDEA @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>
     <string>@@version@@</string>
     <key>CFBundleVersion</key>

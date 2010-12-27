@@ -16,9 +16,12 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.Enumerator;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -28,6 +31,13 @@ import java.util.ArrayList;
 public class Diff {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.diff.Diff");
 
+  @Nullable
+  public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) {
+    final String[] strings1 = LineTokenizer.tokenize(before, false);
+    final String[] strings2 = LineTokenizer.tokenize(after, false);
+    return buildChanges(strings1, strings2);
+  }
+  
   public static <T> Change buildChanges(T[] objects1, T[] objects2) {
     // Old variant of enumerator worked incorrectly with null values.
     // This check is to ensure that the corrected version does not introduce bugs.
@@ -46,6 +56,48 @@ public class Diff {
     return builder.getFirstChange();
   }
 
+  /**
+   * Tries to translate given line that pointed to the text before change to the line that points to the same text after the change.
+   *
+   * @param before    text before change
+   * @param after     text after change
+   * @param line      target line before change
+   * @return          translated line if the processing is ok; negative value otherwise
+   */
+  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) {
+    Change change = buildChanges(before, after);
+    if (change == null) {
+      return -1;
+    }
+    return translateLine(change, line);
+  }
+
+  /**
+   * Tries to translate given line that pointed to the text before change to the line that points to the same text after the change.
+   * 
+   * @param change    target change
+   * @param line      target line before change
+   * @return          translated line if the processing is ok; negative value otherwise
+   */
+  public static int translateLine(@NotNull Change change, int line) {
+    int result = line;
+
+    Change currentChange = change;
+    
+    while (currentChange != null) {
+      if (line < currentChange.line0) break;
+      if (line >= currentChange.line0 + currentChange.deleted) {
+        result += currentChange.inserted - currentChange.deleted;
+      } else {
+        return -1;
+      }
+
+      currentChange = currentChange.link;
+    }
+
+    return result;
+  }
+  
   public static class Change {
     // todo remove. Return lists instead.
     /**

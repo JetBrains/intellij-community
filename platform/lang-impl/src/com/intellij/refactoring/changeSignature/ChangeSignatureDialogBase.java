@@ -71,10 +71,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   private JTextArea mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private VisibilityPanelBase myVisibilityPanel;
+  protected VisibilityPanelBase myVisibilityPanel;
   protected PsiCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
-  private JButton myPropagateParamChangesButton;
+  protected JButton myPropagateParamChangesButton;
   protected Set<M> myMethodsToPropagateParameters = null;
 
   private Tree myParameterPropagationTreeToReuse;

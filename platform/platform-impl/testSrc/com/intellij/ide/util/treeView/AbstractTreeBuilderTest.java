@@ -1,8 +1,10 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
@@ -519,11 +521,17 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     @Override
     @NotNull
       public NodeDescriptor doCreateDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
-      return new NodeDescriptor(null, parentDescriptor) {
+      return new PresentableNodeDescriptor(null, parentDescriptor) {
         @Override
-        public boolean update() {
+        protected void update(PresentationData presentation) {
           onElementAction("update", (NodeElement)element);
-          return true;
+          presentation.clear();
+          presentation.addText(new ColoredFragment(getElement().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES));
+        }
+
+        @Override
+        public PresentableNodeDescriptor getChildToHighlightAt(int index) {
+          return null;
         }
 
         @Override
@@ -533,7 +541,12 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
         @Override
         public String toString() {
-          return getElement().toString();
+          List<ColoredFragment> coloredText = getPresentation().getColoredText();
+          StringBuffer result = new StringBuffer();
+          for (ColoredFragment each : coloredText) {
+            result.append(each.getText());
+          }
+          return result.toString();
         }
       };
     }

@@ -147,7 +147,7 @@ public class ScriptingLibraryManager {
   }
 
   @Nullable
-  public Library createSourceLibrary(String libName, String sourceUrl, LibraryLevel libraryLevel) {
+  public Library createSourceLibrary(String libName, String sourceUrl, String docUrl, LibraryLevel libraryLevel) {
     LibraryTable libraryTable = getLibraryTable(myProject, libraryLevel);
     if (libraryTable == null) return null;
     LibraryTable.ModifiableModel libTableModel = libraryTable.getModifiableModel();
@@ -156,6 +156,9 @@ public class ScriptingLibraryManager {
       if (library != null) {
         Library.ModifiableModel libModel = library.getModifiableModel();
         libModel.addRoot(sourceUrl, OrderRootType.SOURCES);
+        if (docUrl != null && docUrl.trim().length() > 0) {
+          libModel.addRoot(docUrl, OrderRootType.DOCUMENTATION);
+        }
         libModel.commit();
         libTableModel.commit();
         return library;

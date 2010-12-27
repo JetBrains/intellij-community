@@ -88,20 +88,23 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     });
 
     final GroupByScopeAction groupByScopeAction = new GroupByScopeAction(impl);
+
+    final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
+    groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component);
+    impl.scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        groupByPackageAction.unregisterCustomShortcutSet(component);
+      }
+    });
+
     if(view.getPresentation().isCodeUsages()) {
       final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
       groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component);
-
-      final GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
-      groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component);
-
       impl.scheduleDisposeOnClose(new Disposable() {
         public void dispose() {
           groupByUsageTypeAction.unregisterCustomShortcutSet(component);
-          groupByPackageAction.unregisterCustomShortcutSet(component);
         }
       });
-
       return new AnAction[] {
         groupByUsageTypeAction,
         groupByScopeAction,
@@ -114,6 +117,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       return new AnAction[] {
         groupByScopeAction,
         groupByModuleTypeAction,
+        groupByPackageAction,
         groupByFileStructureAction,
       };
     }

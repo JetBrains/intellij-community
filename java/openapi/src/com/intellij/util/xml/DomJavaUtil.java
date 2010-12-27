@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +57,11 @@ public class DomJavaUtil {
     return aClass;
   }
 
+  @Nullable
   public static PsiClass findClass(String name, @NotNull DomElement element) {
     XmlElement xmlElement = element.getXmlElement();
     if (xmlElement != null) {
-      return findClass(name, (XmlFile)xmlElement.getContainingFile(), element.getModule(), element.getResolveScope());
+      return findClass(name, xmlElement.getContainingFile(), element.getModule(), element.getResolveScope());
     }
     return null;
   }
