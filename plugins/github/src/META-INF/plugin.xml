@@ -21,7 +21,7 @@
       <add-to-group group-id="Vcs.Import"/>
     </action>
     <action id="Github.Rebase" class="org.jetbrains.plugins.github.GithubRebaseAction">
-      <add-to-group group-id="VcsGlobalGroup"/>
+      <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
       <add-to-group group-id="EditorPopupMenu"/>

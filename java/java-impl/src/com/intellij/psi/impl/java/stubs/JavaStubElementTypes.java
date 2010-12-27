@@ -13,40 +13,122 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.impl.java.stubs;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.JavaFileElementType;
+import com.intellij.psi.impl.source.tree.java.*;
+import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * @author max
  */
-package com.intellij.psi.impl.java.stubs;
-
-import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
-
 public interface JavaStubElementTypes {
-  JavaClassElementType CLASS = new JavaClassElementType("CLASS");
-  JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS");
-  JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER");
-
   JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
-  JavaMethodElementType METHOD = new JavaMethodElementType("METHOD");
-  JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD");
-  JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD");
-  JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT");
-
   JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
-  JavaClassReferenceListElementType EXTENDS_LIST = new JavaClassReferenceListElementType("EXTENDS_LIST");
-  JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST");
-  JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST");
-  JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST");
-
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();
   JavaTypeParameterListElementType TYPE_PARAMETER_LIST = new JavaTypeParameterListElementType();
   JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
-  JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT");
-  JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT");
+
+  JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ClassElement(this);
+    }
+  };
+  JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new AnonymousClassElement();
+    }
+  };
+  JavaClassElementType ENUM_CONSTANT_INITIALIZER = new JavaClassElementType("ENUM_CONSTANT_INITIALIZER") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new EnumConstantInitializerElement();
+    }
+  };
+
+  JavaMethodElementType METHOD = new JavaMethodElementType("METHOD") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new MethodElement();
+    }
+  };
+  JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new AnnotationMethodElement();
+    }
+  };
+
+  JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new FieldElement();
+    }
+  };
+  JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new EnumConstantElement();
+    }
+  };
+
+  JavaClassReferenceListElementType EXTENDS_LIST = new JavaClassReferenceListElementType("EXTENDS_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ExtendsListElement();
+    }
+  };
+  JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ImplementsListElement();
+    }
+  };
+  JavaClassReferenceListElementType THROWS_LIST = new JavaClassReferenceListElementType("THROWS_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new PsiThrowsListImpl();
+    }
+  };
+  JavaClassReferenceListElementType EXTENDS_BOUND_LIST = new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new TypeParameterExtendsBoundsListElement();
+    }
+  };
+
+  JavaImportStatementElementType IMPORT_STATEMENT = new JavaImportStatementElementType("IMPORT_STATEMENT") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ImportStatementElement();
+    }
+  };
+  JavaImportStatementElementType IMPORT_STATIC_STATEMENT = new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ImportStaticStatementElement();
+    }
+  };
 
   IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }

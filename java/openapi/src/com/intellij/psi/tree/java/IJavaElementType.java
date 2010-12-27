@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 public class IJavaElementType extends IElementType {
   private final boolean myLeftBound;
 
-  public IJavaElementType(@NonNls String debugName) {
+  public IJavaElementType(@NonNls final String debugName) {
     this(debugName, false);
   }
 

@@ -155,28 +155,32 @@ public class AndroidApkBuilder {
 
     FileOutputStream fos = null;
     try {
-      String osKeyPath = DebugKeyProvider.getDefaultKeyStoreOsPath();
 
-      DebugKeyProvider provider = new DebugKeyProvider(osKeyPath, null, new DebugKeyProvider.IKeyGenOutput() {
-        public void err(String message) {
-          result.get(ERROR).add("Error during key creation: " + message);
-        }
+      String keyStoreOsPath = DebugKeyProvider.getDefaultKeyStoreOsPath();
+      DebugKeyProvider provider = createDebugKeyProvider(result, keyStoreOsPath);
 
-        public void out(String message) {
-          result.get(INFORMATION).add("Info message during key creation: " + message);
-        }
-      });
-      PrivateKey key = provider.getDebugKey();
       X509Certificate certificate = signed ? (X509Certificate)provider.getCertificate() : null;
 
-      if (key == null) {
-        result.get(ERROR).add(AndroidBundle.message("android.cannot.create.new.key.error"));
-        return result;
+      if (certificate != null && certificate.getNotAfter().compareTo(new Date()) < 0) {
+        // generate a new one
+        File keyStoreFile = new File(keyStoreOsPath);
+        if (keyStoreFile.exists()) {
+          keyStoreFile.delete();
+        }
+        provider = createDebugKeyProvider(result, keyStoreOsPath);
+        certificate = (X509Certificate)provider.getCertificate();
       }
 
       if (certificate != null && certificate.getNotAfter().compareTo(new Date()) < 0) {
         String date = DateFormatUtil.formatPrettyDateTime(certificate.getNotAfter());
-        result.get(ERROR).add(AndroidBundle.message("android.debug.certificate.expired.error", date));
+        result.get(ERROR).add(AndroidBundle.message("android.debug.certificate.expired.error", date, keyStoreOsPath));
+        return result;
+      }
+
+      PrivateKey key = provider.getDebugKey();
+
+      if (key == null) {
+        result.get(ERROR).add(AndroidBundle.message("android.cannot.create.new.key.error"));
         return result;
       }
 
@@ -257,6 +261,26 @@ public class AndroidApkBuilder {
       }
     }
     return result;
+  }
+
+  private static DebugKeyProvider createDebugKeyProvider(final Map<CompilerMessageCategory, List<String>> result, String path) throws
+                                                                                                                               KeyStoreException,
+                                                                                                                               NoSuchAlgorithmException,
+                                                                                                                               CertificateException,
+                                                                                                                               UnrecoverableEntryException,
+                                                                                                                               IOException,
+                                                                                                                               DebugKeyProvider.KeytoolException,
+                                                                                                                               AndroidLocation.AndroidLocationException {
+
+    return new DebugKeyProvider(path, null, new DebugKeyProvider.IKeyGenOutput() {
+      public void err(String message) {
+        result.get(ERROR).add("Error during key creation: " + message);
+      }
+
+      public void out(String message) {
+        result.get(INFORMATION).add("Info message during key creation: " + message);
+      }
+    });
   }
 
   private static void writeNativeLibraries(SignedJarBuilder builder, VirtualFile nativeLibsFolder, VirtualFile child) throws IOException {

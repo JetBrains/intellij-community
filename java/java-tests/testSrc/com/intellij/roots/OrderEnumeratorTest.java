@@ -9,9 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
+
 
 /**
  * @author nik
@@ -53,18 +55,31 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testModuleDependency() throws Exception {
     final Module dep = createModule("dep");
-    final VirtualFile srcRoot = addSourceRoot(dep, false);
-    final VirtualFile testRoot = addSourceRoot(dep, true);
-    final VirtualFile output = setModuleOutput(dep, false);
-    final VirtualFile testOutput = setModuleOutput(dep, true);
+    final VirtualFile depSrcRoot = addSourceRoot(dep, false);
+    final VirtualFile depTestRoot = addSourceRoot(dep, true);
+    final VirtualFile depOutput = setModuleOutput(dep, false);
+    final VirtualFile depTestOutput = setModuleOutput(dep, true);
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
     addModuleDependency(myModule, dep, DependencyScope.COMPILE, true);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk(), testOutput, output);
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), testOutput, output, getJDomJar());
-    assertSourceRoots(orderEntries(myModule), srcRoot, testRoot);
-    assertSourceRoots(orderEntries(myModule).recursively(), srcRoot, testRoot, getJDomSources());
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(), testOutput, output, getJDomJar());
+    final VirtualFile srcRoot = addSourceRoot(myModule, false);
+    final VirtualFile testRoot = addSourceRoot(myModule, true);
+    final VirtualFile output = setModuleOutput(myModule, false);
+    final VirtualFile testOutput = setModuleOutput(myModule, true);
+
+    assertClassRoots(orderEntries(myModule).withoutSdk(), testOutput, output, depTestOutput, depOutput);
+    assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), testOutput, output, depTestOutput, depOutput, getJDomJar());
+    assertSourceRoots(orderEntries(myModule), srcRoot, testRoot, depSrcRoot, depTestRoot);
+    assertSourceRoots(orderEntries(myModule).recursively(), srcRoot, testRoot, depSrcRoot, depTestRoot, getJDomSources());
+    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+                          output, depTestOutput, depOutput, getJDomJar());
+    assertEnumeratorRoots(orderEntries(myModule).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+                          depOutput, getJDomJar());
+
+    assertClassRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(),
+                     depTestOutput, depOutput, getJDomJar());
+    assertSourceRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(),
+                      depSrcRoot, depTestRoot, getJDomSources());
   }
 
   public void testModuleDependencyScope() throws Exception {
@@ -80,7 +95,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk(), getJDomJar());
     assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries().withoutSdk().productionOnly(), getJDomJar());
   }
-  
+
   public void testNotExportedLibrary() throws Exception {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
@@ -111,7 +126,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertRoots(orderEntries(myModule).classes().usingCache().getPathsList(), getRtJar(), getJDomJar());
     assertRoots(orderEntries(myModule).withoutSdk().classes().usingCache().getPathsList(), getJDomJar());
   }
-  
+
   public void testCachingUrls() throws Exception {
     final String[] urls = orderEntries(myModule).classes().usingCache().getUrls();
     assertOrderedEquals(urls, getRtJar().getUrl());
@@ -125,6 +140,32 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     addLibraryDependency(myModule, createJDomLibrary());
     assertOrderedEquals(orderEntries(myModule).classes().usingCache().getUrls(), getRtJar().getUrl(), getJDomJar().getUrl());
     assertOrderedEquals(orderEntries(myModule).sources().usingCache().getUrls(), getJDomSources().getUrl());
+  }
+
+  public void testProject() throws Exception {
+    addLibraryDependency(myModule, createJDomLibrary());
+
+    final VirtualFile srcRoot = addSourceRoot(myModule, false);
+    final VirtualFile testRoot = addSourceRoot(myModule, true);
+    final VirtualFile output = setModuleOutput(myModule, false);
+    final VirtualFile testOutput = setModuleOutput(myModule, true);
+
+    assertClassRoots(orderEntries(myProject).withoutSdk(), testOutput, output, getJDomJar());
+    assertSourceRoots(orderEntries(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
+  }
+
+  public void testModules() throws Exception {
+    addLibraryDependency(myModule, createJDomLibrary());
+
+    final VirtualFile srcRoot = addSourceRoot(myModule, false);
+    final VirtualFile testRoot = addSourceRoot(myModule, true);
+    final VirtualFile output = setModuleOutput(myModule, false);
+    final VirtualFile testOutput = setModuleOutput(myModule, true);
+
+    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries(Arrays.asList(myModule)).withoutSdk(),
+                     testOutput, output, getJDomJar());
+    assertSourceRoots(ProjectRootManager.getInstance(myProject).orderEntries(Arrays.asList(myModule)).withoutSdk(),
+                      srcRoot, testRoot, getJDomSources());
   }
 
   private static void assertClassRoots(final OrderEnumerator enumerator, VirtualFile... files) {
@@ -143,5 +184,4 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     }
     assertOrderedEquals(rootsEnumerator.getUrls(), ArrayUtil.toStringArray(expectedUrls));
   }
-
 }

@@ -44,7 +44,7 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {
+  public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
     return rootModel.equals(myRootModel);
   }
 }

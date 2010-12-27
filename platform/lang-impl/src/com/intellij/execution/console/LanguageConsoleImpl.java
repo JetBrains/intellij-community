@@ -164,17 +164,21 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
       myFullEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
-      assert myFullEditor != null;
       configureFullEditor();
-      EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(myFullEditor.getComponent()));
-      if (editorWindow == null) {
-        editorWindow = fileManager.getCurrentWindow();
-      }
-      if (editorWindow != null) {
-        editorWindow.setFilePinned(virtualFile, true);
-      }
+      setConsoleFilePinned(fileManager);
 
       myHistoryViewer.setHorizontalScrollbarVisible(true);
+    }
+  }
+
+  private void setConsoleFilePinned(FileEditorManagerEx fileManager) {
+    if (myFullEditor == null) return;
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(myFullEditor.getComponent()));
+    if (editorWindow == null) {
+      editorWindow = fileManager.getCurrentWindow();
+    }
+    if (editorWindow != null) {
+      editorWindow.setFilePinned(myFile.getVirtualFile(), true);
     }
   }
 
@@ -559,7 +563,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singletonList(newVFile), false);
 
     if (prevFile != null) {
-      final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+      final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
       final VirtualFile file = prevFile.getVirtualFile();
       if (file != null && myFullEditor != null) {
         myFullEditor = null;
@@ -578,7 +582,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         editorManager.closeFile(file);
         myFullEditor = editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
         configureFullEditor();
-        ((FileEditorManagerEx)editorManager).getCurrentWindow().setFilePinned(newVFile, true);
+        setConsoleFilePinned(editorManager);
       }
     }
   }

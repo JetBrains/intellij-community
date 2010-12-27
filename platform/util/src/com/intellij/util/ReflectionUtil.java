@@ -81,15 +81,10 @@ public class ReflectionUtil {
     return null;
   }
 
-//void f() {} sdfg
   public static String declarationToString(final GenericDeclaration anInterface) {
-
     return anInterface.toString()
-
            + Arrays.asList(anInterface.getTypeParameters())
-           +
-
-           " loaded by " + ((Class)anInterface).getClassLoader();
+           + " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
   public static Class<?> getRawType(Type type) {
@@ -160,9 +155,7 @@ public class ReflectionUtil {
 
   private static void collectFields(final Class clazz, final ArrayList<Field> result) {
     final Field[] fields = clazz.getDeclaredFields();
-    for (Field field : fields) {
-      result.add(field);
-    }
+    result.addAll(Arrays.asList(fields));
     final Class superClass = clazz.getSuperclass();
     if (superClass != null) {
       collectFields(superClass, result);
@@ -269,5 +262,37 @@ public class ReflectionUtil {
       return resolveVariableInHierarchy((TypeVariable)type, aClass);
     }
     return type;
+  }
+
+  @NotNull
+  public static <T> Constructor<T> getDefaultConstructor(final Class<T> aClass) {
+    try {
+      final Constructor<T> constructor = aClass.getConstructor();
+      constructor.setAccessible(true);
+      return constructor;
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error("No default constructor in " + aClass, e);
+      return null;
+    }
+  }
+
+  @NotNull
+  public static <T> T createInstance(final Constructor<T> constructor, final Object... args) {
+    try {
+      return constructor.newInstance(args);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+      return null;
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+      return null;
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }
