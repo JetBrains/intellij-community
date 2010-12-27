@@ -32,6 +32,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,8 +86,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     if (initialPatterns.length != myPatterns.size()) {
       return true;
     }
-    for (int i = 0; i < initialPatterns.length; i++) {
-      TodoPattern initialPattern = initialPatterns[i];
+    for (TodoPattern initialPattern : initialPatterns) {
       if (!myPatterns.contains(initialPattern)) {
         return true;
       }
@@ -100,8 +100,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     if (initialFilters.length != myFilters.size()) {
       return true;
     }
-    for (int i = 0; i < initialFilters.length; i++) {
-      TodoFilter initialFilter = initialFilters[i];
+    for (TodoFilter initialFilter : initialFilters) {
       if (!myFilters.contains(initialFilter)) {
         return true;
       }
@@ -391,7 +390,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
     TodoPattern sourcePattern = myPatterns.get(selectedIndex);
     TodoPattern pattern = sourcePattern.clone();
-    PatternDialog dialog = new PatternDialog(TodoConfigurable.this.myPanel, pattern);
+    PatternDialog dialog = new PatternDialog(myPanel, pattern);
     dialog.setTitle(IdeBundle.message("title.edit.todo.pattern"));
     dialog.show();
     if (!dialog.isOK()) {
@@ -459,6 +458,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return IdeBundle.message("title.todo");
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "preferences.toDoOptions";
   }
@@ -472,15 +472,15 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
     TodoPattern[] patterns = todoConfiguration.getTodoPatterns();
-    for (int i = 0; i < patterns.length; i++) {
-      myPatterns.add(patterns[i].clone());
+    for (TodoPattern pattern : patterns) {
+      myPatterns.add(pattern.clone());
     }
     myPatternsModel.fireTableDataChanged();
     // Filters
     myFilters.clear();
     TodoFilter[] filters = todoConfiguration.getTodoFilters();
-    for (int i = 0; i < filters.length; i++) {
-      myFilters.add(filters[i].clone());
+    for (TodoFilter filter : filters) {
+      myFilters.add(filter.clone());
     }
     myFiltersModel.fireTableDataChanged();
     //
@@ -506,6 +506,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

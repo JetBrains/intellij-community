@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobUtil;
@@ -39,10 +38,9 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -299,10 +297,10 @@ public abstract class PassExecutorService implements Disposable {
     private final DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull List<FileEditor> fileEditors,
-                         @NotNull TextEditorHighlightingPass pass,
-                         @NotNull DaemonProgressIndicator progressIndicator,
-                         @NotNull AtomicInteger threadsToStartCountdown,
-                         int jobPriority) {
+                          @NotNull TextEditorHighlightingPass pass,
+                          @NotNull DaemonProgressIndicator progressIndicator,
+                          @NotNull AtomicInteger threadsToStartCountdown,
+                          int jobPriority) {
       myFileEditors = fileEditors;
       myPass = pass;
       myThreadsToStartCountdown = threadsToStartCountdown;
@@ -312,6 +310,20 @@ public abstract class PassExecutorService implements Disposable {
     }
 
     public void run() {
+      try {
+        doRun();
+      }
+      catch (RuntimeException e) {
+        saveException(e,myUpdateProgress);
+        throw e;
+      }
+      catch (Error e) {
+        saveException(e,myUpdateProgress);
+        throw e;
+      }
+    }
+
+    private void doRun() {
       if (myUpdateProgress.isCanceled()) return;
 
       log(myUpdateProgress, myPass, "Started. ");
@@ -478,5 +490,13 @@ public abstract class PassExecutorService implements Disposable {
         //System.out.println(message);
       }
     }
+  }
+
+  private static final Key<Throwable> THROWABLE_KEY = Key.create("THROWABLE_KEY");
+  private static void saveException(Throwable e, DaemonProgressIndicator indicator) {
+    indicator.putUserDataIfAbsent(THROWABLE_KEY, e);
+  }
+  public static Throwable getSavedException(DaemonProgressIndicator indicator) {
+    return indicator.getUserData(THROWABLE_KEY);
   }
 }
