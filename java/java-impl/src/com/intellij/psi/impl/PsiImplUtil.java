@@ -128,13 +128,18 @@ public class PsiImplUtil {
 
   public static int getParameterIndex(@NotNull PsiParameter parameter, @NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
-    String name = parameter.getName();
-    PsiParameter suspect = null;
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter paramInList = parameters[i];
       if (parameter.equals(paramInList)) return i;
+    }
+    String name = parameter.getName();
+    PsiParameter suspect = null;
+    int i;
+    for (i = parameters.length - 1; i >= 0; i--) {
+      PsiParameter paramInList = parameters[i];
       if (name.equals(paramInList.getName())) {
         suspect = paramInList;
+        break;
       }
     }
     String message = parameter + " not found among parameters: " + Arrays.asList(parameters) + "." +
@@ -144,11 +149,12 @@ public class PsiImplUtil {
                      " parameter.isValid()=" + parameter.isValid() + ";" +
                      " parameterList.isValid()= " + parameterList.isValid() + ";" +
                      " parameter stub: "+(parameter instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameter).getStub() : "---") + ";" +
+                     " suspect: " + suspect +" (index="+i+"); " +
                      " suspect stub: "+(suspect instanceof StubBasedPsiElement ? ((StubBasedPsiElement)suspect).getStub() : suspect == null ? "-null-" : "---"+suspect.getClass()) + ";" +
                      "."
       ;
     LOG.error(message);
-    return -1;
+    return i;
   }
 
   public static int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter, @NotNull PsiTypeParameterList typeParameterList) {
