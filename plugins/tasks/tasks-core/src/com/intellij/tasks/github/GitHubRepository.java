@@ -42,8 +42,10 @@ public class GitHubRepository extends BaseRepositoryImpl {
   private String myRepoAuthor;
   private String myRepoName;
 
+  private static final String GITHUB_HOST = "https://github.com";
+
   {
-    setUrl("http://github.com");
+    setUrl(GITHUB_HOST);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
