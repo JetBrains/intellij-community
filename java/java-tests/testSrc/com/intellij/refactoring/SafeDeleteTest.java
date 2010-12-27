@@ -77,6 +77,11 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("UserFlags");
   }
 
+  public void testSafeDeleteStaticImports() throws Exception {
+    myDoCompare = false;
+    doTest("A");
+  }
+
   public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
     myDoCompare = false;
     try {

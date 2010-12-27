@@ -393,7 +393,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, allElementsToDelete) && !isInside(element, overridingMethods)) {
-        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, false));
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) != null));
       }
     }
 
@@ -612,7 +612,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
           else {
             TextRange range = reference.getRangeInElement();
             usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(reference.getElement(), psiField, range.getStartOffset(),
-                                                                    range.getEndOffset(), false, false));
+                                                                    range.getEndOffset(), false, PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) != null));
           }
         }
 
