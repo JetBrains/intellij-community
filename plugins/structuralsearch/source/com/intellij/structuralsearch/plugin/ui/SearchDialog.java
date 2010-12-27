@@ -187,7 +187,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             public void run() {
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
-                  if (!doValidate()) {
+                  if (!isValid()) {
                     getOKAction().setEnabled(false);
                   }
                   else {
@@ -792,7 +792,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     if (selectedScope == null) return;
 
     myDoingOkAction = true;
-    boolean result = doValidate();
+    boolean result = isValid();
     myDoingOkAction = false;
     if (!result) return;
 
@@ -832,7 +832,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return selectedScope;
   }
 
-  protected boolean doValidate() {
+  protected boolean isValid() {
     setValuesToConfig(model.getConfig());
     boolean result = true;
 

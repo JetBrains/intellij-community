@@ -308,8 +308,8 @@ public class ReplaceDialog extends SearchDialog {
     return new ArrayList<Variable>(varsMap.values());
   }
 
-  protected boolean doValidate() {
-    if (!super.doValidate()) return false;
+  protected boolean isValid() {
+    if (!super.isValid()) return false;
 
     boolean result = true;
 
