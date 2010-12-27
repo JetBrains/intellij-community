@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 /**
- * Provides access to components. Servers as a base interface for {@link com.intellij.openapi.application.Application}
+ * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
  * and {@link com.intellij.openapi.project.Project}.
  *
  * @see ApplicationComponent
@@ -52,7 +52,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
 
   /**
    * Gets the component by its interface class but returns a specified default implementation
-   * if the actualt component doesn't exist in the container.
+   * if the actual component doesn't exist in the container.
    *
    * @param interfaceClass the interface class of the component
    * @param defaultImplementationIfAbsent the default implementation

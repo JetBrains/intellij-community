@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -38,7 +39,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
     myPanel = useDedicatedLibraryUI(project) ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
-    myContextsConfigurable = new ScriptingContextsConfigurable(project, provider.getLibraryMappings(project));
+    myContextsConfigurable = new ScriptingContextsConfigurable(this, project, provider.getLibraryMappings(project));
   }
 
   private static boolean useDedicatedLibraryUI(Project project) {
@@ -88,4 +89,7 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
   public Configurable[] getConfigurables() {
     return new Configurable[] {myContextsConfigurable};
   }
+  
+  @Nullable
+  public abstract String getUsageScopeHelpTopic();
 }

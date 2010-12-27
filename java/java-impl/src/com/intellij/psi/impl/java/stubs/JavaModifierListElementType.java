@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -25,10 +24,12 @@ import com.intellij.psi.impl.compiled.ClsModifierListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -38,6 +39,12 @@ import java.io.IOException;
 public class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
   public JavaModifierListElementType() {
     super("MODIFIER_LIST");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new ModifierListElement();
   }
 
   public PsiModifierList createPsi(final PsiModifierListStub stub) {

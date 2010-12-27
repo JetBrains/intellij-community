@@ -44,7 +44,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myWithoutJdk;
   private boolean myWithoutLibraries;
   protected boolean myWithoutDepModules;
-  private boolean myWithoutThisModuleContent;
+  private boolean myWithoutRootModuleContent;
   protected boolean myRecursively;
   protected boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
@@ -105,7 +105,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   @Override
   public OrderEnumerator withoutModuleSourceEntries() {
-    myWithoutThisModuleContent = true;
+    myWithoutRootModuleContent = true;
     return this;
   }
 
@@ -186,7 +186,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     flags <<= 1;
     if (myWithoutDepModules) flags |= 1;
     flags <<= 1;
-    if (myWithoutThisModuleContent) flags |= 1;
+    if (myWithoutRootModuleContent) flags |= 1;
     flags <<= 1;
     if (myRecursively) flags |= 1;
     flags <<= 1;
@@ -206,9 +206,13 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
       if (myWithoutLibraries && entry instanceof LibraryOrderEntry) continue;
       if (myWithoutDepModules) {
         if (!myRecursively && entry instanceof ModuleOrderEntry) continue;
-        if (entry instanceof ModuleSourceOrderEntry && !isMainModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
+        if (entry instanceof ModuleSourceOrderEntry && !isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
       }
-      if (myWithoutThisModuleContent && entry instanceof ModuleSourceOrderEntry) continue;
+      if (myWithoutRootModuleContent
+          && entry instanceof ModuleSourceOrderEntry
+          && isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) {
+        continue;
+      }
 
       OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
       for (OrderEnumerationHandler handler : myCustomHandlers) {
@@ -348,7 +352,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     }
   }
 
-  public boolean isMainModuleModel(@NotNull ModuleRootModel rootModel) {
+  public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
     return false;
   }
 

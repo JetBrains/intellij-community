@@ -283,7 +283,7 @@ class FormatProcessor {
       );
       changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
     }
-    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), changes);
+    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), document.getTextLength(), changes);
     if (myBulkReformatListener != null) {
       myBulkReformatListener.beforeProcessing(document, mergeResult);
     }

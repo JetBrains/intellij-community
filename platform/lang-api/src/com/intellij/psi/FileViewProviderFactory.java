@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
+ * Register in extension point {@code com.intellij.fileType.fileViewProviderFactory}
+ * or {@code com.intellij.lang.fileViewProviderFactory}.
+ *
  * @author yole
  */
 public interface FileViewProviderFactory {

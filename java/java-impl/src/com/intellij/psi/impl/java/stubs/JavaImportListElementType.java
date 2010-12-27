@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -22,10 +21,12 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
 import com.intellij.psi.impl.source.PsiImportListImpl;
+import com.intellij.psi.impl.source.tree.java.ImportListElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -35,6 +36,12 @@ import java.io.IOException;
 public class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
   public JavaImportListElementType() {
     super("IMPORT_LIST");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new ImportListElement();
   }
 
   public PsiImportList createPsi(final PsiImportListStub stub) {

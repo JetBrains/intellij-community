@@ -46,6 +46,11 @@ public class BulkChangesMergerTest {
   public void disjointInserts() {
     doTest("abcd", "a1b2c3d45", c("1", 1), c("2", 2), c("3", 3), c("45", 4));
   }
+  
+  @Test
+  public void interestedSymbolsNumberLessThanAvailable() {
+    doTest("abcdefg", 4, "a12bc3d", c("12", 1), c("3", 3));
+  }
 
   private static TextChange c(String text, int offset) {
     return c(text, offset, offset);
@@ -56,7 +61,11 @@ public class BulkChangesMergerTest {
   }
   
   private void doTest(String initial, String expected, TextChange ... changes) {
-    CharSequence actual = myMerger.merge(initial.toCharArray(), Arrays.asList(changes));
+    doTest(initial, initial.length(), expected, changes);
+  }
+
+  private void doTest(String initial, int interestedInitialSymbolsNumber, String expected, TextChange ... changes) {
+    CharSequence actual = myMerger.merge(initial.toCharArray(), interestedInitialSymbolsNumber, Arrays.asList(changes));
     assertEquals(expected, actual.toString());
   }
 }

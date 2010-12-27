@@ -28,35 +28,54 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.source.JavaDummyElement;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.parsing.Parsing;
-import com.intellij.psi.impl.source.tree.java.PsiCodeBlockImpl;
+import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IErrorCounterReparseableElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.ILightLazyParseableElementType;
+import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Constructor;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 
 public interface JavaElementType {
+  class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
+    private final Constructor<? extends ASTNode> myConstructor;
+
+    private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
+      super(debugName);
+      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+    }
+
+    private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass, final boolean leftBound) {
+      super(debugName, leftBound);
+      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+    }
+
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return ReflectionUtil.createInstance(myConstructor);
+    }
+  }
+
   IElementType CLASS = JavaStubElementTypes.CLASS;
   IElementType ANONYMOUS_CLASS = JavaStubElementTypes.ANONYMOUS_CLASS;
   IElementType ENUM_CONSTANT_INITIALIZER = JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER;
-
   IElementType TYPE_PARAMETER_LIST = JavaStubElementTypes.TYPE_PARAMETER_LIST;
   IElementType TYPE_PARAMETER = JavaStubElementTypes.TYPE_PARAMETER;
-
   IElementType IMPORT_LIST = JavaStubElementTypes.IMPORT_LIST;
   IElementType IMPORT_STATEMENT = JavaStubElementTypes.IMPORT_STATEMENT;
   IElementType IMPORT_STATIC_STATEMENT = JavaStubElementTypes.IMPORT_STATIC_STATEMENT;
-
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
   IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
   IElementType EXTENDS_LIST = JavaStubElementTypes.EXTENDS_LIST;
@@ -65,71 +84,65 @@ public interface JavaElementType {
   IElementType ENUM_CONSTANT = JavaStubElementTypes.ENUM_CONSTANT;
   IElementType METHOD = JavaStubElementTypes.METHOD;
   IElementType ANNOTATION_METHOD = JavaStubElementTypes.ANNOTATION_METHOD;
-
   IElementType CLASS_INITIALIZER = JavaStubElementTypes.CLASS_INITIALIZER;
   IElementType PARAMETER = JavaStubElementTypes.PARAMETER;
   IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
 
-  IElementType IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
-  IElementType TYPE = new IJavaElementType("TYPE");
-  IElementType DIAMOND_TYPE = new IJavaElementType("DIAMOND_TYPE");
-  IElementType REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST", true);
-  IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
-  IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");
+  IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
+  IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);
+  IElementType DIAMOND_TYPE = new JavaCompositeElementType("DIAMOND_TYPE", PsiDiamondTypeElementImpl.class);
+  IElementType REFERENCE_PARAMETER_LIST = new JavaCompositeElementType("REFERENCE_PARAMETER_LIST", PsiReferenceParameterListImpl.class, true);
+  IElementType JAVA_CODE_REFERENCE = new JavaCompositeElementType("JAVA_CODE_REFERENCE", PsiJavaCodeReferenceElementImpl.class);
+  IElementType PACKAGE_STATEMENT = new JavaCompositeElementType("PACKAGE_STATEMENT", PsiPackageStatementImpl.class);
+  IElementType LOCAL_VARIABLE = new JavaCompositeElementType("LOCAL_VARIABLE", PsiLocalVariableImpl.class);
+  IElementType REFERENCE_EXPRESSION = new JavaCompositeElementType("REFERENCE_EXPRESSION", PsiReferenceExpressionImpl.class);
+  IElementType LITERAL_EXPRESSION = new JavaCompositeElementType("LITERAL_EXPRESSION", PsiLiteralExpressionImpl.class);
+  IElementType THIS_EXPRESSION = new JavaCompositeElementType("THIS_EXPRESSION", PsiThisExpressionImpl.class);
+  IElementType SUPER_EXPRESSION = new JavaCompositeElementType("SUPER_EXPRESSION", PsiSuperExpressionImpl.class);
+  IElementType PARENTH_EXPRESSION = new JavaCompositeElementType("PARENTH_EXPRESSION", PsiParenthesizedExpressionImpl.class);
+  IElementType METHOD_CALL_EXPRESSION = new JavaCompositeElementType("METHOD_CALL_EXPRESSION", PsiMethodCallExpressionImpl.class);
+  IElementType TYPE_CAST_EXPRESSION = new JavaCompositeElementType("TYPE_CAST_EXPRESSION", PsiTypeCastExpressionImpl.class);
+  IElementType PREFIX_EXPRESSION = new JavaCompositeElementType("PREFIX_EXPRESSION", PsiPrefixExpressionImpl.class);
+  IElementType POSTFIX_EXPRESSION = new JavaCompositeElementType("POSTFIX_EXPRESSION", PsiPostfixExpressionImpl.class);
+  IElementType BINARY_EXPRESSION = new JavaCompositeElementType("BINARY_EXPRESSION", PsiBinaryExpressionImpl.class);
+  IElementType CONDITIONAL_EXPRESSION = new JavaCompositeElementType("CONDITIONAL_EXPRESSION", PsiConditionalExpressionImpl.class);
+  IElementType ASSIGNMENT_EXPRESSION = new JavaCompositeElementType("ASSIGNMENT_EXPRESSION", PsiAssignmentExpressionImpl.class);
+  IElementType NEW_EXPRESSION = new JavaCompositeElementType("NEW_EXPRESSION", PsiNewExpressionImpl.class);
+  IElementType ARRAY_ACCESS_EXPRESSION = new JavaCompositeElementType("ARRAY_ACCESS_EXPRESSION", PsiArrayAccessExpressionImpl.class);
+  IElementType ARRAY_INITIALIZER_EXPRESSION = new JavaCompositeElementType("ARRAY_INITIALIZER_EXPRESSION", PsiArrayInitializerExpressionImpl.class);
+  IElementType INSTANCE_OF_EXPRESSION = new JavaCompositeElementType("INSTANCE_OF_EXPRESSION", PsiInstanceOfExpressionImpl.class);
+  IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new JavaCompositeElementType("CLASS_OBJECT_ACCESS_EXPRESSION", PsiClassObjectAccessExpressionImpl.class);
+  IElementType EMPTY_EXPRESSION = new JavaCompositeElementType("EMPTY_EXPRESSION", PsiEmptyExpressionImpl.class, true);
+  IElementType EXPRESSION_LIST = new JavaCompositeElementType("EXPRESSION_LIST", PsiExpressionListImpl.class, true);
+  IElementType EMPTY_STATEMENT = new JavaCompositeElementType("EMPTY_STATEMENT", PsiEmptyStatementImpl.class);
+  IElementType BLOCK_STATEMENT = new JavaCompositeElementType("BLOCK_STATEMENT", PsiBlockStatementImpl.class);
+  IElementType EXPRESSION_STATEMENT = new JavaCompositeElementType("EXPRESSION_STATEMENT", PsiExpressionStatementImpl.class);
+  IElementType EXPRESSION_LIST_STATEMENT = new JavaCompositeElementType("EXPRESSION_LIST_STATEMENT", PsiExpressionListStatementImpl.class);
+  IElementType DECLARATION_STATEMENT = new JavaCompositeElementType("DECLARATION_STATEMENT", PsiDeclarationStatementImpl.class);
+  IElementType IF_STATEMENT = new JavaCompositeElementType("IF_STATEMENT", PsiIfStatementImpl.class);
+  IElementType WHILE_STATEMENT = new JavaCompositeElementType("WHILE_STATEMENT", PsiWhileStatementImpl.class);
+  IElementType FOR_STATEMENT = new JavaCompositeElementType("FOR_STATEMENT", PsiForStatementImpl.class);
+  IElementType FOREACH_STATEMENT = new JavaCompositeElementType("FOREACH_STATEMENT", PsiForeachStatementImpl.class);
+  IElementType DO_WHILE_STATEMENT = new JavaCompositeElementType("DO_WHILE_STATEMENT", PsiDoWhileStatementImpl.class);
+  IElementType SWITCH_STATEMENT = new JavaCompositeElementType("SWITCH_STATEMENT", PsiSwitchStatementImpl.class);
+  IElementType SWITCH_LABEL_STATEMENT = new JavaCompositeElementType("SWITCH_LABEL_STATEMENT", PsiSwitchLabelStatementImpl.class);
+  IElementType BREAK_STATEMENT = new JavaCompositeElementType("BREAK_STATEMENT", PsiBreakStatementImpl.class);
+  IElementType CONTINUE_STATEMENT = new JavaCompositeElementType("CONTINUE_STATEMENT", PsiContinueStatementImpl.class);
+  IElementType RETURN_STATEMENT = new JavaCompositeElementType("RETURN_STATEMENT", PsiReturnStatementImpl.class);
+  IElementType THROW_STATEMENT = new JavaCompositeElementType("THROW_STATEMENT", PsiThrowStatementImpl.class);
+  IElementType SYNCHRONIZED_STATEMENT = new JavaCompositeElementType("SYNCHRONIZED_STATEMENT", PsiSynchronizedStatementImpl.class);
+  IElementType TRY_STATEMENT = new JavaCompositeElementType("TRY_STATEMENT", PsiTryStatementImpl.class);
+  IElementType LABELED_STATEMENT = new JavaCompositeElementType("LABELED_STATEMENT", PsiLabeledStatementImpl.class);
+  IElementType ASSERT_STATEMENT = new JavaCompositeElementType("ASSERT_STATEMENT", PsiAssertStatementImpl.class);
+  IElementType CATCH_SECTION = new JavaCompositeElementType("CATCH_SECTION", PsiCatchSectionImpl.class);
+  IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
+  IElementType NAME_VALUE_PAIR = new JavaCompositeElementType("NAME_VALUE_PAIR", PsiNameValuePairImpl.class, true);
+  IElementType ANNOTATION_PARAMETER_LIST = new JavaCompositeElementType("ANNOTATION_PARAMETER_LIST", PsiAnnotationParameterListImpl.class, true);
+  IElementType METHOD_RECEIVER = new JavaCompositeElementType("METHOD_RECEIVER", PsiMethodReceiverImpl.class);
 
-  IElementType LOCAL_VARIABLE = new IJavaElementType("LOCAL_VARIABLE");
-  IElementType REFERENCE_EXPRESSION = new IJavaElementType("REFERENCE_EXPRESSION");
-  IElementType LITERAL_EXPRESSION = new IJavaElementType("LITERAL_EXPRESSION");
-  IElementType THIS_EXPRESSION = new IJavaElementType("THIS_EXPRESSION");
-  IElementType SUPER_EXPRESSION = new IJavaElementType("SUPER_EXPRESSION");
-  IElementType PARENTH_EXPRESSION = new IJavaElementType("PARENTH_EXPRESSION");
-  IElementType METHOD_CALL_EXPRESSION = new IJavaElementType("METHOD_CALL_EXPRESSION");
-  IElementType TYPE_CAST_EXPRESSION = new IJavaElementType("TYPE_CAST_EXPRESSION");
-  IElementType PREFIX_EXPRESSION = new IJavaElementType("PREFIX_EXPRESSION");
-  IElementType POSTFIX_EXPRESSION = new IJavaElementType("POSTFIX_EXPRESSION");
-  IElementType BINARY_EXPRESSION = new IJavaElementType("BINARY_EXPRESSION");
-  IElementType CONDITIONAL_EXPRESSION = new IJavaElementType("CONDITIONAL_EXPRESSION");
-  IElementType ASSIGNMENT_EXPRESSION = new IJavaElementType("ASSIGNMENT_EXPRESSION");
-  IElementType NEW_EXPRESSION = new IJavaElementType("NEW_EXPRESSION");
-  IElementType ARRAY_ACCESS_EXPRESSION = new IJavaElementType("ARRAY_ACCESS_EXPRESSION");
-  IElementType ARRAY_INITIALIZER_EXPRESSION = new IJavaElementType("ARRAY_INITIALIZER_EXPRESSION");
-  IElementType INSTANCE_OF_EXPRESSION = new IJavaElementType("INSTANCE_OF_EXPRESSION");
-  IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new IJavaElementType("CLASS_OBJECT_ACCESS_EXPRESSION");
-  IElementType EMPTY_EXPRESSION = new IJavaElementType("EMPTY_EXPRESSION", true);
-
-  IElementType EXPRESSION_LIST = new IJavaElementType("EXPRESSION_LIST", true);
-
-  IElementType EMPTY_STATEMENT = new IJavaElementType("EMPTY_STATEMENT");
-  IElementType BLOCK_STATEMENT = new IJavaElementType("BLOCK_STATEMENT");
-  IElementType EXPRESSION_STATEMENT = new IJavaElementType("EXPRESSION_STATEMENT");
-  IElementType EXPRESSION_LIST_STATEMENT = new IJavaElementType("EXPRESSION_LIST_STATEMENT");
-  IElementType DECLARATION_STATEMENT = new IJavaElementType("DECLARATION_STATEMENT");
-  IElementType IF_STATEMENT = new IJavaElementType("IF_STATEMENT");
-  IElementType WHILE_STATEMENT = new IJavaElementType("WHILE_STATEMENT");
-  IElementType FOR_STATEMENT = new IJavaElementType("FOR_STATEMENT");
-  IElementType FOREACH_STATEMENT = new IJavaElementType("FOREACH_STATEMENT");
-  IElementType DO_WHILE_STATEMENT = new IJavaElementType("DO_WHILE_STATEMENT");
-  IElementType SWITCH_STATEMENT = new IJavaElementType("SWITCH_STATEMENT");
-  IElementType SWITCH_LABEL_STATEMENT = new IJavaElementType("SWITCH_LABEL_STATEMENT");
-  IElementType BREAK_STATEMENT = new IJavaElementType("BREAK_STATEMENT");
-  IElementType CONTINUE_STATEMENT = new IJavaElementType("CONTINUE_STATEMENT");
-  IElementType RETURN_STATEMENT = new IJavaElementType("RETURN_STATEMENT");
-  IElementType THROW_STATEMENT = new IJavaElementType("THROW_STATEMENT");
-  IElementType SYNCHRONIZED_STATEMENT = new IJavaElementType("SYNCHRONIZED_STATEMENT");
-  IElementType TRY_STATEMENT = new IJavaElementType("TRY_STATEMENT");
-  IElementType LABELED_STATEMENT = new IJavaElementType("LABELED_STATEMENT");
-  IElementType ASSERT_STATEMENT = new IJavaElementType("ASSERT_STATEMENT");
-
-  IElementType CATCH_SECTION = new IJavaElementType("CATCH_SECTION");
-
-  IElementType ANNOTATION_ARRAY_INITIALIZER = new IJavaElementType("ANNOTATION_ARRAY_INITIALIZER");
-  IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR", true);
-  IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST", true);
-  IElementType METHOD_RECEIVER = new IJavaElementType("METHOD_RECEIVER");
-
-  class ICodeBlockElementType extends IErrorCounterReparseableElementType {
+  class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType {
     private ICodeBlockElementType() {
       super("CODE_BLOCK", StdLanguages.JAVA);
     }
@@ -137,6 +150,12 @@ public interface JavaElementType {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiCodeBlockImpl(text);
+    }
+
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new PsiCodeBlockImpl(null);
     }
 
     @Override
@@ -277,7 +296,17 @@ public interface JavaElementType {
     }
   };
 
-  IElementType DUMMY_ELEMENT = new ILazyParseableElementType("DUMMY_ELEMENT", StdLanguages.JAVA) {
+  class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
+    private JavaDummyElementType() {
+      super("DUMMY_ELEMENT", StdLanguages.JAVA);
+    }
+
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new CompositePsiElement(this) { };
+    }
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
@@ -285,5 +314,6 @@ public interface JavaElementType {
       final JavaDummyElement dummyElement = (JavaDummyElement)chameleon;
       return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(), dummyElement.getLanguageLevel());
     }
-  };
+  }
+  IElementType DUMMY_ELEMENT = new JavaDummyElementType();
 }

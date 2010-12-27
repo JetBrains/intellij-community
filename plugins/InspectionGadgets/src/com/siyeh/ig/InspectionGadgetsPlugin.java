@@ -564,6 +564,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ReturnNullInspection.class);
         m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
         m_inspectionClasses.add(StringConcatenationInFormatCallInspection.class);
+        m_inspectionClasses.add(StringConcatenationInMessageFormatCallInspection.class);
         m_inspectionClasses.add(StaticFieldReferenceOnSubclassInspection.class);
         m_inspectionClasses.add(StringEqualityInspection.class);
         m_inspectionClasses.add(SubtractionInCompareToInspection.class);

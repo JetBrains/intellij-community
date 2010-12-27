@@ -177,14 +177,16 @@ public class PsiImplUtil {
         if (parent instanceof GrArgumentList) parent = parent.getParent();
         if (parent instanceof GrMethodCall) {
           GrExpression funExpr = ((GrMethodCall)parent).getInvokedExpression();
-          if (funExpr instanceof GrReferenceExpression) {
+          if (funExpr instanceof GrReferenceExpression && ((GrReferenceExpression)funExpr).resolve() instanceof PsiMethod) {
             qualifier = ((GrReferenceExpression) funExpr).getQualifierExpression();
             if (qualifier != null) {
               return qualifier;
             }
           }
+          else {
+            return funExpr;
+          }
         }
-
 
         closure = PsiTreeUtil.getParentOfType(closure, GrClosableBlock.class);
       }

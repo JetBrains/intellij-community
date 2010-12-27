@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -48,7 +47,7 @@ import java.io.IOException;
 /*
  * @author max
  */
-public class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
+public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
   public JavaClassElementType(@NotNull @NonNls final String id) {
     super(id);
   }

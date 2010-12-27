@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,13 +52,6 @@ public class EditorFactoryImpl extends EditorFactory {
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final ArrayList<Editor> myEditors = new ArrayList<Editor>();
   private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
-  private final ModalityStateListener myModalityStateListener = new ModalityStateListener() {
-    public void beforeModalityStateChanged(boolean entering) {
-      for (Editor editor : myEditors) {
-        ((EditorImpl)editor).beforeModalityStateChanged();
-      }
-    }
-  };
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
@@ -77,7 +71,14 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   public void initComponent() {
-    LaterInvocator.addModalityStateListener(myModalityStateListener);
+    ModalityStateListener myModalityStateListener = new ModalityStateListener() {
+      public void beforeModalityStateChanged(boolean entering) {
+        for (Editor editor : myEditors) {
+          ((EditorImpl)editor).beforeModalityStateChanged();
+        }
+      }
+    };
+    LaterInvocator.addModalityStateListener(myModalityStateListener, ApplicationManager.getApplication());
   }
 
   public void validateEditorsAreReleased(Project project) {
@@ -100,7 +101,6 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   public void disposeComponent() {
-    LaterInvocator.removeModalityStateListener(myModalityStateListener);
   }
 
   @NotNull

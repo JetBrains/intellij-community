@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -26,11 +25,13 @@ import com.intellij.psi.impl.compiled.ClsTypeParameterImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
+import com.intellij.psi.impl.source.tree.java.TypeParameterElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -40,6 +41,12 @@ import java.io.IOException;
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
   public JavaTypeParameterElementType() {
     super("TYPE_PARAMETER");
+  }
+
+  @NotNull
+  @Override
+  public ASTNode createCompositeNode() {
+    return new TypeParameterElement();
   }
 
   public PsiTypeParameter createPsi(final PsiTypeParameterStub stub) {
