@@ -405,7 +405,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   }
 
   public void close() {
-    TabInfo selected = myTabs.getSelectedInfo();
+    TabInfo selected = myTabs.getTargetInfo();
     if (selected == null) return;
 
     final VirtualFile file = (VirtualFile)selected.getObject();
