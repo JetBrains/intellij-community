@@ -277,7 +277,8 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
         final Document document = documentManager.getDocument(file);
         if (document != null) {
-          document.setText(oldText);
+          final TextRange textRange = psiElement.getTextRange();
+          document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), oldText);
           documentManager.commitDocument(document);
         }
       }
