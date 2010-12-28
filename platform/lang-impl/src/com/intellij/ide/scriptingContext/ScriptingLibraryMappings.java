@@ -16,10 +16,14 @@
 package com.intellij.ide.scriptingContext;
 
 import com.intellij.lang.LanguagePerFileMappings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +33,8 @@ import java.util.*;
 /**
  * @author Rustam Vishnyakov
  */
-public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> {
+public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingLibraryTable.LibraryModel> implements LibraryTable.Listener,
+                                                                                                                     Disposable {
 
   private final ScriptingLibraryManager myLibraryManager;
   private final Map<VirtualFile, CompoundLibrary> myCompoundLibMap = new HashMap<VirtualFile, CompoundLibrary>();
@@ -38,6 +43,11 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   public ScriptingLibraryMappings(final Project project, final LibraryType libraryType) {
     super(project);
     myLibraryManager = new ScriptingLibraryManager(project, libraryType);
+    if (myLibraryManager.ensureModel()) {
+      LibraryTable libTable = myLibraryManager.getLibraryTable();
+      if (libTable != null) libTable.addListener(this, this);
+    }
+    Disposer.register(project, this);
   }
 
   protected String serialize(final ScriptingLibraryTable.LibraryModel library) {
@@ -49,6 +59,22 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   public void reset() {
     myLibraryManager.reset();
+  }
+  
+  private void updateMappings() {
+    myLibraryManager.reset();
+    Map<VirtualFile,ScriptingLibraryTable.LibraryModel> map = getMappings();
+    for (ScriptingLibraryTable.LibraryModel value : map.values()) {
+      if (value instanceof CompoundLibrary) {
+        CompoundLibrary container = (CompoundLibrary) value;
+        for (ScriptingLibraryTable.LibraryModel libraryModel : container.getLibraries()) {
+          String libName = libraryModel.getName(); 
+          if (myLibraryManager.getLibraryByName(libName) == null) {
+            container.removeLibrary(libName); 
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -164,6 +190,29 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     return libraryModels;
   }
 
+  @Override
+  public void afterLibraryAdded(Library newLibrary) {
+    updateMappings();
+  }
+
+  @Override
+  public void afterLibraryRenamed(Library library) {
+    updateMappings();
+  }
+
+  @Override
+  public void beforeLibraryRemoved(Library library) {
+  }
+
+  @Override
+  public void afterLibraryRemoved(Library library) {
+    updateMappings();
+  }
+
+  @Override
+  public void dispose() {
+  }
+
   public static class CompoundLibrary extends  ScriptingLibraryTable.LibraryModel {
     private final Map<String, ScriptingLibraryTable.LibraryModel> myLibraries = new TreeMap<String, ScriptingLibraryTable.LibraryModel>();
 
@@ -182,6 +231,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
         return;
       }
       myLibraries.put(libName, library);
+    }
+    
+    private void removeLibrary(@NotNull String libName) {
+      myLibraries.remove(libName);
     }
 
     public boolean containsLibrary(String libName) {
@@ -206,6 +259,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
         if (library.containsFile(file)) return true;
       }
       return false;
+    }
+    
+    public Collection<ScriptingLibraryTable.LibraryModel> getLibraries() {
+      return myLibraries.values();
     }
 
     @Override
