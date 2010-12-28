@@ -20,6 +20,12 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 
 /**
+ * This class is an extension to range marker that tries to restore its range even in situations when target text referenced by it
+ * is replaced.
+ * <p/>
+ * Example: consider that the user selects all text at editor (Ctrl+A), copies it to the buffer (Ctrl+C) and performs paste (Ctrl+V).
+ * All document text is replaced then but in essence it's the same, hence, we may want particular range markers to be still valid.   
+ * 
  * @author max
  */
 class PersistentRangeMarker extends RangeMarkerImpl {
@@ -54,7 +60,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   @Override
   protected void changedUpdateImpl(DocumentEvent e) {
     DocumentEventImpl event = (DocumentEventImpl)e;
-    if (event.isWholeTextReplaced()){
+    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)){
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
       if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()){
         invalidate();
