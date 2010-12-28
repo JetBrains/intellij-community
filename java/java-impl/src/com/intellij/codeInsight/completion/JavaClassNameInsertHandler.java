@@ -87,7 +87,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     if (completingRawConstructor(context, item) && !JavaCompletionUtil.hasAccessibleInnerClass(psiClass, file)) {
-      if (ConstructorInsertHandler.insertParentheses(context, item, psiClass)) {
+      if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
       }
     }

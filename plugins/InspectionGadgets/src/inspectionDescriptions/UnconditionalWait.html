@@ -1,5 +1,5 @@
 <html>
-<body><table> <tr> <td valign="top" height="150">
+<body>
 <font face="verdana" size="-1">
 This inspection reports any instances of <b><font color="#000080">.wait()</font></b>
 being called unconditionally within a synchronized context.
@@ -9,5 +9,5 @@ is called unconditionally, that often indicates that the condition was checked b
 acquired.  In that case a data race may occur, with the condition becoming true between the time
 it was checked and the time the lock was acquired.  While constructs found by this inspection
 are not necessarily incorrect, they are certainly worth examining.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+</font><br><small>Powered by InspectionGadgets</small></body>
 </html>

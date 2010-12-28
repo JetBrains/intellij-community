@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.openapi.fileTypes.StdFileTypes
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -48,6 +49,19 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     complete();
     myFixture.checkResult("java.lang.<caret>");
+    assertNull(myItems);
+  }
+
+  public void testQualifierCastingInExpressionCodeFragment() throws Throwable {
+    final ctxText = "class Bar {{ Object o; o=null }}"
+    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
+    final context = ctxFile.findElementAt(ctxText.indexOf("o="))
+    assert context
+
+    PsiFile file = javaFacade.elementFactory.createExpressionCodeFragment("o instanceof String && o.subst<caret>", context, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    complete();
+    myFixture.checkResult("o instanceof String && ((String) o).substring(<caret>)");
     assertNull(myItems);
   }
 
@@ -531,6 +545,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
+
+  public void testSpacesAroundEq() throws Throwable { doTest('='); }
 
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");

@@ -17,11 +17,11 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.DirtBuilder;
 import com.intellij.openapi.vcs.changes.VcsGuess;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public abstract class DefaultVcsRootPolicy {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, DefaultVcsRootPolicy.class);
   }
 
-  public abstract void addDefaultVcsRoots(final NewMappings mappingList, AbstractVcs vcs, List<VirtualFile> result);
+  public abstract void addDefaultVcsRoots(final NewMappings mappingList, @NotNull String vcsName, List<VirtualFile> result);
 
   public abstract boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext);
 

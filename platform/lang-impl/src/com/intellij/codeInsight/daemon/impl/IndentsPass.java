@@ -90,6 +90,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       if (foldingModel.isOffsetCollapsed(off)) return;
 
       final int endOffset = highlighter.getEndOffset();
+      final int endLine = doc.getLineNumber(endOffset);
 
       final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(off)));
       final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
@@ -133,18 +134,27 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
       else {
         int y = start.y;
+        int newY = start.y;
         SoftWrapModel softWrapModel = editor.getSoftWrapModel();
-        for (int visualLine = startPosition.line + 1, column = startPosition.column; visualLine <= endPosition.line; visualLine++) {
-          VisualPosition visualPosition = new VisualPosition(visualLine, 0);
-          LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
-          int offset = editor.logicalPositionToOffset(logicalPosition);
-          SoftWrap softWrap = softWrapModel.getSoftWrap(offset);
-          if (softWrap != null && column >= softWrap.getIndentInColumns()) {
-            int newY = editor.visualPositionToXY(visualPosition).y;
-            g.drawLine(start.x + 2, y, start.x + 2, newY);
-            y = newY + editor.getLineHeight();
+        int lineHeight = editor.getLineHeight();
+        for (int i = startLine + 1; i <= endLine; i++) {
+          List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForLine(i);
+          int logicalLineHeight = softWraps.size() * lineHeight;
+          if (i > startLine + 1) {
+            logicalLineHeight += lineHeight; // We assume that initial 'y' value points just below the target line.
+          }
+          if (!softWraps.isEmpty() && softWraps.get(0).getIndentInColumns() < startPosition.column) {
+            if (y < newY || i > startLine + 1) { // There is a possible case that soft wrap is located on indent start line.
+              g.drawLine(start.x + 2, y, start.x + 2, newY + lineHeight);
+            }
+            newY += logicalLineHeight;
+            y = newY;
+          }
+          else {
+            newY += logicalLineHeight;
           }
         }
+        
         if (y < end.y) {
           g.drawLine(start.x + 2, y, start.x + 2, end.y);
         }

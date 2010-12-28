@@ -140,6 +140,12 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
+    if (context.getCompletionChar() == '=') {
+      context.setAddCompletionChar(false);
+      TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
+      return;
+    }
+
     addTailType(item).processTail(context.getEditor(), context.getTailOffset());
   }
 

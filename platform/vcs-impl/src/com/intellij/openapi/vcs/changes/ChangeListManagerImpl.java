@@ -1174,7 +1174,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               myRevisionsCache.minus(correctedPair);
             }
           });
-          myRevisionsCache.minus(correctedPair);
+          //myRevisionsCache.minus(correctedPair);
         }
       });
     }

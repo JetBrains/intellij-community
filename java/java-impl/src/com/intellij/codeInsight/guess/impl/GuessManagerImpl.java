@@ -140,7 +140,12 @@ public class GuessManagerImpl extends GuessManager {
   private static Map<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
     PsiElement scope = DfaUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
-      return Collections.emptyMap();
+      PsiFile file = forPlace.getContainingFile();
+      if (!(file instanceof PsiCodeFragment)) {
+        return Collections.emptyMap();
+      }
+
+      scope = file;
     }
 
     DataFlowRunner runner = new DataFlowRunner() {
@@ -200,6 +205,12 @@ public class GuessManagerImpl extends GuessManager {
         break;
       }
       lastScope = lastCodeBlock;
+    }
+    if (lastScope == scope) {
+      PsiFile file = scope.getContainingFile();
+      if (file instanceof PsiCodeFragment) {
+        return file;
+      }
     }
     return lastScope;
   }

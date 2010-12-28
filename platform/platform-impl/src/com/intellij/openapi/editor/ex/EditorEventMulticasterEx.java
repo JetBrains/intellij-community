@@ -15,21 +15,23 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.editor.event.DocumentListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 
 public interface EditorEventMulticasterEx extends EditorEventMulticaster{
-  void addErrorStripeListener(ErrorStripeListener listener);
-  void removeErrorStripeListener(ErrorStripeListener listener);
+  void addErrorStripeListener(@NotNull ErrorStripeListener listener);
+  void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable);
+  void removeErrorStripeListener(@NotNull ErrorStripeListener listener);
 
-  void addEditReadOnlyListener(EditReadOnlyListener listener);
-  void removeEditReadOnlyListener(EditReadOnlyListener listener);
+  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
 
-  void addPropertyChangeListener(PropertyChangeListener listener);
-  void removePropertyChangeListener(PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
-  void addFocusChangeListner(FocusChangeListener listener);
-  void removeFocusChangeListner(FocusChangeListener listener);
+  void addFocusChangeListner(@NotNull FocusChangeListener listener);
+  void removeFocusChangeListner(@NotNull FocusChangeListener listener);
 }

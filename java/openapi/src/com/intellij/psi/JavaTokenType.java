@@ -21,15 +21,6 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
 
-@SuppressWarnings({"JavaDoc"})
-/**
- *     Specifies Java token types and three Java token sets.
- *
- *
-
- */
-
-
 public interface JavaTokenType extends TokenType{
   IElementType IDENTIFIER = new IJavaElementType("IDENTIFIER");
   IElementType C_STYLE_COMMENT = new IJavaElementType("C_STYLE_COMMENT");

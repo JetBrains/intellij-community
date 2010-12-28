@@ -59,6 +59,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EditorAdapter;
+import org.jdom.Attribute;
+import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +73,8 @@ import java.util.List;
 
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
-  
+  public static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
+
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
@@ -224,7 +227,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
       @Nullable
       public AbstractVcs compute() {
-        if ((!ApplicationManager.getApplication().isUnitTestMode()) && (!myProject.isInitialized())) return null;
+        if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
@@ -267,6 +270,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Nullable
       public VirtualFile compute() {
+        if (myProject.isDisposed()) return null;
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsRootFor(vFile);
@@ -291,7 +295,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void unregisterVcs(AbstractVcs vcs) {
-    if ((! ApplicationManager.getApplication().isUnitTestMode()) && (myMappings.haveActiveVcs(vcs.getName()))) {
+    if (! ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
       LOG.warn("Active vcs '" + vcs.getName() + "' is being unregistered. Remove from mappings first.");
     }
@@ -395,7 +399,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
-    if ((! myProject.isOpen()) || myProject.isDisposed()) return null;
+    if (! myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
       return null;  // content manager is made null during dispose; flag is set later
@@ -444,7 +448,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public boolean hasExplicitMapping(final VirtualFile vFile) {
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(vFile);
-    return mapping != null && (! mapping.isDefaultMapping());
+    return mapping != null && ! mapping.isDefaultMapping();
   }
 
   public void setDirectoryMapping(final String path, final String activeVcsName) {
@@ -454,6 +458,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
+    final List<VirtualFile> defaultRoots = myMappings.getDefaultRoots();
+    if (defaultRoots.size() == 1 && "".equals(myMappings.haveDefaultMapping())) {
+      myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
+    }
     myMappings.setMapping(path, activeVcsName);
   }
 
@@ -462,6 +470,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
+    myHaveLegacyVcsConfiguration = true;
     myMappings.setDirectoryMappings(items);
   }
 
@@ -471,10 +480,20 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public void readExternal(Element element) throws InvalidDataException {
     mySerialization.readExternalUtil(element, myOptionsAndConfirmations);
+    final Attribute attribute = element.getAttribute(SETTINGS_EDITED_MANUALLY);
+    if (attribute != null) {
+      try {
+        myHaveLegacyVcsConfiguration = attribute.getBooleanValue();
+      }
+      catch (DataConversionException e) {
+        //
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    element.setAttribute(SETTINGS_EDITED_MANUALLY, String.valueOf(myHaveLegacyVcsConfiguration));
   }
 
   @NotNull
@@ -670,7 +689,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void fireDirectoryMappingsChanged() {
-    if (myProject.isOpen() && (! myProject.isDisposed())) {
+    if (myProject.isOpen() && ! myProject.isDisposed()) {
       myMappings.mappingsChanged();
     }
   }
@@ -705,8 +724,8 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
 
   public boolean isFileInContent(final VirtualFile vf) {
     final ExcludedFileIndex excludedIndex = ExcludedFileIndex.getInstance(myProject);
-    return (vf != null) && (excludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                            hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && (! excludedIndex.isExcludedFile(vf));
+    return vf != null && (excludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
+                            hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! excludedIndex.isExcludedFile(vf);
   }
 
   private boolean isInDirectoryBasedRoot(final VirtualFile file) {
@@ -716,7 +735,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       final VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir == null) return false;
       final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      return (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false));
+      return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false);
     }
     return false;
   }

@@ -15,14 +15,11 @@
  */
 package org.jetbrains.plugins.github.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.rebase.GitRebaseDialog;
-import git4idea.ui.GitUIUtil;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,26 +51,6 @@ public class GithubRebaseDialog extends GitRebaseDialog {
         myRemoteBranches.add(branch);
       }
     }
-    // Configure renderer
-    myOntoComboBox.setRenderer(new ListCellRendererWrapper<GitBranch>(myOntoComboBox.getRenderer()) {
-      @Override
-      public void customize(final JList list, final GitBranch value, final int index, final boolean selected, final boolean hasFocus) {
-        final String branchName = value.getFullName();
-        if (branchName.contains(filter)){
-          setText(parent + "/" + branchName.substring(branchName.lastIndexOf(filter) + filter.length()));
-        }
-      }
-    });
-    // Configure renderer
-    myFromComboBox.setRenderer(new ListCellRendererWrapper<GitBranch>(myFromComboBox.getRenderer()) {
-      @Override
-      public void customize(final JList list, final GitBranch value, final int index, final boolean selected, final boolean hasFocus) {
-        final String branchName = value.getFullName();
-        if (branchName.contains(filter)){
-          setText(parent + "/" + branchName.substring(branchName.lastIndexOf(filter) + filter.length()));
-        }
-      }
-    });
     updateOntoFrom();
 
     // Preselect remote master
@@ -81,7 +58,6 @@ public class GithubRebaseDialog extends GitRebaseDialog {
     for (GitBranch remoteBranch : myRemoteBranches) {
       if (remoteBranch.getFullName().endsWith(preselected)){
         myOntoComboBox.setSelectedItem(remoteBranch);
-        GitUIUtil.getTextField(myOntoComboBox).setText(parent + "/master");
         break;
       }
     }

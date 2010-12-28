@@ -15,6 +15,8 @@
  */
 package com.intellij.codeHighlighting;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -86,6 +88,10 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public final void applyInformationToEditor() {
     if (!isValid()) return; // Document has changed.
     if (DumbService.getInstance(myProject).isDumb() && !(this instanceof DumbAware)) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument());
+      if (file != null) {
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(getDocument(), file, getId());
+      }
       return;
     }
     doApplyInformationToEditor();

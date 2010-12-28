@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -732,7 +733,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (description != null) {
         // need this in order to correctly load plugin-supplied descriptions
         try {
-          myBrowser.read(new StringReader(SearchUtil.markup(description, myProfileFilter.getFilter())), null);
+          myBrowser.read(new StringReader(IdeTooltipManager.formatHtml(SearchUtil.markup(description, myProfileFilter.getFilter()), new HintHint(myBrowser, new Point(0, 0)))), null);
         }
         catch (IOException e2) {
           try {

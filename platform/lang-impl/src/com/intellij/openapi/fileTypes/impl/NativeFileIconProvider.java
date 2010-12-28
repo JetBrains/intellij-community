@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.Function;
 import com.intellij.util.ui.update.ComparableObject;
@@ -62,7 +63,7 @@ public class NativeFileIconProvider implements FileIconProvider {
     if (icon != null) {
       return icon;
     }
-    return new DeferredIconImpl<VirtualFile>(file.getFileType().getIcon(), file, false, new Function<VirtualFile, Icon>() {
+    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACHOLDER, file, false, new Function<VirtualFile, Icon>() {
       public Icon fun(VirtualFile virtualFile) {
         final File f = new File(filePath);
         if (!f.exists()) {
@@ -91,7 +92,7 @@ public class NativeFileIconProvider implements FileIconProvider {
   }
 
   protected boolean isNativeFileType(VirtualFile file) {
-    return file.getFileType() instanceof NativeFileType || file.getFileType() instanceof UnknownFileType;
+    return ElementBase.isNativeFileType(file.getFileType());
   }
 
   private static class Ext extends ComparableObject.Impl {

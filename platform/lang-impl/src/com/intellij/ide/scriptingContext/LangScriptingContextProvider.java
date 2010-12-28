@@ -41,5 +41,8 @@ public abstract class LangScriptingContextProvider {
 
   @Nullable
   public abstract String getLibraryTypeName(OrderRootType rootType);
+  
+  @Nullable
+  public abstract String getDefaultDocUrl(VirtualFile file);
 
 }

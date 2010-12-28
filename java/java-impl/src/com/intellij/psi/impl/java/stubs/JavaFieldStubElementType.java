@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -48,7 +47,7 @@ import java.io.IOException;
 /*
  * @author max
  */
-public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
+public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, PsiField> {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
 
   public JavaFieldStubElementType(@NotNull @NonNls final String id) {

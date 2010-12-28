@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -22,13 +21,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.ILightStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.ICompositeElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /*
  * @author max
  */
-public abstract class JavaStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends ILightStubElementType<StubT, PsiT> {
+public abstract class JavaStubElementType<StubT extends StubElement, PsiT extends PsiElement>
+    extends ILightStubElementType<StubT, PsiT> implements ICompositeElementType {
   private final boolean myLeftBound;
 
   protected JavaStubElementType(@NotNull @NonNls final String debugName) {

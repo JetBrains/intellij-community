@@ -77,7 +77,7 @@ public class HotSwapManager extends AbstractProjectComponent {
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final List<VirtualFile> allClasses = OrderEnumerator.orderEntries(myProject).getPathsList().getRootDirs();
+        final List<VirtualFile> allClasses = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getRootDirs();
 
         final VirtualFile[] allDirs = VfsUtil.toVirtualFileArray(allClasses);
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();

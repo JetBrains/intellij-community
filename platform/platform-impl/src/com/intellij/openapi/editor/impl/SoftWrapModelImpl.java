@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareVisualSizeManager;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +73,12 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final SoftWrapAwareVisualSizeManager     myVisualSizeManager;
 
   private final EditorEx myEditor;
+  
+  /**
+   * We don't want to use soft wraps-aware processing from non-EDT and profiling shows that 'is EDT' check that is called too
+   * often is rather expensive. Hence, we use caching here for performance improvement.
+   */
+  private SoftReference<Thread> myLastEdt = new SoftReference<Thread>(null);
   /** Holds number of 'active' calls, i.e. number of methods calls of the current object within the current call stack. */
   private int myActive;
   private boolean myUseSoftWraps;
@@ -142,8 +149,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
     // We check that current thread is EDT because attempt to retrieve information about visible area width may fail otherwise
     Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread()) {
-      return false;
+    Thread lastEdt = myLastEdt.get();
+    Thread currentThread = Thread.currentThread();
+    if (lastEdt != currentThread) {
+      if (application.isDispatchThread()) {
+        myLastEdt = new SoftReference<Thread>(currentThread);
+      }
+      else {
+        myLastEdt = new SoftReference<Thread>(null);
+        return false;
+      }
     }
 
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();

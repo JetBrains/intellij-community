@@ -118,8 +118,7 @@ public class TreeUtil {
   }
 
   public static boolean isLeafOrCollapsedChameleon(ASTNode node) {
-    return node instanceof LeafElement ||
-           node instanceof LazyParseableElement && !((LazyParseableElement)node).isParsed();
+    return node instanceof LeafElement || isCollapsedChameleon(node);
   }
 
   @Nullable
@@ -181,7 +180,7 @@ public class TreeUtil {
   }
 
   public static Pair<ASTNode, ASTNode> findTopmostSiblingParents(ASTNode one, ASTNode two) {
-    if (one == two) return (Pair)Pair.create(null, null);
+    if (one == two) return Pair.create(null, null);
 
     LinkedList<ASTNode> oneParents = new LinkedList<ASTNode>();
     LinkedList<ASTNode> twoParents = new LinkedList<ASTNode>();
@@ -200,11 +199,11 @@ public class TreeUtil {
     }
     while (one == two && one != null);
 
-    return new Pair(one, two);
+    return new Pair<ASTNode, ASTNode>(one, two);
   }
 
   public static void clearCaches(@NotNull final TreeElement tree) {
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
+    tree.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
       protected void visitNode(final TreeElement element) {
         element.clearCaches();

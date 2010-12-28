@@ -47,7 +47,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my fork", "Rebase your forked repository relative to the origin", ICON);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", ICON);
   }
 
   public void update(AnActionEvent e) {
@@ -129,9 +129,9 @@ public class GithubRebaseAction extends DumbAwareAction {
       }
       if (!remoteForParentSeen){
         final int result = Messages.showYesNoDialog(project, "It is nescessary to have '" +
-                                                        parentRepoUrl +
-                                                        "' as a configured remote. Add remote?", "Github Rebase",
-                                               Messages.getQuestionIcon());
+                                                             parentRepoUrl +
+                                                             "' as a configured remote. Add remote?", "Github Rebase",
+                                                    Messages.getQuestionIcon());
         if (result != Messages.OK){
           return;
         }
@@ -140,7 +140,8 @@ public class GithubRebaseAction extends DumbAwareAction {
         final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
         addRemoteHandler.setNoSSH(true);
         addRemoteHandler.setSilent(true);
-        addRemoteHandler.addParameters("add", repoName, parentRepoUrl);
+        final String remoteName = parent.substring(0, parent.lastIndexOf('/'));
+        addRemoteHandler.addParameters("add", remoteName, parentRepoUrl);
         addRemoteHandler.run();
         if (addRemoteHandler.getExitCode() != 0) {
           Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", CANNOT_PERFORM_GITHUB_REBASE);
