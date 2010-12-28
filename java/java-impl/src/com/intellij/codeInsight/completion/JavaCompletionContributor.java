@@ -361,6 +361,18 @@ public class JavaCompletionContributor extends CompletionContributor {
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
+    if (parameters.getCompletionType() == CompletionType.BASIC && parameters.getInvocationCount() > 0) {
+      PsiElement position = parameters.getPosition();
+      if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
+        if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          if (shortcut != null) {
+            return "Pressing " + shortcut + " without a class qualifier would show all accessible static methods";
+          }
+        }
+      }
+    }
+
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
         final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
