@@ -44,7 +44,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
   private boolean myWithoutJdk;
   private boolean myWithoutLibraries;
   protected boolean myWithoutDepModules;
-  private boolean myWithoutRootModuleContent;
+  private boolean myWithoutModuleSourceEntries;
   protected boolean myRecursively;
   protected boolean myRecursivelyExportedOnly;
   private boolean myExportedOnly;
@@ -105,7 +105,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
 
   @Override
   public OrderEnumerator withoutModuleSourceEntries() {
-    myWithoutRootModuleContent = true;
+    myWithoutModuleSourceEntries = true;
     return this;
   }
 
@@ -186,7 +186,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
     flags <<= 1;
     if (myWithoutDepModules) flags |= 1;
     flags <<= 1;
-    if (myWithoutRootModuleContent) flags |= 1;
+    if (myWithoutModuleSourceEntries) flags |= 1;
     flags <<= 1;
     if (myRecursively) flags |= 1;
     flags <<= 1;
@@ -208,9 +208,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator {
         if (!myRecursively && entry instanceof ModuleOrderEntry) continue;
         if (entry instanceof ModuleSourceOrderEntry && !isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
       }
-      if (myWithoutRootModuleContent
-          && entry instanceof ModuleSourceOrderEntry
-          && isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) {
+      if (myWithoutModuleSourceEntries && entry instanceof ModuleSourceOrderEntry) {
         continue;
       }
 
