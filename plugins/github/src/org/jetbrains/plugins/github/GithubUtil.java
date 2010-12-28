@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -254,11 +253,7 @@ public class GithubUtil {
 
   @Nullable
   public static GitRemote getGithubBoundRepository(final Project project){
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-    if (roots.length == 0) {
-      return null;
-    }
-    final VirtualFile root = roots[0];
+    final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (!gitDetected) {
