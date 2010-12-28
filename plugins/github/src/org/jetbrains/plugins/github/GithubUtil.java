@@ -11,6 +11,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import org.apache.commons.httpclient.HttpClient;
@@ -81,6 +82,15 @@ public class GithubUtil {
 
   public static HttpClient getHttpClient(final String login, final String password) {
     final HttpClient client = new HttpClient();
+    // Configure proxySettings if it is required
+    final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    if (proxySettings.USE_HTTP_PROXY){
+      client.getHostConfiguration().setProxy(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
+      if (proxySettings.PROXY_AUTHENTICATION) {
+        client.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,
+                                                                                             proxySettings.getPlainProxyPassword()));
+      }
+    }
     client.getParams().setAuthenticationPreemptive(true);
     client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
     return client;
