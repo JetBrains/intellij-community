@@ -73,8 +73,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     final VirtualFile[] a = asArray();
     if (a != null) {
+      Object encoded = encodeName(name);
+      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
       for (VirtualFile file : a) {
-        if (namesEqual(name, file.getName())) return (NewVirtualFile)file;
+        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
       }
 
       return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
@@ -112,6 +114,21 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     return null;
+  }
+
+  private boolean namesEqual(String name, byte[] encoded, VirtualFile file) {
+    if (encoded != null && file instanceof VirtualFileSystemEntry) {
+      Object o = ((VirtualFileSystemEntry)file).rawName();
+      if (!(o instanceof byte[])) return false;
+
+      if (encoded.length != ((byte[])o).length) return false;
+    }
+
+    final String name2 = file.getName();
+    if (getFileSystem().isCaseSensitive()) {
+      return name.equals(name2);
+    }
+    return name.equalsIgnoreCase(name2);
   }
 
   public VirtualFileSystemEntry createChild(String name, int id) {
@@ -155,8 +172,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public synchronized NewVirtualFile findChildIfCached(final String name) {
     final VirtualFile[] a = asArray();
     if (a != null) {
+      Object encoded = encodeName(name);
+      byte[] bytes = encoded instanceof byte[] ? (byte[])encoded : null;
       for (VirtualFile file : a) {
-        if (namesEqual(name, file.getName())) return (NewVirtualFile)file;
+        if (namesEqual(name, bytes, file)) return (NewVirtualFile)file;
       }
 
       return null;
@@ -358,10 +377,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (a != null) return Arrays.asList(a);
 
     return Collections.emptyList();
-  }
-
-  private boolean namesEqual(final String name1, final String name2) {
-    return getFileSystem().isCaseSensitive() ? name1.equals(name2) : name1.equalsIgnoreCase(name2);
   }
 
   private Map<String, VirtualFile> createMap() {
