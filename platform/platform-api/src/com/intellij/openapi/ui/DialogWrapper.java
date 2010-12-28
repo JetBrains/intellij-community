@@ -244,9 +244,7 @@ public abstract class DialogWrapper {
   private void reportProblem(final String message, final JComponent comp) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        //if (myLastPeerSize == null) {
-        //  myLastPeerSize = myPeer.getSize();
-        //}
+        if (myDisposed) return;
         if (isShowErrorBorder()) {
           if (myLastErrorComponent != comp) {
             if (myLastErrorComponent != null) {
@@ -280,6 +278,7 @@ public abstract class DialogWrapper {
   private void clearProblems() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myDisposed) return;
         setErrorText(null);
         getOKAction().setEnabled(true);
         //if (myLastPeerSize != null) {
@@ -1015,7 +1014,7 @@ public abstract class DialogWrapper {
   void startTrackingValidation() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (!myValidationStarted) {
+        if (!myValidationStarted && !myDisposed) {
           myValidationStarted = true;
           initValidation();
         }
