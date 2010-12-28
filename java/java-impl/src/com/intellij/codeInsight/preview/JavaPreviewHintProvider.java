@@ -110,7 +110,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
               }
 
               if (c != null) {
-                return new ColorPreviewComponent(null, c);
+                return new ColorPreviewComponent(c);
               }
             }
           }
@@ -121,7 +121,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
     if (ColorChooserIntentionAction.isInsideDecodeOrGetColorMethod(element)) {
       final String color = StringUtil.unquoteString(element.getText());
       try {
-        return new ColorPreviewComponent(null, Color.decode(color));
+        return new ColorPreviewComponent(Color.decode(color));
       } catch (NumberFormatException ignore) {}
     }
 
@@ -136,7 +136,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
           if ("java.awt.Color".equals(((PsiField)psiElement).getContainingClass().getQualifiedName())) {
             final String colorName = ((PsiField)psiElement).getName().toLowerCase().replace("_", "");
             final String hex = ColorSampleLookupValue.getHexCodeForColorName(colorName);
-            return new ColorPreviewComponent(null, Color.decode("0x" + hex.substring(1)));
+            return new ColorPreviewComponent(Color.decode("0x" + hex.substring(1)));
           }
         }
       }
