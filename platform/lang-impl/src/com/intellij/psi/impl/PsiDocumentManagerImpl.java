@@ -590,6 +590,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       commitNecessary = true;
     }
 
+    if (event.isWholeTextReplaced()) {
+      document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
+    }
+    
     if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
       commitDocument(document);
     }

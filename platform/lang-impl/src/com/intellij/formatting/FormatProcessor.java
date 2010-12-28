@@ -215,16 +215,16 @@ class FormatProcessor {
     DocumentEx updatedDocument = null;
 
     try {
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
-        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
-          return;
-        }
-      }
-
       final boolean bulkReformat = blocksToModifyCount > 50;
       updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
       if (updatedDocument != null) {
         updatedDocument.setInBulkUpdate(true);
+      }
+      
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
+        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
+          return;
+        }
       }
       
       int shift = 0;
