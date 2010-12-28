@@ -38,15 +38,20 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
 
   public void annotate(PsiFile file, AnnotationHolder holder) {
     if (!(file instanceof XmlFile)) return;
-    myHolder = holder;
     final XmlDocument document = ((XmlFile)file).getDocument();
     if (document == null) return;
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
     if (nsDescriptor instanceof Validator && !HtmlUtil.isHtml5Document(document)) {
-      //noinspection unchecked
-      ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
+      myHolder = holder;
+      try {
+        //noinspection unchecked
+        ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
+      }
+      finally {
+        myHolder = null;
+      }
     }
   }
 
