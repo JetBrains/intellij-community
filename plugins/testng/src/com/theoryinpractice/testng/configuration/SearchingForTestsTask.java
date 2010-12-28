@@ -168,7 +168,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
   private void logCantRunException(CantRunException e) {
     try {
-      final String message = "CantRunException" + e.getMessage();
+      final String message = "CantRunException" + e.getMessage() + "\n";
       FileUtil.writeToFile(myTempFile, message.getBytes());
     }
     catch (IOException e1) {
