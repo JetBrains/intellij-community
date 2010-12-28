@@ -32,6 +32,7 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.parsing.FileTextParsing;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -66,6 +67,11 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   public boolean shouldBuildStubFor(final VirtualFile file) {
     final VirtualFile dir = file.getParent();
     return dir == null || dir.getUserData(LanguageLevel.KEY) != null;
+  }
+
+  @Override
+  public ASTNode createNode(final CharSequence text) {
+    return new JavaFileElement(text);
   }
 
   @Override

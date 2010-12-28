@@ -82,16 +82,10 @@ import java.util.List;
 class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
-  private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
-  private final PropertyChangeListener myTodoListener = new MyTodoListener();
-
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
-  private final ModalityStateListener myModalityStateListener;
 
   private boolean myEscPressed;
-
-  private final ErrorStripeHandler myErrorStripeHandler;
 
   private volatile boolean cutOperationJustHappened;
   private final EditorTracker myEditorTracker;
@@ -208,9 +202,9 @@ class DaemonListeners implements Disposable {
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
     ApplicationListener applicationListener = new MyApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
-    EditorColorsManager.getInstance().addEditorColorsListener(myEditorColorsListener);
+    EditorColorsManager.getInstance().addEditorColorsListener(new MyEditorColorsListener(),this);
     InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
-    TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
+    TodoConfiguration.getInstance().addPropertyChangeListener(new MyTodoListener(), this);
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
@@ -242,8 +236,7 @@ class DaemonListeners implements Disposable {
       }
     }, this);
 
-    myErrorStripeHandler = new ErrorStripeHandler(myProject);
-    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(myErrorStripeHandler);
+    ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(new ErrorStripeHandler(myProject), this);
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(project);
     NamedScopesHolder.ScopeListener scopeListener = new NamedScopesHolder.ScopeListener() {
@@ -255,7 +248,7 @@ class DaemonListeners implements Disposable {
       holder.addScopeListener(scopeListener);
     }
 
-    myModalityStateListener = new ModalityStateListener() {
+    ModalityStateListener modalityStateListener = new ModalityStateListener() {
       public void beforeModalityStateChanged(boolean entering) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
         boolean inModalContext = LaterInvocator.isInModalContext();
@@ -263,7 +256,7 @@ class DaemonListeners implements Disposable {
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
     };
-    LaterInvocator.addModalityStateListener(myModalityStateListener);
+    LaterInvocator.addModalityStateListener(modalityStateListener,this);
   }
 
   static boolean isUnderIgnoredAction(Object action) {
@@ -281,13 +274,6 @@ class DaemonListeners implements Disposable {
   }
 
   public void dispose() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-
-    EditorColorsManager.getInstance().removeEditorColorsListener(myEditorColorsListener);
-    TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
-
-    ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
-    LaterInvocator.removeModalityStateListener(myModalityStateListener);
   }
 
   boolean canChangeFileSilently(PsiFileSystemItem file) {

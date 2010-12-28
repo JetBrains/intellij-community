@@ -406,7 +406,11 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
 
     public VirtualFile[] getRoots(OrderRootType rootType) {
-      return myPathEditors.get(rootType).getRoots();
+      final PathEditor editor = myPathEditors.get(rootType);
+      if (editor == null) {
+        throw new IllegalStateException("no editor for root type " + rootType);
+      }
+      return editor.getRoots();
     }
 
     public void addRoot(VirtualFile root, OrderRootType rootType) {

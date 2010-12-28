@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -40,7 +41,7 @@ public class ModalityContextImpl implements ModalityContext {
     myIsForTemporaryConfiguration = forTemp;
   }
 
-  public void runInDispatchThread(Runnable action, Project project) {
+  public void runInDispatchThread(@NotNull Runnable action, Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isDispatchThread()) {
       action.run();

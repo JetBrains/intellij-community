@@ -427,6 +427,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
+  @Override
+  public boolean isUpToDate() {
+    return !myIsInUpdate;
+  }
+
   @NotNull
   public LogicalPosition getLogicalPosition() {
     validateCallContext();

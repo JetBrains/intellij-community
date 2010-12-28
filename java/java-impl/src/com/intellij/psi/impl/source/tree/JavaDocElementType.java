@@ -20,70 +20,106 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.parsing.JavaParsingContext;
+import com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl;
+import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.CharTable;
+import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
-  //chameleon
-  IElementType DOC_TAG = new IJavaDocElementType("DOC_TAG");
-  IElementType DOC_TAG_VALUE = new IJavaDocElementType("DOC_TAG_VALUE");
-  IElementType DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");
-  IElementType DOC_METHOD_OR_FIELD_REF = new IJavaDocElementType("DOC_METHOD_OR_FIELD_REF");
-  IElementType DOC_PARAMETER_REF = new IJavaDocElementType("DOC_PARAMETER_REF");
+  class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
+    private final Constructor<? extends ASTNode> myConstructor;
 
-  ILazyParseableElementType DOC_REFERENCE_HOLDER = new ILazyParseableElementType("DOC_REFERENCE_HOLDER", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
+    private JavaDocCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
+      super(debugName);
+      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+    }
+
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return ReflectionUtil.createInstance(myConstructor);
+    }
+  }
+
+  class JavaDocLazyElementType extends ILazyParseableElementType {
+    private JavaDocLazyElementType(@NonNls final String debugName) {
+      super(debugName, StdLanguages.JAVA);
+    }
+
+    @Override
+    public ASTNode createNode(final CharSequence text) {
+      return new LazyParseablePsiElement(this, text);
+    }
+  }
+
+  IElementType DOC_TAG = new JavaDocCompositeElementType("DOC_TAG", PsiDocTagImpl.class);
+  IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", PsiInlineDocTagImpl.class);
+  IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", PsiDocMethodOrFieldRef.class);
+  IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", PsiDocParamRef.class);
+
+  ILazyParseableElementType DOC_REFERENCE_HOLDER = new JavaDocLazyElementType("DOC_REFERENCE_HOLDER") {
+    public ASTNode parseContents(final ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      final PsiElement psi = chameleon.getTreeParent().getPsi();
+      assert psi != null : chameleon;
+      final PsiManager manager = psi.getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
-      JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
+      final JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), false, manager);
     }
-
-    @Override
-    public ASTNode createNode(CharSequence text) {
-      return new LazyParseablePsiElement(this, text);
-    }
   };
 
-  ILazyParseableElementType DOC_TYPE_HOLDER = new ILazyParseableElementType("DOC_TYPE_HOLDER", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
+  ILazyParseableElementType DOC_TYPE_HOLDER = new JavaDocLazyElementType("DOC_TYPE_HOLDER") {
+    public ASTNode parseContents(final ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      final PsiElement psi = chameleon.getTreeParent().getPsi();
+      assert psi != null : chameleon;
+      final PsiManager manager = psi.getManager();
       final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
       //no language features from higher java language versions are present in javadoc
-      JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
+      final JavaParsingContext context = new JavaParsingContext(table, LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseJavaDocReference(chars, new JavaLexer(LanguageLevel.JDK_1_3), true, manager);
-    }
-
-    @Override
-    public ASTNode createNode(CharSequence text) {
-      return new LazyParseablePsiElement(this, text);
     }
   };
 
-  ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", StdLanguages.JAVA){
-    public ASTNode parseContents(ASTNode chameleon) {
+  ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", StdLanguages.JAVA) {
+    @Override
+    public ASTNode createNode(final CharSequence text) {
+      return new PsiDocCommentImpl(text);
+    }
+
+    public ASTNode parseContents(final ASTNode chameleon) {
       final CharSequence chars = chameleon.getChars();
-      final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();
+      final PsiElement psi = chameleon.getTreeParent().getPsi();
+      assert psi != null : chameleon;
+      final PsiManager manager = psi.getManager();
       //no higher java language level features are allowed in javadoc
       final JavaParsingContext context = new JavaParsingContext(SharedImplUtil.findCharTableByTree(chameleon), LanguageLevel.JDK_1_3);
       return context.getJavadocParsing().parseDocCommentText(manager, chars, 0, chars.length());
     }
 
-    public boolean isParsable(CharSequence buffer, final Project project) {
+    public boolean isParsable(final CharSequence buffer, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevel.JDK_1_5);
-
       lexer.start(buffer);
-      if(lexer.getTokenType() != DOC_COMMENT) return false;
+      if (lexer.getTokenType() != DOC_COMMENT) return false;
       lexer.advance();
-      if(lexer.getTokenType() != null) return false;
+      if (lexer.getTokenType() != null) return false;
       return true;
     }
   };

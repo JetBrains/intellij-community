@@ -94,12 +94,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     myVCSManager.addVcsListener(myVcsListener);
 
     final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
-    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener);
-    Disposer.register(this, new Disposable() {
-      public void dispose() {
-        TodoConfiguration.getInstance().removePropertyChangeListener(myPropertyChangeListener);
-      }
-    });
+    TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener,this);
 
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());

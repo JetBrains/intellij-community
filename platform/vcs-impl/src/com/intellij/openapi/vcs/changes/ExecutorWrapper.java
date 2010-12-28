@@ -22,28 +22,24 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * for restarted single threaded executor
  */
 public class ExecutorWrapper {
-  private final Project myProject;
-  private final String myName;
   private final Semaphore mySemaphore;
   private volatile boolean myDisposeStarted;
   private final Object myLock;
   private boolean myInProgress;
-  private final Runnable myStopper;
   private Thread myCurrentWorker;
   private final AtomicSectionsAware myAtomicSectionsAware;
 
-  protected ExecutorWrapper(final Project project, final String name) {
-    myProject = project;
-    myName = name;
+  protected ExecutorWrapper(@NotNull Project project, @NotNull String name) {
     myLock = new Object();
     mySemaphore = new Semaphore();
 
-    myStopper = new Runnable() {
+    Runnable stopper = new Runnable() {
       public void run() {
         synchronized (myLock) {
           myDisposeStarted = true;
@@ -71,7 +67,7 @@ public class ExecutorWrapper {
         return myDisposeStarted;
       }
     };
-    myDisposeStarted = ! PeriodicalTasksCloser.getInstance().register(project, myName, myStopper);
+    myDisposeStarted = ! PeriodicalTasksCloser.getInstance().register(project, name, stopper);
   }
 
   private void taskFinished() {

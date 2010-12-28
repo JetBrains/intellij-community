@@ -16,6 +16,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
@@ -84,15 +85,19 @@ public class LaterInvocator {
 
   private static final ArrayList<RunnableInfo> ourForcedFlushQueue = new ArrayList<RunnableInfo>();
 
-  public static void addModalityStateListener(ModalityStateListener listener){
+  public static void addModalityStateListener(@NotNull ModalityStateListener listener){
     ourModalityStateMulticaster.addListener(listener);
   }
+  public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable){
+    ourModalityStateMulticaster.addListener(listener,parentDisposable);
+  }
 
-  public static void removeModalityStateListener(ModalityStateListener listener){
+  public static void removeModalityStateListener(@NotNull ModalityStateListener listener){
     ourModalityStateMulticaster.removeListener(listener);
   }
 
-  static ModalityStateEx modalityStateForWindow(Window window){
+  @NotNull
+  static ModalityStateEx modalityStateForWindow(@NotNull Window window){
     int index = ourModalEntities.indexOf(window);
     if (index < 0){
       Window owner = window.getOwner();
@@ -120,20 +125,20 @@ public class LaterInvocator {
     return new ModalityStateEx(result.toArray());
   }
 
-  public static ActionCallback invokeLater(Runnable runnable) {
+  public static ActionCallback invokeLater(@NotNull Runnable runnable) {
     return invokeLater(runnable, Conditions.FALSE);
   }
 
-  public static ActionCallback invokeLater(Runnable runnable, @NotNull Condition expired) {
+  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
     return invokeLater(runnable, modalityState, expired);
   }
 
-  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState) {
+  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     return invokeLater(runnable, modalityState, Conditions.FALSE);
   }
 
-  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<Object> expired) {
+  public static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<Object> expired) {
     final ActionCallback callback = new ActionCallback();
     synchronized (LOCK) {
       ourQueue.add(new RunnableInfo(runnable, modalityState, expired, callback));
@@ -144,7 +149,7 @@ public class LaterInvocator {
 
 
 
-  public static void invokeAndWait(final Runnable runnable, @NotNull ModalityState modalityState) {
+  public static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -168,7 +173,7 @@ public class LaterInvocator {
     semaphore.waitFor();                                          
   }
 
-  public static void enterModal(Object modalEntity) {
+  public static void enterModal(@NotNull Object modalEntity) {
     if (!IS_TEST_MODE) {
       LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
     }
@@ -184,7 +189,7 @@ public class LaterInvocator {
     ourModalEntities.add(modalEntity);
   }
 
-  public static void leaveModal(Object modalEntity) {
+  public static void leaveModal(@NotNull Object modalEntity) {
     if (!IS_TEST_MODE) {
       LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
     }
@@ -204,7 +209,7 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  private static void cleanupQueueForModal(final Object modalEntity) {
+  private static void cleanupQueueForModal(@NotNull final Object modalEntity) {
     synchronized (LOCK) {
       for (Iterator<RunnableInfo> iterator = ourQueue.iterator(); iterator.hasNext();) {
         RunnableInfo runnableInfo = iterator.next();
@@ -233,6 +238,7 @@ public class LaterInvocator {
     requestFlush();
   }
 
+  @NotNull
   public static Object[] getCurrentModalEntities() {
     if (!IS_TEST_MODE) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -300,7 +306,7 @@ public class LaterInvocator {
   private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
   private static final Object RUN_LOCK = new Object();
 
-  static class FlushQueue implements Runnable {
+  private static class FlushQueue implements Runnable {
     private RunnableInfo myLastInfo;
 
     public void run() {

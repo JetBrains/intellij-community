@@ -100,6 +100,9 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (facet == null) {
       throw new RuntimeConfigurationError(AndroidBundle.message("android.no.facet.error"));
     }
+    if (facet.getConfiguration().LIBRARY_PROJECT) {
+      throw new RuntimeConfigurationError(AndroidBundle.message("android.cannot.run.library.project.error"));
+    }
     if (facet.getConfiguration().getAndroidPlatform() == null) {
       throw new RuntimeConfigurationError(AndroidBundle.message("select.platform.error"));
     }

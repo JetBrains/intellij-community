@@ -71,7 +71,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final String checkoutUrl = settings.getLogin().equals(repositoryOwner)
                                ? "git@github.com:" + repositoryOwner + "/" + repositoryName + ".git"
                                : "https://github.com/" + repositoryOwner + "/" + repositoryName + ".git";
-    GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "master", selectedPath);
+    GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "origin", selectedPath);
   }
 
   @Override

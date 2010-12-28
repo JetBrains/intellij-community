@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -417,7 +418,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
-  public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+  public Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException {
     return loadAndOpenProject(filePath, true);
   }
 
@@ -826,7 +827,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  public void reloadProject(final Project p) {
+  public void reloadProject(@NotNull final Project p) {
     reloadProjectImpl(p, true, false);
   }
 
@@ -886,7 +887,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   */
 
-  public boolean closeProject(final Project project) {
+  public boolean closeProject(@NotNull final Project project) {
     return closeProject(project, true, false);
   }
 
@@ -950,16 +951,27 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  public void addProjectManagerListener(ProjectManagerListener listener) {
+  public void addProjectManagerListener(@NotNull ProjectManagerListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeProjectManagerListener(ProjectManagerListener listener) {
+  @Override
+  public void addProjectManagerListener(@NotNull final ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
+    addProjectManagerListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeProjectManagerListener(listener);
+      }
+    });
+  }
+
+  public void removeProjectManagerListener(@NotNull ProjectManagerListener listener) {
     boolean removed = myListeners.remove(listener);
     LOG.assertTrue(removed);
   }
 
-  public void addProjectManagerListener(Project project, ProjectManagerListener listener) {
+  public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, new ArrayList<ProjectManagerListener>());
@@ -967,7 +979,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     listeners.add(listener);
   }
 
-  public void removeProjectManagerListener(Project project, ProjectManagerListener listener) {
+  public void removeProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners != null) {
       boolean removed = listeners.remove(listener);

@@ -631,17 +631,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LaterInvocator.invokeAndWait(runnable, modalityState);
   }
 
+  @NotNull
   public ModalityState getCurrentModalityState() {
     Object[] entities = LaterInvocator.getCurrentModalEntities();
     return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
   }
 
+  @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
 
+  @NotNull
   public ModalityState getDefaultModalityState() {
     if (EventQueue.isDispatchThread()) {
       return getCurrentModalityState();
@@ -652,6 +655,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @NotNull
   public ModalityState getNoneModalityState() {
     return MODALITY_STATE_NONE;
   }

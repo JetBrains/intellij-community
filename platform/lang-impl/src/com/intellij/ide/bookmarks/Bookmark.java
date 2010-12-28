@@ -24,6 +24,7 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -82,7 +83,7 @@ public class Bookmark {
       myHighlighter = null;
     }
 
-    myTarget = new OpenFileDescriptor(project, file, line, -1);
+    myTarget = new OpenFileDescriptor(project, file, line, -1, true);
   }
 
   public Document getDocument() {
@@ -128,8 +129,19 @@ public class Bookmark {
     return myDescription == null || myDescription.trim().length() == 0;
   }
 
+  OpenFileDescriptor getTarget() {
+    return myTarget;
+  }
+
   public boolean isValid() {
-    return getFile().isValid() && (myHighlighter == null || myHighlighter.isValid());
+    if (!getFile().isValid() || (myHighlighter != null && !myHighlighter.isValid())) {
+      return false;
+    }
+
+    // There is a possible case that target document line that is referenced by the current bookmark is removed. We assume
+    // that corresponding range marker becomes invalid then.
+    RangeMarker rangeMarker = myTarget.getRangeMarker();
+    return rangeMarker == null || rangeMarker.isValid();
   }
 
   public void navigate() {

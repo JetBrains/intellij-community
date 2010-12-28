@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -368,6 +369,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myModalityStateComponent == ANY_COMPONENT ? null : getModalityState();
   }
 
+  @NotNull
   public ModalityState getModalityState() {
     if (myModalityStateComponent == null) {
       return ModalityState.NON_MODAL;
