@@ -19,5 +19,3 @@ Groovy script
           PsiElement(identifier)('a3')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a4')
-  PsiErrorElement:Expression expected
-    <empty list>
