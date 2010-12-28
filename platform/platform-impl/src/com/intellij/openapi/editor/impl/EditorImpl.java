@@ -202,6 +202,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
+  
+  @Nullable
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
@@ -252,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-  EditorImpl(@NotNull Document document, boolean viewer, Project project) {
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
     myScheme = createBoundColorSchemeDelegate(null);
