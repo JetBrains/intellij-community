@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.preview;
 
+import com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -114,6 +116,13 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
           }
         }
       }
+    }
+
+    if (ColorChooserIntentionAction.isInsideDecodeOrGetColorMethod(element)) {
+      final String color = StringUtil.unquoteString(element.getText());
+      try {
+        return new ColorPreviewComponent(null, Color.decode(color));
+      } catch (NumberFormatException ignore) {}
     }
 
     if (PlatformPatterns.psiElement(PsiIdentifier.class).withParent(PlatformPatterns.psiElement(PsiReferenceExpression.class))

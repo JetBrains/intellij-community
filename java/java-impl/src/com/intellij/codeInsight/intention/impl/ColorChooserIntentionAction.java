@@ -27,7 +27,9 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,39 +37,116 @@ import com.intellij.ui.ColorChooser;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+
+/**
+ * @author spleaner
+ * @author Konstantin Bulenkov
+ */
 public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
+  private static final String JAVA_AWT_COLOR = "java.awt.Color";
+
+  private static final PsiMethodPattern DECODE_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(JAVA_AWT_COLOR)
+    .withName("decode");
+
+  private static final PsiMethodPattern GET_COLOR_METHOD = PsiJavaPatterns.psiMethod()
+    .definedInClass(JAVA_AWT_COLOR)
+    .withName("getColor");
+
+
+  public ColorChooserIntentionAction() {
+    setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
+  }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
+    // new Color(...)
+    if (psiElement().inside(psiElement(PsiNewExpression.class)).accepts(element)) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
       if (expression != null) {
-        final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);
-        if (referenceElement != null) {
-          final PsiReference reference = referenceElement.getReference();
-          if (reference != null) {
-            final PsiElement psiElement = reference.resolve();
-            if (psiElement instanceof PsiClass && "java.awt.Color".equals(((PsiClass)psiElement).getQualifiedName())) {
-              setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
-              return true;
-            }
-          }
-        }
+        final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);
+        if (isJavaAwtColor(ref)) return true;
       }
+    }
+    // Color.decode("...")
+    if (isInsideDecodeOrGetColorMethod(element)) {
+      return true;
     }
 
     return false;
   }
 
+  public static boolean isInsideDecodeOrGetColorMethod(PsiElement element) {
+    if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
+      element = element.getParent();
+    }
+
+    return PsiJavaPatterns.psiExpression().methodCallParameter(0, DECODE_METHOD).accepts(element)
+           ||
+           PsiJavaPatterns.psiExpression().methodCallParameter(0, GET_COLOR_METHOD).accepts(element);
+  }
+
+  private static boolean isJavaAwtColor(final PsiJavaCodeReferenceElement ref) {
+    if (ref != null) {
+      final PsiReference reference = ref.getReference();
+      if (reference != null) {
+        final PsiElement psiElement = reference.resolve();
+        if (psiElement instanceof PsiClass && JAVA_AWT_COLOR.equals(((PsiClass)psiElement).getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.color.chooser.dialog");
+    return getText();
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final JComponent editorComponent = editor.getComponent();
+    if (isInsideDecodeOrGetColorMethod(element)) {
+      invokeForMethodParam(editorComponent, element);
+    } else {
+      invokeForConstructor(editorComponent, element);
+    }
+  }
+
+  private void invokeForMethodParam(JComponent editorComponent, PsiElement element) {
+    final PsiLiteralExpression literal = PsiTreeUtil.getParentOfType(element, PsiLiteralExpression.class);
+    if (literal == null) return;
+    final String text = StringUtil.unquoteString(literal.getText());
+    final int radix = text.startsWith("0x") || text.startsWith("0X") || text.startsWith("#") ? 16 : text.startsWith("0") ? 8 : 10;
+    final String hexPrefix = radix == 16 ? text.startsWith("#") ? "#" : text.substring(0, 2) : null;
+
+    Color oldColor;
+    try {
+      oldColor = Color.decode(text);
+    }
+    catch (NumberFormatException e) {
+      oldColor = Color.GRAY;
+    }
+    Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor);
+    if (color == null) return;
+    final int rgb = color.getRGB() - ((255 & 0xFF) << 24);
+    if (color != null && rgb != oldColor.getRGB()) {
+      final String newText = radix == 16 ? hexPrefix + String.format("%6s" ,Integer.toHexString(rgb)).replace(' ', '0')
+                           : radix == 8  ? "0" + Integer.toOctalString(rgb)
+                           : Integer.toString(rgb);
+      final PsiManager manager = literal.getManager();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiExpression newLiteral = factory.createExpressionFromText("\"" + newText + "\"", literal);
+      literal.replace(newLiteral);
+    }
+  }
+
+  private void invokeForConstructor(JComponent editorComponent, PsiElement element) {
     final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     if (expression == null) return;
 
@@ -94,43 +173,57 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
         }
       }
 
-      if (i == expressions.length) {
-        switch (values.length) {
-          case 1:
-            c = new Color(values[0]);
-            break;
-          case 3:
-            c = new Color(values[0], values[1], values[2]);
-            break;
-          case 4:
-            c = new Color(values[0], values[1], values[2], values[3]);
-            break;
-          default:
-            break;
+      try {
+        if (i == expressions.length) {
+          switch (values.length) {
+            case 1:
+              c = new Color(values[0]);
+              break;
+            case 3:
+              c = new Color(values[0], values[1], values[2]);
+              break;
+            case 4:
+              c = new Color(values[0], values[1], values[2], values[3]);
+              break;
+            default:
+              break;
+          }
+        }
+        else if (j == expressions.length) {
+          switch (values2.length) {
+            case 3:
+              c = new Color(values2[0], values2[1], values2[2]);
+              break;
+            case 4:
+              c = new Color(values2[0], values2[1], values2[2], values2[3]);
+              break;
+            default:
+              break;
+          }
         }
       }
-      else if (j == expressions.length) {
-        switch (values2.length) {
-          case 3:
-            c = new Color(values2[0], values2[1], values2[2]);
-            break;
-          case 4:
-            c = new Color(values2[0], values2[1], values2[2], values2[3]);
-            break;
-          default:
-            break;
-        }
+      catch (Exception e) {
+        c = Color.GRAY;
       }
     }
 
     c = (c == null) ? Color.GRAY : c;
 
-    final Color color = ColorChooser.chooseColor(editor.getComponent(), CodeInsightBundle.message("intention.color.chooser.dialog"), c);
+    replaceColor(editorComponent, expression, c);
+  }
+
+  private void replaceColor(JComponent editorComponent, PsiNewExpression expression, Color oldColor) {
+    final Color color = ColorChooser.chooseColor(editorComponent, getText(), oldColor);
     if (color != null) {
       final PsiManager manager = expression.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiExpression newCall = factory.createExpressionFromText(
-          "new java.awt.Color(" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", expression);
+          "new " + JAVA_AWT_COLOR +"("
+          + color.getRed() + ", "
+          + color.getGreen() + ", "
+          + color.getBlue()
+          + (oldColor.getAlpha() < 255 ? ", " + oldColor.getAlpha() : "")
+          +")", expression);
       final PsiElement insertedElement = expression.replace(newCall);
       final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
       codeStyleManager.reformat(insertedElement);
