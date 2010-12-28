@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
@@ -508,6 +509,14 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   public static SdkType getInstance() {
     return SdkType.findInstance(IdeaJdk.class);
+  }
+
+  @Override
+  public boolean isRootTypeApplicable(OrderRootType type) {
+    return type == OrderRootType.CLASSES ||
+           type == OrderRootType.SOURCES ||
+           type == JavadocOrderRootType.getInstance() ||
+           type == AnnotationOrderRootType.getInstance();
   }
 
   enum JDKVersion {
