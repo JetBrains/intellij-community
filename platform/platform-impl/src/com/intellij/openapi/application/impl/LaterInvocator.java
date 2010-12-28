@@ -96,6 +96,7 @@ public class LaterInvocator {
     ourModalityStateMulticaster.removeListener(listener);
   }
 
+  @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window){
     int index = ourModalEntities.indexOf(window);
     if (index < 0){
