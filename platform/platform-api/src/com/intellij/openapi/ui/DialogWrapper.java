@@ -191,10 +191,9 @@ public abstract class DialogWrapper {
   }
 
   //validation
-  private Alarm myValidationAlarm = new Alarm();
-  private int myValidationDelay = 300;
-  //private Dimension myLastPeerSize = null;
-  private String OLD_BORDER = "OLD_BORDER";
+  private final Alarm myValidationAlarm = new Alarm(myDisposable);
+  private static final int myValidationDelay = 300;
+  private static final String OLD_BORDER = "OLD_BORDER";
   private JComponent myLastErrorComponent = null;
   private boolean myDisposed = false;
   private Boolean myLastPaintButtonBorder = null;
@@ -297,6 +296,75 @@ public abstract class DialogWrapper {
         }
       }
     });
+  }
+
+  protected String getDoNotShowMessage() {
+    return CommonBundle.message("dialog.options.do.not.show");
+  }
+
+  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
+  private ErrorText myErrorText;
+  private int myMaxErrorTextLength;
+
+  private final Alarm myErrorTextAlarm = new Alarm();
+
+  /**
+   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   *
+   * @param project     parent window for the dialog will be calculated based on focused window for the
+   *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                    will be suggested based on current focused window.
+   * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
+   *                    by <code>WindowManager</code>.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
+  protected DialogWrapper(Project project, boolean canBeParent) {
+    myPeer = createPeer(project, canBeParent);
+    createDefaultActions();
+  }
+
+  /**
+   * Creates modal <code>DialogWrapper</code> that can be parent for other windows.
+   * The currently active window will be the dialog's parent.
+   *
+   * @param project     parent window for the dialog will be calculated based on focused window for the
+   *                    specified <code>project</code>. This parameter can be <code>null</code>. In this case parent window
+   *                    will be suggested based on current focused window.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean)
+   */
+  protected DialogWrapper(Project project) {
+    this(project, true);
+  }
+
+  /**
+   * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
+   *
+   * @param canBeParent specifies whether the dialog can be parent for other windows. This parameter is used
+   *                    by <code>WindowManager</code>.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
+  protected DialogWrapper(boolean canBeParent) {
+    this((Project)null, canBeParent);
+  }
+
+  protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
+    ensureEventDispatchThread();
+    myPeer = createPeer(canBeParent, toolkitModalIfPossible);
+    createDefaultActions();
+  }
+
+  /**
+   * @param parent parent component whicg is used to canculate heavy weight window ancestor.
+   *               <code>parent</code> cannot be <code>null</code> and must be showing.
+   * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
+   */
+  protected DialogWrapper(Component parent, boolean canBeParent) {
+    ensureEventDispatchThread();
+    myPeer = createPeer(parent, canBeParent);
+    createDefaultActions();
   }
 
   protected void createDefaultActions() {
@@ -618,6 +686,8 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
+    myErrorTextAlarm.cancelAllRequests();
+    myValidationAlarm.cancelAllRequests();
     myDisposed = true;
     if (myButtons != null) {
       for (JButton button : myButtons) {
