@@ -155,10 +155,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final PsiFile file = refElement.getContainingFile();
 
       if (file == null) return false;
-
+      final Project project = file.getProject();
       final Tools tools = myTools.get(tool.getShortName());
       for (ScopeToolState state : tools.getTools()) {
-        final NamedScope namedScope = state.getScope();
+        final NamedScope namedScope = state.getScope(project);
         if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
           return state.isEnabled() && ((GlobalInspectionToolWrapper)state.getTool()).getTool() == tool;
         }
@@ -358,7 +358,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (true) {
       final Tools tools = myTools.get(tool.getShortName());
       for (ScopeToolState state : tools.getTools()) {
-        final NamedScope namedScope = state.getScope();
+        final NamedScope namedScope = state.getScope(element.getProject());
         if (namedScope == null || namedScope.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
           return state.isEnabled() && state.getTool() == tool;
         }

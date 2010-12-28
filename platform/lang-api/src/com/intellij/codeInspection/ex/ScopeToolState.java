@@ -73,6 +73,16 @@ public class ScopeToolState {
     return myScope;
   }
 
+  @Nullable
+  public NamedScope getScope(Project project) {
+    if (myScope == null) {
+      if (project != null) {
+        myScope = NamedScopesHolder.getScope(project, myScopeName);
+      }
+    }
+    return myScope;
+  }
+
   public String getScopeName() {
     return myScopeName;
   }
