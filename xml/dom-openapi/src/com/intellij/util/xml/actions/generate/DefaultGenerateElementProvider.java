@@ -16,14 +16,19 @@
 
 package com.intellij.util.xml.actions.generate;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ui.actions.generate.GenerateDomElementProvider;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.ui.actions.generate.GenerateDomElementProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,7 +37,7 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
-  private final Class<? extends DomElement> myChildElementClass;
+  private final Class<T> myChildElementClass;
 
   public DefaultGenerateElementProvider(final String name, Class<T> childElementClass) {
     super(name);
@@ -49,17 +54,40 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
   @Nullable
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
+  @SuppressWarnings({"unchecked"})
   @Nullable
   public T generate(@Nullable final DomElement parent, final Editor editor) {
-    if (parent != null) {
-      final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
+    if (parent == null) {
+      return null;
+    }
 
-      for (DomCollectionChildDescription childDescription : list) {
-        if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
-          int index  = getCollectionIndex(parent, childDescription, editor);
+    final List<? extends DomCollectionChildDescription> list = parent.getGenericInfo().getCollectionChildrenDescriptions();
 
-          return index < 0 ? (T)childDescription.addValue(parent, myChildElementClass) : (T)childDescription.addValue(parent, myChildElementClass, index) ;
+    for (DomCollectionChildDescription childDescription : list) {
+      if (ReflectionUtil.getRawType(childDescription.getType()).isAssignableFrom(myChildElementClass)) {
+
+        if (editor != null) {
+          int offset = editor.getCaretModel().getOffset();
+          Document document = editor.getDocument();
+          XmlTag parentTag = parent.getXmlTag();
+          XmlTag childTag = parentTag.createChildTag(childDescription.getXmlElementName(), null, null, true);
+          String text = childTag.getText();
+          document.insertString(offset, text);
+          Project project = editor.getProject();
+          assert project != null;
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          documentManager.commitDocument(document);
+          PsiFile file = parentTag.getContainingFile();
+          PsiElement element = file.findElementAt(offset + 1);
+          T domElement = DomUtil.findDomElement(element, myChildElementClass);
+          if (domElement != null) return domElement;
+          document.deleteString(offset, offset + text.length());
+          documentManager.commitDocument(document);
         }
+
+        int index  = getCollectionIndex(parent, childDescription, editor);
+
+        return index < 0 ? (T)childDescription.addValue(parent, myChildElementClass) : (T)childDescription.addValue(parent, myChildElementClass, index) ;
       }
     }
     return null;
