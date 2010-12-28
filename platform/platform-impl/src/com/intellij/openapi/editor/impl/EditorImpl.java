@@ -2868,7 +2868,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final Dimension draft = getSizeWithoutCaret();
     final int additionalSpace = mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
-    if (!myDocument.isInBulkUpdate()) {
+    if (!myDocument.isInBulkUpdate() && getCaretModel().isUpToDate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
       draft.width = Math.max(caretX, draft.width) + additionalSpace;
     }
