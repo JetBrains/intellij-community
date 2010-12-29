@@ -91,6 +91,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myProtocolToSystemMap.remove(fileSystem.getProtocol());
   }
 
+  @NotNull
   public VirtualFileSystem[] getFileSystems() {
     return myFileSystems.toArray(new VirtualFileSystem[myFileSystems.size()]);
   }
@@ -160,7 +161,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myVirtualFileListenerMulticaster.addListener(listener);
   }
 
-  public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable) {
     myVirtualFileListenerMulticaster.addListener(listener, parentDisposable);
   }
 
@@ -183,11 +184,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     myModificationAttemptListenerMulticaster.getMulticaster().readOnlyModificationAttempt(event);
   }
 
-  public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.add(listener);
   }
 
-  public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
+  public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
   }
 
