@@ -407,4 +407,35 @@ format<caret>"""
     myFixture.checkResult "int xxx, xxy; xxx = <caret>"
   }
 
+  public void testOnlyAnnotationsAfterAt() {
+    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.configureByText "a.groovy", "@Abcd<caret> class A {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "@AbcdAnno<caret> class A {}"
+  }
+
+  public void testOnlyAnnotationsAfterAtInMethodParameters() {
+    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.configureByText "a.groovy", "def foo(@Abcd<caret> ) {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
+  }
+
+  public void testOnlyExceptionsInCatch() {
+    myFixture.addClass "package foo; public class AbcdClass {}; public class AbcdException extends Throwable {}"
+    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult """import foo.AbcdException
+
+try {} catch (AbcdException"""
+  }
+
+  public void testOnlyExceptionsInCatch2() {
+    myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
+    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret> e) {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "try {} catch (AbcdException<caret> e) {}"
+  }
+
+
 }
