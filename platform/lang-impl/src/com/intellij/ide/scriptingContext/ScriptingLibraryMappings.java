@@ -116,6 +116,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
           //
           Set<Library> librariesToAdd = new HashSet<Library>();
           for (VirtualFile file : mappings.keySet()) {
+            //
+            // In case if there is a single module (like in Web/PhpStorm), just use it without checking whether it contains the source file 
+            // or not. Otherwise add dependency to a module containing the source file.
+            //
             if (module.getModuleScope().contains(file) || modules.length == 1) {
               ScriptingLibraryTable.LibraryModel container = mappings.get(file);
               assert container instanceof CompoundLibrary;
