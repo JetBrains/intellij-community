@@ -315,10 +315,28 @@ public class SearchUtil {
     if (filter == null || filter.length() == 0) {
       return textToMarkup;
     }
+    int bodyStart = textToMarkup.indexOf("<body>");
+    final int bodyEnd = textToMarkup.indexOf("</body>");
+    final String head;
+    final String foot;
+    if (bodyStart >= 0) {
+      bodyStart += "<body>".length();
+      head = textToMarkup.substring(0, bodyStart);
+      if (bodyEnd >= 0) {
+        foot = textToMarkup.substring(bodyEnd);
+        textToMarkup = textToMarkup.substring(0, bodyEnd);
+      } else {
+        foot = "";
+      }
+      textToMarkup = textToMarkup.substring(bodyStart);
+    } else {
+      foot = "";
+      head = "";
+    }
     final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
     final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     final HashSet<String> quoted = new HashSet<String>();
-    filter = processFilter(quoteStrictOccurences(textToMarkup, filter), quoted);
+    filter = processFilter(quoteStrictOccurrences(textToMarkup, filter), quoted);
     final Set<String> options = registrar.getProcessedWords(filter);
     final Set<String> words = registrar.getProcessedWords(textToMarkup);
     for (String option : options) {
@@ -329,10 +347,10 @@ public class SearchUtil {
     for (String stripped : quoted) {
       textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
     }
-    return textToMarkup;
+    return head + textToMarkup + foot;
   }
 
-  private static String quoteStrictOccurences(final String textToMarkup, final String filter) {
+  private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
     String cur = "";
     final String s = textToMarkup.toLowerCase();
     for (String part : filter.split(" ")) {
@@ -377,7 +395,7 @@ public class SearchUtil {
     }
     else { //markup
       final HashSet<String> quoted = new HashSet<String>();
-      filter = processFilter(quoteStrictOccurences(text, filter), quoted);
+      filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
       final TreeMap<Integer, String> indx = new TreeMap<Integer, String>();
       for (String stripped : quoted) {
         int beg = 0;
