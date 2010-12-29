@@ -11,6 +11,6 @@ switch (e) {
     int preved = 4
     break;
   case 2:
-    preved = 5
-    print preved
+    def preved = 5
+  print preved<caret>
 }
