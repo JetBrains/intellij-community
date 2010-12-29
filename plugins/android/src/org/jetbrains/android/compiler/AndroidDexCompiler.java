@@ -39,6 +39,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,27 +146,25 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           if (outputDir != null) {
             AndroidFacetConfiguration configuration = facet.getConfiguration();
             AndroidPlatform platform = configuration.getAndroidPlatform();
-            if (platform != null) {
-              Set<VirtualFile> files = new HashSet<VirtualFile>();
-              addModuleOutputDir(files, outputDir);
-              files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
-              for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
-                addModuleOutputDir(files, file);
-              }
-              VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
-              if (outputDirForTests != null) {
-                addModuleOutputDir(files, outputDirForTests);
-              }
-              IAndroidTarget target = configuration.getAndroidTarget();
-              if (target != null) {
-                //Set<String> excludedFiles = new HashSet<String>();
-                //collectClassFilesInLibraryModules(facet, excludedFiles);
-
-                outputDir = getOutputDirectoryForDex(module);
-
-                items.add(new DexItem(module, outputDir, target, files, Collections.<String>emptySet()));
-              }
+            if (platform == null) {
+              myContext.addMessage(CompilerMessageCategory.ERROR,
+                                   AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+              continue;
             }
+            Set<VirtualFile> files = new HashSet<VirtualFile>();
+            addModuleOutputDir(files, outputDir);
+            files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
+            for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
+              addModuleOutputDir(files, file);
+            }
+            VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+            if (outputDirForTests != null) {
+              addModuleOutputDir(files, outputDirForTests);
+            }
+
+            outputDir = getOutputDirectoryForDex(module);
+
+            items.add(new DexItem(module, outputDir, platform.getTarget(), files, Collections.<String>emptySet()));
           }
         }
       }

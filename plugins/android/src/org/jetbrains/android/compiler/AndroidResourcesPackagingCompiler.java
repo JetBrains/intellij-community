@@ -24,6 +24,7 @@ import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -48,7 +49,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
         if (manifestFile == null) {
-          context.addMessage(CompilerMessageCategory.ERROR, "AndroidManifest.xml file not found. Please, check Android facet settings.",
+          context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
                              null, -1, -1);
           continue;
         }
