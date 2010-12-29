@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.completion;
+package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.plugins.groovy.util.TestUtils;
