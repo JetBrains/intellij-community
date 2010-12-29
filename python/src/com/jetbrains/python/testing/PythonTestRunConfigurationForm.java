@@ -6,7 +6,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
+import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
+import com.jetbrains.python.run.PyCommonOptionsFormFactory;
+import com.jetbrains.python.run.PythonRunConfigurationFormUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,12 +17,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
+import static com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration.TestType;
 
 /**
  * @author Leonid Shalupov
  */
-public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
+public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams {
   private JPanel myRootPanel;
   private LabeledComponent myTestClassComponent;
   private LabeledComponent myTestMethodComponent;
@@ -29,9 +32,11 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JRadioButton myTestScriptRB;
   private JRadioButton myTestClassRB;
   private JRadioButton myTestMethodRB;
-  private JPanel myCommonOptionsPlaceholder;
   private LabeledComponent myPatternComponent;
   private JRadioButton myTestFunctionRB;
+  private JPanel myAdditionalPanel;
+  private JPanel myCommonOptionsPlaceholder;
+  private JPanel myTestsPanel;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
@@ -42,12 +47,11 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private final Project myProject;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
 
-  public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
+  public PythonTestRunConfigurationForm(final Project project,
+                                        final AbstractPythonTestRunConfiguration configuration) {
     myProject = project;
-
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration);
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
-    
     initComponents();
   }
 
@@ -77,6 +81,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   public void setClassName(String className) {
     myTestClassTextField.setText(className);
   }
+
 
   public String getPattern() {
     return myPatternTextField.getText().trim();
@@ -222,6 +227,17 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myComponent.setText(PyBundle.message("runcfg.unittest.dlg.pattern"));
 
     return myComponent;
+  }
+
+  public JPanel getAdditionalPanel() {
+    return myAdditionalPanel;
+  }
+
+  public JPanel getTestsPanel() {
+    return myTestsPanel;
+  }
+  public LabeledComponent getPatternComponent() {
+    return myPatternComponent;
   }
 }
 

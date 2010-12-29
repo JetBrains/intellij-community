@@ -3,9 +3,9 @@ package com.jetbrains.python.testing;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 
 /**
- * @author Leonid Shalupov
+ * User: catherine
  */
-public interface PythonUnitTestRunConfigurationParams {
+public interface AbstractPythonTestRunConfigurationParams {
   AbstractPythonRunConfigurationParams getBaseParams();
 
   String getClassName();
@@ -20,10 +20,7 @@ public interface PythonUnitTestRunConfigurationParams {
   String getMethodName();
   void setMethodName(String methodName);
 
-  PythonUnitTestRunConfiguration.TestType getTestType();
-  void setTestType(PythonUnitTestRunConfiguration.TestType testType);
-
-  String getPattern();
-  void setPattern(String pattern);
+  AbstractPythonTestRunConfiguration.TestType getTestType();
+  void setTestType(AbstractPythonTestRunConfiguration.TestType testType);
 
 }

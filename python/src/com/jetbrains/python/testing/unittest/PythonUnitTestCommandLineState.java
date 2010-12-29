@@ -1,20 +1,24 @@
-package com.jetbrains.python.testing;
+package com.jetbrains.python.testing.unittest;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER;
+
 /**
  * @author Leonid Shalupov
  */
-public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBase {
+public class PythonUnitTestCommandLineState extends
+                                            PythonTestCommandLineStateBase {
   private final PythonUnitTestRunConfiguration myConfig;
   private static final String UTRUNNER_PY = "pycharm/utrunner.py";
 
@@ -34,7 +38,7 @@ public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBa
   protected Collection<String> buildPythonPath() {
     List<String> pythonPath = new ArrayList<String>(super.buildPythonPath());
     // the first entry is the helpers path; add script directory as second entry
-    if (myConfig.getTestType() == PythonUnitTestRunConfiguration.TestType.TEST_FOLDER) {
+    if (myConfig.getTestType() == TEST_FOLDER) {
       pythonPath.add(1, myConfig.getFolderName());
     }
     else {

@@ -26,11 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationProducer {
+abstract public class PythonTestConfigurationProducer extends RuntimeConfigurationProducer {
   private PsiElement myPsiElement;
 
-  public PythonUnitTestConfigurationProducer() {
-    super(ConfigurationTypeUtil.findConfigurationType(PythonUnitTestConfigurationType.class));
+  public PythonTestConfigurationProducer (final Class configurationTypeClass) {
+    super(ConfigurationTypeUtil.findConfigurationType(configurationTypeClass));
   }
 
   @Override
@@ -40,19 +40,8 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Override
   protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    PsiElement element = location.getPsiElement();
-        if (! (TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
-          PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME))) return null;
+    if (! isAvailable(location)) return null;
     RunnerAndConfigurationSettings settings;
-    /*Module module = location.getModule();
-
-    if (module != null) {
-      for (RunnableUnitTestFilter f : Extensions.getExtensions(RunnableUnitTestFilter.EP_NAME)) {
-        if (f.isRunnableUnitTest(location.getPsiElement().getContainingFile(), module)) {
-          return null;
-        }
-      }
-    }*/
 
     if (PythonUnitTestRunnableScriptFilter.isIfNameMain(location)) {
       return null;
@@ -76,20 +65,24 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     return null;
   }
 
+  protected boolean isAvailable(Location location) {
+    return false;
+  }
+
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     if (pyFunction == null || !PythonUnitTestUtil.isTestCaseFunction(pyFunction)) return null;
     final PyClass containingClass = pyFunction.getContainingClass();
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from function");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+    final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
     configuration.setMethodName(pyFunction.getName());
     if (containingClass != null) {
       configuration.setClassName(containingClass.getName());
-      configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_METHOD);
+      configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_METHOD);
     }
     else {
-      configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_FUNCTION);
+      configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FUNCTION);
     }
     if (!setupConfigurationScript(configuration, pyFunction)) return null;
     configuration.setName(configuration.suggestedName());
@@ -103,10 +96,10 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     if (pyClass == null || !PythonUnitTestUtil.isTestCaseClass(pyClass)) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+    final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
 
     configuration.setTestType(
-      PythonUnitTestRunConfiguration.TestType.TEST_CLASS);
+      AbstractPythonTestRunConfiguration.TestType.TEST_CLASS);
     configuration.setClassName(pyClass.getName());
     if (!setupConfigurationScript(configuration, pyClass)) return null;
     configuration.setName(configuration.suggestedName());
@@ -129,9 +122,9 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     final String path = file.getPath();
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from class");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+    final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
 
-    configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_FOLDER);
+    configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
     configuration.setFolderName(path);
     configuration.setWorkingDirectory(path);
 
@@ -167,9 +160,9 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     if (testCases.isEmpty()) return null;
 
     final RunnerAndConfigurationSettings settings = makeConfigurationSettings(location, "tests from file");
-    final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+    final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
 
-    configuration.setTestType(PythonUnitTestRunConfiguration.TestType.TEST_SCRIPT);
+    configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_SCRIPT);
     if (!setupConfigurationScript(configuration, pyFile)) return null;
 
     configuration.setName(configuration.suggestedName());
@@ -180,13 +173,13 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   private RunnerAndConfigurationSettings makeConfigurationSettings(Location location, String name) {
     final RunnerAndConfigurationSettings result =
       RunManager.getInstance(location.getProject()).createRunConfiguration(name, getConfigurationFactory());
-    PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)result.getConfiguration();
+    AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)result.getConfiguration();
     configuration.setUseModuleSdk(true);
     configuration.setModule(ModuleUtil.findModuleForPsiElement(location.getPsiElement()));
     return result;
   }
 
-  private static boolean setupConfigurationScript(PythonUnitTestRunConfiguration cfg, PyElement element) {
+  private static boolean setupConfigurationScript(AbstractPythonTestRunConfiguration cfg, PyElement element) {
     final PyFile containingFile = PyUtil.getContainingPyFile(element);
     if (containingFile == null) return false;
     final VirtualFile vFile = containingFile.getVirtualFile();
@@ -206,9 +199,9 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
                                                                  ConfigurationContext context) {
     final RunnerAndConfigurationSettings settings = createConfigurationByElement(location, null);
     if (settings != null) {
-      final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
+      final AbstractPythonTestRunConfiguration configuration = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
       for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-        if (configuration.compareSettings((PythonUnitTestRunConfiguration)existingConfiguration.getConfiguration())) {
+        if (configuration.compareSettings((AbstractPythonTestRunConfiguration)existingConfiguration.getConfiguration())) {
           return existingConfiguration;
         }
       }
