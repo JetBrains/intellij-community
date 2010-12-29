@@ -140,9 +140,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   @NotNull
-  private HighlightVisitor[] createHighlightVisitors() {
+  private HighlightVisitor[] getHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
-    HighlightVisitor[] highlightVisitors = Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
+    HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     if (oldCount != 0) {
       HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.length];
       for (int i = 0; i < highlightVisitors.length; i++) {
@@ -152,6 +152,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       highlightVisitors = clones;
     }
     return highlightVisitors;
+  }
+
+  protected HighlightVisitor[] createHighlightVisitors() {
+    return Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject);
   }
 
   // returns old value
@@ -171,7 +175,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-    HighlightVisitor[] highlightVisitors = createHighlightVisitors();
+    HighlightVisitor[] highlightVisitors = getHighlightVisitors();
     final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
     final List<PsiElement> inside = new ArrayList<PsiElement>();
     final List<PsiElement> outside = new ArrayList<PsiElement>();
@@ -456,7 +460,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void runHighlightVisitosForInjected(@NotNull PsiFile injectedPsi, @NotNull final HighlightInfoHolder holder, @NotNull final ProgressIndicator progress) {
-    HighlightVisitor[] visitors = createHighlightVisitors();
+    HighlightVisitor[] visitors = getHighlightVisitors();
     try {
       HighlightVisitor[] filtered = filterVisitors(visitors, injectedPsi);
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());

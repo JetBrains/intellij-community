@@ -21,6 +21,8 @@ package com.intellij.codeInspection;
  */
 public class PlatformInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
-    return new Class[] { SyntaxErrorInspection.class, AnnotatorBasedInspection.class };
+    return new Class[] {
+      DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.class,
+      DefaultHighlightVisitorBasedInspection.SyntaxErrorInspection.class };
   }
 }
