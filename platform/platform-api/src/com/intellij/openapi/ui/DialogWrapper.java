@@ -232,6 +232,7 @@ public abstract class DialogWrapper {
     if (! myErrorText.isTextSet(info.message)) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myDisposed) return;
         setErrorText(info.message);
         myPeer.getRootPane().getGlassPane().repaint();
         getOKAction().setEnabled(false);
@@ -245,6 +246,7 @@ public abstract class DialogWrapper {
     if (! myErrorText.isTextSet(null)) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (myDisposed) return;
           setErrorText(null);
           myPeer.getRootPane().getGlassPane().repaint();
           getOKAction().setEnabled(true);
