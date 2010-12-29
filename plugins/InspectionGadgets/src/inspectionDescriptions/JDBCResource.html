@@ -1,17 +1,18 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any JDBC resource which is not opened in front of a <b><font color="#000080">try</font></b>
-block and closed in the corresponding <b><font color="#000080">finally</font></b> block.  Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed.  JDBC resources reported
-by this inspection include any instances of <b><font color="#000080">java.sql.Connection</font></b>,
- <b><font color="#000080">java.sql.Statement</font></b>,
- <b><font color="#000080">java.sql.PreparedStatement</font></b>,
- <b><font color="#000080">java.sql.CallableStatement</font></b>,
-and <b><font color="#000080">java.sql.ResultSet</font></b>.
+This inspection reports any JDBC resource which is not opened in front of a <b>try</b>
+block and closed in the corresponding <b>finally</b> block. Such resources may
+be inadvertently leaked if an exception is thrown before the resource is closed. JDBC resources reported
+by this inspection include <b>java.sql.Connection</b>,
+<b>java.sql.Statement</b>,
+<b>java.sql.PreparedStatement</b>,
+<b>java.sql.CallableStatement</b>,
+and <b>java.sql.ResultSet</b>.
 <p>
 Use the checkbox below to specify if a JDBC resource is allowed to be opened inside a try
 block. This style is less desirable because it is more verbose than opening a resource
 in front of a try block.
-</font><br><small>Powered by InspectionGadgets</small></body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

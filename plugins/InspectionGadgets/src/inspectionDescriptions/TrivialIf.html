@@ -1,21 +1,21 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports instances of <b><font color="#000080">if</font></b> statements which can be simplified to single assignment or
-<b><font color="#000080">return</font></b> statements.  For example:
-<pre>
-    <b><font color="#000080">if</font></b>(foo())
-    {
-       <b><font color="#000080">return true</font></b>;
+This inspection reports <b>if</b> statements which can be simplified to single assignment or
+<b>return</b> statements.
+<p>
+For example:
+<code><pre>
+    <b>if</b> (foo()) {
+       <b>return true</b>;
+    } <b>else</b> {
+       <b>return false</b>;
     }
-    <b><font color="#000080">else</font></b>
-    {
-       <b><font color="#000080">return false</font></b>;
-    }
-</pre>
+</pre></code>
 can be simplified to
-<pre>
-    <b><font color="#000080">return</font></b> foo();
-</pre>
-</font><br><small>Powered by InspectionGadgets</small></body>
+<code><pre>
+    <b>return</b> foo();
+</pre></code>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>
