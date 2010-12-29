@@ -585,4 +585,33 @@ public class ResolveUtil {
     }
     return false;
   }
+
+  @NotNull
+  public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
+                                                          @Nullable String methodName,
+                                                          @NotNull GroovyPsiElement place,
+                                                          @Nullable PsiType[] argumentTypes) {
+    if (methodName != null) {
+      MethodResolverProcessor processor =
+        new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
+      final ResolveState state;
+      if (thisType instanceof PsiClassType) {
+        final PsiClassType classtype = (PsiClassType)thisType;
+        final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
+        final PsiClass lClass = resolveResult.getElement();
+        state = ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor());
+        if (lClass != null) {
+          lClass.processDeclarations(processor, state, null, place);
+        }
+      }
+      else {
+        state = ResolveState.initial();
+      }
+
+      processNonCodeMethods(thisType, processor, place, state);
+      processCategoryMembers(place, processor);
+      return processor.getCandidates();
+    }
+    return GroovyResolveResult.EMPTY_ARRAY;
+  }
 }

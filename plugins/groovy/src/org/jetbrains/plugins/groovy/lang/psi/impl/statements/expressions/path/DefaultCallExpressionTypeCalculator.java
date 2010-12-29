@@ -53,7 +53,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
           PsiMethod method = (PsiMethod) resolved;
           if (resolveResult.isInvokedOnProperty()) {
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);
-            returnType = extractReturnTypeFromClosure(propertyType, true);
+            returnType = extractReturnTypeFromType(propertyType, true, callExpression);
           } else {
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
@@ -63,7 +63,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         } else if (resolved instanceof GrVariable) {
           PsiType refType = refExpr.getType();
           final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
-          returnType = extractReturnTypeFromClosure(type, true);
+          returnType = extractReturnTypeFromType(type, false, callExpression);
         }
         if (returnType == null) return null;
         returnType = resolveResult.getSubstitutor().substitute(returnType);
@@ -83,12 +83,12 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       }
     }
     else {
-      return extractReturnTypeFromClosure(invoked.getType(), false);
+      return extractReturnTypeFromType(invoked.getType(), false, callExpression);
     }
   }
 
   @Nullable
-  private static PsiType extractReturnTypeFromClosure(PsiType type, boolean returnTypeIfFail) {
+  private static PsiType extractReturnTypeFromType(PsiType type, boolean returnTypeIfFail, GrMethodCall callExpression) {
     PsiType returnType = returnTypeIfFail ? type: null;
     if (type instanceof GrClosureType) {
       returnType = ((GrClosureType) type).getSignature().getReturnType();
@@ -98,6 +98,19 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       final PsiType[] parameters = ((PsiClassType)type).getParameters();
       if (parameters.length == 1) {
         returnType = parameters[0];
+      }
+    }
+    else if (type instanceof PsiClassType) {
+      final GroovyResolveResult[] calls = ResolveUtil
+        .getMethodCandidates(type, "call", callExpression, PsiUtil.getArgumentTypes(callExpression.getInvokedExpression(), false));
+      returnType = null;
+      final PsiManager manager = callExpression.getManager();
+      for (GroovyResolveResult call : calls) {
+        final PsiElement element = call.getElement();
+        if (element instanceof PsiMethod) {
+          final PsiType substituted = call.getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
+          returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
+        }
       }
     }
     return returnType;
