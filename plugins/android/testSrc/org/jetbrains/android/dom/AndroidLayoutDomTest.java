@@ -56,6 +56,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("an5.xml", "an5_after.xml");
   }
 
+  /*public void testCommonPrefixIdea63531() throws Throwable {
+    toTestCompletion("commonPrefixIdea63531.xml", "commonPrefixIdea63531_after.xml");
+  }*/
+
   public void testHighlighting() throws Throwable {
     doTestHighlighting("hl.xml");
   }
