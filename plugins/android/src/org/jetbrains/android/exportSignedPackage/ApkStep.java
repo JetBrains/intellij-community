@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.SaveFileListener;
@@ -104,7 +105,9 @@ class ApkStep extends ExportSignedPackageWizardStep {
   }
 
   private void createAndAlignApk(final String apkPath) {
-    String sdkPath = myWizard.getFacet().getConfiguration().getSdkPath();
+    AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
+    assert platform != null;
+    String sdkPath = platform.getSdk().getLocation();
     String zipAlignPath = sdkPath + File.separatorChar + AndroidUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     File zipalign = new File(zipAlignPath);
     final boolean runZipAlign = zipalign.isFile();
