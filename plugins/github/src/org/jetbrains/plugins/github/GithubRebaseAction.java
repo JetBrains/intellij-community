@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
@@ -47,31 +46,29 @@ public class GithubRebaseAction extends DumbAwareAction {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Cannot perform github rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my fork", "Rebase your forked repository relative to the origin", ICON);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", ICON);
   }
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
     if (GithubUtil.getGithubBoundRepository(project) == null){
       e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
       return;
     }
+    e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(true);
   }
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-    if (roots.length == 0) {
-      Messages.showErrorDialog(project, "Project doesn't have any project roots", CANNOT_PERFORM_GITHUB_REBASE);
-      return;
-    }
-    final VirtualFile root = roots[0];
+    final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (!gitDetected) {
@@ -126,9 +123,9 @@ public class GithubRebaseAction extends DumbAwareAction {
       }
       if (!remoteForParentSeen){
         final int result = Messages.showYesNoDialog(project, "It is nescessary to have '" +
-                                                        parentRepoUrl +
-                                                        "' as a configured remote. Add remote?", "Github Rebase",
-                                               Messages.getQuestionIcon());
+                                                             parentRepoUrl +
+                                                             "' as a configured remote. Add remote?", "Github Rebase",
+                                                    Messages.getQuestionIcon());
         if (result != Messages.OK){
           return;
         }
@@ -137,7 +134,8 @@ public class GithubRebaseAction extends DumbAwareAction {
         final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
         addRemoteHandler.setNoSSH(true);
         addRemoteHandler.setSilent(true);
-        addRemoteHandler.addParameters("add", repoName, parentRepoUrl);
+        final String remoteName = parent.substring(0, parent.lastIndexOf('/'));
+        addRemoteHandler.addParameters("add", remoteName, parentRepoUrl);
         addRemoteHandler.run();
         if (addRemoteHandler.getExitCode() != 0) {
           Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", CANNOT_PERFORM_GITHUB_REBASE);

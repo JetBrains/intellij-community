@@ -91,14 +91,8 @@ public class ImportUtils{
         if (methods.length > 0) {
             return false;
         }
-        if (hasOnDemandImportStaticConflict(fqName, memberName, context,
-                true)) {
-            return false;
-        }
-        if (hasExactImportStaticConflict(fqName, memberName, context)) {
-            return false;
-        }
-        return true;
+        return !hasOnDemandImportStaticConflict(fqName, memberName, context, true) &&
+                !hasExactImportStaticConflict(fqName, memberName, context);
     }
 
     public static boolean nameCanBeImported(@NotNull String fqName,
@@ -284,7 +278,7 @@ public class ImportUtils{
         return hasJavaLangImportConflict(fqName, file);
     }
 
-    public static boolean hasOnDemandImportStaticConflict(
+    private static boolean hasOnDemandImportStaticConflict(
             String fqName, String memberName, PsiElement context) {
         return hasOnDemandImportStaticConflict(fqName, memberName, context,
                 false);
@@ -446,16 +440,13 @@ public class ImportUtils{
                 importList.findSingleImportStatement(memberName);
         if (existingImportStatement != null) {
             return;
-        } else {
-            final PsiImportStaticStatement onDemandImportStatement =
-                    findOnDemandImportStaticStatement(importList,
-                            qualifierClass);
-            if (onDemandImportStatement != null) {
-                if (!hasOnDemandImportStaticConflict(qualifierClass,
-                        memberName, context)) {
-                    return;
-                }
-            }
+        }
+        final PsiImportStaticStatement onDemandImportStatement =
+                findOnDemandImportStaticStatement(importList, qualifierClass);
+        if (onDemandImportStatement != null &&
+                !hasOnDemandImportStaticConflict(qualifierClass, memberName,
+                        context)) {
+            return;
         }
         final Project project = context.getProject();
         final GlobalSearchScope scope = context.getResolveScope();
@@ -535,7 +526,7 @@ public class ImportUtils{
                 PsiTreeUtil.getParentOfType(context, PsiClass.class);
         if (InheritanceUtil.isCorrectDescendant(containingClass, memberClass,
                 true)) {
-            return true;
+            return false;
         }
         final PsiFile psiFile = context.getContainingFile();
         if (!(psiFile instanceof PsiJavaFile)) {
@@ -566,19 +557,19 @@ public class ImportUtils{
         return false;
     }
 
-    private static boolean memberReferenced(PsiField field,
-                                            PsiJavaFile javaFile) {
+    private static boolean memberReferenced(PsiMember member,
+                                            PsiElement context) {
         final MemberReferenceVisitor visitor =
-                new MemberReferenceVisitor(field);
-        javaFile.accept(visitor);
+                new MemberReferenceVisitor(member);
+        context.accept(visitor);
         return visitor.isReferenceFound();
     }
 
-    private static boolean membersReferenced(PsiMethod[] methods,
-                                             PsiJavaFile javaFile) {
+    private static boolean membersReferenced(PsiMember[] members,
+                                             PsiElement context) {
         final MemberReferenceVisitor visitor =
-                new MemberReferenceVisitor(methods);
-        javaFile.accept(visitor);
+                new MemberReferenceVisitor(members);
+        context.accept(visitor);
         return visitor.isReferenceFound();
     }
 
@@ -588,12 +579,12 @@ public class ImportUtils{
         private final PsiMember[] members;
         private boolean referenceFound = false;
 
-        public MemberReferenceVisitor(PsiField field) {
-            members = new PsiMember[]{field};
+        public MemberReferenceVisitor(PsiMember member) {
+            members = new PsiMember[]{member};
         }
 
-        public MemberReferenceVisitor(PsiMethod[] methods) {
-            members = methods;
+        public MemberReferenceVisitor(PsiMember[] members) {
+            this.members = members;
         }
 
         @Override

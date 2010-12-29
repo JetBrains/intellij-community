@@ -18,13 +18,13 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class LowMemoryWatcher {
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   
-  public static abstract class ForceableAdapter implements Forceable {
+  public abstract static class ForceableAdapter implements Forceable {
     public boolean isDirty() {
       return true;
     }
@@ -44,7 +44,7 @@ public class LowMemoryWatcher {
   private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<Object>();
   @SuppressWarnings({"FieldCanBeLocal"}) 
   private static SoftReference<Object> ourRef;
-  private static final List<WeakReference<LowMemoryWatcher>> ourInstances = new CopyOnWriteArrayList<WeakReference<LowMemoryWatcher>>();
+  private static final List<WeakReference<LowMemoryWatcher>> ourInstances = ContainerUtil.createEmptyCOWList();
 
   private final Forceable myForceable;
 
@@ -62,7 +62,7 @@ public class LowMemoryWatcher {
 
             if (!shouldCleanup) {
               final Runtime runtime = Runtime.getRuntime();
-              shouldCleanup = (runtime.maxMemory() - runtime.totalMemory()) <= MEM_THRESHOLD;
+              shouldCleanup = runtime.maxMemory() - runtime.totalMemory() <= MEM_THRESHOLD;
             }
 
             for (WeakReference<LowMemoryWatcher> instanceRef : ourInstances) {

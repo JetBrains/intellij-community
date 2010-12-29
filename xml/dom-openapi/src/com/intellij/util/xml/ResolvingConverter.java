@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.codeInspection.LocalQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * If converter extends this class, the corresponding XML {@link com.intellij.psi.PsiReference}
- * will take completion variants from {@link #getVariants(ConvertContext)} method
+ * will take completion variants from {@link #getVariants(ConvertContext)} method.
  *
  * @author peter
  */
@@ -51,6 +51,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     }
   };
 
+  /** @see com.intellij.util.xml.converters.values.BooleanValueConverter */
   @Deprecated
   public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<Boolean>() {
     public Boolean fromString(final String s, final ConvertContext context) {
@@ -182,6 +183,15 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
+  /**
+   * Override to provide custom lookup elements in completion.
+   * <p/>
+   * Default is {@code null} which will create lookup via
+   * {@link ElementPresentationManager#createVariant(java.lang.Object, java.lang.String, com.intellij.psi.PsiElement)}.
+   *
+   * @param t DOM to create lookup element for.
+   * @return Lookup element.
+   */
   @Nullable
   public LookupElement createLookupElement(T t) {
     return null;

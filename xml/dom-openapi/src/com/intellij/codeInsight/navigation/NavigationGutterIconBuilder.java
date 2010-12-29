@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.codeInsight.navigation;
 
@@ -33,6 +45,9 @@ import java.text.MessageFormat;
 import java.util.*;
 
 /**
+ * DOM-specific builder for {@link com.intellij.openapi.editor.markup.GutterIconRenderer}
+ * and {@link com.intellij.codeInsight.daemon.LineMarkerInfo}.
+ *
  * @author peter
  */
 public class NavigationGutterIconBuilder<T> {
@@ -63,7 +78,7 @@ public class NavigationGutterIconBuilder<T> {
     }
   };
 
-  protected NavigationGutterIconBuilder(@NotNull final Icon icon, NotNullFunction<T,Collection<? extends PsiElement>> convertor) {
+  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T,Collection<? extends PsiElement>> convertor) {
     myIcon = icon;
     myConvertor = convertor;
   }
@@ -72,7 +87,7 @@ public class NavigationGutterIconBuilder<T> {
     return create(icon, DEFAULT_PSI_CONVERTOR);
   }
 
-  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon, NotNullFunction<T, Collection<? extends PsiElement>> convertor) {
+  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> convertor) {
     return new NavigationGutterIconBuilder<T>(icon, convertor);
   }
 
@@ -147,14 +162,14 @@ public class NavigationGutterIconBuilder<T> {
     return doInstall(holder.createInfoAnnotation(element, null), element.getProject());
   }
 
-  private Annotation doInstall(final Annotation annotation, final Project project) {
+  private Annotation doInstall(@NotNull Annotation annotation, @NotNull Project project) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(project);
     annotation.setGutterIconRenderer(renderer);
     annotation.setNeedsUpdateOnTyping(false);
     return annotation;
   }
 
-  public LineMarkerInfo createLineMarkerInfo(PsiElement element) {
+  public LineMarkerInfo createLineMarkerInfo(@NotNull PsiElement element) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
     return new LineMarkerInfo<PsiElement>(element,
@@ -166,7 +181,12 @@ public class NavigationGutterIconBuilder<T> {
                                           renderer.getAlignment());
   }
 
-  private MyNavigationGutterIconRenderer createGutterIconRenderer(final Project project) {
+  private void checkBuilt() {
+    assert myTargets != null : "Must have called .setTargets() before calling create()";
+  }
+
+  private MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull Project project) {
+    checkBuilt();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     NotNullLazyValue<List<SmartPsiElementPointer>> pointers = new NotNullLazyValue<List<SmartPsiElementPointer>>() {
@@ -219,11 +239,11 @@ public class NavigationGutterIconBuilder<T> {
     private final String myTooltipText;
     private final boolean myEmpty;
 
-    public MyNavigationGutterIconRenderer(final NavigationGutterIconBuilder builder,
+    public MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
                                           final Alignment alignment,
                                           final Icon icon,
                                           final String tooltipText,
-                                          final NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                          @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
                                           boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, builder.myCellRenderer, pointers);
       myAlignment = alignment;

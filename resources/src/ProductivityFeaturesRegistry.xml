@@ -176,7 +176,7 @@
       <dependency id="editing.completion.smarttype.general"/>
       </feature>
     <feature
-      id="editing.completion.import.static"
+      id="editing.completion.global.member.name"
       tip-file="CompletionImportStatic.html"
       min-usage-count="8"
       first-show="10"

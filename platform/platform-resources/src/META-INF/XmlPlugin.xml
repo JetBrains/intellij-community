@@ -263,7 +263,7 @@
 
     <fileTypeIndentOptionsProvider implementation="com.intellij.application.options.XmlIndentOptionsProvider"/>
 
-    <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.XmlMethodNavigationOffsetProvider"/>
+    <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.XmlMethodNavigationOffsetProvider" order="last"/>
 
     <annotator language="XML" implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongClosingTagNameInspection"/>
 

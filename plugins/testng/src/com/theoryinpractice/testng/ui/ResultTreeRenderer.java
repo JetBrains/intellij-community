@@ -69,7 +69,13 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             } else {
                 if (proxy.getResultMessage() != null) {
                     TestResultMessage result = proxy.getResultMessage();
-                  final String name = node.getChildCount() == 0 ? result.toDisplayString() : result.getTestClass();
+                  String name;
+                  if (node.getChildCount() == 0) {
+                    name = TestProxy.toDisplayText(result, consoleProperties.getProject());
+                  }
+                  else {
+                    name = result.getTestClass();
+                  }
                   append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
                   final String description = result.getTestDescription();
                   if (description != null && description.startsWith(name) && description.length() > name.length()) {

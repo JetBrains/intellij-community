@@ -42,7 +42,8 @@ public class TelemetryToolWindow {
         final TelemetryDisplay telemetryDisplay =
                 new TelemetryDisplay(telemetry);
         final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-        toolbarGroup.add(new UpdateTelemetryViewAction(telemetryDisplay));
+        toolbarGroup.add(
+                new UpdateTelemetryViewAction(telemetry, telemetryDisplay));
         toolbarGroup.add(new ResetTelemetryAction(telemetry, telemetryDisplay));
         final ActionManager actionManager = ActionManager.getInstance();
         final ActionToolbar toolbar =

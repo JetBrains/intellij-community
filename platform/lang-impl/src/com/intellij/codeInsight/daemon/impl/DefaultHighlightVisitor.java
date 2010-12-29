@@ -116,22 +116,26 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     final boolean dumb = myDumbService.isDumb();
     annotationHolder.setSession(holder.getAnnotationSession());
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < annotators.size(); i++) {
-      Annotator annotator = annotators.get(i);
-      if (dumb && !DumbService.isDumbAware(annotator)) {
-        continue;
+    try {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < annotators.size(); i++) {
+        Annotator annotator = annotators.get(i);
+        if (dumb && !DumbService.isDumbAware(annotator)) {
+          continue;
+        }
+
+        annotator.annotate(element, annotationHolder);
       }
 
-      annotator.annotate(element, annotationHolder);
-    }
-
-    if (annotationHolder.hasAnnotations()) {
-      for (Annotation annotation : annotationHolder) {
-        holder.add(HighlightInfo.fromAnnotation(annotation));
+      if (annotationHolder.hasAnnotations()) {
+        for (Annotation annotation : annotationHolder) {
+          holder.add(HighlightInfo.fromAnnotation(annotation));
+        }
       }
     }
-    annotationHolder.clear();
+    finally {
+      annotationHolder.clear();
+    }
   }
 
   private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {

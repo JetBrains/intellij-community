@@ -1546,7 +1546,18 @@ public class AbstractTreeUi {
           maybeYeild(new ActiveRunnable() {
             @Override
             public ActionCallback run() {
-              return processExistingNode(eachChild, getDescriptorFrom(eachChild), node, elementToIndexMap, pass, canSmartExpand,
+              NodeDescriptor descriptor = preloaded != null ? preloaded.getDescriptor(getElementFor(eachChild)) : null;
+              NodeDescriptor descriptorFromNode = getDescriptorFrom(eachChild);
+              if (descriptor != null) {
+                eachChild.setUserObject(descriptor);
+                if (descriptorFromNode != null) {
+                  descriptor.setChildrenSortingStamp(descriptorFromNode.getChildrenSortingStamp());
+                }
+              } else {
+                descriptor = descriptorFromNode;
+              }
+
+              return processExistingNode(eachChild, descriptor, node, elementToIndexMap, pass, canSmartExpand,
                                          childForceUpdate, preloaded);
             }
           }, pass, node).notify(result);

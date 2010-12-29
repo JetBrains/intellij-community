@@ -74,6 +74,17 @@ public interface CaretModel {
   void moveToOffset(int offset, boolean locateBeforeSoftWrap);
 
   /**
+   * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
+   * before caret. Caret offset, visual and logical positions should be updated then). So, there is a possible case
+   * that caret model in in the process of caret position update now.
+   * <p/>
+   * Current method allows to check that.
+   *
+   * @return    <code>true</code> if caret position is up-to-date for now; <code>false</code> otherwise
+   */
+  boolean isUpToDate();
+  
+  /**
    * Returns the logical position of the caret.
    *
    * @return the caret position.

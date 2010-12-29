@@ -59,7 +59,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     configuration.MAIN_CLASS_NAME = getMainClassField().getText();
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
-    configuration.ENABLE_SWING_INSPECTOR = myVersionDetector.isJre50Configured(configuration) && myShowSwingInspectorCheckbox.isSelected();
+    configuration.ENABLE_SWING_INSPECTOR = (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected();
 
     updateShowSwingInspector(configuration);
   }
@@ -74,7 +74,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   private void updateShowSwingInspector(final ApplicationConfiguration configuration) {
-    if (myVersionDetector.isJre50Configured(configuration)) {
+    if (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) {
       myShowSwingInspectorCheckbox.setEnabled(true);
       myShowSwingInspectorCheckbox.setSelected(configuration.ENABLE_SWING_INSPECTOR);
       myShowSwingInspectorCheckbox.setText(ExecutionBundle.message("show.swing.inspector"));

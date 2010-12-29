@@ -34,7 +34,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   }
 
   @Override
-  protected List<VirtualFile> getClassRoots() {
+  protected List<VirtualFile> calcClassRoots() {
     return mySettings.getClassRoots();
   }
 

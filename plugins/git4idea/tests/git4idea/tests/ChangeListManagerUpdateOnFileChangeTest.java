@@ -37,7 +37,7 @@ import static org.testng.Assert.assertTrue;
  * TODO: This shouldn't rely on Git. Either test all version controls, either test a mock version control. Or even use both approaches.
  * @author Kirill Likhodedov
  */
-public class ChangeListManagerUpdateOnFileChangeTest extends GitSingleUserTestCase {
+public class ChangeListManagerUpdateOnFileChangeTest extends GitSingleUserTest {
 
   private ChangeListManagerImpl myChangeListManager;
   private VirtualFile afile;

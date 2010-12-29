@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 public class NextVariableAction extends EditorAction {
   public NextVariableAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorWriteActionHandler {

@@ -43,7 +43,7 @@ import java.io.IOException;
 public class BuildPropertiesImpl extends BuildProperties {
 
   public BuildPropertiesImpl(Project project, final GenerationOptions genOptions) {
-    add(new Property(getPropertyFileName(project)));
+    add(new Property(genOptions.getPropertiesFileName()));
 
     //noinspection HardCodedStringLiteral
     add(new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"),

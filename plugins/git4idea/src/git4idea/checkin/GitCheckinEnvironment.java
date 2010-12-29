@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,31 +49,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.EventQueue;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
 
 /**
  * Git environment for commit operations.
@@ -266,14 +247,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       if (line.length() == 0) {
         continue;
       }
-      String[] tk = line.split("[ \t]+");
+      String[] tk = line.split("\t");
       switch (tk[0].charAt(0)) {
         case 'M':
         case 'A':
-          realAdded.add(VcsUtil.getFilePath(rootPath + "/" + tk[tk.length - 1]));
+          realAdded.add(VcsUtil.getFilePath(rootPath + "/" + tk[1]));
           break;
         case 'D':
-          realRemoved.add(VcsUtil.getFilePathForDeletedFile(rootPath + "/" + tk[tk.length - 1], false));
+          realRemoved.add(VcsUtil.getFilePathForDeletedFile(rootPath + "/" + tk[1], false));
           break;
         default:
           throw new IllegalStateException("Unexpected status: " + line);
@@ -298,11 +279,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       final int[] rc = new int[1];
       try {
-        EventQueue.invokeAndWait(new Runnable() {
+        GuiUtils.runOrInvokeAndWait(new Runnable() {
           public void run() {
             rc[0] = Messages.showOkCancelDialog(project, GitBundle.message("commit.partial.merge.message", fileList.toString()),
                                                 GitBundle.getString("commit.partial.merge.title"), null);
-
           }
         });
       }

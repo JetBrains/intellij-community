@@ -131,7 +131,9 @@ public class FormatterImpl extends FormatterEx
                      FormatTextRanges affectedRanges) throws IncorrectOperationException {
     disableFormatting();
     try {
-      new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges).format(model);
+      FormatProcessor processor =
+        new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges);
+      processor.format(model);
     } finally {
       enableFormatting();
     }

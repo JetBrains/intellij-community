@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
@@ -24,6 +20,7 @@ import com.intellij.lexer.LexerUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
+import com.intellij.psi.impl.source.DummyHolderElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.*;
@@ -31,46 +28,61 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/*
+ * @author max
+ */
 public abstract class ASTFactory {
   public static final DefaultFactory DEFAULT = new DefaultFactory();
-  private static final CharTable WHITSPACES = new CharTableImpl();
+
+  private static final CharTable WHITESPACES = new CharTableImpl();
+
+  // interface methods
 
   @Nullable
-  public abstract CompositeElement createComposite(IElementType type);
-
-  @Nullable
-  public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
-    if (type instanceof IFileElementType) {
-      return new FileElement(type, text);
-    }
-    
-    return new LazyParseableElement(type, text);
+  public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
+    return null;
   }
 
   @Nullable
-  public abstract LeafElement createLeaf(IElementType type, CharSequence text);
+  public CompositeElement createComposite(final IElementType type) {
+    return null;
+  }
+
+  @Nullable
+  public LeafElement createLeaf(final IElementType type, final CharSequence text) {
+    return null;
+  }
+
+  // factory methods
 
   @NotNull
-  public static LazyParseableElement lazy(ILazyParseableElementType type, CharSequence text) {
-    ASTNode node = type.createNode(text);
+  public static LazyParseableElement lazy(final ILazyParseableElementType type, final CharSequence text) {
+    final ASTNode node = type.createNode(text);
     if (node != null) return (LazyParseableElement)node;
 
     if (type == TokenType.CODE_FRAGMENT) {
       return new CodeFragmentElement(null);
     }
+    else if (type == TokenType.DUMMY_HOLDER) {
+      return new DummyHolderElement(text);
+    }
 
-    LazyParseableElement psi = factory(type).createLazy(type, text);
-    return psi != null ? psi : DEFAULT.createLazy(type, text);
-  }
-
-  @Deprecated
-  @NotNull
-  public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
-    return leaf(type, table.intern(fileText, start, end));
+    final LazyParseableElement customLazy = factory(type).createLazy(type, text);
+    return customLazy != null ? customLazy : DEFAULT.createLazy(type, text);
   }
 
   @NotNull
-  public static LeafElement leaf(IElementType type, CharSequence text) {
+  public static CompositeElement composite(final IElementType type) {
+    if (type instanceof ICompositeElementType) {
+      return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
+    }
+
+    final CompositeElement customComposite = factory(type).createComposite(type);
+    return customComposite != null ? customComposite : DEFAULT.createComposite(type);
+  }
+
+  @NotNull
+  public static LeafElement leaf(final IElementType type, final CharSequence text) {
     if (type == TokenType.WHITE_SPACE) {
       return new PsiWhiteSpaceImpl(text);
     }
@@ -83,42 +95,57 @@ public abstract class ASTFactory {
     return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, text);
   }
 
-  private static ASTFactory factory(IElementType type) {
+  private static ASTFactory factory(final IElementType type) {
     return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }
 
-  public static LeafElement whitespace(CharSequence text) {
-    PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITSPACES.intern(text));
+  @NotNull
+  public static LeafElement whitespace(final CharSequence text) {
+    final PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
     CodeEditUtil.setNodeGenerated(w, true);
     return w;
   }
 
+  /**
+   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
+   */
+  @NotNull
+  public static LeafElement leaf(IElementType type, CharSequence fileText, int start, int end, CharTable table) {
+    return leaf(type, table.intern(fileText, start, end));
+  }
+
+  /**
+   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
+   */
+  @NotNull
   public static LeafElement leaf(IElementType type, CharSequence text, CharTable table) {
     return leaf(type, table.intern(text));
   }
 
+  /**
+   * @deprecated use {@link #leaf(com.intellij.psi.tree.IElementType, CharSequence)} (to remove in IDEA 11).
+   */
+  @NotNull
   public static LeafElement leaf(final Lexer lexer, final CharTable charTable) {
     return leaf(lexer.getTokenType(), LexerUtil.internToken(lexer, charTable));
   }
 
-  @NotNull
-  public static CompositeElement composite(IElementType type) {
-    if (type instanceof ICompositeElementType) {
-      return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
-    }
-
-    if (type == TokenType.CODE_FRAGMENT) {
-      return new CodeFragmentElement(null);
-    }
-
-    final CompositeElement customComposite = factory(type).createComposite(type);
-    return customComposite != null ? customComposite : DEFAULT.createComposite(type);
-  }
+  // default implementation
 
   private static class DefaultFactory extends ASTFactory {
     @Override
     @NotNull
-    public CompositeElement createComposite(IElementType type) {
+    public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
+      if (type instanceof IFileElementType) {
+        return new FileElement(type, text);
+      }
+
+      return new LazyParseableElement(type, text);
+    }
+
+    @Override
+    @NotNull
+    public CompositeElement createComposite(final IElementType type) {
       if (type instanceof IFileElementType) {
         return new FileElement(type, null);
       }
@@ -128,7 +155,7 @@ public abstract class ASTFactory {
 
     @Override
     @NotNull
-    public LeafElement createLeaf(IElementType type, CharSequence text) {
+    public LeafElement createLeaf(final IElementType type, final CharSequence text) {
       final Language lang = type.getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       if (parserDefinition != null) {
@@ -136,6 +163,7 @@ public abstract class ASTFactory {
           return new PsiCommentImpl(type, text);
         }
       }
+
       return new LeafPsiElement(type, text);
     }
   }

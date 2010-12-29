@@ -15,16 +15,16 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.JavaParsingContext;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,9 +33,17 @@ import org.jetbrains.annotations.NotNull;
 public class ClsAnnotationsUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsAnnotationsUtil");
 
-  private ClsAnnotationsUtil() {}
+  private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      DeclarationParser.parseAnnotationValue(builder);
+    }
+  };
 
-  @NotNull public static PsiAnnotationMemberValue getMemberValue(PsiElement element, ClsElementImpl parent) {
+  private ClsAnnotationsUtil() { }
+
+  @NotNull
+  public static PsiAnnotationMemberValue getMemberValue(PsiElement element, ClsElementImpl parent) {
     if (element instanceof PsiLiteralExpression) {
       PsiLiteralExpression expr = (PsiLiteralExpression)element;
       return new ClsLiteralExpressionImpl(parent, element.getText(), expr.getType(), expr.getValue());
@@ -62,7 +70,9 @@ public class ClsAnnotationsUtil {
     }
     else if (element instanceof PsiAnnotation) {
       final PsiAnnotation psiAnnotation = (PsiAnnotation)element;
-      final String canonicalText = psiAnnotation.getNameReferenceElement().getCanonicalText();
+      final PsiJavaCodeReferenceElement referenceElement = psiAnnotation.getNameReferenceElement();
+      assert referenceElement != null : psiAnnotation;
+      final String canonicalText = referenceElement.getCanonicalText();
       return new ClsAnnotationValueImpl(parent) {
         protected ClsJavaCodeReferenceElementImpl createReference() {
           return new ClsJavaCodeReferenceElementImpl(this, canonicalText);
@@ -86,18 +96,16 @@ public class ClsAnnotationsUtil {
     }
   }
 
-  @NotNull public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
-    PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
-    final FileElement holderElement = DummyHolderFactory.createHolder(manager, dummyJavaFile).getTreeElement();
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
-    JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), languageLevel);
-    TreeElement element = context.getDeclarationParsing().parseMemberValueText(manager, text, languageLevel);
-    if (element == null) {
+  @NotNull
+  public static PsiAnnotationMemberValue createMemberValueFromText(final String text, final PsiManager manager, final ClsElementImpl parent) {
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiJavaFile context = ((PsiElementFactoryImpl)factory).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
+    final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(text, ANNOTATION_VALUE, false), context);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+    if (!(element instanceof PsiAnnotationMemberValue)) {
       LOG.error("Could not parse initializer:'" + text + "'");
       return null;
     }
-    holderElement.rawAddChildren(element);
-    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    return getMemberValue(psiElement, parent);
+    return getMemberValue(element, parent);
   }
 }

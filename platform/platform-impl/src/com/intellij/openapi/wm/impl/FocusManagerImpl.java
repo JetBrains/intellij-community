@@ -85,7 +85,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private boolean myFlushWasDelayedToFixFocus;
 
   private boolean canFlushIdleRequests() {
-    return isFocusTransferReady() && !isIdleQueueEmpty();
+    return isFocusTransferReady() && !isIdleQueueEmpty() && !IdeEventQueue.getInstance().isDispatchingFocusEvent();
   }
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
@@ -742,14 +742,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       myCallbackOnActivation = null;
 
       if (cmd != null) {
-        requestFocus(cmd, true).notify(callback).doWhenRejected(new Runnable() {
-          public void run() {
-            focusLastFocusedComponent(ideFrame);
-          }
-        });
-      }
-      else {
-        focusLastFocusedComponent(ideFrame);
+        requestFocus(cmd, true).notify(callback);
       }
     }
 

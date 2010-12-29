@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.util;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,6 @@ import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 
 import java.util.*;
-import java.util.regex.Matcher;
 
 public class FileTypeUtil
 {
@@ -226,6 +226,7 @@ public class FileTypeUtil
             return false;
         }
 
+        if (ProjectUtil.isProjectOrWorkspaceFile(file)) return false;
         FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
 
         return types.get(type.getName()) != null;
@@ -237,7 +238,9 @@ public class FileTypeUtil
         {
             return false;
         }
-
+        final VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) return false;
+        if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
         return isSupportedType(file.getFileType());
     }
 

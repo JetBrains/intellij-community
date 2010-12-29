@@ -114,7 +114,7 @@ public class ShiftIndentInsideHelper {
           }
           else {
             if (newSpace.length() > 0) {
-              LeafElement newLeaf = ASTFactory.leaf(TokenType.WHITE_SPACE, newSpace, charTableByTree);
+              LeafElement newLeaf = ASTFactory.whitespace(newSpace);
               next.getTreeParent().addChild(newLeaf, next);
             }
             text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ package com.intellij.util.xml;
  * DomElementVisitor has only one method: {@link #visitDomElement(DomElement)}.
  * Where is the Visitor pattern? Where are all those methods with names like <code>visitT(T)</code> that
  * are usually found in it? There are no such methods, because the actual interfaces (<code>T</code>'s)
- * arent known to anyone except you. But when you instantiate the DomElementVisitor
+ * aren't known to anyone except you. But when you instantiate the DomElementVisitor
  * interface, you may add your own <code>visitT()</code> methods and they will be called! You may
  * even name them just <code>visit()</code>, specify the type of the parameter and everything will be
  * fine. 

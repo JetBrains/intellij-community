@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
+ * @see DomService#createAnchor(DomElement)
  */
 public interface DomAnchor<T extends DomElement> extends PsiElementPointer {
 

@@ -88,6 +88,22 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   IElementType lookAhead(int steps);
 
   /**
+   * See what token type is in <code>steps</code> ahead / behind
+   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @return type element ahead or behind, including whitespace / comment tokens
+   */
+  @Nullable
+  IElementType rawLookup(int steps);
+
+  /**
+   * See what token type is in <code>steps</code> ahead / behind current position
+   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @return offset type element ahead or behind, including whitespace / comment tokens, -1 if first token,
+   * getOriginalText().getLength() at end
+   */
+  int rawTokenTypeStart(int steps);
+
+  /**
    * Returns the text of the current token from the lexer.
    *
    * @return the token text, or null when the lexing is over.

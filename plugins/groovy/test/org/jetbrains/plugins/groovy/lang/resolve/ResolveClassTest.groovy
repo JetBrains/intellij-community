@@ -1,17 +1,17 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
@@ -181,6 +181,32 @@ class X {
 
   public void testLowerCaseClassName() {
     doTest()
+  }
+
+  public void testInnerClassIsNotResolvedInAnonymous() {
+    myFixture.addFileToProject "/p/Super.groovy", """
+package p
+
+interface Super {
+  class Inner {
+  }
+
+  def foo(Inner i);
+}"""
+    assertNull resolve("A.groovy");
+  }
+
+  public void testInnerClassIsResolvedInAnonymous() {
+    myFixture.addFileToProject "/p/Super.groovy", """
+package p
+
+interface Super {
+  class Inner {
+  }
+
+  def foo(Inner i);
+}"""
+    assertInstanceOf resolve("A.groovy"), PsiClass;
   }
 
   private void doTest() {

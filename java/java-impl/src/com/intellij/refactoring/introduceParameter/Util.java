@@ -37,6 +37,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -102,7 +103,9 @@ public class Util {
 
   // returns parameters that are used solely in specified expression
   @NotNull
-  public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method, @NotNull final PsiExpression expr) {
+  public static TIntArrayList findParametersToRemove(@NotNull PsiMethod method,
+                                                     @NotNull final PsiExpression expr,
+                                                     @Nullable final PsiExpression[] occurences) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
@@ -133,7 +136,18 @@ public class Util {
         if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(new Processor<PsiReference>() {
           public boolean process(final PsiReference reference) {
             PsiElement element = reference.getElement();
-            boolean stillCanBeRemoved = element != null && (PsiTreeUtil.isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(element));
+            boolean stillCanBeRemoved = false;
+            if (element != null) {
+              stillCanBeRemoved = PsiTreeUtil.isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(element);
+              if (!stillCanBeRemoved && occurences != null) {
+                for (PsiExpression occurence : occurences) {
+                  if (PsiTreeUtil.isAncestor(occurence, element, false)) {
+                    stillCanBeRemoved = true;
+                    break;
+                  }
+                }
+              }
+            }
             if (!stillCanBeRemoved) {
               iterator.remove();
               return false;

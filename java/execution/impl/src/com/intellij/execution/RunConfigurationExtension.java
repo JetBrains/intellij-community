@@ -22,10 +22,7 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -47,15 +44,21 @@ import java.util.TreeMap;
 public abstract class RunConfigurationExtension {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
   public static final Key<List> RUN_EXTENSIONS = Key.create("run.extension.elemnts");
-  public abstract void handleStartProcess(final ModuleBasedConfiguration configuration, final OSProcessHandler handler);
+  public abstract void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler);
   @Nullable  
-  public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> SettingsEditor createEditor(T configuration);
+  public abstract SettingsEditor createEditor(RunConfigurationBase configuration);
   public abstract String getEditorTitle();
   public abstract String getName();
   @Nullable
-  public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> Icon getIcon(T runConfiguration);
+  public abstract Icon getIcon(RunConfigurationBase runConfiguration);
+  public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings);
 
-  public static <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void appendEditors(T configuration, SettingsEditorGroup<T> group) {
+  protected abstract void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException;
+  protected abstract void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException;
+  public abstract void patchConfiguration(RunConfigurationBase runJavaConfiguration);
+  public abstract void checkConfiguration(RunConfigurationBase runJavaConfiguration) throws RuntimeConfigurationException;
+
+  public static  void appendEditors(RunConfigurationBase configuration, SettingsEditorGroup group) {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       final SettingsEditor editor = extension.createEditor(configuration);
       if (editor != null) {
@@ -64,7 +67,7 @@ public abstract class RunConfigurationExtension {
     }
   }
 
-  public static <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> Icon getIcon(T configuration, Icon icon) {
+  public static Icon getIcon(RunConfigurationBase configuration, Icon icon) {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       final Icon extIcon = extension.getIcon(configuration);
       if (extIcon != null) {
@@ -74,37 +77,28 @@ public abstract class RunConfigurationExtension {
     return icon;
   }
 
-  public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings);
-
-  protected abstract void readExternal(ModuleBasedConfiguration runConfiguration, Element element) throws InvalidDataException;
-
-  public static void readSettings(ModuleBasedConfiguration runConfiguration, Element parentNode) throws InvalidDataException {
+  public static void readSettings(RunConfigurationBase runConfiguration, Element parentNode) throws InvalidDataException {
     final List children = parentNode.getChildren("extension");
     final Map<String, RunConfigurationExtension> extensions = new HashMap<String, RunConfigurationExtension>();
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       extensions.put(extension.getName(), extension);
     }
-    boolean found = true;
     for (Object o : children) {
       final Element element = (Element)o;
       final String extensionName = element.getAttributeValue("name");
       final RunConfigurationExtension extension = extensions.remove(extensionName);
       if (extension != null) {
         extension.readExternal(runConfiguration, element);
-      } else {
-        found = false;
       }
     }
     //try to read from old format if possible
     for (RunConfigurationExtension extension : extensions.values()) {
       extension.readExternal(runConfiguration, parentNode);
     }
-    if (!found) {
-      runConfiguration.putCopyableUserData(RUN_EXTENSIONS, children);
-    }
+    runConfiguration.putCopyableUserData(RUN_EXTENSIONS, children);
   }
 
-  public static void writeSettings(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException {
+  public static void writeSettings(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException {
     final TreeMap<String, Element> map = new TreeMap<String, Element>();
     final List<Element> elements = runConfiguration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
@@ -121,6 +115,7 @@ public abstract class RunConfigurationExtension {
         extension.writeExternal(runConfiguration, el);
       }
       catch (WriteExternalException e) {
+        map.remove(extension.getName());
         continue;
       }
       map.put(extension.getName(), el);
@@ -131,24 +126,20 @@ public abstract class RunConfigurationExtension {
     }
   }
 
-  protected abstract void writeExternal(ModuleBasedConfiguration runConfiguration, Element element) throws WriteExternalException;
 
-  public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void patchConfiguration(T runJavaConfiguration);
-  public abstract <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void checkConfiguration(T runJavaConfiguration) throws RuntimeConfigurationException;
-
-  public static <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void patchCreatedConfiguration(T configuration) {
+  public static void patchCreatedConfiguration(RunConfigurationBase configuration) {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       extension.patchConfiguration(configuration);
     }
   }
 
-  public static <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void checkConfigurationIsValid(T configuration) throws RuntimeConfigurationException {
+  public static void checkConfigurationIsValid(RunConfigurationBase configuration) throws RuntimeConfigurationException {
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       extension.checkConfiguration(configuration);
     }
   }
 
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isListenerDisabled(T configuration, Object listener) {
+  public  boolean isListenerDisabled(RunConfigurationBase configuration, Object listener) {
     return false;
   }
 }

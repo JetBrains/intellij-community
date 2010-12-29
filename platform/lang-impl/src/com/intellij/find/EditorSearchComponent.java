@@ -146,8 +146,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     DefaultActionGroup group = new DefaultActionGroup("search bar", false);
     group.add(new ShowHistoryAction());
-    group.add(new PrevOccurenceAction());
-    group.add(new NextOccurenceAction());
+    group.add(new PrevOccurrenceAction());
+    group.add(new NextOccurrenceAction());
     group.add(new FindAllAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", group, true);
@@ -250,7 +250,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     setSmallerFontAndOpaque(myClickToHighlightLabel);
     myClickToHighlightLabel.setVisible(false);
 
-    JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), JLabel.RIGHT);
+    JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), SwingConstants.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         close();
@@ -297,7 +297,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           addCurrentTextToRecents();
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
 
     final String initialText = myEditor.getSelectionModel().getSelectedText();
 
@@ -459,7 +459,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       while (true) {
         FindResult result = findManager.findString(myEditor.getDocument().getCharsSequence(), offset, model, virtualFile);
         if (!result.isStringFound()) break;
-        offset = result.getEndOffset();
+        int newOffset = result.getEndOffset();
+        if (offset == newOffset) break;
+        offset = newOffset;
         results.add(result);
 
         if (results.size() > myMatchesLimit) break;
@@ -597,16 +599,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     updateResults(true);
   }
 
-  private class PrevOccurenceAction extends AnAction implements DumbAware {
-    public PrevOccurenceAction() {
+  private class PrevOccurrenceAction extends AnAction implements DumbAware {
+    public PrevOccurrenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      ContainerUtil
-        .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts());
-      ContainerUtil
-        .addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
-      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), null));
+      ContainerUtil.addAll(shortcuts,ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts());
+      ContainerUtil.addAll(shortcuts,
+                           ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
+      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
@@ -626,8 +627,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     return myOkToSearch && myHasMatches;
   }
 
-  private class NextOccurenceAction extends AnAction implements DumbAware {
-    public NextOccurenceAction() {
+  private class NextOccurrenceAction extends AnAction implements DumbAware {
+    public NextOccurrenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
       ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts());
@@ -657,7 +658,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
       ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
-      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, KeyEvent.CTRL_DOWN_MASK), null));
+      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), null));
       ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts());
 
       registerCustomShortcutSet(

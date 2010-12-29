@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
@@ -293,7 +294,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
             if (element != null) {
               final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
-                myInitialText = document.getText();
+                final TextRange textRange = info.getMethod().getTextRange();
+                myInitialText =  document.getText().substring(textRange.getStartOffset(), textRange.getEndOffset()) ;
                 myInitialChangeInfo = info;
               }
             }

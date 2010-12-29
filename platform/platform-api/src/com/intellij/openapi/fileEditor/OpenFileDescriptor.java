@@ -41,27 +41,31 @@ public class OpenFileDescriptor implements Navigatable {
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 
-  @NotNull private final VirtualFile myFile;
-  private final int myOffset;
-  private final int myLine;
-  private final int myColumn;
+  @NotNull
+  private final VirtualFile myFile;
+  private final int         myOffset;
+  private final int         myLine;
+  private final int         myColumn;
   private final RangeMarker myRangeMarker;
-
-  private final Project myProject;
+  private final Project     myProject;
 
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, -1, -1, offset);
+    this(project, file, -1, -1, offset, false);
   }
 
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col) {
-    this(project, file, line, col, -1);
+    this(project, file, line, col, -1, false);
+  }
+
+  public OpenFileDescriptor(Project project, @NotNull VirtualFile file, int line, int col, boolean persistent) {
+    this(project, file, line, col, -1, persistent);
   }
 
   public OpenFileDescriptor(Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1);
+    this(project, file, -1, -1, -1, false);
   }
 
-  private OpenFileDescriptor(final Project project, @NotNull final VirtualFile file, int line, int col, int offset) {
+  private OpenFileDescriptor(final Project project, @NotNull final VirtualFile file, int line, int col, int offset, boolean persistent) {
     myProject = project;
 
     myFile = file;
@@ -72,7 +76,7 @@ public class OpenFileDescriptor implements Navigatable {
       myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
     }
     else if (line >= 0 ){
-      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, line, Math.max(0, col));
+      myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, line, Math.max(0, col), persistent);
     }
     else {
       myRangeMarker = null;
@@ -84,10 +88,14 @@ public class OpenFileDescriptor implements Navigatable {
     return myFile;
   }
 
+  @Nullable
+  public RangeMarker getRangeMarker() {
+    return myRangeMarker;
+  }
+
   public int getOffset() {
     return myRangeMarker != null && myRangeMarker.isValid() ? myRangeMarker.getStartOffset() : myOffset;
   }
-
 
   public int getLine() {
     return myLine;

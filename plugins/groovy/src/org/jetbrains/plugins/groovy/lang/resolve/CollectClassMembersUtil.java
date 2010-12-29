@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.ArrayList;
@@ -77,13 +78,13 @@ public class CollectClassMembersUtil {
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();
         Map<String, CandidateInfo> allInnerClasses = new HashMap<String, CandidateInfo>();
 
-        processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
+        processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic, true);
         return Result.create(Trinity.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
 
-  private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Map<String, CandidateInfo> allInnerClasses, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor, boolean includeSynthetic) {
+  private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Map<String, CandidateInfo> allInnerClasses, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor, boolean includeSynthetic, boolean shouldProcessInnerClasses) {
     if (visitedClasses.contains(aClass)) return;
     visitedClasses.add(aClass);
 
@@ -107,10 +108,12 @@ public class CollectClassMembersUtil {
       addMethod(allMethods, method, substitutor);
     }
 
-    for (final PsiClass inner : aClass.getInnerClasses()) {
-      final String name = inner.getName();
-      if (name != null && !allInnerClasses.containsKey(name)) {
-        allInnerClasses.put(name, new CandidateInfo(inner, substitutor));
+    if (shouldProcessInnerClasses) {
+      for (final PsiClass inner : aClass.getInnerClasses()) {
+        final String name = inner.getName();
+        if (name != null && !allInnerClasses.containsKey(name)) {
+          allInnerClasses.put(name, new CandidateInfo(inner, substitutor));
+        }
       }
     }
 
@@ -118,7 +121,8 @@ public class CollectClassMembersUtil {
       PsiClass superClass = superType.resolve();
       if (superClass != null) {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
-        processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
+        processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic,
+                     shouldProcessInnerClasses && !(aClass instanceof GrAnonymousClassDefinition));
       }
     }
   }

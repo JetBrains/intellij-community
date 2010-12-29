@@ -20,6 +20,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
@@ -110,14 +111,6 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponent;
   private Computable<Point> myInitialLocationCallback;
 
-  protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
-  }
-
-  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
-    myDoNotAsk = doNotAsk;
-  }
-
   protected final Disposable myDisposable = new Disposable() {
     public String toString() {
       return DialogWrapper.this.toString();
@@ -127,6 +120,14 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
+
+  protected String getDoNotShowMessage() {
+    return CommonBundle.message("dialog.options.do.not.show");
+  }
+
+  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
   private ErrorText myErrorText;
   private int myMaxErrorTextLength;
 
@@ -187,6 +188,113 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
+  }
+
+  //validation
+  private final Alarm myValidationAlarm = new Alarm(myDisposable);
+  private int myValidationDelay = 300;
+  private static final String OLD_BORDER = "OLD_BORDER";
+  private JComponent myLastErrorComponent = null;
+  private boolean myDisposed = false;
+  private Boolean myLastPaintButtonBorder = null;
+  private boolean myValidationStarted = false;
+
+  /**
+   * Allows to postpone first start of validation
+   *
+   * @return <code>false</code> if start validation in <code>init()</code> method
+   */
+  protected boolean postponeValidation() {
+    return false;
+  }
+
+  /**
+   * Validates a user input and returns <code>null</code> if everything is fine
+   * or returns a problem description with component where is the problem has been found.
+   *
+   * @return <code>null</code> if everything is OK or a problem descriptor
+   */
+  @Nullable
+  protected ValidationInfo doValidate() {
+    return null;
+  }
+
+  /**
+   * Controls components highlighting
+   *
+   * @return <code>true</code> for problem components highlighting. <code>false</code> otherwise.
+   */
+  protected boolean isShowErrorBorder() {
+    return true;
+  }
+
+  /**
+   * Specifies border color for error highlighting
+   *
+   * @return color for error highlighting
+   */
+  protected Color getErrorColor() {
+    return Color.RED;
+  }
+
+  public void setValidationDelay(int delay) {
+    myValidationDelay = delay;
+  }
+
+  private void reportProblem(final String message, final JComponent comp) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myDisposed) return;
+        if (isShowErrorBorder()) {
+          if (myLastErrorComponent != comp) {
+            if (myLastErrorComponent != null) {
+              myLastErrorComponent.setBorder((Border)myLastErrorComponent.getClientProperty(OLD_BORDER));
+              if (myLastErrorComponent instanceof AbstractButton && myLastPaintButtonBorder != null) {
+                ((AbstractButton)myLastErrorComponent).setBorderPainted(myLastPaintButtonBorder);
+              }
+            }
+            myLastErrorComponent = comp;
+            if (comp != null) {
+              if (comp instanceof AbstractButton) {
+                myLastPaintButtonBorder = ((AbstractButton)comp).isBorderPainted();
+                ((AbstractButton)comp).setBorderPainted(true);
+              }
+              final Object border = comp.getClientProperty(OLD_BORDER);
+              if (border == null) {
+                comp.putClientProperty(OLD_BORDER, comp.getBorder());
+              }
+              comp.setBorder(BorderFactory.createLineBorder(getErrorColor(), 1));
+            }
+          }
+        }
+        setErrorText(message);
+        getOKAction().setEnabled(false);
+      }
+
+    });
+  }
+
+
+  private void clearProblems() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myDisposed) return;
+        setErrorText(null);
+        getOKAction().setEnabled(true);
+        //if (myLastPeerSize != null) {
+        //  myPeer.setSize(myLastPeerSize.width, myLastPeerSize.height);
+        //  myLastPeerSize = null;
+        //}
+        if (myLastErrorComponent != null) {
+          myLastErrorComponent.setBorder((Border)myLastErrorComponent.getClientProperty(OLD_BORDER));
+          if (myLastPaintButtonBorder != null && myLastErrorComponent instanceof AbstractButton) {
+            ((AbstractButton)myLastErrorComponent).setBorderPainted(myLastPaintButtonBorder);
+          }
+          myLastErrorComponent = null;
+          myLastPaintButtonBorder = null;
+        }
+      }
+    });
   }
 
   protected void createDefaultActions() {
@@ -508,7 +616,9 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
-
+    myErrorTextAlarm.cancelAllRequests();
+    myValidationAlarm.cancelAllRequests();
+    myDisposed = true;
     if (myButtons != null) {
       for (JButton button : myButtons) {
         button.setAction(null); // avoid memory leak via KeyboardManager
@@ -827,7 +937,50 @@ public abstract class DialogWrapper {
     }
 
     new MnemonicHelper().register(root);
+    if (!postponeValidation()) {
+      startTrackingValidation();
+    }
   }
+
+  void startTrackingValidation() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (!myValidationStarted && !myDisposed) {
+          myValidationStarted = true;
+          initValidation();
+        }
+      }
+    });
+  }
+
+  protected final void initValidation() {
+    myValidationAlarm.cancelAllRequests();
+    myValidationAlarm.addRequest(new Runnable() {
+      public void run() {
+        final ValidationInfo result = doValidate();
+        if (result == null) {
+          clearProblems();
+        } else {
+          reportProblem(result.message, result.component);
+        }
+
+        if (!myDisposed) {
+          initValidation();
+        }
+      }
+    }, myValidationDelay, ModalityState.current());
+  }
+
+  public static final class ValidationInfo {
+    public final String message;
+    public final JComponent component;
+
+    public ValidationInfo(String message, JComponent component) {
+      this.message = message;
+      this.component = component;
+    }
+  }
+
 
   private static JComponent wrap(final JComponent c, boolean strict) {
     if (!strict) return c;
@@ -1209,6 +1362,10 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
+      if (doValidate() != null) {
+        startTrackingValidation();
+        return;
+      }
       doOKAction();
     }
   }

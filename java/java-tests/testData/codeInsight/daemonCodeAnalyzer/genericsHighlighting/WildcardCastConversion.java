@@ -475,6 +475,27 @@ public class Test {
         }
       }
     }
+
+    //IDEA-63447
+    void testUnboundWildcardWithArrayTypes() {
+        class IUWWAT{
+            private <T> void method1(T[][] matrix) {
+                final Class<T[]> type = (Class<T[]>) matrix.getClass().getComponentType();
+            }
+
+            private <T> void method2(T[][] matrix) {
+                final Class<Object> type = (Class<Object>) matrix.getClass().getComponentType();
+            }
+
+            private <T> void method3(T[][] matrix) {
+                final Class<Object[]> type = (Class<Object[]>) matrix.getClass().getComponentType();
+            }
+
+            private <T> void method4(T[][] matrix) {
+                final Class<Object[][]> type = (Class<Object[][]>) matrix.getClass().getComponentType();
+            }
+        }
+    }
 }
 
 class W<T> {}

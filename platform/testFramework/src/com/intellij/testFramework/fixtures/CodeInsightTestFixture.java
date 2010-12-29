@@ -66,7 +66,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NonNls String END_LINE_WARNING_MARKER = "EOLWarning";
 
   Editor getEditor();
-  
+
   PsiFile getFile();
 
   void setTestDataPath(@NonNls String dataPath);
@@ -87,8 +87,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Enables inspections for highlighting tests.
    * Should be called BEFORE {@link #setUp()}. And do not forget to call {@link #tearDown()}
    *
-   * @param inspections inspections to be enabled in highliting tests.
-   * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider[])
+   * @param inspections inspections to be enabled in highlighting tests.
+   * @see #enableInspections(com.intellij.codeInspection.InspectionToolProvider...)
    */
   void enableInspections(InspectionProfileEntry... inspections);
 
@@ -100,12 +100,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * Enable all inspections provided by given providers.
    *
    * @param providers providers to be enabled.
-   * @see #enableInspections(com.intellij.codeInspection.LocalInspectionTool[])
+   * @see #enableInspections(Class[])
    */
   void enableInspections(InspectionToolProvider... providers);
 
   /**
-   * Runs highliting test for the given files.
+   * Runs highlighting test for the given files.
    * Checks for {@link #ERROR_MARKER} markers by default.
    *
    * @param checkWarnings enables {@link #WARNING_MARKER} support.
@@ -147,7 +147,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testInspection(String testDir, InspectionTool tool);
 
   /**
-   * @return all highlightings for current file
+   * @return all highlight infos for current file
    */
   @NotNull
   List<HighlightInfo> doHighlighting();
@@ -223,7 +223,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param expectedFile file to check against.
    */
   void checkResultByFile(@TestDataFile @NonNls String expectedFile);
-  
+
   void checkResultByFile(@TestDataFile @NonNls String expectedFile, boolean ignoreTrailingWhitespaces);
 
   /**
@@ -261,7 +261,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param fileAfter result file to be checked against.
    * @param newName new name for the element.
    * @param additionalFiles
-   * @see #testRename(String, String, String, String[])
+   * @see #testRename(String, String)
    */
   void testRename(@TestDataFile @NonNls String fileBefore,
                   @TestDataFile @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles);
@@ -366,4 +366,5 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
 
   void testFolding(String fileName);
+  void testFoldingWithCollapseStatus(String fileName);
 }

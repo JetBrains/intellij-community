@@ -44,8 +44,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   private volatile PsiType myCachedType = null;
   private volatile PatchedSoftReference<PsiType> myCachedDetachedType = null;
 
+  @SuppressWarnings({"UnusedDeclaration"})
   public PsiTypeElementImpl() {
-    super(JavaElementType.TYPE);
+    this(JavaElementType.TYPE);
+  }
+
+  protected PsiTypeElementImpl(final IElementType type) {
+    super(type);
   }
 
   public void clearCaches() {

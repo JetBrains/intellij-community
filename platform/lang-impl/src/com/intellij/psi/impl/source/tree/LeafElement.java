@@ -55,7 +55,7 @@ public abstract class LeafElement extends TreeElement {
     return myText.charAt(position);
   }
 
-  public int copyTo(char[] buffer, int start) {
+  public int copyTo(@Nullable char[] buffer, int start) {
     if (buffer != null) {
       CharArrayUtil.getChars(myText, buffer, start);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -39,7 +38,7 @@ public class ExpressionStatement implements GroovyElementTypes {
   private static IElementType parseExpressionStatement(PsiBuilder builder, GroovyParser parser) {
     final LighterASTNode firstDoneMarker = builder.getLatestDoneMarker();
     PsiBuilder.Marker marker = builder.mark();
-    if (AssignmentExpression.parse(builder, parser) &&
+    if (ConditionalExpression.parse(builder, parser) &&
         !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
         CommandArguments.parse(builder, parser)) {
       marker.done(CALL_EXPRESSION);
@@ -86,7 +85,7 @@ public class ExpressionStatement implements GroovyElementTypes {
       }
       else {
         exprStatement.drop();
-        builder.error(GroovyBundle.message("expression.expected"));
+        //builder.error(GroovyBundle.message("expression.expected"));
         break;
       }
 

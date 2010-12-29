@@ -21,12 +21,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FormatUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class MalformedFormatStringInspection extends BaseInspection{
 
@@ -72,28 +69,12 @@ public class MalformedFormatStringInspection extends BaseInspection{
     private static class MalformedFormatStringVisitor
             extends BaseInspectionVisitor{
 
-        /** @noinspection StaticCollection */
-        @NonNls
-        private static final Set<String> formatMethodNames =
-                new HashSet<String>(2);
-
-        /** @noinspection StaticCollection */
-        private static final Set<String> formatClassNames =
-                new HashSet<String>(4);
-
-        static{
-            formatMethodNames.add("format");
-            formatMethodNames.add("printf");
-
-            formatClassNames.add("java.io.PrintWriter");
-            formatClassNames.add("java.io.PrintStream");
-            formatClassNames.add("java.util.Formatter");
-            formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
-        }
-
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
+            if(!FormatUtils.isFormatCall(expression)){
+                return;
+            }
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
             if(arguments.length == 0){
@@ -104,14 +85,14 @@ public class MalformedFormatStringInspection extends BaseInspection{
             if(type == null){
                 return;
             }
-            final int formatArgPosition;
+            final int formatArgumentIndex;
             if("java.util.Locale".equals(type.getCanonicalText())
                     && arguments.length > 1){
-                formatArgPosition = 1;
+                formatArgumentIndex = 1;
             } else{
-                formatArgPosition = 0;
+                formatArgumentIndex = 0;
             }
-            final PsiExpression formatArgument = arguments[formatArgPosition];
+            final PsiExpression formatArgument = arguments[formatArgumentIndex];
             if(!TypeUtils.expressionHasType(formatArgument,
                     CommonClassNames.JAVA_LANG_STRING)) {
                 return;
@@ -126,10 +107,8 @@ public class MalformedFormatStringInspection extends BaseInspection{
             if(value == null){
                 return;
             }
-            if(!callTakesFormatString(expression)){
-                return;
-            }
-            final int argumentCount = arguments.length - (formatArgPosition + 1);
+            final int argumentCount =
+                    arguments.length - (formatArgumentIndex + 1);
             final Validator[] validators;
             try{
                 validators = FormatDecode.decode(value, argumentCount);
@@ -140,7 +119,7 @@ public class MalformedFormatStringInspection extends BaseInspection{
             if(validators.length != argumentCount){
                 if (argumentCount == 1) {
                     final PsiExpression argument =
-                            arguments[formatArgPosition + 1];
+                            arguments[formatArgumentIndex + 1];
                     final PsiType argumentType = argument.getType();
                     if (argumentType instanceof PsiArrayType) {
                         return;
@@ -152,34 +131,14 @@ public class MalformedFormatStringInspection extends BaseInspection{
             }
             for(int i = 0; i < validators.length; i++){
                 final Validator validator = validators[i];
-                final PsiType argType =
-                        arguments[i + formatArgPosition + 1].getType();
-                if(!validator.valid(argType)){
+                final PsiType argumentType =
+                        arguments[i + formatArgumentIndex + 1].getType();
+                if(!validator.valid(argumentType)){
                     registerError(formatArgument, validators,
                             Integer.valueOf(argumentCount));
                     return;
                 }
             }
-        }
-
-        private static boolean callTakesFormatString(
-                PsiMethodCallExpression expression){
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String name = methodExpression.getReferenceName();
-            if(!formatMethodNames.contains(name)){
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return false;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return false;
-            }
-            final String className = containingClass.getQualifiedName();
-            return formatClassNames.contains(className);
         }
     }
 }

@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="library" name="commons-lang" level="project" />
   </component>
 </module>
 

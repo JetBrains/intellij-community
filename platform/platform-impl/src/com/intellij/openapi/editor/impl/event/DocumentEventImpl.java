@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
@@ -135,6 +134,7 @@ public class DocumentEventImpl extends DocumentEvent {
            ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']" + (isWholeTextReplaced() ? " Whole." : ".");
   }
 
+  @Override
   public boolean isWholeTextReplaced() {
     return myIsWholeDocReplaced;
   }
@@ -165,33 +165,15 @@ public class DocumentEventImpl extends DocumentEvent {
 
   public int translateLineViaDiffStrict(int line) {
     if (myChange == null) buildDiff();
-    if (myChange == null) return line;
-
     Diff.Change change = myChange;
-
-    int newLine = line;
-
-    while (change != null) {
-      if (line < change.line0) break;
-      if (line >= change.line0 + change.deleted) {
-        newLine += change.inserted - change.deleted;
-      } else {
-        return -1;
-      }
-
-      change = change.link;
-    }
-
-    return newLine;
+    if (change == null) return line;
+    return Diff.translateLine(change, line);
   }
 
   private void buildDiff() {
-    final String[] strings1 = LineTokenizer.tokenize(myOldString, false);
-    final String[] strings2 = LineTokenizer.tokenize(myNewString, false);
-
     //Diff diff = new Diff(strings1, strings2);
     //myChange = diff.diff_2(false);
-    myChange = Diff.buildChanges(strings1, strings2);
+    myChange = Diff.buildChanges(myOldString, myNewString);
   }
 
   public int getOptimizedLineShift() {

@@ -15,12 +15,12 @@
  */
 package com.intellij.psi.tree.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 public class IJavaDocElementType extends IElementType {
-  public IJavaDocElementType(@NonNls String debugName) {
-    super(debugName, StdFileTypes.JAVA.getLanguage()); //TODO: should be a separate language for javadoc?
+  public IJavaDocElementType(@NonNls final String debugName) {
+    super(debugName, StdLanguages.JAVA);
   }
 }

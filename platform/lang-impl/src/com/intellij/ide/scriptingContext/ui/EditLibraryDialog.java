@@ -38,6 +38,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
@@ -80,6 +81,7 @@ public class EditLibraryDialog extends DialogWrapper {
     });
 
     myFileTableModel = new FileTableModel();
+    myFileTable.setRowHeight(myFileTable.getRowHeight() + 5);
     myFileTable.setModel(myFileTableModel);
 
     myRemoveFileButton.setEnabled(false);
@@ -140,6 +142,9 @@ public class EditLibraryDialog extends DialogWrapper {
     typeCol.setMaxWidth(80);
     MyTableCellEditor cellEditor = new MyTableCellEditor(new JComboBox(new String[] {mySourceTypeName, myCompactTypeName}), myFileTableModel);
     typeCol.setCellEditor(cellEditor);
+    
+    TableColumn fileCol = myFileTable.getColumnModel().getColumn(FILE_LOCATION_COL);
+    fileCol.setCellRenderer(new MyTableCellRenderer());
   }
 
   public EditLibraryDialog(String title, LangScriptingContextProvider provider, Project project, ScriptingLibraryTable.LibraryModel lib) {
@@ -150,6 +155,20 @@ public class EditLibraryDialog extends DialogWrapper {
     myDocUrlListModel.setDocUrls(docUrls);
     if (docUrls.length > 0) {
       myRemoveDocUrlButton.setEnabled(true);
+    }
+  }
+  
+  private class MyTableCellRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      if (renderer instanceof JLabel) {
+        VirtualFile file = myFileTableModel.getFileAt(row);
+        if (file != null) {
+          ((JLabel)renderer).setToolTipText(file.getPath());
+        }
+      }
+      return renderer;
     }
   }
 
@@ -245,7 +264,7 @@ public class EditLibraryDialog extends DialogWrapper {
     public String getColumnName(int column) {
       switch(column) {
         case FILE_LOCATION_COL:
-          return IdeBundle.message("scripting.lib.file.location");
+          return IdeBundle.message("scripting.lib.file.name");
         case FILE_TYPE_COL:
           return IdeBundle.message("scripting.lib.file.type");
       }
@@ -307,7 +326,7 @@ public class EditLibraryDialog extends DialogWrapper {
       VirtualFile file = myFiles.get(rowIndex);
       switch (columnIndex) {
         case FILE_LOCATION_COL:
-          return file;
+          return file.getPresentableName();
         case FILE_TYPE_COL:
           return myCompactFiles.contains(file) ? myCompactTypeName : mySourceTypeName;
       }
@@ -419,19 +438,42 @@ public class EditLibraryDialog extends DialogWrapper {
       fireIntervalRemoved(this, index, index);
     }
     
+    public boolean contains(String url) {
+      return myDocUrls.contains(url);
+    }
+    
     public String[] getDocUrls() {
       return ArrayUtil.toStringArray(myDocUrls);
     }
   }
   
   private void specifyDocUrl() {
-    VirtualFile vf = Util.showSpecifyJavadocUrlDialog(contentPane);
+    String defaultUrl = findUnspecifiedMatchingDocUrl(myFileTableModel.getSourceFiles());
+    if (defaultUrl == null) {
+      defaultUrl = findUnspecifiedMatchingDocUrl(myFileTableModel.getCompactFiles());
+    }
+    VirtualFile vf = Util.showSpecifyJavadocUrlDialog(contentPane, defaultUrl != null ? defaultUrl : "");
     if (vf != null && vf.isValid()) {
       String url = vf.getUrl();
       int index = myDocUrlListModel.addUrl(url);
       myDocUrlList.ensureIndexIsVisible(index);
       myDocUrlList.setSelectedIndex(index);
     }
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myLibName;
+  }
+
+  @Nullable
+  private String findUnspecifiedMatchingDocUrl(VirtualFile[] files) {
+    String docUrl;
+    for (VirtualFile file : files) {
+      docUrl = myProvider.getDefaultDocUrl(file);
+      if (docUrl != null && !myDocUrlListModel.contains(docUrl)) return docUrl;
+    }
+    return null;
   }
   
   private void removeDocUrl() {

@@ -484,7 +484,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       for (ScopeToolState state : currentTools.getTools()) {
         final InspectionTool tool = (InspectionTool)state.getTool();
         if (myProvider.checkReportedProblems(tool)) {
-          addTool(tool, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope()), isGroupedBySeverity);
+          addTool(tool, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject)), isGroupedBySeverity);
           resultsFound = true;
         }
       }

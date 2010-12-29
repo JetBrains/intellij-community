@@ -25,16 +25,9 @@ import java.awt.*;
 public class ColorPreviewComponent extends JComponent {
   private final Color myColor;
 
-  public ColorPreviewComponent(final String hexValue, final Color color) {
+  public ColorPreviewComponent(final Color color) {
     myColor = color;
     setOpaque(true);
-
-/*    if (hexValue != null) {
-      final JLabel label = new JLabel('#' + hexValue);
-      label.setFont(UIUtil.getToolTipFont());
-      label.setForeground(Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null)[2] >= 0.5f ? Color.BLACK : Color.WHITE);
-      add(label, BorderLayout.SOUTH);
-    } */
   }
 
   public void paintComponent(final Graphics g) {

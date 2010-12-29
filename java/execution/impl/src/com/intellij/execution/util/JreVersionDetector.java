@@ -34,24 +34,28 @@ public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
   private boolean myLastIsJre50;
 
-  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isJre50Configured(final T configuration) {
+
+  public boolean isModuleJre50Configured(final ModuleBasedConfiguration configuration) {
+    final Module module = configuration.getConfigurationModule().getModule();
+    if (module != null && !module.isDisposed()) {
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      final Sdk jdk = rootManager.getSdk();
+      return isJre50(jdk);
+    }
+
+    final Sdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectSdk();
+    return isJre50(projectJdk);
+  }
+
+  public boolean isJre50Configured(final CommonJavaRunConfigurationParameters configuration) {
     if (configuration.isAlternativeJrePathEnabled()) {
       if (configuration.getAlternativeJrePath().equals(myLastAlternativeJrePath)) return myLastIsJre50;
       myLastAlternativeJrePath = configuration.getAlternativeJrePath();
       final String versionString = JavaSdkImpl.getJdkVersion(myLastAlternativeJrePath);
       myLastIsJre50 = versionString != null && isJre50(versionString);
       return myLastIsJre50;
-    } else {
-      final Module module = configuration.getConfigurationModule().getModule();
-      if (module != null && !module.isDisposed()) {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final Sdk jdk = rootManager.getSdk();
-        return isJre50(jdk);
-      }
-
-      final Sdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectSdk();
-      return isJre50(projectJdk);
     }
+    return false;
   }
 
   private static boolean isJre50(final Sdk jdk) {

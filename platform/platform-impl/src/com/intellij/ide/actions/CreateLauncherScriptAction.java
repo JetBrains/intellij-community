@@ -57,7 +57,7 @@ public class CreateLauncherScriptAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
     }
-    createLauncherScript(project, dialog.myNameField.getText() + "/" + dialog.myPathField.getText());
+    createLauncherScript(project, new File(dialog.myPathField.getText(), dialog.myNameField.getText()).getPath());
   }
 
   public static void createLauncherScript(Project project, String pathname) {
@@ -118,7 +118,7 @@ public class CreateLauncherScriptAction extends AnAction {
     String launcherContents = FileUtil.loadTextAndClose(new InputStreamReader(stream));
     launcherContents = launcherContents.replace("$CONFIG_PATH$", PathManager.getConfigPath());
 
-    String homePath = PathManager.getHomePath().replace(" ", "\\ ");
+    String homePath = PathManager.getHomePath();
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
     if (SystemInfo.isMac) {
       launcherContents = launcherContents.replace("$RUN_PATH$", homePath + "/Contents/MacOS/" + productName);

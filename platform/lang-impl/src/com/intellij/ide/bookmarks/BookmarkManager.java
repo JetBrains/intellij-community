@@ -23,10 +23,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorMouseAdapter;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -48,10 +45,13 @@ import java.util.List;
   }
 )
 public class BookmarkManager implements PersistentStateComponent<Element> {
+  
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
-  private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
+
+  private final List<Bookmark>        myBookmarks           = new ArrayList<Bookmark>();
   private final MyEditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
-  private final Project myProject;
+
+  private final Project    myProject;
   private final MessageBus myBus;
 
   public static BookmarkManager getInstance(Project project) {
@@ -61,11 +61,11 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   public BookmarkManager(Project project, MessageBus bus) {
     myProject = project;
     myBus = bus;
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), myProject);
   }
 
   public void projectOpened() {
-    EditorEventMulticasterEx eventMulticaster = (EditorEventMulticasterEx)EditorFactory.getInstance()
-      .getEventMulticaster();
+    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
   }
 
@@ -354,6 +354,27 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
         removeBookmark(bookmark);
       }
       e.consume();
+    }
+  }
+  
+  private class MyDocumentListener extends DocumentAdapter {
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      List<Bookmark> bookmarksToRemove = null;
+      for (Bookmark bookmark : myBookmarks) {
+        if (!bookmark.isValid()) {
+          if (bookmarksToRemove == null) {
+            bookmarksToRemove = new ArrayList<Bookmark>();
+          }
+          bookmarksToRemove.add(bookmark);
+        }
+      }
+      
+      if (bookmarksToRemove != null) {
+        for (Bookmark bookmark : bookmarksToRemove) {
+          removeBookmark(bookmark);
+        }
+      }
     }
   }
 }

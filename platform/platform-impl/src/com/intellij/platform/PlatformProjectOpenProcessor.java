@@ -18,7 +18,6 @@ package com.intellij.platform;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -59,7 +58,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public boolean canOpenProject(final VirtualFile file) {
-    return file.isDirectory() || !file.getFileType().isBinary();
+    return file.isDirectory() || ! file.getFileType().isBinary();
+  }
+
+  @Override
+  public boolean isProjectFile(VirtualFile file) {
+    return false;
   }
 
   @Override
@@ -77,7 +81,20 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                                       final Project projectToClose,
                                       final boolean forceOpenInNewFrame,
                                       final int line) {
-    VirtualFile baseDir = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
+    VirtualFile baseDir = virtualFile;
+    if (!baseDir.isDirectory()) {
+      baseDir = virtualFile.getParent();
+      while (baseDir != null) {
+        if (new File(baseDir.getPath(), ".idea").exists()) {
+          break;
+        }
+        baseDir = baseDir.getParent();
+      }
+      if (baseDir == null) {
+        baseDir = virtualFile.getParent();
+      }
+    }
+
     final File projectDir = new File(baseDir.getPath(), ".idea");
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -137,7 +154,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
                     new OpenFileDescriptor(project, virtualFile, line-1, 0).navigate(true);
                   }
                   else {
-                    FileEditorManager.getInstance(project).openFile(virtualFile, true);
+                    new OpenFileDescriptor(project, virtualFile).navigate(true);
                   }
                 }
               }

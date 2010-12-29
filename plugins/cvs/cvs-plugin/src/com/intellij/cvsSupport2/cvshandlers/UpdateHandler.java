@@ -56,13 +56,13 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final Collection<File> myNotProcessedRepositories = new HashSet<File>();
   private double myDirectoriesToBeProcessedCount;
 
-  private final static CvsMessagePattern UPDATE_PATTERN = new CvsMessagePattern(new String[]{"cvs server: Updating ", "*"}, 2);
+  private static final CvsMessagePattern UPDATE_PATTERN = new CvsMessagePattern(new String[]{"cvs server: Updating ", "*"}, 2);
   private final Project myProject;
   private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
   private final UpdatedFiles myUpdatedFiles;
   private final UpdateSettings myUpdateSettings;
 
-  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, @NotNull UpdatedFiles updatedFiles) {
+  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, @NotNull Project project, @NotNull UpdatedFiles updatedFiles) {
     super(CvsBundle.message("operation.name.update"), new UpdateOperation(new FilePath[0], updateSettings, project),
           FileSetToBeUpdated.selectedFiles(files));
     myFiles = files;

@@ -975,6 +975,7 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         result = EditorUtil.getSpaceWidth(fontType, myEditor);
         fontType2spaceWidth.put(fontType, result);
       }
+      assert result > 0;
       return result;
     }
     

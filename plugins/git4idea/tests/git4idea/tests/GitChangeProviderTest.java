@@ -45,7 +45,7 @@ import static org.testng.Assert.*;
  * 3. Calls ChangeProvider.getChanges() and checks that the changes are there.
  * @author Kirill Likhodedov
  */
-public class GitChangeProviderTest extends GitSingleUserTestCase {
+public class GitChangeProviderTest extends GitSingleUserTest {
 
   private GitChangeProvider myChangeProvider;
   private VcsModifiableDirtyScope myDirtyScope;

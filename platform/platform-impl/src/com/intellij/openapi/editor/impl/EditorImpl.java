@@ -147,7 +147,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
 
-  private final DocumentListener myEditorDocumentAdapter;
+  private final DocumentListener           myEditorDocumentAdapter;
 
   private final SettingsImpl mySettings;
 
@@ -202,6 +202,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
+  
+  @Nullable
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
@@ -252,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-  EditorImpl(@NotNull Document document, boolean viewer, Project project) {
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
     myScheme = createBoundColorSchemeDelegate(null);
@@ -270,6 +272,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
+    if (project != null) {
+      project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
+    }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
     myMarkupModelListener = new MarkupModelListener() {
@@ -863,6 +868,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int yPositionToLogicalLineNumber(int y) {
     int line = yPositionToVisibleLineNumber(y);
+    if (line <= 0) {
+      return 0;
+    }
     LogicalPosition logicalPosition = visualToLogicalPosition(new VisualPosition(line, 0));
     return logicalPosition.line;
   }
@@ -1008,7 +1016,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         int diff = px - x;
         column += diff / spaceSize;
-        if ((diff % spaceSize) * 2 >= spaceSize) {
+        if (diff % spaceSize * 2 >= spaceSize) {
           column++;
         }
       }
@@ -1056,13 +1064,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int line = calcLogicalLineNumber(offset, false);
     int column = calcColumnNumber(offset, line, false);
     return new LogicalPosition(line, column);
-  }
-
-  @Override
-  public boolean isCaretActive() {
-    synchronized (ourCaretBlinkingCommand) {
-      return ourCaretBlinkingCommand.myEditor == this;
-    }
   }
 
   @TestOnly
@@ -1320,13 +1321,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
   }
 
-  private void beforeChangedUpdate(DocumentEvent e) {
-    if (!myDocument.isInBulkUpdate()) {
-      Rectangle visibleArea = getScrollingModel().getVisibleArea();
-      Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-      myCaretUpdateVShift = pos.y - visibleArea.y;
+  private void bulkUpdateStarted() {
+  }
+
+  private void bulkUpdateFinished() {
+    if (myScrollPane == null) {
+      return;
     }
+
+    stopOptimizedScrolling();
+    mySelectionModel.removeBlockSelection();
     
+    mySizeContainer.reset();
+    validateSize();
+
+    updateGutterSize();
+    repaintToScreenBottom(0);
+    updateCaretCursor();
+  }
+  
+  private void beforeChangedUpdate(DocumentEvent e) {
+    if (myDocument.isInBulkUpdate()) {
+      // Assuming that the job is done at bulk listener callback methods.
+      return;
+    }
+
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
+    Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
+    myCaretUpdateVShift = pos.y - visibleArea.y;
+
     // We assume that size container is already notified with the visual line widths during soft wraps processing
     if (!mySoftWrapModel.isSoftWrappingEnabled()) {
       mySizeContainer.beforeChange(e);
@@ -1334,7 +1357,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void changedUpdate(DocumentEvent e) {
-    if (myScrollPane == null) return;
+    if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
 
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
@@ -2002,7 +2025,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     // Check if the first soft wrap line is within the visual selection.
     if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
-        || (currentVisualLine == selectionEndPosition.line && selectionEndPosition.column <= lastColumn)) {
+        || currentVisualLine == selectionEndPosition.line && selectionEndPosition.column <= lastColumn) {
       return;
     }
     
@@ -2059,7 +2082,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     
     // Check if the second soft wrap line is within the visual selection.
     if (currentVisualLine < selectionStartPosition.line || currentVisualLine > selectionEndPosition.line 
-        || (currentVisualLine == selectionStartPosition.line && selectionStartPosition.column >= softWrap.getIndentInColumns())) {
+        || currentVisualLine == selectionStartPosition.line && selectionStartPosition.column >= softWrap.getIndentInColumns()) {
       return;
     }
 
@@ -2845,7 +2868,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final Dimension draft = getSizeWithoutCaret();
     final int additionalSpace = mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
-    if (!myDocument.isInBulkUpdate()) {
+    if (!myDocument.isInBulkUpdate() && getCaretModel().isUpToDate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
       draft.width = Math.max(caretX, draft.width) + additionalSpace;
     }
@@ -3051,9 +3074,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (i >= 0) {
           return topLevelCollapsed[i];
         }
-        else {
-          return null;
-        }
+        return null;
       }
       return region;
     }
@@ -5135,6 +5156,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
+    @Override
+    public void updateStarted(Document doc) {
+      bulkUpdateStarted();
+    }
+
+    @Override
+    public void updateFinished(Document doc) {
+      bulkUpdateFinished();
+    }
+  }
+  
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private class EditorSizeContainer {
 

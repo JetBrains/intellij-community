@@ -5,6 +5,6 @@ PsiJavaFile:Type7.java
       PsiReferenceParameterList
         PsiJavaToken:LT('<')
         PsiTypeElement:
-          PsiElement(DIAMOND_TYPE)
+          PsiTypeElement:DIAMOND
             <empty list>
         PsiJavaToken:GT('>')

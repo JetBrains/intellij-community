@@ -268,7 +268,9 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     for(int i=configurations.size()-1; i >= 0; i--) {
-      if (!new JreVersionDetector().isJre50Configured((ApplicationConfiguration) configurations.get(i).getConfiguration())) {
+      final JreVersionDetector detector = new JreVersionDetector();
+      final ApplicationConfiguration configuration = (ApplicationConfiguration)configurations.get(i).getConfiguration();
+      if (!detector.isJre50Configured(configuration) && !detector.isModuleJre50Configured(configuration)) {
         configurations.remove(i);
       }
     }

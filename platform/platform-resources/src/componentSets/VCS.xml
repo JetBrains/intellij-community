@@ -95,8 +95,5 @@
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
-    </component>
   </project-components>
 </components>

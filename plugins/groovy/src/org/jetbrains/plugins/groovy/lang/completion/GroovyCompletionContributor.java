@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Iconable;
@@ -272,23 +273,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   public GroovyCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final PsiElement reference = parameters.getPosition().getParent();
-        if (reference instanceof GrReferenceElement) {
-          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
-            result.addElement(LookupElementBuilder.create("*"));
-          }
-
-          completeReference(parameters, result, (GrReferenceElement)reference);
-        }
-      }
-    });
-
-
     //provide 'this' and 'super' completions in ClassName.<caret>
     extend(CompletionType.BASIC, AFTER_DOT, new CompletionProvider<CompletionParameters>() {
       @Override
@@ -305,6 +289,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
         GrReferenceExpression referenceExpression = (GrReferenceExpression)qualifier;
         final PsiElement resolved = referenceExpression.resolve();
         if (!(resolved instanceof PsiClass)) return;
+
+        if (CompletionService.getCompletionService().getAdvertisementText() == null && parameters.getInvocationCount() > 0 &&
+            CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          if (shortcut != null) {
+            CompletionService.getCompletionService().setAdvertisementText("Pressing " + shortcut + " without a class qualifier would show all accessible static methods");
+          }
+        }
+
         if (!PsiUtil.hasEnclosingInstanceInScope((PsiClass)resolved, position, false)) return;
 
         for (String keyword : THIS_SUPER) {
@@ -312,6 +305,23 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.BASIC, psiElement(PsiElement.class), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull final CompletionResultSet result) {
+        final PsiElement reference = parameters.getPosition().getParent();
+        if (reference instanceof GrReferenceElement) {
+          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
+            result.addElement(LookupElementBuilder.create("*"));
+          }
+
+          completeReference(parameters, result, (GrReferenceElement)reference);
+        }
+      }
+    });
+
 
     extend(CompletionType.BASIC, TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER, new CompletionProvider<CompletionParameters>() {
       @Override
@@ -525,8 +535,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static void showInfo() {
-    CompletionService.getCompletionService()
-      .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
+    if (StringUtil.isEmpty(CompletionService.getCompletionService().getAdvertisementText())) {
+      CompletionService.getCompletionService()
+        .setAdvertisementText(GroovyBundle.message("invoke.completion.second.time.to.show.skipped.methods"));
+    }
   }
 
   private static StaticMemberProcessor completeStaticMembers(PsiElement position) {

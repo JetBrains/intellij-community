@@ -389,7 +389,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       return ((GrMethod)defintion);
     }
     catch (Exception error) {
-      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'", error);
     }
   }
 

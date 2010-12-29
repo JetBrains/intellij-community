@@ -22,8 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PropertiesComponentImpl extends PropertiesComponent
-    implements PersistentStateComponent<Element> {
+public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
   private final HashMap<String, String> myMap = new HashMap<String, String>();
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -74,6 +73,11 @@ public class PropertiesComponentImpl extends PropertiesComponent
 
   public void setValue(String name, String value) {
     myMap.put(name, value);
+  }
+
+  @Override
+  public void unsetValue(String name) {
+    myMap.remove(name);
   }
 
   public boolean isValueSet(String name) {

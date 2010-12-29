@@ -40,7 +40,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   private final long myModificationStamp;
   private final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
 
-  public DummyHolderViewProvider(final PsiManager manager) {
+  public DummyHolderViewProvider(@NotNull PsiManager manager) {
     myManager = manager;
     myModificationStamp = LocalTimeCounter.currentTime();
   }

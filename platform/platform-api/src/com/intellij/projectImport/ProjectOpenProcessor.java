@@ -38,6 +38,10 @@ public abstract class ProjectOpenProcessor {
 
   public abstract boolean canOpenProject(VirtualFile file);
 
+  public boolean isProjectFile(VirtualFile file) {
+    return canOpenProject(file);
+  }
+
   @Nullable
   public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame);
 

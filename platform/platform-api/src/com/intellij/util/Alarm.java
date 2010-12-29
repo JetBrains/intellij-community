@@ -107,11 +107,13 @@ public class Alarm implements Disposable {
 
   private void _addRequest(final Runnable request, int delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
+      LOG.assertTrue(!myDisposed, "Already disposed");
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
 
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
         _add(requestToSchedule);
-      } else {
+      }
+      else {
         if (!myPendingRequests.contains(requestToSchedule)) {
           myPendingRequests.add(requestToSchedule);
         }

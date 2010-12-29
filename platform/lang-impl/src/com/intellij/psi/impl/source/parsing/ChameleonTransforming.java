@@ -18,7 +18,10 @@ package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.lang.ASTNode;
 
-@Deprecated
+/**
+ * @deprecated obsolete (ro remove in IDEA 11).
+ */
+@SuppressWarnings({"ALL"})
 public class ChameleonTransforming {
   public static void transformChildren(ASTNode element) {
   }

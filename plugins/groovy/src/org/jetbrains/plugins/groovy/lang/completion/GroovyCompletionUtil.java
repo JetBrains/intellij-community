@@ -467,50 +467,16 @@ public class GroovyCompletionUtil {
     return TailType.insertChar(editor, offset, ')');
   }
 
-  private static final Set<String> COLLECTION_METHOD_NAMES = new HashSet<String>();
-  public static final Set<String> OPERATOR_METHOD_NAMES = new HashSet<String>();
-  static {
-    COLLECTION_METHOD_NAMES.add("each");
-    COLLECTION_METHOD_NAMES.add("eachWithIndex");
-    COLLECTION_METHOD_NAMES.add("any");
-    COLLECTION_METHOD_NAMES.add("every");
-    COLLECTION_METHOD_NAMES.add("reverseEach");
-    COLLECTION_METHOD_NAMES.add("collect");
-    COLLECTION_METHOD_NAMES.add("collectAll");
-    COLLECTION_METHOD_NAMES.add("find");
-    COLLECTION_METHOD_NAMES.add("findAll");
-    COLLECTION_METHOD_NAMES.add("retainAll");
-    COLLECTION_METHOD_NAMES.add("removeAll");
-    COLLECTION_METHOD_NAMES.add("split");
-    COLLECTION_METHOD_NAMES.add("groupBy");
-    COLLECTION_METHOD_NAMES.add("groupEntriesBy");
-    COLLECTION_METHOD_NAMES.add("findLastIndexOf");
-    COLLECTION_METHOD_NAMES.add("findIndexValues");
-    COLLECTION_METHOD_NAMES.add("findIndexOf");
+  private static final Set<String> COLLECTION_METHOD_NAMES = CollectionFactory.newSet(
+    "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
+    "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
+  );
 
-    OPERATOR_METHOD_NAMES.add("plus");
-    OPERATOR_METHOD_NAMES.add("minus");
-    OPERATOR_METHOD_NAMES.add("multiply");
-    OPERATOR_METHOD_NAMES.add("power");
-    OPERATOR_METHOD_NAMES.add("div");
-    OPERATOR_METHOD_NAMES.add("mod");
-    OPERATOR_METHOD_NAMES.add("or");
-    OPERATOR_METHOD_NAMES.add("and");
-    OPERATOR_METHOD_NAMES.add("xor");
-    OPERATOR_METHOD_NAMES.add("next");
-    OPERATOR_METHOD_NAMES.add("previous");
-    OPERATOR_METHOD_NAMES.add("getAt");
-    OPERATOR_METHOD_NAMES.add("putAt");
-    OPERATOR_METHOD_NAMES.add("leftShift");
-    OPERATOR_METHOD_NAMES.add("rightShift");
-    OPERATOR_METHOD_NAMES.add("isCase");
-    OPERATOR_METHOD_NAMES.add("bitwiseNegate");
-    OPERATOR_METHOD_NAMES.add("negative");
-    OPERATOR_METHOD_NAMES.add("positive");
-  }
-
-
-
+  public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.newSet(
+    "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
+    "isCase", "bitwiseNegate", "negative", "positive"
+  );
+    
   public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor, @Nullable PsiType type) {
     if (type == null) return false;
     String name = gdkMethod.getStaticMethod().getName();

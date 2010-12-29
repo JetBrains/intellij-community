@@ -87,23 +87,27 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
         //todo remove this assertion before X release
         final PsiElement nav1 = myElement.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
-        if (ApplicationManagerEx.getApplicationEx().isInternal() && nav1 != nav2) {
-          PsiElement cur = findIncluder(myElement);
-          PsiElement nav = findIncluder(nav1);
-          throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()) + "; nav=" + (nav == null ? null : nav.getText()));
-        }
+        if (nav1 != nav2) {
+          if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+            PsiElement cur = findIncluder(myElement);
+            PsiElement nav = findIncluder(nav1);
+            final PsiElement _nav1 = myElement.getNavigationElement();
+            final PsiElement _nav2 = thatElement.getNavigationElement();
+            throw new AssertionError(myElement.getText() + "; including=" + (cur == null ? null : cur.getText()) + "; nav=" + (nav == null ? null : nav.getText()));
+          }
 
-        assert nav1 == nav2 : nav1.getContainingFile() +
-                              ":" +
-                              nav1.getTextRange().getStartOffset() +
-                              "!=" +
-                              nav2.getContainingFile() +
-                              ":" +
-                              nav2.getTextRange().getStartOffset() +
-                              "; " +
-                              (nav1 == myElement) +
-                              ";" +
-                              (nav2 == thatElement);
+          throw new AssertionError(nav1.getContainingFile() +
+                                ":" +
+                                nav1.getTextRange().getStartOffset() +
+                                "!=" +
+                                nav2.getContainingFile() +
+                                ":" +
+                                nav2.getTextRange().getStartOffset() +
+                                "; " +
+                                (nav1 == myElement) +
+                                ";" +
+                                (nav2 == thatElement));
+        }
       }
       return true;
     }

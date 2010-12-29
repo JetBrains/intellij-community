@@ -39,13 +39,14 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.containers.ContainerUtil;
+import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.TestNG;
+import org.testng.internal.AnnotationTypeEnum;
 import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
 import org.testng.xml.SuiteGenerator;
@@ -66,12 +67,15 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   private final boolean myIs15;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
+  private final IDEARemoteTestRunnerClient myClient;
 
   public SearchingForTestsTask(ServerSocket serverSocket,
                                boolean is15,
                                TestNGConfiguration config,
-                               File tempFile) {
+                               File tempFile,
+                               IDEARemoteTestRunnerClient client) {
     super(config.getProject(), "Searching For Tests ...", true);
+    myClient = client;
     myData = config.getPersistantData();
     myProject = config.getProject();
     myServerSocket = serverSocket;
@@ -100,6 +104,8 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   public void onSuccess() {
     writeTempFile();
     connect();
+
+    myClient.startListening();
   }
 
   @Override
@@ -162,7 +168,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
   private void logCantRunException(CantRunException e) {
     try {
-      final String message = "CantRunException" + e.getMessage();
+      final String message = "CantRunException" + e.getMessage() + "\n";
       FileUtil.writeToFile(myTempFile, message.getBytes());
     }
     catch (IOException e1) {
@@ -198,13 +204,6 @@ public class SearchingForTestsTask extends Task.Backgroundable {
 
     Map<String, String> testParams = buildTestParameters();
 
-    String annotationType = myData.ANNOTATION_TYPE;
-    if (annotationType == null || "".equals(annotationType)) {
-      annotationType = myIs15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
-    }
-
-    LOG.info("Using annotationType of " + annotationType);
-
     int logLevel = 1;
     try {
       final Properties properties = new Properties();
@@ -219,7 +218,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     }
 
     LaunchSuite suite =
-      SuiteGenerator.createSuite(myProject.getName(), null, map, groupNames, testParams, annotationType, logLevel);
+      SuiteGenerator.createSuite(myProject.getName(), null, map, groupNames, testParams, AnnotationTypeEnum.JDK.getName(), logLevel);
 
     File xmlFile = suite.save(new File(PathManager.getSystemPath()));
     String path = xmlFile.getAbsolutePath() + "\n";
@@ -232,7 +231,13 @@ public class SearchingForTestsTask extends Task.Backgroundable {
   }
 
   private void composeTestSuiteFromXml() throws CantRunException {
+    final Map<String, String> buildTestParams = buildTestParameters();
     try {
+      if (buildTestParams.isEmpty()) {
+        String path = new File(myData.getSuiteName()).getAbsolutePath() + "\n";
+        FileUtil.writeToFile(myTempFile, path.getBytes(), true);
+        return;
+      }
       Collection<XmlSuite> suites;
       FileInputStream in = new FileInputStream(myData.getSuiteName());
       try {
@@ -241,16 +246,11 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       finally {
         in.close();
       }
+
       for (XmlSuite suite : suites) {
         Map<String, String> params = suite.getParameters();
 
-        params.putAll(buildTestParameters());
-
-        String annotationType = myData.ANNOTATION_TYPE;
-        if (annotationType != null && !"".equals(annotationType)) {
-          suite.setAnnotations(annotationType);
-        }
-        LOG.info("Using annotationType of " + annotationType);
+        params.putAll(buildTestParams);
 
         final String fileId =
           (myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml")
@@ -293,7 +293,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         TestSearchScope scope = myConfig.getPersistantData().getScope();
         //TODO we should narrow this down by module really, if that's what's specified
         TestClassFilter projectFilter =
-          new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true);
+          new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true);
         TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
         classes.putAll(calculateDependencies(null, TestNGUtil.getAllTestClasses(filter, false)));
         if (classes.size() == 0) {
@@ -365,7 +365,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
       //for a group, we include all classes
       PsiClass[] testClasses = TestNGUtil
-        .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myProject, true), false);
+        .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true), false);
       for (PsiClass c : testClasses) {
         classes.put(c, new HashSet<PsiMethod>());
       }

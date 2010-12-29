@@ -400,4 +400,11 @@ format<caret>"""
     myFixture.checkResult "def b<caret>"
   }
 
+  public void testSpacesAroundEq() {
+    myFixture.configureByText "a.groovy", "int xxx, xxy; xx<caret>"
+    myFixture.completeBasic()
+    myFixture.type '='
+    myFixture.checkResult "int xxx, xxy; xxx = <caret>"
+  }
+
 }
