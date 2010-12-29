@@ -35,9 +35,20 @@ import java.util.List;
  * @author cdr
  */
 public class FilePathReferenceProvider extends PsiReferenceProvider {
+
+  private final boolean myEndingSlashNotAllowed;
+
+  public FilePathReferenceProvider() {
+    this(true);
+  }
+
+  public FilePathReferenceProvider(boolean endingSlashNotAllowed) {
+    myEndingSlashNotAllowed = endingSlashNotAllowed;
+  }
+
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
-    return new FileReferenceSet(text, element, offset, this, true) {
+    return new FileReferenceSet(text, element, offset, this, true, myEndingSlashNotAllowed) {
       protected boolean isSoft() {
         return soft;
       }
