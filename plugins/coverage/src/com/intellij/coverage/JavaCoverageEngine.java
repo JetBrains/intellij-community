@@ -3,6 +3,7 @@ package com.intellij.coverage;
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
@@ -73,6 +74,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public boolean isApplicableTo(@Nullable final RunConfigurationBase conf) {
     return conf instanceof CommonJavaRunConfigurationParameters;
+  }
+
+  @Override
+  public boolean canHavePerTestCoverage(@Nullable RunConfigurationBase conf) {
+    return !(conf instanceof ApplicationConfiguration);
   }
 
   @Override

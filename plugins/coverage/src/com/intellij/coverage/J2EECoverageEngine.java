@@ -13,4 +13,9 @@ public class J2EECoverageEngine extends JavaCoverageEngine {
   public boolean isApplicableTo(@Nullable RunConfigurationBase conf) {
     return conf instanceof CommonModel && ((CommonModel)conf).isLocal();
   }
+
+  @Override
+  public boolean canHavePerTestCoverage(@Nullable RunConfigurationBase conf) {
+    return false;
+  }
 }

@@ -95,10 +95,6 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return myCoverageProvider;
   }
 
-  public boolean canHavePerTestCoverage() {
-    return !(getConfiguration() instanceof ApplicationConfiguration);
-  }
-
   public ClassFilter[] getCoveragePatterns() {
     return myCoveragePatterns;
   }
