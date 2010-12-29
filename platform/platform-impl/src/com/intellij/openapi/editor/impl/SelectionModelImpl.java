@@ -252,10 +252,26 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public void setSelection(int startOffset, int endOffset) {
     doSetSelection(myEditor.offsetToVisualPosition(startOffset), startOffset, myEditor.offsetToVisualPosition(endOffset), endOffset, false);
   }
-  
+
   @Override
-  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
-    doSetSelection(startPosition, startOffset, endPosition, endOffset, true);
+  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    VisualPosition startPosition;
+    if (hasSelection()) {
+      startPosition = getLeadSelectionPosition();
+    }
+    else {
+      startPosition = myEditor.offsetToVisualPosition(startOffset);
+    }
+    setSelection(startPosition, startOffset, endPosition, endOffset);
+  }
+
+  @Override
+  public void setSelection(final @Nullable VisualPosition startPosition, int startOffset, final @Nullable VisualPosition endPosition,
+                           int endOffset) 
+  {
+    VisualPosition startPositionToUse = startPosition == null ? myEditor.offsetToVisualPosition(startOffset) : startPosition;
+    VisualPosition endPositionToUse = endPosition == null ? myEditor.offsetToVisualPosition(endOffset) : endPosition;
+    doSetSelection(startPositionToUse, startOffset, endPositionToUse, endOffset, true);
   }
 
   private void doSetSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition,
