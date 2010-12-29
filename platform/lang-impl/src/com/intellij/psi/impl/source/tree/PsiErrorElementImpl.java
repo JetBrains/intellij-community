@@ -23,13 +23,10 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiErrorElementImpl extends CompositePsiElement implements PsiErrorElement{
-  private String myErrorDescription;
+  private final String myErrorDescription;
 
-  public PsiErrorElementImpl() {
+  public PsiErrorElementImpl(String errorDescription) {
     super(TokenType.ERROR_ELEMENT);
-  }
-
-  public void setErrorDescription(String errorDescription) {
     myErrorDescription = errorDescription;
   }
 

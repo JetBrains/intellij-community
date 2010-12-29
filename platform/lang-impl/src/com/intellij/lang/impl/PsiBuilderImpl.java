@@ -1111,8 +1111,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
       else if (item instanceof ErrorItem) {
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
+        final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildren(errorElement);
       }
       else if (item instanceof DoneMarker) {
@@ -1152,11 +1151,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static CompositeElement createComposite(final StartMarker marker) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
-      CompositeElement childNode = new PsiErrorElementImpl();
-      if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
-        ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
-      }
-      return childNode;
+      String message = marker.myDoneMarker instanceof DoneWithErrorMarker ? ((DoneWithErrorMarker)marker.myDoneMarker).myMessage : null;
+      return Factory.createErrorElement(message);
     }
 
     if (type == null) {
@@ -1435,13 +1431,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return token.myBuilder.createLeaf(token.getTokenType(), token.myTokenStart, token.myTokenEnd);
       }
       else if (n instanceof ErrorItem) {
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)n).myMessage);
-        return errorElement;
+        return Factory.createErrorElement(((ErrorItem)n).myMessage);
       }
       else {
         final StartMarker startMarker = (StartMarker)n;
-        final CompositeElement composite = (n == myRoot) ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
+        final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
                                                          : createComposite(startMarker);
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
