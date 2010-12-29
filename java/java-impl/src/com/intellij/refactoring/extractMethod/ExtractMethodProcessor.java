@@ -718,6 +718,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       deleteExtracted();
     }
     else {
+      declareNecessaryVariablesInsideBody(body);
       if (myHasExpressionOutput) {
         PsiReturnStatement returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return x;", null);
         final PsiExpression returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
@@ -729,7 +730,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         statement.getExpression().replace(myExpression);
         body.add(statement);
       }
-      final PsiElement replacement = IntroduceVariableBase.replace(myExpression, myMethodCall, myProject);
+      PsiExpression expression2Replace = myExpression;
+      if (myExpression instanceof PsiAssignmentExpression) {
+        expression2Replace = ((PsiAssignmentExpression)myExpression).getRExpression();
+      }
+      final PsiElement replacement = IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
       myMethodCall = PsiTreeUtil.getParentOfType(replacement.findElementAt(replacement.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
     }
 
