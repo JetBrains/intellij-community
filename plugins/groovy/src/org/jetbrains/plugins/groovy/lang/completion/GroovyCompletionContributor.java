@@ -452,8 +452,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                             : GroovyCompletionUtil.getLookupElement(element);
         Object object = lookupElement.getObject();
         PsiSubstitutor substitutor = null;
+        GroovyResolveResult resolveResult = null;
         if (object instanceof GroovyResolveResult) {
-          substitutor = ((GroovyResolveResult)object).getSubstitutor();
+          resolveResult = (GroovyResolveResult)object;
+          substitutor = resolveResult.getSubstitutor();
           object = ((GroovyResolveResult)object).getElement();
         }
 
@@ -482,6 +484,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         //skip accessors if there is no get, set, is prefix
         if (skipAccessors && object instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)object)) {
+          if (!autopopup) {
+            showInfo();
+          }
+          return;
+        }
+
+        //skip inaccessible elements
+        if (!secondCompletionInvoked && resolveResult != null && !resolveResult.isAccessible()) {
           if (!autopopup) {
             showInfo();
           }

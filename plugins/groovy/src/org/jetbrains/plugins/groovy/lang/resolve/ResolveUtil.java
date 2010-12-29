@@ -522,10 +522,10 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    return isInUseScope(resolveResult.getCurrentFileResolveContext());
+    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext());
   }
 
-  public static boolean isInUseScope(GroovyPsiElement context) {
+  public static boolean isInUseScope(PsiElement context) {
     if (context instanceof GrMethodCall) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {

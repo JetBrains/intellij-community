@@ -1,6 +1,6 @@
 enum Nums {
   one, two, tree;
-  private int foo() {
+  int foo() {
     return 1;
   }
 }

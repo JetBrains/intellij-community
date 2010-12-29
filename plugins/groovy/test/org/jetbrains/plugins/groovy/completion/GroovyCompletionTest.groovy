@@ -21,7 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 
- /**
+/**
  * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends GroovyCompletionTestBase {
@@ -69,7 +69,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testCatchClauseParameter() throws Throwable {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getStackTrace", "getStackTraceDepth", "getStackTraceElement");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getCause", "getClass");
   }
 
   public void testFieldSuggestedOnce1() throws Throwable {
