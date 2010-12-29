@@ -733,7 +733,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (description != null) {
         // need this in order to correctly load plugin-supplied descriptions
         try {
-          myBrowser.read(new StringReader(IdeTooltipManager.formatHtml(SearchUtil.markup(description, myProfileFilter.getFilter()), new HintHint(myBrowser, new Point(0, 0)))), null);
+          final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
+          hintHint.setFont(myBrowser.getFont());
+          myBrowser.read(new StringReader(SearchUtil.markup(IdeTooltipManager.formatHtml(description, hintHint), myProfileFilter.getFilter())), null);
         }
         catch (IOException e2) {
           try {

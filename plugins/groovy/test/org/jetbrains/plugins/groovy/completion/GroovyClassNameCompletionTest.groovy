@@ -184,6 +184,19 @@ new Fxoo()<caret>\n"""
 
   }
 
+  public void testOnlyAnnotationsAfterAt() {
+    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.configureByText "a.groovy", "@Abcd<caret>"
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.checkResult "@AbcdAnno<caret>"
+  }
+
+  public void testOnlyExceptionsInCatch() {
+    myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
+    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
+    myFixture.complete(CompletionType.CLASS_NAME)
+    myFixture.checkResult "try {} catch (AbcdException<caret>"
+  }
 
 
 }

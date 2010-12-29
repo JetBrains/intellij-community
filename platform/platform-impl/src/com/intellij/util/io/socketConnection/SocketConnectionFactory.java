@@ -15,7 +15,7 @@
  */
 package com.intellij.util.io.socketConnection;
 
-import com.intellij.util.io.socketConnection.impl.SocketConnectionImpl;
+import com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl;
 
 /**
  * @author nik
@@ -24,13 +24,16 @@ public class SocketConnectionFactory {
   private SocketConnectionFactory() {
   }
 
-  public static <Request extends AbstractRequest, Response extends AbstractResponse> SocketConnection<Request, Response>
-                  createConnection(int defaultPort, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new SocketConnectionImpl<Request, Response>(defaultPort, attempts, factory);
+  public static
+    <Request extends AbstractRequest, Response extends AbstractResponse> SocketConnection<Request, Response>
+      createServerConnection(int defaultPort, int attempts, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<Request, Response>(defaultPort, attempts, factory);
   }
 
-  public static <Request extends AbstractRequest, Response extends AbstractResponse> SocketConnection<Request, Response>
-                  createConnection(int defaultPort, RequestResponseExternalizerFactory<Request, Response> factory) {
-    return new SocketConnectionImpl<Request, Response>(defaultPort, 1, factory);
+
+  public static
+    <Request extends AbstractRequest, Response extends AbstractResponse> SocketConnection<Request, Response>
+      createServerConnection(int defaultPort, RequestResponseExternalizerFactory<Request, Response> factory) {
+    return new ServerSocketConnectionImpl<Request, Response>(defaultPort, 1, factory);
   }
 }

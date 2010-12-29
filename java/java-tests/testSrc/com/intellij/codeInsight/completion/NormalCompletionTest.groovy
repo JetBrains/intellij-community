@@ -825,6 +825,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
+  public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
+  public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
+
   public void testRightShift() throws Throwable {
     configure()
     assertStringItems("myField1", "myField2");

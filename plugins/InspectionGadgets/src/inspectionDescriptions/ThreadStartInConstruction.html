@@ -1,9 +1,10 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any calls to <b><font color="#000080">start()</font></b> on <b><font color="#000080">java.lang.Thread</font></b>
-or any of its subclasses during object construction.  While occasionally useful, this construct should be avoided due
-to inheritance issues.  Subclasses of a class which launches a thread during object construction will not have finished
+This inspection reports any calls to <b>start()</b> on <b>java.lang.Thread</b>
+or any of its subclasses during object construction. While occasionally useful, this construct should be avoided due
+to inheritance issues. Subclasses of a class which launches a thread during object construction will not have finished
 any initialization logic of their own before the thread has launched.
-</font><br><small>Powered by InspectionGadgets</small></body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

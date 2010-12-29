@@ -1,14 +1,18 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any unnecessary unary minuses. For example:</font>
-<pre>
-    <b><font color="#000080">i</font> += -8;</b>
-    <b><font color="#000080">i</font> = <font color="#000080">i</font> + -8;</b>
-</pre>
-<font face="verdana" size="-1">could be replaced by</font>
-<pre>
-    <b><font color="#000080">i</font> -= 8;</b>
-    <b><font color="#000080">i</font> = <font color="#000080">i</font> - 8;</b>
-</pre><br><small>Powered by InspectionGadgets</small> </body>
+This inspection reports any unnecessary unary minuses.
+<p>
+For example:
+<code><pre>
+    i += -8;
+    i = i + -8;
+</pre></code>
+could be replaced by:
+<code><pre>
+    i -= 8;
+    i = i - 8;
+</pre></code>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
 * @author nik
 */
-public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPackagingElement> {
+public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPackagingElementImpl> {
   public static final ModuleOutputElementType MODULE_OUTPUT_ELEMENT_TYPE = new ModuleOutputElementType();
 
   ModuleOutputElementType() {
@@ -53,13 +54,13 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   }
 
   @NotNull
-  public List<? extends ModuleOutputPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
+  public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                        @NotNull CompositePackagingElement<?> parent) {
     List<Module> modules = chooseModules(context);
-    final List<ModuleOutputPackagingElement> elements = new ArrayList<ModuleOutputPackagingElement>();
+    final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
     final ModulePointerManager pointerManager = ModulePointerManager.getInstance(context.getProject());
     for (Module module : modules) {
-      elements.add(new ModuleOutputPackagingElement(context.getProject(), pointerManager.create(module)));
+      elements.add(new ModuleOutputPackagingElementImpl(context.getProject(), pointerManager.create(module)));
     }
     return elements;
   }
@@ -69,7 +70,7 @@ public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPa
   }
 
   @NotNull
-  public ModuleOutputPackagingElement createEmpty(@NotNull Project project) {
-    return new ModuleOutputPackagingElement(project);
+  public ModuleOutputPackagingElementImpl createEmpty(@NotNull Project project) {
+    return new ModuleOutputPackagingElementImpl(project);
   }
 }

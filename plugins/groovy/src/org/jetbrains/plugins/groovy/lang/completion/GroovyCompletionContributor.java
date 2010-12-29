@@ -27,6 +27,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -256,20 +259,34 @@ public class GroovyCompletionContributor extends CompletionContributor {
     );
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
-    PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement().withElementType(
+    psiElement().afterLeaf(psiElement().withElementType(
       elementType().oneOf(GroovyElementTypes.mNUM_DOUBLE, GroovyElementTypes.mNUM_INT, GroovyElementTypes.mNUM_LONG, GroovyElementTypes.mNUM_FLOAT, GroovyElementTypes.mNUM_BIG_INT, GroovyElementTypes.mNUM_BIG_DECIMAL)));
+  private static final ElementPattern<PsiElement> AFTER_AT = psiElement().afterLeaf("@");
+  private static final ElementPattern<PsiElement> IN_CATCH_TYPE = psiElement().afterLeaf(psiElement().withText("(").withParent(GrCatchClause.class));
 
 
   private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
     result.stopHere();
+    final PsiElement position = parameters.getPosition();
+    final ElementFilter filter = getClassFilter(position);
     AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
       @Override
       public void consume(PsiClass psiClass) {
-        if (!inheritors.alreadyProcessed(psiClass)) {
+        if (!inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position)) {
           result.addElement(GroovyCompletionUtil.createClassLookupItem(psiClass));
         }
       }
     });
+  }
+
+  private static ElementFilter getClassFilter(PsiElement position) {
+    if (AFTER_AT.accepts(position)) {
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
+    }
+    if (IN_CATCH_TYPE.accepts(position)) {
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
+    }
+    return TrueFilter.INSTANCE;
   }
 
   public GroovyCompletionContributor() {
@@ -311,13 +328,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        final PsiElement reference = parameters.getPosition().getParent();
+        PsiElement position = parameters.getPosition();
+        final PsiElement reference = position.getParent();
         if (reference instanceof GrReferenceElement) {
           if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
             result.addElement(LookupElementBuilder.create("*"));
           }
 
           completeReference(parameters, result, (GrReferenceElement)reference);
+        } else if (IN_CATCH_TYPE.accepts(position) || AFTER_AT.accepts(position)) {
+          addAllClasses(parameters, result, new InheritorsHolder(position, result));
         }
       }
     });
@@ -410,7 +430,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static void completeReference(final CompletionParameters parameters, final CompletionResultSet result, GrReferenceElement reference) {
-    PsiElement position = parameters.getPosition();
+    final PsiElement position = parameters.getPosition();
 
     final InheritorsHolder inheritors = new InheritorsHolder(position, result);
     if (GroovySmartCompletionContributor.AFTER_NEW.accepts(position)) {
@@ -438,6 +458,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
     else {
       qualifierType = null;
     }
+
+    final ElementFilter classFilter = getClassFilter(position);
+
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
@@ -494,6 +517,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
             staticMembers.put((PsiModifierListOwner)object, lookupElement);
             return;
           }
+        }
+        if (object instanceof PsiClass && !classFilter.isAcceptable(object, position)) {
+          return;
         }
         result.addElement(lookupElement);
       }

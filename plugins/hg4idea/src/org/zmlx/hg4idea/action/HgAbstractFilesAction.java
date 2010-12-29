@@ -86,7 +86,7 @@ abstract class HgAbstractFilesAction extends AnAction {
     }
 
     final HgVcs vcs = HgVcs.getInstance(project);
-    if ((vcs == null) || !vcs.isStarted()) {
+    if ((vcs == null)) {
       presentation.setEnabled(false);
       return;
     }
