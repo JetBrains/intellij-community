@@ -723,6 +723,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return false;
       }
     }
+    Disposer.dispose(confirmExitDialog.getDisposable());
     return true;
   }
 

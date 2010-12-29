@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
@@ -90,6 +89,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
 
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
+  @SuppressWarnings({"unchecked"})
   protected void doNavigate(final DomElementNavigationProvider navigateProvider, final DomElement copy) {
     final DomElement element = getElementToNavigate((T)copy);
     if (element != null) {

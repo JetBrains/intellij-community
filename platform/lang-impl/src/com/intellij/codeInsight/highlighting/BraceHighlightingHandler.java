@@ -154,6 +154,8 @@ public class BraceHighlightingHandler {
     if (!myCodeInsightSettings.HIGHLIGHT_BRACES) return;
 
     if (myEditor.getSelectionModel().hasSelection()) return;
+    
+    if (myEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(myEditor.getCaretModel().getVisualPosition())) return;
 
     int offset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();

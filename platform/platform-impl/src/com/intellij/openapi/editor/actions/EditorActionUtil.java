@@ -541,16 +541,18 @@ public class EditorActionUtil {
   private static void setupSelection(Editor editor,
                                      boolean isWithSelection,
                                      int selectionStart, LogicalPosition blockSelectionStart) {
+    SelectionModel selectionModel = editor.getSelectionModel();
     if (isWithSelection) {
+      CaretModel caretModel = editor.getCaretModel();
       if (editor.isColumnMode()) {
-        editor.getSelectionModel().setBlockSelection(blockSelectionStart, editor.getCaretModel().getLogicalPosition());
+        selectionModel.setBlockSelection(blockSelectionStart, caretModel.getLogicalPosition());
       }
       else {
-        editor.getSelectionModel().setSelection(selectionStart, editor.getCaretModel().getOffset());
+        selectionModel.setSelection(selectionStart, caretModel.getVisualPosition(), caretModel.getOffset());
       }
     }
     else {
-      editor.getSelectionModel().removeSelection();
+      selectionModel.removeSelection();
     }
   }
 
