@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -139,6 +142,11 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testRawTypeInReturnExpression() {
     assertNotNull(resolve("A.groovy"));
+  }
+
+  public void testMethodCallInvokedOnArrayAccess() {
+    final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy");
+    assertEquals("java.lang.Integer", reference.getType().getCanonicalText());
   }
 
   private void assertTypeEquals(String expected, String fileName) {

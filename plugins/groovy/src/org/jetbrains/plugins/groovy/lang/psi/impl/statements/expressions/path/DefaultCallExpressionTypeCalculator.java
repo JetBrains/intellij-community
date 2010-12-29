@@ -53,7 +53,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
           PsiMethod method = (PsiMethod) resolved;
           if (resolveResult.isInvokedOnProperty()) {
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);
-            returnType = checkForClosure(propertyType);
+            returnType = extractReturnTypeFromClosure(propertyType, true);
           } else {
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
@@ -63,7 +63,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         } else if (resolved instanceof GrVariable) {
           PsiType refType = refExpr.getType();
           final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
-          returnType = checkForClosure(type);
+          returnType = extractReturnTypeFromClosure(type, true);
         }
         if (returnType == null) return null;
         returnType = resolveResult.getSubstitutor().substitute(returnType);
@@ -82,13 +82,14 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
       }
     }
-
-    return null;
+    else {
+      return extractReturnTypeFromClosure(invoked.getType(), false);
+    }
   }
 
   @Nullable
-  private static PsiType checkForClosure(PsiType type) {
-    PsiType returnType = type;
+  private static PsiType extractReturnTypeFromClosure(PsiType type, boolean returnTypeIfFail) {
+    PsiType returnType = returnTypeIfFail ? type: null;
     if (type instanceof GrClosureType) {
       returnType = ((GrClosureType) type).getSignature().getReturnType();
     }
