@@ -332,7 +332,7 @@ public class FindUtil {
     final FindManager findManager = FindManager.getInstance(project);
     final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
     final String s = editor.getSelectionModel().getSelectedText();
-    if (s != null) {
+    if (!StringUtil.isEmpty(s)) {
       if (s.indexOf('\n') >= 0) {
         model.setGlobal(false);
       }
