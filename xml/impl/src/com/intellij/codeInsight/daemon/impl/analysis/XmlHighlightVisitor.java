@@ -713,11 +713,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  public boolean suitableForFile(final PsiFile file) {
+  public boolean suitableForFile(@NotNull final PsiFile file) {
     return file instanceof XmlFile;
   }
 
-  public void visit(final PsiElement element, final HighlightInfoHolder holder) {
+  public void visit(@NotNull final PsiElement element, @NotNull final HighlightInfoHolder holder) {
     element.accept(this);
 
     List<HighlightInfo> result = myResult;
@@ -725,7 +725,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     myResult = null;
   }
 
-  public boolean analyze(Runnable action, final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(@NotNull Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
     try {
       action.run();
     }
@@ -735,6 +735,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return true;
   }
 
+  @NotNull
   public HighlightVisitor clone() {
     return new XmlHighlightVisitor();
   }
