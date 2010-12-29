@@ -25,6 +25,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
@@ -208,7 +209,7 @@ public abstract class DialogWrapper {
    * @return <code>false</code> if start validation in <code>init()</code> method
    */
   protected boolean postponeValidation() {
-    return false;
+    return true;
   }
 
   /**
@@ -228,7 +229,7 @@ public abstract class DialogWrapper {
 
   private void reportProblem(final ValidationInfo info) {
     myErrorPainter.setValidationInfo(info);
-    if (! info.message.equals(myErrorText.myLabel.getText())) {
+    if (! myErrorText.isTextSet(info.message)) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         setErrorText(info.message);
@@ -241,13 +242,15 @@ public abstract class DialogWrapper {
 
   private void clearProblems() {
     myErrorPainter.setValidationInfo(null);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        setErrorText(null);
-        myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(true);
-      }
-    });
+    if (! myErrorText.isTextSet(null)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          setErrorText(null);
+          myPeer.getRootPane().getGlassPane().repaint();
+          getOKAction().setEnabled(true);
+        }
+      });
+    }
   }
 
   protected void createDefaultActions() {
@@ -1400,6 +1403,7 @@ public abstract class DialogWrapper {
   private static class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
     private Dimension myPrefSize;
+    private String myText;
 
     private ErrorText() {
       setLayout(new BorderLayout());
@@ -1409,6 +1413,7 @@ public abstract class DialogWrapper {
 
     public void setError(String text) {
       final Dimension oldSize = getPreferredSize();
+      myText = text;
 
       if (text == null) {
         myLabel.setText("");
@@ -1427,6 +1432,10 @@ public abstract class DialogWrapper {
       if (oldSize.height < size.height) {
         revalidate();
       }
+    }
+
+    public boolean isTextSet(String text) {
+      return StringUtil.equals(text, myText);
     }
 
     public Dimension getPreferredSize() {
