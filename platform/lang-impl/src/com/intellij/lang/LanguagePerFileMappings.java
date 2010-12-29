@@ -207,5 +207,9 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       myMappings.clear();
     }
   }
+  
+  protected Project getProject() {
+    return myProject;
+  }
 
 }

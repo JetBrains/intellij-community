@@ -17,7 +17,14 @@ package com.intellij.ide.scriptingContext;
 
 import com.intellij.lang.LanguagePerFileMappings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryType;
@@ -77,6 +84,64 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
   }
 
+  @Override
+  public void setMappings(Map<VirtualFile, ScriptingLibraryTable.LibraryModel> mappings) {
+    super.setMappings(mappings);
+    updateDependencies(mappings);
+  }
+
+  private static boolean dependencyExists(ModuleRootManager rootManager, Library library) {
+    final OrderEntry[] orderEntries = rootManager.getOrderEntries();
+    for (final OrderEntry orderEntry : orderEntries) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        final Library moduleLibrary = libraryOrderEntry.getLibrary();
+        if (moduleLibrary != null && moduleLibrary.equals(library)) return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateDependencies(final Map<VirtualFile, ScriptingLibraryTable.LibraryModel> mappings) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final LibraryTable libTable = myLibraryManager.getLibraryTable();
+        if (libTable == null) return;
+        final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+        for (Module module : modules) {
+          final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+          //
+          // Collect libraries to add to the module
+          //
+          Set<Library> librariesToAdd = new HashSet<Library>();
+          for (VirtualFile file : mappings.keySet()) {
+            if (module.getModuleScope().contains(file) || modules.length == 1) {
+              ScriptingLibraryTable.LibraryModel container = mappings.get(file);
+              assert container instanceof CompoundLibrary;
+              for (ScriptingLibraryTable.LibraryModel libModel : ((CompoundLibrary)container).getLibraries()) {
+                final Library library = myLibraryManager.getOriginalLibrary(libModel);
+                if (!dependencyExists(rootManager, library)) {
+                  librariesToAdd.add(library);
+                }
+              }
+            }
+          }
+          //
+          // Add collected libraries (if any)
+          //
+          if (!librariesToAdd.isEmpty()) {
+            ModifiableRootModel model = rootManager.getModifiableModel();
+            for (Library library : librariesToAdd) {
+              model.addLibraryEntry(library);
+            }
+            model.commit();
+          }
+        }
+      }
+    });
+  }
+
   /**
    * Creates an association between a virtual file and a library specified by name.
    * @param file    The file to associate the library with.
@@ -93,6 +158,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       ((CompoundLibrary)container).toggleLibrary(libraryModel);
       setMapping(file, container);
     }
+    updateDependencies(getMappings());
   }
   
   public boolean isAssociatedWith(VirtualFile file, String libName) {

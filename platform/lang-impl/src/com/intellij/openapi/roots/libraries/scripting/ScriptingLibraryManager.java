@@ -264,4 +264,15 @@ public class ScriptingLibraryManager {
     assert myLibTable != null;
     return myLibTable.getDocUrlsFor(file);
   }
+  
+  @Nullable
+  public Library getOriginalLibrary(ScriptingLibraryTable.LibraryModel libraryModel) {
+    //TODO<rv> create direct bindings without using library name.
+    LibraryTable libraryTable = getLibraryTable();
+    if (libraryTable == null) return null;
+    for (Library library : libraryTable.getLibraries()) {
+      if (libraryModel.getName().equals(library.getName())) return library;
+    }
+    return null;
+  }
 }
