@@ -16,7 +16,6 @@
 package com.intellij.util.io.socketConnection.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
@@ -28,68 +27,29 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author nik
  */
-public class SocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> implements SocketConnection<Request, Response> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.SocketConnectionImpl");
+public abstract class SocketConnectionBase<Request extends AbstractRequest, Response extends AbstractResponse> implements SocketConnection<Request, Response> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl");
   private final Object myLock = new Object();
   private int myPort = -1;
   private ConnectionStatus myStatus = ConnectionStatus.NOT_CONNECTED;
   private boolean myStopping;
   private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
-  private ServerSocket myServerSocket;
   private String myStatusMessage;
   private Thread myProcessingThread;
-  private final int myDefaultPort;
-  private final int myConnectionAttempts;
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
   private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
   private final ResponseProcessor<Response> myResponseProcessor;
 
-  public SocketConnectionImpl(int defaultPort, int connectionAttempts, @NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
-    myDefaultPort = defaultPort;
-    myConnectionAttempts = connectionAttempts;
-    myExternalizerFactory = factory;
+  public SocketConnectionBase(@NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
     myResponseProcessor = new ResponseProcessor<Response>(this);
-  }
-
-  public void open() throws IOException {
-    myServerSocket = createSocket();
-    myPort = myServerSocket.getLocalPort();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        myProcessingThread = Thread.currentThread();
-        try {
-          doRun();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          setStatus(ConnectionStatus.CONNECTION_FAILED, e.getMessage());
-        }
-      }
-    });
-  }
-
-  @NotNull
-  private ServerSocket createSocket() throws IOException {
-    IOException exc = null;
-    for (int i = 0; i < myConnectionAttempts; i++) {
-      int port = myDefaultPort + i;
-      try {
-        return new ServerSocket(port);
-      }
-      catch (IOException e) {
-        exc = e;
-        LOG.info(e);
-      }
-    }
-    throw exc;
+    myExternalizerFactory = factory;
   }
 
   @Override
@@ -122,44 +82,6 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     myResponseProcessor.registerHandler(responseClass, handler);
   }
 
-  private void doRun() throws IOException {
-    try {
-      setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
-      LOG.debug("waiting for connection on port " + myPort);
-
-      final Socket socket = myServerSocket.accept();
-      try {
-        setStatus(ConnectionStatus.CONNECTED, null);
-        LOG.debug("connected");
-
-        final OutputStream outputStream = socket.getOutputStream();
-        final InputStream inputStream = socket.getInputStream();
-        myResponseProcessor.startReading(myExternalizerFactory.createResponseReader(inputStream));
-        processRequests(myExternalizerFactory.createRequestWriter(outputStream));
-      }
-      finally {
-        socket.close();
-      }
-    }
-    finally {
-      myServerSocket.close();
-    }
-  }
-
-  @Override
-  public void close() {
-    synchronized (myLock) {
-      if (myStopping) return;
-      myStopping = true;
-    }
-    LOG.debug("closing connection");
-    if (myProcessingThread != null) {
-      myProcessingThread.interrupt();
-    }
-    myResponseProcessor.stopReading();
-    Disposer.dispose(this);
-  }
-
   @Override
   public boolean isStopping() {
     synchronized (myLock) {
@@ -167,7 +89,8 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     }
   }
 
-  private void processRequests(RequestWriter<Request> writer) throws IOException {
+  protected void processRequests(RequestWriter<Request> writer) throws IOException {
+    myProcessingThread = Thread.currentThread();
     try {
       while (!isStopping()) {
         final Request request = myRequests.take();
@@ -198,7 +121,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     }
   }
 
-  private void setStatus(ConnectionStatus status, String message) {
+  protected void setStatus(ConnectionStatus status, String message) {
     synchronized (myLock) {
       myStatus = status;
       myStatusMessage = message;
@@ -219,6 +142,38 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
     else {
       myDispatcher.addListener(listener);
     }
+  }
+
+  @Override
+  public void close() {
+    synchronized (myLock) {
+      if (myStopping) return;
+      myStopping = true;
+    }
+    LOG.debug("closing connection");
+    if (myProcessingThread != null) {
+      myProcessingThread.interrupt();
+    }
+    onClosing();
+    myResponseProcessor.stopReading();
+    Disposer.dispose(this);
+  }
+
+  protected void onClosing() {
+  }
+
+  protected void attachToSocket(Socket socket) throws IOException {
+    setStatus(ConnectionStatus.CONNECTED, null);
+    LOG.debug("connected");
+
+    final OutputStream outputStream = socket.getOutputStream();
+    final InputStream inputStream = socket.getInputStream();
+    myResponseProcessor.startReading(myExternalizerFactory.createResponseReader(inputStream));
+    processRequests(myExternalizerFactory.createRequestWriter(outputStream));
+  }
+
+  protected void setPort(int port) {
+    myPort = port;
   }
 
   private static class TimeoutInfo {
