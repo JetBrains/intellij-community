@@ -733,9 +733,15 @@ public class ExtractMethodProcessor implements MatchProvider {
       PsiExpression expression2Replace = myExpression;
       if (myExpression instanceof PsiAssignmentExpression) {
         expression2Replace = ((PsiAssignmentExpression)myExpression).getRExpression();
+      } else if (myExpression instanceof PsiPostfixExpression || myExpression instanceof PsiPrefixExpression) {
+        PsiExpression operand = myExpression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)myExpression).getOperand() :
+                                ((PsiPrefixExpression)myExpression).getOperand();
+        expression2Replace =
+          ((PsiBinaryExpression)myExpression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
       }
-      final PsiElement replacement = IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
-      myMethodCall = PsiTreeUtil.getParentOfType(replacement.findElementAt(replacement.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
+      myExpression = (PsiExpression)IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
+      myMethodCall = PsiTreeUtil.getParentOfType(myExpression.findElementAt(myExpression.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
+      declareNecessaryVariablesAfterCall(myOutputVariable);
     }
 
     if (myAnchor instanceof PsiField) {
@@ -874,9 +880,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected PsiElement addToMethodCallLocation(PsiElement statement) throws IncorrectOperationException {
+  protected PsiElement addToMethodCallLocation(PsiStatement statement) throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
-      return myElements[0].getParent().addBefore(statement, myElements[0]);
+      PsiStatement containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
+      return containingStatement.getParent().addBefore(statement, containingStatement);
     }
     else {
       return myEnclosingBlockStatement.getParent().addBefore(statement, myEnclosingBlockStatement);
