@@ -59,6 +59,8 @@ import java.util.*;
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
+  @NonNls public static final String FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY =
+    "force.rename.processor.to.throw.exception.on.bad.renameability";
 
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
@@ -415,7 +417,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
   }
 
-  protected boolean inTestsProduceExceptionOnBadRenameabilityStatus() { return false; }
+  protected boolean inTestsProduceExceptionOnBadRenameabilityStatus() {
+    return System.getProperty(FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY) != null;
+  }
 
   public Collection<String> getNewNames() {
     return myAllRenames.values();
