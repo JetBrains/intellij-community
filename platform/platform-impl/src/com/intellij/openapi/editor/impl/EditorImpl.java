@@ -510,6 +510,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDescent = -1;
     myPlainFontMetrics = null;
 
+    boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
+    
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -520,7 +522,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
-
+    if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
+      mySizeContainer.reset();
+      validateSize();
+    }
+    
     final EditorColorsScheme scheme =
       myScheme instanceof DelegateColorScheme? ((DelegateColorScheme)myScheme).getDelegate() : myScheme;
     if (scheme instanceof MyColorSchemeDelegate) {
