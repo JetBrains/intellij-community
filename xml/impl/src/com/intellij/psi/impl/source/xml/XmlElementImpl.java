@@ -115,7 +115,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
             }
 
             if (candidate != null && candidate.getTextRange().getEndOffset() == endOffset) {
-              return candidate;
+              return candidate.getNavigationElement();
             }
           }
         }

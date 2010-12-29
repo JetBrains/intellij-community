@@ -303,6 +303,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     return myModalityProgress != null;
   }
 
+  @NotNull
   public final ModalityState getModalityState() {
     return myModalityState;
   }

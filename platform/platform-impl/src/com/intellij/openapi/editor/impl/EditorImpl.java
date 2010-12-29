@@ -202,6 +202,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
+  
+  @Nullable
   private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
@@ -252,7 +254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-  EditorImpl(@NotNull Document document, boolean viewer, Project project) {
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     myProject = project;
     myDocument = (DocumentImpl)document;
     myScheme = createBoundColorSchemeDelegate(null);
@@ -508,6 +510,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDescent = -1;
     myPlainFontMetrics = null;
 
+    boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
+    
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -518,7 +522,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
-
+    if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
+      mySizeContainer.reset();
+      validateSize();
+    }
+    
     final EditorColorsScheme scheme =
       myScheme instanceof DelegateColorScheme? ((DelegateColorScheme)myScheme).getDelegate() : myScheme;
     if (scheme instanceof MyColorSchemeDelegate) {
@@ -2866,7 +2874,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     final Dimension draft = getSizeWithoutCaret();
     final int additionalSpace = mySettings.getAdditionalColumnsCount() * EditorUtil.getSpaceWidth(Font.PLAIN, this);
 
-    if (!myDocument.isInBulkUpdate()) {
+    if (!myDocument.isInBulkUpdate() && getCaretModel().isUpToDate()) {
       int caretX = visualPositionToXY(getCaretModel().getVisualPosition()).x;
       draft.width = Math.max(caretX, draft.width) + additionalSpace;
     }

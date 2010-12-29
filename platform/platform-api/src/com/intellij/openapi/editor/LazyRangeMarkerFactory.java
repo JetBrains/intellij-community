@@ -69,12 +69,12 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return marker;
   }
 
-  public RangeMarker createRangeMarker(VirtualFile file, int line, int column) {
+  public RangeMarker createRangeMarker(VirtualFile file, int line, int column, boolean persistent) {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
     final Document document = fdm.getCachedDocument(file);
     if (document != null) {
       final int offset = calculateOffset(myProject, file, document, line, column);
-      return document.createRangeMarker(offset, offset);
+      return document.createRangeMarker(offset, offset, persistent);
     }
 
     final LazyMarker marker = new LineColumnLazyMarker(file, line, column);

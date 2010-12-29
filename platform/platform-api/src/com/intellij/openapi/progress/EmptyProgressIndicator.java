@@ -17,6 +17,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptyProgressIndicator implements ProgressIndicator {
   private boolean myIsRunning = false;
@@ -80,6 +81,7 @@ public class EmptyProgressIndicator implements ProgressIndicator {
     return false;
   }
 
+  @NotNull
   public ModalityState getModalityState() {
     return ModalityState.NON_MODAL;
   }

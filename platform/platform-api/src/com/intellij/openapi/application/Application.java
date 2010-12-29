@@ -208,6 +208,7 @@ public interface Application extends ComponentManager {
    *
    * @return the current modality state.
    */
+  @NotNull
   ModalityState getCurrentModalityState();
 
   /**
@@ -216,6 +217,7 @@ public interface Application extends ComponentManager {
    * @param c the component for which the modality state is requested.
    * @return the modality state.
    */
+  @NotNull
   ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
@@ -224,6 +226,7 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for the current thread.
    */
+  @NotNull
   ModalityState getDefaultModalityState();
 
   /**
@@ -232,6 +235,7 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for no modal dialogs.
    */
+  @NotNull
   ModalityState getNoneModalityState();
 
   /**

@@ -19,10 +19,10 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,6 +80,11 @@ public class CaretModelWindow implements CaretModel {
 
   public int getOffset() {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getOffset());
+  }
+
+  @Override
+  public boolean isUpToDate() {
+    return myDelegate.isUpToDate();
   }
 
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();

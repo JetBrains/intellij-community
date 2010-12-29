@@ -87,7 +87,7 @@ public class OrderRootType {
   public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
 
   /**
-   * Classpath without output directories for this module.
+   * Classpath without output directories for modules.
    * Includes:
    * <li>  classes roots for libraries and jdk
    * <li>  recursively for module dependencies: only exported items

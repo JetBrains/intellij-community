@@ -613,15 +613,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       public void run() {
         DocumentEx document = (DocumentEx) myEditor.getDocument();
 
-        document.setInBulkUpdate(true);
-        try {
-          document.setText(documentText);
-          myEditor.getSelectionModel().setSelection(selStart, selEnd);
-          myEditor.getCaretModel().moveToOffset(caret);
-        }
-        finally {
-          document.setInBulkUpdate(false);
-        }
+        document.replaceString(0, myEditor.getCaretModel().getOffset(), documentText.substring(0, caret));
+        document.replaceString(caret, document.getTextLength(), documentText.substring(caret));
+        myEditor.getSelectionModel().setSelection(selStart, selEnd);
       }
     });
   }

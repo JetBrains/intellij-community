@@ -24,6 +24,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -85,8 +86,9 @@ public class ToolsImpl implements Tools {
           return state.getTool();
         }
         else {
-          final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
-          final NamedScope scope = state.getScope();
+          final Project project = element.getProject();
+          final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
+          final NamedScope scope = state.getScope(project);
           if (scope != null) {
             final PackageSet packageSet = scope.getValue();
             if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {
@@ -267,9 +269,10 @@ public class ToolsImpl implements Tools {
 
   public HighlightDisplayLevel getLevel(PsiElement element) {
     if (myTools == null || element == null) return myDefaultState.getLevel();
-    final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
+    final Project project = element.getProject();
+    final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
     for (ScopeToolState state : myTools) {
-      final NamedScope scope = state.getScope();
+      final NamedScope scope = state.getScope(project);
       final PackageSet set = scope != null ? scope.getValue() : null;
       if (set != null && set.contains(element.getContainingFile(), manager)) {
         return state.getLevel();
@@ -292,9 +295,10 @@ public class ToolsImpl implements Tools {
   public boolean isEnabled(PsiElement element) {
     if (!myEnabled) return false;
     if (myTools == null || element == null) return myDefaultState.isEnabled();
-    final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
+    final Project project = element.getProject();
+    final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
     for (ScopeToolState state : myTools) {
-      final NamedScope scope = state.getScope();
+      final NamedScope scope = state.getScope(project);
       if (scope != null) {
         final PackageSet set = scope.getValue();
         if (set != null && set.contains(element.getContainingFile(), manager)) {
@@ -309,9 +313,10 @@ public class ToolsImpl implements Tools {
   public InspectionTool getEnabledTool(PsiElement element) {
     if (!myEnabled) return null;
     if (myTools == null || element == null) return myDefaultState.isEnabled() ? (InspectionTool)myDefaultState.getTool() : null;
-    final DependencyValidationManager manager = DependencyValidationManager.getInstance(element.getProject());
+    final Project project = element.getProject();
+    final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
     for (ScopeToolState state : myTools) {
-      final NamedScope scope = state.getScope();
+      final NamedScope scope = state.getScope(project);
       if (scope != null) {
         final PackageSet set = scope.getValue();
         if (set != null && set.contains(element.getContainingFile(), manager)) {
@@ -354,10 +359,11 @@ public class ToolsImpl implements Tools {
       setEnabled(false);
       return;
     }
-    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(element.getProject());
+    final Project project = element.getProject();
+    final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
-        final NamedScope scope = state.getScope();
+        final NamedScope scope = state.getScope(project);
         if (scope != null) {
           final PackageSet packageSet = scope.getValue();
           if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {

@@ -32,7 +32,7 @@ public class PersistentLineMarker extends RangeMarkerImpl {
   @Override
   protected void changedUpdateImpl(DocumentEvent e) {
     DocumentEventImpl event = (DocumentEventImpl)e;
-    if (event.isWholeTextReplaced()) {
+    if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)) {
       myLine = event.translateLineViaDiff(myLine);
       if (myLine < 0 || myLine >= getDocument().getLineCount()) {
         invalidate();

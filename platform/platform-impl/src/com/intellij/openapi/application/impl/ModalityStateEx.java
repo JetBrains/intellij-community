@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -44,11 +45,13 @@ public class ModalityStateEx extends ModalityState {
     }
   }
 
-  public ModalityState appendProgress(ProgressIndicator progress){
+  @NotNull
+  public ModalityState appendProgress(@NotNull ProgressIndicator progress){
     return appendEntity(progress);
   }
 
-  ModalityStateEx appendEntity(Object anEntity){
+  @NotNull
+  ModalityStateEx appendEntity(@NotNull Object anEntity){
     ArrayList<Object> list = new ArrayList<Object>();
     for (WeakReference modalEntity : myModalEntities) {
       Object entity = modalEntity.get();
@@ -68,7 +71,7 @@ public class ModalityStateEx extends ModalityState {
     return false;
   }
 
-  public boolean dominates(ModalityState anotherState){
+  public boolean dominates(@NotNull ModalityState anotherState){
     for (WeakReference modalEntity : myModalEntities) {
       Object entity = modalEntity.get();
       if (entity == null) continue;

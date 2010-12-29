@@ -169,7 +169,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public <T> T getCurrentWriteAction(@NotNull Class<T> actionClass) {
+  public <T> T getCurrentWriteAction(@Nullable Class<T> actionClass) {
     return null;
   }
 
@@ -285,21 +285,25 @@ public class MockApplication extends MockComponentManager implements Application
     return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
+  @NotNull
   @Override
   public ModalityState getCurrentModalityState() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public ModalityState getDefaultModalityState() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public ModalityState getNoneModalityState() {
     if (MODALITY_STATE_NONE == null) {

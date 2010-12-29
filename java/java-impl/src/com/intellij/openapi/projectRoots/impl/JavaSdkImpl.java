@@ -18,6 +18,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.IconLoader;
@@ -485,4 +486,11 @@ public class JavaSdkImpl extends JavaSdk {
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
+  @Override
+  public boolean isRootTypeApplicable(OrderRootType type) {
+    return type == OrderRootType.CLASSES ||
+           type == OrderRootType.SOURCES ||
+           type == JavadocOrderRootType.getInstance() ||
+           type == AnnotationOrderRootType.getInstance();
+  }
 }

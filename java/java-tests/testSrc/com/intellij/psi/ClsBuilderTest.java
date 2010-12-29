@@ -4,8 +4,6 @@
 package com.intellij.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,11 +21,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ClsBuilderTest extends LightIdeaTestCase {
-  @Override
-  protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17();
-  }
-
   public void testUtilList() throws Exception {
     doTest("java/util/List.class");
   }

@@ -569,6 +569,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           // hence, we trim deferred text on per-token basis and don't try to remove adjacent tokens together.
           myDeferredOutput.delete(tokenInfo.startOffset - removedSymbolsNumber, tokenInfo.endOffset - removedSymbolsNumber);
           removedSymbolsNumber += tokenLength;
+          endIndex = i + 1;
         }
         else {
           // We assume here that token construction is smart enough to extend end index in case of subsequent tokens of the same type,
@@ -579,15 +580,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           );
           tokenInfo.startOffset += remainingNumberOfSymbolsToRemove;
           removedSymbolsNumber = numberOfSymbolsToRemove;
+          endIndex = i;
         }
       }
 
       if (removedSymbolsNumber < numberOfSymbolsToRemove) {
         continue;
-      }
-
-      if (endIndex < 0) {
-        endIndex = i;
       }
 
       tokenInfo.startOffset -= numberOfSymbolsToRemove;

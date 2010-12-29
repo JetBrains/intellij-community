@@ -60,8 +60,12 @@ public class IndentInfo {
       if (options.SMART_TABS) {
         int tabCount = myIndentSpaces / options.TAB_SIZE;
         int leftSpaces = myIndentSpaces - tabCount * options.TAB_SIZE;
-        StringUtil.repeatSymbol(buffer, '\t', tabCount);
-        StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
+        if (tabCount > 0) {
+          StringUtil.repeatSymbol(buffer, '\t', tabCount);
+        }
+        if (leftSpaces + mySpaces > 0) {
+          StringUtil.repeatSymbol(buffer, ' ', leftSpaces + mySpaces);
+        }
       }
       else {
         int size = getTotalSpaces();

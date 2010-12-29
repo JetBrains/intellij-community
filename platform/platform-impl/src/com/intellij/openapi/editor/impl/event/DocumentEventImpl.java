@@ -134,6 +134,7 @@ public class DocumentEventImpl extends DocumentEvent {
            ", myOldString='" + myOldString + "', myNewString='" + myNewString + "']" + (isWholeTextReplaced() ? " Whole." : ".");
   }
 
+  @Override
   public boolean isWholeTextReplaced() {
     return myIsWholeDocReplaced;
   }

@@ -102,16 +102,30 @@ public interface SelectionModel {
   void setSelection(int startOffset, int endOffset);
 
   /**
+   * Selects target range providing information about visual boundary of selection end.
+   * <p/>
+   * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
+   * 
+   * @param startOffset     start selection offset
+   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   *                        no specific visual position should be used)
+   * @param endOffset       end selection offset
+   */
+  void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset);
+  
+  /**
    * Selects target range based on its visual boundaries.
    * <p/>
    * That is the case for soft wraps-aware processing where the whole soft wraps virtual space is matched to the same offset.
    * 
-   * @param startPosition   start visual position of the text range to select
-   * @param endPosition     end visual position of the text range to select
+   * @param startPosition   start visual position of the text range to select (<code>null</code> argument means that
+   *                        no specific visual position should be used)
+   * @param endPosition     end visual position of the text range to select (<code>null</code> argument means that
+   *                        no specific visual position should be used)
    * @param startOffset     start selection offset
    * @param endOffset       end selection offset
    */
-  void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset);
+  void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset);
   
   /**
    * Removes the selection in the editor.

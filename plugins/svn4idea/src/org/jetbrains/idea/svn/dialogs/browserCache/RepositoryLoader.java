@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -87,6 +88,7 @@ class RepositoryLoader extends Loader {
       @Override
       public void run() {
         ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator() {
+          @NotNull
           @Override
           public ModalityState getModalityState() {
             return state;

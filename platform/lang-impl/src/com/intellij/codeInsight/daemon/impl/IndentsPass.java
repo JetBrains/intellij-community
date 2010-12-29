@@ -66,6 +66,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   };
 
   private static final CustomHighlighterRenderer RENDERER = new CustomHighlighterRenderer() {
+    @SuppressWarnings({"AssignmentToForLoopParameter"})
     public void paint(Editor editor,
                       RangeHighlighter highlighter,
                       Graphics g) {
@@ -112,6 +113,16 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line + 1, startPosition.column));
       final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
+      int maxY = end.y;
+
+      Rectangle clip = g.getClipBounds();
+      if (clip != null) {
+        if (clip.y >= end.y || clip.y + clip.height <= start.y) {
+          return;
+        }
+        maxY = Math.min(maxY, clip.y + clip.height);
+      }
+
       final EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(selected ? scheme.getColor(EditorColors.SELECTED_INDENT_GUIDE_COLOR) : scheme.getColor(EditorColors.INDENT_GUIDE_COLOR));
       
@@ -130,14 +141,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       //     1. Show only active indent if it crosses soft wrap-introduced text;
       //     2. Show indent as is if it doesn't intersect with soft wrap-introduced text;
       if (selected) {
-        g.drawLine(start.x + 2, start.y, start.x + 2, end.y);
+        g.drawLine(start.x + 2, start.y, start.x + 2, maxY);
       }
       else {
         int y = start.y;
         int newY = start.y;
         SoftWrapModel softWrapModel = editor.getSoftWrapModel();
         int lineHeight = editor.getLineHeight();
-        for (int i = startLine + 1; i <= endLine; i++) {
+        for (int i = startLine + 1; i < endLine && newY < maxY; i++) {
           List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForLine(i);
           int logicalLineHeight = softWraps.size() * lineHeight;
           if (i > startLine + 1) {
@@ -153,10 +164,15 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
           else {
             newY += logicalLineHeight;
           }
+
+          FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(i));
+          if (foldRegion != null && foldRegion.getEndOffset() < doc.getTextLength()) {
+            i = doc.getLineNumber(foldRegion.getEndOffset());
+          }
         }
         
-        if (y < end.y) {
-          g.drawLine(start.x + 2, y, start.x + 2, end.y);
+        if (y < maxY) {
+          g.drawLine(start.x + 2, y, start.x + 2, maxY);
         }
       }
     }

@@ -44,6 +44,8 @@ public abstract class StaticMemberProcessor {
   }
 
   public void processStaticMethodsGlobally(final CompletionResultSet resultSet) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
+
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
@@ -64,10 +66,7 @@ public abstract class StaticMemberProcessor {
 
             if (classes.add(containingClass)) {
               final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-              if (!myHintShown &&
-                  !shouldImport &&
-                  FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
-                  CompletionService.getCompletionService().getAdvertisementText() == null) {
+              if (!myHintShown && !shouldImport && CompletionService.getCompletionService().getAdvertisementText() == null) {
                 final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
                 if (shortcut != null) {
                   CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);

@@ -96,7 +96,12 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
+  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    setSelection(startOffset, endOffset);
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     setSelection(startOffset, endOffset);
   }
 

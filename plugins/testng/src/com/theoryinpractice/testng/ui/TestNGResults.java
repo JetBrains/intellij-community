@@ -162,7 +162,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public String getStatusLine() {
     StringBuffer sb = new StringBuffer();
-    if (end == 0) {
+    if (end == 0 && start > 0) {
       sb.append("Running: ");
     }
     else {
@@ -328,7 +328,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   public void finish() {
     if (end > 0) return;
-    end = System.currentTimeMillis();
+    if (start > 0) {
+      end = System.currentTimeMillis();
+    }
     LvcsHelper.addLabel(this);
 
     SwingUtilities.invokeLater(new Runnable() {

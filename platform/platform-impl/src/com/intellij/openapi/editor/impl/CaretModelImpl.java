@@ -284,7 +284,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           }
         }
         else {
-          selectionModel.setSelection(selectionStart, getOffset());
+          selectionModel.setSelection(selectionStart, getVisualPosition(), getOffset());
         }
       }
     }
@@ -425,6 +425,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       content.repaintEditorComponent(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
       gutter.repaint(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
     }
+  }
+
+  @Override
+  public boolean isUpToDate() {
+    return !myIsInUpdate;
   }
 
   @NotNull

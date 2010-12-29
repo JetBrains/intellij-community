@@ -146,16 +146,19 @@ public class PasteHandler extends EditorActionHandler {
       else {
         blockIndentAnchorColumn = col;
       }
-        
-      if (selectionModel.hasSelection()) {
-        ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            public void run() {
-              EditorModificationUtil.deleteSelectedText(editor);
-            }
-          }
-        );
-      }
+      
+      // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to understand that text that is currently
+      // selected at editor (if any) should be removed.
+      //
+      //if (selectionModel.hasSelection()) {
+      //  ApplicationManager.getApplication().runWriteAction(
+      //    new Runnable() {
+      //      public void run() {
+      //        EditorModificationUtil.deleteSelectedText(editor);
+      //      }
+      //    }
+      //  );
+      //}
 
       RawText rawText = RawText.fromTransferable(content);
 

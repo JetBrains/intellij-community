@@ -106,7 +106,7 @@ public abstract class AddScopeAction extends AnAction {
     final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString());
     if (nonDefaultTools != null) {
       for (ScopeToolState state : nonDefaultTools) {
-        used.add(state.getScope());
+        used.add(state.getScope(project));
       }
     }
     scopes.removeAll(used);

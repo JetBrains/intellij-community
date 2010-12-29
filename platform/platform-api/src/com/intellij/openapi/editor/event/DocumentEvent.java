@@ -36,5 +36,8 @@ public abstract class DocumentEvent extends EventObject {
   public abstract CharSequence getNewFragment();
 
   public abstract long getOldTimeStamp();
-
+  
+  public boolean isWholeTextReplaced() {
+    return getOffset() == 0 && getNewLength() == getDocument().getTextLength();
+  }
 }

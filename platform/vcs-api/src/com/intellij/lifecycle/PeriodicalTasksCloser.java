@@ -15,6 +15,7 @@
  */
 package com.intellij.lifecycle;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,35 +27,30 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLifecycleListener, ApplicationComponent {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
+public class PeriodicalTasksCloser extends ProjectManagerAdapter implements ProjectLifecycleListener, ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
   private final Object myLock = new Object();
-  private final MultiMap<Project, Pair<String, Runnable>> myInterrupters;
-  //private final Map<Project, TracedLifeCycle> myStates = new HashMap<Project, TracedLifeCycle>();
-  private MessageBusConnection myConnection;
-  private ProjectManager myProjectManager;
 
-  private PeriodicalTasksCloser(final ProjectManager projectManager) {
-    myInterrupters = new MultiMap<Project, Pair<String, Runnable>>();
-    myProjectManager = projectManager;
-    myProjectManager.addProjectManagerListener(this);
-    myConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    myConnection.subscribe(ProjectLifecycleListener.TOPIC, this);
+  PeriodicalTasksCloser(final ProjectManager projectManager) {
+    Application application = ApplicationManager.getApplication();
+    MessageBusConnection connection = application.getMessageBus().connect(application);
+    connection.subscribe(ProjectLifecycleListener.TOPIC, this);
+    projectManager.addProjectManagerListener(this, application);
   }
 
   public static PeriodicalTasksCloser getInstance() {
@@ -63,14 +59,6 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   @Override
   public void disposeComponent() {
-    /*synchronized (myLock) {
-      myStates.clear(); // +-
-    }*/
-    myProjectManager.removeProjectManagerListener(this);
-    myConnection.disconnect();
-    synchronized (myLock) {
-      myInterrupters.clear();
-    }
   }
 
   @NotNull
@@ -83,65 +71,67 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
   public void initComponent() {
   }
 
-  public boolean register(final Project project, final String name, final Runnable runnable) {
+  private static class Interrupter implements Disposable {
+    private final String myName;
+    private final Runnable myRunnable;
+
+    private Interrupter(@NotNull String name, @NotNull Runnable runnable) {
+      myName = name;
+      myRunnable = runnable;
+    }
+
+    @Override
+    public void dispose() {
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText(myName);
+        indicator.checkCanceled();
+      }
+      myRunnable.run();
+    }
+  }
+
+  private static final Key<List<Interrupter>> INTERRUPTERS = Key.create("VCS_INTERRUPTERS");
+  public boolean register(@NotNull Project project, @NotNull String name, @NotNull Runnable runnable) {
     synchronized (myLock) {
       if (project.isDisposed()) {
         return false;
       }
-      /*if (Boolean.FALSE.equals(myStates.get(project))) {
-        return false;
-      }*/
-      myInterrupters.putValue(project, new Pair<String, Runnable>(name, runnable));
+
+      Interrupter interrupter = new Interrupter(name, runnable);
+      List<Interrupter> list = project.getUserData(INTERRUPTERS);
+      if (list == null) {
+        list = new ArrayList<Interrupter>();
+        project.putUserData(INTERRUPTERS, list);
+      }
+      list.add(interrupter);
+      Disposer.register(project, interrupter);
+
       return true;
     }
-  }
-
-  public void projectOpened(Project project) {
-    clearForTests();
-    /*clearForTests();
-
-    synchronized (myLock) {
-      myStates.put(project, TracedLifeCycle.OPEN);
-    }*/
   }
 
   public boolean canCloseProject(Project project) {
     return true;
   }
 
-  private void clearForTests() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final Project[] projects = myProjectManager.getOpenProjects();
-      synchronized (myLock) {
-        myInterrupters.keySet().retainAll(Arrays.asList(projects));
+  public void projectClosing(final Project project) {
+    final List<Interrupter> interrupters;
+    synchronized (myLock) {
+      List<Interrupter> list = project.getUserData(INTERRUPTERS);
+      if (list == null) {
+        interrupters = null;
+      }
+      else {
+        interrupters = new ArrayList<Interrupter>(list);
+        list.clear();
       }
     }
-  }
-
-  public void projectClosed(Project project) {
-    /*synchronized (myLock) {
-      myStates.remove(project);
-    }*/
-  }
-
-  public void projectClosing(final Project project) {
-    /*synchronized (myLock) {
-      myStates.put(project, TracedLifeCycle.CLOSING);
-    }*/
-    final Collection<Pair<String, Runnable>> list;
-    synchronized (myLock) {
-      list = myInterrupters.remove(project);
-    }
-    if (list != null) {
+    if (interrupters != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          for (Pair<String, Runnable> pair : list) {
-            if (indicator != null) {
-              indicator.setText(pair.getFirst());
-              indicator.checkCanceled();
-            }
-            pair.getSecond().run();
+          for (Interrupter interrupter : interrupters) {
+            Disposer.dispose(interrupter);
           }
         }
       }, "Please wait for safe shutdown of periodical tasks...", true, project);
@@ -158,12 +148,6 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
 
   @Override
   public void beforeProjectLoaded(@NotNull Project project) {
-    clearForTests();
-    /*clearForTests();
-
-    synchronized (myLock) {
-      myStates.put(project, TracedLifeCycle.OPENING);
-    }*/
   }
 
   public <T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
@@ -204,10 +188,9 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
     throw new ProcessCanceledException();
   }
 
-  public void invokeAndWaitInterruptedWhenClosing(final Project project, final Runnable runnable, final ModalityState modalityState) {
-    final Ref<Boolean> start = new Ref<Boolean>(Boolean.TRUE);
-    final Application application = ApplicationManager.getApplication();
-    LOG.assertTrue(! application.isDispatchThread());
+  public void invokeAndWaitInterruptedWhenClosing(Project project, @NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+    final AtomicBoolean start = new AtomicBoolean(true);
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -228,9 +211,7 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
     };
     ApplicationManager.getApplication().invokeLater(runnable1, modalityState, new Condition<Object>() {
       public boolean value(Object o) {
-        synchronized (start) {
-          return ! start.get();
-        }
+        return !start.get();
       }
     });
 
@@ -238,19 +219,8 @@ public class PeriodicalTasksCloser implements ProjectManagerListener, ProjectLif
       if (semaphore.waitFor(1000)) {
         return;
       }
-      final Ref<Boolean> fire = new Ref<Boolean>();
-      if (project != null) {
-        synchronized (myLock) {
-          if (! project.isOpen()) {
-            fire.set(Boolean.TRUE);
-          }
-          if (Boolean.TRUE.equals(fire.get())) {
-            synchronized (start) {
-              start.set(Boolean.FALSE);
-              return;
-            }
-          }
-        }
+      if (project != null && !project.isOpen()) {
+        start.set(false);
       }
     }
   }
