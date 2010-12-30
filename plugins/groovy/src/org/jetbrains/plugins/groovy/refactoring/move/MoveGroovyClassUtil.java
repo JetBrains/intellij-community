@@ -54,10 +54,14 @@ public class MoveGroovyClassUtil {
         final PsiClass created = ((GroovyFile)GroovyTemplatesFactory
           .createFromTemplate(moveDestination, aClass.getName(), aClass.getName() + NewGroovyActionBase.GROOVY_EXTENSION,
                               "GroovyClass.groovy")).getClasses()[0];
-        if (aClass.getDocComment() == null) {
+        PsiDocComment docComment = aClass.getDocComment();
+        if (docComment != null) {
           final PsiDocComment createdDocComment = created.getDocComment();
           if (createdDocComment != null) {
-            aClass.addBefore(createdDocComment, null);
+            createdDocComment.replace(docComment);
+          }
+          else {
+            created.getContainingFile().addBefore(docComment, created);
           }
         }
         newClass = (PsiClass)created.replace(aClass);
