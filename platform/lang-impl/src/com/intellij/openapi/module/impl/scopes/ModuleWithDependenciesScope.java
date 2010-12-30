@@ -168,8 +168,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (myModule != null ? myModule.hashCode() : 0);
+    int result = myModule != null ? myModule.hashCode() : 0;
     result = 31 * result + (myIncludeLibraries ? 1 : 0);
     result = 31 * result + (myIncludeOtherModules ? 1 : 0);
     result = 31 * result + (myIncludeTests ? 1 : 0);
