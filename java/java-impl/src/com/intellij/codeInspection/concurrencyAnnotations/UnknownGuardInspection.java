@@ -27,6 +27,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * check locks according to http://www.javaconcurrencyinpractice.com/annotations/doc/net/jcip/annotations/GuardedBy.html
+ */
 public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
@@ -71,20 +74,7 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
         return;
       }
 
-      //field-name
-      if (containingClass.findFieldByName(guardValue, true) != null) {
-        return;
-      }
-
-      //method-name
-      if (guardValue.endsWith("()")) {
-        final PsiMethod[] methods = containingClass.findMethodsByName(StringUtil.trimEnd(guardValue, "()"), true);
-        for (PsiMethod method : methods) {
-          if (method.getParameterList().getParameters().length == 0) {
-            return;
-          }
-        }
-      }
+      if (containsFieldOrMethod(containingClass, guardValue)) return;
 
       //class-name.class
       final Project project = containingClass.getProject();
@@ -102,12 +92,55 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
         if (gClass.findFieldByName(fieldName, true) != null) {
           return;
         }
+        //class-name.this
+        if (fieldName.equals("this")) {
+          return;
+        }
       }
+
+      //class-name.this.field-name/method-name
+      final int thisIdx = guardValue.indexOf("this");
+      if (thisIdx > -1 && thisIdx + 1 < guardValue.length()) {
+        final PsiClass lockClass;
+        if (thisIdx == 0) {
+          lockClass = containingClass;
+        }
+        else {
+          final String fqn = guardValue.substring(0, thisIdx - 1);
+          lockClass = facade.findClass(fqn, GlobalSearchScope.allScope(project));
+        }
+
+        if (lockClass != null) {
+          final String fieldName = guardValue.substring(thisIdx + "this".length() + 1);
+          if (containsFieldOrMethod(lockClass, fieldName)) {
+            return;
+          }
+        }
+      }
+
       final PsiAnnotationMemberValue member = annotation.findAttributeValue("value");
       if (member == null) {
         return;
       }
       myHolder.registerProblem(member, "Unknown @GuardedBy field #ref #loc");
+    }
+
+    private static boolean containsFieldOrMethod(PsiClass containingClass, String fieldOrMethod) {
+      //field-name
+      if (containingClass.findFieldByName(fieldOrMethod, true) != null) {
+        return true;
+      }
+
+      //method-name
+      if (fieldOrMethod.endsWith("()")) {
+        final PsiMethod[] methods = containingClass.findMethodsByName(StringUtil.trimEnd(fieldOrMethod, "()"), true);
+        for (PsiMethod method : methods) {
+          if (method.getParameterList().getParameters().length == 0) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     public void visitDocTag(PsiDocTag psiDocTag) {
