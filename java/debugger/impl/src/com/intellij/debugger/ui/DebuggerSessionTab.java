@@ -39,7 +39,10 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsoleEx;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
@@ -69,7 +72,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.util.Collection;
 import java.util.List;
 
 public class DebuggerSessionTab extends DebuggerSessionTabBase implements Disposable {
@@ -364,19 +366,6 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
 
     return myRunContentDescriptor;
-  }
-
-  private void attachNotificationTo(final Content content) {
-    if (myConsole instanceof ObservableConsoleView) {
-      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
-      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
-        public void contentAdded(final Collection<ConsoleViewContentType> types) {
-          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
-            content.fireAlert();
-          }
-        }
-      }, content);
-    }
   }
 
   private static void addAction(DefaultActionGroup group, String actionId) {
