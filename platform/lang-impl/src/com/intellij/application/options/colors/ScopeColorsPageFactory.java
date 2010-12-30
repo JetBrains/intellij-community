@@ -71,7 +71,9 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {
           try {
-            optionsEditor.select(ScopeChooserConfigurable.class);
+            if (optionsEditor.select(ScopeChooserConfigurable.class).isRejected()) {
+              EditScopesDialog.editConfigurable(project, null);
+            }
           } catch (IllegalStateException ex) {
             EditScopesDialog.editConfigurable(project, null);
           }
