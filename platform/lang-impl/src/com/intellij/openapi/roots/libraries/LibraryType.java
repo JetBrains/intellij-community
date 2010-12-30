@@ -85,4 +85,8 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   public OrderRootType[] getExternalRootTypes() {
     return DEFAULT_EXTERNAL_ROOT_TYPES;
   }
+  
+  public OrderRootType[] getAdditionalRootTypes() {
+    return new OrderRootType[0];
+  }
 }
