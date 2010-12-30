@@ -5,9 +5,7 @@
     <constraints>
       <xy x="20" y="20" width="500" height="400"/>
     </constraints>
-    <properties>
-      <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="git.vcs.config.convert.ask"/>
-    </properties>
+    <properties/>
     <border type="none"/>
     <children>
       <grid id="e7668" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
