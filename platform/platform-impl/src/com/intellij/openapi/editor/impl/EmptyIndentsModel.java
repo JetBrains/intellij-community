@@ -26,10 +26,17 @@ import java.util.List;
 
 public class EmptyIndentsModel implements IndentsModel {
 
+  @Override
   public IndentGuideDescriptor getCaretIndentGuide() {
     return null;
   }
 
+  @Override
+  public IndentGuideDescriptor getDescriptor(int startLine, int endLine) {
+    return null;
+  }
+
+  @Override
   public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
   }
 }
