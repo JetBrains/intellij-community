@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
 public class DeleteAction extends EditorAction {
@@ -40,16 +41,20 @@ public class DeleteAction extends EditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        final LogicalPosition start = selectionModel.getBlockStart();
-        final LogicalPosition end = selectionModel.getBlockEnd();
-        if (start.column == end.column) {
-          int column = start.column;
-          int startLine = Math.min(start.line, end.line);
-          int endLine = Math.max(start.line, end.line);
+      final LogicalPosition logicalBlockSelectionStart = selectionModel.getBlockStart();
+      final LogicalPosition logicalBlockSelectionEnd = selectionModel.getBlockEnd();
+      if (selectionModel.hasBlockSelection() && logicalBlockSelectionStart != null && logicalBlockSelectionEnd != null) {
+        final VisualPosition visualStart = editor.logicalToVisualPosition(logicalBlockSelectionStart);
+        final VisualPosition visualEnd = editor.logicalToVisualPosition(logicalBlockSelectionEnd);
+        if (visualStart.column == visualEnd.column) {
+          int column = visualEnd.column;
+          int startLine = Math.min(visualStart.line, visualEnd.line);
+          int endLine = Math.max(visualStart.line, visualEnd.line);
           for (int i = startLine; i <= endLine; i++) {
-            editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(i, column));
-            deleteCharAtCaret(editor);
+            if (EditorUtil.getLastVisualLineColumnNumber(editor, i) >= visualStart.column) {
+              editor.getCaretModel().moveToVisualPosition(new VisualPosition(i, column));
+              deleteCharAtCaret(editor);
+            }
           }
           selectionModel.setBlockSelection(new LogicalPosition(startLine, column), new LogicalPosition(endLine, column));
           return;
