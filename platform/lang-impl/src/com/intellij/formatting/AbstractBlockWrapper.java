@@ -394,7 +394,7 @@ public abstract class AbstractBlockWrapper {
     }
     if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
-    if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
+    if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(indent.getSpaces(), 0);
     return new IndentData(options.INDENT_SIZE);
 
   }
