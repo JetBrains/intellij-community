@@ -317,6 +317,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   public void showPopup() {
+    //todo leak via not shown dialog?
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, createChooseByNameModel(), getContext());
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void elementChosen(Object element) {
@@ -331,7 +332,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
 
-  private <E extends PsiElement> void selectElementInTree(@NotNull final PsiElement element) {
+  private void selectElementInTree(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;

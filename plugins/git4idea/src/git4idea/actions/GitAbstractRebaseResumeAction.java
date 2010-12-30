@@ -56,6 +56,8 @@ public abstract class GitAbstractRebaseResumeAction extends GitRebaseActionBase 
         defaultRoot = gitRoots.get(0);
       }
       GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionTitle(), gitRoots, defaultRoot);
+      d.show();
+
       root = d.selectRoot();
       if (root == null) {
         return null;

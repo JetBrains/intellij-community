@@ -20,6 +20,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -259,7 +260,9 @@ public class BrowserUtil {
             if (dialog.isToBeShown()) {
               dialog.show();
               extract.set(dialog.isOK());
-            } else {
+            }
+            else {
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
               extract.set(true);
             }
           }

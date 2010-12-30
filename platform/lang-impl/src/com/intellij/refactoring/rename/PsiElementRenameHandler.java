@@ -150,9 +150,9 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (defaultName != null) {
       try {
         dialog.performRename(defaultName);
-      } catch (CommonRefactoringUtil.RefactoringErrorHintException testErrorHintException){
+      }
+      finally {
         dialog.close(DialogWrapper.CANCEL_EXIT_CODE); // to avoid dialog leak
-        throw testErrorHintException;
       }
     }
     else {

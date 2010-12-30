@@ -122,25 +122,25 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       }
       case IS_NOT_MAP: {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
-          final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
-            @Override
-            protected void doOKAction() {
-              String name = getEnteredName();
-              MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-              GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
-              if (isClosure) {
-                findClosureConflictUsages((GrClosableBlock)owner, conflicts, occurrences);
-              }
-              if (reportConflicts(conflicts, project)) {
-                performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
-              }
-              super.doOKAction();
-            }
-          };
+          final String[] possibleNames = generateValidNames(MY_POSSIBLE_NAMES, firstParam);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
+              final GroovyMapParameterDialog dialog = new GroovyMapParameterDialog(project, possibleNames, true) {
+                @Override
+                protected void doOKAction() {
+                  String name = getEnteredName();
+                  MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+                  GroovyValidationUtil.validateNewParameterName(firstParam, conflicts, name);
+                  if (isClosure) {
+                    findClosureConflictUsages((GrClosableBlock)owner, conflicts, occurrences);
+                  }
+                  if (reportConflicts(conflicts, project)) {
+                    performRefactoring(element, owner, occurrences, createNewFirst(), name, specifyTypeExplicitly());
+                  }
+                  super.doOKAction();
+                }
+              };
               dialog.show();
             }
           });
