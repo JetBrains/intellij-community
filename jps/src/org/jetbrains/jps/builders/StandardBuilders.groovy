@@ -174,7 +174,7 @@ class GroovyStubGenerator implements ModuleBuilder {
 
     String targetFolder = project.targetFolder
     File dir = new File(targetFolder != null ? targetFolder : ".", "___temp___")
-    ant.delete(dir: dir)
+    BuildUtil.deleteDir(project, dir)
     ant.mkdir(dir: dir)
 
     def stubsRoot = dir.getAbsolutePath()

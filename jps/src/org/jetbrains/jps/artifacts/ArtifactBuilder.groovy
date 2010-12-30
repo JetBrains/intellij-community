@@ -158,7 +158,7 @@ class ArtifactBuilder {
     }
     else {
       checkCanCleanDirectory(outputPath)
-      ant.delete(dir: outputPath)
+      BuildUtil.deleteDir(project, outputPath)
     }
   }
 

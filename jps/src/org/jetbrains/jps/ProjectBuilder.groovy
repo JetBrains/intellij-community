@@ -228,11 +228,11 @@ class ProjectBuilder {
 
       states.keySet().each {
         it.tempRootsToDelete.each {
-          binding.ant.delete(dir: it)
+          BuildUtil.deleteDir(project, it)
         }
       }
       chunkState.tempRootsToDelete.each {
-        binding.ant.delete(dir: it)
+        BuildUtil.deleteDir(project, it)
       }
       listeners*.onCompilationFinished(chunk)
     }

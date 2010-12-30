@@ -21,7 +21,7 @@ class TempFileContainer {
       def ant = project.binding.ant
       String basePath = project.tempFolder ?: project.targetFolder ?: "."
       baseDirectory = new File(basePath, tempDirectoryName)
-      ant.delete(dir: baseDirectory.absolutePath)
+      BuildUtil.deleteDir(project, baseDirectory.absolutePath)
       ant.mkdir(dir: baseDirectory.absolutePath)
     }
     return baseDirectory
@@ -43,7 +43,7 @@ class TempFileContainer {
   def clean() {
     if (baseDirectory != null) {
       def ant = project.binding.ant
-      ant.delete(dir: baseDirectory.absolutePath)
+      BuildUtil.deleteDir(project, baseDirectory.absolutePath)
     }
 
   }

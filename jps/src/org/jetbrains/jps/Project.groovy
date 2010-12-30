@@ -8,6 +8,7 @@ import org.jetbrains.jps.resolvers.LibraryResolver
 import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
+import org.jetbrains.jps.builders.BuildUtil
 
 /**
  * @author max
@@ -158,13 +159,13 @@ class Project {
     if (!dryRun) {
       if (targetFolder != null) {
         stage("Cleaning $targetFolder")
-        binding.ant.delete(dir: targetFolder)
+        BuildUtil.deleteDir(this, targetFolder)
       }
       else {
         stage("Cleaning output folders for ${modules.size()} modules")
         modules.values().each {
-          binding.ant.delete(dir: it.outputPath)
-          binding.ant.delete(dir: it.testOutputPath)
+          BuildUtil.deleteDir(this, it.outputPath)
+          BuildUtil.deleteDir(this, it.testOutputPath)
         }
         stage("Cleaning output folders for ${artifacts.size()} artifacts")
         artifacts.values().each {

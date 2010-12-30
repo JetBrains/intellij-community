@@ -6,6 +6,7 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.Project
 import org.jetbrains.jps.artifacts.LayoutElement
 import org.jetbrains.jps.artifacts.ArtifactLayoutElement
+import org.jetbrains.jps.builders.BuildUtil
 
 /**
  * @author nik
@@ -50,7 +51,7 @@ class GwtModuleBuilder implements ModuleBuilder {
     facet.tempOutputDir = outputDir
 
     def ant = project.binding.ant
-    ant.delete(dir: outputDir)
+    BuildUtil.deleteDir(project, outputDir)
     ant.mkdir(dir: outputDir)
 
     gwtModules.each {String moduleName ->
