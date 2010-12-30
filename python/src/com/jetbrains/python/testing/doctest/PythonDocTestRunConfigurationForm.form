@@ -1,128 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.testing.doctest.PythonDocTestRunConfigurationForm">
-  <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myRootPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="139" y="101" width="754" height="400"/>
+      <xy x="139" y="101" width="24" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="6d5f3" binding="myCommonOptionsPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children/>
-      </grid>
-      <grid id="f8bdd" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
+      <grid id="6d5f3" binding="myTestsPlaceHolder" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
-        <children>
-          <component id="11d0e" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_type_title"/>
-            </properties>
-          </component>
-          <component id="814d9" class="javax.swing.JRadioButton" binding="myAllInFolderRB">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.all_in_folder_title"/>
-            </properties>
-          </component>
-          <component id="ed9cd" class="javax.swing.JRadioButton" binding="myTestScriptRB">
-            <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.all_in_script_title"/>
-            </properties>
-          </component>
-          <component id="784c3" class="javax.swing.JRadioButton" binding="myTestClassRB">
-            <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_class_title"/>
-            </properties>
-          </component>
-          <component id="de052" class="javax.swing.JRadioButton" binding="myTestMethodRB">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_method_title"/>
-            </properties>
-          </component>
-          <component id="5b2fd" class="javax.swing.JRadioButton" binding="myTestFunctionRB">
-            <constraints>
-              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_function_title"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
-      <grid id="16300" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="5" bottom="0" right="0"/>
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="etched" title="Tests:"/>
-        <children>
-          <component id="fff6c" class="com.intellij.openapi.ui.LabeledComponent" binding="myPatternComponent" custom-create="true">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.pattern"/>
-            </properties>
-          </component>
-          <component id="54301" class="com.intellij.openapi.ui.LabeledComponent" binding="myTestScriptComponent" custom-create="true">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.test_script_label"/>
-            </properties>
-          </component>
-          <component id="9ac22" class="com.intellij.openapi.ui.LabeledComponent" binding="myTestMethodComponent" custom-create="true">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.method_label"/>
-            </properties>
-          </component>
-          <component id="1aebe" class="com.intellij.openapi.ui.LabeledComponent" binding="myTestClassComponent" custom-create="true">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.class_label"/>
-            </properties>
-          </component>
-          <component id="2c797" class="com.intellij.openapi.ui.LabeledComponent" binding="myTestFolderComponent" custom-create="true">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="com/jetbrains/python/PyBundle" key="runcfg.unittest.dlg.folder_path"/>
-            </properties>
-          </component>
-        </children>
+        <children/>
       </grid>
     </children>
   </grid>
