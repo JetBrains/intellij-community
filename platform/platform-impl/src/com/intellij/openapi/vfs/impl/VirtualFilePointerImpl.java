@@ -90,9 +90,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   @NotNull
   public String getPresentableUrl() {
     checkDisposed();
-    Pair<VirtualFile, String> result = update();
-
-    return PathUtil.toPresentableUrl(result.second);
+    return PathUtil.toPresentableUrl(getUrl());
   }
 
   private void checkDisposed() {
