@@ -66,7 +66,7 @@ public class JavaUtilForVfs {
     }
     FileTypeManager typeManager = FileTypeManager.getInstance();
     final String dirName = dir.getName();
-    if (typeManager.isFileIgnored(dirName) || StringUtil.startsWithIgnoreCase(dirName, "testdata")) {
+    if (typeManager.isFileIgnored(dir) || StringUtil.startsWithIgnoreCase(dirName, "testdata")) {
       return;
     }
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();

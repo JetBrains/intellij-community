@@ -466,7 +466,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private static boolean isInContent(VirtualFile file) {
-    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName());
+    return file == null || !FileTypeManager.getInstance().isFileIgnored(file);
   }
 
   private static DirectoryContent getDirectoryContent(VirtualFile directory, final Runnable checkCanceled) {

@@ -54,7 +54,7 @@ public class PruneEmptyDirectoriesAction extends AnAction {
 
   private static void pruneEmptiesIn(final VirtualFile file, FileTypeManager ftManager) throws IOException {
     if (file.isDirectory()) {
-      if (ftManager.isFileIgnored(file.getName())) return;
+      if (ftManager.isFileIgnored(file)) return;
 
       for (VirtualFile child : file.getChildren()) {
         pruneEmptiesIn(child, ftManager);

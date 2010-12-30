@@ -68,7 +68,7 @@ public class IdeaGateway {
       if (ProjectRootManager.getInstance(each).getFileIndex().isIgnored(f)) return false;
     }
 
-    return !FileTypeManager.getInstance().isFileIgnored(fileName);
+    return !FileTypeManager.getInstance().isFileIgnored(f);
   }
 
   public boolean areContentChangesVersioned(VirtualFile f) {

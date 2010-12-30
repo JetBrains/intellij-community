@@ -696,7 +696,7 @@ public class VfsUtil {
     final FileTypeManager ftm = FileTypeManager.getInstance();
     processFilesRecursively(root, processor, new Convertor<VirtualFile, Boolean>() {
       public Boolean convert(final VirtualFile vf) {
-        return ! ftm.isFileIgnored(vf.getName());
+        return ! ftm.isFileIgnored(vf);
       }
     });
   }

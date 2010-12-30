@@ -939,7 +939,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         new Object() {
           void processFile(VirtualFile file) {
-            if (fileTypeManager.isFileIgnored(file.getName())) {
+            if (fileTypeManager.isFileIgnored(file)) {
               return;
             }
             final int fileId = getFileId(file);

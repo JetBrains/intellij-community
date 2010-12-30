@@ -435,7 +435,7 @@ public class FindInProjectUtil {
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       public boolean accept(final VirtualFile file) {
         if (file.isDirectory()) return true;
-        if (fileTypeManager.isFileIgnored(file.getName()) || fileTypeManager.getFileTypeByFile(file).isBinary()) return false;
+        if (fileTypeManager.isFileIgnored(file) || fileTypeManager.getFileTypeByFile(file).isBinary()) return false;
         return searchScope.contains(file);
       }
     };

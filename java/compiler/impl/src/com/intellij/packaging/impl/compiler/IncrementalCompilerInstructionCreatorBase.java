@@ -56,7 +56,7 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
     if (children != null) {
       for (VirtualFile child : children) {
         if (copyExcluded) {
-          if (fileTypeManager.isFileIgnored(child.getName())) continue;
+          if (fileTypeManager.isFileIgnored(child)) continue;
         }
         else {
           if (index.isIgnored(child)) continue;
