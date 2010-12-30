@@ -55,6 +55,10 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
                                  })
   }
 
+  protected void doHighlighting() {
+    UIUtil.invokeAndWaitIfNeeded({ myFixture.doHighlighting() } as Runnable)
+  }
+
   void type(String s) {
     for (i in 0..<s.size()) {
       final c = s.charAt(i)
