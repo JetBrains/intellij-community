@@ -587,11 +587,16 @@ public class JavaCompletionUtil {
 
     boolean mayHighlight = qualifierType != null && (castedQualifierType == null || !qualifierType.isAssignableFrom(castedQualifierType));
 
+    final boolean pkgContext = inSomePackage(element);
+
     final Set<PsiMember> mentioned = new THashSet<PsiMember>();
     for (CompletionElement completionElement : plainResults) {
       LookupElement item = createLookupElement(completionElement, qualifierType);
       if (item != null) {
         final Object o = item.getObject();
+        if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
+          continue;
+        }
         if (o instanceof PsiMember) {
           mentioned.add((PsiMember)o);
         }
@@ -1001,5 +1006,25 @@ public class JavaCompletionUtil {
       }
     }
     return false;
+  }
+
+  public static boolean inSomePackage(PsiElement context) {
+    PsiFile contextFile = context.getContainingFile();
+    return contextFile instanceof PsiClassOwner && StringUtil.isNotEmpty(((PsiClassOwner)contextFile).getPackageName());
+  }
+
+  public static boolean isSourceLevelAccessible(PsiElement context, PsiClass psiClass, final boolean pkgContext) {
+    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
+      return false;
+    }
+
+    if (pkgContext) {
+      PsiFile classFile = psiClass.getContainingFile();
+      if (classFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)classFile).getPackageName())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

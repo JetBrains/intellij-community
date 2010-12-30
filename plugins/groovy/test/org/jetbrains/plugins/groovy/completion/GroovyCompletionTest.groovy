@@ -437,5 +437,15 @@ try {} catch (AbcdException"""
     myFixture.checkResult "try {} catch (AbcdException<caret> e) {}"
   }
 
+  public void testTopLevelClassesFromPackaged() throws Throwable {
+    myFixture.addClass "public class Fooooo {}"
+    final text = "package foo; class Bar { Fooo<caret> }"
+    def file = myFixture.addFileToProject("foo/Bar.groovy", text)
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+    assertEmpty myFixture.completeBasic()
+    myFixture.checkResult text
+  }
+
+
 
 }
