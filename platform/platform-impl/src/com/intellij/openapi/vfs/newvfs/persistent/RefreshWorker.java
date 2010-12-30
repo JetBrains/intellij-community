@@ -110,7 +110,7 @@ public class RefreshWorker {
               }
             }
 
-            final List<String> names = dir.getSuspicousNames();
+            final List<String> names = dir.getSuspiciousNames();
             for (String name : names) {
               if (name.length() == 0) continue;
 
