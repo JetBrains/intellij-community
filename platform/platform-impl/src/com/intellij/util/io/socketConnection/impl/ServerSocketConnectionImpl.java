@@ -35,7 +35,6 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
   private ServerSocket myServerSocket;
   private final int myDefaultPort;
   private final int myConnectionAttempts;
-  private Thread myWaitingForConnectionThread;
 
   public ServerSocketConnectionImpl(int defaultPort,
                                     int connectionAttempts,
@@ -78,7 +77,7 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
   }
 
   private void waitForConnection() throws IOException {
-    myWaitingForConnectionThread = Thread.currentThread();
+    addThreadToInterrupt();
     try {
       setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
       LOG.debug("waiting for connection on port " + getPort());
@@ -93,13 +92,7 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
     }
     finally {
       myServerSocket.close();
-    }
-  }
-
-  @Override
-  protected void onClosing() {
-    if (myWaitingForConnectionThread != null) {
-      myWaitingForConnectionThread.interrupt();
+      removeThreadToInterrupt();
     }
   }
 }

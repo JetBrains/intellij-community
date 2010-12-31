@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -41,7 +43,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   private boolean myStopping;
   private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
   private String myStatusMessage;
-  private Thread myProcessingThread;
+  private List<Thread> myThreadsToInterrupt = new ArrayList<Thread>();
   private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
   private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
   private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
@@ -90,7 +92,7 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
   }
 
   protected void processRequests(RequestWriter<Request> writer) throws IOException {
-    myProcessingThread = Thread.currentThread();
+    addThreadToInterrupt();
     try {
       while (!isStopping()) {
         final Request request = myRequests.take();
@@ -105,6 +107,19 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
     catch (InterruptedException ignored) {
     }
     setStatus(ConnectionStatus.DISCONNECTED, null);
+    removeThreadToInterrupt();
+  }
+
+  protected void addThreadToInterrupt() {
+    synchronized (myLock) {
+      myThreadsToInterrupt.add(Thread.currentThread());
+    }
+  }
+
+  protected void removeThreadToInterrupt() {
+    synchronized (myLock) {
+      myThreadsToInterrupt.remove(Thread.currentThread());
+    }
   }
 
   public void dispose() {
@@ -151,8 +166,10 @@ public abstract class SocketConnectionBase<Request extends AbstractRequest, Resp
       myStopping = true;
     }
     LOG.debug("closing connection");
-    if (myProcessingThread != null) {
-      myProcessingThread.interrupt();
+    synchronized (myLock) {
+      for (Thread thread : myThreadsToInterrupt) {
+        thread.interrupt();
+      }
     }
     onClosing();
     myResponseProcessor.stopReading();
