@@ -73,7 +73,13 @@ public class GitUIUtil {
   }
 
   public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
-    StringBuilder content = new StringBuilder(description);
+    StringBuilder content = new StringBuilder();
+    if (!StringUtil.isEmptyOrSpaces(description)) {
+      content.append(description);
+    }
+    if (!gitErrors.isEmpty()) {
+      content.append("<br/>");
+    }
     for (VcsException e : gitErrors) {
       content.append(e.getLocalizedMessage()).append("<br/>");
     }
