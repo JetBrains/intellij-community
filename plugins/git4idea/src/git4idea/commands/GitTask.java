@@ -50,10 +50,6 @@ public class GitTask {
   private final String myTitle;
   private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
 
-  public interface ResultHandler {
-    void run(GitTaskResult result);
-  }
-
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
     myHandler = handler;
@@ -94,7 +90,7 @@ public class GitTask {
    * Executes this task asynchronously, in backgrond. Calls the resultHandler when finished.
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
-  public void executeAsync(final ResultHandler resultHandler) {
+  public void executeAsync(final GitTaskResultHandler resultHandler) {
     BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
         GitHandlerUtil.runInCurrentThread(myHandler, indicator, true, myTitle);
@@ -118,7 +114,7 @@ public class GitTask {
     };
 
     addListeners(task);
-    GitVcs.getInstance(myProject).runInBackground(task);
+    GitVcs.runInBackground(task);
   }
 
   private void addListeners(final TaskExecution task) {
@@ -242,10 +238,13 @@ public class GitTask {
         @Override
         public void run() {
           if (myIndicator != null && myIndicator.isCanceled()) {
-            if (myHandler != null) {
-              myHandler.destroyProcess();
+            try {
+              if (myHandler != null) {
+                myHandler.destroyProcess();
+              }
+            } finally {
+              Disposer.dispose(GitTaskDelegate.this);
             }
-            Disposer.dispose(GitTaskDelegate.this);
           }
         }
       }, 0, 200);
