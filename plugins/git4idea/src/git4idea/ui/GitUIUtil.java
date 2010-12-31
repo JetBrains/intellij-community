@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +60,24 @@ public class GitUIUtil {
    */
   public static void notifySuccess(Project project, String title, String description) {
     Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION), project);
+  }
+
+  /**
+   * Displays an error notification.
+   */
+  public static void notifyError(Project project, String title, String description) {
+    if (StringUtil.isEmptyOrSpaces(description)) {
+      description = title;
+    }
+    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
+  }
+
+  public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {
+    StringBuilder content = new StringBuilder(description);
+    for (VcsException e : gitErrors) {
+      content.append(e.getLocalizedMessage()).append("<br/>");
+    }
+    notifyError(project, title, content.toString());
   }
 
   /**
