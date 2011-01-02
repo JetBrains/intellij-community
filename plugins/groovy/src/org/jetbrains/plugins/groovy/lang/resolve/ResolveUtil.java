@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -464,27 +463,24 @@ public class ResolveUtil {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
-    } else if (parent instanceof GrConstructorInvocation) {
-      final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
+      variants = ((GrCallExpression)parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
+    }
+    else if (parent instanceof GrConstructorInvocation) {
+      final PsiClass clazz = ((GrConstructorInvocation)parent).getDelegatedClass();
       if (clazz != null) {
         final PsiMethod[] constructors = clazz.getConstructors();
         variants = getConstructorResolveResult(constructors, place);
       }
-    } else if (parent instanceof GrAnonymousClassDefinition) {
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
       final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
       if (element instanceof PsiClass) {
         final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
         variants = getConstructorResolveResult(constructors, place);
       }
     }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrExpression funExpr = ((GrApplicationStatement) parent).getInvokedExpression();
-      if (funExpr instanceof GrReferenceExpression) {
-        variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
-      }
-    } else if (place instanceof GrReferenceExpression) {
-      variants = ((GrReferenceExpression) place).getSameNameVariants();
+    else if (place instanceof GrReferenceExpression) {
+      variants = ((GrReferenceExpression)place).getSameNameVariants();
     }
     return variants;
   }
