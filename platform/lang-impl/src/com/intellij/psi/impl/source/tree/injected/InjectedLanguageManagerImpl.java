@@ -23,6 +23,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   private final Project myProject;
   private final DumbService myDumbService;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
@@ -152,6 +154,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
     for (Class<? extends PsiElement> place : injector.elementsToInjectIn()) {
+      LOG.assertTrue(place != null, injector);
       while (true) {
         MultiHostInjector[] injectors = this.injectors.get(place);
         if (injectors == null) {

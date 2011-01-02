@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 
 /**
  * @author mike
@@ -52,7 +53,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     final int currentPriority = thread.getPriority();
     try {
       thread.setPriority(Thread.NORM_PRIORITY - 2);
-      myWebServer = new IdeaAwareWebServer(getPortNumber(), InetAddress.getLocalHost(), new IdeaAwareXmlRpcServer());
+      myWebServer = new IdeaAwareWebServer(getPortNumber(), getBindAddress(), new IdeaAwareXmlRpcServer());
       myWebServer.start();
     }
     catch (Exception e) {
@@ -75,6 +76,10 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     }
   }
 
+  private static InetAddress getBindAddress() throws UnknownHostException {
+    return InetAddress.getByName("127.0.0.1");
+  }
+
   public int getPortNumber() {
     return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
   }
@@ -91,7 +96,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
       for (int i = 0; i < PORTS_COUNT; i++) {
         int port = firstPort + i;
         try {
-          socket = new ServerSocket(port, 10, InetAddress.getLocalHost());
+          socket = new ServerSocket(port, 10, getBindAddress());
           detectedPortNumber = port;
           return true;
         }
@@ -101,7 +106,7 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
 
       try {
         // try any port
-        socket = new ServerSocket(0, 10, InetAddress.getLocalHost());
+        socket = new ServerSocket(0, 10, getBindAddress());
         detectedPortNumber = socket.getLocalPort();
         return true;
       }

@@ -45,27 +45,13 @@ public class GlobalInspectionUtil {
   }
 
   public static void createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType, TextRange range,
-                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
-                                    GlobalInspectionContext globalContext) {
+                                   InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
+                                   GlobalInspectionContext globalContext) {
     ProblemDescriptor descriptor = manager.createProblemDescriptor(
-        elt,
-        range,
-        createInspectionMessage(message),
-        problemHighlightType, false);
-    problemDescriptionsProcessor.addProblemElement(
-      retrieveRefElement(elt, globalContext),
-      descriptor
-    );
-  }
-
-  public static void createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType, TextRange range,
-                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
-                                    GlobalInspectionContext globalContext, LocalQuickFix fix) {
-    ProblemDescriptor descriptor = manager.createProblemDescriptor(
-        elt,
-        range,
-        createInspectionMessage(message),
-        problemHighlightType, false, fix);
+      elt,
+      range,
+      createInspectionMessage(message),
+      problemHighlightType, false);
     problemDescriptionsProcessor.addProblemElement(
       retrieveRefElement(elt, globalContext),
       descriptor

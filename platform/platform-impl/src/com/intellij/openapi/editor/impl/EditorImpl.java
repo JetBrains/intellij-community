@@ -69,6 +69,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.EmptyClipboardOwner;
@@ -173,6 +174,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final SoftWrapModelImpl mySoftWrapModel;
 
   private static final RepaintCursorCommand ourCaretBlinkingCommand;
+  private MessageBusConnection myConnection;
 
   private int myMouseSelectionState = MOUSE_SELECTION_STATE_NONE;
   private FoldRegion myMouseSelectedRegion = null;
@@ -273,7 +275,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorDocumentAdapter = new EditorDocumentAdapter();
     if (project != null) {
-      project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
+      myConnection = project.getMessageBus().connect();
+      myConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
     }
     myMouseMotionListeners = ContainerUtil.createEmptyCOWList();
 
@@ -511,7 +514,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPlainFontMetrics = null;
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
-    
+
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
@@ -526,7 +529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySizeContainer.reset();
       validateSize();
     }
-    
+
     final EditorColorsScheme scheme =
       myScheme instanceof DelegateColorScheme? ((DelegateColorScheme)myScheme).getDelegate() : myScheme;
     if (scheme instanceof MyColorSchemeDelegate) {
@@ -603,6 +606,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     clearCaretThread();
 
     myFocusListeners.clear();
+
+    if (myConnection != null) {
+      myConnection.disconnect();
+  }
   }
 
   private void clearCaretThread() {
@@ -3418,7 +3425,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition oldVisLeadSelectionStart = selectionModel.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       LogicalPosition oldLogicalCaret = getCaretModel().getLogicalPosition();
-      VisualPosition oldVisualCaret = getCaretModel().getVisualPosition();
       moveCaretToScreenPos(x, y);
       getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
@@ -3598,6 +3604,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.add(listener);
   }
 
+  @Nullable
   public Project getProject() {
     return myProject;
   }
@@ -5187,9 +5194,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private int myOldEndLine;
 
     private Dimension mySize;
-
-    private final Object lock       = new Object();
-    private       int    myMaxWidth = -1;
+    private int myMaxWidth = -1;
 
     public synchronized void reset() {
       int lineCount = getDocument().getLineCount();
@@ -5308,7 +5313,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void validateSizes() {
       if (!myIsDirty) return;
 
-      synchronized (lock) {
+      synchronized (this) {
         if (!myIsDirty) return;
         int lineCount = Math.min(myLineWidths.size(), myDocument.getLineCount());
 

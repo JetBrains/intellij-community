@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
@@ -723,7 +724,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         return false;
       }
     }
-    Disposer.dispose(confirmExitDialog.getDisposable());
+    else {
+      confirmExitDialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
     return true;
   }
 

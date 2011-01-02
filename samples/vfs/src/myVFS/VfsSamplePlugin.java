@@ -69,7 +69,7 @@ public class VfsSamplePlugin implements ProjectComponent {
     private static boolean updateCount(VirtualFile file, int increase) {
 
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        if (!fileTypeManager.isFileIgnored(file.getName())
+        if (!fileTypeManager.isFileIgnored(file)
                 && fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
             ourJavaFilesCount += increase;
             return true;

@@ -27,5 +27,17 @@ public interface IndentsModel {
   @Nullable
   IndentGuideDescriptor getCaretIndentGuide();
 
+  /**
+   * Tries to return descriptor (if any) that defines indent guide for the given lines.
+   * 
+   * @param startLine   logical line where target indent guide is started
+   * @param endLine     logical line where target indent guide is ended
+   * @return            indent guide descriptor registered for the given lines at the current model previously if any;
+   *                    <code>null</code> otherwise
+   */
+  @Nullable
+  IndentGuideDescriptor getDescriptor(int startLine, int endLine);
+
   void assumeIndents(List<IndentGuideDescriptor> descriptors);
+  
 }

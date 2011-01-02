@@ -246,19 +246,6 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, Editor editor, PsiFile oldFile) {
-    boolean significant = charTyped == '"' ||
-                          charTyped == '\'' ||
-                          charTyped == '[' ||
-                          charTyped == '(' ||
-                          charTyped == ']' ||
-                          charTyped == ')' ||
-                          charTyped == '{' ||
-                          charTyped == '}' ||
-                          charTyped == '.';
-    if (!significant) {
-      return editor;
-    }
-
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change

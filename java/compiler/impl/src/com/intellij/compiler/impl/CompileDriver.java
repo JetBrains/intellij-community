@@ -541,6 +541,7 @@ public class CompileDriver {
         }
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
             final int warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
             final String statusMessage = createStatusMessage(_status, warningCount, errorCount);

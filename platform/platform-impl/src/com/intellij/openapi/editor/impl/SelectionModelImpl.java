@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -300,6 +301,17 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       int tmp = startOffset;
       startOffset = endOffset;
       endOffset = tmp;
+    }
+
+    FoldingModelEx foldingModel = myEditor.getFoldingModel();
+    FoldRegion startFold = foldingModel.getCollapsedRegionAtOffset(startOffset);
+    if (startFold != null && startFold.getStartOffset() < startOffset) {
+      startOffset = startFold.getStartOffset();
+    }
+
+    FoldRegion endFold = foldingModel.getCollapsedRegionAtOffset(endOffset);
+    if (endFold != null) {
+      endOffset = endFold.getEndOffset();
     }
 
     int oldSelectionStart;

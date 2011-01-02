@@ -43,6 +43,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -284,12 +286,15 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     if (handler == null) return;
     try {
+      System.getProperties().put(RenameProcessor.FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY, "");
       invokeRename(context, handler);
     }
-    catch (Exception e) {
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       if (!e.getMessage().startsWith("Cannot perform refactoring.")) {
         throw e;
       }
+    } finally {
+      System.getProperties().remove(RenameProcessor.FORCE_RENAME_PROCESSOR_TO_THROW_EXCEPTION_ON_BAD_RENAMEABILITY);
     }
   }
 

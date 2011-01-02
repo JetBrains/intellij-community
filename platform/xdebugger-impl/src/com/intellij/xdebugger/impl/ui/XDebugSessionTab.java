@@ -28,7 +28,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.ide.CommonActionsManager;
@@ -52,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -179,16 +180,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
     final Content consoleContent = createConsoleContent();
     myUi.addContent(consoleContent, 1, PlaceInGrid.bottom, false);
-    if (myConsole instanceof ObservableConsoleView) {
-      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
-      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
-        public void contentAdded(final Collection<ConsoleViewContentType> types) {
-          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.SYSTEM_OUTPUT)) {
-            consoleContent.fireAlert();
-          }
-        }
-      }, consoleContent);
-    }
+    attachNotificationTo(consoleContent);
+
     session.getDebugProcess().registerAdditionalContent(myUi);
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
     myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);

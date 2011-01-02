@@ -163,6 +163,22 @@ public class GithubUtil {
     return false;
   }
 
+  public static boolean checkCredentials(final Project project) {
+    try {
+      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          final GithubSettings settings = GithubSettings.getInstance();
+          return testConnection(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return false;
+    }
+  }
+
   public static class CancelledException extends RuntimeException {}
 
   /**
@@ -253,6 +269,7 @@ public class GithubUtil {
 
   @Nullable
   public static GitRemote getGithubBoundRepository(final Project project){
+    final boolean b = GithubUtil.testConnection(GithubSettings.getInstance().getLogin(), GithubSettings.getInstance().getPassword());
     final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);

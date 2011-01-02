@@ -146,6 +146,7 @@ public class AllClassesGetter {
     final Set<String> qnames = new THashSet<String>();
 
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(context.getProject());
+    final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
 
     AllClassesSearch.search(scope, context.getProject(), new Condition<String>() {
       public boolean value(String s) {
@@ -154,7 +155,8 @@ public class AllClassesGetter {
     }).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
-        if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope)) {
+        if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope, pkgContext)) {
+          qnames.add(psiClass.getQualifiedName());
           consumer.consume(psiClass);
         }
         return true;
@@ -177,8 +179,8 @@ public class AllClassesGetter {
   }
 
   private static boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
-                             @NotNull final PsiClass psiClass,
-                             final boolean filterByScope) {
+                                    @NotNull final PsiClass psiClass,
+                                    final boolean filterByScope, final boolean pkgContext) {
     ProgressManager.checkCanceled();
 
     if (!context.isValid() || !psiClass.isValid()) return false;
@@ -188,11 +190,11 @@ public class AllClassesGetter {
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
 
-    if (!(psiClass instanceof PsiCompiledElement) || !filterByScope ||
-        JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass)) {
-      return qnames.add(qualifiedName);
-    }
-    return false;
+    if (qnames.contains(qualifiedName)) return false;
+
+    if (!filterByScope && !(psiClass instanceof PsiCompiledElement)) return true;
+
+    return JavaCompletionUtil.isSourceLevelAccessible(context, psiClass, pkgContext);
   }
 
   public static JavaPsiClassReferenceElement createLookupItem(@NotNull final PsiClass psiClass,

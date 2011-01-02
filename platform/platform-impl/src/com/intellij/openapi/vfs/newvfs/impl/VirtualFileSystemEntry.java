@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ import java.nio.charset.Charset;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
   private static final byte DIRTY_FLAG = 0x01;
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final String EMPTY = "";
 
   private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
@@ -53,8 +54,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   protected static Object encodeName(String name) {
-    byte[] bytes = name.getBytes(UTF_8);
-    return bytes.length < name.length() * 2 ? bytes : name;
+    int length = name.length();
+    if (length == 0) return EMPTY;
+
+    if (!IOUtil.isAscii(name)) return name;
+
+    byte[] bytes = new byte[length];
+    for (int i = 0; i < length; i++) {
+      bytes[i] = (byte)name.charAt(i);
+    }
+    return bytes;
   }
 
   @NotNull
@@ -75,7 +84,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (name instanceof String) {
       return (String)name;
     }
-    return new String((byte[])name, UTF_8);
+
+    byte[] bytes = (byte[])name;
+    int length = bytes.length;
+    char[] chars = new char[length];
+    for (int i = 0; i < length; i++) {
+      chars[i] = (char)bytes[i];
+    }
+    return new String(chars);
   }
 
   protected final Object rawName() {
@@ -96,13 +112,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
     }
 
-    String name = decodeName();
-    if (name.length() > 0) {
-      final int len = builder.length();
-      if (len > 0 && builder.charAt(len - 1) != '/') {
-        builder.append('/');
+    Object o = rawName();
+    if (o == EMPTY) return;
+
+    final int oldLen = builder.length();
+    if (oldLen > 0 && builder.charAt(oldLen - 1) != '/') {
+      builder.append('/');
+    }
+
+    if (o instanceof String) {
+      builder.append((String)o);
+    } else {
+      byte[] bytes = (byte[]) o;
+      int len = bytes.length;
+      int start = builder.length();
+      builder.setLength(start + len);
+      for (int i = 0; i < len; i++) {
+        builder.setCharAt(start + i, (char)bytes[i]);
       }
-      builder.append(name);
     }
   }
 

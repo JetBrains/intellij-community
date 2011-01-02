@@ -119,7 +119,7 @@ public class IOUtil {
     return new String(chars);
   }
 
-  static boolean isAscii(final String str) {
+  public static boolean isAscii(final String str) {
     for (int i = 0; i != str.length(); ++ i) {
       final char c = str.charAt(i);
       if (c < 0 || c >= 128) {

@@ -181,14 +181,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @NotNull
   public PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project) {
     final ModulePointer pointer = ModulePointerManager.getInstance(project).create(moduleName);
-    return new ModuleOutputPackagingElement(project, pointer);
+    return new ModuleOutputPackagingElementImpl(project, pointer);
   }
 
   @NotNull
   @Override
   public PackagingElement<?> createModuleOutput(@NotNull Module module) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(module.getProject()).create(module);
-    return new ModuleOutputPackagingElement(module.getProject(), modulePointer);
+    return new ModuleOutputPackagingElementImpl(module.getProject(), modulePointer);
   }
 
   @NotNull

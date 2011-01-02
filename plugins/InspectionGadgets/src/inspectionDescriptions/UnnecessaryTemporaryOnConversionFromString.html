@@ -1,9 +1,17 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any instances of unnecessary creation of temporary objects when converting
-from Strings to primitive types.  For example,  <b><font color="#000080">new Integer("3").intValue()</font></b>
-would be reported, and could
-be automatically converted to <b><font color="#000080">Integer.valueOf("3")</font></b>.
-</font><br><small>Powered by InspectionGadgets</small></body>
+This inspection reports unnecessary creation of temporary objects when converting
+from Strings to primitive types.
+<p>
+For example:
+<code><pre>
+    new Integer("3").intValue()
+</pre></code>
+will be reported, and can be automatically converted to:
+<code><pre>
+    Integer.valueOf("3")
+</pre></code>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.completion;
+package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;

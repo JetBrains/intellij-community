@@ -21,7 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
+ /**
  * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends GroovyCompletionTestBase {
@@ -69,7 +69,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testCatchClauseParameter() throws Throwable {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getCause", "getClass");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getStackTrace", "getStackTraceDepth", "getStackTraceElement");
   }
 
   public void testFieldSuggestedOnce1() throws Throwable {
@@ -406,5 +406,46 @@ format<caret>"""
     myFixture.type '='
     myFixture.checkResult "int xxx, xxy; xxx = <caret>"
   }
+
+  public void testOnlyAnnotationsAfterAt() {
+    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.configureByText "a.groovy", "@Abcd<caret> class A {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "@AbcdAnno<caret> class A {}"
+  }
+
+  public void testOnlyAnnotationsAfterAtInMethodParameters() {
+    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.configureByText "a.groovy", "def foo(@Abcd<caret> ) {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
+  }
+
+  public void testOnlyExceptionsInCatch() {
+    myFixture.addClass "package foo; public class AbcdClass {}; public class AbcdException extends Throwable {}"
+    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
+    myFixture.completeBasic()
+    myFixture.checkResult """import foo.AbcdException
+
+try {} catch (AbcdException"""
+  }
+
+  public void testOnlyExceptionsInCatch2() {
+    myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
+    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret> e) {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "try {} catch (AbcdException<caret> e) {}"
+  }
+
+  public void testTopLevelClassesFromPackaged() throws Throwable {
+    myFixture.addClass "public class Fooooo {}"
+    final text = "package foo; class Bar { Fooo<caret> }"
+    def file = myFixture.addFileToProject("foo/Bar.groovy", text)
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+    assertEmpty myFixture.completeBasic()
+    myFixture.checkResult text
+  }
+
+
 
 }

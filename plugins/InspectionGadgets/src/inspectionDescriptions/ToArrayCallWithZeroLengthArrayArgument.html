@@ -1,11 +1,12 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any call to <b><font color="#000080">toArray()</font></b>
-on an object of type or subtype <b><font color="#000080">java.util.Collection</font></b>
+This inspection reports any call to <b>toArray()</b>
+on an object of type or subtype <b>java.util.Collection</b>
 with a zero-length array argument. When passing in an array of too small size, the 
-<b><font color="#000080">toArray()</font></b> method has to construct a new array of
+<b>toArray()</b> method has to construct a new array of
 the right size using reflection. This has significantly worse performance than passing
 in an array of at least the size of the collection itself.
-</font><br><small>Powered by InspectionGadgets</small></body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

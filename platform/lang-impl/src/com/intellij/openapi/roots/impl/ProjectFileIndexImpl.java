@@ -16,14 +16,12 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -89,7 +87,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isIgnored(@NotNull VirtualFile file) {
-    if (myFileTypeManager.isFileIgnored(file.getName())) return true;
+    if (myFileTypeManager.isFileIgnored(file)) return true;
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return false;
 
@@ -157,14 +155,14 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
     if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
-    if (myFileTypeManager.isFileIgnored(file.getName())) return false;
+    if (myFileTypeManager.isFileIgnored(file)) return false;
     return isInSourceContent(file);
   }
 
   public boolean isLibraryClassFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
     if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.CLASS) return false;
-    if (myFileTypeManager.isFileIgnored(file.getName())) return false;
+    if (myFileTypeManager.isFileIgnored(file)) return false;
     VirtualFile parent = file.getParent();
     DirectoryInfo parentInfo = getInfoForDirectory(parent);
     return parentInfo != null && parentInfo.libraryClassRoot != null;
@@ -244,7 +242,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
         return info != null && info.module != null;
       }
       else {
-        return !myFileTypeManager.isFileIgnored(file.getName());
+        return !myFileTypeManager.isFileIgnored(file);
       }
     }
   }

@@ -257,7 +257,7 @@ public class DeleteHandler {
    * Fills readOnlyFiles with VirtualFiles
    */
   private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList<VirtualFile> readOnlyFiles, final FileTypeManager ftManager) {
-    if (ftManager.isFileIgnored(file.getName())) return;
+    if (ftManager.isFileIgnored(file)) return;
     if (!file.isWritable()) {
       readOnlyFiles.add(file);
     }

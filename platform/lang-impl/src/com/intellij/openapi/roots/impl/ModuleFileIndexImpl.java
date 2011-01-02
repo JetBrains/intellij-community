@@ -68,7 +68,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory()
            && myFileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA
-           && !myFileTypeManager.isFileIgnored(file.getName())
+           && !myFileTypeManager.isFileIgnored(file)
            && isInSourceContent(file);
   }
 
@@ -153,7 +153,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         return info != null && myModule.equals(info.module);
       }
       else {
-        return !myFileTypeManager.isFileIgnored(file.getName());
+        return !myFileTypeManager.isFileIgnored(file);
       }
     }
   }

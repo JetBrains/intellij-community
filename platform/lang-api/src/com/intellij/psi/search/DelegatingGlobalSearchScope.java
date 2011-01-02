@@ -114,8 +114,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + myBaseScope.hashCode();
+    int result = myBaseScope.hashCode();
     result = 31 * result + myEquality.hashCode();
     return result;
   }

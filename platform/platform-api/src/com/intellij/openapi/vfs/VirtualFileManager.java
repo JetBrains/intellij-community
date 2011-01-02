@@ -49,6 +49,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    *
    * @return array of {@link VirtualFileSystem} objects
    */
+  @NotNull
   public abstract VirtualFileSystem[] getFileSystems();
 
   /**
@@ -118,7 +119,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
    */
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable);
+  public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Removes listener form the file system.
@@ -173,7 +174,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
     return url.substring(index + "://".length());
   }
 
-  public abstract void addVirtualFileManagerListener(VirtualFileManagerListener listener);
+  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
-  public abstract void removeVirtualFileManagerListener(VirtualFileManagerListener listener);
+  public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 }

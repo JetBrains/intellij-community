@@ -332,9 +332,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
 
-    //if (myListenerToPointersMap.isEmpty()) {
-    //  System.err.println("All pointers are disposed");
-    //}
     synchronized (myContainers) {
       if (!myContainers.isEmpty()) {
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();

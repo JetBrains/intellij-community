@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.rebase.GitRebaseDialog;
+import git4idea.ui.GitUIUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,8 +57,10 @@ public class GithubRebaseDialog extends GitRebaseDialog {
     // Preselect remote master
     final String preselected = "/" + originName + "/master";
     for (GitBranch remoteBranch : myRemoteBranches) {
-      if (remoteBranch.getFullName().endsWith(preselected)){
+      final String branchFullName = remoteBranch.getFullName();
+      if (branchFullName.endsWith(preselected)){
         myOntoComboBox.setSelectedItem(remoteBranch);
+        GitUIUtil.getTextField(myOntoComboBox).setText(branchFullName);
         break;
       }
     }

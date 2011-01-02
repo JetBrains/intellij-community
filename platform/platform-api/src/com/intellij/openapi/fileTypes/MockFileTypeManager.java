@@ -62,6 +62,11 @@ class MockFileTypeManager extends FileTypeManager {
     return false;
   }
 
+  @Override
+  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+    return false;
+  }
+
   @NotNull
   @Override
   public String[] getAssociatedExtensions(@NotNull FileType type) {

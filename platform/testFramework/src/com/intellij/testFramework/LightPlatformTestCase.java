@@ -372,6 +372,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         return null;
       }
 
+      @Override
+      public InspectionProfileEntry getToolById(String id, PsiElement element) {
+        if (availableInspectionTools.containsKey(id)) {
+          return availableInspectionTools.get(id);
+        }
+        return null;
+      }
     };
     final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
     inspectionProfileManager.addProfile(profile);

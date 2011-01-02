@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -141,6 +142,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
       final Map<PsiElement, PsiElement> oldToNewMap = new HashMap<PsiElement, PsiElement>();
       for (final PsiElement element : myElementsToMove) {
+        final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
+
         if (element instanceof PsiDirectory) {
           MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, myNewParent);
           for (PsiElement psiElement : element.getChildren()) {
@@ -160,7 +163,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           movedFiles.add(moving);
         }
 
-        getTransaction().getElementListener(element).elementMoved(element);
+        elementListener.elementMoved(element);
       }
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       Arrays.sort(usages, new Comparator<UsageInfo>() {

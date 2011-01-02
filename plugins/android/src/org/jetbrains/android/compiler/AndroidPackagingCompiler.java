@@ -15,7 +15,6 @@
  */
 package org.jetbrains.android.compiler;
 
-import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
@@ -32,6 +31,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,18 +122,26 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
 
-            IAndroidTarget target = configuration.getAndroidTarget();
-            String sdkPath = configuration.getSdkPath();
-            String outputPath = facet.getApkPath();
-            if (target != null && sdkPath != null && outputPath != null) {
-              AptPackagingItem item =
-                new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
-              item.setNativeLibsFolders(collectNativeLibsFolders(facet));
-              item.setClassesDexPath(classesDexPath);
-              item.setSourceRoots(sourceRoots);
-              item.setExternalLibraries(externalJars);
-              items.add(item);
+            AndroidPlatform platform = configuration.getAndroidPlatform();
+            if (platform == null) {
+              context.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+              continue;
             }
+            String sdkPath = platform.getSdk().getLocation();
+            String outputPath = facet.getApkPath();
+            if (outputPath == null) {
+              context.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.apk.path.not.specified", module.getName()), null, -1, -1);
+              continue;
+            }
+            AptPackagingItem item =
+              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK);
+            item.setNativeLibsFolders(collectNativeLibsFolders(facet));
+            item.setClassesDexPath(classesDexPath);
+            item.setSourceRoots(sourceRoots);
+            item.setExternalLibraries(externalJars);
+            items.add(item);
           }
         }
       }

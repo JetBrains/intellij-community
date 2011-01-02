@@ -140,11 +140,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
       final List<Object> chosenElements = getChosenElements();
       if (chosenElements != null) {
-        for (Object element : chosenElements) {
-          myActionListener.elementChosen(element);
-          String text = myModel.getFullName(element);
-          if (text != null) {
-            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+        if (myActionListener instanceof MultiElementsCallback) {
+          ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
+        } else {
+          for (Object element : chosenElements) {
+            myActionListener.elementChosen(element);
+            String text = myModel.getFullName(element);
+            if (text != null) {
+              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+            }
           }
         }
       } else {

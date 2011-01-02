@@ -69,12 +69,6 @@ abstract class HgAbstractGlobalAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-
-    HgVcs vcs = (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
-
-    if (!vcs.isStarted()) {
-      presentation.setEnabled(false);
-    }
   }
 
   private List<VirtualFile> findRepos(Project project) {

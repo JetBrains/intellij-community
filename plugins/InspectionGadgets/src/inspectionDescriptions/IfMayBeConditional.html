@@ -1,22 +1,22 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection reports any <b><font color="#000080">if</font></b>
-statements with then and <b><font color="#000080">else</font></b> branches which
-are both assignment expressions or both <b><font color="#000080">return</font></b>
+This inspection reports any <b>if</b>
+statements with then and <b>else</b> branches which
+are both assignment expressions or both <b>return</b>
 statements. The same semantics can be expressed more compactly, and arguably
 more clearly, with a conditional expression. Example:
-</font>
 <pre>
-  <b><font color="#000080">if</font></b> (foo == null) {
+  <b>if</b> (foo == null) {
     bar = null;
-  } <b><font color="#000080">else</font></b> {
+  } <b>else</b> {
     bar = foo.get();
   }
 </pre>
-<font face="verdana" size="-1">may be expressed as:</font>
+may be expressed as:
 <pre>
-  bar = foo ==  null ? null : foo.get();
+  bar = foo == null ? null : foo.get();
 </pre>
-<br><small>Powered by InspectionGadgets</small></body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

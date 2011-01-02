@@ -103,10 +103,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
 
-  private static ProjectManagerListener[] getListeners(Project project) {
+  @NotNull
+  private static List<ProjectManagerListener> getListeners(Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
-    if (array == null) return ProjectManagerListener.EMPTY_ARRAY;
-    return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
+    if (array == null) return Collections.emptyList();
+    return array;
   }
 
   public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
@@ -127,7 +128,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     addProjectManagerListener(
       new ProjectManagerListener() {
-
         public void projectOpened(final Project project) {
           MessageBus messageBus = project.getMessageBus();
           MessageBusConnection connection = messageBus.connect(project);
@@ -141,23 +141,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           });
 
           busPublisher.projectOpened(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectOpened(project);
           }
         }
 
         public void projectClosed(Project project) {
           busPublisher.projectClosed(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectClosed(project);
           }
         }
 
         public boolean canCloseProject(Project project) {
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             if (!listener.canCloseProject(project)) {
               return false;
             }
@@ -167,8 +164,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
         public void projectClosing(Project project) {
           busPublisher.projectClosing(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectClosing(project);
           }
         }
@@ -974,7 +970,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
-      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, new ArrayList<ProjectManagerListener>());
+      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createEmptyCOWList());
     }
     listeners.add(listener);
   }

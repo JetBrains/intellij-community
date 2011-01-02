@@ -241,38 +241,59 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           if (!isToCompileModule(module, configuration)) {
             continue;
           }
-          Manifest manifest = facet.getManifest();
+
+          IAndroidTarget target = configuration.getAndroidTarget();
+          if (target == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+            continue;
+          }
 
           String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet);
+          if (resPaths.length <= 0) {
+            continue;
+          }
 
           VirtualFile assetsDir = !configuration.LIBRARY_PROJECT ? AndroidRootUtil.getAssetsDir(module) : null;
 
-          if (manifest != null && resPaths.length > 0) {
-            String packageName = manifest.getPackage().getValue();
-            if (packageName != null) {
-              packageName = packageName.trim();
-              if (packageName.length() > 0) {
-                String sourceRootPath = facet.getAptGenSourceRootPath();
-                if (sourceRootPath != null) {
-                  IAndroidTarget target = configuration.getAndroidTarget();
-                  if (target != null) {
-                    AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
-                    String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
-                    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
-                    if (manifestFile != null) {
-                      String manifestPath = manifestFile.getPath();
-                      items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
-                                                      packageName, false));
+          VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
+          if (manifestFile == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
+                                 null, -1, -1);
+            continue;
+          }
 
-                      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-                        items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
-                                                        libPackage, true));
-                      }
-                    }
-                  }
-                }
-              }
-            }
+          Manifest manifest = AndroidUtils.loadDomElement(module, manifestFile, Manifest.class);
+          if (manifest == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR, "Cannot parse file", manifestFile.getUrl(), -1, -1);
+            continue;
+          }
+
+          String packageName = manifest.getPackage().getValue();
+          if (packageName != null) {
+            packageName = packageName.trim();
+          }
+          if (packageName == null || packageName.length() <= 0) {
+            myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("package.not.found.error"), manifestFile.getUrl(),
+                                 -1, -1);
+            continue;
+          }
+          String sourceRootPath = facet.getAptGenSourceRootPath();
+          if (sourceRootPath == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
+            continue;
+          }
+          AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
+          String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
+
+          String manifestPath = manifestFile.getPath();
+          items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+                                        packageName, false));
+
+          for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
+            items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+                                            libPackage, true));
           }
         }
       }

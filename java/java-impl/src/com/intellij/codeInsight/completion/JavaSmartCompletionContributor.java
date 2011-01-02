@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -41,7 +40,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -76,13 +78,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           psiElement().withText(PsiKeyword.NEW).andNot(
               psiElement().afterLeaf(
                   psiElement().withText(PsiKeyword.THROW))));
-  static final ElementPattern<PsiElement> AFTER_THROW_NEW =
-      psiElement().afterLeaf(
-          psiElement().withText(PsiKeyword.NEW).afterLeaf(
-              psiElement().withText(PsiKeyword.THROW)));
+  static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
   private static final OrFilter THROWABLE_TYPE_FILTER = new OrFilter(
       new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
-      new AssignableFromFilter("java.lang.RuntimeException"));
+      new AssignableFromFilter(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
         psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)),
         psiElement().inside(PsiClassObjectAccessExpression.class),
