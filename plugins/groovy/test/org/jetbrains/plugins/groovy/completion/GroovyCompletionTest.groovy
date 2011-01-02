@@ -69,7 +69,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testCatchClauseParameter() throws Throwable {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getStackTrace", "getStackTraceDepth", "getStackTraceElement");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getCause", "getClass");
   }
 
   public void testFieldSuggestedOnce1() throws Throwable {

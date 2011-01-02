@@ -167,6 +167,6 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testImplicitCallMethod() {
-    assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).getType());
+    assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).getType().getCanonicalText());
   }
 }
