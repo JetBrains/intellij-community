@@ -21,7 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.util.TestUtils
 
- /**
+/**
  * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends GroovyCompletionTestBase {

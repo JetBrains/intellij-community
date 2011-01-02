@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -166,6 +167,7 @@ public class ResolveUtil {
 
   private static final Key<PsiType> COMPARABLE = Key.create(CommonClassNames.JAVA_LANG_COMPARABLE);
   private static final Key<PsiType> SERIALIZABLE = Key.create(CommonClassNames.JAVA_IO_SERIALIZABLE);
+  private static final Key<PsiType> STRING = Key.create(CommonClassNames.JAVA_LANG_STRING);
 
   private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
     String qName = rawCanonicalText(type);
@@ -184,6 +186,10 @@ public class ResolveUtil {
       PsiType serializable = createTypeFromText(project, SERIALIZABLE, CommonClassNames.JAVA_IO_SERIALIZABLE);
       collectSuperTypes(comparable, visited, project);
       collectSuperTypes(serializable, visited, project);
+    }
+
+    if (GrStringUtil.GROOVY_LANG_GSTRING.equals(qName)) {
+      collectSuperTypes(createTypeFromText(project, STRING, CommonClassNames.JAVA_LANG_STRING), visited, project);
     }
 
   }

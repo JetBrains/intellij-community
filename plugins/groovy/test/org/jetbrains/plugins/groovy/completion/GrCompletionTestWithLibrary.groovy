@@ -78,4 +78,8 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testIteratorNext() {
     doVariantableTest "next", "notify", "notifyAll"
   }
+
+  public void testGstringExtendsString() {
+    myFixture.testCompletionVariants getTestName(false)+".groovy", "stripIndent", "stripIndent", "stripIndentFromLine"
+  }
 }
