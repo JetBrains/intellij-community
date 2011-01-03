@@ -22,26 +22,20 @@ Groovy script
       Compound Gstring
         PsiElement(Gstring begin)('"""')
         PsiElement(Gstring content)('DELIMITER ')
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
+        GString injection
+          PsiElement($)('$')
+          PsiErrorElement:Identifier or code block expected
+            PsiElement($)('$')
         PsiElement(Gstring content)('\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`')
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
+        GString injection
+          PsiElement($)('$')
+          PsiErrorElement:Identifier or code block expected
+            PsiElement($)('$')
         PsiElement(Gstring content)('\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END')
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
-        PsiElement($)('$')
-        PsiErrorElement:Identifier or code block expected
-          <empty list>
+        GString injection
+          PsiElement($)('$')
+          PsiErrorElement:Identifier or code block expected
+            PsiElement($)('$')
         PsiElement(Gstring content)('\n\nDELIMITER ;')
         PsiElement(Gstring end)('"""')
   PsiElement(;)(';')

@@ -18,10 +18,7 @@ Groovy script
       PsiElement(Gstring content)('My ')
       GString injection
         PsiElement($)('$')
-        Reference expression
-          Reference expression
-            PsiElement(identifier)('import')
-          PsiElement(.)('.')
-          PsiElement(identifier)('bugaga')
-      PsiElement(Gstring content)(' aga')
+        PsiErrorElement:Identifier or code block expected
+          PsiElement(import)('import')
+      PsiElement(Gstring content)('.bugaga aga')
       PsiElement(Gstring end)('"')
