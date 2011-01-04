@@ -82,4 +82,8 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testGstringExtendsString() {
     myFixture.testCompletionVariants getTestName(false)+".groovy", "stripIndent", "stripIndent", "stripIndentFromLine"
   }
+
+  public void testCompletionInEachClosure() {
+    myFixture.testCompletionVariants getTestName(false)+".groovy", "intValue", "intdiv", "intdiv"
+  }
 }
