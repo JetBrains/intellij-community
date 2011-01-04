@@ -135,8 +135,16 @@ public class PsiUtil {
     }
 
     //check for default constructor
-    if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+    if (method.isConstructor()) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0 && argumentTypes.length == 1) {
+        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+      }
+      if (parameters.length == 1 &&
+          argumentTypes.length == 0 &&
+          InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
+        return false;
+      }
     }
     LOG.assertTrue(signature != null);
     if (GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place)) {
