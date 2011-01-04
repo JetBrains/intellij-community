@@ -294,4 +294,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.copyFileToProject(getTestName(false)+".java");
     doTest();
   }
+
+  public void testMapParamWithNoArgs() {doTest(new GroovyAssignabilityCheckInspection());}
 }
