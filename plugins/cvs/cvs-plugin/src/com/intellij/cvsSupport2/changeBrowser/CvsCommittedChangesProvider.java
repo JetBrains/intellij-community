@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,15 +195,15 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
         dateFrom = calendar.getTime();
       }
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
-      final Set<Date> controlSet = new HashSet<Date>();
+      final Set<CvsChangeList> controlSet = new HashSet<CvsChangeList>();
       final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
         public void consume(LogInformationWrapper wrapper) {
           final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
           if (wrappers != null) {
             for (RevisionWrapper revisionWrapper : wrappers) {
               final CvsChangeList changeList = builder.addRevision(revisionWrapper);
-              if (controlSet.contains(changeList.getCommitDate())) continue;
-              controlSet.add(changeList.getCommitDate());
+              if (controlSet.contains(changeList)) continue;
+              controlSet.add(changeList);
               if (filter.accepts(changeList)) {
                 consumer.consume(changeList);
               }
