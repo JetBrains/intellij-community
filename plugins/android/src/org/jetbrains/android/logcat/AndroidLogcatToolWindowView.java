@@ -149,13 +149,14 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       }
     };
     mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
+    JComponent consoleComponent = myLogConsole.getComponent();
     DefaultActionGroup group = new DefaultActionGroup();
     group.addAll(myLogConsole.getToolbarActions());
     group.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
     final JComponent tbComp =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent();
     myConsoleWrapper.add(tbComp, BorderLayout.WEST);
-    myConsoleWrapper.add(myLogConsole.getComponent(), BorderLayout.CENTER);
+    myConsoleWrapper.add(consoleComponent, BorderLayout.CENTER);
     Disposer.register(this, myLogConsole);
     myClearLogButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
