@@ -18,6 +18,7 @@ package org.jetbrains.android.resourceManagers;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.android.AndroidFileTemplateProvider;
@@ -250,6 +252,9 @@ public class LocalResourceManager extends ResourceManager {
     if (resFile == null) return null;
     final Resources resources = loadDomElement(myModule, resFile, Resources.class);
     if (resources == null) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new IncorrectOperationException("invalid strings.xml");
+      }
       Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("not.resource.file.error", resourceFileName),
                                CommonBundle.getErrorTitle());
       return null;
