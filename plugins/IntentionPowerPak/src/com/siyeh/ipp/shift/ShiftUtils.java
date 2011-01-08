@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,10 @@ class ShiftUtils{
     public static int getExpBase2(PsiExpression rhs){
         final PsiLiteralExpression literal = (PsiLiteralExpression) rhs;
         final Object value = literal.getValue();
-        final int intValue = ((Number) value).intValue();
+        if (value == null) {
+            return 0;
+        }
+        final int intValue = ((Number) value).intValue() & 31;
         int exp = 1;
         for(int i = 0; i < intValue; i++){
             exp <<= 1;
