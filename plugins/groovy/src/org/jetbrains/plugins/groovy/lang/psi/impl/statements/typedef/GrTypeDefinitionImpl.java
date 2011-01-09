@@ -544,7 +544,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrModifierList getModifierList() {
-    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
