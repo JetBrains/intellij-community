@@ -109,8 +109,8 @@ public class GroovyToJavaGenerator {
   }
 
   public Collection<VirtualFile> generateItems(final VirtualFile item, final VirtualFile outputRootDirectory) {
-    ProgressIndicator indicator = getProcessIndicator();
-    if (indicator != null) indicator.setText("Generating stubs for " + item.getName() + "...");
+    ProgressIndicator indicator = myContext.getProgressIndicator();
+    indicator.setText("Generating stubs for " + item.getName() + "...");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Generating stubs for " + item.getName() + "...");
@@ -122,10 +122,6 @@ public class GroovyToJavaGenerator {
       }
     });
     return writeStubs(outputRootDirectory, output);
-  }
-
-  protected ProgressIndicator getProcessIndicator() {
-    return myContext.getProgressIndicator();
   }
 
   public Map<String, String> generateStubs(GroovyFile file) {
@@ -243,9 +239,16 @@ public class GroovyToJavaGenerator {
       if (extendsClassesTypes.length > 0) {
         text.append("extends ").append(getTypeText(extendsClassesTypes[0], typeDefinition, false)).append(" ");
       }
-      final List<PsiClassType> implementsTypes =
-        new ArrayList<PsiClassType>(Arrays.asList(typeDefinition.getImplementsListTypes()));
-      implementsTypes.addAll(collectDelegateTypes(typeDefinition));
+
+      final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+      Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
+      for (PsiClass aClass : collectDelegateTypes(typeDefinition)) {
+        if (aClass.isInterface()) {
+          implementsTypes.add(JavaPsiFacade.getElementFactory(myProject).createType(aClass));
+        } else {
+          Collections.addAll(implementsTypes, aClass.getImplementsListTypes());
+        }
+      }
 
       if (!implementsTypes.isEmpty()) {
         text.append(isInterface ? "extends " : "implements ");
@@ -348,18 +351,7 @@ public class GroovyToJavaGenerator {
           final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
           final PsiClass baseClass = method.getContainingClass();
           if (isAbstractInJava(method) && baseClass != null && typeDefinition.isInheritor(baseClass, true)) {
-            final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
-            final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY);
-            for (PsiParameter parameter : method.getParameterList().getParameters()) {
-              builder.addParameter(parameter.getName(), substitutor.substitute(parameter.getType()));
-            }
-            builder.setReturnType(substitutor.substitute(method.getReturnType()));
-            for (String modifier : JAVA_MODIFIERS) {
-              if (method.hasModifierProperty(modifier)) {
-                builder.addModifier(modifier);
-              }
-            }
-            methods.add(builder);
+            methods.add(mirrorMethod(typeDefinition, method, baseClass, JAVA_MODIFIERS));
           }
         }
       }
@@ -372,13 +364,10 @@ public class GroovyToJavaGenerator {
       methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
     }
 
-    for (PsiClassType type : collectDelegateTypes(typeDefinition)) {
-      final PsiClass resolve = type.resolve();
-      if (resolve != null) {
-        for (PsiMethod method : resolve.getAllMethods()) {
-          if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC)) {
-            methods.add(method);
-          }
+    for (PsiClass resolve : collectDelegateTypes(typeDefinition)) {
+      for (PsiMethod method : resolve.getAllMethods()) {
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+          methods.add(mirrorMethod(typeDefinition, method, typeDefinition, PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE));
         }
       }
     }
@@ -386,14 +375,29 @@ public class GroovyToJavaGenerator {
     return methods;
   }
 
-  private static List<PsiClassType> collectDelegateTypes(PsiClass typeDefinition) {
-    final ArrayList<PsiClassType> result = new ArrayList<PsiClassType>();
+  private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition, PsiMethod method, PsiClass baseClass, String... modifierFilter) {
+    final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY);
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(parameter.getType()));
+    }
+    builder.setReturnType(substitutor.substitute(method.getReturnType()));
+    for (String modifier : modifierFilter) {
+      if (method.hasModifierProperty(modifier)) {
+        builder.addModifier(modifier);
+      }
+    }
+    return builder;
+  }
+
+  private static List<PsiClass> collectDelegateTypes(PsiClass typeDefinition) {
+    final ArrayList<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiField field : typeDefinition.getFields()) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList != null && modifierList.findAnnotation("groovy.lang.Delegate") != null) {
         final PsiType type = field.getType();
         if (type instanceof PsiClassType) {
-          result.add((PsiClassType)type);
+          ContainerUtil.addIfNotNull(result, ((PsiClassType)type).resolve());
         }
       }
     }
