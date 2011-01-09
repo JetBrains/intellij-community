@@ -44,6 +44,11 @@ public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrRefere
     super(node);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
+
   public GrReferenceListImpl(final GrReferenceListStub stub, IStubElementType elementType) {
     super(stub, elementType);
   }

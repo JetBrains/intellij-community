@@ -77,6 +77,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     super(stub, nodeType);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitField(this);
   }

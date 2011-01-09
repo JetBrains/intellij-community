@@ -65,6 +65,11 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
     super(stub, nodeType);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getParentByTree();
+  }
+
   @Nullable
   public PsiTypeElement getTypeElement() {
     return null;

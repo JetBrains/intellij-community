@@ -67,6 +67,11 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
     super(node);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
+
   public GrModifierListImpl(GrModifierListStub stub) {
     this(stub, GroovyElementTypes.MODIFIERS);
   }

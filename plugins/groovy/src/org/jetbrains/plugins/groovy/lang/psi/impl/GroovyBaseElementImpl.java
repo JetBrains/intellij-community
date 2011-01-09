@@ -21,12 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas
  */
-public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements GroovyPsiElement {
+public abstract class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements GroovyPsiElement {
 
   protected GroovyBaseElementImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -37,9 +38,7 @@ public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiEl
   }
 
   @Override
-  public PsiElement getParent() {
-    return getParentByStub();
-  }
+  public abstract PsiElement getParent();
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitElement(this);
@@ -47,5 +46,14 @@ public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiEl
 
   public void acceptChildren(GroovyElementVisitor visitor) {
     GroovyPsiElementImpl.acceptGroovyChildren(this, visitor);
+  }
+
+  protected PsiElement getDefinitionParent() {
+    final PsiElement candidate = getParentByStub();
+    if (candidate instanceof GroovyFile) {
+      return candidate;
+    }
+
+    return getParentByTree();
   }
 }
