@@ -16,13 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.Language;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GroovyFileStubBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrScriptClassNameIndex;
@@ -39,12 +40,20 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   }
 
   public StubBuilder getBuilder() {
-    return new GroovyFileStubBuilder();
+    return new DefaultStubBuilder() {
+      protected StubElement createStubForFile(final PsiFile file) {
+        if (file instanceof GroovyFile) {
+          return new GrFileStub((GroovyFile)file);
+        }
+
+        return super.createStubForFile(file);
+      }
+    };
   }
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 7;
+    return super.getStubVersion() + 8;
   }
 
   public String getExternalId() {
