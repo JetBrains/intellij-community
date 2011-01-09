@@ -408,10 +408,6 @@ public class GroovycRunner {
     unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
       public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
         final String name = node.getNameWithoutPackage();
-        if ("package-info".equals(name)) {
-          return;
-        }
-
         System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
         try {
           stubGenerator.generateClass(node);
