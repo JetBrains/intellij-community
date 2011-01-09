@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.javaee.model.annotations.AnnotationModelUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -211,7 +212,7 @@ public class GroovyToJavaGenerator {
     });
   }
 
-  private void writeTypeDefinition(StringBuffer text, @NotNull PsiClass typeDefinition,
+  private void writeTypeDefinition(StringBuffer text, @NotNull final PsiClass typeDefinition,
                                    @Nullable GrPackageDefinition packageDefinition, boolean toplevel) {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
@@ -244,16 +245,19 @@ public class GroovyToJavaGenerator {
       if (extendsClassesTypes.length > 0) {
         text.append("extends ").append(getTypeText(extendsClassesTypes[0], typeDefinition, false)).append(" ");
       }
-      PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
+      final List<PsiClassType> implementsTypes =
+        new ArrayList<PsiClassType>(Arrays.asList(typeDefinition.getImplementsListTypes()));
+      implementsTypes.addAll(collectDelegateTypes(typeDefinition));
 
-      if (implementsTypes.length > 0) {
+      if (!implementsTypes.isEmpty()) {
         text.append(isInterface ? "extends " : "implements ");
-        int i = 0;
-        while (i < implementsTypes.length) {
-          if (i > 0) text.append(", ");
-          text.append(getTypeText(implementsTypes[i], typeDefinition, false)).append(" ");
-          i++;
-        }
+        text.append(StringUtil.join(implementsTypes, new Function<PsiClassType, String>() {
+          @Override
+          public String fun(PsiClassType psiClassType) {
+            return getTypeText(psiClassType, typeDefinition, false);
+          }
+        }, ", "));
+        text.append(" ");
       }
     }
 
@@ -280,7 +284,7 @@ public class GroovyToJavaGenerator {
     text.append("}");
   }
 
-  private void writeAllMethods(StringBuffer text, List<PsiMethod> methods, PsiClass aClass) {
+  private void writeAllMethods(StringBuffer text, Collection<PsiMethod> methods, PsiClass aClass) {
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
       if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
@@ -323,8 +327,8 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private List<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+  private Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
+    Collection<PsiMethod> methods = new LinkedHashSet<PsiMethod>();
     ContainerUtil.addAll(methods, typeDefinition.getMethods());
     if (classDef) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
@@ -356,7 +360,33 @@ public class GroovyToJavaGenerator {
       methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
       methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
     }
+
+    for (PsiClassType type : collectDelegateTypes(typeDefinition)) {
+      final PsiClass resolve = type.resolve();
+      if (resolve != null) {
+        for (PsiMethod method : resolve.getAllMethods()) {
+          if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+            methods.add(method);
+          }
+        }
+      }
+    }
+
     return methods;
+  }
+
+  private static List<PsiClassType> collectDelegateTypes(PsiClass typeDefinition) {
+    final ArrayList<PsiClassType> result = new ArrayList<PsiClassType>();
+    for (PsiField field : typeDefinition.getFields()) {
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList != null && modifierList.findAnnotation("groovy.lang.Delegate") != null) {
+        final PsiType type = field.getType();
+        if (type instanceof PsiClassType) {
+          result.add((PsiClassType)type);
+        }
+      }
+    }
+    return result;
   }
 
   private static boolean isAbstractInJava(PsiMethod method) {

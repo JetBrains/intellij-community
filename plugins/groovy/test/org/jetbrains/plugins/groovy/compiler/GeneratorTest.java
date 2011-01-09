@@ -76,6 +76,11 @@ public void testArrayType1() throws Throwable { doTest(); }
     doTest();
   }
 
+  public void testDelegateAnno() throws Throwable {
+    myFixture.addClass("package groovy.lang; public @interface Delegate {}");
+    doTest();
+  }
+
   public void doTest() throws Exception {
     final String relTestPath = getTestName(true) + ".test";
     final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
