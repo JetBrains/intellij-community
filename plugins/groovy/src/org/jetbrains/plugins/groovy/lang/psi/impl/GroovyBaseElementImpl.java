@@ -18,19 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
@@ -50,37 +41,11 @@ public class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiEl
     return getParentByStub();
   }
 
-  public <T extends GrStatement> T replaceWithStatement(@NotNull T newStmt) {
-    PsiElement parent = getParent();
-    if (parent == null) {
-      throw new PsiInvalidElementAccessException(this);
-    }
-    return (T)replace(newStmt);
-  }
-
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
   public void acceptChildren(GroovyElementVisitor visitor) {
-    PsiElement child = getFirstChild();
-    while (child != null) {
-      if (child instanceof GroovyPsiElement) {
-        ((GroovyPsiElement) child).accept(visitor);
-      }
-
-      child = child.getNextSibling();
-    }
+    GroovyPsiElementImpl.acceptGroovyChildren(this, visitor);
   }
-
-  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    CompositeElement treeElement = (CompositeElement)getNode();
-    assert treeElement.getTreeParent() != null;
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(newElement);
-    treeElement.getTreeParent().replaceChildInternal(treeElement, elementCopy);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
-  }
-
 }
