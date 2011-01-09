@@ -15,14 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.psi.impl.search.IndexPatternBuilder;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lexer.Lexer;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.search.IndexPatternBuilder;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -37,18 +38,14 @@ public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
     }
 
     public TokenSet getCommentTokenSet(PsiFile file) {
-        return GroovyTokenTypes.COMMENT_SET;
+      return TokenSets.ALL_COMMENT_TOKENS;
     }
 
     public int getCommentStartDelta(IElementType tokenType) {
-      if (tokenType == GroovyTokenTypes.GROOVY_DOC_COMMENT) {
-        return 3; //     /** Comment */
-      }
-
-      return 2;
+      return 0;
     }
 
     public int getCommentEndDelta(IElementType tokenType) {
-      return (tokenType == GroovyTokenTypes.mML_COMMENT || tokenType == GroovyTokenTypes.GROOVY_DOC_COMMENT) ? 2 : 0;
+      return tokenType == GroovyTokenTypes.mML_COMMENT ? 2 : 0;
     }
 }
