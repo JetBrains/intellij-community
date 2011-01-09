@@ -20,6 +20,7 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -190,6 +191,9 @@ public class GroovyToJavaGenerator {
       writeTypeDefinition(text, typeDefinition, packageDefinition, true);
 
       output.put(getPackageDirectory(packageDefinition) + typeDefinition.getName() + "." + "java", text.toString());
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
