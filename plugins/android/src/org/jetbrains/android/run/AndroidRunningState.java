@@ -279,6 +279,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     IDevice targetDevice = null;
     for (IDevice device : devices) {
       Boolean compatible = isMyCompatibleDevice(device);
+      if (compatible == Boolean.FALSE) {
+        continue;
+      }
       if (targetDevice == null ||
           (targetDevice.isEmulator() && !device.isEmulator()) ||
           (targetDevice.isEmulator() == device.isEmulator() && !exactlyCompatible)) {

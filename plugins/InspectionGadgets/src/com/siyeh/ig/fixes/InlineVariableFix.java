@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,22 @@ public class InlineVariableFix extends InspectionGadgetsFix {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiLocalVariable variable =
                 (PsiLocalVariable) nameElement.getParent();
-        final PsiExpression initializer = variable.getInitializer();
+        PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
             return;
+        }
+        if (initializer instanceof PsiArrayInitializerExpression) {
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
+            final PsiType type = initializer.getType();
+            final String typeText;
+            if (type == null) {
+                typeText = "";
+            } else {
+                typeText = type.getCanonicalText();
+            }
+            initializer = factory.createExpressionFromText("new " + typeText +
+                    initializer.getText(), variable);
         }
         final PsiMember member =
                 PsiTreeUtil.getParentOfType(variable, PsiMember.class);

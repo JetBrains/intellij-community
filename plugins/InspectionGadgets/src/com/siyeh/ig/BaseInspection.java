@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
@@ -265,6 +266,9 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     @Override
     public void projectOpened(Project project) {
         super.projectOpened(project);
+        if (inspectionGadgetsPlugin != null) {
+          return;
+        }
         final Application application = ApplicationManager.getApplication();
         inspectionGadgetsPlugin = (InspectionGadgetsPlugin)
                 application.getComponent("InspectionGadgets");
@@ -273,6 +277,9 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     @Override
     public void projectClosed(Project project) {
         super.projectClosed(project);
-        inspectionGadgetsPlugin = null;
+        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+        if (openProjects.length == 0) {
+            inspectionGadgetsPlugin = null;
+        }
     }
 }

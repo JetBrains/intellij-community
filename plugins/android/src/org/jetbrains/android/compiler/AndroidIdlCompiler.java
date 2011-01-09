@@ -19,7 +19,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -62,12 +61,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return EMPTY_GENERATION_ITEM_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
@@ -164,8 +158,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
         return EMPTY_GENERATION_ITEM_ARRAY;
       }
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      CompileScope compileScope = myContext.getCompileScope();
-      VirtualFile[] files = compileScope.getFiles(AndroidIdlFileType.ourFileType, false);
+      VirtualFile[] files = myContext.getProjectCompileScope().getFiles(AndroidIdlFileType.ourFileType, false);
       List<GenerationItem> items = new ArrayList<GenerationItem>(files.length);
       for (VirtualFile file : files) {
         Module module = myContext.getModuleByFile(file);

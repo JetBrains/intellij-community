@@ -36,8 +36,10 @@ import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.ddms.AdbManager;
 import org.jetbrains.android.ddms.AdbNotRespondingException;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -147,13 +149,14 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
       }
     };
     mySearchComponentWrapper.add(myLogConsole.getSearchComponent());
+    JComponent consoleComponent = myLogConsole.getComponent();
     DefaultActionGroup group = new DefaultActionGroup();
     group.addAll(myLogConsole.getToolbarActions());
     group.add(new AndroidEnableDdmsAction(AndroidUtils.DDMS_ICON));
     final JComponent tbComp =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent();
     myConsoleWrapper.add(tbComp, BorderLayout.WEST);
-    myConsoleWrapper.add(myLogConsole.getComponent(), BorderLayout.CENTER);
+    myConsoleWrapper.add(consoleComponent, BorderLayout.CENTER);
     Disposer.register(this, myLogConsole);
     myClearLogButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -208,10 +211,22 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
     }
   }
 
+  @Nullable
+  private static AndroidPlatform getAndroidPlatform(@NotNull Project project) {
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    for (AndroidFacet facet : facets) {
+      AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+      if (platform != null) {
+        return platform;
+      }
+    }
+    return null;
+  }
+
   private void updateDevices() {
-    List<AndroidFacet> facets = ProjectFacetManager.getInstance(myProject).getFacets(AndroidFacet.ID);
-    if (facets.size() > 0) {
-      final AndroidDebugBridge debugBridge = facets.get(0).getDebugBridge();
+    AndroidPlatform platform = getAndroidPlatform(myProject);
+    if (platform != null) {
+      final AndroidDebugBridge debugBridge = platform.getSdk().getDebugBridge(myProject);
       if (debugBridge != null) {
         IDevice[] devices;
         try {

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FileEditorProvider {
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<FileEditorProvider>("com.intellij.fileEditorProvider");
+  Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
   /**
    * @param file file to be tested for acceptance. This

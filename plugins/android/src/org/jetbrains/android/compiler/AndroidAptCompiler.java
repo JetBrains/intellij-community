@@ -18,11 +18,11 @@ package org.jetbrains.android.compiler;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -63,12 +63,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return EMPTY_GENERATION_ITEM_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
@@ -231,8 +226,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (myContext.getProject().isDisposed()) {
         return EMPTY_GENERATION_ITEM_ARRAY;
       }
-      CompileScope compileScope = myContext.getCompileScope();
-      Module[] modules = compileScope.getAffectedModules();
+      Module[] modules = ModuleManager.getInstance(myContext.getProject()).getModules();
       List<GenerationItem> items = new ArrayList<GenerationItem>();
       for (Module module : modules) {
         AndroidFacet facet = AndroidFacet.getInstance(module);

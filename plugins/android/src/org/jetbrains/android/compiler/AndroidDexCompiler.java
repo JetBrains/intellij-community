@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -73,13 +74,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      //saveDocuments();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return ProcessingItem.EMPTY_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
@@ -135,8 +130,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
 
     public ProcessingItem[] compute() {
-      CompileScope compileScope = myContext.getCompileScope();
-      Module[] modules = compileScope.getAffectedModules();
+      Module[] modules = ModuleManager.getInstance(myContext.getProject()).getModules();
       List<ProcessingItem> items = new ArrayList<ProcessingItem>();
       for (Module module : modules) {
         AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
