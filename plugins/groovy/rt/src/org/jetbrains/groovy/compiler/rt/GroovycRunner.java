@@ -435,7 +435,7 @@ public class GroovycRunner {
             catch (NoClassDefFoundError e) {
               final String ncdfe = e.getMessage();
               
-              throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name + "; try compiling " + ncdfe + " explicitly", e);
+              throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name, e);
             }
             catch (LinkageError e) {
               throw new RuntimeException("Problem loading class " + name, e);
