@@ -33,8 +33,6 @@ public abstract class GrStubElementType<S extends StubElement, T extends GroovyP
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 
-  public abstract PsiElement createElement(final ASTNode node);
-
   public void indexStub(final S stub, final IndexSink sink) {
   }
 

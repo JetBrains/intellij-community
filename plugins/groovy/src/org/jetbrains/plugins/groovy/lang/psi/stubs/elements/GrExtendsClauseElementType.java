@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -41,10 +40,6 @@ public class GrExtendsClauseElementType extends GrStubElementType<GrReferenceLis
 
   public GrExtendsClauseElementType() {
     super("super class clause");
-  }
-
-  public GrExtendsClause createElement(ASTNode node) {
-    return new GrExtendsClauseImpl(node);
   }
 
   public GrExtendsClause createPsi(GrReferenceListStub stub) {

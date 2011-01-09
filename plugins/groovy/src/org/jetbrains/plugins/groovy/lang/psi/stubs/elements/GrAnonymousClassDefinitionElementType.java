@@ -16,8 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
@@ -26,10 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
  * @author Maxim.Medvedev
  */
 public class GrAnonymousClassDefinitionElementType extends GrTypeDefinitionElementType<GrAnonymousClassDefinition>{
-  @Override
-  public PsiElement createElement(ASTNode node) {
-    return new GrAnonymousClassDefinitionImpl(node);
-  }
 
   @Override
   public GrAnonymousClassDefinition createPsi(GrTypeDefinitionStub stub) {

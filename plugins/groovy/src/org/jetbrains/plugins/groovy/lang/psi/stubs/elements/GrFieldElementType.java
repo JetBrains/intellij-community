@@ -15,14 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -34,10 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.ENUM_CONSTANT;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.FIELD;
@@ -49,10 +42,6 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
   public GrFieldElementType() {
     super("field");
-  }
-
-  public PsiElement createElement(ASTNode node) {
-    return new GrFieldImpl(node);
   }
 
   public GrField createPsi(GrFieldStub stub) {

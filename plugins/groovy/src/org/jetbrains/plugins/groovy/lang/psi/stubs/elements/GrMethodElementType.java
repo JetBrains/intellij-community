@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -31,10 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -43,10 +38,6 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
 
   public GrMethodElementType() {
     super("method definition");
-  }
-
-  public GrMethod createElement(ASTNode node) {
-    return new GrMethodImpl(node);
   }
 
   public GrMethod createPsi(GrMethodStub stub) {

@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -36,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -45,10 +42,6 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
 
   public GrEnumConstantElementType() {
     super("Enumeration constant");
-  }
-
-  public PsiElement createElement(ASTNode node) {
-    return new GrEnumConstantImpl(node);
   }
 
   public GrEnumConstant createPsi(GrFieldStub stub) {

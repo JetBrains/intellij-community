@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -35,11 +33,6 @@ import java.io.IOException;
 public class GrModifierListElementType extends GrStubElementType<GrModifierListStub, GrModifierList> {
   public GrModifierListElementType(String debugName) {
     super(debugName);
-  }
-
-  @Override
-  public PsiElement createElement(ASTNode node) {
-    return new GrModifierListImpl(node);
   }
 
   @Override
