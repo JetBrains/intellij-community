@@ -127,7 +127,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   };
 
   private static boolean importAlreadyExists(final PsiMember member, final GroovyFile file, final PsiElement place) {
-    final PsiManager manager = PsiManager.getInstance(file.getProject());
+    final PsiManager manager = file.getManager();
     PsiScopeProcessor processor = new PsiScopeProcessor() {
       @Override
       public boolean execute(PsiElement element, ResolveState state) {
