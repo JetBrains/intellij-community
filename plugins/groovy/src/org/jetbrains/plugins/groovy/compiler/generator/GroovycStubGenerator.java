@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -113,10 +114,20 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
       runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);
     } else {
-      final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
-      for (VirtualFile file : toCompile) {
-        final Collection<VirtualFile> stubFiles = generator.generateItems(file, tempOutput);
-        ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
+      ProgressIndicator indicator = compileContext.getProgressIndicator();
+      indicator.pushState();
+
+      try {
+        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, compileContext, toCompile);
+        for (int i = 0; i < toCompile.size(); i++) {
+          indicator.setFraction((double)i / toCompile.size());
+
+          final Collection<VirtualFile> stubFiles = generator.generateItems(toCompile.get(i), tempOutput);
+          ((CompileContextEx)compileContext).addScope(new FileSetCompileScope(stubFiles, new Module[]{module}));
+        }
+      }
+      finally {
+        indicator.popState();
       }
     }
   }
