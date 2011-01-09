@@ -346,7 +346,7 @@ public class GroovyToJavaGenerator {
   }
 
   private Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
-    Collection<PsiMethod> methods = new LinkedHashSet<PsiMethod>();
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
     ContainerUtil.addAll(methods, typeDefinition.getMethods());
     if (classDef) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
@@ -644,6 +644,15 @@ public class GroovyToJavaGenerator {
     //append return type
     PsiType retType = method.getReturnType();
     if (retType == null) retType = TypesUtil.getJavaLangObject(method);
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
+      for (MethodSignatureBackedByPsiMethod superSignature : superSignatures) {
+        final PsiType superType = superSignature.getSubstitutor().substitute(superSignature.getMethod().getReturnType());
+        if (superType != null && !superType.isAssignableFrom(retType)) {
+          retType = superType;
+        }
+      }
+    }
 
     text.append(getTypeText(retType, method, false));
     text.append(" ");
