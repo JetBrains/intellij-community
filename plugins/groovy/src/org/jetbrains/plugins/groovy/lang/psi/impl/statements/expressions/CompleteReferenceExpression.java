@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -327,6 +328,7 @@ public class CompleteReferenceExpression {
     private final boolean mySkipPackages;
     private final PsiClass myEventListener;
     private final Set<String> myPropertyNames = new HashSet<String>();
+    private final Set<String> myLocalVars = new HashSet<String>();
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -369,8 +371,13 @@ public class CompleteReferenceExpression {
         if (element instanceof PsiMethod) {
           processProperty((PsiMethod)element, result);
         }
-        else if (element instanceof GrField && ((GrField)element).isProperty()) {
-          processPropertyFromField((GrField)element, result);
+        else if (element instanceof GrField) {
+          if (((GrField)element).isProperty()) {
+            processPropertyFromField((GrField)element, result);
+          }
+        }
+        else if (element instanceof GrVariable && ((GrVariable)element).getName()!=null) {
+          myLocalVars.add(((GrVariable)element).getName());
         }
       }
       else {
@@ -431,7 +438,10 @@ public class CompleteReferenceExpression {
       myPropertyNames.removeAll(myPreferredFieldNames);
       for (GroovyResolveResult result : results) {
         final PsiElement element = result.getElement();
-        if (element instanceof PsiField && myPropertyNames.contains(((PsiField)element).getName())) continue;
+        if (element instanceof PsiField &&
+            (myPropertyNames.contains(((PsiField)element).getName()) || myLocalVars.contains(((PsiField)element).getName()))) {
+          continue;
+        }
         list.add(result);
       }
       return list.toArray(new GroovyResolveResult[list.size()]);

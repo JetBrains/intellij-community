@@ -446,6 +446,28 @@ try {} catch (AbcdException"""
     myFixture.checkResult text
   }
 
+  public void testLocalVarOverlaysField() {
+    myFixture.configureByText "a.groovy", """
+class A {
+  def myVar = 2
 
+  def foo() {
+    def myVar = 3
+    print myVa<caret>
+  }
+}"""
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+  def myVar = 2
+
+  def foo() {
+    def myVar = 3
+    print myVar<caret>
+  }
+}"""
+
+  }
 
 }
