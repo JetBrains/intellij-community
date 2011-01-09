@@ -90,7 +90,11 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String idText, PsiElement context) ;
 
-  public abstract GrCodeReferenceElement createReferenceElementFromText(String refName);
+  public GrCodeReferenceElement createReferenceElementFromText(String refName) {
+    return createReferenceElementFromText(refName, null);
+  }
+
+  public abstract GrCodeReferenceElement createReferenceElementFromText(String refName, PsiElement context);
 
   public abstract GrExpression createExpressionFromText(String exprText);
 

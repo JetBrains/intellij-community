@@ -112,8 +112,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return PsiTreeUtil.getChildOfType(tag, GrDocReferenceElement.class);
   }
 
-  public GrCodeReferenceElement createReferenceElementFromText(String refName) {
-    PsiFile file = createGroovyFile("(" + refName + " " + ")foo");
+  public GrCodeReferenceElement createReferenceElementFromText(String refName, final PsiElement context) {
+    PsiFile file = createGroovyFile("(" + refName + " " + ")foo", false, context);
     GrTypeElement typeElement = ((GrTypeCastExpression) ((GroovyFileBase) file).getTopStatements()[0]).getCastTypeElement();
     return ((GrClassTypeElement) typeElement).getReferenceElement();
   }
