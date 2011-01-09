@@ -251,14 +251,33 @@ public class GroovyOverrideImplementUtil {
     StringBuffer buffer = new StringBuffer();
     final boolean hasModifiers = writeMethodModifiers(buffer, superMethod.getModifierList(), GROOVY_MODIFIERS);
 
+    final PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
+    final List<PsiTypeParameter> typeParameters = new ArrayList<PsiTypeParameter>();
+    final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+    for (PsiTypeParameter parameter : superTypeParameters) {
+      if (!map.containsKey(parameter)) {
+        typeParameters.add(parameter);
+      }
+    }
+
     final PsiType returnType = substitutor.substitute(getSuperReturnType(superMethod));
-    if (!hasModifiers && returnType == null) {
+    if (!hasModifiers && returnType == null || typeParameters.size() > 0) {
       buffer.append("def ");
     }
 
+    if (typeParameters.size() > 0) {
+      buffer.append('<');
+      for (PsiTypeParameter parameter : typeParameters) {
+        buffer.append(parameter.getText());
+        buffer.append(", ");
+      }
+      buffer.replace(buffer.length() - 2, buffer.length(), ">");
+    }
+
     if (superMethod.isConstructor()) {
-       buffer.append(aClass.getName());
-    } else {
+      buffer.append(aClass.getName());
+    }
+    else {
       if (returnType != null) {
         buffer.append(returnType.getCanonicalText()).append(" ");
       }
@@ -276,7 +295,8 @@ public class GroovyOverrideImplementUtil {
       final String paramName = parameter.getName();
       if (paramName != null) {
         buffer.append(paramName);
-      } else if (parameter instanceof PsiCompiledElement) {
+      }
+      else if (parameter instanceof PsiCompiledElement) {
         buffer.append(((PsiParameter)((PsiCompiledElement)parameter).getMirror()).getName());
       }
     }
