@@ -59,7 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -75,7 +75,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseElementImpl<T> implements GrMethod {
+public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElementBase<T> implements GrMethod {
 
   protected GrMethodBaseImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);

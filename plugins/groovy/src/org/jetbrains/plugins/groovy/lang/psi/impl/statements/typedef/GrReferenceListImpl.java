@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -35,7 +35,7 @@ import java.util.ArrayList;
 /**
  * @author Maxim.Medvedev
  */
-public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrReferenceListStub>
+public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub>
   implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
 
   private PsiClassType[] cachedTypes = null;
