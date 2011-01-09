@@ -21,12 +21,9 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -40,18 +37,20 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   private final StringRef myName;
   private final String[] myAnnotations;
   private final String[] myNamedParameters;
+  private final String myTypeText;
 
   public GrFieldStubImpl(StubElement parent,
                          StringRef name,
                          final String[] annotations,
                          String[] namedParameters,
                          final IStubElementType elemType,
-                         byte flags) {
+                         byte flags, String typeText) {
     super(parent, elemType);
     myName = name;
     myAnnotations = annotations;
     myNamedParameters = namedParameters;
     myFlags = flags;
+    myTypeText = typeText;
   }
 
   public boolean isEnumConstant() {
@@ -81,6 +80,11 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
 
   public byte getFlags() {
     return myFlags;
+  }
+
+  @Override
+  public String getTypeText() {
+    return myTypeText;
   }
 
   public static byte buildFlags(GrField field) {

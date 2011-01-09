@@ -19,8 +19,6 @@ import com.intellij.psi.stubs.NamedStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
-import java.util.Set;
-
 /**
  * @author ilyas
  */
@@ -41,4 +39,6 @@ public interface GrFieldStub extends NamedStub<GrField> {
   boolean isDeprecatedByDocTag();
 
   byte getFlags();
+
+  String getTypeText();
 }

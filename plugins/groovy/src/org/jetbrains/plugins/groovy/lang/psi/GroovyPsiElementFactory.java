@@ -130,7 +130,11 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrTypeElement createTypeElement(PsiType type) throws IncorrectOperationException;
 
   @NotNull
-  public abstract GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException;
+  public GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException {
+    return createTypeElement(typeText, null);
+  }
+
+  public abstract GrTypeElement createTypeElement(String typeText, PsiElement context);
 
   public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr);
 
