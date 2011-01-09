@@ -27,13 +27,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author ilyas
  */
-public abstract class GroovyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements GroovyPsiElement {
+public abstract class GrStubElementBase<T extends StubElement> extends StubBasedPsiElementBase<T> implements GroovyPsiElement {
 
-  protected GroovyBaseElementImpl(final T stub, IStubElementType nodeType) {
+  protected GrStubElementBase(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
 
-  public GroovyBaseElementImpl(final ASTNode node) {
+  public GrStubElementBase(final ASTNode node) {
     super(node);
   }
 
