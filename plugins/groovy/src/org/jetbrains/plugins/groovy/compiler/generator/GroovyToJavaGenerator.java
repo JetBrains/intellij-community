@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.javaee.model.annotations.AnnotationModelUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -287,7 +285,7 @@ public class GroovyToJavaGenerator {
   private void writeAllMethods(StringBuffer text, Collection<PsiMethod> methods, PsiClass aClass) {
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
-      if (LightMethodBuilder.isLightMethod(method, GrClassImplUtil.SYNTHETIC_METHOD_IMPLEMENTATION)) {
+      if (!shouldBeGenerated(method)) {
         continue;
       }
 
@@ -325,6 +323,19 @@ public class GroovyToJavaGenerator {
         }
       }
     }
+  }
+
+  private static boolean shouldBeGenerated(PsiMethod method) {
+    for (PsiMethod psiMethod : method.findSuperMethods()) {
+      if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final PsiType type = method.getReturnType();
+        final PsiType superType = psiMethod.getReturnType();
+        if (type != null && superType != null && !superType.isAssignableFrom(type)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {

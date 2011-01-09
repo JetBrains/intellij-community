@@ -60,7 +60,6 @@ public class GrClassImplUtil {
   };
 
   public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
-  public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
 
   private GrClassImplUtil() {
   }
