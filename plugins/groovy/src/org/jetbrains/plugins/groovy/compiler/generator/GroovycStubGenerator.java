@@ -76,7 +76,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       }
 
       if (!excluded.isExcluded(virtualFile)) {
-        if (fileType == GroovyFileType.GROOVY_FILE_TYPE) {
+        if (fileType == GroovyFileType.GROOVY_FILE_TYPE && !"package-info".equals(virtualFile.getNameWithoutExtension())) {
           total.add(virtualFile);
         }
       }
