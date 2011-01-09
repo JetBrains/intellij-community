@@ -411,6 +411,28 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
+  @Nullable
+  @Override
+  public GrPackageDefinition setPackage(@Nullable GrPackageDefinition newPackage) {
+    final GrPackageDefinition oldPackage = getPackageDefinition();
+    if (oldPackage == null) {
+      if (newPackage != null) {
+        final GrPackageDefinition result = (GrPackageDefinition)addAfter(newPackage, null);
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode().getTreeNext());
+        return result;
+      }
+    }
+    else {
+      if (newPackage != null) {
+        return (GrPackageDefinition)oldPackage.replace(newPackage);
+      }
+      else {
+        oldPackage.delete();
+      }
+    }
+    return null;
+  }
+
   public void clearCaches() {
     super.clearCaches();
 //    myScriptClass = null;

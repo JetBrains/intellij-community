@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
@@ -35,6 +36,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import java.util.ArrayList;
@@ -97,10 +100,21 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
         GroovyFile file = (GroovyFile)element;
         final RefactoringElementListener elementListener = getTransaction().getElementListener(file);
 
+        final GrPackageDefinition packageDefinition = file.getPackageDefinition();
+        final String packageName = packageDefinition == null ? null : packageDefinition.getPackageName();
+        final PsiModifierList modifierList = packageDefinition == null ? null : (PsiModifierList)packageDefinition.getModifierList().copy();
+
         final PsiClass[] oldClasses = file.getClasses();
         GroovyChangeContextUtil.encodeContextInfo(file);
         PsiManager.getInstance(myProject).moveFile(file, myMoveDestination.getTargetDirectory(file));
-        file.setPackageName(getTargetPackage().getQualifiedName());
+        final String newPackageName = getTargetPackage().getQualifiedName();
+
+        final String modifierText =
+          modifierList != null && packageName != null && packageName.equals(newPackageName) ? modifierList.getText() + " " : "";
+        final GrPackageDefinition newPackage =
+          "".equals(newPackageName) ? null : (GrPackageDefinition)GroovyPsiElementFactory.getInstance(myProject)
+            .createTopElementFromText(modifierText + "package " + newPackageName);
+        file.setPackage(newPackage);
 
         PsiClass[] newClasses = file.getClasses();
         for (int i = 0; i < oldClasses.length; i++) {
