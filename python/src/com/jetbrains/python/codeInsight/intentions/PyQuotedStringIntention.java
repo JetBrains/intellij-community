@@ -3,20 +3,14 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * User: catherine
@@ -75,12 +69,23 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
 
   private static String convertDoubleToSingleQuoted(String stringText) {
     StringBuilder stringBuilder = new StringBuilder();
-    for (char ch : stringText.toCharArray()) {
+    boolean skipNext = false;
+    char[] charArr = stringText.toCharArray();
+    for (int i = 0; i != charArr.length; ++i) {
+      char ch = charArr[i];
+      if (skipNext) {
+        skipNext = false;
+        continue;
+      }
       if (ch == '"') {
-        stringBuilder.append('\'');
+          stringBuilder.append('\'');
       }
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
+      }
+      else if (ch == '\\') {
+        skipNext = true;
+        stringBuilder.append(charArr[i+1]);
       }
       else {
         stringBuilder.append(ch);
@@ -91,12 +96,23 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
 
   private static String convertSingleToDoubleQuoted(String stringText) {
     StringBuilder stringBuilder = new StringBuilder();
-    for (char ch : stringText.toCharArray()) {
+    boolean skipNext = false;
+    char[] charArr = stringText.toCharArray();
+    for (int i = 0; i != charArr.length; ++i) {
+      char ch = charArr[i];
+      if (skipNext) {
+        skipNext = false;
+        continue;
+      }
       if (ch == '\'') {
         stringBuilder.append('"');
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");
+      }
+      else if (ch == '\\') {
+        skipNext = true;
+        stringBuilder.append(charArr[i+1]);
       }
       else {
         stringBuilder.append(ch);
