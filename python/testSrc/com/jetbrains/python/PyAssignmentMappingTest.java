@@ -122,7 +122,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
       PsiElement dst = marks.get("<dst" + String.valueOf(i + 1) + ">").getParent(); // ident -> target expr
       assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
-      PsiElement src = marks.get("<src" + String.valueOf(i + 1) +">").getParent(); // ident -> target expr
+      PsiElement src = marks.get("<src" + String.valueOf(i + 1) + ">").getParent(); // ident -> target expr
       assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }
@@ -161,21 +161,28 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
   public void testTupleUnpack() throws Exception {
     Map<String, PsiElement> marks = loadTest();
     final int DST_NUM = 2;
-    assertEquals(DST_NUM+1, marks.size());
+    assertEquals(DST_NUM+3, marks.size());
     PsiElement[] dsts = new PsiElement[DST_NUM];
     for (int i=0; i<DST_NUM; i+=1) {
       PsiElement dst = marks.get("<dst" + String.valueOf(i+1) +">").getParent(); // ident -> target expr
       assertTrue(dst instanceof PyTargetExpression);
       dsts[i] = dst;
     }
+    PsiElement[] srcs = new PsiElement[DST_NUM];
+    for (int i=0; i<DST_NUM; i+=1) {
+      PsiElement src = marks.get("<src" + String.valueOf(i+1) +">").getParent().getParent().getParent(); // ident -> target expr
+      assertTrue(src instanceof PyExpression);
+      srcs[i] = src;
+    }
+
     PsiElement src = marks.get("<src>").getParent(); // ident -> target expr
-    PyAssignmentStatement stmt = (PyAssignmentStatement)src.getParent();
+    PyAssignmentStatement stmt = (PyAssignmentStatement)src.getParent().getParent();
     List<Pair<PyExpression, PyExpression>> mapping = stmt.getTargetsToValuesMapping();
     assertEquals(DST_NUM, mapping.size());
     for (int i=0; i<DST_NUM; i+=1) {
       Pair<PyExpression, PyExpression> pair = mapping.get(i);
       assertEquals(dsts[i], pair.getFirst());
-      assertEquals(src, pair.getSecond());
+      assertEquals(srcs[i].getText(), pair.getSecond().getText());
     }
   }
 }

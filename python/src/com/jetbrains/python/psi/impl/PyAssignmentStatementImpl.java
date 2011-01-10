@@ -11,7 +11,6 @@ import com.intellij.util.SmartList;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.FP;
-import com.jetbrains.python.toolbox.RepeatIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,8 +161,15 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
        map.add(new Pair<PyExpression, PyExpression>(lhs_one, rhs));
     }
     else if (lhs_tuple != null && rhs_one != null) { // multiple LHS, single RHS: unpacking
-      //for (PyExpression tuple_elt : lhs_tuple.getElements()) map.add(new Pair<PyExpression, PyExpression>(tuple_elt, rhs_one));
-      map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), new RepeatIterable<PyExpression>(rhs_one)));
+      // PY-2648, PY-2649
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(rhs_one.getProject());
+      int counter = 0;
+      for (PyExpression tuple_elt : lhs_tuple.getElements()) {
+        map.add(new Pair<PyExpression, PyExpression>(tuple_elt,
+                                                     elementGenerator.createExpressionFromText(rhs_one.getText() + "[" + counter + "]")));
+        ++counter;
+      }
+      //  map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), new RepeatIterable<PyExpression>(rhs_one)));
     }
     else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
       map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), Arrays.asList(rhs_tuple.getElements()), null, null));
