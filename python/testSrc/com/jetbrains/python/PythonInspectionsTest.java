@@ -287,4 +287,8 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyOldStyleClassesInspection() {
     doHighlightingTest(PyOldStyleClassesInspection.class);
   }
+
+  public void testPyTupleAssignmentBalanceInspection3() {
+    doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
+  }
 }
