@@ -148,7 +148,14 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     
     PySequenceExpression rhs_tuple = null;
     PyExpression rhs_one = null;
-    if (rhs instanceof PySequenceExpression) rhs_tuple = (PySequenceExpression)rhs;
+    if (rhs instanceof PyParenthesizedExpression) {
+      PyExpression exp = ((PyParenthesizedExpression)rhs).getContainedExpression();
+      if (exp instanceof PyTupleExpression)
+        rhs_tuple = (PySequenceExpression)exp;
+      else
+        rhs_one = rhs;
+    }
+    else if (rhs instanceof PySequenceExpression) rhs_tuple = (PySequenceExpression)rhs;
     else if (rhs != null) rhs_one = rhs;
     //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)

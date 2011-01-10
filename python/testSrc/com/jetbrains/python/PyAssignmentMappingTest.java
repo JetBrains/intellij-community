@@ -112,6 +112,30 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     }
   }
 
+  public void testParenthesizedTuple() throws Exception { //PY-2648
+    Map<String, PsiElement> marks = loadTest();
+    final int PAIR_NUM = 2;
+    assertEquals(PAIR_NUM*2, marks.size());
+    PsiElement[] srcs = new PsiElement[PAIR_NUM];
+    PsiElement[] dsts = new PsiElement[PAIR_NUM];
+    for (int i=0; i<PAIR_NUM; i+=1) {
+      PsiElement dst = marks.get("<dst" + String.valueOf(i + 1) + ">").getParent(); // ident -> target expr
+      assertTrue(dst instanceof PyTargetExpression);
+      dsts[i] = dst;
+      PsiElement src = marks.get("<src" + String.valueOf(i + 1) +">").getParent(); // ident -> target expr
+      assertTrue(src instanceof PyExpression);
+      srcs[i] = src;
+    }
+    PyAssignmentStatement stmt = (PyAssignmentStatement)srcs[0].getParent().getParent().getParent(); // tuple expr -> assignment
+    List<Pair<PyExpression, PyExpression>> mapping = stmt.getTargetsToValuesMapping();
+    assertEquals(PAIR_NUM, mapping.size());
+    for (int i=0; i<PAIR_NUM; i+=1) {
+      Pair<PyExpression, PyExpression> pair = mapping.get(i);
+      assertEquals(dsts[i], pair.getFirst());
+      assertEquals(srcs[i], pair.getSecond());
+    }
+  }
+
   public void testTuplePack() throws Exception {
     Map<String, PsiElement> marks = loadTest();
     final int SRC_NUM = 2;
