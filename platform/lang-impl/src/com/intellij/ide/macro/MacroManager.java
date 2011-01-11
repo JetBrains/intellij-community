@@ -71,6 +71,13 @@ public final class MacroManager {
     registerMacro(new FileRelativeDirMacro());
     registerMacro(new LineNumberMacro());
     registerMacro(new ColumnNumberMacro());
+
+    registerMacro(new SelectedTextMacro());
+    registerMacro(new SelectionStartLineMacro());
+    registerMacro(new SelectionStartColumnMacro());
+    registerMacro(new SelectionEndLineMacro());
+    registerMacro(new SelectionEndColumnMacro());
+
     if (File.separatorChar != '/') {
       registerMacro(new FileDirRelativeToProjectRootMacro2());
       registerMacro(new FilePathRelativeToProjectRootMacro2());

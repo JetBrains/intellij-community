@@ -118,7 +118,12 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       "Prompt",
       "SourcepathEntry",
       "Sourcepath",
-      "SHOW_CHANGES"
+      "SHOW_CHANGES",
+      "SelectedText",
+      "SelectionStartLine",
+      "SelectionEndLine",
+      "SelectionStartColumn",
+      "SelectionEndColumn"
     ));
   }
 
