@@ -229,6 +229,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private boolean processChildrenScopes(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
+    final StubElement<?> stub = getStub();
+    if (stub != null) {
+      return true; // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
+    }
+
     PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
@@ -241,6 +246,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     return true;
   }
+
 
   public GrImportStatement[] getImportStatements() {
     return findChildrenByClass(GrImportStatement.class);
