@@ -46,12 +46,6 @@ import java.util.List;
  */
 public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinitionBodyStub> implements GrTypeDefinitionBody,
                                                                                                      StubBasedPsiElement<GrTypeDefinitionBodyStub> {
-  private static final ArrayFactory<GrMethod> METHOD_ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
-    @Override
-    public GrMethod[] create(int count) {
-      return new GrMethod[count];
-    }
-  };
   private static final ArrayFactory<GrVariableDeclaration> FIELD_ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
     @Override
     public GrVariableDeclaration[] create(int count) {
@@ -109,7 +103,7 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinition
   }
 
   public GrMethod[] getGroovyMethods() {
-    return getStubOrPsiChildren(GroovyElementTypes.METHOD_DEFS, METHOD_ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyElementTypes.METHOD_DEFS, GrMethod.ARRAY_FACTORY);
   }
 
   public List<PsiMethod> getMethods() {
