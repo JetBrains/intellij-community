@@ -21,7 +21,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;

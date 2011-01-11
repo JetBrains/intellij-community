@@ -25,10 +25,11 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
@@ -210,9 +210,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
-  TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
 
-  //  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
 
   //throws
@@ -249,28 +247,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
 
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-  GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody> CLASS_BODY = new GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody>("class block") {
-    @Override
-    public GrTypeDefinitionBody createPsi(GrTypeDefinitionBodyStub stub) {
-      return new GrTypeDefinitionBodyImpl(stub);
-    }
+  GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody> CLASS_BODY = new GrTypeDefinitionBodyElementType("class block", true);
 
-    @Override
-    public GrTypeDefinitionBodyStub createStub(GrTypeDefinitionBody psi, StubElement parentStub) {
-      return new GrTypeDefinitionBodyStub(parentStub);
-    }
-
-    @Override
-    public void serialize(GrTypeDefinitionBodyStub stub, StubOutputStream dataStream) throws IOException {
-    }
-
-    @Override
-    public GrTypeDefinitionBodyStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-      return new GrTypeDefinitionBodyStub(parentStub);
-    }
-  };
-
-  GroovyElementType ENUM_BODY = new GroovyElementType("enum block");
+  IElementType ENUM_BODY = new GrTypeDefinitionBodyElementType("enum block", false);
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
@@ -292,8 +271,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
-  GroovyElementType VARIABLE_DEFINITION = new GroovyElementType("variable definitions");
-  GroovyElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
+  GrStubElementType<GrVariableDeclarationStub, GrVariableDeclaration> VARIABLE_DEFINITION = new GrVariableDeclarationElementType( "variable definitions", true);
+  IElementType MULTIPLE_VARIABLE_DEFINITION = new GrVariableDeclarationElementType("multivariable definition", false);
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
 
@@ -315,5 +294,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
           OPEN_BLOCK,
           ENUM_BODY,
           CLASS_BODY);
+
+  TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
 
 }

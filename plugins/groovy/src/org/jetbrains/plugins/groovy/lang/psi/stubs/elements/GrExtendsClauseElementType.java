@@ -23,7 +23,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.EXTENDS_CLAUSE;
-import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
+
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrExtendsClauseImpl;

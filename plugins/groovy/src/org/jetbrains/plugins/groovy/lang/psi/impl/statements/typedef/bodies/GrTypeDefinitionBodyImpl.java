@@ -52,6 +52,12 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinition
       return new GrMethod[count];
     }
   };
+  private static final ArrayFactory<GrVariableDeclaration> FIELD_ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
+    @Override
+    public GrVariableDeclaration[] create(int count) {
+      return new GrVariableDeclaration[count];
+    }
+  };
   private GrField[] myFields;
 
   public GrTypeDefinitionBodyImpl(@NotNull ASTNode node) {
@@ -85,7 +91,7 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinition
 
   public GrField[] getFields() {
     if (myFields == null) {
-      GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
+      GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, FIELD_ARRAY_FACTORY);
       if (declarations.length == 0) return GrField.EMPTY_ARRAY;
       List<GrField> result = new ArrayList<GrField>();
       for (GrVariableDeclaration declaration : declarations) {
@@ -144,9 +150,8 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinition
   }
 
   public PsiClass[] getInnerClasses() {
-    return findChildrenByClass(PsiClass.class);
+    return getStubOrPsiChildren(GroovyElementTypes.TYPE_DEFINITION_TYPES, PsiClass.ARRAY_FACTORY);
   }
-
 
   public void removeVariable(GrVariable variable) {
     PsiImplUtil.removeVariable(variable);

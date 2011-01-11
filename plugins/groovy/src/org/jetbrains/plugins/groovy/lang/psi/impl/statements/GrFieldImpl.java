@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -63,8 +62,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   private boolean mySetterInitialized = false;
   private boolean myGettersInitialized = false;
 
-  private volatile CachedValue<PsiType> myEnhancedType;
-
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -79,7 +76,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiElement getParent() {
-    return getDefinitionParent();
+    return getParentByStub();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -130,12 +127,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public PsiClass getContainingClass() {
-    final GrFieldStub stub = getStub();
-    if (stub != null) {
-      final PsiElement element = getParentByStub();
-      return element instanceof PsiClass ? (PsiClass)element : null;
-    }
-
     PsiElement parent = getParent().getParent();
     if (parent instanceof GrTypeDefinitionBody) {
       final PsiElement pparent = parent.getParent();
@@ -187,7 +178,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetterInitialized = myGettersInitialized = false;
     mySetter = null;
     myGetters = GrAccessorMethod.EMPTY_ARRAY;
-    myEnhancedType = null;
   }
 
   @NotNull

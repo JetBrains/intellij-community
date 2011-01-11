@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
@@ -20,16 +21,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableDeclarationStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -38,13 +38,32 @@ import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
- * @date: 27.03.2007
  */
-public class GrVariableDeclarationImpl extends GroovyPsiElementImpl implements GrVariableDeclaration {
+public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDeclarationStub> implements GrVariableDeclaration,
+                                                                                                       StubBasedPsiElement<GrVariableDeclarationStub> {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl");
 
   public GrVariableDeclarationImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrVariableDeclarationImpl(GrVariableDeclarationStub stub) {
+    super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
+  }
+
+  @Override
+  public <T extends GrStatement> T replaceWithStatement(T statement) {
+    return GroovyPsiElementImpl.replaceWithStatement(this, statement);
+  }
+
+  @Override
+  public void removeStatement() throws IncorrectOperationException {
+    GroovyPsiElementImpl.removeStatement(this);
   }
 
   public void accept(GroovyElementVisitor visitor) {
