@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.compiler.MavenResourceCompiler;
@@ -47,7 +48,7 @@ import java.util.regex.Pattern;
 public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
   public static void setPathsToDefault(MavenProject mavenProject, Module module, AndroidFacetConfiguration configuration) {
-    String moduleDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
 
     if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {
@@ -70,7 +71,7 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
                                               Module module,
                                               AndroidFacetConfiguration configuration,
                                               boolean hasApkSources) {
-    String moduleDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     String genSources = FileUtil.toSystemIndependentName(mavenProject.getGeneratedSourcesDirectory(false));
 
     if (VfsUtil.isAncestor(new File(moduleDirPath), new File(genSources), true)) {

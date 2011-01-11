@@ -233,4 +233,14 @@ public class AndroidRootUtil {
     }
     return result.toArray(new VirtualFile[result.size()]);
   }
+
+  @Nullable
+  public static String getModuleDirPath(Module module) {
+    String moduleFilePath = module.getModuleFilePath();
+    String moduleDirPath = new File(moduleFilePath).getParent();
+    if (moduleDirPath != null) {
+      moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
+    }
+    return moduleDirPath;
+  }
 }
