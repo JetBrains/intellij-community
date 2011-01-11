@@ -269,7 +269,6 @@ public class GithubUtil {
 
   @Nullable
   public static GitRemote getGithubBoundRepository(final Project project){
-    final boolean b = GithubUtil.testConnection(GithubSettings.getInstance().getLogin(), GithubSettings.getInstance().getPassword());
     final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
