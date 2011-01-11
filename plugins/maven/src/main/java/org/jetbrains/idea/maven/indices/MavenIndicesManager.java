@@ -85,6 +85,10 @@ public class MavenIndicesManager {
     myTestIndicesDir = indicesDir;
   }
 
+  public void clear() {
+    myUpdatingQueue.clear();
+  }
+
   private synchronized MavenIndices getIndicesObject() {
     ensureInitialized();
     return myIndices;
@@ -146,6 +150,7 @@ public class MavenIndicesManager {
       myIndices = null;
     }
 
+    clear();
     myIndexer = null;
   }
 
