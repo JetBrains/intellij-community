@@ -118,7 +118,9 @@ def get_class( kls ):
     try:
         m = __import__( module )
         for comp in parts[-1:]:
-            m = getattr(m, comp)
+            if m is None:
+                return None
+            m = getattr(m, comp, None)
         return m
     except ImportError:
         return None
