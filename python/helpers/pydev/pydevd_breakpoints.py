@@ -96,7 +96,7 @@ def set_pm_excepthook(handle_exceptions_arg=None):
 
 def restore_pm_excepthook():
     global _original_excepthook
-    if (_original_excepthook):
+    if _original_excepthook:
         sys.excepthook = _original_excepthook
         _original_excepthook = None
 
