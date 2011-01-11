@@ -69,64 +69,34 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
   }
 
   public void removeStatement() throws IncorrectOperationException {
-    if (getParent() == null ||
-        getParent().getNode() == null) {
+    removeStatement(this);
+  }
+
+  public static void removeStatement(GroovyPsiElement element) {
+    if (element.getParent() == null ||
+        element.getParent().getNode() == null) {
       throw new IncorrectOperationException();
     }
-    ASTNode parentNode = getParent().getNode();
-    ASTNode prevNode = getNode().getTreePrev();
-    parentNode.removeChild(this.getNode());
+    ASTNode parentNode = element.getParent().getNode();
+    ASTNode prevNode = element.getNode().getTreePrev();
+    parentNode.removeChild(element.getNode());
     if (prevNode != null && TokenSets.SEPARATORS.contains(prevNode.getElementType())) {
       parentNode.removeChild(prevNode);
     }
   }
 
   public <T extends GrStatement> T replaceWithStatement(@NotNull T newStmt) {
-    PsiElement parent = getParent();
+    return replaceWithStatement(this, newStmt);
+  }
+
+  public static <T extends GrStatement> T replaceWithStatement(GroovyPsiElement element, @NotNull T newStmt) {
+    PsiElement parent = element.getParent();
     if (parent == null) {
-      throw new PsiInvalidElementAccessException(this);
+      throw new PsiInvalidElementAccessException(element);
     }
-    return (T)replace(newStmt);
+    return (T)element.replace(newStmt);
   }
 
-  /*
-  public <T extends GroovyPsiElement> Iterable<T> childrenOfType(final TokenSet tokSet) {
-    return new Iterable<T>() {
-
-      public Iterator<T> iterator() {
-        return new Iterator<T>() {
-          private ASTNode findChild(ASTNode child) {
-            if (child == null) return null;
-
-            if (tokSet.contains(child.getElementType())) return child;
-
-            return findChild(child.getTreeNext());
-          }
-
-          PsiElement first = getFirstChild();
-
-          ASTNode n = first == null ? null : findChild(first.getNode());
-
-          public boolean hasNext() {
-            return n != null;
-          }
-
-          public T next() {
-            if (n == null) return null;
-            else {
-              final ASTNode res = n;
-              n = findChild(n.getTreeNext());
-              return (T) res.getPsi();
-            }
-          }
-
-          public void remove() {
-          }
-        };
-      }
-    };
-  }
-  */
 
 }
 

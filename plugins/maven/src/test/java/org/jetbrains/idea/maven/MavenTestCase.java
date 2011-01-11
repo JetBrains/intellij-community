@@ -39,6 +39,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
@@ -153,8 +154,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
       myDir.deleteOnExit();
     }
 
-    resetClassFields(getClass());
+    MavenIndicesManager.getInstance().clear();
+
     super.tearDown();
+    resetClassFields(getClass());
   }
 
   protected void tearDownFixtures() throws Exception {

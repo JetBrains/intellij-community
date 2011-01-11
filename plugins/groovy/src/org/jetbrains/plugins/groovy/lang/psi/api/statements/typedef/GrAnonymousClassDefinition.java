@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
  * @author Maxim.Medvedev
  */
 public interface GrAnonymousClassDefinition
-  extends GrTypeDefinition, GrTypeParameterListOwner, PsiAnonymousClass, StubBasedPsiElement<GrTypeDefinitionStub> {
+  extends GrTypeDefinition, GrTypeParameterListOwner, PsiAnonymousClass {
   @NotNull
   GrCodeReferenceElement getBaseClassReferenceGroovy();
 

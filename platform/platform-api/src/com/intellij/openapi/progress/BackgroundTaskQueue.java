@@ -50,6 +50,10 @@ public class BackgroundTaskQueue implements Consumer<Task.Backgroundable> {
     myTitle = title;
   }
 
+  public void clear() {
+    myProcessor.clear();
+  }
+
   public void run(Task.Backgroundable task) {
     myProcessor.add(task);
   }

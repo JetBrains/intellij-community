@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,12 @@ public abstract class PsiClassType extends PsiType {
    * The empty array of PSI class types which can be reused to avoid unnecessary allocations.
    */
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
+  public static final ArrayFactory<PsiClassType> ARRAY_FACTORY = new ArrayFactory<PsiClassType>() {
+    @Override
+    public PsiClassType[] create(int count) {
+      return new PsiClassType[count];
+    }
+  };
   protected final LanguageLevel myLanguageLevel;
 
   protected PsiClassType(LanguageLevel languageLevel) {

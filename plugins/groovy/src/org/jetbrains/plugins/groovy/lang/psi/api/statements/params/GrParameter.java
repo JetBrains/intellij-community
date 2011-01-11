@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.params;
 
 import com.intellij.psi.PsiModifierList;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -30,6 +31,12 @@ import com.intellij.psi.PsiParameter;
  */
 public interface GrParameter extends PsiParameter, GrVariable {
   public static final GrParameter[] EMPTY_ARRAY = new GrParameter[0];
+  ArrayFactory<GrParameter> ARRAY_FACTORY = new ArrayFactory<GrParameter>() {
+    @Override
+    public GrParameter[] create(int count) {
+      return new GrParameter[count];
+    }
+  };
 
   @Nullable
   GrTypeElement getTypeElementGroovy();

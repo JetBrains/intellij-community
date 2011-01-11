@@ -17,14 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +47,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -83,8 +86,6 @@ public class GrClassImplUtil {
     }
   }
 
-  private static final Key<CachedValue<Boolean>> HAS_GROOVY_OBJECT_METHODS = Key.create("has groovy object methods");
-
   @NotNull
   public static PsiClassType[] getExtendsListTypes(GrTypeDefinition grType) {
     final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
@@ -96,47 +97,10 @@ public class GrClassImplUtil {
 
     PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
     if (grObSupport != null) {
-      return ArrayUtil.append(extendsTypes, JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport));
+      final PsiClassType type = JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport);
+      return ArrayUtil.append(extendsTypes, type, PsiClassType.ARRAY_FACTORY);
     }
     return extendsTypes;
-  }
-
-  private static boolean hasGroovyObjectSupportInner(final PsiClass psiClass,
-                                                     Set<PsiClass> visited,
-                                                     PsiClass groovyObjSupport,
-                                                     PsiManager manager) {
-    final CachedValue<Boolean> userData = psiClass.getUserData(HAS_GROOVY_OBJECT_METHODS);
-    if (userData != null && userData.getValue() != null) return userData.getValue();
-
-    if (manager.areElementsEquivalent(groovyObjSupport, psiClass)) return true;
-
-    final PsiClassType[] supers;
-    if (psiClass instanceof GrTypeDefinition) {
-      supers = getReferenceListTypes(((GrTypeDefinition)psiClass).getExtendsClause());
-    }
-    else {
-      supers = psiClass.getExtendsListTypes();
-    }
-
-    boolean result = false;
-    for (PsiClassType superType : supers) {
-      PsiClass aSuper = superType.resolve();
-      if (aSuper == null || visited.contains(aSuper)) continue;
-      visited.add(aSuper);
-      if (hasGroovyObjectSupportInner(aSuper, visited, groovyObjSupport, manager)) {
-        result = true;
-        break;
-      }
-    }
-    final boolean finalResult = result;
-    psiClass.putUserData(HAS_GROOVY_OBJECT_METHODS,
-                         CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Boolean>() {
-                           @Override
-                           public Result<Boolean> compute() {
-                             return Result.create(finalResult, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-                           }
-                         }, false));
-    return finalResult;
   }
 
   @NotNull
@@ -145,7 +109,7 @@ public class GrClassImplUtil {
     if (!grType.isInterface() &&
         !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) &&
         !ContainerUtil.or(getReferenceListTypes(grType.getExtendsClause()), IS_GROOVY_OBJECT)) {
-      return ArrayUtil.append(implementsTypes, getGroovyObjectType(grType));
+      return ArrayUtil.append(implementsTypes, getGroovyObjectType(grType), PsiClassType.ARRAY_FACTORY);
     }
     return implementsTypes;
   }
@@ -162,7 +126,7 @@ public class GrClassImplUtil {
       extendsList = new PsiClassType[]{createBaseClassType(grType)};
     }
 
-    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(), PsiClassType.class);
+    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(), PsiClassType.ARRAY_FACTORY);
   }
 
   public static PsiClassType createBaseClassType(GrTypeDefinition grType) {

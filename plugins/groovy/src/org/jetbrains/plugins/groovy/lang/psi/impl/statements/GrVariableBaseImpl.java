@@ -117,10 +117,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
     return modifierList != null && modifierList.hasModifierProperty(property);
   }
 
-  public String getElementToCompare() {
-    return getName();
-  }
-
   @NotNull
   public PsiType getType() {
     PsiType type = getDeclaredType();

@@ -25,7 +25,7 @@ import com.intellij.psi.StubBasedPsiElement;
 /**
  * @author Dmitry.Krasilschikov
  */
-public interface GrEnumTypeDefinition extends GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
+public interface GrEnumTypeDefinition extends GrTypeDefinition {
   GrEnumConstant[] getEnumConstants();
 
   @Nullable

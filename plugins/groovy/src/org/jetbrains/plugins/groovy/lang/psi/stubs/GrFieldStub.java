@@ -15,30 +15,90 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 
 /**
  * @author ilyas
  */
-public interface GrFieldStub extends NamedStub<GrField> {
+public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField> {
+  public static final byte IS_PROPERTY = 0x01;
+  public static final byte IS_ENUM_CONSTANT = 0x02;
+  public static final byte IS_DEPRECATED_BY_DOC_TAG = 0x04;
 
-  //todo add type info
-  //todo add initializer info
+  private final byte myFlags;
+  private final StringRef myName;
+  private final String[] myAnnotations;
+  private final String[] myNamedParameters;
+  private final String myTypeText;
 
-  String[] getAnnotations();
+  public GrFieldStub(StubElement parent,
+                         StringRef name,
+                         final String[] annotations,
+                         String[] namedParameters,
+                         final IStubElementType elemType,
+                         byte flags, String typeText) {
+    super(parent, elemType);
+    myName = name;
+    myAnnotations = annotations;
+    myNamedParameters = namedParameters;
+    myFlags = flags;
+    myTypeText = typeText;
+  }
 
-  boolean isEnumConstant();
+  public String getName() {
+    return StringRef.toString(myName);
+  }
+
+  public String[] getAnnotations() {
+    return myAnnotations;
+  }
 
   @NotNull
-  String[] getNamedParameters();
+  public String[] getNamedParameters() {
+    return myNamedParameters;
+  }
 
-  boolean isProperty();
+  public boolean isProperty() {
+    return (myFlags & IS_PROPERTY) != 0;
+  }
 
-  boolean isDeprecatedByDocTag();
+  public boolean isDeprecatedByDocTag() {
+    return (myFlags & IS_DEPRECATED_BY_DOC_TAG) != 0;
+  }
 
-  byte getFlags();
+  public byte getFlags() {
+    return myFlags;
+  }
 
-  String getTypeText();
+  public String getTypeText() {
+    return myTypeText;
+  }
+
+  public static byte buildFlags(GrField field) {
+    byte f = 0;
+    if (field instanceof GrEnumConstant) {
+      f |= IS_ENUM_CONSTANT;
+    }
+
+    if (field.isProperty()) {
+      f |= IS_PROPERTY;
+    }
+
+    if (PsiImplUtil.isDeprecatedByDocTag(field)) {
+      f|= IS_DEPRECATED_BY_DOC_TAG;
+    }
+    return f;
+  }
+
+  public static boolean isEnumConstant(byte flags) {
+    return (flags & IS_ENUM_CONSTANT) != 0;
+  }
 }

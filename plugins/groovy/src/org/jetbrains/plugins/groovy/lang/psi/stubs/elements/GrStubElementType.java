@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi;
+package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ilyas

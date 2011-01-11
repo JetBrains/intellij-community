@@ -69,6 +69,13 @@ public abstract class JavaDirectoryService {
   public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
 
   /**
+   * @param askForUndefinedVariables
+   *  true show dialog asking for undefined variables
+   *  false leave them blank
+   */
+  public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName, boolean askForUndefinedVariables) throws IncorrectOperationException;
+
+  /**
    * Checks if it's possible to create a class with the specified name in the directory,
    * and throws an exception if the creation is not possible. Does not actually modify
    * anything.

@@ -52,13 +52,16 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
       e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabled(false);
       return;
     }
     if (GithubUtil.getGithubBoundRepository(project) == null){
       e.getPresentation().setVisible(false);
+      e.getPresentation().setEnabled(false);
       return;
     }
     e.getPresentation().setVisible(true);
+    e.getPresentation().setEnabled(true);
   }
 
   @Override

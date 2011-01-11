@@ -15,13 +15,24 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 
 /**
  * @author ilyas
  */
-public interface GrReferenceListStub extends StubElement<GrReferenceList> {
+public class GrReferenceListStub extends StubBase<GrReferenceList> implements StubElement<GrReferenceList> {
 
-  String[] getBaseClasses();
+  private final String[] myRefNames;
+
+  public GrReferenceListStub(final StubElement parentStub, IStubElementType elemtType, final String[] refNames) {
+    super(parentStub, elemtType);
+    myRefNames = refNames;
+  }
+
+  public String[] getBaseClasses() {
+    return myRefNames;
+  }
 }

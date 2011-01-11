@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
@@ -48,7 +47,6 @@ import java.util.List;
  *  @author dsl
  */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl");
   private final LightEmptyImplementsList myLightEmptyImplementsList = new LightEmptyImplementsList(null) {
     public PsiManager getManager() {
       return PsiTypeParameterImpl.this.getManager();
