@@ -323,8 +323,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    if (myName == null) return "Module"; // was called before initialized
-    return "Module: '" + getName() + "' path: '" + getModuleFilePath() + "'";
+    if (myName == null) return "Module (not initialized)";
+    return "Module: '" + getName() + "' " +(isDisposed() ? "(Disposed)" : "path: '" + getModuleFilePath() + "'");
   }
 
   private static String moduleNameByFileName(@NotNull String fileName) {
