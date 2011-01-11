@@ -16,10 +16,24 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 
 /**
  * @author ilyas
  */
-public interface GrAnnotationMethodStub extends NamedStub<GrAnnotationMethod> {
+public class GrAnnotationMethodStub extends StubBase<GrAnnotationMethod> implements NamedStub<GrAnnotationMethod> {
+  private final StringRef myName;
+
+  public GrAnnotationMethodStub(StubElement parent, StringRef name) {
+    super(parent, GroovyElementTypes.ANNOTATION_METHOD);
+    myName = name;
+  }
+
+  public String getName() {
+    return StringRef.toString(myName);
+  }
 }

@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrTypeDefinitionStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
@@ -55,8 +54,8 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
 
   public GrTypeDefinitionStub createStub(TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
-    final byte flags = GrTypeDefinitionStubImpl.buildFlags(psi);
-    return new GrTypeDefinitionStubImpl(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), getAnnotationNames(psi),
+    final byte flags = GrTypeDefinitionStub.buildFlags(psi);
+    return new GrTypeDefinitionStub(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), getAnnotationNames(psi),
                                         flags);
   }
 
@@ -98,7 +97,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     byte flags = dataStream.readByte();
     String[] superClasses = readStringArray(dataStream);
     String[] annos = readStringArray(dataStream);
-    return new GrTypeDefinitionStubImpl(parentStub, name, superClasses, this, qname, annos, flags);
+    return new GrTypeDefinitionStub(parentStub, name, superClasses, this, qname, annos, flags);
   }
 
   private static String[] readStringArray(StubInputStream dataStream) throws IOException {

@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrExtendsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrReferenceListStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.io.IOException;
@@ -55,7 +54,7 @@ public class GrExtendsClauseElementType extends GrStubElementType<GrReferenceLis
       }
     }, new String[elements.length]);
 
-    return new GrReferenceListStubImpl(parentStub, EXTENDS_CLAUSE, refNames);
+    return new GrReferenceListStub(parentStub, EXTENDS_CLAUSE, refNames);
   }
 
   public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
@@ -72,7 +71,7 @@ public class GrExtendsClauseElementType extends GrStubElementType<GrReferenceLis
     for (int i = 0; i < b; i++) {
       names[i] = dataStream.readName().toString();
     }
-    return new GrReferenceListStubImpl(parentStub, EXTENDS_CLAUSE, names);
+    return new GrReferenceListStub(parentStub, EXTENDS_CLAUSE, names);
   }
 
   public void indexStub(GrReferenceListStub stub, IndexSink sink) {

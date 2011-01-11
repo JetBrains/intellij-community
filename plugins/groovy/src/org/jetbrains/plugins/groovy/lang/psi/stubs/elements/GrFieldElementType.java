@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 
@@ -59,7 +58,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
     final GrTypeElement typeElement = psi.getTypeElementGroovy();
     String myTypeText = typeElement == null ? null : typeElement.getText();
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStubImpl.buildFlags(psi), myTypeText);
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStub.buildFlags(psi), myTypeText);
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -112,7 +111,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
     final boolean hasTypeText = dataStream.readBoolean();
     final String typeText = hasTypeText ? dataStream.readUTFFast() : null;
-    return new GrFieldStubImpl(parentStub, ref, annNames, namedParameters, GrFieldStubImpl.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD,
+    return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD,
                                flags, typeText);
   }
 

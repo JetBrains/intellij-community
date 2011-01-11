@@ -22,16 +22,16 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.IMPLEMENTS_CLAUSE;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrImplementsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrReferenceListStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.io.IOException;
+
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.IMPLEMENTS_CLAUSE;
 
 /**
  * @author ilyas
@@ -55,7 +55,7 @@ public class GrImplementsClauseElementType extends GrStubElementType<GrReference
       }
     }, new String[elements.length]);
 
-    return new GrReferenceListStubImpl(parentStub, IMPLEMENTS_CLAUSE, refNames);
+    return new GrReferenceListStub(parentStub, IMPLEMENTS_CLAUSE, refNames);
   }
 
   public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
@@ -72,7 +72,7 @@ public class GrImplementsClauseElementType extends GrStubElementType<GrReference
     for (int i = 0; i < b; i++) {
       names[i] = dataStream.readName().toString();
     }
-    return new GrReferenceListStubImpl(parentStub, IMPLEMENTS_CLAUSE, names);
+    return new GrReferenceListStub(parentStub, IMPLEMENTS_CLAUSE, names);
   }
 
   public void indexStub(GrReferenceListStub stub, IndexSink sink) {

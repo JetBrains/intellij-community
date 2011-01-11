@@ -56,7 +56,7 @@ import javax.swing.*;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField {
+public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
   private GrAccessorMethod mySetter;
   private GrAccessorMethod[] myGetters;
 

@@ -46,7 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList {
+public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
   private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = new ArrayFactory<GrAnnotation>() {
     @Override

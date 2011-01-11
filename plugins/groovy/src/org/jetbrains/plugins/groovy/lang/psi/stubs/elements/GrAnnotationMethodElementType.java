@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationMethodStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrAnnotationMethodStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameIndex;
 
 import java.io.IOException;
@@ -45,7 +44,7 @@ public class GrAnnotationMethodElementType extends GrStubElementType<GrAnnotatio
 
   @Override
   public GrAnnotationMethodStub createStub(final GrAnnotationMethod psi, final StubElement parentStub) {
-    return new GrAnnotationMethodStubImpl(parentStub, StringRef.fromString(psi.getName()));
+    return new GrAnnotationMethodStub(parentStub, StringRef.fromString(psi.getName()));
   }
 
   public void serialize(GrAnnotationMethodStub stub, StubOutputStream dataStream) throws IOException {
@@ -54,7 +53,7 @@ public class GrAnnotationMethodElementType extends GrStubElementType<GrAnnotatio
 
   public GrAnnotationMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
-    return new GrAnnotationMethodStubImpl(parentStub, ref);
+    return new GrAnnotationMethodStub(parentStub, ref);
   }
 
   public void indexStub(GrAnnotationMethodStub stub, IndexSink sink) {

@@ -76,7 +76,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition {
+public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
   private volatile PsiClass[] myInnerClasses;
   private volatile List<PsiMethod> myMethods;

@@ -35,8 +35,7 @@ import java.util.ArrayList;
 /**
  * @author Maxim.Medvedev
  */
-public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub>
-  implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
+public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
 
   private PsiClassType[] cachedTypes = null;
 
