@@ -278,7 +278,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @NotNull
   public GrParameterList getParameterList() {
-    GrParameterList parameterList = (GrParameterList)findChildByType(GroovyElementTypes.PARAMETERS_LIST);
+    final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETERS_LIST);
     assert parameterList != null;
     return parameterList;
   }

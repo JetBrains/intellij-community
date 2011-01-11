@@ -35,9 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author: Dmitry.Krasilschikov
  */
@@ -161,6 +158,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
   }
 
   public static class GrVariables extends GrVariableDeclarationBase implements StubBasedPsiElement<EmptyStub> {
+
     public GrVariables(@NotNull ASTNode node) {
       super(node);
     }
@@ -178,11 +176,7 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
     }
 
     public GrVariable[] getVariables() {
-      List<GrVariable> result = new ArrayList<GrVariable>();
-      for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-        if (cur instanceof GrVariable) result.add((GrVariable)cur);
-      }
-      return result.toArray(new GrVariable[result.size()]);
+      return getStubOrPsiChildren(GroovyElementTypes.VARIABLES, GrVariable.ARRAY_FACTORY);
     }
 
     public GrMember[] getMembers() {

@@ -173,12 +173,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public GrExtendsClause getExtendsClause() {
-    return (GrExtendsClause)findChildByType(GroovyElementTypes.EXTENDS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.EXTENDS_CLAUSE);
   }
 
   @Nullable
   public GrImplementsClause getImplementsClause() {
-    return (GrImplementsClause)findChildByType(GroovyElementTypes.IMPLEMENTS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
   public String[] getSuperClassNames() {

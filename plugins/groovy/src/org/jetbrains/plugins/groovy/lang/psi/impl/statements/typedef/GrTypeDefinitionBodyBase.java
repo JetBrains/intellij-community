@@ -22,7 +22,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,12 +47,6 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov, ilyas
  */
 public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody {
-  private static final ArrayFactory<GrVariableDeclaration> FIELD_ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
-    @Override
-    public GrVariableDeclaration[] create(int count) {
-      return new GrVariableDeclaration[count];
-    }
-  };
   private GrField[] myFields;
 
   public GrTypeDefinitionBodyBase(@NotNull ASTNode node) {
@@ -85,7 +78,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
 
   public GrField[] getFields() {
     if (myFields == null) {
-      GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, FIELD_ARRAY_FACTORY);
+      GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.ARRAY_FACTORY);
       if (declarations.length == 0) return GrField.EMPTY_ARRAY;
       List<GrField> result = new ArrayList<GrField>();
       for (GrVariableDeclaration declaration : declarations) {

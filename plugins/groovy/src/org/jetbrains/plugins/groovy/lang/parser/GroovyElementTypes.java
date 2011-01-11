@@ -354,5 +354,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
           CLASS_BODY);
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
+  TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
 
 }

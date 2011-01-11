@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -30,6 +31,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrVariable extends PsiVariable, GrNamedElement {
   GrVariable[] EMPTY_ARRAY = new GrVariable[0];
+  ArrayFactory<GrVariable> ARRAY_FACTORY = new ArrayFactory<GrVariable>() {
+    @Override
+    public GrVariable[] create(int count) {
+      return new GrVariable[count];
+    }
+  };
 
   @Nullable
   GrExpression getInitializerGroovy();
