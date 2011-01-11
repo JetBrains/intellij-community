@@ -110,7 +110,7 @@ def update_exception_hook():
 def get_class( kls ):
     parts = kls.split('.')
     module = ".".join(parts[:-1])
-    if (module == ""):
+    if module == "":
         if IS_PY3K:
             module = "builtins"
         else:
