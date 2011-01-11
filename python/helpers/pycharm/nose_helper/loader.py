@@ -63,7 +63,7 @@ class TestLoader(unittest.TestLoader):
                 yield Failure(exc[0], exc[1], exc[2])
         return self.suiteClass(generate, context=generator)
 
-    def loadTestsFromModule(self, module, direct = None):
+    def loadTestsFromModule(self, module, direct = True):
         """Load all tests from module and return a suite containing
         them.
         """

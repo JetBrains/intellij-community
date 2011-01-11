@@ -75,7 +75,7 @@ public class PythonUnitTestCommandLineState extends
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }
-
+    specs.add(String.valueOf(myConfig.isPureUnittest()));
     return specs;
   }
 }
