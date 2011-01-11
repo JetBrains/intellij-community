@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -35,6 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionBodyBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
@@ -257,9 +261,39 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
   };
   //parameters
-  GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
+  EmptyStubElementType<GrParameterList> PARAMETERS_LIST = new EmptyStubElementType<GrParameterList>("parameters list", GroovyFileType.GROOVY_LANGUAGE) {
+    @Override
+    public GrParameterList createPsi(EmptyStub stub) {
+      return new GrParameterListImpl(stub);
+    }
+  };
 
-  GroovyElementType PARAMETER = new GroovyElementType("parameter");
+  GrStubElementType<GrParameterStub, GrParameter> PARAMETER = new GrStubElementType<GrParameterStub, GrParameter>("parameter") {
+    @Override
+    public GrParameter createPsi(GrParameterStub stub) {
+      return new GrParameterImpl(stub);
+    }
+
+    @Override
+    public GrParameterStub createStub(GrParameter psi, StubElement parentStub) {
+      return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(psi));
+    }
+
+    @Override
+    public void serialize(GrParameterStub stub, StubOutputStream dataStream) throws IOException {
+      dataStream.writeName(stub.getName());
+      GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
+      GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
+    }
+
+    @Override
+    public GrParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      final StringRef name = dataStream.readName();
+      final String[] annotations = GrStubUtils.readStringArray(dataStream);
+      final String typeText = GrStubUtils.readNullableString(dataStream);
+      return new GrParameterStub(parentStub, name, annotations, typeText);
+    }
+  };
   EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
       public GrTypeDefinitionBody createPsi(EmptyStub stub) {

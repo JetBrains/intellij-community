@@ -39,7 +39,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
 
   public GrMethodStub createStub(GrMethod psi, StubElement parentStub) {
 
-    return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrTypeDefinitionElementType.getAnnotationNames(psi),
+    return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
                                 psi.getNamedParametersArray(), this);
   }
 

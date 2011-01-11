@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
@@ -25,21 +22,16 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author ilyas
@@ -54,25 +46,9 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   public GrTypeDefinitionStub createStub(TypeDef psi, StubElement parentStub) {
     String[] superClassNames = psi.getSuperClassNames();
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);
-    return new GrTypeDefinitionStub(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), getAnnotationNames(psi),
+    return new GrTypeDefinitionStub(parentStub, psi.getName(), superClassNames, this, psi.getQualifiedName(), GrStubUtils
+      .getAnnotationNames(psi),
                                         flags);
-  }
-
-  public static String[] getAnnotationNames(PsiModifierListOwner psi) {
-    List<String> annoNames = CollectionFactory.arrayList();
-    final PsiModifierList modifierList = psi.getModifierList();
-    if (modifierList instanceof GrModifierList) {
-      for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {
-        final GrCodeReferenceElement element = annotation.getClassReference();
-        if (element != null) {
-          final String annoShortName = StringUtil.getShortName(element.getText()).trim();
-          if (StringUtil.isNotEmpty(annoShortName)) {
-            annoNames.add(annoShortName);
-          }
-        }
-      }
-    }
-    return ArrayUtil.toStringArray(annoNames);
   }
 
   public void serialize(GrTypeDefinitionStub stub, StubOutputStream dataStream) throws IOException {

@@ -22,7 +22,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
@@ -48,16 +47,15 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
   }
 
   public GrFieldStub createStub(GrField psi, StubElement parentStub) {
-    String[] annNames = GrTypeDefinitionElementType.getAnnotationNames(psi);
+    String[] annNames = GrStubUtils.getAnnotationNames(psi);
 
     String[] namedParametersArray = ArrayUtil.EMPTY_STRING_ARRAY;
     if (psi instanceof GrFieldImpl){
       namedParametersArray = psi.getNamedParametersArray();
     }
 
-    final GrTypeElement typeElement = psi.getTypeElementGroovy();
-    String myTypeText = typeElement == null ? null : typeElement.getText();
-    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStub.buildFlags(psi), myTypeText);
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParametersArray, FIELD, GrFieldStub.buildFlags(psi),
+                           GrStubUtils.getTypeText(psi));
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -78,38 +76,18 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
 
   static void serializeFieldStub(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    final String[] annotations = stub.getAnnotations();
-    dataStream.writeByte(annotations.length);
-    for (String s : annotations) {
-      dataStream.writeName(s);
-    }
-
-    final String[] namedParameters = stub.getNamedParameters();
-    GrStubUtils.writeStringArray(dataStream, namedParameters);
-
+    GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
+    GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
     dataStream.writeByte(stub.getFlags());
-
-    final String typeText = stub.getTypeText();
-    dataStream.writeBoolean(typeText != null);
-    if (typeText != null) {
-      dataStream.writeUTFFast(typeText);
-    }
+    GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
   }
 
   static GrFieldStub deserializeFieldStub(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
-    final byte b = dataStream.readByte();
-    final String[] annNames = new String[b];
-    for (int i = 0; i < b; i++) {
-      annNames[i] = dataStream.readName().toString();
-    }
-
+    final String[] annNames = GrStubUtils.readStringArray(dataStream);
     final String[] namedParameters = GrStubUtils.readStringArray(dataStream);
-
     byte flags = dataStream.readByte();
-
-    final boolean hasTypeText = dataStream.readBoolean();
-    final String typeText = hasTypeText ? dataStream.readUTFFast() : null;
+    final String typeText = GrStubUtils.readNullableString(dataStream);
     return new GrFieldStub(parentStub, ref, annNames, namedParameters, GrFieldStub.isEnumConstant(flags) ? ENUM_CONSTANT : FIELD,
                                flags, typeText);
   }

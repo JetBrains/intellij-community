@@ -12,4 +12,6 @@ class Stub {
         [Field : myInt]
       [Method : foo]
         [Modifiers]
-        [Modifiers]
+        [Parameter list]
+          [Parameter : i]
+            [Modifiers]

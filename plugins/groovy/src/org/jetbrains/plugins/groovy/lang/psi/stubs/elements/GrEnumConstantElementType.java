@@ -20,16 +20,12 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.io.IOException;
 
@@ -48,20 +44,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
 
   @Override
   public GrFieldStub createStub(GrEnumConstant psi, StubElement parentStub) {
-     final GrModifierList list = psi.getModifierList();
-    String[] annNames;
-    if (list == null) {
-      annNames = ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-    else {
-      annNames = ContainerUtil.map(list.getAnnotations(), new Function<GrAnnotation, String>() {
-        public String fun(final GrAnnotation grAnnotation) {
-          final GrCodeReferenceElement element = grAnnotation.getClassReference();
-          if (element == null) return null;
-          return element.getReferenceName();
-        }
-      }, ArrayUtil.EMPTY_STRING_ARRAY);
-    }
+    String[] annNames = GrStubUtils.getAnnotationNames(psi);
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
   }
 
