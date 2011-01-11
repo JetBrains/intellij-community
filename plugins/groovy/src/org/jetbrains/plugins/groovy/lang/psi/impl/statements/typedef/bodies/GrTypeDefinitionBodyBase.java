@@ -31,7 +31,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -45,7 +47,7 @@ import java.util.List;
 /**
  * @author: Dmitry.Krasilschikov, ilyas
  */
-public class GrTypeDefinitionBodyImpl extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody, StubBasedPsiElement<EmptyStub> {
+public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody {
   private static final ArrayFactory<GrVariableDeclaration> FIELD_ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
     @Override
     public GrVariableDeclaration[] create(int count) {
@@ -54,11 +56,11 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<EmptyStub> imple
   };
   private GrField[] myFields;
 
-  public GrTypeDefinitionBodyImpl(@NotNull ASTNode node) {
+  public GrTypeDefinitionBodyBase(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrTypeDefinitionBodyImpl(EmptyStub stub, final IStubElementType classBody) {
+  public GrTypeDefinitionBodyBase(EmptyStub stub, final IStubElementType classBody) {
     super(stub, classBody);
   }
 
@@ -75,9 +77,7 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<EmptyStub> imple
     }
   }
 
-  public void accept(GroovyElementVisitor visitor) {
-    visitor.visitTypeDefinitionBody(this);
-  }
+  public abstract void accept(GroovyElementVisitor visitor);
 
   public String toString() {
     return "Type definition body";
@@ -166,5 +166,35 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<EmptyStub> imple
     getNode().addChild(elemNode, anchorNode);
     getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
     return (GrVariableDeclaration) elemNode.getPsi();
+  }
+
+  public static class GrClassBody extends GrTypeDefinitionBodyBase implements StubBasedPsiElement<EmptyStub> {
+
+    public GrClassBody(@NotNull ASTNode node) {
+      super(node);
+    }
+
+    public GrClassBody(EmptyStub stub) {
+      super(stub, GroovyElementTypes.CLASS_BODY);
+    }
+
+    public void accept(GroovyElementVisitor visitor) {
+      visitor.visitTypeDefinitionBody(this);
+    }
+
+  }
+
+  public static class GrEnumBody extends GrTypeDefinitionBodyBase implements GrEnumDefinitionBody {
+    public GrEnumBody(@NotNull ASTNode node) {
+      super(node);
+    }
+
+    public GrEnumConstantList getEnumConstantList() {
+      return findChildByClass(GrEnumConstantList.class);
+    }
+
+    public void accept(GroovyElementVisitor visitor) {
+      visitor.visitEnumDefinitionBody(this);
+    }
   }
 }

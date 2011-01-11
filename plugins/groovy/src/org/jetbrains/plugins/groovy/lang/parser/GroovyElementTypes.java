@@ -34,6 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
@@ -258,9 +260,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
 
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new GrTypeDefinitionBodyElementType("class block", true);
+  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block", GroovyFileType.GROOVY_LANGUAGE) {
+      @Override
+      public GrTypeDefinitionBody createPsi(EmptyStub stub) {
+        return new GrTypeDefinitionBodyBase.GrClassBody(stub);
+      }
+    };
 
-  IElementType ENUM_BODY = new GrTypeDefinitionBodyElementType("enum block", false);
+  IElementType ENUM_BODY = new GroovyElementType("enum block");
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
@@ -282,8 +289,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
-  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION = new GrVariableDeclarationElementType( "variable definitions", true);
-  IElementType MULTIPLE_VARIABLE_DEFINITION = new GrVariableDeclarationElementType("multivariable definition", false);
+  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION =
+    new EmptyStubElementType<GrVariableDeclaration>("variable definitions", GroovyFileType.GROOVY_LANGUAGE) {
+      @Override
+      public GrVariableDeclaration createPsi(EmptyStub stub) {
+        return new GrVariableDeclarationBase.GrVariables(stub);
+      }
+    };
+  IElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
 

@@ -13,6 +13,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.psi.stubs.EmptyStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -39,15 +41,15 @@ import java.util.List;
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> implements GrVariableDeclaration, StubBasedPsiElement<EmptyStub> {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl");
+public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyStub> implements GrVariableDeclaration {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase");
 
-  public GrVariableDeclarationImpl(@NotNull ASTNode node) {
+  public GrVariableDeclarationBase(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrVariableDeclarationImpl(EmptyStub stub) {
-    super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+  public GrVariableDeclarationBase(EmptyStub stub, final EmptyStubElementType<GrVariableDeclaration> type) {
+    super(stub, type);
   }
 
   @Override
@@ -63,14 +65,6 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   @Override
   public void removeStatement() throws IncorrectOperationException {
     GroovyPsiElementImpl.removeStatement(this);
-  }
-
-  public void accept(GroovyElementVisitor visitor) {
-    visitor.visitVariableDeclaration(this);
-  }
-
-  public String toString() {
-    return "Variable definitions";
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
@@ -91,14 +85,6 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
     return getModifierList().hasModifierProperty(name);
-  }
-
-  public GrVariable[] getVariables() {
-    List<GrVariable> result = new ArrayList<GrVariable>();
-    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrVariable) result.add((GrVariable)cur);
-    }
-    return result.toArray(new GrVariable[result.size()]);
   }
 
   public void setType(@Nullable PsiType type) {
@@ -156,10 +142,6 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     return findChildByClass(GrTypeElement.class);
   }
 
-  public GrMember[] getMembers() {
-    return findChildrenByClass(GrMember.class);
-  }
-
   @Override
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
@@ -176,5 +158,64 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> impl
     }
     throw new IncorrectOperationException("Invalid enclosing variable declaration owner");
 
+  }
+
+  public static class GrVariables extends GrVariableDeclarationBase implements StubBasedPsiElement<EmptyStub> {
+    public GrVariables(@NotNull ASTNode node) {
+      super(node);
+    }
+
+    public GrVariables(EmptyStub stub) {
+      super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
+    }
+
+    public void accept(GroovyElementVisitor visitor) {
+      visitor.visitVariableDeclaration(this);
+    }
+
+    public String toString() {
+      return "Variable definitions";
+    }
+
+    public GrVariable[] getVariables() {
+      List<GrVariable> result = new ArrayList<GrVariable>();
+      for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+        if (cur instanceof GrVariable) result.add((GrVariable)cur);
+      }
+      return result.toArray(new GrVariable[result.size()]);
+    }
+
+    public GrMember[] getMembers() {
+      return findChildrenByClass(GrMember.class);
+    }
+
+  }
+
+  public static class GrMultipleVariables extends GrVariableDeclarationBase {
+    public GrMultipleVariables(@NotNull ASTNode node) {
+      super(node);
+    }
+
+    public String toString() {
+      return "Multiple variable definitions";
+    }
+
+    @NotNull
+    public GrTupleDeclaration getTuple(){
+      return findChildByClass(GrTupleDeclaration.class);
+    }
+
+    @Nullable
+    public GrExpression getInitializerGroovy(){
+      return findChildByClass(GrExpression.class);
+    }
+
+    public GrVariable[] getVariables() {
+      return getTuple().getVariables();
+    }
+
+    public GrMember[] getMembers() {
+      return GrMember.EMPTY_ARRAY;
+    }
   }
 }
