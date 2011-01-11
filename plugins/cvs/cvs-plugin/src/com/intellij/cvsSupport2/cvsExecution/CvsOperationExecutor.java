@@ -289,6 +289,7 @@ public class CvsOperationExecutor {
   @Nullable
   public CvsTabbedWindow openTabbedWindow(final CvsHandler output) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (myProject != null && myProject.isDefault()) return null;
     if (myProject != null) {
       if (myConfiguration != null && myConfiguration.SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
