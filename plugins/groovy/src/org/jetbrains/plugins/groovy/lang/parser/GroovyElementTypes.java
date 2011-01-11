@@ -16,13 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -185,24 +183,10 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
-  GrStubElementType<GrTypeParameterListStub, GrTypeParameterList> TYPE_PARAMETER_LIST = new GrStubElementType<GrTypeParameterListStub, GrTypeParameterList>("type parameter list") {
+  EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = new EmptyStubElementType<GrTypeParameterList>("type parameter list", GroovyFileType.GROOVY_LANGUAGE) {
     @Override
-    public GrTypeParameterList createPsi(GrTypeParameterListStub stub) {
+    public GrTypeParameterList createPsi(EmptyStub stub) {
       return new GrTypeParameterListImpl(stub);
-    }
-
-    @Override
-    public GrTypeParameterListStub createStub(GrTypeParameterList psi, StubElement parentStub) {
-      return new GrTypeParameterListStub(parentStub);
-    }
-
-    @Override
-    public void serialize(GrTypeParameterListStub stub, StubOutputStream dataStream) throws IOException {
-    }
-
-    @Override
-    public GrTypeParameterListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-      return new GrTypeParameterListStub(parentStub);
     }
   };
 
@@ -274,7 +258,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
 
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-  GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody> CLASS_BODY = new GrTypeDefinitionBodyElementType("class block", true);
+  EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new GrTypeDefinitionBodyElementType("class block", true);
 
   IElementType ENUM_BODY = new GrTypeDefinitionBodyElementType("enum block", false);
   //statements
@@ -298,7 +282,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
 
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");
-  GrStubElementType<GrVariableDeclarationStub, GrVariableDeclaration> VARIABLE_DEFINITION = new GrVariableDeclarationElementType( "variable definitions", true);
+  EmptyStubElementType<GrVariableDeclaration> VARIABLE_DEFINITION = new GrVariableDeclarationElementType( "variable definitions", true);
   IElementType MULTIPLE_VARIABLE_DEFINITION = new GrVariableDeclarationElementType("multivariable definition", false);
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");

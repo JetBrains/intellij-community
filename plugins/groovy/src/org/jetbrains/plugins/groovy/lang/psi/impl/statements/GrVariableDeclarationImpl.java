@@ -12,6 +12,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableDeclarationStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -39,15 +39,14 @@ import java.util.List;
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDeclarationStub> implements GrVariableDeclaration,
-                                                                                                       StubBasedPsiElement<GrVariableDeclarationStub> {
+public class GrVariableDeclarationImpl extends GrStubElementBase<EmptyStub> implements GrVariableDeclaration, StubBasedPsiElement<EmptyStub> {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl");
 
   public GrVariableDeclarationImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrVariableDeclarationImpl(GrVariableDeclarationStub stub) {
+  public GrVariableDeclarationImpl(EmptyStub stub) {
     super(stub, GroovyElementTypes.VARIABLE_DEFINITION);
   }
 

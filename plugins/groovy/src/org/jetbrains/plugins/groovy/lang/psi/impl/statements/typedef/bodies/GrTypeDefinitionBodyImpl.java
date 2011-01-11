@@ -20,6 +20,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionBodyStub;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +45,7 @@ import java.util.List;
 /**
  * @author: Dmitry.Krasilschikov, ilyas
  */
-public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinitionBodyStub> implements GrTypeDefinitionBody,
-                                                                                                     StubBasedPsiElement<GrTypeDefinitionBodyStub> {
+public class GrTypeDefinitionBodyImpl extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody, StubBasedPsiElement<EmptyStub> {
   private static final ArrayFactory<GrVariableDeclaration> FIELD_ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
     @Override
     public GrVariableDeclaration[] create(int count) {
@@ -58,8 +58,8 @@ public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinition
     super(node);
   }
 
-  public GrTypeDefinitionBodyImpl(GrTypeDefinitionBodyStub stub) {
-    super(stub, GroovyElementTypes.CLASS_BODY);
+  public GrTypeDefinitionBodyImpl(EmptyStub stub, final IStubElementType classBody) {
+    super(stub, classBody);
   }
 
   @Override

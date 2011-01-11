@@ -20,19 +20,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeParameterListStub;
 
 /**
  * @author ilyas
  */
-public class GrTypeParameterListImpl extends GrStubElementBase<GrTypeParameterListStub> implements GrTypeParameterList,
-                                                                                                   StubBasedPsiElement<GrTypeParameterListStub> {
+public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
   private static final ArrayFactory<GrTypeParameter> ARRAY_FACTORY = new ArrayFactory<GrTypeParameter>() {
     @Override
     public GrTypeParameter[] create(int count) {
@@ -40,7 +39,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<GrTypeParameterLi
     }
   };
 
-  public GrTypeParameterListImpl(GrTypeParameterListStub stub) {
+  public GrTypeParameterListImpl(EmptyStub stub) {
     super(stub, GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
