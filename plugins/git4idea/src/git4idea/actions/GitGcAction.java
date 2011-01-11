@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,7 @@ public class GitGcAction extends GitRepositoryAction {
     for (VirtualFile root : gitRoots) {
       final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.GC);
       final GitTask task = new GitTask(project, handler, getActionName());
-      task.executeAsync(GitTask.ResultHandler.DO_NOTHING);
+      task.executeAsync(new GitTaskResultHandlerAdapter());
     }
   }
 }
