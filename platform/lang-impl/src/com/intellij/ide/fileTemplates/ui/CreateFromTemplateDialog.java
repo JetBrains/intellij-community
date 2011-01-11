@@ -48,14 +48,22 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
   public CreateFromTemplateDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull FileTemplate template,
                                   @Nullable final AttributesDefaults attributesDefaults) {
+    this(project, directory, template, attributesDefaults, null);
+  }
+
+  public CreateFromTemplateDialog(@NotNull Project project,
+                                  @NotNull PsiDirectory directory,
+                                  @NotNull FileTemplate template,
+                                  @Nullable final AttributesDefaults attributesDefaults,
+                                  @Nullable final Properties defaultProperties) {
     super(project, true);
     myDirectory = directory;
     myProject = project;
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    myDefaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
-    FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
+    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance().getDefaultProperties() : defaultProperties;
+    FileTemplateUtil.fillDefaultProperties(defaultProperties, directory);
 
     String[] unsetAttributes = null;
     try {
