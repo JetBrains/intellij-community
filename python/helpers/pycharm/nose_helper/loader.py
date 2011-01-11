@@ -124,7 +124,7 @@ class TestLoader(unittest.TestLoader):
         try:
           lineno = inspect.getsourcelines(obj)
         except:
-          lineno = 1
+          lineno = ("", 1)
         if isfunction(obj) and parent and not isinstance(parent, types.ModuleType):
           obj = unbound_method(parent, obj)
         if isinstance(obj, unittest.TestCase):
