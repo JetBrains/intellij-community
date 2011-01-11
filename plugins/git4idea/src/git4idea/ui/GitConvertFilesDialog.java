@@ -151,8 +151,8 @@ public class GitConvertFilesDialog extends DialogWrapper {
                                            Map<VirtualFile, List<Change>> sortedChanges,
                                            final List<VcsException> exceptions) {
     try {
-      if (settings.askBeforeLineSeparatorConversion() ||
-          settings.getLineSeparatorsConversion() == GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS) {
+      final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
+      if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
         LocalFileSystem lfs = LocalFileSystem.getInstance();
         final String nl = CodeStyleFacade.getInstance(project).getLineSeparator();
         final Map<VirtualFile, Set<VirtualFile>> files = new HashMap<VirtualFile, Set<VirtualFile>>();
@@ -200,17 +200,19 @@ public class GitConvertFilesDialog extends DialogWrapper {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           public void run() {
             VirtualFile[] selectedFiles = null;
-            if (settings.askBeforeLineSeparatorConversion()) {
+            if (settings.getLineSeparatorsConversion() == GitVcsSettings.ConversionPolicy.ASK) {
               GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
               d.show();
               if (d.isOK()) {
-                settings.setAskBeforeLineSeparatorConversion(!d.myDoNotShowCheckBox.isSelected());
-                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.PROJECT_LINE_SEPARATORS);
+                if (d.myDoNotShowCheckBox.isSelected()) {
+                  settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.CONVERT);
+                }
                 selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
               }
               else if (d.getExitCode() == DO_NOT_CONVERT) {
-                settings.setAskBeforeLineSeparatorConversion(!d.myDoNotShowCheckBox.isSelected());
-                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
+                if (d.myDoNotShowCheckBox.isSelected()) {
+                  settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
+                }
               }
               else {
                 //noinspection ThrowableInstanceNeverThrown
