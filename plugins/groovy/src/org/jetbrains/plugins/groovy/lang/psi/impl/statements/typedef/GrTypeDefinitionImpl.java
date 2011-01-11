@@ -131,7 +131,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public GrTypeDefinitionBody getBody() {
-    return (GrTypeDefinitionBody)findChildByType(GroovyElementTypes.CLASS_BODY);
+    return getStubOrPsiChild(GroovyElementTypes.CLASS_BODY);
   }
 
   @NotNull

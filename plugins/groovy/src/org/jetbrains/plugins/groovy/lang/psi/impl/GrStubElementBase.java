@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
 /**
  * @author ilyas
@@ -50,7 +51,7 @@ public abstract class GrStubElementBase<T extends StubElement> extends StubBased
 
   protected PsiElement getDefinitionParent() {
     final PsiElement candidate = getParentByStub();
-    if (candidate instanceof GroovyFile) {
+    if (candidate instanceof GroovyFile || candidate instanceof GrTypeDefinitionBody) {
       return candidate;
     }
 

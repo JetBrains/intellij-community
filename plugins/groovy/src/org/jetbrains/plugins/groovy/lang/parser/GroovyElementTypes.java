@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
@@ -209,6 +210,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");
 
   GroovyElementType CONSTRUCTOR_DEFINITION = new GroovyElementType("constructor definition");
+  TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
 
   //  GroovyElementType CONSTRUCTOR_BODY = new GroovyElementType("constructor body");
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
@@ -247,7 +249,26 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
 
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-  GroovyElementType CLASS_BODY = new GroovyElementType("class block");
+  GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody> CLASS_BODY = new GrStubElementType<GrTypeDefinitionBodyStub, GrTypeDefinitionBody>("class block") {
+    @Override
+    public GrTypeDefinitionBody createPsi(GrTypeDefinitionBodyStub stub) {
+      return new GrTypeDefinitionBodyImpl(stub);
+    }
+
+    @Override
+    public GrTypeDefinitionBodyStub createStub(GrTypeDefinitionBody psi, StubElement parentStub) {
+      return new GrTypeDefinitionBodyStub(parentStub);
+    }
+
+    @Override
+    public void serialize(GrTypeDefinitionBodyStub stub, StubOutputStream dataStream) throws IOException {
+    }
+
+    @Override
+    public GrTypeDefinitionBodyStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      return new GrTypeDefinitionBodyStub(parentStub);
+    }
+  };
 
   GroovyElementType ENUM_BODY = new GroovyElementType("enum block");
   //statements

@@ -19,19 +19,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionBodyStub;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,12 +43,28 @@ import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov, ilyas
- * @date: 04.05.2007
  */
-public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements GrTypeDefinitionBody {
+public class GrTypeDefinitionBodyImpl extends GrStubElementBase<GrTypeDefinitionBodyStub> implements GrTypeDefinitionBody,
+                                                                                                     StubBasedPsiElement<GrTypeDefinitionBodyStub> {
+  private static final ArrayFactory<GrMethod> METHOD_ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
+    @Override
+    public GrMethod[] create(int count) {
+      return new GrMethod[count];
+    }
+  };
   private GrField[] myFields;
+
   public GrTypeDefinitionBodyImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrTypeDefinitionBodyImpl(GrTypeDefinitionBodyStub stub) {
+    super(stub, GroovyElementTypes.CLASS_BODY);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public void subtreeChanged() {
@@ -83,7 +103,7 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
   }
 
   public GrMethod[] getGroovyMethods() {
-    return findChildrenByClass(GrMethod.class);
+    return getStubOrPsiChildren(GroovyElementTypes.METHOD_DEFS, METHOD_ARRAY_FACTORY);
   }
 
   public List<PsiMethod> getMethods() {
