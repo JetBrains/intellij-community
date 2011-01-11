@@ -17,14 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +47,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Medvedev
@@ -82,8 +85,6 @@ public class GrClassImplUtil {
       return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, grType.getResolveScope());
     }
   }
-
-  private static final Key<CachedValue<Boolean>> HAS_GROOVY_OBJECT_METHODS = Key.create("has groovy object methods");
 
   @NotNull
   public static PsiClassType[] getExtendsListTypes(GrTypeDefinition grType) {
@@ -125,7 +126,7 @@ public class GrClassImplUtil {
       extendsList = new PsiClassType[]{createBaseClassType(grType)};
     }
 
-    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(), PsiClassType.class);
+    return ArrayUtil.mergeArrays(extendsList, grType.getImplementsListTypes(), PsiClassType.ARRAY_FACTORY);
   }
 
   public static PsiClassType createBaseClassType(GrTypeDefinition grType) {
