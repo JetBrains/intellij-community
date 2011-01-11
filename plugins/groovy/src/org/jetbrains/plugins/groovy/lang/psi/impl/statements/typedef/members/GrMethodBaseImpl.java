@@ -386,7 +386,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return findChildByClass(GrTypeParameterList.class);
+    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull

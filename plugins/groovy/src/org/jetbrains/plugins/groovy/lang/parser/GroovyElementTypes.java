@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -32,7 +33,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
 
@@ -66,8 +71,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
-
-  GroovyElementType IDENTIFIER = new GroovyElementType("Groovy identifier");
 
   // Indicates the wrongway of parsing
   GroovyElementType WRONGWAY = new GroovyElementType("Wrong way!");
@@ -118,7 +121,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType SAFE_CAST_EXPRESSION = new GroovyElementType("safe cast expression");
   GroovyElementType INSTANCEOF_EXPRESSION = new GroovyElementType("instanceof expression");
   GroovyElementType POSTFIX_EXPRESSION = new GroovyElementType("Postfix expression");
-  GroovyElementType PATH_EXPRESSION = new GroovyElementType("Path expression");
   GroovyElementType PATH_PROPERTY_REFERENCE = new GroovyElementType("Property reference");
 
   GroovyElementType PATH_METHOD_CALL = new GroovyElementType("Method call");
@@ -160,9 +162,48 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
-  GroovyElementType TYPE_PARAMETER_LIST = new GroovyElementType("type parameter list");
+  GrStubElementType<GrTypeParameterListStub, GrTypeParameterList> TYPE_PARAMETER_LIST = new GrStubElementType<GrTypeParameterListStub, GrTypeParameterList>("type parameter list") {
+    @Override
+    public GrTypeParameterList createPsi(GrTypeParameterListStub stub) {
+      return new GrTypeParameterListImpl(stub);
+    }
 
-  GroovyElementType TYPE_PARAMETER = new GroovyElementType("type parameter");
+    @Override
+    public GrTypeParameterListStub createStub(GrTypeParameterList psi, StubElement parentStub) {
+      return new GrTypeParameterListStub(parentStub);
+    }
+
+    @Override
+    public void serialize(GrTypeParameterListStub stub, StubOutputStream dataStream) throws IOException {
+    }
+
+    @Override
+    public GrTypeParameterListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      return new GrTypeParameterListStub(parentStub);
+    }
+  };
+
+  GrStubElementType<GrTypeParameterStub, GrTypeParameter> TYPE_PARAMETER = new GrStubElementType<GrTypeParameterStub, GrTypeParameter>("type parameter") {
+    @Override
+    public GrTypeParameter createPsi(GrTypeParameterStub stub) {
+      return new GrTypeParameterImpl(stub);
+    }
+
+    @Override
+    public GrTypeParameterStub createStub(GrTypeParameter psi, StubElement parentStub) {
+      return new GrTypeParameterStub(parentStub, StringRef.fromString(psi.getName()));
+    }
+
+    @Override
+    public void serialize(GrTypeParameterStub stub, StubOutputStream dataStream) throws IOException {
+      dataStream.writeName(stub.getName());
+    }
+
+    @Override
+    public GrTypeParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      return new GrTypeParameterStub(parentStub, dataStream.readName());
+    }
+  };
   GroovyElementType TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GroovyElementType("type extends list");
 
   GroovyElementType DEFAULT_ANNOTATION_VALUE = new GroovyElementType("default annotation value");

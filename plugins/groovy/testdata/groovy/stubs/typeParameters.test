@@ -1,0 +1,15 @@
+@Anno class Stub<A,B> {
+  def <T> T foo() {}
+}
+-----
+[Groovy script]
+  [Class definition : Stub]
+    [Modifiers]
+      [Annotation]
+    [Type parameter list]
+      [Type parameter : A]
+      [Type parameter : B]
+    [Method : foo]
+      [Modifiers]
+      [Type parameter list]
+        [Type parameter : T]
