@@ -68,13 +68,18 @@ def loadModulesFromFolderUsingPattern(folder, pattern):
   return result
 
 if __name__ == "__main__":
-  #testLoader = unittest.TestLoader()
-  testLoader = TestLoader()
+  arg = sys.argv[-1]
+  if arg == "true":
+    import unittest
+    testLoader = unittest.TestLoader()
+    all = unittest.TestSuite()
+    pure_unittest = True
+  else:
+    testLoader = TestLoader()
+    all = ContextSuite()
+    pure_unittest = False
 
-  #all = unittest.TestSuite()
-  all = ContextSuite()
-
-  for arg in sys.argv[1:]:
+  for arg in sys.argv[1:-1]:
     arg = arg.strip()
     if len(arg) == 0:
       continue
@@ -97,13 +102,16 @@ if __name__ == "__main__":
           modules = [loadSource(a[0])]
 
       for module in modules:
-        all.addTests(testLoader.loadTestsFromModule(module, True))
+        all.addTests(testLoader.loadTestsFromModule(module))
 
     elif len(a) == 2:
       # From testcase
       debug("/ from testcase " + a[1] + " in " + a[0])
       module = loadSource(a[0])
-      all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
+      if pure_unittest:
+        all.addTests(testLoader.loadTestsFromTestCase(getattr(module, a[1])))
+      else:
+        all.addTests(testLoader.loadTestsFromTestClass(getattr(module, a[1])))
     else:
       # From method in class or from function
       debug("/ from method " + a[2] + " in testcase " +  a[1] + " in " + a[0])
