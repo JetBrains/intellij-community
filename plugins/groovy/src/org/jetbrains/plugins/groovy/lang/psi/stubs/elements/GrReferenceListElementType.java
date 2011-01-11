@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -22,40 +23,34 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrImplementsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.io.IOException;
 
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.IMPLEMENTS_CLAUSE;
-
 /**
  * @author ilyas
  */
-public class GrImplementsClauseElementType extends GrStubElementType<GrReferenceListStub, GrImplementsClause> {
+public abstract class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
 
-  public GrImplementsClauseElementType() {
-    super("implements clause");
+  public GrReferenceListElementType(final String debugName) {
+    super(debugName);
   }
 
-  public GrImplementsClause createPsi(GrReferenceListStub stub) {
-    return new GrImplementsClauseImpl(stub);
-  }
-
-  public GrReferenceListStub createStub(GrImplementsClause psi, StubElement parentStub) {
+  public GrReferenceListStub createStub(T psi, StubElement parentStub) {
     final GrCodeReferenceElement[] elements = psi.getReferenceElements();
     String[] refNames = ContainerUtil.map(elements, new Function<GrCodeReferenceElement, String>() {
       @Nullable
       public String fun(final GrCodeReferenceElement element) {
-        return element.getReferenceName();
+        final String name = element.getReferenceName();
+        return name == null ? null : StringUtil.getShortName(name);
       }
     }, new String[elements.length]);
 
-    return new GrReferenceListStub(parentStub, IMPLEMENTS_CLAUSE, refNames);
+    return new GrReferenceListStub(parentStub, this, refNames);
   }
 
   public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
@@ -63,7 +58,7 @@ public class GrImplementsClauseElementType extends GrStubElementType<GrReference
   }
 
   public GrReferenceListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new GrReferenceListStub(parentStub, IMPLEMENTS_CLAUSE, GrStubUtils.readStringArray(dataStream));
+    return new GrReferenceListStub(parentStub, this, GrStubUtils.readStringArray(dataStream));
   }
 
   public void indexStub(GrReferenceListStub stub, IndexSink sink) {
@@ -74,3 +69,4 @@ public class GrImplementsClauseElementType extends GrStubElementType<GrReference
     }
   }
 }
+

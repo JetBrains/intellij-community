@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionBodyBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
@@ -61,11 +61,37 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   /*
   Stub elements
    */
-  GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION = new GrClassDefinitionElementType();
-  GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION = new GrInterfaceDefinitionElementType();
-  GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION = new GrEnumDefinitionElementType();
-  GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION = new GrAnnotationDefinitionElementType();
-  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION = new GrAnonymousClassDefinitionElementType();
+  GrStubElementType<GrTypeDefinitionStub, GrClassDefinition> CLASS_DEFINITION =
+    new GrTypeDefinitionElementType<GrClassDefinition>("class definition") {
+      public GrClassDefinition createPsi(GrTypeDefinitionStub stub) {
+        return new GrClassDefinitionImpl(stub);
+      }
+    };
+  GrStubElementType<GrTypeDefinitionStub, GrInterfaceDefinition> INTERFACE_DEFINITION =
+    new GrTypeDefinitionElementType<GrInterfaceDefinition>("interface definition") {
+      public GrInterfaceDefinition createPsi(GrTypeDefinitionStub stub) {
+        return new GrInterfaceDefinitionImpl(stub);
+      }
+    };
+  GrStubElementType<GrTypeDefinitionStub, GrEnumTypeDefinition> ENUM_DEFINITION =
+    new GrTypeDefinitionElementType<GrEnumTypeDefinition>("enumeration definition") {
+      public GrEnumTypeDefinition createPsi(GrTypeDefinitionStub stub) {
+        return new GrEnumTypeDefinitionImpl(stub);
+      }
+    };
+  GrStubElementType<GrTypeDefinitionStub, GrAnnotationTypeDefinition> ANNOTATION_DEFINITION =
+    new GrTypeDefinitionElementType<GrAnnotationTypeDefinition>("annotation definition") {
+      public GrAnnotationTypeDefinition createPsi(GrTypeDefinitionStub stub) {
+        return new GrAnnotationTypeDefinitionImpl(stub);
+      }
+    };
+  GrStubElementType<GrTypeDefinitionStub, GrAnonymousClassDefinition> ANONYMOUS_CLASS_DEFINITION =
+    new GrTypeDefinitionElementType<GrAnonymousClassDefinition>("Anonymous class") {
+      @Override
+      public GrAnonymousClassDefinition createPsi(GrTypeDefinitionStub stub) {
+        return new GrAnonymousClassDefinitionImpl(stub);
+      }
+    };
 
   TokenSet TYPE_DEFINITION_TYPES = TokenSet.create(CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION);
 
@@ -93,8 +119,16 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
   };
 
-  GrStubElementType<GrReferenceListStub, GrImplementsClause> IMPLEMENTS_CLAUSE = new GrImplementsClauseElementType();
-  GrStubElementType<GrReferenceListStub, GrExtendsClause> EXTENDS_CLAUSE = new GrExtendsClauseElementType();
+  GrReferenceListElementType<GrImplementsClause> IMPLEMENTS_CLAUSE = new GrReferenceListElementType<GrImplementsClause>("implements clause") {
+    public GrImplementsClause createPsi(GrReferenceListStub stub) {
+      return new GrImplementsClauseImpl(stub);
+    }
+  };
+  GrReferenceListElementType<GrExtendsClause> EXTENDS_CLAUSE = new GrReferenceListElementType<GrExtendsClause>("super class clause") {
+    public GrExtendsClause createPsi(GrReferenceListStub stub) {
+      return new GrExtendsClauseImpl(stub);
+    }
+  };
 
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
