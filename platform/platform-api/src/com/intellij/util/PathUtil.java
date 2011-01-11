@@ -61,12 +61,14 @@ public class PathUtil {
     return file;
   }
 
-  public static String getJarPathForClass(final Class aClass) {
+  @NotNull
+  public static String getJarPathForClass(@NotNull Class aClass) {
     String resourceRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
   }
 
-  public static String toPresentableUrl(String url) {
+  @NotNull
+  public static String toPresentableUrl(@NotNull String url) {
     return getLocalPath(VirtualFileManager.extractPath(url));
   }
 
@@ -126,7 +128,8 @@ public class PathUtil {
     return end == -1 ? "" : path.substring(0, end);
   }
 
-  public static String suggestFileName(final String text) {
+  @NotNull
+  public static String suggestFileName(@NotNull String text) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
