@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -65,8 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionBodyBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrAnnotationMethodImpl;
@@ -254,7 +254,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ARGUMENT)) return new GrNamedArgumentImpl(node);
     if (elem.equals(ARGUMENT_LABEL)) return new GrArgumentLabelImpl(node);
 
-    if (elem.equals(BALANCED_BRACKETS)) return new GrBalancedBracketsImpl(node);
+    if (elem.equals(BALANCED_BRACKETS)) return new GroovyPsiElementImpl(node){};
 
     return new ASTWrapperPsiElement(node);
   }
