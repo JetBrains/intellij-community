@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.PythonUnitTestConfigurationProducer;
+import com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,11 +115,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     return null;
   }
 
-
   public int compareTo(Object o) {
-    if (o instanceof PythonUnitTestConfigurationProducer) {
-      return -PREFERED;
-    }
     return PREFERED;
   }
 }

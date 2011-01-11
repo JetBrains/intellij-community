@@ -166,6 +166,11 @@ class TeamcityNoseRunner(unittest.TextTestRunner):
         """Overrides to provide plugin hooks and defer all output to
         the test result class.
         """
+        #for 2.5 compat
+        for plugin in self.config.plugins.plugins:
+            if plugin.name == "profile":
+                plugin.begin()
+
         wrapper = self.config.plugins.prepareTest(test)
         if wrapper is not None:
             test = wrapper

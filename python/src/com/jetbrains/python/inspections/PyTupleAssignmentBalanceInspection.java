@@ -35,6 +35,8 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
       PyExpression lhsExpression = node.getLeftHandSideExpression();
       PyExpression assignedValue = node.getAssignedValue();
+      if (assignedValue instanceof PyParenthesizedExpression)     // PY-2659
+        assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
       if (lhsExpression instanceof PyTupleExpression && assignedValue instanceof PyTupleExpression) {
         int valuesLength = ((PyTupleExpression)assignedValue).getElements().length;
         PyExpression[] elements = ((PyTupleExpression) lhsExpression).getElements();

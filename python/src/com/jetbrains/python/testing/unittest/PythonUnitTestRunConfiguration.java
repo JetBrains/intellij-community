@@ -1,4 +1,4 @@
-package com.jetbrains.python.testing.doctest;
+package com.jetbrains.python.testing.unittest;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -14,29 +14,30 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * User: catherine
+ * @author Leonid Shalupov
  */
-public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
-                                          implements PythonDocTestRunConfigurationParams {
+public class PythonUnitTestRunConfiguration extends
+                                            AbstractPythonTestRunConfiguration
+                                              implements PythonUnitTestRunConfigurationParams {
   private String myPattern = ""; // pattern for modules in folder to match against
 
-  protected PythonDocTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
+  protected PythonUnitTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(module, configurationFactory, name);
   }
 
   @Override
   protected ModuleBasedConfiguration createInstance() {
-    return new PythonDocTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
+    return new PythonUnitTestRunConfiguration(getConfigurationModule(), getFactory(), getName());
   }
 
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new PythonDocTestRunConfigurationEditor(getProject(), this);
+    return new PythonUnitTestRunConfigurationEditor(getProject(), this);
   }
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new PythonDocTestCommandLineState(this, env);
+    return new PythonUnitTestCommandLineState(this, env);
   }
 
   @Override
@@ -51,7 +52,25 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
     JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
   }
 
-  public static void copyParams(PythonDocTestRunConfigurationParams source, PythonDocTestRunConfigurationParams target) {
+  @Override
+  public String suggestedName() {
+    switch (myTestType) {
+      case TEST_CLASS:
+        return "Tests in " + myClassName;
+      case TEST_METHOD:
+        return "Test " + myClassName + "." + myMethodName;
+      case TEST_SCRIPT:
+        return "Tests in " + myScriptName;
+      case TEST_FOLDER:
+        return "Tests in " + FileUtil.toSystemDependentName(myFolderName);
+      case TEST_FUNCTION:
+        return "Test " + myMethodName;
+      default:
+        throw new IllegalStateException("Unknown test type: " + myTestType);
+    }
+  }
+
+  public static void copyParams(PythonUnitTestRunConfigurationParams source, PythonUnitTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
     target.setPattern(source.getPattern());
   }
@@ -62,23 +81,5 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
 
   public void setPattern(String pattern) {
     myPattern = pattern;
-  }
-
-  @Override
-  public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return "Doctests in " + myClassName;
-      case TEST_METHOD:
-        return "Doctests in " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
-        return "Doctests in " + myScriptName;
-      case TEST_FOLDER:
-        return "Doctests in " + FileUtil.toSystemDependentName(myFolderName);
-      case TEST_FUNCTION:
-        return "Doctests in " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
   }
 }

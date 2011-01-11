@@ -21,6 +21,7 @@ import javax.swing.*;
 public class PyRedundantParenthesesInspection extends PyInspection {
 
   public boolean myIgnorePercOperator = false;
+  public boolean myIgnoreTupleInReturn = false;
   @Nls
   @NotNull
   @Override
@@ -31,14 +32,16 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new Visitor(holder, myIgnorePercOperator);
+    return new Visitor(holder, myIgnorePercOperator, myIgnoreTupleInReturn);
   }
 
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnorePercOperator;
-    public Visitor(final ProblemsHolder holder, boolean ignorePercOperator) {
+    private final boolean myIgnoreTupleInReturn;
+    public Visitor(final ProblemsHolder holder, boolean ignorePercOperator, boolean ignoreTupleInReturn) {
       super(holder);
       myIgnorePercOperator = ignorePercOperator;
+      myIgnoreTupleInReturn = ignoreTupleInReturn;
     }
 
     @Override
@@ -56,10 +59,12 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           return;
         registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
+      else if (node.getParent() instanceof PyReturnStatement && node.getContainedExpression() instanceof PyTupleExpression && myIgnoreTupleInReturn) {
+        return;
+      }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
         if (!node.getText().contains("\n")) {
-          
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
         }
       }
@@ -71,6 +76,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore argument of % operator", "myIgnorePercOperator");
+    panel.addCheckbox("Ignore tuple in return statement", "myIgnoreTupleInReturn");
     return panel;
   }
 }

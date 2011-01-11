@@ -1,4 +1,4 @@
-package com.jetbrains.python.testing;
+package com.jetbrains.python.testing.unittest;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;

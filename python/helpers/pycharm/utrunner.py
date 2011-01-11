@@ -117,7 +117,7 @@ if __name__ == "__main__":
               all.addTest(testCaseClass(a[2]))
           except:
               # class is not a testcase inheritor
-              all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2])))
+              all.addTest(testLoader.makeTest(getattr(testCaseClass, a[2]), testCaseClass))
 
 
   debug("/ Loaded " + str(all.countTestCases()) + " tests")

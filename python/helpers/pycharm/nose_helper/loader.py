@@ -22,8 +22,8 @@ op_abspath = os.path.abspath
 PYTHON_VERSION_MAJOR = sys.version_info[0]
 PYTHON_VERSION_MINOR = sys.version_info[1]
 
-#if PYTHON_VERSION_MAJOR == 3:
-#    ismethod = isfunction
+from nose_helper.util import unbound_method
+import types
 
 class TestLoader(unittest.TestLoader):
     """Test loader that extends unittest.TestLoader to support nosetests
@@ -97,11 +97,14 @@ class TestLoader(unittest.TestLoader):
         """
         def wanted(attr, cls=cls, sel=self.selector):
             item = getattr(cls, attr, None)
+            if isfunction(item):
+                item = unbound_method(cls, item)
             if not ismethod(item):
                 return False
             return sel.wantMethod(item)
         cases = [self.makeTest(getattr(cls, case), cls)
                  for case in filter(wanted, dir(cls))]
+
         return self.suiteClass(ContextList(cases, context=cls))
 
     def makeTest(self, obj, parent=None):
@@ -119,7 +122,10 @@ class TestLoader(unittest.TestLoader):
         """
         import inspect
         lineno = inspect.getsourcelines(obj)
-
+        if isfunction(obj) and parent and not isinstance(parent, types.ModuleType):
+	    # This is a Python 3.x 'unbound method'.  Wrap it with its
+	    # associated class..
+            obj = unbound_method(parent, obj)
         if isinstance(obj, unittest.TestCase):
             return obj
         elif isclass(obj):
@@ -135,6 +141,9 @@ class TestLoader(unittest.TestLoader):
             if issubclass(parent, unittest.TestCase):
                 return parent(obj.__name__)
             else:
+              if PYTHON_VERSION_MAJOR > 2:
+                setattr(obj, "im_class", parent)
+                setattr(obj, "im_self", parent)
               test_case = MethodTestCase(obj)
               test_case.lineno = lineno[1]
               return test_case

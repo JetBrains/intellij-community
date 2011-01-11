@@ -67,8 +67,8 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
 
-    <configurationType implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationType"/>
-    <configurationProducer implementation="com.jetbrains.python.testing.PythonUnitTestConfigurationProducer"/>
+    <configurationType implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.python.testing.unittest.PythonUnitTestConfigurationProducer"/>
     <testSrcLocator implementation="com.jetbrains.python.testing.PythonUnitTestTestIdUrlProvider"/>
 
     <configurationType implementation="com.jetbrains.python.testing.pytest.PyTestRunConfigurationType"/>

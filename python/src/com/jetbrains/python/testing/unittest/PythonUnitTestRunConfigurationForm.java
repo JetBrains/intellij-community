@@ -1,4 +1,4 @@
-package com.jetbrains.python.testing.doctest;
+package com.jetbrains.python.testing.unittest;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
@@ -8,16 +8,16 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * User: catherine
+ * @author Leonid Shalupov
  */
-public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
+public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
   private JPanel myTestsPlaceHolder;
   private JPanel myRootPanel;
 
   private final PythonTestRunConfigurationForm myTestRunConfigurationForm;
 
 
-  public PythonDocTestRunConfigurationForm(final Project project, final PythonDocTestRunConfiguration configuration) {
+  public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
     myTestsPlaceHolder.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
