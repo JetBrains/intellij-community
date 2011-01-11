@@ -44,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -128,7 +127,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public GrTypeElement getReturnTypeElementGroovy() {
-    return findChildByClass(GrTypeElement.class);
+    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
   }
 
   public PsiType getInferredReturnType() {
@@ -282,9 +281,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    GrThrowsClause clause = findChildByClass(GrThrowsClause.class);
-    assert clause != null : this;
-    return clause;
+    return (PsiReferenceList)findNotNullChildByType(GroovyElementTypes.THROW_CLAUSE);
   }
 
   @Nullable
