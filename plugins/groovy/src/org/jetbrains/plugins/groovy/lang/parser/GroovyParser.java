@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.*;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
@@ -449,7 +449,7 @@ public class GroovyParser implements PsiParser {
     }
     if (TypeDefinition.parse(builder, this)) return true;
 
-    return ExpressionStatement.parse(builder, this);
+    return AssignmentExpression.parse(builder, this, true);
 
   }
 

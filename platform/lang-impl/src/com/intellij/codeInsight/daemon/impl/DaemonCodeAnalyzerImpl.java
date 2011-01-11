@@ -197,16 +197,18 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
     try {
       while (progress.isRunning()) {
+        try {
         if (progress.isCanceled() && progress.isRunning()) {
           // write action sneaked in the AWT. restart
           waitForTermination();
+          Throwable savedException = PassExecutorService.getSavedException(progress);
+          if (savedException != null) throw savedException;
           return runPasses(file, document, textEditor, toIgnore, canChangeDocument,callbackWhileWaiting);
         }
         if (callbackWhileWaiting != null) {
           callbackWhileWaiting.run();
         }
         progress.waitFor(100);
-        try {
           UIUtil.dispatchAllInvocationEvents();
         }
         catch (RuntimeException e) {
@@ -501,11 +503,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
         int compare = info.getSeverity().compareTo(minSeverity);
-        if (compare < 0) {
-          return true;
-        }
-
-        return processor.process(info);
+        return compare < 0 || processor.process(info);
       }
     });
   }

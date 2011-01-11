@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,29 @@
  */
 package com.siyeh.ig.bitwise;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "shift.operation.by.inappropriate.constant.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         final Integer value = (Integer)infos[0];
@@ -44,10 +50,71 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
         }
     }
 
+    @Override
     public boolean isEnabledByDefault(){
         return true;
     }
 
+    @Override
+    protected InspectionGadgetsFix buildFix(Object... infos) {
+        return new ShiftOutOfRangeFix(((Integer)infos[0]).intValue(),
+                ((Boolean)infos[1]).booleanValue());
+    }
+
+    private static class ShiftOutOfRangeFix extends InspectionGadgetsFix {
+
+        private final int value;
+        private final boolean isLong;
+
+        ShiftOutOfRangeFix(int value, boolean isLong) {
+            this.value = value;
+            this.isLong = isLong;
+        }
+
+        @NotNull
+        public String getName() {
+            final int newValue;
+            if (isLong) {
+                newValue = value & 63;
+            } else {
+                newValue = value & 31;
+            }
+            return InspectionGadgetsBundle.message(
+                    "shift.out.of.range.quickfix",
+                    Integer.valueOf(value), Integer.valueOf(newValue));
+        }
+
+        @Override
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiBinaryExpression)) {
+                return;
+            }
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) parent;
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
+                return;
+            }
+            final PsiElementFactory factory =
+                    JavaPsiFacade.getElementFactory(project);
+            final String text;
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            if (PsiType.LONG.equals(lhs.getType())) {
+                text = String.valueOf(value & 63);
+            } else {
+            text = String.valueOf(value & 31);
+            }
+            final PsiExpression newExpression =
+                    factory.createExpressionFromText(
+                            text, element);
+            rhs.replace(newExpression);
+        }
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ShiftOutOfRange();
     }
@@ -87,12 +154,12 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
             final int value = valueObject.intValue();
             if(expressionType.equals(PsiType.LONG)){
                 if(value < 0 || value > 63){
-                    registerError(sign, valueObject);
+                    registerError(sign, valueObject, Boolean.TRUE);
                 }
             }
             if(expressionType.equals(PsiType.INT)){
                 if(value < 0 || value > 31){
-                    registerError(sign, valueObject);
+                    registerError(sign, valueObject, Boolean.FALSE);
                 }
             }
         }

@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -57,38 +58,38 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   @NotNull
   public String getFileName() {
-    update();
-
-    if (myFile != null) {
-      return myFile.getName();
+    Pair<VirtualFile, String> result = update();
+    VirtualFile file = result.first;
+    if (file != null) {
+      return file.getName();
     }
-    int index = myUrl.lastIndexOf('/');
-    return index >= 0 ? myUrl.substring(index + 1) : myUrl;
+    String url = result.second;
+    int index = url.lastIndexOf('/');
+    return index >= 0 ? url.substring(index + 1) : url;
   }
 
   public VirtualFile getFile() {
     checkDisposed();
 
-    update();
-    return myFile;
+    Pair<VirtualFile, String> result = update();
+    return result.first;
   }
 
   @NotNull
   public String getUrl() {
     //checkDisposed(); no check here since Disposer might want to compute hashcode during dispose()
-    update();
-    return getUrlNoUpdate();
+
+    Pair<VirtualFile, String> result = update();
+    return getUrlNoUpdate(result.first, result.second);
   }
 
-  private String getUrlNoUpdate() {
-    return myUrl == null ? myFile.getUrl() : myUrl;
+  private static String getUrlNoUpdate(VirtualFile file, String url) {
+    return url == null ? file.getUrl() : url;
   }
 
   @NotNull
   public String getPresentableUrl() {
     checkDisposed();
-    update();
-
     return PathUtil.toPresentableUrl(getUrl());
   }
 
@@ -138,36 +139,42 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   public boolean isValid() {
-    update();
-    return !disposed && myFile != null;
+    Pair<VirtualFile, String> result = update();
+    return !disposed && result.first != null;
   }
 
-  void update() {
-    if (disposed) return;
+  Pair<VirtualFile, String> update() {
+    if (disposed) return null;
+    long lastUpdated = myLastUpdated;
+    String url = myUrl;
+    VirtualFile file = myFile;
     long fsModCount = myVirtualFileManager.getModificationCount();
-    if (myLastUpdated == fsModCount) return;
-    myLastUpdated = fsModCount;
+    if (lastUpdated == fsModCount) return Pair.create(file, url);
 
-    if (myFile != null && !myFile.isValid()) {
-      myUrl = myFile.getUrl();
-      myFile = null;
+    if (file != null && !file.isValid()) {
+      url = file.getUrl();
+      file = null;
     }
-    if (myFile == null) {
-      LOG.assertTrue(myUrl != null, "Both file & url are null");
-      myFile = myVirtualFileManager.findFileByUrl(myUrl);
-      if (myFile != null) {
-        myUrl = null;
+    if (file == null) {
+      LOG.assertTrue(url != null, "Both file & url are null");
+      file = myVirtualFileManager.findFileByUrl(url);
+      if (file != null) {
+        url = null;
       }
     }
-    else if (!myFile.exists()) {
-      myUrl = myFile.getUrl();
-      myFile = null;
+    if (file != null && !file.exists()) {
+      url = file.getUrl();
+      file = null;
     }
+    myFile = file;
+    myUrl = url;
+    myLastUpdated = fsModCount;
+    return Pair.create(file, url);
   }
 
   @Override
   public String toString() {
-    return getUrlNoUpdate();
+    return getUrlNoUpdate(myFile, myUrl);
   }
 
   public void dispose() {
@@ -178,9 +185,13 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       if (TRACE_CREATION) {
         putUserData(KILL_TRACE, new Throwable());
       }
-      String url = getUrlNoUpdate();
+      String url = getUrlNoUpdate(myFile, myUrl);
       disposed = true;
       ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(url, myListener);
     }
+  }
+
+  public boolean isDisposed() {
+    return disposed;
   }
 }

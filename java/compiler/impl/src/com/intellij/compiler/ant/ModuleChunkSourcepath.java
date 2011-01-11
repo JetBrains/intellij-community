@@ -141,7 +141,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
   }
 
   private void addExcludePatterns(Module module, final VirtualFile root, VirtualFile dir, CompositeGenerator generator, final boolean parentIncluded) {
-    if (FileTypeManager.getInstance().isFileIgnored(dir.getName())) {
+    if (FileTypeManager.getInstance().isFileIgnored(dir)) {
       // ignored files are handled by global 'ignored' patternset
       return;
     }

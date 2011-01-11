@@ -63,9 +63,7 @@ public class Factory  {
   }
 
   public static CompositeElement createErrorElement(String description) {
-    PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-    errorElement.setErrorDescription(description);
-    return errorElement;
+    return new PsiErrorElementImpl(description);
   }
 
   @NotNull

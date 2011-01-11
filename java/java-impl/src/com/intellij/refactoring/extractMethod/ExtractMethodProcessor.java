@@ -718,6 +718,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       deleteExtracted();
     }
     else {
+      declareNecessaryVariablesInsideBody(body);
       if (myHasExpressionOutput) {
         PsiReturnStatement returnStatement = (PsiReturnStatement)myElementFactory.createStatementFromText("return x;", null);
         final PsiExpression returnValue = RefactoringUtil.convertInitializerToNormalExpression(myExpression, myForcedReturnType);
@@ -729,8 +730,18 @@ public class ExtractMethodProcessor implements MatchProvider {
         statement.getExpression().replace(myExpression);
         body.add(statement);
       }
-      final PsiElement replacement = IntroduceVariableBase.replace(myExpression, myMethodCall, myProject);
-      myMethodCall = PsiTreeUtil.getParentOfType(replacement.findElementAt(replacement.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
+      PsiExpression expression2Replace = myExpression;
+      if (myExpression instanceof PsiAssignmentExpression) {
+        expression2Replace = ((PsiAssignmentExpression)myExpression).getRExpression();
+      } else if (myExpression instanceof PsiPostfixExpression || myExpression instanceof PsiPrefixExpression) {
+        PsiExpression operand = myExpression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)myExpression).getOperand() :
+                                ((PsiPrefixExpression)myExpression).getOperand();
+        expression2Replace =
+          ((PsiBinaryExpression)myExpression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
+      }
+      myExpression = (PsiExpression)IntroduceVariableBase.replace(expression2Replace, myMethodCall, myProject);
+      myMethodCall = PsiTreeUtil.getParentOfType(myExpression.findElementAt(myExpression.getText().indexOf(myMethodCall.getText())), PsiMethodCallExpression.class);
+      declareNecessaryVariablesAfterCall(myOutputVariable);
     }
 
     if (myAnchor instanceof PsiField) {
@@ -869,9 +880,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  protected PsiElement addToMethodCallLocation(PsiElement statement) throws IncorrectOperationException {
+  protected PsiElement addToMethodCallLocation(PsiStatement statement) throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
-      return myElements[0].getParent().addBefore(statement, myElements[0]);
+      PsiStatement containingStatement = PsiTreeUtil.getParentOfType(myExpression != null ? myExpression : myElements[0], PsiStatement.class, false);
+      return containingStatement.getParent().addBefore(statement, containingStatement);
     }
     else {
       return myEnclosingBlockStatement.getParent().addBefore(statement, myEnclosingBlockStatement);

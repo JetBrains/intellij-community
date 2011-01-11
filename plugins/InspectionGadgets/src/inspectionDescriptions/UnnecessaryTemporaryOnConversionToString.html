@@ -1,8 +1,17 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports any instances of unnecessary creation of temporary objects when converting
-from primitive types to Strings.  For example,  <b><font color="#000080">new Integer(3).toString()</font></b> would be reported, and could
-be automatically converted to <b><font color="#000080">Integer.toString(3)</font></b>.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<body>
+This inspection reports unnecessary creation of temporary objects when converting
+from primitive types to Strings.
+<p>
+For example:
+<code><pre>
+    new Integer(3).toString()
+</pre></code>
+will be reported, and can be automatically converted to:
+<code><pre>
+    Integer.toString(3)
+</pre></code>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

@@ -1,14 +1,15 @@
 
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports any Hibernate resource which is not opened in a <b><font color="#000080">try</font></b>
-block and closed in the corresponding <b><font color="#000080">finally</font></b> block.  Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed.  Hibernate resources reported
-by this inspection include any instances of <b><font color="#000080">org.hibernate.Session</font></b>.
+<body>
+This inspection reports any Hibernate resource which is not opened in a <b>try</b>
+block and closed in the corresponding <b>finally</b> block. Such resources may
+be inadvertently leaked if an exception is thrown before the resource is closed. Hibernate resources reported
+by this inspection include <b>org.hibernate.Session</b>.
 <p>
 Use the checkbox below to specify if a Hibernate resource is allowed to be opened inside a try
 block. This style is less desirable because it is more verbose than opening a resource
 in front of a try block.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

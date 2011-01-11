@@ -218,7 +218,7 @@ public class CommonRefactoringUtil {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (children != null) {
       for (VirtualFile virtualFile : children) {
-        if (fileTypeManager.isFileIgnored(virtualFile.getName())) continue;
+        if (fileTypeManager.isFileIgnored(virtualFile)) continue;
         addVirtualFiles(virtualFile, list);
       }
     }

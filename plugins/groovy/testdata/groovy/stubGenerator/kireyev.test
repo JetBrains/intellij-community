@@ -7,7 +7,7 @@ public void remove() { throw new UnsupportedOperationException("This method is n
 public T next() { throw new UnsupportedOperationException("This method is not available"); }
 }
 -----
-public class BugSample<T> extends groovy.lang.GroovyObjectSupport implements java.util.Iterator<T> , groovy.lang.GroovyObject {
+public class BugSample<T> extends groovy.lang.GroovyObjectSupport implements java.util.Iterator<T>, groovy.lang.GroovyObject {
   public boolean hasNext() {
     return false;
   }

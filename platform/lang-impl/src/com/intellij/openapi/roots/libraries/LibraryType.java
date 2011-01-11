@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
@@ -37,6 +38,8 @@ import java.util.List;
  */
 public abstract class LibraryType<P extends LibraryProperties> extends LibraryPresentationProvider<P> {
   public static final ExtensionPointName<LibraryType<?>> EP_NAME = ExtensionPointName.create("com.intellij.library.type");
+  
+  public final static OrderRootType[] DEFAULT_EXTERNAL_ROOT_TYPES = {OrderRootType.CLASSES};
 
   protected LibraryType(@NotNull LibraryKind<P> libraryKind) {
     super(libraryKind);
@@ -73,5 +76,17 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
   @Override
   public P detect(@NotNull List<VirtualFile> classesRoots) {
     return null;
+  }
+
+  /**
+   * @return Root types to collect library files which do not belong to the project and therefore
+   *         indicate that the library is external.
+   */
+  public OrderRootType[] getExternalRootTypes() {
+    return DEFAULT_EXTERNAL_ROOT_TYPES;
+  }
+  
+  public OrderRootType[] getAdditionalRootTypes() {
+    return new OrderRootType[0];
   }
 }

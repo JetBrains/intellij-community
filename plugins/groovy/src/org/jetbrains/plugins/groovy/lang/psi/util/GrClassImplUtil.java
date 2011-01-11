@@ -60,7 +60,6 @@ public class GrClassImplUtil {
   };
 
   public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
-  public static final String SYNTHETIC_METHOD_IMPLEMENTATION = "GroovySyntheticMethodImplementation";
 
   private GrClassImplUtil() {
   }
@@ -283,7 +282,7 @@ public class GrClassImplUtil {
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
       Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, true);
-      boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+      boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
       if (name == null) {
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {

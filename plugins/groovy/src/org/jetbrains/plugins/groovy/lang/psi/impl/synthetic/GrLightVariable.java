@@ -6,7 +6,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +22,8 @@ import java.util.List;
 public class GrLightVariable extends GrImplicitVariableImpl implements NavigatablePsiElement {
 
   private final List<PsiElement> myDeclarations;
+
+  private Object myCreatorKey;
 
   public GrLightVariable(@Nullable PsiModifierList modifierList,
                        PsiManager manager,
@@ -127,5 +128,11 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
     return getNameIdentifier().replace(new GrLightIdentifier(myManager, name));
   }
 
-  
+  public Object getCreatorKey() {
+    return myCreatorKey;
+  }
+
+  public void setCreatorKey(Object creatorKey) {
+    myCreatorKey = creatorKey;
+  }
 }

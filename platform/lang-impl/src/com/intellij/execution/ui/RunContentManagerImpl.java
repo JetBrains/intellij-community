@@ -118,7 +118,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myToolwindowIdZbuffer.remove(id);
   }
 
-  private void registerToolwindow(final @NotNull Executor executor) {
+  private void registerToolwindow(@NotNull final Executor executor) {
     final String toolWindowId = executor.getToolWindowId();
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return; //headless environment
@@ -490,7 +490,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     private Content myContent;
     private final Executor myExecutor;
 
-    private CloseListener(final @NotNull Content content, @NotNull Executor executor) {
+    private CloseListener(@NotNull final Content content, @NotNull Executor executor) {
       myContent = content;
       content.getManager().addContentManagerListener(this);
       ProjectManager.getInstance().addProjectManagerListener(this);

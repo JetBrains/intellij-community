@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -37,8 +37,9 @@ public class GrStringInjectionImpl extends GroovyPsiElementImpl implements GrStr
   }
 
   @Nullable
-  public GrReferenceExpression getReferenceExpression() {
-    return findChildByClass(GrReferenceExpression.class);
+  public GrExpression getExpression() {
+    final GrExpression expression = findChildByClass(GrExpression.class);
+    return expression instanceof GrClosableBlock ? null : expression;
   }
 
   @Nullable

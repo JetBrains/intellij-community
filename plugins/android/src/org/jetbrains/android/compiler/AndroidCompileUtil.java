@@ -228,7 +228,16 @@ public class AndroidCompileUtil {
   public static void generate(GeneratingCompiler compiler, final CompileContext context) {
     if (context != null) {
 
-      GeneratingCompiler.GenerationItem[] items = compiler.getGenerationItems(context);
+      Set<Module> affectedModules = new HashSet<Module>();
+      Collections.addAll(affectedModules, context.getCompileScope().getAffectedModules());
+      List<GeneratingCompiler.GenerationItem> itemsToGenerate = new ArrayList<GeneratingCompiler.GenerationItem>();
+      for (GeneratingCompiler.GenerationItem item : compiler.getGenerationItems(context)) {
+        if (affectedModules.contains(item.getModule())) {
+          itemsToGenerate.add(item);
+        }
+      }
+
+      GeneratingCompiler.GenerationItem[] items = itemsToGenerate.toArray(new GeneratingCompiler.GenerationItem[itemsToGenerate.size()]);
 
       final boolean[] run = {true};
       final VirtualFile[] files = getFilesToCheckReadonlyStatus(items);

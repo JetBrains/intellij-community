@@ -17,6 +17,8 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.application.ModalityState;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: Jan 26, 2005
@@ -29,5 +31,15 @@ public interface ChooseByNamePopupComponent {
   abstract class Callback {
     public abstract void elementChosen(Object element);
     public void onClose() { }
+  }
+
+  /**
+   * Used for popups with multi selection enabled to pass all chosen elements at one time.
+   *
+   * @author Konstantin Bulenkov
+   */
+  abstract class MultiElementsCallback extends Callback {
+    public final void elementChosen(Object element){}
+    public abstract void elementsChosen(List<Object> elements);
   }
 }

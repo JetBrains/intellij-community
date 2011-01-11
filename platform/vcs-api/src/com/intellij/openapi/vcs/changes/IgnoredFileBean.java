@@ -131,6 +131,7 @@ public class IgnoredFileBean {
 
   @Nullable
   private VirtualFile doResolve() {
+    if (myProject == null || myProject.isDisposed()) { return null; }
     VirtualFile baseDir = myProject.getBaseDir();
 
     String path = FileUtil.toSystemIndependentName(myPath);

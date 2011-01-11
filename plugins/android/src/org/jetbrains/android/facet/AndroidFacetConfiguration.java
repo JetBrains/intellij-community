@@ -96,12 +96,6 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   }
 
   @Nullable
-  public String getSdkPath() {
-    AndroidSdk sdk = getAndroidSdk();
-    return sdk != null ? sdk.getLocation() : null;
-  }
-
-  @Nullable
   public AndroidFacet getFacet() {
     return myFacet;
   }

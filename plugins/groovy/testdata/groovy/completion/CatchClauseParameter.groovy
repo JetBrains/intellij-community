@@ -2,5 +2,5 @@ try {
   throw new Exception();
 }
 catch (e) {
-  e.getS<caret>
+  e.getC<caret>
 }

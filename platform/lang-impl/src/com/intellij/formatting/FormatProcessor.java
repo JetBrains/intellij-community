@@ -102,8 +102,6 @@ class FormatProcessor {
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
   private CodeStyleSettings.IndentOptions myJavaIndentOptions;
-  private BulkReformatListener myBulkReformatListener;
-
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -211,29 +209,22 @@ class FormatProcessor {
     myJavaIndentOptions = javaIndentOptions;
   }
 
-  /**
-   * @param bulkReformatListener    new listener to use; <code>null</code> to reset any listener registered before
-   */
-  public void setBulkReformatListener(@Nullable BulkReformatListener bulkReformatListener) {
-    myBulkReformatListener = bulkReformatListener;
-  }
-
-  private void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+  private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
                                CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
     final int blocksToModifyCount = blocksToModify.size();
     DocumentEx updatedDocument = null;
 
     try {
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
-        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
-          return;
-        }
-      }
-
       final boolean bulkReformat = blocksToModifyCount > 50;
       updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
       if (updatedDocument != null) {
         updatedDocument.setInBulkUpdate(true);
+      }
+      
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
+        if (applyChangesAtBulkMode(blocksToModify, model, indentOption)) {
+          return;
+        }
       }
       
       int shift = 0;
@@ -264,10 +255,9 @@ class FormatProcessor {
    * @param indentOption          indent options to use
    * @return                      <code>true</code> if given changes are applied to the document (i.e. no further processing is required);
    *                              <code>false</code> otherwise
-   * @see BulkReformatListener
    */
-  private boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                                             CodeStyleSettings.IndentOptions indentOption) 
+  private static boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+                                                CodeStyleSettings.IndentOptions indentOption) 
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -283,15 +273,9 @@ class FormatProcessor {
       );
       changes.add(new TextChangeImpl(newWs, whiteSpace.getStartOffset(), whiteSpace.getEndOffset()));
     }
-    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), changes);
-    if (myBulkReformatListener != null) {
-      myBulkReformatListener.beforeProcessing(document, mergeResult);
-    }
+    CharSequence mergeResult = ourBulkChangesMerger.merge(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
     cleanupBlocks(blocksToModify);
-    if (myBulkReformatListener != null) {
-      myBulkReformatListener.afterProcessing();
-    }
     return true;
   }
 
@@ -887,8 +871,7 @@ class FormatProcessor {
     if (myWrapCandidate == myCurrentBlock) return wraps.get(0);
 
     final int wrapsCount = wraps.size();
-    for (int i = 0; i < wrapsCount; ++i) {
-      final WrapImpl wrap = wraps.get(i);
+    for (final WrapImpl wrap : wraps) {
       if (!isSuitableInTheCurrentPosition(wrap)) continue;
       if (wrap.isIsActive()) return wrap;
 

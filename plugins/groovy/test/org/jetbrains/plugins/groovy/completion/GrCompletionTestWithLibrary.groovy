@@ -55,6 +55,7 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
   public void testCategoryMethod() {doBasicTest()}
   public void testCategoryProperty() {doBasicTest()}
   public void testMultipleCategories() {doBasicTest()}
+  public void testCategoryForArray() {doBasicTest()}
 
   public void testArrayLikeAccessForList() throws Throwable {doBasicTest(); }
   public void testArrayLikeAccessForMap() throws Throwable {doBasicTest();}
@@ -76,5 +77,13 @@ class GrCompletionTestWithLibrary extends GroovyCompletionTestBase {
 
   public void testIteratorNext() {
     doVariantableTest "next", "notify", "notifyAll"
+  }
+
+  public void testGstringExtendsString() {
+    myFixture.testCompletionVariants getTestName(false)+".groovy", "stripIndent", "stripIndent", "stripIndentFromLine"
+  }
+
+  public void testCompletionInEachClosure() {
+    myFixture.testCompletionVariants getTestName(false)+".groovy", "intValue", "intdiv", "intdiv"
   }
 }

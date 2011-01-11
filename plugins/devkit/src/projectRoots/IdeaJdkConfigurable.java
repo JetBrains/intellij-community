@@ -127,6 +127,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
         if (myFreeze) return;
         final Sdk javaJdk = (Sdk)e.getItem();
         for (OrderRootType type : OrderRootType.getAllTypes()) {
+          if (!javaJdk.getSdkType().isRootTypeApplicable(type)) {
+            continue;
+          }
           final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
           final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
           for (VirtualFile file : internalRoots) {

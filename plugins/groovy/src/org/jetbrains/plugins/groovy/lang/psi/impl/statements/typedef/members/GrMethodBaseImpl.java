@@ -44,10 +44,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -62,7 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -78,7 +75,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseElementImpl<T> implements GrMethod {
+public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElementBase<T> implements GrMethod {
 
   protected GrMethodBaseImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -86,6 +83,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   public GrMethodBaseImpl(final ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
   }
 
   public void accept(GroovyElementVisitor visitor) {

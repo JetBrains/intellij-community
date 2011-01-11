@@ -1,16 +1,17 @@
 
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports any Socket resource which is not opened in front of a <b><font color="#000080">try</font></b>
-block and closed in the corresponding <b><font color="#000080">finally</font></b> block.  Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed.  Socket resources reported
-by this inspection include any instances of <b><font color="#000080">java.net.Socket</font></b>,
-     <b><font color="#000080">java.net.DatagramSocket</font></b>,
-and <b><font color="#000080">java.net.ServerSocket</font></b>.
+<body>
+This inspection reports any Socket resource which is not opened in front of a <b>try</b>
+block and closed in the corresponding <b>finally</b> block. Such resources may
+be inadvertently leaked if an exception is thrown before the resource is closed. Socket resources reported
+by this inspection include <b>java.net.Socket</b>,
+<b>java.net.DatagramSocket</b>,
+and <b>java.net.ServerSocket</b>.
 <p>
 Use the checkbox below to specify if a Socket is allowed to be opened inside a try
 block. This style is less desirable because it is more verbose than opening a Socket
 in front of a try block.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

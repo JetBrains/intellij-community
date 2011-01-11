@@ -61,7 +61,6 @@ public class GitRebaseActionDialog extends DialogWrapper {
    */
   @Nullable
   public VirtualFile selectRoot() {
-    show();
     return isOK() ? (VirtualFile)myGitRootComboBox.getSelectedItem() : null;
   }
 

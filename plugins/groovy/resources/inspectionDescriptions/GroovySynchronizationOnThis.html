@@ -1,5 +1,5 @@
 <html>
-<body><table> <tr> <td valign="top">
+<body>
 <font face="verdana" size="-1">
 This inspection reports any instances of synchronization in Groovy code which use <b><font color="#000080">this</font></b> as their lock
 expression.  Constructs reported include <b><font color="#000080">synchronized</font></b>
@@ -8,5 +8,5 @@ blocks which lock <b><font color="#000080">this</font></b>, and calls to <b><fon
 Such constructs, like synchronized methods, make it hard to track just who is locking on a given
 object, and make possible "denial of service" attacks on objects.  As an alternative, consider
 locking on a private instance variable, access to which can be completely controlled.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectorGroovy </font> </td> </tr> </table> </body>
+</font><br><small>Powered by InspectorGroovy</small></body>
 </html>

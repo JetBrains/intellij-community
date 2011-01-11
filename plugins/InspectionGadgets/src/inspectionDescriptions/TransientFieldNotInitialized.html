@@ -1,13 +1,14 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports <b><font color="#000080">transient</font></b> fields which
+<body>
+This inspection reports <b>transient</b> fields which
 are initialized during normal object construction, but whose class does not have a
-<b><font color="#000080">readObject</font></b> method.
-Because <b><font color="#000080">transient</font></b> fields are not serialized they need
-to be initialized separately in a <b><font color="#000080">readObject</font></b> method
-during deserialization. Any <b><font color="#000080">transient</font></b> fields which 
+<b>readObject</b> method.
+Because <b>transient</b> fields are not serialized they need
+to be initialized separately in a <b>readObject</b> method
+during deserialization. Any <b>transient</b> fields which 
 are not initialized during normal object construction are considered to use the default
 initialization and are not reported by this inspection.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets</font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

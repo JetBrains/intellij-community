@@ -246,19 +246,6 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   static Editor injectedEditorIfCharTypedIsSignificant(final char charTyped, Editor editor, PsiFile oldFile) {
-    boolean significant = charTyped == '"' ||
-                          charTyped == '\'' ||
-                          charTyped == '[' ||
-                          charTyped == '(' ||
-                          charTyped == ']' ||
-                          charTyped == ')' ||
-                          charTyped == '{' ||
-                          charTyped == '}' ||
-                          charTyped == '.';
-    if (!significant) {
-      return editor;
-    }
-
     int offset = editor.getCaretModel().getOffset();
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
@@ -268,8 +255,9 @@ public class TypedHandler implements TypedActionHandler {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
         // IDEA-52375 fix: last quote sign should be handled by outer language quote handler
+        final CharSequence charsSequence = editor.getDocument().getCharsSequence();
         if (injectedEditor.getCaretModel().getOffset() == injectedEditor.getDocument().getTextLength() &&
-            charTyped == editor.getDocument().getCharsSequence().charAt(offset)) {
+            offset < charsSequence.length() && charTyped == charsSequence.charAt(offset)) {
           return editor;
         }
         return injectedEditor;

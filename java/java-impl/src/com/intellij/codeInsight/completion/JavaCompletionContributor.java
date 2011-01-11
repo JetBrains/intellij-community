@@ -30,14 +30,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
-import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -88,6 +84,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
   private static final PsiJavaElementPattern.Capture<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
+  static final PsiJavaElementPattern.Capture<PsiElement> IN_CATCH_TYPE =
+    psiElement().afterLeaf(psiElement().withText("(").withParent(PsiCatchSection.class));
+  static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
+          PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
   @Nullable 
   private static ElementFilter getReferenceFilter(PsiElement position) {
@@ -102,9 +102,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
 
-    // Completion for classes in method throws section
-    if (psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(PsiReferenceList.class).withParent(PsiMethod.class)).accepts(position)) {
-      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")), ElementClassFilter.PACKAGE_FILTER);
+    if (INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
@@ -125,12 +124,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ElementClassFilter.VARIABLE;
     }
 
-    if (psiElement().afterLeaf(psiElement().withText("(").withParent(PsiTryStatement.class)).accepts(position)) {
-      return new OrFilter(new ThisOrAnyInnerFilter(new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE)), ElementClassFilter.PACKAGE_FILTER);
+    if (IN_CATCH_TYPE.accepts(position)) {
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position)) {
-      return new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable"));
+      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
@@ -360,6 +359,18 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
+
+    if (parameters.getCompletionType() == CompletionType.BASIC && parameters.getInvocationCount() > 0) {
+      PsiElement position = parameters.getPosition();
+      if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
+        if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          if (shortcut != null) {
+            return "Pressing " + shortcut + " without a class qualifier would show all accessible static methods";
+          }
+        }
+      }
+    }
 
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {

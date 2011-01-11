@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,9 +104,11 @@ public class CvsChangeListsBuilder {
     final ChangeListKey key = new ChangeListKey(branch, author, message);
     final List<CvsChangeList> versions = myCache.get(key);
     if (versions != null) {
-      final CvsChangeList lastVersion = versions.get(versions.size() - 1);
-      if (lastVersion.containsDate(date) && !lastVersion.containsFile(path)) {
-        return lastVersion;
+      for (int i = versions.size() - 1; i >= 0; i--) {
+        final CvsChangeList version = versions.get(i);
+        if (version.containsDate(date) && !version.containsFile(path)) {
+          return version;
+        }
       }
     }
 

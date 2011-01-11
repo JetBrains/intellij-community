@@ -70,6 +70,13 @@ import java.util.Map;
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                         boolean focusEditor,
                                                                         boolean searchForSplitter) {
+    // for non-text editors. uml, etc
+    final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
+    if (provider != null && provider.accept(getProject(), file)) {
+      return Pair.create(new FileEditor[]{provider.createEditor(getProject(), file)}, new FileEditorProvider[]{provider});
+    }
+
+    //text editor
     Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     return Pair.create (new FileEditor[] {fileEditor}, new FileEditorProvider[] {getProvider (fileEditor)});

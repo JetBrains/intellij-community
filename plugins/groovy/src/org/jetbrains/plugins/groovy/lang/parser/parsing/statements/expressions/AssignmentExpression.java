@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,29 +41,53 @@ public class AssignmentExpression implements GroovyElementTypes {
           mSL_ASSIGN,
           mBAND_ASSIGN,
           mBOR_ASSIGN,
-          mBXOR_ASSIGN,                                       
+          mBXOR_ASSIGN,
           mSTAR_STAR_ASSIGN,
           mSR_ASSIGN,
           mBSR_ASSIGN
   );
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, false);
+  }
+
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean comExprAllowed) {
     Marker marker = builder.mark();
     final boolean isTuple = ParserUtils.lookAhead(builder, mLPAREN, mIDENT, mCOMMA);
-    if (isTuple ? TupleParse.parseTuple(builder, TUPLE_EXPRESSION, REFERENCE_EXPRESSION) : ConditionalExpression.parse(builder, parser)) {
+    if (parseSide(builder, parser, isTuple,comExprAllowed)) {
       if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
         ParserUtils.getToken(builder, mNLS);
-        if (!parse(builder, parser)) {
+        if (!parse(builder, parser, comExprAllowed)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         marker.done(ASSIGNMENT_EXPRESSION);
-      } else {
+      }
+      else {
         marker.drop();
       }
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
+  }
+
+  private static boolean parseSide(PsiBuilder builder, GroovyParser parser, boolean tuple, boolean comExprAllowed) {
+    if (tuple) {
+      return TupleParse.parseTuple(builder, TUPLE_EXPRESSION, REFERENCE_EXPRESSION);
+    }
+
+    if (comExprAllowed) {
+      Marker marker = builder.mark();
+      if (ExpressionStatement.parse(builder, parser)) {
+        marker.drop();
+        return true;
+      }
+      else {
+        marker.rollbackTo();
+      }
+    }
+    return ConditionalExpression.parse(builder, parser);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import org.jetbrains.annotations.NonNls;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * Type-safe key for access to {@link SemElement}.
+ * <p/>
+ * Use {@link #createKey(String, SemKey[])} to create a new "root" key, on which you can attach "sub"-keys via
+ * {@link #subKey(String, SemKey[])}.
+ *
  * @author peter
  */
 public class SemKey<T extends SemElement> {

@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
@@ -631,17 +632,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     LaterInvocator.invokeAndWait(runnable, modalityState);
   }
 
+  @NotNull
   public ModalityState getCurrentModalityState() {
     Object[] entities = LaterInvocator.getCurrentModalEntities();
     return entities.length > 0 ? new ModalityStateEx(entities) : getNoneModalityState();
   }
 
+  @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
     Window window = c instanceof Window ? (Window)c : SwingUtilities.windowForComponent(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
 
+  @NotNull
   public ModalityState getDefaultModalityState() {
     if (EventQueue.isDispatchThread()) {
       return getCurrentModalityState();
@@ -652,6 +656,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @NotNull
   public ModalityState getNoneModalityState() {
     return MODALITY_STATE_NONE;
   }
@@ -718,6 +723,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (!confirmExitDialog.isOK()) {
         return false;
       }
+    }
+    else {
+      confirmExitDialog.close(DialogWrapper.OK_EXIT_CODE);
     }
     return true;
   }

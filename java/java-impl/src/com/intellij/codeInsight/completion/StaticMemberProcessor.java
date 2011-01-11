@@ -32,11 +32,13 @@ public abstract class StaticMemberProcessor {
   private final Project myProject;
   private final PsiResolveHelper myResolveHelper;
   private boolean myHintShown = false;
+  private final boolean myPackagedContext;
 
   public StaticMemberProcessor(final PsiElement position) {
     myPosition = position;
     myProject = myPosition.getProject();
     myResolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
+    myPackagedContext = JavaCompletionUtil.inSomePackage(position);
   }
 
   public void importMembersOf(@Nullable PsiClass psiClass) {
@@ -44,6 +46,8 @@ public abstract class StaticMemberProcessor {
   }
 
   public void processStaticMethodsGlobally(final CompletionResultSet resultSet) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
+
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
@@ -62,12 +66,9 @@ public abstract class StaticMemberProcessor {
             final PsiClass containingClass = method.getContainingClass();
             assert containingClass != null;
 
-            if (classes.add(containingClass)) {
+            if (classes.add(containingClass) && JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
               final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-              if (!myHintShown &&
-                  !shouldImport &&
-                  FeatureUsageTracker.getInstance().isToBeShown(JavaCompletionFeatures.IMPORT_STATIC, myProject) &&
-                  CompletionService.getCompletionService().getAdvertisementText() == null) {
+              if (!myHintShown && !shouldImport && CompletionService.getCompletionService().getAdvertisementText() == null) {
                 final String shortcut = CompletionContributor.getActionShortcut("EditorRight");
                 if (shortcut != null) {
                   CompletionService.getCompletionService().setAdvertisementText("To import a method statically, press " + shortcut);

@@ -24,11 +24,15 @@ import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class IndentsModelImpl implements IndentsModel {
+
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<IntPair, IndentGuideDescriptor>();
+  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<IndentGuideDescriptor>();
   private final EditorImpl myEditor;
-  private List<IndentGuideDescriptor> myIndents = new ArrayList<IndentGuideDescriptor>();
 
   public IndentsModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -49,7 +53,47 @@ public class IndentsModelImpl implements IndentsModel {
     return null;
   }
 
+  @Override
+  public IndentGuideDescriptor getDescriptor(int startLine, int endLine) {
+    return myIndentsByLines.get(new IntPair(startLine, endLine));
+  }
+
   public void assumeIndents(List<IndentGuideDescriptor> descriptors) {
     myIndents = descriptors;
+    myIndentsByLines.clear();
+    for (IndentGuideDescriptor descriptor : myIndents) {
+      myIndentsByLines.put(new IntPair(descriptor.startLine, descriptor.endLine), descriptor);
+    }
+  }
+  
+  private static class IntPair {
+    
+    private final int start;
+    private final int end;
+
+    IntPair(int start, int end) {
+      this.start = start;
+      this.end = end;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = start;
+      return 31 * result + end;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      IntPair that = (IntPair)o;
+      return start == that.start && end == that.end;
+    }
+
+    @Override
+    public String toString() {
+      return "start=" + start + ", end=" + end;
+    }
   }
 }

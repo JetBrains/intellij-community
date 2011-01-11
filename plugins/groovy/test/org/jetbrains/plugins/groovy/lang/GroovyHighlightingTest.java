@@ -202,6 +202,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testMethodCallWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testCallIsNotApplicable() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testPathCallIsNotApplicable() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testOverlyLongMethodInspection() throws Exception {
     doTest(new GroovyOverlyLongMethodInspection());

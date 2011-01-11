@@ -80,11 +80,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (myAttrPanel != null) {
       if (myAttrPanel.hasSomethingToAsk()) {
         show();
+        return myCreatedElement;
       }
-      else {
-        doCreate(null);
-      }
+      doCreate(null);
     }
+    close(DialogWrapper.OK_EXIT_CODE);
     return myCreatedElement;
   }
 

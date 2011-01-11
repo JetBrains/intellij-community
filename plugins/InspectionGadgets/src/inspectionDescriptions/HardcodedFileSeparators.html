@@ -1,13 +1,14 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">This inspection reports any instances of the forward (/) or backward (\) slash in a string or
-character literal.  These characters are commonly used as file separators, and portability may suffer if their use is hardcoded.
-This will not report instances of the forward slash immediately following a '&lt;' character,
+<body>
+This inspection reports the forward (/) or backward (\) slash in a string or
+character literal. These characters are commonly used as file separators, and portability may suffer if their use is hardcoded.
+This will not report a forward slash immediately following a '&lt;' character,
 or immediately preceding a '&gt;' character, as those often indicate XML or HTML tags rather than file names,
-instances where the string represents a <b><font color="#000080">java.util.TimeZone</font></b> ID, instances where
-the string is a valid regular expression or instances where the string is an IANA-registered MIME media type.
+strings representing a <b>java.util.TimeZone</b> ID, strings that are a valid regular expression or strings that equal an IANA-registered MIME media type.
 <p>
-Normally, usage of the <b>example/*</b> MIME media type outside of an example (<em>e.g.</em> in a <b><font color="#000080">Content-Type</font></b>
-header) is an error.  Use the checkbox below to include <b>example/*</b> in the set of recognized media types.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+Normally, usage of the <b>example/*</b> MIME media type outside of an example (<em>e.g.</em> in a <b>Content-Type</b>
+header) is an error. Use the checkbox below to include <b>example/*</b> in the set of recognized media types.
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

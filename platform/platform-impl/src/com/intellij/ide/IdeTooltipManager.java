@@ -508,6 +508,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return pane;
   }
 
+  public static String formatHtml(String text, HintHint hintHint) {
+    String htmlBody = getHtmlBody(text);
+    text = "<html><head>" +
+           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
+                                        hintHint.getUlImg()) +
+           "</head><body>" +
+           htmlBody +
+           "</body></html>";
+    return text;
+  }
+
   public static void setColors(JComponent pane) {
     pane.setForeground(Color.black);
     pane.setBackground(HintUtil.INFORMATION_COLOR);

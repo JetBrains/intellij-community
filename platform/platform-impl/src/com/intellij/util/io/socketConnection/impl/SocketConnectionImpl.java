@@ -15,58 +15,41 @@
  */
 package com.intellij.util.io.socketConnection.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.socketConnection.*;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
+import java.net.InetAddress;
 import java.net.Socket;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author nik
  */
-public class SocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> implements SocketConnection<Request, Response> {
+public class SocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request, Response> implements ClientSocketConnection<Request, Response> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.SocketConnectionImpl");
-  private final Object myLock = new Object();
-  private int myPort = -1;
-  private ConnectionStatus myStatus = ConnectionStatus.NOT_CONNECTED;
-  private boolean myStopping;
-  private final EventDispatcher<SocketConnectionListener> myDispatcher = EventDispatcher.create(SocketConnectionListener.class);
-  private ServerSocket myServerSocket;
-  private String myStatusMessage;
-  private Thread myProcessingThread;
-  private final int myDefaultPort;
-  private final int myConnectionAttempts;
-  private final RequestResponseExternalizerFactory<Request, Response> myExternalizerFactory;
-  private final LinkedBlockingQueue<Request> myRequests = new LinkedBlockingQueue<Request>();
-  private final TIntObjectHashMap<TimeoutInfo> myTimeouts = new TIntObjectHashMap<TimeoutInfo>();
-  private final ResponseProcessor<Response> myResponseProcessor;
+  private final InetAddress myHost;
+  private final int myInitialPort;
+  private final int myPortsNumberToTry;
 
-  public SocketConnectionImpl(int defaultPort, int connectionAttempts, @NotNull RequestResponseExternalizerFactory<Request, Response> factory) {
-    myDefaultPort = defaultPort;
-    myConnectionAttempts = connectionAttempts;
-    myExternalizerFactory = factory;
-    myResponseProcessor = new ResponseProcessor<Response>(this);
+  public SocketConnectionImpl(InetAddress host, int initialPort,
+                              int portsNumberToTry,
+                              @NotNull RequestResponseExternalizerFactory<Request, Response> requestResponseRequestResponseExternalizerFactory) {
+    super(requestResponseRequestResponseExternalizerFactory);
+    myHost = host;
+    myInitialPort = initialPort;
+    myPortsNumberToTry = portsNumberToTry;
   }
 
+  @Override
   public void open() throws IOException {
-    myServerSocket = createSocket();
-    myPort = myServerSocket.getLocalPort();
+    final Socket socket = createSocket();
+    setPort(socket.getPort());
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        myProcessingThread = Thread.currentThread();
         try {
-          doRun();
+          attachToSocket(socket);
         }
         catch (IOException e) {
           LOG.info(e);
@@ -77,157 +60,48 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
   }
 
   @NotNull
-  private ServerSocket createSocket() throws IOException {
+  private Socket createSocket() throws IOException {
+    final InetAddress host = myHost != null ? myHost : InetAddress.getLocalHost();
     IOException exc = null;
-    for (int i = 0; i < myConnectionAttempts; i++) {
-      int port = myDefaultPort + i;
+    for (int i = 0; i < myPortsNumberToTry; i++) {
+      int port = myInitialPort + i;
       try {
-        return new ServerSocket(port);
+        return new Socket(host, port);
       }
       catch (IOException e) {
         exc = e;
-        LOG.info(e);
+        LOG.debug(e);
       }
     }
     throw exc;
   }
 
   @Override
-  public void sendRequest(@NotNull Request request) {
-    sendRequest(request, null);
-  }
+  public void startPolling() {
+    setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        addThreadToInterrupt();
+        try {
+          while (true) {
+            try {
+              open();
+              return;
+            }
+            catch (IOException e) {
+              LOG.debug(e);
+            }
 
-  @Override
-  public void sendRequest(@NotNull Request request, @Nullable AbstractResponseToRequestHandler<? extends Response> handler) {
-    if (handler != null) {
-      myResponseProcessor.registerHandler(request.getId(), handler);
-    }
-
-    try {
-      myRequests.put(request);
-    }
-    catch (InterruptedException ignored) {
-    }
-  }
-
-  @Override
-  public void sendRequest(@NotNull Request request, @Nullable AbstractResponseToRequestHandler<? extends Response> handler,
-                          int timeout, @NotNull Runnable onTimeout) {
-    myTimeouts.put(request.getId(), new TimeoutInfo(timeout, onTimeout));
-    sendRequest(request, handler);
-  }
-
-  @Override
-  public <R extends Response> void registerHandler(@NotNull Class<R> responseClass, @NotNull AbstractResponseHandler<R> handler) {
-    myResponseProcessor.registerHandler(responseClass, handler);
-  }
-
-  private void doRun() throws IOException {
-    try {
-      setStatus(ConnectionStatus.WAITING_FOR_CONNECTION, null);
-      LOG.debug("waiting for connection on port " + myPort);
-
-      final Socket socket = myServerSocket.accept();
-      try {
-        setStatus(ConnectionStatus.CONNECTED, null);
-        LOG.debug("connected");
-
-        final OutputStream outputStream = socket.getOutputStream();
-        final InputStream inputStream = socket.getInputStream();
-        myResponseProcessor.startReading(myExternalizerFactory.createResponseReader(inputStream));
-        processRequests(myExternalizerFactory.createRequestWriter(outputStream));
-      }
-      finally {
-        socket.close();
-      }
-    }
-    finally {
-      myServerSocket.close();
-    }
-  }
-
-  @Override
-  public void close() {
-    synchronized (myLock) {
-      if (myStopping) return;
-      myStopping = true;
-    }
-    LOG.debug("closing connection");
-    if (myProcessingThread != null) {
-      myProcessingThread.interrupt();
-    }
-    myResponseProcessor.stopReading();
-    Disposer.dispose(this);
-  }
-
-  @Override
-  public boolean isStopping() {
-    synchronized (myLock) {
-      return myStopping;
-    }
-  }
-
-  private void processRequests(RequestWriter<Request> writer) throws IOException {
-    try {
-      while (!isStopping()) {
-        final Request request = myRequests.take();
-        LOG.debug("sending request: " + request);
-        final TimeoutInfo timeoutInfo = myTimeouts.remove(request.getId());
-        if (timeoutInfo != null) {
-          myResponseProcessor.registerTimeoutHandler(request.getId(), timeoutInfo.myTimeout, timeoutInfo.myOnTimeout);
+            Thread.sleep(500);
+          }
         }
-        writer.writeRequest(request);
+        catch (InterruptedException ignored) {
+        }
+        finally {
+          removeThreadToInterrupt();
+        }
       }
-    }
-    catch (InterruptedException ignored) {
-    }
-    setStatus(ConnectionStatus.DISCONNECTED, null);
-  }
-
-  public void dispose() {
-    LOG.debug("Firefox connection disposed");
-  }
-
-  public int getPort() {
-    return myPort;
-  }
-
-  public String getStatusMessage() {
-    synchronized (myLock) {
-      return myStatusMessage;
-    }
-  }
-
-  private void setStatus(ConnectionStatus status, String message) {
-    synchronized (myLock) {
-      myStatus = status;
-      myStatusMessage = message;
-    }
-    myDispatcher.getMulticaster().statusChanged(status);
-  }
-
-  public ConnectionStatus getStatus() {
-    synchronized (myLock) {
-      return myStatus;
-    }
-  }
-
-  public void addListener(@NotNull SocketConnectionListener listener, @Nullable Disposable parentDisposable) {
-    if (parentDisposable != null) {
-      myDispatcher.addListener(listener, parentDisposable);
-    }
-    else {
-      myDispatcher.addListener(listener);
-    }
-  }
-
-  private static class TimeoutInfo {
-    private int myTimeout;
-    private Runnable myOnTimeout;
-
-    private TimeoutInfo(int timeout, Runnable onTimeout) {
-      myTimeout = timeout;
-      myOnTimeout = onTimeout;
-    }
+    });
   }
 }

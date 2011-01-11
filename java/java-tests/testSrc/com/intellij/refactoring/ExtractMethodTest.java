@@ -151,6 +151,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractAssignmentExpression() throws Exception {
+    doTest();
+  }
+
+  public void testExtractAssignmentExpressionFromStatement() throws Exception {
+    doTest();
+  }
+
   public void _testExtractFromTryFinally2() throws Exception {  // IDEADEV-11844
     doTest();
   }

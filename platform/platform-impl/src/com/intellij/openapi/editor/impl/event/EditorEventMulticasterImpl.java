@@ -134,11 +134,16 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
     mySelectionMulticaster.removeListener(listener);
   }
 
-  public void addErrorStripeListener(ErrorStripeListener listener) {
+  public void addErrorStripeListener(@NotNull ErrorStripeListener listener) {
     myErrorStripeMulticaster.addListener(listener);
   }
 
-  public void removeErrorStripeListener(ErrorStripeListener listener) {
+  @Override
+  public void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable) {
+    myErrorStripeMulticaster.addListener(listener, parentDisposable);
+  }
+
+  public void removeErrorStripeListener(@NotNull ErrorStripeListener listener) {
     myErrorStripeMulticaster.removeListener(listener);
   }
 
@@ -150,27 +155,27 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
     myVisibleAreaMulticaster.removeListener(listener);
   }
 
-  public void addEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myEditReadOnlyMulticaster.addListener(listener);
   }
 
-  public void removeEditReadOnlyListener(EditReadOnlyListener listener) {
+  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
     myEditReadOnlyMulticaster.removeListener(listener);
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.addListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeMulticaster.removeListener(listener);
   }
 
-  public void addFocusChangeListner(FocusChangeListener listener) {
+  public void addFocusChangeListner(@NotNull FocusChangeListener listener) {
     myFocusChangeListenerMulticaster.addListener(listener);
   }
 
-  public void removeFocusChangeListner(FocusChangeListener listener) {
+  public void removeFocusChangeListner(@NotNull FocusChangeListener listener) {
     myFocusChangeListenerMulticaster.removeListener(listener);
   }
 

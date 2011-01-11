@@ -86,7 +86,13 @@ public class SelectionModelWindow implements SelectionModel {
   }
 
   @Override
-  public void setSelection(@NotNull VisualPosition startPosition, int startOffset, @NotNull VisualPosition endPosition, int endOffset) {
+  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
+    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
+    myHostModel.setSelection(hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
+  }
+
+  @Override
+  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
     TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     myHostModel.setSelection(startPosition, hostRange.getStartOffset(), endPosition, hostRange.getEndOffset());
   }

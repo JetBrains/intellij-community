@@ -1,14 +1,15 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports any instances of objects which are a subtype of
-<b><font color="#000080">java.util.Set</font></b> or <b><font color="#000080">java.util.Map</font></b>
-and which may contain java.net.URL objects. Adding <b><font color="#000080">java.net.URL</font></b>
+<body>
+This inspection reports objects which are a subtype of
+<b>java.util.Set</b> or <b>java.util.Map</b>
+and which may contain java.net.URL objects. Adding <b>java.net.URL</b>
 objects to such collections can cause performance problems because of calls to the
-<b><font color="#000080">equals()</font></b> and <b><font color="#000080">hashCode()</font></b>
-methods of <b><font color="#000080">java.net.URL</font></b>.
-<b><font color="#000080">java.net.URL</font></b>'s equals and hashCode method use a DNS
+<b>equals()</b> and <b>hashCode()</b>
+methods of <b>java.net.URL</b>.
+<b>java.net.URL</b>'s equals and hashCode method use a DNS
 lookup, which depending on the availability of the network and the speed of the DNS server
 can cause significant delays.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

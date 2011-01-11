@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -49,5 +50,10 @@ public class ModulesOrderEnumerator extends OrderEnumeratorBase {
     for (Module module : myModules) {
       processEntries(getRootModel(module), processor, processed, true);
     }
+  }
+
+  @Override
+  public boolean isRootModuleModel(@NotNull ModuleRootModel rootModel) {
+    return myModules.contains(rootModel.getModule());
   }
 }

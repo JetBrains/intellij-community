@@ -16,6 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
@@ -23,13 +26,17 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.*;
+
+import java.io.IOException;
 
 /**
  * Utility interface that contains all Groovy non-token element types
@@ -173,7 +180,28 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");
 
-  GroovyElementType ANNOTATION = new GroovyElementType("annotation");
+  GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrStubElementType<GrAnnotationStub, GrAnnotation>("annotation") {
+
+    @Override
+    public GrAnnotation createPsi(GrAnnotationStub stub) {
+      return new GrAnnotationImpl(stub);
+    }
+
+    @Override
+    public GrAnnotationStub createStub(GrAnnotation psi, StubElement parentStub) {
+      return new GrAnnotationStub(parentStub, psi);
+    }
+
+    @Override
+    public void serialize(GrAnnotationStub stub, StubOutputStream dataStream) throws IOException {
+      dataStream.writeName(stub.getAnnotationName());
+    }
+
+    @Override
+    public GrAnnotationStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+      return new GrAnnotationStub(parentStub, dataStream.readName());
+    }
+  };
   //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
 

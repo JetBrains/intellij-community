@@ -19,11 +19,13 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -41,14 +43,13 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
   @Override
   public ProcessingItem[] getProcessingItems(CompileContext context) {
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>();
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    for (Module module : affectedModules) {
+    for (Module module : ModuleManager.getInstance(context.getProject()).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(module);
         if (manifestFile == null) {
-          context.addMessage(CompilerMessageCategory.ERROR, "AndroidManifest.xml file not found. Please, check Android facet settings.",
+          context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
                              null, -1, -1);
           continue;
         }

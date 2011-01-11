@@ -28,6 +28,7 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     super();
   }
 
+  @NotNull
   @Override
   public VirtualFileSystem[] getFileSystems() {
     return new VirtualFileSystem[0];
@@ -66,7 +67,7 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   @Override
-  public void addVirtualFileListener(@NotNull VirtualFileListener listener, Disposable parentDisposable) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable) {
   }
 
   @Override
@@ -86,11 +87,11 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   @Override
-  public void addVirtualFileManagerListener(VirtualFileManagerListener listener) {
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
   }
 
   @Override
-  public void removeVirtualFileManagerListener(VirtualFileManagerListener listener) {
+  public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
   }
 
   public void beforeRefreshStart(boolean asynchronous, ModalityState modalityState, Runnable postAction) {

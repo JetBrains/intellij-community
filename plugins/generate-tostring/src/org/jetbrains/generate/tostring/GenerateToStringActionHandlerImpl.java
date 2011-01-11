@@ -87,7 +87,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
             logger.debug("Current project " + project.getName());
         }
 
-        PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
+        final PsiElementClassMember[] dialogMembers = buildMembersToShow(clazz);
         if (dialogMembers.length == 0) {
           HintManager.getInstance().showErrorHint(editor, "No members to include in toString() have been found");
           return;
@@ -99,14 +99,15 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
         boolean isJdk15Enabled = PsiUtil.isLanguageLevel5OrHigher(clazz);
         builder.overrideAnnotationVisible(isJdk15Enabled);
         builder.setTitle(calcCurrentTitle());
-        final MemberChooser dialog = builder.createBuilder(dialogMembers);
-        dialog.setCopyJavadocVisible(false);
-        dialog.selectElements(dialogMembers);
-        header.setChooser(dialog);
 
         logger.debug("Displaying member chooser dialog");
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
+              if (project.isDisposed()) return;
+              final MemberChooser dialog = builder.createBuilder(dialogMembers);
+              dialog.setCopyJavadocVisible(false);
+              dialog.selectElements(dialogMembers);
+              header.setChooser(dialog);
                 dialog.show();
 
                 if (MemberChooser.OK_EXIT_CODE == dialog.getExitCode()) {

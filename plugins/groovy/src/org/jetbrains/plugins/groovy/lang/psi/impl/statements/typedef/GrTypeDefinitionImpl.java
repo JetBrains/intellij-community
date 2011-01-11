@@ -61,7 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
@@ -76,7 +76,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeDefinitionStub> implements GrTypeDefinition {
+public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition {
 
   private volatile PsiClass[] myInnerClasses;
   private volatile List<PsiMethod> myMethods;
@@ -89,6 +89,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   protected GrTypeDefinitionImpl(GrTypeDefinitionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -544,7 +549,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrModifierList getModifierList() {
-    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

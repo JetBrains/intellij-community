@@ -19,7 +19,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
@@ -35,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,12 +61,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
   }
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return EMPTY_GENERATION_ITEM_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
@@ -163,34 +158,41 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
         return EMPTY_GENERATION_ITEM_ARRAY;
       }
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      CompileScope compileScope = myContext.getCompileScope();
-      VirtualFile[] files = compileScope.getFiles(AndroidIdlFileType.ourFileType, false);
+      VirtualFile[] files = myContext.getProjectCompileScope().getFiles(AndroidIdlFileType.ourFileType, false);
       List<GenerationItem> items = new ArrayList<GenerationItem>(files.length);
       for (VirtualFile file : files) {
         Module module = myContext.getModuleByFile(file);
         AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
         if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
           IAndroidTarget target = facet.getConfiguration().getAndroidTarget();
-          if (target != null) {
-            String sourceRootPath = facet.getAidlGenSourceRootPath();
-            if (sourceRootPath != null) {
-              String packageName = AndroidUtils.getPackageName(module, file);
-              if (packageName != null) {
-                IdlGenerationItem generationItem =
-                  new IdlGenerationItem(module, file, sourceRootPath, fileIndex.isInTestSourceContent(file), target, packageName);
-                if (myContext.isMake()) {
-                  File generatedFile = generationItem.myGeneratedFile;
-                  if (generatedFile == null || !generatedFile.exists() || generatedFile.lastModified() <= file.getModificationCount()) {
-                    AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
-                    items.add(generationItem);
-                  }
-                }
-                else {
-                  AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
-                  items.add(generationItem);
-                }
-              }
+          if (target == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+            continue;
+          }
+          String sourceRootPath = facet.getAidlGenSourceRootPath();
+          if (sourceRootPath == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
+            continue;
+          }
+          String packageName = AndroidUtils.getPackageName(module, file);
+          if (packageName == null) {
+            myContext.addMessage(CompilerMessageCategory.ERROR, "Cannot compute package for file", file.getUrl(), -1, -1);
+            continue;
+          }
+          IdlGenerationItem generationItem =
+            new IdlGenerationItem(module, file, sourceRootPath, fileIndex.isInTestSourceContent(file), target, packageName);
+          if (myContext.isMake()) {
+            File generatedFile = generationItem.myGeneratedFile;
+            if (generatedFile == null || !generatedFile.exists() || generatedFile.lastModified() <= file.getModificationCount()) {
+              AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
+              items.add(generationItem);
             }
+          }
+          else {
+            AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
+            items.add(generationItem);
           }
         }
       }

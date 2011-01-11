@@ -47,7 +47,7 @@ public class CheckUtil {
   }
 
   public static void checkDelete(VirtualFile file) throws IncorrectOperationException{
-    if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
+    if (FileTypeManager.getInstance().isFileIgnored(file)) return;
     if (!file.isWritable()) {
       throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
     }

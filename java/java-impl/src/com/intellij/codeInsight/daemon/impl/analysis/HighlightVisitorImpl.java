@@ -90,6 +90,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myResolveHelper = resolveHelper;
   }
 
+  @NotNull
   public HighlightVisitorImpl clone() {
     return new HighlightVisitorImpl(myResolveHelper);
   }
@@ -98,11 +99,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return 0;
   }  
 
-  public boolean suitableForFile(PsiFile file) {
+  public boolean suitableForFile(@NotNull PsiFile file) {
     return !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
-  public void visit(PsiElement element, HighlightInfoHolder holder) {
+  public void visit(@NotNull PsiElement element, @NotNull HighlightInfoHolder holder) {
     myHolder = holder;
 
     if (LOG.isDebugEnabled()) {
@@ -119,7 +120,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }, false);
   }
 
-  public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(@NotNull final Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
     myFile = file;
     boolean success = true;
     try {

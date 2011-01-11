@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
@@ -105,6 +106,15 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRoots = initRoots();
     mySource = null;
   }
+  
+  private Set<OrderRootType> getAllRootTypes() {
+    Set<OrderRootType> rootTypes = new HashSet<OrderRootType>();
+    rootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
+    if (myType != null) {
+      rootTypes.addAll(Arrays.asList(myType.getAdditionalRootTypes()));
+    }
+    return rootTypes;
+  } 
 
   private LibraryImpl(LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
     assert !from.isDisposed();
@@ -119,7 +129,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRoots = initRoots();
     mySource = newSource;
     myLibraryTable = from.myLibraryTable;
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : getAllRootTypes()) {
       final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
       final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
@@ -235,7 +245,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     
     Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : getAllRootTypes()) {
       result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable));
     }
     result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
@@ -274,7 +284,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   private void readRoots(Element element) throws InvalidDataException {
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : getAllRootTypes()) {
       final Element rootChild = element.getChild(rootType.name());
       if (rootChild == null) {
         continue;
@@ -297,6 +307,28 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     }
   }
 
+  
+  //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType. 
+  //
+  private static List<OrderRootType> sortRootTypes(List<OrderRootType> rootTypes) {
+    List<OrderRootType> allTypes = new ArrayList<OrderRootType>(rootTypes);
+    Collections.sort(allTypes, new Comparator<OrderRootType>() {
+      public int compare(final OrderRootType o1, final OrderRootType o2) {
+        return getSortKey(o1).compareTo(getSortKey(o2));
+      }
+    });
+    return allTypes;
+  }
+  
+  private static String getSortKey(OrderRootType orderRootType) {
+    if (orderRootType instanceof PersistentOrderRootType) {
+      return ((PersistentOrderRootType)orderRootType).getSdkRootName();
+    }
+    else if (orderRootType instanceof OrderRootType.DocumentationRootType) {
+      return ((OrderRootType.DocumentationRootType)orderRootType).getSdkRootName();
+    }
+    return "";
+  }
 
   public void writeExternal(Element rootElement) {
     LOG.assertTrue(!isDisposed(), "Already disposed!");
@@ -315,7 +347,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         }
       }
     }
-    for (OrderRootType rootType : OrderRootType.getSortedRootTypes()) {
+    ArrayList<OrderRootType> storableRootTypes = new ArrayList<OrderRootType>();
+    storableRootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
+    if (myType != null) {
+      storableRootTypes.addAll(Arrays.asList(myType.getAdditionalRootTypes()));
+    }
+    for (OrderRootType rootType : sortRootTypes(storableRootTypes)) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       if (roots.size() == 0 && rootType.skipWriteIfEmpty()) continue; //compatibility iml/ipr
       final Element rootTypeElement = new Element(rootType.name());

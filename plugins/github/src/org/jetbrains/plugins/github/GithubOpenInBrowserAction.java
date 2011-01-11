@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
@@ -65,13 +64,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-    if (roots.length == 0) {
-      Messages.showErrorDialog(project, "Project doesn't have any project roots", CANNOT_OPEN_IN_BROWSER);
+    if (!GithubUtil.checkCredentials(project)){
+      Messages.showErrorDialog(project, "Cannot login with GitHub credentials. Please configure them in File | Settings | GitHub", CANNOT_OPEN_IN_BROWSER);
       return;
     }
-    final VirtualFile root = roots[0];
+
+    final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (!gitDetected) {

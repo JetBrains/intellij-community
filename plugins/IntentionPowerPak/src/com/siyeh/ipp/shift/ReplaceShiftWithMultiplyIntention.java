@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         if (element instanceof PsiBinaryExpression) {
             final PsiBinaryExpression exp = (PsiBinaryExpression)element;
@@ -57,11 +58,13 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
         }
     }
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new ShiftByLiteralPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         if (element instanceof PsiBinaryExpression) {

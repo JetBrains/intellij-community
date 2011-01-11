@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -97,7 +98,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionProfileImpl mySelectedProfile;
   private JEditorPane myBrowser;
   private JPanel myOptionsPanel;
-  private final JPanel myInspectionProfilePanel = new JPanel(new BorderLayout());
+  private JPanel myInspectionProfilePanel = null;
   private FilterComponent myProfileFilter;
   private final InspectionConfigTreeNode myRoot =
     new InspectionConfigTreeNode(InspectionsBundle.message("inspection.root.node.title"), null, false, false, false);
@@ -121,7 +122,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     myProjectProfileManager = projectProfileManager;
     mySelectedProfile = (InspectionProfileImpl)profile;
     myInitialProfile = inspectionProfileName;
-    add(createInspectionProfileSettingsPanel(), BorderLayout.CENTER);
+    myShareProfile = profile.getProfileManager() == projectProfileManager;
+  }
+
+  private void initUI() {
+    myInspectionProfilePanel = createInspectionProfileSettingsPanel();
+    add(myInspectionProfilePanel, BorderLayout.CENTER);
     UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
     userActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
@@ -137,6 +143,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
     userActivityWatcher.register(myOptionsPanel);
     updateSelectedProfileState();
+    reset();
   }
 
   private void updateSelectedProfileState() {
@@ -732,7 +739,9 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (description != null) {
         // need this in order to correctly load plugin-supplied descriptions
         try {
-          myBrowser.read(new StringReader(SearchUtil.markup(description, myProfileFilter.getFilter())), null);
+          final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
+          hintHint.setFont(myBrowser.getFont());
+          myBrowser.read(new StringReader(SearchUtil.markup(IdeTooltipManager.formatHtml(description, hintHint), myProfileFilter.getFilter())), null);
         }
         catch (IOException e2) {
           try {
@@ -853,6 +862,9 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void disposeUI() {
+    if (myInspectionProfilePanel == null) {
+      return;
+    }
     myAlarm.cancelAllRequests();
     myProfileFilter.dispose();
     if (mySelectedProfile != null) {
@@ -885,7 +897,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     rightPanel.setHonorComponentsMinimumSize(true);
 
     final JPanel treePanel = new JPanel(new BorderLayout());
-    treePanel.add(initTreeScrollPane(), BorderLayout.CENTER);
+    final JScrollPane tree = initTreeScrollPane();
+    treePanel.add(tree, BorderLayout.CENTER);
 
     final JPanel northPanel = new JPanel(new BorderLayout());
     northPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
@@ -897,12 +910,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     splitter.setShowDividerControls(false);
     splitter.setFirstComponent(treePanel);
     splitter.setSecondComponent(rightPanel);
-    splitter.setProportion((float)treePanel.getPreferredSize().width/getPreferredSize().width);
+    splitter.setProportion((float)tree.getPreferredSize().width/getPreferredSize().width);
     splitter.setHonorComponentsMinimumSize(true);
 
-    myInspectionProfilePanel.add(splitter, BorderLayout.CENTER);
-    myInspectionProfilePanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 0, 2));
-    return myInspectionProfilePanel;
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(splitter, BorderLayout.CENTER);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 0, 2));
+    return panel;
   }
 
   public boolean isModified() {
@@ -927,6 +941,10 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void apply() throws ConfigurationException {
+    final boolean modified = isModified();
+    if (!modified) {
+      return;
+    }
     final ModifiableModel selectedProfile = getSelectedProfile();
     final ProfileManager profileManager =
       myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
@@ -1025,6 +1043,14 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void setProfileShared(boolean profileShared) {
     myShareProfile = profileShared;
+  }
+
+  @Override
+  public void setVisible(boolean aFlag) {
+    if (aFlag && myInspectionProfilePanel == null) {
+      initUI();
+    }
+    super.setVisible(aFlag);
   }
 
   private class LevelSelection implements ActionListener {

@@ -1,15 +1,16 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">
-This inspection reports any <b><font color="#000080">Channel</font></b> which is not opened in
-front of a <b><font color="#000080">try</font></b> block and closed in the corresponding
-<b><font color="#000080">finally</font></b> block.  Such resources may be inadvertently leaked
-if an exception is thrown before the resource is closed.  Channel resources reported
+<body>
+This inspection reports any <b>Channel</b> which is not opened in
+front of a <b>try</b> block and closed in the corresponding
+<b>finally</b> block. Such resources may be inadvertently leaked
+if an exception is thrown before the resource is closed. Channel resources reported
 by this inspection include any instances created by calling
-<b><font color="#000080">getChannel()</font></b> on a file or socket resource.
+<b>getChannel()</b> on a file or socket resource.
 <p>
 Use the checkbox below to specify if a Channel is allowed to be opened inside a try
 block. This style is less desirable because it is more verbose than opening a Channel
 in front of a try block.
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

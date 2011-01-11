@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -48,13 +49,14 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       String name = DEFAULT_NAME.getData(dataContext);
       dialog.performRename(name);
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
     else {
       dialog.show();
     }
   }
 
-  private PsiElement findTarget(DataContext context) {
+  private static PsiElement findTarget(DataContext context) {
     return MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context), LangDataKeys.PSI_FILE.getData(context));
   }
 }

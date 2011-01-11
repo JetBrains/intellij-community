@@ -33,6 +33,10 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
 public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, true);
+  }
+
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean runPostfixIfFail) {
     PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == mLPAREN) {
       final ReferenceElement.ReferenceElementResult result = parseTypeCast(builder);
@@ -42,16 +46,20 @@ public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
           return true;
         } else {
           marker.rollbackTo();
-          return PostfixExpression.parse(builder, parser);
+          return runPostfix(builder, parser, runPostfixIfFail);
         }
       } else {
         marker.drop();
-        return PostfixExpression.parse(builder, parser);
+        return runPostfix(builder, parser, runPostfixIfFail);
       }
     } else {
       marker.drop();
-      return PostfixExpression.parse(builder, parser);
+      return runPostfix(builder, parser, runPostfixIfFail);
     }
+  }
+
+  private static boolean runPostfix(PsiBuilder builder, GroovyParser parser, boolean runPostfixIfFail) {
+    return runPostfixIfFail ? PostfixExpression.parse(builder, parser) : false;
   }
 
   private static ReferenceElement.ReferenceElementResult parseTypeCast(PsiBuilder builder) {

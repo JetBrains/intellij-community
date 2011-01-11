@@ -18,8 +18,8 @@ package com.intellij.openapi.editor.textarea;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,6 +59,11 @@ public class TextComponentCaretModel implements CaretModel {
 
   public void moveToOffset(final int offset, boolean locateBeforeSoftWrap) {
     myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
+  }
+
+  @Override
+  public boolean isUpToDate() {
+    return true;
   }
 
   @NotNull

@@ -42,7 +42,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -206,57 +205,54 @@ public class GroovyCompletionUtil {
 
   public static List<Object> getCompletionVariants(GroovyResolveResult[] candidates) {
     List<Object> result = CollectionFactory.arrayList();
-    Outer:
     for (GroovyResolveResult candidate : candidates) {
-      final PsiElement element = candidate.getElement();
-      final PsiElement context = candidate.getCurrentFileResolveContext();
-      if (context instanceof GrImportStatement && element != null) {
-        final String importedName = ((GrImportStatement)context).getImportedName();
-        if (importedName != null) {
-          final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
-          if (importReference != null) {
-            for (GroovyResolveResult r : importReference.multiResolve(false)) {
-              final PsiElement resolved = r.getElement();
-              if (context.getManager().areElementsEquivalent(resolved, element)) {
-                result.add(generateLookupForImportedElement(candidate, importedName));
-                continue Outer;
-              }
-              else {
-                if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                  result.add(generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName)));
-                  continue Outer;
-                }
-              }
+      result.add(createCompletionVariant(candidate));
+    }
 
+    return result;
+  }
+
+  public static Object createCompletionVariant(GroovyResolveResult candidate) {
+    final PsiElement element = candidate.getElement();
+    final PsiElement context = candidate.getCurrentFileResolveContext();
+    if (context instanceof GrImportStatement && element != null) {
+      final String importedName = ((GrImportStatement)context).getImportedName();
+      if (importedName != null) {
+        final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
+        if (importReference != null) {
+          for (GroovyResolveResult r : importReference.multiResolve(false)) {
+            final PsiElement resolved = r.getElement();
+            if (context.getManager().areElementsEquivalent(resolved, element)) {
+              return generateLookupForImportedElement(candidate, importedName);
+            }
+            else {
+              if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
+                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+              }
             }
           }
         }
       }
-      else if (element instanceof PsiMethod) {
-        final PsiMethod method;
-        if (ResolveUtil.isInUseScope(candidate)) {
-          method = generateMethodInCategory(candidate);
-        }
-        else {
-          method = (PsiMethod)element;
-        }
-        result.add(setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate,
-                                                                                                      ((PsiMethod)element).getName())));
-        continue;
+    }
+    else if (element instanceof PsiMethod) {
+      final PsiMethod method;
+      if (ResolveUtil.isInUseScope(candidate)) {
+        method = generateMethodInCategory(candidate);
       }
-      if (element instanceof PsiClass) {
-        result.add(createClassLookupItem((PsiClass)element));
-        continue;
+      else {
+        method = (PsiMethod)element;
       }
-
-      if (element instanceof PsiNamedElement) {
-        result.add(setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element)));
-        continue;
-      }
-      result.add(element);
+      return setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
+    }
+    if (element instanceof PsiClass) {
+      return createClassLookupItem((PsiClass)element);
     }
 
-    return result;
+    if (element instanceof PsiNamedElement) {
+      return setupLookupBuilder(element, candidate.getSubstitutor(),
+                                LookupElementBuilder.create(candidate, ((PsiNamedElement)element).getName()));
+    }
+    return candidate;
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -467,50 +463,16 @@ public class GroovyCompletionUtil {
     return TailType.insertChar(editor, offset, ')');
   }
 
-  private static final Set<String> COLLECTION_METHOD_NAMES = new HashSet<String>();
-  public static final Set<String> OPERATOR_METHOD_NAMES = new HashSet<String>();
-  static {
-    COLLECTION_METHOD_NAMES.add("each");
-    COLLECTION_METHOD_NAMES.add("eachWithIndex");
-    COLLECTION_METHOD_NAMES.add("any");
-    COLLECTION_METHOD_NAMES.add("every");
-    COLLECTION_METHOD_NAMES.add("reverseEach");
-    COLLECTION_METHOD_NAMES.add("collect");
-    COLLECTION_METHOD_NAMES.add("collectAll");
-    COLLECTION_METHOD_NAMES.add("find");
-    COLLECTION_METHOD_NAMES.add("findAll");
-    COLLECTION_METHOD_NAMES.add("retainAll");
-    COLLECTION_METHOD_NAMES.add("removeAll");
-    COLLECTION_METHOD_NAMES.add("split");
-    COLLECTION_METHOD_NAMES.add("groupBy");
-    COLLECTION_METHOD_NAMES.add("groupEntriesBy");
-    COLLECTION_METHOD_NAMES.add("findLastIndexOf");
-    COLLECTION_METHOD_NAMES.add("findIndexValues");
-    COLLECTION_METHOD_NAMES.add("findIndexOf");
+  private static final Set<String> COLLECTION_METHOD_NAMES = CollectionFactory.newSet(
+    "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
+    "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
+  );
 
-    OPERATOR_METHOD_NAMES.add("plus");
-    OPERATOR_METHOD_NAMES.add("minus");
-    OPERATOR_METHOD_NAMES.add("multiply");
-    OPERATOR_METHOD_NAMES.add("power");
-    OPERATOR_METHOD_NAMES.add("div");
-    OPERATOR_METHOD_NAMES.add("mod");
-    OPERATOR_METHOD_NAMES.add("or");
-    OPERATOR_METHOD_NAMES.add("and");
-    OPERATOR_METHOD_NAMES.add("xor");
-    OPERATOR_METHOD_NAMES.add("next");
-    OPERATOR_METHOD_NAMES.add("previous");
-    OPERATOR_METHOD_NAMES.add("getAt");
-    OPERATOR_METHOD_NAMES.add("putAt");
-    OPERATOR_METHOD_NAMES.add("leftShift");
-    OPERATOR_METHOD_NAMES.add("rightShift");
-    OPERATOR_METHOD_NAMES.add("isCase");
-    OPERATOR_METHOD_NAMES.add("bitwiseNegate");
-    OPERATOR_METHOD_NAMES.add("negative");
-    OPERATOR_METHOD_NAMES.add("positive");
-  }
-
-
-
+  public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.newSet(
+    "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
+    "isCase", "bitwiseNegate", "negative", "positive"
+  );
+    
   public static boolean skipDefGroovyMethod(GrGdkMethod gdkMethod, PsiSubstitutor substitutor, @Nullable PsiType type) {
     if (type == null) return false;
     String name = gdkMethod.getStaticMethod().getName();

@@ -87,7 +87,7 @@ public class OrderRootType {
   public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
 
   /**
-   * Classpath without output directories for this module.
+   * Classpath without output directories for modules.
    * Includes:
    * <li>  classes roots for libraries and jdk
    * <li>  recursively for module dependencies: only exported items
@@ -107,12 +107,27 @@ public class OrderRootType {
    * Documentation.
    * Generic documentation order root type
    */
-  public static final OrderRootType DOCUMENTATION = new PersistentOrderRootType("DOCUMENTATION", "docPath", null, null) {
+  public static final OrderRootType DOCUMENTATION = new DocumentationRootType();
+
+  /**
+   * A temporary solution to exclude DOCUMENTATION from getAllTypes() and handle it only in special
+   * cases if supported by LibraryType.
+   */
+  public static class DocumentationRootType extends OrderRootType {
+    
+    public DocumentationRootType() {
+      super("DOCUMENTATION");
+    }
+    
     @Override
     public boolean skipWriteIfEmpty() {
       return true;
     }
-  };
+    
+    public String getSdkRootName() {
+      return "documentation";
+    }
+  }
 
   public String name() {
     return myName;

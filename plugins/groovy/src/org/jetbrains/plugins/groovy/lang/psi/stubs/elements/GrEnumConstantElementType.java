@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -31,12 +29,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrFieldStubImpl;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -45,10 +43,6 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
 
   public GrEnumConstantElementType() {
     super("Enumeration constant");
-  }
-
-  public PsiElement createElement(ASTNode node) {
-    return new GrEnumConstantImpl(node);
   }
 
   public GrEnumConstant createPsi(GrFieldStub stub) {
@@ -71,7 +65,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
         }
       }, ArrayUtil.EMPTY_STRING_ARRAY);
     }
-    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStubImpl.buildFlags(psi));
+    return new GrFieldStubImpl(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY, GroovyElementTypes.ENUM_CONSTANT, GrFieldStubImpl.buildFlags(psi), null);
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {

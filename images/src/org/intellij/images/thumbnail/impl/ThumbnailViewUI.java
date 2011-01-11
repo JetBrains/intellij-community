@@ -300,7 +300,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
             boolean projectIgnored = rootManager.getFileIndex().isIgnored(file);
 
-            if (!projectIgnored && !FileTypeManager.getInstance().isFileIgnored(file.getName())) {
+            if (!projectIgnored && !FileTypeManager.getInstance().isFileIgnored(file)) {
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 if (file.isDirectory()) {
                     if (thumbnailView.isRecursive()) {

@@ -18,7 +18,6 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -171,16 +170,16 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myParameterList;
   }
 
-  public LightMethodBuilder addParameter(PsiParameter parameter) {
+  public LightMethodBuilder addParameter(@NotNull PsiParameter parameter) {
     ((LightParameterListBuilder)myParameterList).addParameter(parameter);
     return this;
   }
 
-  public LightMethodBuilder addParameter(String name, String type) {
+  public LightMethodBuilder addParameter(@NotNull String name, @NotNull String type) {
     return addParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this));
   }
   
-  public LightMethodBuilder addParameter(String name, PsiType type) {
+  public LightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
     return addParameter(new LightParameter(name, type, this));
   }
 

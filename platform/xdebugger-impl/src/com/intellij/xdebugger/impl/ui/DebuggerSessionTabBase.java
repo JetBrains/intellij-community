@@ -22,9 +22,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -134,6 +133,19 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
 
   public void addLogConsole(String name, String path, long skippedContent) {
     addLogConsole(name, path, skippedContent, DEFAULT_TAB_COMPONENT_ICON);
+  }
+
+  protected void attachNotificationTo(final Content content) {
+    if (myConsole instanceof ObservableConsoleView) {
+      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
+      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
+        public void contentAdded(final Collection<ConsoleViewContentType> types) {
+          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
+            content.fireAlert();
+          }
+        }
+      }, content);
+    }
   }
 
   @Nullable

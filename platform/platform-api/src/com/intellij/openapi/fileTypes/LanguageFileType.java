@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,10 @@ public abstract class LanguageFileType implements FileType{
 
   /**
    * Lower level API for customizing language's file syntax highlighting in editor component.
-   * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
+   * @param project The project in which the highlighter will work, or null if the highlighter is not tied to any project.
    * @param virtualFile The file to be highlighted
    * @param colors color scheme highlighter shall be initialized with.
-   * @return EditorHiglighter implementation
+   * @return EditorHighlighter implementation
    */
   public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                 @Nullable final VirtualFile virtualFile,

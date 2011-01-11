@@ -67,7 +67,7 @@ public abstract class RenameChangeInfo implements ChangeInfo {
 
   @Override
   public PsiElement getMethod() {
-    return null;
+    return getNamedElement();
   }
 
   @Override

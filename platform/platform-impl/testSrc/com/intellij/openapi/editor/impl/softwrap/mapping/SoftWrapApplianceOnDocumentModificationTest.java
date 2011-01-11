@@ -629,6 +629,21 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     }
   }
   
+  public void testVerticalCaretShiftOnLineComment() throws IOException {
+    String text =
+      "1. just a line that is long enough to be soft wrapped\n" +
+      "2. just a line that is long enough to be soft wrapped\n" +
+      "3. just a line that is long enough to be soft wrapped\n" +
+      "4. just a line that is long enough to be soft wrapped";
+    init(100, text);
+
+    CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.moveToOffset(text.indexOf("2.") + 2);
+    lineComment();
+    
+    assertEquals(myEditor.offsetToLogicalPosition(text.indexOf("3.") + 2), caretModel.getLogicalPosition());
+  }
+  
   private static TIntHashSet collectSoftWrapStartOffsets(int documentLine) {
     TIntHashSet result = new TIntHashSet();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForLine(documentLine)) {

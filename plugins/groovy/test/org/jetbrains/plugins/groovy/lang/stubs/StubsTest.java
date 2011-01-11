@@ -57,7 +57,6 @@ public class StubsTest extends LightCodeInsightFixtureTestCase {
             append("]\n");
     for (StubElement stubElement : ((List<StubElement>) element.getChildrenStubs())) {
       PsiElement child = stubElement.getPsi();
-      Assert.assertTrue(child.getParent() == psi);
       getStubsTreeImpl(stubElement, buffer, offset + "  ");
     }
   }

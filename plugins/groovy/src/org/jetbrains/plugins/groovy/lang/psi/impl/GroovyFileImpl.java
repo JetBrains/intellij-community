@@ -446,8 +446,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (!isScript()) return declaredDefs;
     final PsiClass scriptClass = getScriptClass();
     PsiClass[] result = new PsiClass[declaredDefs.length + 1];
-    result[0] = scriptClass;
-    System.arraycopy(declaredDefs, 0, result, 1, declaredDefs.length);
+    result[result.length - 1] = scriptClass;
+    System.arraycopy(declaredDefs, 0, result, 0, declaredDefs.length);
     return result;
   }
 

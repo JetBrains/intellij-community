@@ -366,7 +366,7 @@ static bool unwatchable_mounts(array* mounts) {
 
 static void inotify_callback(char* path, int event) {
   if (event & IN_CREATE || event & IN_MOVED_TO) {
-    output("CREATE\n%s\n", path);
+    output("CREATE\n%s\nCHANGE\n%s\n", path, path);
     userlog(LOG_DEBUG, "CREATE: %s", path);
     return;
   }

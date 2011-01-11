@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -37,11 +36,6 @@ public class GrAnnotationMethodElementType extends GrStubElementType<GrAnnotatio
 
   public GrAnnotationMethodElementType() {
     super("annotation method");
-  }
-
-  @Override
-  public GrAnnotationMethod createElement(ASTNode node) {
-    return new GrAnnotationMethodImpl(node);
   }
 
   @Override

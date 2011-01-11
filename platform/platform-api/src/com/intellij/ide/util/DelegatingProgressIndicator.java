@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -97,6 +98,7 @@ public class DelegatingProgressIndicator implements ProgressIndicator {
     return getDelegate().isModal();
   }
 
+  @NotNull
   public ModalityState getModalityState() {
     return getDelegate().getModalityState();
   }

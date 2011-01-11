@@ -411,6 +411,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return false;
   }
 
+  @Override
+  public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
+    return isFileIgnored(file.getName());
+  }
+
   @SuppressWarnings({"deprecation"})
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {

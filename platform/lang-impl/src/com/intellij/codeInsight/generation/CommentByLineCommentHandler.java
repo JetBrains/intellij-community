@@ -151,8 +151,11 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     else {
       if (!hasSelection) {
         // Don't tweak caret position if we're already located on the last document line.
-        if (myEditor.getCaretModel().getLogicalPosition().line < myDocument.getLineCount() - 1) {
-          myEditor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+        LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+        if (position.line < myDocument.getLineCount() - 1) {
+          int verticalShift = 1 + myEditor.getSoftWrapModel().getSoftWrapsForLine(position.line).size() 
+                              - position.softWrapLinesOnCurrentLogicalLine;
+          myEditor.getCaretModel().moveCaretRelatively(0, verticalShift, false, false, true);
         }
       }
       else {

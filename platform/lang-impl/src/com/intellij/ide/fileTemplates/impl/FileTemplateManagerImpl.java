@@ -338,7 +338,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     LOG.debug("FileTemplateManagerImpl.loadTemplates() reading default templates...");
     // Read default templates
     for (VirtualFile file : defaultTemplates) {
-      if(FileTypeManagerEx.getInstance().isFileIgnored(file.getName())) continue;
+      if(FileTypeManagerEx.getInstance().isFileIgnored(file)) continue;
       String name = file.getName();                                                       //name.extension.ft  , e.g.  "NewClass.java.ft"
       @NonNls String extension = myTypeManager.getExtension(name);
       name = name.substring(0, name.length() - extension.length() - 1);                   //name="NewClass.java"   extension="ft"

@@ -465,7 +465,7 @@ public abstract class GitHandler {
   public void waitFor() {
     checkStarted();
     try {
-      if (myInputProcessor != null) {
+      if (myInputProcessor != null && myProcess != null) {
         myInputProcessor.process(myProcess.getOutputStream());
       }
     }

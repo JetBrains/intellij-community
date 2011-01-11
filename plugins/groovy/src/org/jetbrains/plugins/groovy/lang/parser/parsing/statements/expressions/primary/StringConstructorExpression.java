@@ -67,24 +67,25 @@ public class StringConstructorExpression implements GroovyElementTypes {
    * @param builder given builder
    * @return nothing
    */
-  private static GroovyElementType stringConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
+  private static void stringConstructorValuePart(PsiBuilder builder, GroovyParser parser) {
     final Marker injection = builder.mark();
     ParserUtils.getToken(builder, mDOLLAR);
     ParserUtils.getToken(builder, mSTAR);
     if (mIDENT.equals(builder.getTokenType())) {
       PathExpression.parse(builder, parser);
-      injection.done(GSTRING_INJECTION);
-      return PATH_EXPRESSION;
     }
     else if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseClosableBlock(builder, parser);
-      injection.done(GSTRING_INJECTION);
-      return CLOSABLE_BLOCK;
+    }
+    else if (kTHIS.equals(builder.getTokenType())) {
+      ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
+    }
+    else if (kSUPER.equals(builder.getTokenType())) {
+      ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
     }
     else {
-      builder.error(GroovyBundle.message("identifier.or.block.expected"));
+      ParserUtils.wrapError(builder, GroovyBundle.message("identifier.or.block.expected"));
     }
-    injection.drop();
-    return WRONGWAY;
+    injection.done(GSTRING_INJECTION);
   }
 }

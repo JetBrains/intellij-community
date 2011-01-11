@@ -20,10 +20,14 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
@@ -32,6 +36,7 @@ import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -110,14 +115,6 @@ public abstract class DialogWrapper {
   private JComponent myPreferredFocusedComponent;
   private Computable<Point> myInitialLocationCallback;
 
-  protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
-  }
-
-  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
-    myDoNotAsk = doNotAsk;
-  }
-
   protected final Disposable myDisposable = new Disposable() {
     public String toString() {
       return DialogWrapper.this.toString();
@@ -127,6 +124,14 @@ public abstract class DialogWrapper {
       DialogWrapper.this.dispose();
     }
   };
+
+  protected String getDoNotShowMessage() {
+    return CommonBundle.message("dialog.options.do.not.show");
+  }
+
+  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
   private ErrorText myErrorText;
   private int myMaxErrorTextLength;
 
@@ -187,6 +192,67 @@ public abstract class DialogWrapper {
     ensureEventDispatchThread();
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
+  }
+
+  //validation
+  private final Alarm myValidationAlarm = new Alarm(myDisposable);
+  private int myValidationDelay = 300;
+  private boolean myDisposed = false;
+  private boolean myValidationStarted = false;
+  private Icon ERROR_POINT = IconLoader.getIcon("/ide/errorPoint.png");
+  private Icon ERROR_SIGN = IconLoader.getIcon("/ide/errorSign.png");
+  private final ErrorPainter myErrorPainter = new ErrorPainter();
+
+  /**
+   * Allows to postpone first start of validation
+   *
+   * @return <code>false</code> if start validation in <code>init()</code> method
+   */
+  protected boolean postponeValidation() {
+    return true;
+  }
+
+  /**
+   * Validates a user input and returns <code>null</code> if everything is fine
+   * or returns a problem description with component where is the problem has been found.
+   *
+   * @return <code>null</code> if everything is OK or a problem descriptor
+   */
+  @Nullable
+  protected ValidationInfo doValidate() {
+    return null;
+  }
+
+  public void setValidationDelay(int delay) {
+    myValidationDelay = delay;
+  }
+
+  private void reportProblem(final ValidationInfo info) {
+    myErrorPainter.setValidationInfo(info);
+    if (! myErrorText.isTextSet(info.message)) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myDisposed) return;
+        setErrorText(info.message);
+        myPeer.getRootPane().getGlassPane().repaint();
+        getOKAction().setEnabled(false);
+      }
+    });
+  }
+  }
+
+  private void clearProblems() {
+    myErrorPainter.setValidationInfo(null);
+    if (! myErrorText.isTextSet(null)) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myDisposed) return;
+          setErrorText(null);
+          myPeer.getRootPane().getGlassPane().repaint();
+          getOKAction().setEnabled(true);
+        }
+      });
+    }
   }
 
   protected void createDefaultActions() {
@@ -508,7 +574,9 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
-
+    myErrorTextAlarm.cancelAllRequests();
+    myValidationAlarm.cancelAllRequests();
+    myDisposed = true;
     if (myButtons != null) {
       for (JButton button : myButtons) {
         button.setAction(null); // avoid memory leak via KeyboardManager
@@ -814,7 +882,9 @@ public abstract class DialogWrapper {
 
     final JComponent c = createCenterPanel();
     if (c != null) {
-      centerSection.add(wrap(c, isCenterStrictedToPreferredSize()), BorderLayout.CENTER);
+      final JComponent wrap = wrap(c, isCenterStrictedToPreferredSize());
+      centerSection.add(wrap, BorderLayout.CENTER);
+      IdeGlassPaneUtil.installPainter(wrap, myErrorPainter, myDisposable);
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -827,6 +897,38 @@ public abstract class DialogWrapper {
     }
 
     new MnemonicHelper().register(root);
+    if (!postponeValidation()) {
+      startTrackingValidation();
+    }
+  }
+
+  void startTrackingValidation() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (!myValidationStarted && !myDisposed) {
+          myValidationStarted = true;
+          initValidation();
+        }
+      }
+    });
+  }
+
+  protected final void initValidation() {
+    myValidationAlarm.cancelAllRequests();
+    myValidationAlarm.addRequest(new Runnable() {
+      public void run() {
+        final ValidationInfo result = doValidate();
+        if (result == null) {
+          clearProblems();
+        } else {
+          reportProblem(result);
+        }
+
+        if (!myDisposed) {
+          initValidation();
+        }
+      }
+    }, myValidationDelay, ModalityState.current());
   }
 
   private static JComponent wrap(final JComponent c, boolean strict) {
@@ -1209,6 +1311,10 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
+      if (doValidate() != null) {
+        startTrackingValidation();
+        return;
+      }
       doOKAction();
     }
   }
@@ -1299,6 +1405,7 @@ public abstract class DialogWrapper {
   private static class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
     private Dimension myPrefSize;
+    private String myText;
 
     private ErrorText() {
       setLayout(new BorderLayout());
@@ -1308,6 +1415,7 @@ public abstract class DialogWrapper {
 
     public void setError(String text) {
       final Dimension oldSize = getPreferredSize();
+      myText = text;
 
       if (text == null) {
         myLabel.setText("");
@@ -1326,6 +1434,10 @@ public abstract class DialogWrapper {
       if (oldSize.height < size.height) {
         revalidate();
       }
+    }
+
+    public boolean isTextSet(String text) {
+      return StringUtil.equals(text, myText);
     }
 
     public Dimension getPreferredSize() {
@@ -1363,5 +1475,65 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     String getDoNotShowMessage();
+  }
+
+  private ErrorPaintingType getErrorPaintingType() {
+    return ErrorPaintingType.SIGN;
+  }
+
+  private class ErrorPainter extends AbstractPainter {
+    private ValidationInfo myInfo;
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      if (myInfo != null &&  myInfo.component != null) {
+        final JComponent comp = myInfo.component;
+        final int w = comp.getWidth();
+        final int h = comp.getHeight();
+        Point p;
+        switch (getErrorPaintingType()) {
+          case DOT:
+            p = SwingUtilities.convertPoint(comp, 2,  h/2 , component);
+            ERROR_POINT.paintIcon(component, g, p.x, p.y);
+            break;
+          case SIGN:
+            p = SwingUtilities.convertPoint(comp, w,  0, component);
+            ERROR_SIGN.paintIcon(component, g, p.x - 8, p.y - 8);
+            break;
+          case LINE:
+            p = SwingUtilities.convertPoint(comp, 0,  h, component);
+            final GraphicsConfig config = new GraphicsConfig(g);
+            g.setColor(new Color(255, 0, 0 , 100));
+            g.fillRoundRect(p.x, p.y-2, w, 4, 2, 2);
+            config.restore();
+            break;
+        }
+      }
+    }
+
+    @Override
+    public boolean needsRepaint() {
+      return true;
+    }
+
+    public void setValidationInfo(ValidationInfo info) {
+      myInfo = info;
+    }
+  }
+
+  private static enum ErrorPaintingType {DOT, SIGN, LINE}
+
+  public static final class ValidationInfo {
+    public final String message;
+    public final JComponent component;
+
+    public ValidationInfo(@NotNull String message, JComponent component) {
+      this.message = message;
+      this.component = component;
+    }
+
+    public ValidationInfo(@NotNull String message) {
+      this(message, null);
+    }
   }
 }

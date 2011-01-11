@@ -15,7 +15,6 @@
  */
 package git4idea.checkout;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -23,9 +22,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,13 +73,10 @@ public class GitCheckoutProvider implements CheckoutProvider {
                               final String originName,
                               final String parentDirectory) {
     final GitLineHandler handler = clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
-    handler.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(ProgressManager.getInstance().getProgressIndicator(), handler, "git clone", true));
-
     GitTask task = new GitTask(project, handler, GitBundle.message("cloning.repository", sourceRepositoryURL));
-    task.executeAsync(new GitTask.ResultHandler() {
+    task.executeAsync(new GitTaskResultHandlerAdapter() {
       @Override
-      public void run(GitTaskResult result) {
-        if (result == GitTaskResult.OK) {
+      public void onSuccess() {
           destinationParent.refresh(true, true, new Runnable() {
             public void run() {
               if (project.isOpen() && (!project.isDisposed()) && (!project.isDefault())) {
@@ -87,7 +87,11 @@ public class GitCheckoutProvider implements CheckoutProvider {
           });
           listener.directoryCheckedOut(new File(parentDirectory, directoryName));
           listener.checkoutCompleted();
-        }
+      }
+
+      @Override
+      protected void onFailure() {
+        GitUIUtil.notifyGitErrors(project, "Couldn't clone", "Couldn't clone from " + sourceRepositoryURL, handler.errors());
       }
     });
   }

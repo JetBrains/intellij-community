@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -75,8 +77,28 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     super(stub, nodeType);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitField(this);
+  }
+
+  @Override
+  public GrTypeElement getTypeElementGroovy() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      final String typeText = stub.getTypeText();
+      if (typeText == null) {
+        return null;
+      }
+
+      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
+    }
+
+    return super.getTypeElementGroovy();
   }
 
   public String toString() {
@@ -108,6 +130,12 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public PsiClass getContainingClass() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      final PsiElement element = getParentByStub();
+      return element instanceof PsiClass ? (PsiClass)element : null;
+    }
+
     PsiElement parent = getParent().getParent();
     if (parent instanceof GrTypeDefinitionBody) {
       final PsiElement pparent = parent.getParent();

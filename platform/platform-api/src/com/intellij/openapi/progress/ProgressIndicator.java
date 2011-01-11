@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
 public interface ProgressIndicator {
   void start();
@@ -60,6 +61,7 @@ public interface ProgressIndicator {
 
   boolean isModal();
 
+  @NotNull
   ModalityState getModalityState();
 
   void setModalityProgress(ProgressIndicator modalityProgress);

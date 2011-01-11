@@ -722,7 +722,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           return;
         }
       }
-      if (!ResolveUtil.processCategoryMembers(this, processor)) return;
     }
     else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(getProject()).getArrayClass();
@@ -738,6 +737,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       state = ResolveState.initial();
     }
 
+    if (!ResolveUtil.processCategoryMembers(this, processor)) return;
     ResolveUtil.processNonCodeMethods(qualifierType, processor, this, state);
   }
 

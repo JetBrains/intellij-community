@@ -34,14 +34,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -67,7 +65,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                      final @NotNull ResolveState _state,
                                      final PsiElement lastParent,
                                      final @NotNull PsiElement place) {
-    if (lastParent == null || !(place instanceof GroovyPsiElement)) return true;
+    if (lastParent == null) return true;
 
     ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
@@ -98,7 +96,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 
-      if (!ResolveUtil.processNonCodeMethods(GrClosureType.create(this), processor, (GroovyPsiElement)place, state)) return false;
+      if (place instanceof GroovyPsiElement && !ResolveUtil.processNonCodeMethods(GrClosureType.create(this), processor, (GroovyPsiElement)place, state)) return false;
     }
 
     return true;

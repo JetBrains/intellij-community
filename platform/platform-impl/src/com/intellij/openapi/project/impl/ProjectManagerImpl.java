@@ -21,6 +21,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.NotificationsManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -102,10 +103,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
 
-  private static ProjectManagerListener[] getListeners(Project project) {
+  @NotNull
+  private static List<ProjectManagerListener> getListeners(Project project) {
     List<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
-    if (array == null) return ProjectManagerListener.EMPTY_ARRAY;
-    return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
+    if (array == null) return Collections.emptyList();
+    return array;
   }
 
   public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx, ProgressManager progressManager) {
@@ -126,7 +128,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     addProjectManagerListener(
       new ProjectManagerListener() {
-
         public void projectOpened(final Project project) {
           MessageBus messageBus = project.getMessageBus();
           MessageBusConnection connection = messageBus.connect(project);
@@ -140,23 +141,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           });
 
           busPublisher.projectOpened(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectOpened(project);
           }
         }
 
         public void projectClosed(Project project) {
           busPublisher.projectClosed(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectClosed(project);
           }
         }
 
         public boolean canCloseProject(Project project) {
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             if (!listener.canCloseProject(project)) {
               return false;
             }
@@ -166,8 +164,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
         public void projectClosing(Project project) {
           busPublisher.projectClosing(project);
-          ProjectManagerListener[] listeners = getListeners(project);
-          for (ProjectManagerListener listener : listeners) {
+          for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectClosing(project);
           }
         }
@@ -417,7 +414,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
-  public Project loadAndOpenProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+  public Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException {
     return loadAndOpenProject(filePath, true);
   }
 
@@ -826,7 +823,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  public void reloadProject(final Project p) {
+  public void reloadProject(@NotNull final Project p) {
     reloadProjectImpl(p, true, false);
   }
 
@@ -886,7 +883,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
   */
 
-  public boolean closeProject(final Project project) {
+  public boolean closeProject(@NotNull final Project project) {
     return closeProject(project, true, false);
   }
 
@@ -950,24 +947,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  public void addProjectManagerListener(ProjectManagerListener listener) {
+  public void addProjectManagerListener(@NotNull ProjectManagerListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeProjectManagerListener(ProjectManagerListener listener) {
+  @Override
+  public void addProjectManagerListener(@NotNull final ProjectManagerListener listener, @NotNull Disposable parentDisposable) {
+    addProjectManagerListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeProjectManagerListener(listener);
+      }
+    });
+  }
+
+  public void removeProjectManagerListener(@NotNull ProjectManagerListener listener) {
     boolean removed = myListeners.remove(listener);
     LOG.assertTrue(removed);
   }
 
-  public void addProjectManagerListener(Project project, ProjectManagerListener listener) {
+  public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
-      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, new ArrayList<ProjectManagerListener>());
+      listeners = ((UserDataHolderEx)project).putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createEmptyCOWList());
     }
     listeners.add(listener);
   }
 
-  public void removeProjectManagerListener(Project project, ProjectManagerListener listener) {
+  public void removeProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners != null) {
       boolean removed = listeners.remove(listener);

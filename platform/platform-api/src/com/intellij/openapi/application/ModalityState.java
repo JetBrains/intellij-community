@@ -45,17 +45,20 @@ public abstract class ModalityState {
     }
   }
 
+  @NotNull
   public static ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();
   }
 
+  @NotNull
   public static ModalityState stateForComponent(Component component){
     return ApplicationManager.getApplication().getModalityStateForComponent(component);
   }
 
+  @NotNull
   public static ModalityState defaultModalityState() {
     return ApplicationManager.getApplication().getDefaultModalityState();
   }
 
-  public abstract boolean dominates(ModalityState anotherState);
+  public abstract boolean dominates(@NotNull ModalityState anotherState);
 }

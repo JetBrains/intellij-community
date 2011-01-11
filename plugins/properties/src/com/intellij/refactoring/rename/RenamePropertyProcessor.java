@@ -17,8 +17,12 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,6 +40,23 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
     allRenames.clear();
     for (Property otherProperty : properties) {
       allRenames.put(otherProperty, newName);
+    }
+  }
+
+  @Override
+  public void findCollisions(PsiElement element,
+                             final String newName,
+                             Map<? extends PsiElement, String> allRenames,
+                             List<UsageInfo> result) {
+    for (Property property : ((PropertiesFile)element.getContainingFile()).getProperties()) {
+      if (Comparing.strEqual(newName, property.getKey())) {
+        result.add(new UnresolvableCollisionUsageInfo(property, element) {
+          @Override
+          public String getDescription() {
+            return "New property name \'" + newName + "\' hides existing property";
+          }
+        });
+      }
     }
   }
 }

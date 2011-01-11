@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -31,11 +32,10 @@ import java.nio.charset.Charset;
  * The handler for git commands with text outputs
  */
 public abstract class GitTextHandler extends GitHandler {
-  /**
-   * wrapped process handler
-   */
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
+  private volatile boolean myIsDestroyed;
+  private final Object myProcessStateLock = new Object();
 
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
@@ -45,11 +45,17 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, vcsRoot, command);
   }
 
+  @Nullable
   @Override
   protected Process startProcess() throws ExecutionException {
-    final ProcessHandler processHandler = new MyRunnerMediator().createProcess(myCommandLine);
-    myHandler = (MyOSProcessHandler)processHandler;
-    return myHandler.getProcess();
+    synchronized (myProcessStateLock) {
+      if (myIsDestroyed) {
+        return null;
+      }
+      final ProcessHandler processHandler = new MyRunnerMediator().createProcess(myCommandLine);
+      myHandler = (MyOSProcessHandler)processHandler;
+      return myHandler.getProcess();
+    }
   }
 
   protected void startHandlingStreams() {
@@ -93,11 +99,18 @@ public abstract class GitTextHandler extends GitHandler {
   protected abstract void onTextAvailable(final String text, final Key outputType);
 
   public void destroyProcess() {
-    myHandler.destroyProcess();
+    synchronized (myProcessStateLock) {
+      myIsDestroyed = true;
+      if (myHandler != null) {
+        myHandler.destroyProcess();
+      }
+    }
   }
 
   protected void waitForProcess() {
-    myHandler.waitFor();
+    if (myHandler != null) {
+      myHandler.waitFor();
+    }
   }
 
   /**

@@ -540,10 +540,12 @@ public class ArtifactUtil {
     final Set<Module> modules = new HashSet<Module>();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     for (Artifact artifact : artifacts) {
-      processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
+      processPackagingElements(artifact, null, new Processor<PackagingElement<?>>() {
         @Override
-        public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
-          ContainerUtil.addIfNotNull(modules, moduleOutputPackagingElement.findModule(resolvingContext));
+        public boolean process(PackagingElement<?> element) {
+          if (element instanceof ModuleOutputPackagingElement) {
+            ContainerUtil.addIfNotNull(modules, ((ModuleOutputPackagingElement)element).findModule(resolvingContext));
+          }
           return true;
         }
       }, resolvingContext, true);

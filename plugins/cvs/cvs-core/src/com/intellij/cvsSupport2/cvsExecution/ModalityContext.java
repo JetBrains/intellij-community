@@ -17,9 +17,10 @@
 package com.intellij.cvsSupport2.cvsExecution;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public interface ModalityContext {
-  void runInDispatchThread(Runnable action, Project project);
+  void runInDispatchThread(@NotNull Runnable action, Project project);
 
   boolean isForTemporaryConfiguration();
 }

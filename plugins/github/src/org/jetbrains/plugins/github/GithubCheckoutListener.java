@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkout.CheckoutListener;
@@ -41,11 +40,7 @@ public class GithubCheckoutListener implements CheckoutListener {
 
   @Nullable
   private String getGithubProjectName(final Project project) {
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-    if (roots.length == 0){
-      return null;
-    }
-    final VirtualFile root = roots[0];
+    final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (gitDetected) {

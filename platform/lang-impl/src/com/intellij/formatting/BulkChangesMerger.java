@@ -33,19 +33,20 @@ public class BulkChangesMerger {
   /**
    * Merges given changes within the given text and returns result.
    * 
-   * @param text      text to apply given changes for
-   * @param changes   changes to apply to the given text. It's assumed that there are no intersections between them and that they
-   *                  are sorted by offsets in ascending order 
-   * @return          merge result
+   * @param text          text to apply given changes for
+   * @param textLength    interested number of symbols from the given text to use
+   * @param changes       changes to apply to the given text. It's assumed that there are no intersections between them and that they
+   *                      are sorted by offsets in ascending order 
+   * @return              merge result
    */
   @SuppressWarnings({"MethodMayBeStatic"})
-  public CharSequence merge(@NotNull char[] text, @NotNull List<TextChange> changes) {
-    int newLength = text.length;
+  public CharSequence merge(@NotNull char[] text, int textLength, @NotNull List<TextChange> changes) {
+    int newLength = textLength;
     for (TextChange change : changes) {
       newLength += change.getText().length() - (change.getEnd() - change.getStart());
     }
     char[] data = new char[newLength];
-    int oldEndOffset = text.length;
+    int oldEndOffset = textLength;
     int newEndOffset = data.length;
     for (int i = changes.size() - 1; i >= 0; i--) {
       TextChange change = changes.get(i);

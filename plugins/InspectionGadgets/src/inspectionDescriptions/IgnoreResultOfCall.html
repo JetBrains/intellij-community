@@ -1,18 +1,19 @@
 <html>
-<body><table> <tr> <td valign="top">
-<font face="verdana" size="-1">This inspection reports any calls to a specified list of
-methods where the result of that call is ignored.  For many methods, ignoring the result is perfectly
-legitimate, but for some methods it is almost certainly an error.  Examples of methods where ignoring
-the result of a call is likely to be an error include <b><font color="#000080">java.io.inputStream.read()</font></b>,
+<body>
+This inspection reports any calls to a specified list of
+methods where the result of that call is ignored. For many methods, ignoring the result is perfectly
+legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
+the result of a call is likely to be an error include <b>java.io.inputStream.read()</b>,
 which returns the number of bytes actually read, any method on
-<b><font color="#000080">java.lang.String </font></b> or <b><font color="#000080">java.math.BigInteger</font></b>,
+<b>java.lang.String </b> or <b>java.math.BigInteger</b>,
 as all of those methods are side-effect free and thus pointless if ignored.
-
 <p>
 Use the panel below to enter the class names and method names of the methods you wish to check for
-ignored returns.  Class names must be specified as a simple string, while method names may be
-specified using a standard Java regular expression.  Specifying a class names implicitly specifies
-that class and all of its subclasses.  In addition, you may choose to report any
+ignored returns. Class names must be specified as a simple string, while method names may be
+specified using a standard Java regular expression. Specifying a class names implicitly specifies
+that class and all of its subclasses. In addition, you may choose to report any
 call to a non-library call whose result is ignored
-</font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
+<p>
+<small>Powered by InspectionGadgets</small>
+</body>
 </html>

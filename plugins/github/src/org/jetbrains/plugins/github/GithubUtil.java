@@ -5,12 +5,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import org.apache.commons.httpclient.HttpClient;
@@ -81,6 +81,15 @@ public class GithubUtil {
 
   public static HttpClient getHttpClient(final String login, final String password) {
     final HttpClient client = new HttpClient();
+    // Configure proxySettings if it is required
+    final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
+    if (proxySettings.USE_HTTP_PROXY){
+      client.getHostConfiguration().setProxy(proxySettings.PROXY_HOST, proxySettings.PROXY_PORT);
+      if (proxySettings.PROXY_AUTHENTICATION) {
+        client.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxySettings.PROXY_LOGIN,
+                                                                                             proxySettings.getPlainProxyPassword()));
+      }
+    }
     client.getParams().setAuthenticationPreemptive(true);
     client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
     return client;
@@ -152,6 +161,22 @@ public class GithubUtil {
       // ignore
     }
     return false;
+  }
+
+  public static boolean checkCredentials(final Project project) {
+    try {
+      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          final GithubSettings settings = GithubSettings.getInstance();
+          return testConnection(settings.getLogin(), settings.getPassword());
+        }
+      });
+    }
+    catch (CancelledException e) {
+      return false;
+    }
   }
 
   public static class CancelledException extends RuntimeException {}
@@ -244,11 +269,8 @@ public class GithubUtil {
 
   @Nullable
   public static GitRemote getGithubBoundRepository(final Project project){
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-    if (roots.length == 0) {
-      return null;
-    }
-    final VirtualFile root = roots[0];
+    final boolean b = GithubUtil.testConnection(GithubSettings.getInstance().getLogin(), GithubSettings.getInstance().getPassword());
+    final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (!gitDetected) {

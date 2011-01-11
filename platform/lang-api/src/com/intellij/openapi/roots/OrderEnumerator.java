@@ -66,6 +66,10 @@ public abstract class OrderEnumerator {
 
   public abstract OrderEnumerator withoutDepModules();
 
+  /**
+   * Skip root module's entries
+   * @return this
+   */
   public abstract OrderEnumerator withoutModuleSourceEntries();
 
   public OrderEnumerator librariesOnly() {
