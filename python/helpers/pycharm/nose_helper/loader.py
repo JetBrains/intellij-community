@@ -121,11 +121,12 @@ class TestLoader(unittest.TestLoader):
         or test suite.
         """
         import inspect
-        lineno = inspect.getsourcelines(obj)
+        try:
+          lineno = inspect.getsourcelines(obj)
+        except:
+          lineno = 1
         if isfunction(obj) and parent and not isinstance(parent, types.ModuleType):
-	    # This is a Python 3.x 'unbound method'.  Wrap it with its
-	    # associated class..
-            obj = unbound_method(parent, obj)
+          obj = unbound_method(parent, obj)
         if isinstance(obj, unittest.TestCase):
             return obj
         elif isclass(obj):
