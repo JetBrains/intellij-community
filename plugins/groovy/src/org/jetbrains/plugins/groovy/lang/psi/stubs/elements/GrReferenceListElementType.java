@@ -16,13 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
@@ -30,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -41,16 +42,15 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
   }
 
   public GrReferenceListStub createStub(T psi, StubElement parentStub) {
-    final GrCodeReferenceElement[] elements = psi.getReferenceElements();
-    String[] refNames = ContainerUtil.map(elements, new Function<GrCodeReferenceElement, String>() {
-      @Nullable
-      public String fun(final GrCodeReferenceElement element) {
-        final String name = element.getReferenceName();
-        return name == null ? null : StringUtil.getShortName(name);
+    List<String> refNames = new ArrayList<String>();
+    for (GrCodeReferenceElement element : psi.getReferenceElements()) {
+      final String name = element.getText();
+      if (StringUtil.isNotEmpty(name)) {
+        refNames.add(name);
       }
-    }, new String[elements.length]);
+    }
+    return new GrReferenceListStub(parentStub, this, ArrayUtil.toStringArray(refNames));
 
-    return new GrReferenceListStub(parentStub, this, refNames);
   }
 
   public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
@@ -64,7 +64,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
   public void indexStub(GrReferenceListStub stub, IndexSink sink) {
     for (String name : stub.getBaseClasses()) {
       if (name != null) {
-        sink.occurrence(GrDirectInheritorsIndex.KEY, name);
+        sink.occurrence(GrDirectInheritorsIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
     }
   }
