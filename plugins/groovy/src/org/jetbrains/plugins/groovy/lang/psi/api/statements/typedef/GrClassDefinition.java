@@ -23,5 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 /**
  * @author Dmitry.Krasilschikov
  */
-public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
+public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
 }

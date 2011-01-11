@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.stubs.impl;
+package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationMethodStub;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 
 /**
- * @author ilyas
+ * @author peter
  */
-public class GrAnnotationMethodStubImpl extends StubBase<GrAnnotationMethod> implements GrAnnotationMethodStub {
+public class GrTypeParameterStub extends StubBase<GrTypeParameter> implements NamedStub<GrTypeParameter> {
   private final StringRef myName;
 
-  public GrAnnotationMethodStubImpl(StubElement parent, StringRef name) {
-    super(parent, GroovyElementTypes.ANNOTATION_METHOD);
+  public GrTypeParameterStub(final StubElement parentStub, final StringRef name) {
+    super(parentStub, GroovyElementTypes.TYPE_PARAMETER);
     myName = name;
   }
 
   public String getName() {
     return StringRef.toString(myName);
   }
+
 }

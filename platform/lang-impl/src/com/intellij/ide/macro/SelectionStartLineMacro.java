@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 
-public final class LineNumberMacro extends EditorMacro {
-  public LineNumberMacro() {
-    super("LineNumber", IdeBundle.message("macro.line.number"));
+/**
+ * @author yole
+ */
+public class SelectionStartLineMacro extends EditorMacro {
+  public SelectionStartLineMacro() {
+    super("SelectionStartLine", "Selected text start line number");
   }
 
   @Override
   protected String expand(Editor editor) {
-    return String.valueOf(editor.getCaretModel().getLogicalPosition().line + 1);
+    VisualPosition selectionStartPosition = editor.getSelectionModel().getSelectionStartPosition();
+    if (selectionStartPosition == null) {
+      return null;
+    }
+    return String.valueOf(editor.visualToLogicalPosition(selectionStartPosition).line + 1);
   }
 }

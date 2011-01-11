@@ -70,7 +70,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
-    return JavaDirectoryService.getInstance().createClass(dir, className, templateName);
+    return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }
 
   @Override

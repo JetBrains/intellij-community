@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.stubs.impl;
+package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
-
-import java.util.Set;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
- * @author ilyas
+ * @author peter
  */
-public class GrMethodStubImpl extends StubBase<GrMethod> implements GrMethodStub {
+public class GrParameterStub extends StubBase<GrField> implements NamedStub<GrField> {
   private final StringRef myName;
   private final String[] myAnnotations;
-  private final String[] myNamedParameters;
+  private final String myTypeText;
 
-  public GrMethodStubImpl(StubElement parent, StringRef name, final String[] annotations, final @NotNull String[] namedParameters) {
-    super(parent, GroovyElementTypes.METHOD_DEFINITION);
+  public GrParameterStub(StubElement parent,
+                         StringRef name,
+                         final String[] annotations,
+                         String typeText) {
+    super(parent, GroovyElementTypes.PARAMETER);
     myName = name;
     myAnnotations = annotations;
-    myNamedParameters = namedParameters;
+    myTypeText = typeText;
   }
 
   public String getName() {
@@ -48,8 +48,8 @@ public class GrMethodStubImpl extends StubBase<GrMethod> implements GrMethodStub
     return myAnnotations;
   }
 
-  @NotNull
-  public String[] getNamedParameters() {
-    return myNamedParameters;
+  public String getTypeText() {
+    return myTypeText;
   }
+
 }

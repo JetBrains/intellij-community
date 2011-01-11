@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.RepositoryInfo;
 
@@ -101,11 +102,19 @@ public class GithubCloneProjectPane {
           }
         };
         fileChooserDescriptor.setTitle("Select project destination folder");
-        final FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(fileChooserDescriptor, myPanel);
-        final VirtualFile[] files = fileChooser.choose(null, null);
-        if (files.length > 0) {
-          myTextFieldWithBrowseButton.setText(files[0].getPath());
-        }
+
+        final String preselectedFolderPath = myTextFieldWithBrowseButton.getText();
+        final VirtualFile preselectedFolder = LocalFileSystem.getInstance().findFileByPath(preselectedFolderPath);
+
+        FileChooser.chooseFilesWithSlideEffect(fileChooserDescriptor, null, preselectedFolder,
+                                               new Consumer<VirtualFile[]>() {
+                                                 @Override
+                                                 public void consume(VirtualFile[] files) {
+                                                   if (files.length > 0) {
+                                                     myTextFieldWithBrowseButton.setText(files[0].getPath());
+                                                   }
+                                                 }
+                                               });
       }
     });
   }
