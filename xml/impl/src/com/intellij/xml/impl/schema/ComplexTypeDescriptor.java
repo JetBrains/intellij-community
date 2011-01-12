@@ -19,9 +19,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -119,19 +118,21 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         }
       }
     }.startProcessing(myTag);
-    addSubstitutionGroups(map);
+    addSubstitutionGroups(map, myDocumentDescriptor, new HashSet<XmlNSDescriptorImpl>());
     filterAbstractElements(map);
     return map.values().toArray(
       new XmlElementDescriptor[map.values().size()]
     );
   }
 
-  private void addSubstitutionGroups(Map<String, XmlElementDescriptor> result) {
+  private static void addSubstitutionGroups(Map<String, XmlElementDescriptor> result,
+                                            XmlNSDescriptorImpl nsDescriptor,
+                                            Set<XmlNSDescriptorImpl> visited) {
     mainLoop: while (true) {
       for (final XmlElementDescriptor xmlElementDescriptor : result.values()) {
         XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
 
-        final XmlElementDescriptor[] substitutes = myDocumentDescriptor.getSubstitutes(descriptor.getName(), descriptor.getNamespace());
+        final XmlElementDescriptor[] substitutes = nsDescriptor.getSubstitutes(descriptor.getName(), descriptor.getNamespace());
         boolean toContinue = false;
 
         for (XmlElementDescriptor substitute : substitutes) {
@@ -146,6 +147,23 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       break;
     }
+
+    visited.add(nsDescriptor);
+    for (XmlTag tag : nsDescriptor.getTag().getSubTags()) {
+      if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "include")) {
+        PsiElement element = XmlSchemaTagsProcessor.resolveReference(tag.getAttribute("schemaLocation"));
+        if (element instanceof XmlFile) {
+          XmlDocument document = ((XmlFile)element).getDocument();
+          if (document != null) {
+            PsiMetaData metaData = document.getMetaData();
+            if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
+              addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
+            }
+          }
+        }
+      }
+    }
+
   }
 
   private static void filterAbstractElements(Map<String,XmlElementDescriptor> result) {
