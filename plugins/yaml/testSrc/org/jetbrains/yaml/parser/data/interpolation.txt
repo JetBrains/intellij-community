@@ -1,0 +1,10 @@
+YAML file
+  YAML document
+    YAML key value
+      PsiElement(scalar key)('en:')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML compound value
+        YAML key value
+          PsiElement(scalar key)('foo:')
+          PsiElement(text)('bar %{baz}')

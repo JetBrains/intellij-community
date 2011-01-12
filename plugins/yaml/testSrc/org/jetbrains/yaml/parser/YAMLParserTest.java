@@ -98,6 +98,9 @@ public class YAMLParserTest extends LightPlatformTestCase {
            "    }");
   }
 
+  public void testInterpolation() throws Throwable {
+    doTest("en:\n  foo: bar %{baz}");
+  }
 
   public void testValue_injection() throws Throwable {
     doTest("key:\n" + "    one: 1 text\n" + "    other: some {{count}} text");

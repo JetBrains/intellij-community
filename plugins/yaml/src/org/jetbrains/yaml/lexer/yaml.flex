@@ -51,7 +51,7 @@ COMMENT =                       "#"{LINE}
 
 ID =                            [a-zA-Z_][a-zA-Z0-9\-_ ]*
 KEY =                           {ID}:
-INJECTION =                     "{{" {ID} "}"{0,2}
+INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
 DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
