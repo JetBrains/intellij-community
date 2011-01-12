@@ -15,67 +15,37 @@
  */
 package git4idea.ui;
 
-import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * This dialog allows converting the specified files before committing them.
+ * This dialog shows files which have line separators different than in the project code style and allows to select files to be converted.
+ * The dialog is shown before commit or before update.
+ * In the settings the user may choose {@link GitVcsSettings.ConversionPolicy} and don't show the dialog at all.
  */
 public class GitConvertFilesDialog extends DialogWrapper {
-  /**
-   * The version when option --stdin was added
-   */
-  private static final GitVersion CHECK_ATTR_STDIN_SUPPORTED = new GitVersion(1, 6, 1, 0);
-  /**
-   * Do not convert exit code
-   */
-  public static final int DO_NOT_CONVERT = NEXT_USER_EXIT_CODE;
-  /**
-   * The checkbox used to indicate that dialog should not be shown
-   */
-  private JCheckBox myDoNotShowCheckBox;
-  /**
-   * The root panel of the dialog
-   */
+  public static final int DO_NOT_CONVERT = NEXT_USER_EXIT_CODE; // "Do not convert" button code
+  private JCheckBox myDoNotShowCheckBox; // don't show the dialog again
   private JPanel myRootPanel;
-  /**
-   * The tree of files to convert
-   */
-  private CheckboxTreeBase myFilesToConvert;
-  /**
-   * The root node in the tree
-   */
+  private CheckboxTreeBase myFilesToConvert; // Tree of files selected to convert
   private CheckedTreeNode myRootNode;
 
-  /**
-   * The constructor
-   *
-   * @param project     the project to which this dialog is related
-   * @param filesToShow the files to show sorted by vcs root
-   */
-  GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
+  public GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
     super(project, true);
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>(filesToShow.keySet());
     Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
@@ -95,17 +65,24 @@ public class GitConvertFilesDialog extends DialogWrapper {
   }
 
   /**
-   * {@inheritDoc}
+   * @return did user selected the checkbox "don't show this dialog again".
    */
+  public boolean isDontShowAgainChosen() {
+    return myDoNotShowCheckBox.isSelected();
+  }
+
+  /**
+   * @return Files selected to be converted.
+   */
+  public VirtualFile[] getSelectedFiles() {
+    return myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
+  }
+
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), new DoNotConvertAction(), getCancelAction()};
   }
 
-
-  /**
-   * Create custom UI components
-   */
   private void createUIComponents() {
     myRootNode = new CheckedTreeNode("ROOT");
     myFilesToConvert = new CheckboxTree(new FileTreeCellRenderer(), myRootNode) {
@@ -117,123 +94,14 @@ public class GitConvertFilesDialog extends DialogWrapper {
     };
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected JComponent createCenterPanel() {
     return myRootPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
-  }
-
-  /**
-   * Check if files need to be converted to other line separator. The method could be invoked from non-UI thread.
-   *
-   * @param project       the project to use
-   * @param settings      the vcs settings
-   * @param sortedChanges sorted changes
-   * @param exceptions    the collection with exceptions
-   * @return true if conversion completed successfully, false if process was cancelled or there were errors
-   */
-  public static boolean showDialogIfNeeded(final Project project,
-                                           final GitVcsSettings settings,
-                                           Map<VirtualFile, List<Change>> sortedChanges,
-                                           final List<VcsException> exceptions) {
-    final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
-    if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
-      LocalFileSystem lfs = LocalFileSystem.getInstance();
-      final String nl = CodeStyleFacade.getInstance(project).getLineSeparator();
-      final Map<VirtualFile, Set<VirtualFile>> files = new HashMap<VirtualFile, Set<VirtualFile>>();
-      // preliminary screening of files
-      for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
-        final VirtualFile root = entry.getKey();
-        final Set<VirtualFile> added = new HashSet<VirtualFile>();
-        for (Change change : entry.getValue()) {
-          switch (change.getType()) {
-            case NEW:
-            case MODIFICATION:
-            case MOVED:
-              VirtualFile f = lfs.findFileByPath(change.getAfterRevision().getFile().getPath());
-              if (f != null && !f.getFileType().isBinary() && !nl.equals(LoadTextUtil.detectLineSeparator(f, false))) {
-                added.add(f);
-              }
-              break;
-            case DELETED:
-          }
-        }
-        if (!added.isEmpty()) {
-          files.put(root, added);
-        }
-      }
-      // check crlf for real
-      for (Iterator<Map.Entry<VirtualFile, Set<VirtualFile>>> i = files.entrySet().iterator(); i.hasNext();) {
-        Map.Entry<VirtualFile, Set<VirtualFile>> e = i.next();
-        Set<VirtualFile> fs = e.getValue();
-        for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext();) {
-          VirtualFile f = j.next();
-          String detectedLineSeparator = LoadTextUtil.detectLineSeparator(f, true);
-          if (detectedLineSeparator == null || nl.equals(detectedLineSeparator)) {
-            j.remove();
-          }
-        }
-        if (fs.isEmpty()) {
-          i.remove();
-        }
-      }
-      if (files.isEmpty()) {
-        return true;
-      }
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          VirtualFile[] selectedFiles = null;
-          if (settings.getLineSeparatorsConversion() == GitVcsSettings.ConversionPolicy.ASK) {
-            GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
-            d.show();
-            if (d.isOK()) {
-              if (d.myDoNotShowCheckBox.isSelected()) {
-                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.CONVERT);
-              }
-              selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
-            }
-            else if (d.getExitCode() == DO_NOT_CONVERT) {
-              if (d.myDoNotShowCheckBox.isSelected()) {
-                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
-              }
-            }
-            else {
-              //noinspection ThrowableInstanceNeverThrown
-              exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
-            }
-          }
-          else {
-            ArrayList<VirtualFile> fileList = new ArrayList<VirtualFile>();
-            for (Set<VirtualFile> fileSet : files.values()) {
-              fileList.addAll(fileSet);
-            }
-            selectedFiles = VfsUtil.toVirtualFileArray(fileList);
-          }
-          if (selectedFiles != null) {
-            for (VirtualFile f : selectedFiles) {
-              if (f == null) { continue; }
-              try {
-                LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
-              } catch (IOException e) {
-                //noinspection ThrowableInstanceNeverThrown
-                exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
-              }
-            }
-          }
-        }
-      });
-    }
-    return exceptions.isEmpty();
   }
 
   /**
@@ -242,17 +110,11 @@ public class GitConvertFilesDialog extends DialogWrapper {
   class DoNotConvertAction extends AbstractAction {
     private static final long serialVersionUID = 1931383640152023206L;
 
-    /**
-     * The constructor
-     */
     DoNotConvertAction() {
       putValue(NAME, GitBundle.getString("crlf.convert.leave"));
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public void actionPerformed(ActionEvent e) {
       if (myPerformAction) return;
       try {
