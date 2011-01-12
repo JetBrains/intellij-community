@@ -50,8 +50,10 @@ try:
 except AttributeError:
     pass #Not all versions have sys.version_info
 
-IS_64_BITS = sys.maxsize>2**32
-
+try:
+    IS_64_BITS = sys.maxsize>2**32
+except AttributeError:
+    IS_64_BITS = False
 
 
 #=======================================================================================================================
