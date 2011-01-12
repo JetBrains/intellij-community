@@ -204,7 +204,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void launchBrowser(@NonNls @NotNull String browserPath, @NonNls String... parameters) throws IOException {
     final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath, parameters);
-    Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
+    Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, ArrayUtil.STRING_ARRAY_FACTORY));
   }
 
   @Nullable

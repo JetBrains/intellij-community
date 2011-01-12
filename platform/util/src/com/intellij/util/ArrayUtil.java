@@ -44,6 +44,12 @@ public class ArrayUtil {
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
+  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
+    @Override
+    public String[] create(int count) {
+      return newStringArray(count);
+    }
+  };
 
   @NotNull
   public static byte[] realloc(@NotNull byte[] array, final int newSize) {
