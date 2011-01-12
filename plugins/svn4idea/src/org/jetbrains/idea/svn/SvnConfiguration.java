@@ -78,7 +78,6 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
-  public boolean UPDATE_RUN_STATUS = false;
   public SVNDepth UPDATE_DEPTH = SVNDepth.INFINITY;
 
   public boolean MERGE_DRY_RUN = false;
@@ -89,6 +88,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean CHECK_NESTED_FOR_QUICK_MERGE = false;
   public boolean IGNORE_SPACES_IN_ANNOTATE = true;
   public boolean SHOW_MERGE_SOURCES_IN_ANNOTATE = true;
+  public boolean FORCE_UPDATE = false;
 
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<File, MergeRootInfo>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();

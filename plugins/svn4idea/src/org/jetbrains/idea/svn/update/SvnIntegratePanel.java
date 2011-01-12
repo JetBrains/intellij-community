@@ -27,7 +27,6 @@ import java.util.Collection;
 public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
 
   private JCheckBox myDryRunCheckbox;
-  private JCheckBox myStatusBox;
   private JPanel myRootOptionsPanel;
   private JPanel myPanel;
   private JCheckBox myUseAncestry;
@@ -71,10 +70,6 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
 
   protected JComponent getPanel() {
     return myPanel;
-  }
-
-  protected JCheckBox getStatusBox() {
-    return myStatusBox;
   }
 
   protected DepthCombo getDepthBox() {
