@@ -88,5 +88,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
         return toolTip;
       }
     };
+    myDepthCombo = new DepthCombo(true);
   }
 }

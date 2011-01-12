@@ -290,4 +290,8 @@ public class Alarm implements Disposable {
 
     return this;
   }
+
+  public boolean isDisposed() {
+    return myDisposed;
+  }
 }

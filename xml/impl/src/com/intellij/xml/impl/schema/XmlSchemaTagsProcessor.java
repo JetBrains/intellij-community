@@ -57,7 +57,7 @@ public abstract class XmlSchemaTagsProcessor {
     if (checkTagName(tagName, "element", "attribute")) {
       XmlAttribute ref = tag.getAttribute("ref");
       if (ref != null) {
-        XmlTag resolved = resolveReference(ref);
+        XmlTag resolved = resolveTagReference(ref);
         if (resolved != null) {
           tagStarted(resolved, resolved.getLocalName(), tag, tag);
         }
@@ -70,7 +70,7 @@ public abstract class XmlSchemaTagsProcessor {
       String value = tag.getAttributeValue("ref");
       if (value != null) {
         XmlTag group = myNsDescriptor.findGroup(value);
-        if (group == null) group = resolveReference(tag.getAttribute("ref"));
+        if (group == null) group = resolveTagReference(tag.getAttribute("ref"));
         processTagWithSubTags(group, tag, tag);
       }
     }
@@ -81,17 +81,17 @@ public abstract class XmlSchemaTagsProcessor {
       XmlTag parentTag = tag.getParentTag();
       if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") &&
         ref.equals(parentTag.getAttributeValue("name"))) {
-        group = resolveReference(tag.getAttribute("ref"));
+        group = resolveTagReference(tag.getAttribute("ref"));
         if (group == null) group = myNsDescriptor.findAttributeGroup(ref);
       }
       else {
         group =  myNsDescriptor.findAttributeGroup(ref);
-        if (group == null) group = resolveReference(tag.getAttribute("ref"));
+        if (group == null) group = resolveTagReference(tag.getAttribute("ref"));
       }
       processTagWithSubTags(group, tag, null);
     }
     else if (checkTagName(tagName, "restriction", "extension")) {
-      processTagWithSubTags(resolveReference(tag.getAttribute("base")), tag, null);
+      processTagWithSubTags(resolveTagReference(tag.getAttribute("base")), tag, null);
       processTagWithSubTags(tag, context, null);
     }
     else if (!checkTagName(tagName, myTagsToIgnore)) {
@@ -114,14 +114,17 @@ public abstract class XmlSchemaTagsProcessor {
   protected void tagFinished(XmlTag tag) {}
 
   @Nullable
-  private static XmlTag resolveReference(XmlAttribute ref) {
+  private static XmlTag resolveTagReference(XmlAttribute ref) {
+    PsiElement element = resolveReference(ref);
+    return element instanceof XmlTag ? (XmlTag)element : null;
+  }
+
+  @Nullable
+  static PsiElement resolveReference(XmlAttribute ref) {
     if (ref != null) {
       XmlAttributeValue value = ref.getValueElement();
       if (value != null) {
-        PsiElement element = value.getReferences()[0].resolve();
-        if (element instanceof XmlTag) {
-          return (XmlTag)element;
-        }
+        return value.getReferences()[0].resolve();
       }
     }
     return null;

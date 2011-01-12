@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -159,6 +160,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalInspe
                 public boolean add(@Nullable HighlightInfo info) {
                   if (info == null) return true;
                   if (info.severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) return true;
+                  if (info.severity == HighlightSeverity.INFORMATION) return true;
                   ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
                   GlobalInspectionUtil.createProblem(
                     file,

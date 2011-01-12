@@ -244,7 +244,7 @@ public abstract class PsiAnchor {
 
           boolean foreign = tree == null;
           if (foreign) {
-            if (fileImpl instanceof PsiFileImpl) {
+            if (fileImpl instanceof PsiFileImpl && ((PsiFileImpl)fileImpl).getContentElementType() instanceof IStubFileElementType) {
               tree = ((PsiFileImpl)fileImpl).calcStubTree();
             }
             else {
