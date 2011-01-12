@@ -22,7 +22,7 @@
         <border type="none"/>
         <children/>
       </xy>
-      <component id="3f0c3" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo">
+      <component id="3f0c3" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo" custom-create="true">
         <constraints>
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

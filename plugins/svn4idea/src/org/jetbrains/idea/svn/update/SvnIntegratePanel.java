@@ -80,4 +80,8 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
   protected DepthCombo getDepthBox() {
     return myDepthCombo;
   }
+
+  private void createUIComponents() {
+    myDepthCombo = new DepthCombo(true);
+  }
 }

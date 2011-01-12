@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
@@ -164,6 +165,9 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
+    if (areCredentialsEmpty()){
+      return false;
+    }
     try {
       return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
@@ -177,6 +181,11 @@ public class GithubUtil {
     catch (CancelledException e) {
       return false;
     }
+  }
+
+  public static boolean areCredentialsEmpty() {
+    final GithubSettings settings = GithubSettings.getInstance();
+    return StringUtil.isEmptyOrSpaces(settings.getLogin()) || StringUtil.isEmptyOrSpaces(settings.getPassword());
   }
 
   public static class CancelledException extends RuntimeException {}

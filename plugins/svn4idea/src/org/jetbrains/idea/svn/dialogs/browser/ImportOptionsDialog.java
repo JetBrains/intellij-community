@@ -130,7 +130,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
     panel.add(depthLabel, gc);
     ++gc.gridx;
-    myDepth = new DepthCombo();
+    myDepth = new DepthCombo(false);
     panel.add(myDepth, gc);
     depthLabel.setLabelFor(myDepth);
 

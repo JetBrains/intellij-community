@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -39,7 +38,6 @@ import java.util.List;
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
-  private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
   private static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
 
   protected GithubOpenInBrowserAction() {
@@ -50,12 +48,9 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    if (project == null || project.isDefault() || virtualFile == null) {
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    if (GithubUtil.getGithubBoundRepository(project) == null){
+    if (GithubUtil.areCredentialsEmpty() ||
+        project == null || project.isDefault() || virtualFile == null ||
+        GithubUtil.getGithubBoundRepository(project) == null) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
       return;

@@ -17,14 +17,15 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class AbstractShowDiffAction extends AbstractVcsAction{
@@ -87,6 +88,8 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
   protected void actionPerformed(VcsContext vcsContext) {
     final Project project = vcsContext.getProject();
     final VirtualFile selectedFile = vcsContext.getSelectedFiles()[0];
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    fileDocumentManager.saveDocument(fileDocumentManager.getDocument(selectedFile));
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);
