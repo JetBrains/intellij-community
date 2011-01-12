@@ -1,7 +1,28 @@
 from pycharm.tcunittest import TeamcityTestRunner
-from django.test.simple import build_suite, settings, get_app, get_apps, setup_test_environment
+from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
 import unittest
 from django.test.testcases import TestCase
+import django
+import sys
+
+try:
+  from django.test.simple import DjangoTestSuiteRunner
+  class BaseRunner(TeamcityTestRunner, DjangoTestSuiteRunner):
+    def __init__(self, stream=sys.stdout):
+      TeamcityTestRunner.__init__(self,stream)
+      DjangoTestSuiteRunner.__init__(self)
+
+except ImportError:
+  class BaseRunner(TeamcityTestRunner):
+    def __init__(self, stream=sys.stdout):
+      TeamcityTestRunner.__init__(self,stream)
+
+class DjangoTeamcityTestRunner(BaseRunner):
+  def __init__(self, stream=sys.stdout):
+    BaseRunner.__init__(self, stream)
+
+  def run_suite(self, suite):
+        return TeamcityTestRunner().run(suite)
 
 def partition_suite(suite, classes, bins):
     """
@@ -59,6 +80,9 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
 
     Returns the number of tests that failed.
     """
+    if django.VERSION[1] > 1:
+      return DjangoTeamcityTestRunner().run_tests(test_labels, extra_tests=extra_tests)
+
     setup_test_environment()
 
     settings.DEBUG = False
@@ -83,7 +107,7 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     old_name = settings.DATABASE_NAME
     from django.db import connection
     connection.creation.create_test_db(verbosity, autoclobber=not interactive)
-    result = TeamcityTestRunner().run(suite)
+    result = DjangoTeamcityTestRunner().run(suite)
     connection.creation.destroy_test_db(old_name, verbosity)
 
     teardown_test_environment()
