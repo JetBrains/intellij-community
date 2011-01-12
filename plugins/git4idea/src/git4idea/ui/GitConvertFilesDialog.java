@@ -29,10 +29,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitFileUtils;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.StringScanner;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -150,139 +146,94 @@ public class GitConvertFilesDialog extends DialogWrapper {
                                            final GitVcsSettings settings,
                                            Map<VirtualFile, List<Change>> sortedChanges,
                                            final List<VcsException> exceptions) {
-    try {
-      final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
-      if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
-        LocalFileSystem lfs = LocalFileSystem.getInstance();
-        final String nl = CodeStyleFacade.getInstance(project).getLineSeparator();
-        final Map<VirtualFile, Set<VirtualFile>> files = new HashMap<VirtualFile, Set<VirtualFile>>();
-        // preliminary screening of files
-        for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
-          final VirtualFile root = entry.getKey();
-          final Set<VirtualFile> added = new HashSet<VirtualFile>();
-          for (Change change : entry.getValue()) {
-            switch (change.getType()) {
-              case NEW:
-              case MODIFICATION:
-              case MOVED:
-                VirtualFile f = lfs.findFileByPath(change.getAfterRevision().getFile().getPath());
-                if (f != null && !f.getFileType().isBinary() && !nl.equals(LoadTextUtil.detectLineSeparator(f, false))) {
-                  added.add(f);
-                }
-                break;
-              case DELETED:
-            }
-          }
-          if (!added.isEmpty()) {
-            files.put(root, added);
-          }
-        }
-        // ignore files with CRLF unset
-        ignoreFilesWithCrlfUnset(project, files);
-        // check crlf for real
-        for (Iterator<Map.Entry<VirtualFile, Set<VirtualFile>>> i = files.entrySet().iterator(); i.hasNext();) {
-          Map.Entry<VirtualFile, Set<VirtualFile>> e = i.next();
-          Set<VirtualFile> fs = e.getValue();
-          for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext();) {
-            VirtualFile f = j.next();
-            String detectedLineSeparator = LoadTextUtil.detectLineSeparator(f, true);
-            if (detectedLineSeparator == null || nl.equals(detectedLineSeparator)) {
-              j.remove();
-            }
-          }
-          if (fs.isEmpty()) {
-            i.remove();
-          }
-        }
-        if (files.isEmpty()) {
-          return true;
-        }
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          public void run() {
-            VirtualFile[] selectedFiles = null;
-            if (settings.getLineSeparatorsConversion() == GitVcsSettings.ConversionPolicy.ASK) {
-              GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
-              d.show();
-              if (d.isOK()) {
-                if (d.myDoNotShowCheckBox.isSelected()) {
-                  settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.CONVERT);
-                }
-                selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
+    final GitVcsSettings.ConversionPolicy conversionPolicy = settings.getLineSeparatorsConversion();
+    if (conversionPolicy != GitVcsSettings.ConversionPolicy.NONE) {
+      LocalFileSystem lfs = LocalFileSystem.getInstance();
+      final String nl = CodeStyleFacade.getInstance(project).getLineSeparator();
+      final Map<VirtualFile, Set<VirtualFile>> files = new HashMap<VirtualFile, Set<VirtualFile>>();
+      // preliminary screening of files
+      for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
+        final VirtualFile root = entry.getKey();
+        final Set<VirtualFile> added = new HashSet<VirtualFile>();
+        for (Change change : entry.getValue()) {
+          switch (change.getType()) {
+            case NEW:
+            case MODIFICATION:
+            case MOVED:
+              VirtualFile f = lfs.findFileByPath(change.getAfterRevision().getFile().getPath());
+              if (f != null && !f.getFileType().isBinary() && !nl.equals(LoadTextUtil.detectLineSeparator(f, false))) {
+                added.add(f);
               }
-              else if (d.getExitCode() == DO_NOT_CONVERT) {
-                if (d.myDoNotShowCheckBox.isSelected()) {
-                  settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
-                }
+              break;
+            case DELETED:
+          }
+        }
+        if (!added.isEmpty()) {
+          files.put(root, added);
+        }
+      }
+      // check crlf for real
+      for (Iterator<Map.Entry<VirtualFile, Set<VirtualFile>>> i = files.entrySet().iterator(); i.hasNext();) {
+        Map.Entry<VirtualFile, Set<VirtualFile>> e = i.next();
+        Set<VirtualFile> fs = e.getValue();
+        for (Iterator<VirtualFile> j = fs.iterator(); j.hasNext();) {
+          VirtualFile f = j.next();
+          String detectedLineSeparator = LoadTextUtil.detectLineSeparator(f, true);
+          if (detectedLineSeparator == null || nl.equals(detectedLineSeparator)) {
+            j.remove();
+          }
+        }
+        if (fs.isEmpty()) {
+          i.remove();
+        }
+      }
+      if (files.isEmpty()) {
+        return true;
+      }
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        public void run() {
+          VirtualFile[] selectedFiles = null;
+          if (settings.getLineSeparatorsConversion() == GitVcsSettings.ConversionPolicy.ASK) {
+            GitConvertFilesDialog d = new GitConvertFilesDialog(project, files);
+            d.show();
+            if (d.isOK()) {
+              if (d.myDoNotShowCheckBox.isSelected()) {
+                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.CONVERT);
               }
-              else {
-                //noinspection ThrowableInstanceNeverThrown
-                exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
+              selectedFiles = d.myFilesToConvert.getCheckedNodes(VirtualFile.class, null);
+            }
+            else if (d.getExitCode() == DO_NOT_CONVERT) {
+              if (d.myDoNotShowCheckBox.isSelected()) {
+                settings.setLineSeparatorsConversion(GitVcsSettings.ConversionPolicy.NONE);
               }
             }
             else {
-              ArrayList<VirtualFile> fileList = new ArrayList<VirtualFile>();
-              for (Set<VirtualFile> fileSet : files.values()) {
-                fileList.addAll(fileSet);
-              }
-              selectedFiles = VfsUtil.toVirtualFileArray(fileList);
-            }
-            if (selectedFiles != null) {
-              for (VirtualFile f : selectedFiles) {
-                if (f == null) { continue; }
-                try {
-                  LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
-                } catch (IOException e) {
-                  //noinspection ThrowableInstanceNeverThrown
-                  exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
-                }
-              }
+              //noinspection ThrowableInstanceNeverThrown
+              exceptions.add(new VcsException("Commit was cancelled in file conversion dialog"));
             }
           }
-        });
-      }
-    }
-    catch (VcsException e) {
-      exceptions.add(e);
-    }
-    return exceptions.isEmpty();
-  }
-
-  /**
-   * Remove files that have -crlf attribute specified
-   *
-   * @param project the context project
-   * @param files   the files to check (map from vcs roots to the set of files under root)
-   * @throws VcsException if there is problem with running git
-   */
-  private static void ignoreFilesWithCrlfUnset(Project project, Map<VirtualFile, Set<VirtualFile>> files) throws VcsException {
-    for (final Map.Entry<VirtualFile, Set<VirtualFile>> e : files.entrySet()) {
-      final VirtualFile r = e.getKey();
-
-      final HashMap<String, VirtualFile> filesToCheck = new HashMap<String, VirtualFile>();
-      Set<VirtualFile> fileSet = e.getValue();
-      for (VirtualFile file : fileSet) {
-        filesToCheck.put(GitUtil.relativePath(r, file), file);
-      }
-
-      final List<List<String>> chunkedFiles = GitFileUtils.chunkFiles(r, filesToCheck.values());
-      for (List<String> list : chunkedFiles) {
-        GitSimpleHandler h = new GitSimpleHandler(project, r, GitCommand.CHECK_ATTR);
-        h.addParameters("crlf");
-        h.setSilent(true);
-        h.setNoSSH(true);
-        h.endOptions();
-        h.addParameters(list);
-        StringScanner output = new StringScanner(h.run());
-        String unsetIndicator = ": crlf: unset";
-        
-        while (output.hasMoreData()) {
-          String l = output.line();
-          if (l.endsWith(unsetIndicator)) {
-            fileSet.remove(filesToCheck.get(GitUtil.unescapePath(l.substring(0, l.length() - unsetIndicator.length()))));
+          else {
+            ArrayList<VirtualFile> fileList = new ArrayList<VirtualFile>();
+            for (Set<VirtualFile> fileSet : files.values()) {
+              fileList.addAll(fileSet);
+            }
+            selectedFiles = VfsUtil.toVirtualFileArray(fileList);
+          }
+          if (selectedFiles != null) {
+            for (VirtualFile f : selectedFiles) {
+              if (f == null) { continue; }
+              try {
+                LoadTextUtil.changeLineSeparator(project, GitConvertFilesDialog.class.getName(), f, nl);
+              } catch (IOException e) {
+                //noinspection ThrowableInstanceNeverThrown
+                exceptions.add(new VcsException("Failed to change line separators for the file: " + f.getPresentableUrl(), e));
+              }
+            }
           }
         }
-      }
+      });
     }
+    return exceptions.isEmpty();
   }
 
   /**
