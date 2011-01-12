@@ -40,12 +40,10 @@ import java.util.Map;
  */
 public class AndroidIdIndex extends ScalarIndexExtension<String> {
   public static final String[] RES_TYPES_CONTAINING_ID_DECLARATIONS = {SdkConstants.FD_LAYOUT, SdkConstants.FD_MENU};
-
   public static final ID<String, Void> INDEX_ID = ID.create("android.id.index");
-
   public static final String MARKER = "$";
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       if ((file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
           file.getFileType() == StdFileTypes.XML) {
@@ -63,7 +61,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
+  private static final DataIndexer<String, Void, FileContent> INDEXER = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     public Map<String, Void> map(FileContent inputData) {
       PsiFile file = inputData.getPsiFile();
@@ -75,7 +73,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
             if (AndroidResourceUtil.isIdDeclaration(attributeValue)) {
               String id = AndroidResourceUtil.getResourceNameByReferenceText(attributeValue.getValue());
               if (id != null) {
-                if (ids.size() == 0) {
+                if (ids.isEmpty()) {
                   ids.put(MARKER, null);
                 }
                 ids.put(id, null);
@@ -100,7 +98,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
-    return myIndexer;
+    return INDEXER;
   }
 
   @Override
@@ -110,7 +108,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
 
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return INPUT_FILTER;
   }
 
   @Override
