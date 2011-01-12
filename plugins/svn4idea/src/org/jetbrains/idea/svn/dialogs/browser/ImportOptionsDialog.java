@@ -68,7 +68,7 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   public SVNDepth getDepth() {
-    return myDepth.getSelectedItem();
+    return myDepth.getDepth();
   }
 
   public boolean isIncludeIgnored() {

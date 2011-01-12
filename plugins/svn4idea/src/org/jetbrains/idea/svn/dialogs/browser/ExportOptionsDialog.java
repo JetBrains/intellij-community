@@ -62,7 +62,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   public SVNDepth getDepth() {
-    return myDepth.getSelectedItem();
+    return myDepth.getDepth();
   }
 
   public boolean isForce() {

@@ -81,7 +81,7 @@ public abstract class AbstractSvnUpdatePanel {
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     configuration.UPDATE_RUN_STATUS = getStatusBox().isSelected();
-    configuration.UPDATE_DEPTH = getDepthBox().getSelectedItem();
+    configuration.UPDATE_DEPTH = getDepthBox().getDepth();
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       final SvnPanel svnPanel = myRootToPanel.get(filePath);

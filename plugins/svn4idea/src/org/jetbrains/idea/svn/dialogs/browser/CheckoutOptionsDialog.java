@@ -143,7 +143,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   }
 
   public SVNDepth getDepth() {
-    return myDepthCombo.getSelectedItem();
+    return myDepthCombo.getDepth();
   }
 
   public boolean isIgnoreExternals() {
