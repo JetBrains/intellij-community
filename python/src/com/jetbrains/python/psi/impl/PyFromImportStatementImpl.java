@@ -115,6 +115,16 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return qName != null && qName.matches(PyNames.FUTURE_MODULE);
   }
 
+  @Override
+  public PsiElement getLeftParen() {
+    return findChildByType(PyTokenTypes.LPAR);
+  }
+
+  @Override
+  public PsiElement getRightParen() {
+    return findChildByType(PyTokenTypes.RPAR);
+  }
+
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor, @NotNull final ResolveState state, final PsiElement lastParent,
                                      @NotNull final PsiElement place) {
     // import is per-file
