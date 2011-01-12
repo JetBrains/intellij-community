@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,6 +243,33 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                     return type instanceof PsiPrimitiveType;
                 } else {
                     return true;
+                }
+            } else if (parent instanceof PsiBinaryExpression) {
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression) parent;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs == null) {
+                    return false;
+                }
+                final PsiType rhsType = rhs.getType();
+                if (rhsType == null) {
+                    return false;
+                }
+                final PsiType lhsType = lhs.getType();
+                if (lhsType == null) {
+                    return false;
+                }
+                if (PsiTreeUtil.isAncestor(rhs, expression, false)) {
+                    final PsiPrimitiveType unboxedType =
+                            PsiPrimitiveType.getUnboxedType(rhsType);
+                    return unboxedType != null &&
+                            unboxedType.isAssignableFrom(lhsType);
+                } else {
+                    final PsiPrimitiveType unboxedType =
+                            PsiPrimitiveType.getUnboxedType(lhsType);
+                    return unboxedType != null &&
+                            unboxedType.isAssignableFrom(rhsType);
                 }
             }
             final PsiMethodCallExpression containingMethodCallExpression =
