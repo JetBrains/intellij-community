@@ -41,7 +41,7 @@
           <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.integrate.difference.option.use.ancestry.text"/>
         </properties>
       </component>
-      <component id="31e75" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo">
+      <component id="31e75" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo" custom-create="true">
         <constraints>
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

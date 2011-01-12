@@ -20,8 +20,9 @@ import org.tmatesoft.svn.core.SVNDepth;
 import javax.swing.*;
 
 public class DepthCombo extends JComboBox {
-  public DepthCombo() {
-    super(new SVNDepth[] {SVNDepth.EMPTY, SVNDepth.FILES, SVNDepth.IMMEDIATES, SVNDepth.INFINITY});
+  public DepthCombo(final boolean forUpdate) {
+    super(forUpdate ? new SVNDepth[] {SVNDepth.UNKNOWN, SVNDepth.EMPTY, SVNDepth.FILES, SVNDepth.IMMEDIATES, SVNDepth.INFINITY} :
+      new SVNDepth[] {SVNDepth.EMPTY, SVNDepth.FILES, SVNDepth.IMMEDIATES, SVNDepth.INFINITY});
     setSelectedIndex(3);
     setEditable(false);
     setToolTipText(SvnBundle.message("label.depth.description"));
