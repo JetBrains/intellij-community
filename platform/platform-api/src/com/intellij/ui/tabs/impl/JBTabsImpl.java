@@ -1474,8 +1474,7 @@ public class JBTabsImpl extends JComponent
 
     final ShapeInfo shapeInfo = computeSelectedLabelShape();
     if (!isHideTabs()) {
-      //g2d.setColor(getBackground());
-      g2d.setColor(Color.green);
+      g2d.setColor(getBackground());
       g2d.fill(shapeInfo.fillPath.getShape());
     }
 
