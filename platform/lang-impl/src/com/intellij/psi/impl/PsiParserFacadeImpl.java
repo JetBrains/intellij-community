@@ -55,7 +55,9 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(fileType.getLanguage());
     assert commenter != null;
     String prefix = commenter.getLineCommentPrefix();
-    assert prefix != null;
+    if (prefix == null) {
+      throw new IncorrectOperationException("No line comment prefix defined for language " + fileType.getLanguage().getID());
+    }
 
     PsiFile aFile = createDummyFile(prefix + text, fileType);
     PsiElement[] children = aFile.getChildren();
