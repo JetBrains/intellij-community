@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.Icons;
@@ -39,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -168,10 +168,18 @@ public class ActionMenuItem extends JMenuItem {
   private void setAcceleratorFromShortcuts(final Shortcut[] shortcuts) {
     for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
-        setAccelerator(((KeyboardShortcut)shortcut).getFirstKeyStroke());
+        final KeyStroke firstKeyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
+        //If action has Enter shortcut, do not add it. Otherwise, user won't be able to chose any ActionMenuItem other than that
+        if (!isEnterKeyStroke(firstKeyStroke)) {
+          setAccelerator(firstKeyStroke);
+        }
         break;
       }
     }
+  }
+
+  private static boolean isEnterKeyStroke(KeyStroke keyStroke) {
+    return keyStroke.getKeyCode() == KeyEvent.VK_ENTER && keyStroke.getModifiers() == 0;
   }
 
   public void updateUI() {

@@ -36,6 +36,8 @@ import java.util.List;
  */
 public class GithubUtil {
   public static final String GITHUB_HOST = "https://github.com";
+  public static final String GITHUB_HOST_GIT = "git@github.com";
+
   private static final String API_URL = "/api/v2/xml";
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
 
@@ -284,11 +286,17 @@ public class GithubUtil {
     if (!gitDetected) {
       return null;
     }
+    return findGitHubRemoteBranch(project, root);
+  }
+
+  @Nullable
+  public static GitRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
     try {
       // Check that given repository is properly configured git repository
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       for (GitRemote gitRemote : gitRemotes) {
-        if (gitRemote.pushUrl().contains("git@github.com")) {
+        final String pushUrl = gitRemote.pushUrl();
+        if (pushUrl.startsWith(GITHUB_HOST) || pushUrl.startsWith(GITHUB_HOST_GIT)) {
           return gitRemote;
         }
       }

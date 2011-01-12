@@ -22,13 +22,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -83,50 +81,38 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
 
-    try {
-      // Check that given repository is properly configured git repository
-      GitRemote githubRemote = null;
-      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      if (gitRemotes.isEmpty()) {
-        Messages.showErrorDialog(project, "Git repository doesn't have any remotes configured", CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-      for (GitRemote gitRemote : gitRemotes) {
-        if (gitRemote.pushUrl().contains("git@github.com")) {
-          githubRemote = gitRemote;
-          break;
-        }
-      }
-      if (githubRemote == null) {
-        Messages.showErrorDialog(project, "Configured own github repository is not found", CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-
-      final String pushUrl = githubRemote.pushUrl();
-      final String login = GithubSettings.getInstance().getLogin();
-      final int index = pushUrl.lastIndexOf(login);
-      if (index == -1) {
-        Messages.showErrorDialog(project, "Github remote repository doesn't seem to be your own repository: " + pushUrl,
-                                 CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-      String repoName = pushUrl.substring(index + login.length() + 1);
-      if (repoName.endsWith(".git")) {
-        repoName = repoName.substring(0, repoName.length() - 4);
-      }
-      final RepositoryInfo repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, repoName);
-      if (repositoryInfo == null) {
-        Messages
-          .showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-      // TODO[oleg] support custom branches here
-      BrowserUtil.launchBrowser("https://github.com/" + login + "/" + repoName + "/blob/master" + path.substring(rootPath.length()));
-
-    } catch (VcsException e1){
-      Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), CANNOT_OPEN_IN_BROWSER);
+    // Check that given repository is properly configured git repository
+    final GitRemote githubRemote = GithubUtil.getGithubBoundRepository(project);
+    if (githubRemote == null) {
+      Messages.showErrorDialog(project, "Configured github repository is not found", CANNOT_OPEN_IN_BROWSER);
       return;
     }
 
+    final String pushUrl = githubRemote.pushUrl();
+    int index = -1;
+    if (pushUrl.startsWith(GithubUtil.GITHUB_HOST)) {
+      index = pushUrl.lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+      index = pushUrl.substring(0, index).lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+    } else {
+      index = pushUrl.lastIndexOf(':');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+    }
+    String repoInfo = pushUrl.substring(index + 1);
+    if (repoInfo.endsWith(".git")) {
+      repoInfo = repoInfo.substring(0, repoInfo.length() - 4);
+    }
+    // TODO[oleg] support custom branches here
+    BrowserUtil.launchBrowser("https://github.com/" + repoInfo + "/blob/master" + path.substring(rootPath.length()));
   }
 }
