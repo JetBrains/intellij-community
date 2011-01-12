@@ -118,7 +118,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
   @Override
   public ValidityState createValidityState(DataInput in) throws IOException {
-    return new ResourcesValidityState(in);
+    return new MyValidityState(in);
   }
 
   private static class MyItem implements ProcessingItem {
@@ -128,6 +128,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final String[] myResourceDirPaths;
     final String myAssetsDirPath;
     final String myOutputPath;
+
+    private final boolean myFileExists;
 
     private MyItem(Module module,
                    IAndroidTarget androidTarget,
@@ -141,6 +143,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myResourceDirPaths = resourceDirPaths;
       myAssetsDirPath = assetsDirPath;
       myOutputPath = outputPath;
+      myFileExists = new File(outputPath).exists();
     }
 
     @NotNull
@@ -152,7 +155,32 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     @Override
     public ValidityState getValidityState() {
-      return new ResourcesValidityState(myModule);
+      return new MyValidityState(myModule, myFileExists);
+    }
+  }
+
+  private static class MyValidityState extends ResourcesValidityState {
+    private final boolean myOutputFileExists;
+
+    public MyValidityState(Module module, boolean outputFileExists) {
+      super(module);
+      myOutputFileExists = outputFileExists;
+    }
+
+    public MyValidityState(DataInput is) throws IOException {
+      super(is);
+      myOutputFileExists = true;
+    }
+
+    @Override
+    public boolean equalsTo(ValidityState otherState) {
+      if (!(otherState instanceof MyValidityState)) {
+        return false;
+      }
+      if (myOutputFileExists != ((MyValidityState)otherState).myOutputFileExists) {
+        return false;
+      }
+      return super.equalsTo(otherState);
     }
   }
 }
