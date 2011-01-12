@@ -115,9 +115,10 @@ class PyDBFrame:
                 expression = breakpoint[line][3]
                 if expression is not None:
                     try:
-                        val = eval(expression, frame.f_globals, frame.f_locals)
-                    except:
-                        val = sys.exc_info()[1]
+                        try:
+                            val = eval(expression, frame.f_globals, frame.f_locals)
+                        except:
+                            val = sys.exc_info()[1]
                     finally:
                         if val is not None:
                             thread.log_expression = val
