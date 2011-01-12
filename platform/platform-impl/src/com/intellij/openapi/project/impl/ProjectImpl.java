@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.util.Function;
+import com.intellij.util.TimedReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -330,6 +331,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (!application.isDisposed()) {
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
+    TimedReference.disposeTimed(true);
   }
 
   private void projectOpened() {

@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
@@ -40,8 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -53,8 +53,21 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeParameter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl");
+public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> implements GrTypeParameter, StubBasedPsiElement<GrTypeParameterStub> {
+
+  public GrTypeParameterImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public GrTypeParameterImpl(GrTypeParameterStub stub) {
+    super(stub, GroovyElementTypes.TYPE_PARAMETER);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
+
   public GrTypeDefinitionBody getBody() {
     return null;
   }
@@ -115,10 +128,6 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Cannot add member declaration to GrTypeParameter");
-  }
-
-  public GrTypeParameterImpl(@NotNull ASTNode node) {
-    super(node);
   }
 
   public String toString() {

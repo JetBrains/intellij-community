@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -252,6 +253,7 @@ public abstract class CompilerManager {
    * @param listener the listener to be registered.
    */
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
+  public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Unregister a compilation listener.

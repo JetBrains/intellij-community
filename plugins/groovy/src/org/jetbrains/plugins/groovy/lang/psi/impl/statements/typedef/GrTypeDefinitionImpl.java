@@ -76,7 +76,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition {
+public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
   private volatile PsiClass[] myInnerClasses;
   private volatile List<PsiMethod> myMethods;
@@ -131,7 +131,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public GrTypeDefinitionBody getBody() {
-    return (GrTypeDefinitionBody)findChildByType(GroovyElementTypes.CLASS_BODY);
+    return getStubOrPsiChild(GroovyElementTypes.CLASS_BODY);
   }
 
   @NotNull
@@ -173,12 +173,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public GrExtendsClause getExtendsClause() {
-    return (GrExtendsClause)findChildByType(GroovyElementTypes.EXTENDS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.EXTENDS_CLAUSE);
   }
 
   @Nullable
   public GrImplementsClause getImplementsClause() {
-    return (GrImplementsClause)findChildByType(GroovyElementTypes.IMPLEMENTS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
   public String[] getSuperClassNames() {
@@ -572,7 +572,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return (GrTypeParameterList)findChildByType(GroovyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull

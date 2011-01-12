@@ -34,17 +34,7 @@ public abstract class SpacingTokens implements GroovyElementTypes {
       mCOMMA,
       mSEMI);
 
-  protected final static TokenSet DOTS = TokenSet.create(mDOT,
-      mMEMBER_POINTER,
-      mSPREAD_DOT,
-      mOPTIONAL_DOT);
-
-  protected final static TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
-  protected final static TokenSet CLASS_MEMBER_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION,
-      VARIABLE_DEFINITION, CLASS_INITIALIZER);
-  
   protected final static TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
-  protected final static TokenSet THIS_OR_SUPER = TokenSet.create(kTHIS, kSUPER);
 
   protected final static TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
   protected final static TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);

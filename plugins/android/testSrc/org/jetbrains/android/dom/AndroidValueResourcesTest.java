@@ -104,6 +104,42 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestHighlighting("styles10.xml");
   }
 
+  public void testMoreTypes() throws Throwable {
+    doTestHighlighting("moreTypes.xml");
+  }
+
+  public void testBool() throws Throwable {
+    toTestCompletion("bool.xml", "bool_after.xml");
+  }
+
+  public void testBool1() throws Throwable {
+    toTestCompletion("bool1.xml", "bool1_after.xml");
+  }
+
+  public void testInteger() throws Throwable {
+    doTestCompletionVariants("integer.xml", "integer", "integer-array");
+  }
+
+  public void testIntegerArray() throws Throwable {
+    toTestCompletion("integerArray.xml", "integerArray_after.xml");
+  }
+
+  public void testArray() throws Throwable {
+    toTestCompletion("array.xml", "array_after.xml");
+  }
+
+  public void testIntResourceReference() throws Throwable {
+    myFixture.copyFileToProject(testFolder + "/intResReference.xml", "res/layout/main.xml");
+    myFixture.copyFileToProject(testFolder + "/intbool.xml", "res/values/values.xml");
+    myFixture.testCompletion("res/layout/main.xml", testFolder + "/intResReference_after.xml");
+  }
+
+  public void testBoolResourceReference() throws Throwable {
+    myFixture.copyFileToProject(testFolder + "/boolResReference.xml", "res/layout/main.xml");
+    myFixture.copyFileToProject(testFolder + "/intbool.xml", "res/values/values.xml");
+    myFixture.testCompletion("res/layout/main.xml", testFolder + "/boolResReference_after.xml");
+  }
+
   public void testParentStyleReference() throws Throwable {
     VirtualFile file = myFixture.copyFileToProject(testFolder + "/psreference.xml", getPathToCopy("psreference.xml"));
     myFixture.configureFromExistingVirtualFile(file);

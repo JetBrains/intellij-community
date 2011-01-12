@@ -52,7 +52,8 @@ import static java.util.Collections.addAll;
 public abstract class ResourceManager {
   public static final Set<String> REFERABLE_RESOURCE_TYPES = new HashSet<String>();
   public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
-  public static final String[] VALUE_RESOURCE_TYPES = new String[]{"drawable", "dimen", "color", "string", "style", "array", "id"};
+  public static final String[] VALUE_RESOURCE_TYPES =
+    new String[]{"drawable", "dimen", "color", "string", "style", "array", "id", "bool", "integer", "integer-array"};
   private static final String[] DRAWABLE_EXTENSIONS = new String[]{"png", "jpg", "gif"};
 
   protected final Module myModule;
@@ -266,20 +267,28 @@ public abstract class ResourceManager {
     if (resourceType.equals("string")) {
       result.addAll(resources.getStrings());
     }
-    if (resourceType.equals("drawable")) {
+    else if (resourceType.equals("drawable")) {
       result.addAll(resources.getDrawables());
     }
-    if (resourceType.equals("color")) {
+    else if (resourceType.equals("color")) {
       result.addAll(resources.getColors());
     }
-    if (resourceType.equals("dimen")) {
+    else if (resourceType.equals("dimen")) {
       result.addAll(resources.getDimens());
     }
-    if (resourceType.equals("style")) {
+    else if (resourceType.equals("style")) {
       result.addAll(resources.getStyles());
     }
-    if (resourceType.equals("array")) {
+    else if (resourceType.equals("array")) {
       result.addAll(resources.getStringArrays());
+      result.addAll(resources.getIntegerArrays());
+      result.addAll(resources.getArrays());
+    }
+    else if (resourceType.equals("integer")) {
+      result.addAll(resources.getIntegers());
+    }
+    else if (resourceType.equals("bool")) {
+      result.addAll(resources.getBools());
     }
     for (Item item : resources.getItems()) {
       String type = item.getType().getValue();

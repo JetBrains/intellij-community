@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.android.dom.resources;
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary;
-
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import com.intellij.util.xml.Convert;
+import org.jetbrains.android.dom.converters.AndroidBooleanValueConverter;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 16.03.2007
+ * @author Eugene.Kudelevsky
  */
-public class GrBalancedBracketsImpl extends GroovyPsiElementImpl {
-  public GrBalancedBracketsImpl(@NotNull ASTNode node) {
-    super(node);
-  }
+@Convert(AndroidBooleanValueConverter.class)
+public interface BoolElement extends ResourceElement {
 }

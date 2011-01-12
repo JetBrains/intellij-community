@@ -20,6 +20,7 @@ import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
 import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.extensions.Extensions;
@@ -262,6 +263,12 @@ public class CompilerManagerImpl extends CompilerManager {
   public void addCompilationStatusListener(@NotNull final CompilationStatusListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     myListenerAdapters.put(listener, connection);
+    connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
+  }
+
+  @Override
+  public void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable) {
+    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
   }
 

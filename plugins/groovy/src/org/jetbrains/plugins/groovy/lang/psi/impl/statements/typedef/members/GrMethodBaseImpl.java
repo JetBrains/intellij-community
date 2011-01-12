@@ -26,15 +26,11 @@ import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +40,10 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -65,6 +63,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -75,9 +74,9 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElementBase<T> implements GrMethod {
+public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
 
-  protected GrMethodBaseImpl(final T stub, IStubElementType nodeType) {
+  protected GrMethodBaseImpl(final GrMethodStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -128,7 +127,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
   }
 
   public GrTypeElement getReturnTypeElementGroovy() {
-    return findChildByClass(GrTypeElement.class);
+    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
   }
 
   public PsiType getInferredReturnType() {
@@ -275,16 +274,14 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @NotNull
   public GrParameterList getParameterList() {
-    GrParameterList parameterList = (GrParameterList)findChildByType(GroovyElementTypes.PARAMETERS_LIST);
+    final GrParameterList parameterList = getStubOrPsiChild(GroovyElementTypes.PARAMETERS_LIST);
     assert parameterList != null;
     return parameterList;
   }
 
   @NotNull
   public PsiReferenceList getThrowsList() {
-    GrThrowsClause clause = findChildByClass(GrThrowsClause.class);
-    assert clause != null : this;
-    return clause;
+    return (PsiReferenceList)findNotNullChildByType(GroovyElementTypes.THROW_CLAUSE);
   }
 
   @Nullable
@@ -353,7 +350,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @NotNull
   public GrModifierList getModifierList() {
-    return (GrModifierList)findNotNullChildByType(GroovyElementTypes.MODIFIERS);
+    return ObjectUtils.assertNotNull(getStubOrPsiChild(GroovyElementTypes.MODIFIERS));
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
@@ -367,6 +364,10 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @NotNull
   public String getName() {
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.getName();
+    }
     return PsiImplUtil.getName(this);
   }
 
@@ -386,7 +387,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return findChildByClass(GrTypeParameterList.class);
+    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull
@@ -452,6 +453,11 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GrStubElemen
 
   @NotNull
   public String[] getNamedParametersArray() {
+    final GrMethodStub stub = getStub();
+    if (stub != null) {
+      return stub.getNamedParameters();
+    }
+
     GrOpenBlock body = getBlock();
     if (body == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 

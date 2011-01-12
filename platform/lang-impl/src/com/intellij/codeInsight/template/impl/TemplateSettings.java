@@ -108,7 +108,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private int myMaxKeyLength = 0;
   private char myDefaultShortcutChar = TAB_CHAR;
-  private String myLastSelectedTemplateKey;
   private final SchemesManager<TemplateGroup, TemplateGroup> mySchemesManager;
   private static final String FILE_SPEC = "$ROOT_CONFIG$/templates";
 
@@ -143,6 +142,8 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       return result;
     }
   }
+
+  private TemplateKey myLastSelectedTemplate;
 
   public TemplateSettings(SchemesManagerFactory schemesManagerFactory) {
 
@@ -292,12 +293,18 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return parentNode;
   }
 
+  @Nullable
   public String getLastSelectedTemplateKey() {
-    return myLastSelectedTemplateKey;
+    return myLastSelectedTemplate != null ? myLastSelectedTemplate.key : null;
   }
 
-  public void setLastSelectedTemplateKey(String key) {
-    myLastSelectedTemplateKey = key;
+  @Nullable
+  public String getLastSelectedTemplateGroup() {
+    return myLastSelectedTemplate != null ? myLastSelectedTemplate.groupName : null;
+  }
+
+  public void setLastSelectedTemplate(String group, String key) {
+    myLastSelectedTemplate = group == null ? null : new TemplateKey(group, key);
   }
 
   public TemplateImpl[] getTemplates() {

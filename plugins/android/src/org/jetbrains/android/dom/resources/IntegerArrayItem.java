@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.stubs.cache;
+package org.jetbrains.android.dom.resources;
+
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.android.dom.converters.IntegerConverter;
 
 /**
- * @author ilyas
+ * @author Eugene.Kudelevsky
  */
-public class TypeInfo {
+@Convert(IntegerConverter.class)
+public interface IntegerArrayItem extends GenericDomValue {
 }

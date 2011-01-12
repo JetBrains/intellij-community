@@ -213,10 +213,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         commandLine.addParameter(myActivityName);
       }
       else if (myProjectType == ProjectType.TEST) {
-        String moduleDirPath = new File(myTestedModule.getModuleFilePath()).getParent();
+        String moduleDirPath = AndroidRootUtil.getModuleDirPath(myTestedModule);
         assert moduleDirPath != null;
         commandLine.addParameter("--main");
-        commandLine.addParameter(moduleDirPath);
+        commandLine.addParameter(FileUtil.toSystemDependentName(moduleDirPath));
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {

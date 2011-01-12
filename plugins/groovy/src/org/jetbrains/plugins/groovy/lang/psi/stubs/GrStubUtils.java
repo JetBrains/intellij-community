@@ -16,49 +16,29 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 02.06.2009
  */
 public class GrStubUtils {
-  public static List<Set<String>> deserializeCollectionsArray(StubInputStream dataStream) throws IOException {
-    //named parameters
-    final byte namedParametersSetNumber = dataStream.readByte();
-    final List<Set<String>> collArray = new ArrayList<Set<String>>();
 
-    for (int i = 0; i < namedParametersSetNumber; i++) {
-      final byte curNamedParameterSetSize = dataStream.readByte();
-      final String[] namedParameterSetArray = new String[curNamedParameterSetSize];
-
-      for (int j = 0; j < curNamedParameterSetSize; j++) {
-        namedParameterSetArray[j] = dataStream.readUTF();
-      }
-      Set<String> curSet = new HashSet<String>();
-      ContainerUtil.addAll(curSet, namedParameterSetArray);
-      collArray.add(curSet);
-    }
-    return collArray;
-  }
-
-  public static void serializeCollectionsArray(StubOutputStream dataStream, Set<String>[] collArray) throws IOException {
-    dataStream.writeByte(collArray.length);
-    for (Set<String> namedParameterSet : collArray) {
-      dataStream.writeByte(namedParameterSet.size());
-      for (String namepParameter : namedParameterSet) {
-        dataStream.writeUTF(namepParameter);
-      }
-    }
-  }
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
     dataStream.writeByte(array.length);
@@ -74,5 +54,41 @@ public class GrStubUtils {
       annNames[i] = dataStream.readName().toString();
     }
     return annNames;
+  }
+
+  public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
+    dataStream.writeBoolean(typeText != null);
+    if (typeText != null) {
+      dataStream.writeUTFFast(typeText);
+    }
+  }
+
+  @Nullable
+  public static String readNullableString(StubInputStream dataStream) throws IOException {
+    final boolean hasTypeText = dataStream.readBoolean();
+    return hasTypeText ? dataStream.readUTFFast() : null;
+  }
+
+  @Nullable
+  public static String getTypeText(GrVariable psi) {
+    final GrTypeElement typeElement = psi.getTypeElementGroovy();
+    return typeElement == null ? null : typeElement.getText();
+  }
+
+  public static String[] getAnnotationNames(PsiModifierListOwner psi) {
+    List<String> annoNames = CollectionFactory.arrayList();
+    final PsiModifierList modifierList = psi.getModifierList();
+    if (modifierList instanceof GrModifierList) {
+      for (GrAnnotation annotation : ((GrModifierList)modifierList).getAnnotations()) {
+        final GrCodeReferenceElement element = annotation.getClassReference();
+        if (element != null) {
+          final String annoShortName = StringUtil.getShortName(element.getText()).trim();
+          if (StringUtil.isNotEmpty(annoShortName)) {
+            annoNames.add(annoShortName);
+          }
+        }
+      }
+    }
+    return ArrayUtil.toStringArray(annoNames);
   }
 }

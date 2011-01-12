@@ -18,6 +18,7 @@ package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,8 @@ public class UpdateCopyrightFactory
     public static UpdateCopyright createUpdateCopyright(Project project, Module module, PsiFile file,
         CopyrightProfile options)
     {
-        return createUpdateCopyright(project, module, file.getVirtualFile(), file.getFileType(), options);
+      final VirtualFile virtualFile = file.getVirtualFile();
+      return createUpdateCopyright(project, module, virtualFile, virtualFile != null ? virtualFile.getFileType() : null, options);
     }
 
 

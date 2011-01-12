@@ -167,15 +167,19 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     int groupNumber = 1;
     group: while(true) {
       @NonNls String suggestedName = "buttonGroup" + groupNumber;
-      SuggestedNameInfo nameInfo =
-        JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.FIELD, suggestedName, null, null);
+      // we don't have a project in snapshooter
+      if (getModule() != null) {
+        SuggestedNameInfo nameInfo =
+          JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.FIELD, suggestedName, null, null);
+        suggestedName = nameInfo.names[0];
+      }
       for(RadButtonGroup group: myButtonGroups) {
-        if (group.getName().equals(nameInfo.names[0])) {
+        if (group.getName().equals(suggestedName)) {
           groupNumber++;
           continue group;
         }
       }
-      return nameInfo.names[0];
+      return suggestedName;
     }
   }
 

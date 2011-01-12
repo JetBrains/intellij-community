@@ -106,6 +106,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       public boolean process(ChooseByNameContributor contributor) {
         try {
           for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+            if (item == null) {
+              LOG.error("null item from contributor " + contributor + " for name " + name);
+              continue;
+            }
+
             if (acceptItem(item)) {
               items.add(item);
             }

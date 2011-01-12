@@ -227,7 +227,8 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
 
   @Nullable
   public CopyrightProfile getCopyrightOptions(@NotNull PsiFile file) {
-    if (myOptions.getOptions(file.getFileType().getName()).getFileTypeOverride() == LanguageOptions.NO_COPYRIGHT) return null;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null || myOptions.getOptions(virtualFile.getFileType().getName()).getFileTypeOverride() == LanguageOptions.NO_COPYRIGHT) return null;
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     for (String scopeName : myModule2Copyrights.keySet()) {
       final NamedScope namedScope = validationManager.getScope(scopeName);

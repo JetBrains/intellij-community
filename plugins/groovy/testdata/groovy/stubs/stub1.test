@@ -5,5 +5,7 @@ interface I {}
 [Groovy script]
   [Class definition : A]
     [Modifiers]
+    [Type definition body]
   [Interface definition : I]
     [Modifiers]
+    [Type definition body]

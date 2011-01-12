@@ -407,6 +407,7 @@ public class AndroidUtils {
 
   @Nullable
   public static String executeCommand(GeneralCommandLine commandLine) throws ExecutionException {
+    LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
     final StringBuilder messageBuilder = new StringBuilder();
     handler.addProcessListener(new ProcessAdapter() {
@@ -421,8 +422,10 @@ public class AndroidUtils {
     catch (ProcessCanceledException e) {
       return null;
     }
+    String message = messageBuilder.toString();
+    LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
-    return exitCode != 0 ? messageBuilder.toString() : null;
+    return exitCode != 0 ? message : null;
   }
 
   public static void runExternalToolInSeparateThread(@NotNull final Project project,

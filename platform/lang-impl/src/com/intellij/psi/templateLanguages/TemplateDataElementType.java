@@ -27,6 +27,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.*;
@@ -48,7 +49,7 @@ import javax.swing.*;
 public class TemplateDataElementType extends IFileElementType implements ITemplateDataElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.templateLanguages.TemplateDataElementType");
 
-  private final static LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher()); 
+  private static final LanguageExtension<TreePatcher> TREE_PATCHER = new LanguageExtension<TreePatcher>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
   private final IElementType myTemplateElementType;
   private final IElementType myOuterElementType;
@@ -93,13 +94,22 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     if (parsed != null) {
       final TreeElement element = parsed.getFirstChildNode();
       if (element != null) {
+        ((CompositeElement)parsed).rawRemoveAllChildren();
         treeElement.rawAddChildren(element);
       }
     }
 
     treeElement.clearCaches();
     treeElement.subtreeChanged();
-    return treeElement.getFirstChildNode();
+    TreeElement childNode = treeElement.getFirstChildNode();
+
+    DebugUtil.checkTreeStructureIfConfigured(parsed);
+    DebugUtil.checkTreeStructureIfConfigured(treeElement);
+    DebugUtil.checkTreeStructureIfConfigured(chameleon);
+    DebugUtil.checkTreeStructureIfConfigured(file.getNode());
+    DebugUtil.checkTreeStructureIfConfigured(originalFile.getNode());
+
+    return childNode;
   }
 
   private CharSequence createTemplateText(CharSequence buf, Lexer lexer) {
