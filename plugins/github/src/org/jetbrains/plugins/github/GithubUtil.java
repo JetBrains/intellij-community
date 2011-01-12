@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class GithubUtil {
   public static final String GITHUB_HOST = "https://github.com";
-  private static final String GITHUB_HOST_GIT = "git@github.com";
+  public static final String GITHUB_HOST_GIT = "git@github.com";
 
   private static final String API_URL = "/api/v2/xml";
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());

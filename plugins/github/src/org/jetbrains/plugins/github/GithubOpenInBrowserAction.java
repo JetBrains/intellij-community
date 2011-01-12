@@ -89,15 +89,24 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     final String pushUrl = githubRemote.pushUrl();
-    int index = pushUrl.lastIndexOf('/');
-    if (index == -1) {
-      Messages.showErrorDialog(project, "Cannot extract info about repository name: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-      return;
-    }
-    index = pushUrl.substring(0, index).lastIndexOf('/');
-    if (index == -1) {
-      Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-      return;
+    int index = -1;
+    if (pushUrl.startsWith(GithubUtil.GITHUB_HOST)) {
+      index = pushUrl.lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+      index = pushUrl.substring(0, index).lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+    } else {
+      index = pushUrl.lastIndexOf(':');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
     }
     String repoInfo = pushUrl.substring(index + 1);
     if (repoInfo.endsWith(".git")) {
