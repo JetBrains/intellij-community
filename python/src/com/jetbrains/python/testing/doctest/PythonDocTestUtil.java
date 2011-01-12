@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.jetbrains.python.psi.*;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: catherine
@@ -48,7 +47,7 @@ public class PythonDocTestUtil {
     }
     if (pyClass.getDocStringExpression() != null) {
       PythonDocStringParser parser = new PythonDocStringParser(pyClass.getDocStringExpression().getStringValue());
-      if (!parser.hasExample()) {
+      if (parser.hasExample()) {
         result.add(pyClass);
       }
     }
