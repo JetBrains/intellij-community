@@ -254,7 +254,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                       createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
                     }
                     VirtualFile srcDir = contentRoot.findChild(SdkConstants.FD_SOURCES);
-                    if (srcDir != sourceRoot && sourceRoot != null) {
+                    if (srcDir != sourceRoot && sourceRoot != null && srcDir != null) {
                       moveContentAndRemoveDir(project, srcDir, sourceRoot);
                     }
                   }
@@ -277,7 +277,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return true;
   }
 
-  private static void moveContentAndRemoveDir(Project project, VirtualFile from, @NotNull VirtualFile to) throws IOException {
+  private static void moveContentAndRemoveDir(Project project, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
     for (VirtualFile child : from.getChildren()) {
       child.move(project, to);
     }
