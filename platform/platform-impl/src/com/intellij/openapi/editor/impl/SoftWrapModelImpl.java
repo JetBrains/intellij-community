@@ -94,6 +94,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   private boolean myUpdateInProgress;
 
+  /**
+   * There is a possible case that target document is changed while its editor is inactive (e.g. user opens two editors for classes
+   * <code>'Part'</code> and <code>'Whole'</code>; activates editor for the class <code>'Whole'</code> and performs 'rename class'
+   * for <code>'Part'</code> from it). Soft wraps cache is not recalculated during that because corresponding editor is not shown
+   * and we lack information about visible area width. Hence, we will need to recalculate the whole soft wraps cache as soon
+   * as target editor becomes visible.
+   * <p/>
+   * Current field serves as a flag for that <code>'dirty document, need complete soft wraps cache recalculation'</code> state. 
+   */
+  private boolean myDirty;
+
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
   }
@@ -375,6 +386,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return useSoftWraps;
     }
 
+    if (myDirty) {
+      myApplianceManager.reset();
+      myDirty = false;
+    }
+    
     myApplianceManager.recalculateIfNecessary();
     return true;
     //
@@ -505,6 +521,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   public void beforeDocumentChange(DocumentEvent event) {
     myUpdateInProgress = true;
     if (!isSoftWrappingEnabled()) {
+      myDirty = true;
       return;
     }
     for (DocumentListener listener : myDocumentListeners) {
@@ -527,6 +544,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
     myUpdateInProgress = true;
     if (!isSoftWrappingEnabled() || !region.isValid()) {
+      myDirty = true;
       return;
     }
     for (FoldingListener listener : myFoldListeners) {

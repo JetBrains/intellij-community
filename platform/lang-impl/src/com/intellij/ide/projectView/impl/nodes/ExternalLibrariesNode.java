@@ -38,10 +38,7 @@ import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExternalLibrariesNode extends ProjectViewNode<String> {
   public ExternalLibrariesNode(Project project, ViewSettings viewSettings) {
@@ -109,13 +106,12 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   private static boolean hasExternalEntries(ProjectFileIndex index, LibraryOrderEntry orderEntry) {
-    VirtualFile[] files = orderEntry.getRootFiles(OrderRootType.CLASSES);
-    for (VirtualFile file : files) {
+    for (VirtualFile file : LibraryGroupNode.getLibraryRoots(orderEntry)) {
       if (!index.isInContent(PathUtil.getLocalFile(file))) return true;
     }
-
     return false;
   }
+
 
   @Override
   protected void update(PresentationData presentation) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
@@ -35,6 +36,8 @@ import java.util.List;
  */
 public class GithubUtil {
   public static final String GITHUB_HOST = "https://github.com";
+  public static final String GITHUB_HOST_GIT = "git@github.com";
+
   private static final String API_URL = "/api/v2/xml";
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
 
@@ -164,6 +167,9 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
+    if (areCredentialsEmpty()){
+      return false;
+    }
     try {
       return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
@@ -177,6 +183,11 @@ public class GithubUtil {
     catch (CancelledException e) {
       return false;
     }
+  }
+
+  public static boolean areCredentialsEmpty() {
+    final GithubSettings settings = GithubSettings.getInstance();
+    return StringUtil.isEmptyOrSpaces(settings.getLogin()) || StringUtil.isEmptyOrSpaces(settings.getPassword());
   }
 
   public static class CancelledException extends RuntimeException {}
@@ -275,11 +286,17 @@ public class GithubUtil {
     if (!gitDetected) {
       return null;
     }
+    return findGitHubRemoteBranch(project, root);
+  }
+
+  @Nullable
+  public static GitRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
     try {
       // Check that given repository is properly configured git repository
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       for (GitRemote gitRemote : gitRemotes) {
-        if (gitRemote.pushUrl().contains("git@github.com")) {
+        final String pushUrl = gitRemote.pushUrl();
+        if (pushUrl.startsWith(GITHUB_HOST) || pushUrl.startsWith(GITHUB_HOST_GIT)) {
           return gitRemote;
         }
       }
