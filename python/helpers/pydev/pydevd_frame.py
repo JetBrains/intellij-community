@@ -107,8 +107,7 @@ class PyDBFrame:
                             return self.trace_dispatch
                             
                     except:
-                        sys.stderr.write('Error while evaluating expression\n')
-                        traceback.print_exc()
+                        sys.stderr.write('Error while evaluating condition \'%s\': %s\n'%(condition, sys.exc_info()[1]))
                         sys.stderr.flush()
                         return self.trace_dispatch
 
