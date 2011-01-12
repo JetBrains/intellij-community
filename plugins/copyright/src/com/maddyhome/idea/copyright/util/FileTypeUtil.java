@@ -241,7 +241,7 @@ public class FileTypeUtil
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) return false;
         if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
-        return isSupportedType(file.getFileType());
+        return isSupportedType(virtualFile.getFileType());
     }
 
     public FileType[] getSupportedTypes()
