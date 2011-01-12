@@ -69,8 +69,10 @@ public class AndroidMavenExecutor {
       String[] commands = commandLine.getCommands();
       String command = StringUtil.join(commands, " ");
       LOG.info("Execute: " + command);
-      String message = AndroidUtils.executeCommand(commandLine);
-      if (message != null) {
+      StringBuilder messageBuilder = new StringBuilder();
+      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder);
+      String message = messageBuilder.toString();
+      if (message != null && !success) {
         LOG.info(message);
         String lcmessage = message.toLowerCase();
         int buildErrorIndex = lcmessage.indexOf(BUILD_ERROR_INDICATOR);
