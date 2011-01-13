@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
     PsiExpression operand = getOperand();
     if (operand == null) return null;
     PsiType type = operand.getType();
+    if (type instanceof PsiClassType) type = PsiPrimitiveType.getUnboxedType(type);
     IElementType opCode = SourceTreeToPsiMap.psiElementToTree(getOperationSign()).getElementType();
     if (opCode == JavaTokenType.PLUS || opCode == JavaTokenType.MINUS || opCode == JavaTokenType.TILDE) {
       if (type == null) return null;

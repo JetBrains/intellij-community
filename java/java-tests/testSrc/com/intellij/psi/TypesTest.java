@@ -434,8 +434,19 @@ public class TypesTest extends GenericsTestCase {
   public void testBinaryNumericPromotion() throws Exception {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression conditional = factory.createExpressionFromText("b ? new Integer (0) : new Double(0.0)", null);
-    assertEquals(conditional.getType(), PsiType.DOUBLE);
+    assertEquals(PsiType.DOUBLE, conditional.getType());
     final PsiExpression shift = factory.createExpressionFromText("Integer.valueOf(0) << 2", null);
-    assertEquals(shift.getType(), PsiType.INT);
+    assertEquals(PsiType.INT, shift.getType());
+  }
+
+  public void testUnaryExpressionType() throws Exception {
+    final PsiElementFactory factory = myJavaFacade.getElementFactory();
+    final PsiExpression plusPrefix = factory.createExpressionFromText("+Integer.valueOf(1)", null);
+    assertEquals(PsiType.INT, plusPrefix.getType());
+    final PsiExpression plusBytePrefix = factory.createExpressionFromText("+Byte.valueOf(1)", null);
+    assertEquals(PsiType.INT, plusBytePrefix.getType());
+    final PsiStatement declaration = factory.createStatementFromText("Byte b = 1;", null);
+    final PsiExpression plusPlusPostfix = factory.createExpressionFromText("b++", declaration);
+    assertEquals(PsiType.BYTE, plusPlusPostfix.getType());
   }
 }
