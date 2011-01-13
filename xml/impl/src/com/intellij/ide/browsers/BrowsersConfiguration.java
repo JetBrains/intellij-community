@@ -213,7 +213,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     if (browserArgs.length > 0) {
       if (SystemInfo.isMac && "open".equals(command[0])) {
         if (BrowserUtil.isOpenCommandSupportsArgs()) {
-          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs, String.class);
+          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs, ArrayUtil.STRING_ARRAY_FACTORY);
         }
         else {
           LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(args));
@@ -223,7 +223,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         args = ArrayUtil.append(browserArgs, url);
       }
     }
-    final String[] commandLine = ArrayUtil.mergeArrays(command, args, String.class);
+    final String[] commandLine = ArrayUtil.mergeArrays(command, args, ArrayUtil.STRING_ARRAY_FACTORY);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Launching browser: " + Arrays.toString(commandLine));
     }
