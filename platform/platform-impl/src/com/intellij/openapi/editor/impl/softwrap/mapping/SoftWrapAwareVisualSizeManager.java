@@ -82,7 +82,7 @@ public class SoftWrapAwareVisualSizeManager implements SoftWrapAwareDocumentPars
     if (myListeners.isEmpty()) {
       return;
     }
-    myLineWidths.put(position.logicalLine, position.x);
+    updateLineWidthIfNecessary(position.logicalLine, position.x);
     myLastLogicalLine = position.logicalLine;
   }
 
@@ -103,12 +103,16 @@ public class SoftWrapAwareVisualSizeManager implements SoftWrapAwareDocumentPars
       return;
     }
     
-    int width = myLineWidths.get(position.logicalLine);
-    if (position.x > width) {
-      myLineWidths.put(position.logicalLine, newWidth);
-    }
+    updateLineWidthIfNecessary(position.logicalLine, newWidth);
   }
 
+  private void updateLineWidthIfNecessary(int line, int width) {
+    int storedWidth = myLineWidths.get(line);
+    if (width > storedWidth) {
+      myLineWidths.put(line, width);
+    }
+  }
+  
   @Override
   public void afterSoftWrapLineFeed(@NotNull EditorPosition position) {
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -69,8 +70,22 @@ public class ChangeListChooserPanel extends JPanel {
       @Override
       protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LocalChangeList) {
-          myLinkRenderer.appendTextWithLinks(((LocalChangeList)value).getName(),
-                                             ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+          String name = ((LocalChangeList) value).getName();
+
+          if (myExistingListsCombo.getWidth() == 0) {
+            name = name.length() > 10 ? name.substring(0, 7) + " .." : name;
+          } else {
+            final FontMetrics fm = list.getFontMetrics(list.getFont());
+            final int width = fm.stringWidth(name);
+            final int listWidth = myExistingListsCombo.getWidth();
+            if ((listWidth > 0) && (width > listWidth)) {
+              final String truncated = CommittedChangeListRenderer.truncateDescription(name, fm, listWidth - fm.stringWidth(" ..") - 7);
+              if (truncated.length() > 5) {
+                name = truncated + " ..";
+              }
+            }
+          }
+          myLinkRenderer.appendTextWithLinks(name, ((LocalChangeList)value).isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
                                                                                   : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }

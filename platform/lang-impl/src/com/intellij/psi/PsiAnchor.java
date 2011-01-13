@@ -66,7 +66,9 @@ public abstract class PsiAnchor {
       final StubBasedPsiElement elt = (StubBasedPsiElement)element;
       if (elt.getStub() != null || elt.getElementType().shouldCreateStub(element.getNode())) {
         int index = calcStubIndex((StubBasedPsiElement)element);
-        if (index != -1) return new StubIndexReference(file, index, elt.getElementType());
+        if (index != -1) {
+          return new StubIndexReference(file, index, file.getLanguage(), elt.getElementType());
+        }
       }
     }
 
@@ -221,18 +223,30 @@ public abstract class PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
     private final int myIndex;
+    private final Language myLanguage;
     private final IStubElementType myElementType;
 
-    public StubIndexReference(@NotNull PsiFile file, final int index, IStubElementType elementType) {
+    public StubIndexReference(@NotNull final PsiFile file, final int index, final Language language, final IStubElementType elementType) {
+      myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
       myProject = file.getProject();
       myIndex = index;
     }
 
+    @Nullable
     public PsiFile getFile() {
-      if (myProject.isDisposed() || !myVirtualFile.isValid()) return null;
-      return PsiManager.getInstance(myProject).findFile(myVirtualFile);
+      if (myProject.isDisposed() || !myVirtualFile.isValid()) {
+        return null;
+      }
+      final PsiFile file = PsiManager.getInstance(myProject).findFile(myVirtualFile);
+      if (file == null) {
+        return null;
+      }
+      if (file.getLanguage() == myLanguage) {
+        return file;
+      }
+      return file.getViewProvider().getPsi(myLanguage);
     }
 
     public PsiElement retrieve() {
@@ -244,7 +258,8 @@ public abstract class PsiAnchor {
 
           boolean foreign = tree == null;
           if (foreign) {
-            if (fileImpl instanceof PsiFileImpl && ((PsiFileImpl)fileImpl).getContentElementType() instanceof IStubFileElementType) {
+            if (fileImpl instanceof PsiFileImpl) {
+              // Note: as far as this is a realization of StubIndexReference fileImpl#getContentElementType() must be instance of IStubFileElementType
               tree = ((PsiFileImpl)fileImpl).calcStubTree();
             }
             else {
@@ -266,7 +281,7 @@ public abstract class PsiAnchor {
             return ast != null ? ast.getPsi() : null;
           }
           else {
-            return stub != null ? stub.getPsi() : null;
+            return stub.getPsi();
           }
         }
       });
@@ -279,12 +294,12 @@ public abstract class PsiAnchor {
 
       final StubIndexReference that = (StubIndexReference)o;
 
-      return myIndex == that.myIndex && myVirtualFile.equals(that.myVirtualFile) && myElementType.equals(that.myElementType);
+      return myIndex == that.myIndex && myVirtualFile.equals(that.myVirtualFile) && myElementType.equals(that.myElementType) && myLanguage == that.myLanguage;
     }
 
     @Override
     public int hashCode() {
-      return (31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode();
+      return ((31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode()) * 31 + myLanguage.hashCode();
     }
 
     public int getStartOffset() {
