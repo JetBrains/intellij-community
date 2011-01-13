@@ -16,13 +16,14 @@
 
 package com.intellij.application.options.editor;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -50,7 +51,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
       SwingConstants.RIGHT,
       UISettings.TABS_NONE,
     }));
-    myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
+    myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer(myEditorTabPlacement.getRenderer()));
     myEditorTabPlacement.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         revalidateSingleRowCheckbox();
@@ -184,36 +185,38 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
-  private static final class MyTabsPlacementComboBoxRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      int tabPlacement = ((Integer)value).intValue();
+  private static final class MyTabsPlacementComboBoxRenderer extends ListCellRendererWrapper<Integer> {
+    public MyTabsPlacementComboBoxRenderer(final ListCellRenderer listCellRenderer) {
+      super(listCellRenderer);
+    }
+
+    @Override
+    public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
+      int tabPlacement = value.intValue();
       String text;
       if (UISettings.TABS_NONE == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.none");
       }
-      else if (TOP == tabPlacement) {
+      else if (SwingConstants.TOP == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.top");
       }
-      else if (LEFT == tabPlacement) {
+      else if (SwingConstants.LEFT == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.left");
       }
-      else if (BOTTOM == tabPlacement) {
+      else if (SwingConstants.BOTTOM == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.bottom");
       }
-      else if (RIGHT == tabPlacement) {
+      else if (SwingConstants.RIGHT == tabPlacement) {
         text = ApplicationBundle.message("combobox.tab.placement.right");
       }
       else {
         throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
       }
-      return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+      setText(text);
     }
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.tabs";
   }
