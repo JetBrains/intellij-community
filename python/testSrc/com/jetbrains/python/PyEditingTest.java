@@ -158,6 +158,12 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     doTestEnter(" <caret>\n", " \n \n");
   }
 
+  public void testEnterInImportWithParens() {  // PY-2661
+    doTestEnter("from django.http import (HttpResponse,<caret>)",
+                "from django.http import (HttpResponse,\n" +
+                "                         )");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

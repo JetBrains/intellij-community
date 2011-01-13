@@ -77,6 +77,10 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       // if we're in middle of typing, it's expected that we will have error elements
     }
 
+    if (inFromImportParentheses(statementBefore, offset)) {
+      return Result.Continue;
+    }
+
     PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
     PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
     if (!(wrappableBefore instanceof PsiComment)) {
@@ -153,5 +157,17 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     }
 
     return null;
+  }
+
+  private static boolean inFromImportParentheses(PsiElement statement, int offset) {
+    if (!(statement instanceof PyFromImportStatement)) {
+      return false;
+    }
+    PyFromImportStatement fromImportStatement = (PyFromImportStatement)statement;
+    PsiElement leftParen = fromImportStatement.getLeftParen();
+    if (leftParen != null && offset > leftParen.getTextRange().getEndOffset()) {
+      return true;
+    }
+    return false;
   }
 }

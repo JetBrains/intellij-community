@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PyStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
+public class PyStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
   public PyStructureViewModel(@NotNull PsiFile psiFile) {
     super(psiFile, new PyStructureViewElement((PyElement) psiFile));
     withSorters(Sorter.ALPHA_SORTER);
@@ -32,5 +32,10 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   @Override
   public boolean shouldEnterElement(Object element) {
     return element instanceof PyClass;
+  }
+
+  @Override
+  public boolean isAutoExpand(StructureViewTreeElement element) {
+    return element.getValue() instanceof PsiFile;
   }
 }
