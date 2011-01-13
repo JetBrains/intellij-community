@@ -435,5 +435,7 @@ public class TypesTest extends GenericsTestCase {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiExpression conditional = factory.createExpressionFromText("b ? new Integer (0) : new Double(0.0)", null);
     assertEquals(conditional.getType(), PsiType.DOUBLE);
+    final PsiExpression shift = factory.createExpressionFromText("Integer.valueOf(0) << 2", null);
+    assertEquals(shift.getType(), PsiType.INT);
   }
 }
