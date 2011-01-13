@@ -46,7 +46,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
   }
 
   protected PyDebugValue extend(final PyDebugValue value) {
-    return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), null, myDebugProcess);
+    return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
   }
 
   public List<PyDebugValue> getVariables() {

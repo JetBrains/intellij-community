@@ -7,6 +7,7 @@ from console import pydevconsole
 from code import compile_command
 from code import InteractiveInterpreter
 
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -141,8 +142,16 @@ except:
         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
-def varToXML(v, name, doTrim=True):
+def varToXML(val, name, doTrim=True):
     """ single variable or dictionary to xml representation """
+
+    is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
+
+    if is_exception_on_eval:
+        v = val.result
+    else:
+        v = val
+
     type, typeName, resolver = getType(v)
 
     try:
@@ -191,10 +200,13 @@ def varToXML(v, name, doTrim=True):
     else:
         xmlValue = ''
 
-    if resolver is not None:
-        xmlCont = ' isContainer="True"'
+    if is_exception_on_eval:
+        xmlCont = ' isErrorOnEval="True"'
     else:
-        xmlCont = ''
+        if resolver is not None:
+            xmlCont = ' isContainer="True"'
+        else:
+            xmlCont = ''
 
     return ''.join((xml, xmlValue, xmlCont, ' />\n'))
 
@@ -351,6 +363,9 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
     except:
         traceback.print_exc()
 
+class ExceptionOnEvaluate:
+    def __init__(self, result):
+        self.result = result
 
 def evaluateExpression(thread_id, frame_id, expression, doExec):
     '''returns the result of the evaluated expression
@@ -390,6 +405,7 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
             except Exception:
                 s = StringIO()
                 traceback.print_exc(file=s)
+
                 result = s.getvalue()
 
                 try:
@@ -400,6 +416,8 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
                         etype = value = tb = None
                 except:
                     pass
+
+                result = ExceptionOnEvaluate(result)
 
             return result
     finally:

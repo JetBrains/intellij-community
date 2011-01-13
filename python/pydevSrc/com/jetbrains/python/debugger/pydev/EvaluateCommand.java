@@ -39,7 +39,7 @@ public class EvaluateCommand extends AbstractFrameCommand {
     super.processResponse(response);
     final PyDebugValue value = ProtocolParser.parseValue(response.getPayload());
     final String name = (myExecute ? "" : myExpression);
-    myValue = new PyDebugValue(name, value.getType(), value.getValue(), value.isContainer(), null, myDebugProcess);
+    myValue = new PyDebugValue(name, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
   }
 
   public PyDebugValue getValue() {

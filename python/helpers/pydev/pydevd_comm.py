@@ -618,7 +618,7 @@ class InternalGetVariable(InternalThreadCommand):
             if hasattr(keys, 'sort'):
                 keys.sort(compare_object_attrs) #Python 3.0 does not have it
             else:
-                if (IS_PY3K):
+                if IS_PY3K:
                     keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
                 else:
                     keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
@@ -690,8 +690,6 @@ class InternalGetFrame(InternalThreadCommand):
         except:
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
             dbg.writer.addCommand(cmd)
-
-           
 
            
 #=======================================================================================================================
