@@ -147,9 +147,9 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     replaceSubscriptions(project);
     replaceCallElements(project);
-    if (canRemove) {
+    /*if (canRemove) {
       removeKwarg();
-    }
+    }*/
     canRemove = true;
   }
 
@@ -167,6 +167,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
     }
     myKeywordContainer.delete();
   }
+
 
   private void replaceCallElements(Project project) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
