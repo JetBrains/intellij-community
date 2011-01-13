@@ -69,7 +69,8 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   void setTokenTypeRemapper(ITokenTypeRemapper remapper);
 
   /**
-   * Slightly easier way to what {@link ITokenTypeRemapper} does. I.e. we just remap current token to given type
+   * Slightly easier way to what {@link ITokenTypeRemapper} does (i.e. it just remaps current token to a given type).
+   * @param type new type for the current token.
    */
   void remapCurrentToken(IElementType type);
 
