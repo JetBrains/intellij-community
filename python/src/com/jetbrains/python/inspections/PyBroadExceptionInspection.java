@@ -36,7 +36,9 @@ public class PyBroadExceptionInspection extends PyInspection {
 
     @Override
     public void visitPyExceptBlock(final PyExceptPart node){
-      PyExpression exceptClass= node.getExceptClass();
+      PyExpression exceptClass = node.getExceptClass();
+      if (reRaised(node))
+        return;
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), "Too broad exception clause");
       }
@@ -50,6 +52,19 @@ public class PyBroadExceptionInspection extends PyInspection {
           }
         }
       }
+    }
+
+    /**
+     * detects reraising of exception
+     * @param node
+     * @return
+     */
+    private static boolean reRaised(PyExceptPart node) {
+      for (PyStatement st : node.getStatementList().getStatements()) {
+        if (st instanceof PyRaiseStatement)
+          return true;
+      }
+      return false;
     }
   }
 }

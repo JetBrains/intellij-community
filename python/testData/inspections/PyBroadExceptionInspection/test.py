@@ -23,3 +23,9 @@ try:
     function_throws_exception()
 except Exception:
     pass
+
+try:
+  doSomething()
+except:
+  someCleanup()
+  raise
