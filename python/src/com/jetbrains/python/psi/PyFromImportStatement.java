@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -34,4 +35,20 @@ public interface PyFromImportStatement extends PyImportStatementBase, StubBasedP
    * @return true iff the statement is an import from __future__.
    */
   boolean isFromFuture();
+
+  /**
+   * If the from ... import statement uses an import list in parentheses, returns the opening parenthesis.
+   *
+   * @return opening parenthesis token or null
+   */
+  @Nullable
+  PsiElement getLeftParen();
+
+  /**
+   * If the from ... import statement uses an import list in parentheses, returns the opening parenthesis.
+   *
+   * @return opening parenthesis token or null
+   */
+  @Nullable
+  PsiElement getRightParen();
 }
