@@ -45,7 +45,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         PyExpression rightExpression = expression.getRightExpression();
         if (rightExpression != null) {
           boolean changedParts = false;
-          if (rightExpression.getText().equals(target.getText())) {
+          if (rightExpression.getText().equals(target.getText()) && leftExpression instanceof PyNumericLiteralExpression) {
             PyExpression tmp = rightExpression;
             rightExpression = leftExpression;
             leftExpression = tmp;

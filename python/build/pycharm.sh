@@ -88,7 +88,7 @@ fi
 
 # isEap
 if [ "@@isEap@@" -eq "true" ]; then
- $AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
+ AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
 fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.platform.prefix=Python -Didea.no.jre.check=true $AGENT $PYCHARM_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"

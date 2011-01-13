@@ -96,7 +96,7 @@ def set_pm_excepthook(handle_exceptions_arg=None):
 
 def restore_pm_excepthook():
     global _original_excepthook
-    if (_original_excepthook):
+    if _original_excepthook:
         sys.excepthook = _original_excepthook
         _original_excepthook = None
 
@@ -110,7 +110,7 @@ def update_exception_hook():
 def get_class( kls ):
     parts = kls.split('.')
     module = ".".join(parts[:-1])
-    if (module == ""):
+    if module == "":
         if IS_PY3K:
             module = "builtins"
         else:
@@ -118,7 +118,9 @@ def get_class( kls ):
     try:
         m = __import__( module )
         for comp in parts[-1:]:
-            m = getattr(m, comp)
+            if m is None:
+                return None
+            m = getattr(m, comp, None)
         return m
     except ImportError:
         return None

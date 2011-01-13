@@ -738,17 +738,18 @@ class InternalConsoleExec(InternalThreadCommand):
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
-            result = pydevd_vars.consoleExec(self.thread_id, self.frame_id, self.expression)
-            xml = "<xml>"
-            xml += pydevd_vars.varToXML(result, "")
-            xml += "</xml>"
-            cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
-            dbg.writer.addCommand(cmd)
-        except:
-            exc = GetExceptionTracebackStr()
-            sys.stderr.write('%s\n' % (exc,))
-            cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
-            dbg.writer.addCommand(cmd)
+            try:
+                result = pydevd_vars.consoleExec(self.thread_id, self.frame_id, self.expression)
+                xml = "<xml>"
+                xml += pydevd_vars.varToXML(result, "")
+                xml += "</xml>"
+                cmd = dbg.cmdFactory.makeEvaluateExpressionMessage(self.sequence, xml)
+                dbg.writer.addCommand(cmd)
+            except:
+                exc = GetExceptionTracebackStr()
+                sys.stderr.write('%s\n' % (exc,))
+                cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error evaluating console expression " + exc)
+                dbg.writer.addCommand(cmd)
         finally:
             sys.stderr.flush()
             sys.stdout.flush()

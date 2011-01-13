@@ -6,6 +6,8 @@ import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Leonid Shalupov
@@ -13,12 +15,22 @@ import java.awt.*;
 public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConfigurationParams {
   private JPanel myTestsPlaceHolder;
   private JPanel myRootPanel;
+  private JCheckBox myIsPureUnittest;
 
-  private final PythonTestRunConfigurationForm myTestRunConfigurationForm;
+  private PythonTestRunConfigurationForm myTestRunConfigurationForm;
 
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
+    myIsPureUnittest = new JCheckBox("Inspect only subclasses of unittest.TestCase");
+    myIsPureUnittest.setSelected(configuration.isPureUnittest());
+    myIsPureUnittest.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        configuration.setPureUnittest(myIsPureUnittest.isSelected());
+      }
+    });
+    myTestRunConfigurationForm.getAdditionalPanel().add(myIsPureUnittest);
     myTestsPlaceHolder.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
   public String getPattern() {
@@ -32,6 +44,16 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   @Override
   public AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams() {
     return myTestRunConfigurationForm;
+  }
+
+  @Override
+  public boolean isPureUnittest() {
+    return myIsPureUnittest.isSelected();
+  }
+
+  @Override
+  public void setPureUnittest(boolean isPureUnittest) {
+    myIsPureUnittest.setSelected(isPureUnittest);
   }
 
   public JComponent getPanel() {

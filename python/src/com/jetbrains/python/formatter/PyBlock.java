@@ -165,6 +165,12 @@ public class PyBlock implements ASTBlock {
         childAlignment = getAlignmentForChildren();
       }
     }
+    else if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
+      if ((childType == PyElementTypes.IMPORT_ELEMENT || childType == PyTokenTypes.RPAR) &&
+          _node.findChildByType(PyTokenTypes.LPAR) != null) {
+        childAlignment = getAlignmentForChildren();
+      }
+    }
 
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2)) {  // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();

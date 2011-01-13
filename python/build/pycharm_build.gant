@@ -386,7 +386,7 @@ def buildTarGz() {
     tarfileset(dir: "$home/community/bin/nix", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "inspect*.sh")
     }
-    tarfileset(dir: "$home/python/build", filemode: "755", prefix: "$tarRoot/bin") {
+    tarfileset(dir: "$paths.distUnix/bin", filemode: "755", prefix: "$tarRoot/bin") {
       include(name: "pycharm.sh")
     }
     tarfileset(dir: "$home/python/build", fullpath: "$tarRoot/bin/pycharm.vmoptions") {

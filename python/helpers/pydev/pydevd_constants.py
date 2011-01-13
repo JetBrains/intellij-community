@@ -49,12 +49,11 @@ try:
         IS_PY27 = True
 except AttributeError:
     pass #Not all versions have sys.version_info
-IS_WIN64 = False
+
 try:
-    if sys.platform == 'win64':
-        IS_WIN64 = True
+    IS_64_BITS = sys.maxsize>2**32
 except AttributeError:
-    pass #Not all versions have sys.version_info
+    IS_64_BITS = False
 
 
 #=======================================================================================================================
