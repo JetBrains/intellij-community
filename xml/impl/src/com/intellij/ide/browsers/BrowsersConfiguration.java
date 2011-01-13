@@ -212,7 +212,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     String[] args = {url};
     if (browserArgs.length > 0) {
       if (SystemInfo.isMac && "open".equals(command[0])) {
-        if (BrowserUtil.isOpenCommandSupportsArgs()) {
+        if (BrowserUtil.isOpenCommandSupportArgs()) {
           args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs, ArrayUtil.STRING_ARRAY_FACTORY);
         }
         else {
