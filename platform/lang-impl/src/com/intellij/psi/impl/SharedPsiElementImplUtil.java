@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -99,12 +100,11 @@ public class SharedPsiElementImplUtil {
         return i < children.length - 1 ? children[i + 1] : null;
       }
     }
-    LOG.error("Cannot find element among its parent' children. element: '" +
-              element +
-              "'; parent:'" +
-              parent +
-              "'; file:" +
-              element.getContainingFile());
+    LOG.error("Cannot find element among its parent' children." +
+              " element: '" + element + "';" +
+              " parent: '" + parent + "';" +
+              " children: " + new ArrayList(Arrays.asList(children)) + "; " +
+              " file:" + element.getContainingFile());
     return null;
   }
 

@@ -57,7 +57,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
         if (topLevelClasses == null) return null;
         PsiClass[] classes = result.get(containingFile);
         if (classes != null) {
-          topLevelClasses = ArrayUtil.mergeArrays(classes, topLevelClasses, PsiClass.class);
+          topLevelClasses = ArrayUtil.mergeArrays(classes, topLevelClasses, PsiClass.ARRAY_FACTORY);
         }
         result.put(containingFile, topLevelClasses);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,10 +145,10 @@ public class StringConcatenationInMessageFormatCallInspection
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new StringConcatenationInFormatCallVisitor();
+        return new StringConcatenationInMessageFormatCallVisitor();
     }
 
-    private static class StringConcatenationInFormatCallVisitor
+    private static class StringConcatenationInMessageFormatCallVisitor
             extends BaseInspectionVisitor {
 
         @Override

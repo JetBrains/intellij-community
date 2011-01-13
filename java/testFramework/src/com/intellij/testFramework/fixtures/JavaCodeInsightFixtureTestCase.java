@@ -79,9 +79,9 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @Override
   protected void tearDown() throws Exception {
+    myModule = null;
     myFixture.tearDown();
     myFixture = null;
-    myModule = null;
     super.tearDown();
   }
 
