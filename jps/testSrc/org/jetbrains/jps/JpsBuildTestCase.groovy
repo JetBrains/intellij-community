@@ -28,9 +28,9 @@ abstract class JpsBuildTestCase extends TestCase {
 
   def protected buildAll(String projectPath, Map<String, String> pathVariables, Closure initProject) {
     Project project = loadProject(projectPath, pathVariables)
-    initProject(project)
     def target = FileUtil.createTempDirectory("targetDir")
     project.targetFolder = target.absolutePath
+    initProject(project)
     project.clean()
     project.makeAll()
     project.buildArtifacts()

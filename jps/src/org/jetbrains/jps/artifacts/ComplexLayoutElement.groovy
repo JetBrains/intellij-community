@@ -75,11 +75,16 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
     }
     def output = project.artifactBuilder.artifactOutputs[artifact]
     if (output != null) {
-      project.binding.ant.fileset(dir: output)
+      LayoutElement root = artifact.rootElement
+      if (root instanceof ArchiveElement) {
+        project.binding.ant.fileset(file: "$output/$root.name")
+      }
+      else {
+        project.binding.ant.fileset(dir: output)
+      }
     }
     else {
       project.error("Required artifact $artifactName is not build")
-//      super.build(project)
     }
   }
 
