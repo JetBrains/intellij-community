@@ -71,9 +71,23 @@ public class CreateLauncherScriptAction extends AnAction {
           return;
         }
       }
+
       if (!scriptFile.renameTo(scriptTarget)) {
-        final String mvCommand = "mv -f " + scriptFile + " " + pathname;
-        sudo(mvCommand, "In order to create a launcher script in " + scriptTarget.getParent() + ", please enter your administrator password:");
+        if (SystemInfo.isUnix) {
+          final String launcherScriptContainingDirPath = scriptTarget.getParent();
+          final String installationScriptSrc =
+            // create all intermediate folders
+            "mkdir -p " + launcherScriptContainingDirPath + "\n" +
+            // Copy file & change owner to root
+            // uid 0 = root
+            // gid 0 = root || wheel (MacOS)
+            "install -g 0 -o 0 " + scriptFile.getCanonicalPath() + " " + pathname;
+          final File installationScript = createTempExecutableScript("launcher_installer", installationScriptSrc);
+
+          sudo(installationScript.getCanonicalPath(),
+               installationScriptSrc,
+               "In order to create a launcher script in " + launcherScriptContainingDirPath + ", please enter your administrator password:");
+        }
       }
     }
     catch (Exception e) {
@@ -82,13 +96,15 @@ public class CreateLauncherScriptAction extends AnAction {
     }
   }
 
-  private static boolean sudo(String mvCommand, final String prompt) throws IOException, ScriptException, ExecutionException {
+  private static boolean sudo(String installationScriptPath,
+                              String installScriptSrc,
+                              final String prompt) throws IOException, ScriptException, ExecutionException {
     if (SystemInfo.isMac) {
       final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
       if (engine == null) {
         throw new IOException("Could not find AppleScript engine");
       }
-      engine.eval("do shell script \"" + mvCommand + "\" with administrator privileges");
+      engine.eval("do shell script \"" + installationScriptPath + "\" with administrator privileges");
     }
     else if (SystemInfo.isUnix) {
       GeneralCommandLine cmdLine = new GeneralCommandLine();
@@ -100,12 +116,12 @@ public class CreateLauncherScriptAction extends AnAction {
         cmdLine.setExePath("kdesudo");
       }
       else {
-        Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + mvCommand,
+        Messages.showMessageDialog("Unsupported graphical environment. Please execute the following command from the shell:\n" + installScriptSrc,
                                    "Create Launcher Script",
                                    Messages.getInformationIcon());
         return true;
       }
-      cmdLine.addParameter(mvCommand);
+      cmdLine.addParameter(installationScriptPath);
       cmdLine.createProcess();
     }
     return false;
@@ -129,6 +145,16 @@ public class CreateLauncherScriptAction extends AnAction {
     FileUtil.writeToFile(tempFile, launcherContents.getBytes(CharsetToolkit.UTF8_CHARSET));
     if (!tempFile.setExecutable(true)) {
       throw new IOException("Failed to mark the launcher script as executable");
+    }
+    return tempFile;
+  }
+
+  private static File createTempExecutableScript(final String fileNamePrefix,
+                                                 final String source) throws IOException {
+    final File tempFile = FileUtil.createTempFile(fileNamePrefix, "");
+    FileUtil.writeToFile(tempFile, source.getBytes(CharsetToolkit.UTF8_CHARSET));
+    if (!tempFile.setExecutable(true)) {
+      throw new IOException("Failed to mark the launcher installation script as executable: script path " + tempFile.getCanonicalPath());
     }
     return tempFile;
   }
