@@ -15,12 +15,14 @@
  */
 package git4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -44,9 +46,11 @@ public class GitConvertFilesDialog extends DialogWrapper {
   private JPanel myRootPanel;
   private CheckboxTreeBase myFilesToConvert; // Tree of files selected to convert
   private CheckedTreeNode myRootNode;
+  private final Project myProject;
 
   public GitConvertFilesDialog(Project project, Map<VirtualFile, Set<VirtualFile>> filesToShow) {
     super(project, true);
+    myProject = project;
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>(filesToShow.keySet());
     Collections.sort(roots, GitUtil.VIRTUAL_FILE_COMPARATOR);
     for (VirtualFile root : roots) {
@@ -62,6 +66,15 @@ public class GitConvertFilesDialog extends DialogWrapper {
     setTitle(GitBundle.getString("crlf.convert.title"));
     setOKButtonText(GitBundle.getString("crlf.convert.convert"));
     init();
+  }
+
+  @Override
+  public void show() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      DialogManager.getInstance(myProject).showDialog(this);
+    } else {
+      super.show();
+    }
   }
 
   /**
@@ -132,9 +145,6 @@ public class GitConvertFilesDialog extends DialogWrapper {
    * The cell renderer for the tree
    */
   static class FileTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       // Fix GTK background
