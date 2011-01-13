@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,22 +88,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
             "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
       }
       else if("content".equals(name) && "meta".equals(tagName) && getAttribute(tag, "name") == null) {
-        return new String[] {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft", "application/dec-dx", "application/mac-binhex40"
-            , "application/mac-compactpro", "application/macwriteii", "application/msword", "application/news-message-id", "application/news-transmission", "application/octet-stream"
-            , "application/oda", "application/pdf", "application/postscript", "application/powerpoint", "application/remote-printing", "application/rtf"
-            , "application/slate", "application/wita", "application/wordperfect5.1", "application/x-bcpio", "application/x-cdlink", "application/x-compress"
-            , "application/x-cpio", "application/x-csh", "application/x-director", "application/x-dvi", "application/x-gtar", "application/x-gzip"
-            , "application/x-hdf", "application/x-httpd-cgi", "application/x-koan", "application/x-latex", "application/x-mif", "application/x-netcdf"
-            , "application/x-sh", "application/x-shar", "application/x-stuffit", "application/x-sv4cpio", "application/x-sv4crc", "application/x-tar"
-            , "application/x-tcl", "application/x-tex", "application/x-texinfo", "application/x-troff", "application/x-troff-man", "application/x-troff-me"
-            , "application/x-troff-ms", "application/x-ustar", "application/x-wais-source", "application/zip", "audio/basic", "audio/mpeg"
-            , "audio/x-aiff", "audio/x-pn-realaudio", "audio/x-pn-realaudio-plugin", "audio/x-realaudio", "audio/x-wav", "chemical/x-pdb"
-            , "image/gif", "image/ief", "image/jpeg", "image/png", "image/tiff", "image/x-cmu-raster"
-            , "image/x-portable-anymap", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-pixmap", "image/x-rgb", "image/x-xbitmap"
-            , "image/x-xpixmap", "image/x-xwindowdump", "message/external-body", "message/news", "message/partial", "message/rfc822"
-            , "multipart/alternative", "multipart/appledouble", "multipart/digest", "multipart/mixed", "multipart/parallel", "text/html"
-            , "text/plain", "text/richtext", "text/tab-separated-values", "text/x-setext", "text/x-sgml", "video/mpeg"
-            , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
+        return HtmlUtil.CONTENT_TYPES;
       }
       else if("accept-charset".equals(name) || "charset".equals(name)) {
         Charset[] charSets = CharsetToolkit.getAvailableCharsets();
