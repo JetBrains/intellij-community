@@ -148,4 +148,7 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testConvertLambdaToFunction() {
     doTest(PyBundle.message("INTN.convert.lambda.to.function"));
   }
+  public void testConvertVariadicParam() { //PY-2264
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
 }

@@ -51,7 +51,9 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
         final String method_name = node.getName();
-        if (params.length == 0) {
+        final String CLS = "cls"; // TODO: move to style settings
+        final String MCS = "mcs"; // as per pylint inspection C0203
+        if (params.length == 0) { // fix: add
           // check for "staticmetod"
           if (flags.isStaticMethod()) return; // no params may be fine
           // check actual param list
@@ -63,7 +65,13 @@ public class PyMethodParametersInspection extends PyInspection {
               open_paren != null && close_paren != null &&
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
-              String paramName = flags.isClassMethod() || flags.isMetaclassMethod() ? "cls" : "self";
+              String paramName;
+              if (flags.isMetaclassMethod()) {
+                if(flags.isClassMethod()) paramName = MCS;
+                else paramName = CLS;
+              }
+              else if (flags.isClassMethod()) paramName = CLS;
+              else paramName = PyNames.CANONICAL_SELF;
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
                 ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
@@ -71,7 +79,7 @@ public class PyMethodParametersInspection extends PyInspection {
             }
           }
         }
-        else {
+        else { // fix: rename
           PyNamedParameter first_param = params[0].getAsNamed();
           if (first_param != null) {
             String pname = first_param.getText();
@@ -85,18 +93,20 @@ public class PyMethodParametersInspection extends PyInspection {
               );
               return;
             }
-            String CLS = "cls"; // TODO: move to style settings
-            if (flags.isMetaclassMethod() && PyNames.NEW.equals(method_name)) {
-              final String[] POSSIBLE_PARAM_NAMES = {"typ", "meta"}; // TODO: move to style settings
-              if (!PyUtil.among(pname, POSSIBLE_PARAM_NAMES)) {
+            if (flags.isMetaclassMethod()) {
+              String expected_name;
+              if (PyNames.NEW.equals(method_name) || flags.isClassMethod()) expected_name = MCS;
+              else if (flags.isSpecialMetaclassMethod()) expected_name = CLS;
+              else expected_name = PyNames.CANONICAL_SELF;
+              if (!expected_name.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyBundle.message("INSP.usually.named.$0", POSSIBLE_PARAM_NAMES[0]),
-                  new RenameParameterQuickFix(POSSIBLE_PARAM_NAMES[0])
+                  PyBundle.message("INSP.usually.named.$0", expected_name),
+                  new RenameParameterQuickFix(expected_name)
                 );
               }
             }
-            else if (flags.isClassMethod() || flags.isSpecialMetaclassMethod() || PyNames.NEW.equals(method_name)) {
+            else if (flags.isClassMethod() || PyNames.NEW.equals(method_name)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
