@@ -147,10 +147,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void updateSelection() {
-    final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath != null) {
-      TreeUtil.selectNode(myTree, (TreeNode)selectionPath.getLastPathComponent());
-      TreeUtil.showRowCentered(myTree, myTree.getRowForPath(selectionPath), false);
+    if (myTree != null) {
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null) {
+        TreeUtil.selectNode(myTree, (TreeNode)selectionPath.getLastPathComponent());
+        TreeUtil.showRowCentered(myTree, myTree.getRowForPath(selectionPath), false);
+      }
     }
   }
 
