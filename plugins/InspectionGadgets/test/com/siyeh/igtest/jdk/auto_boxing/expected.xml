@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;0L&lt;/code&gt; #loc</description>
+  </problem>
+
+ <!-- <problem>
+    <file>AutoBoxing.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;someNumber &lt;&lt; 2&lt;/code&gt; #loc</description>
+  </problem>-->
+
+</problems>

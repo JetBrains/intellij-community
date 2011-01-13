@@ -66,6 +66,9 @@ public class ExpectedTypeUtils{
         private static final Set<IElementType> booleanOps =
                 new HashSet<IElementType>(5);
 
+        private static final Set<IElementType> shiftOps =
+                new HashSet<IElementType>(3);
+
         private static final Set<IElementType> operatorAssignmentOps =
                 new HashSet<IElementType>(11);
 
@@ -89,6 +92,10 @@ public class ExpectedTypeUtils{
             booleanOps.add(JavaTokenType.OROR);
             booleanOps.add(JavaTokenType.OR);
 
+            shiftOps.add(JavaTokenType.LTLT);
+            shiftOps.add(JavaTokenType.GTGT);
+            shiftOps.add(JavaTokenType.GTGTGT);
+
             operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
             operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
             operatorAssignmentOps.add(JavaTokenType.ASTERISKEQ);
@@ -108,7 +115,6 @@ public class ExpectedTypeUtils{
 
         ExpectedTypeVisitor(PsiExpression wrappedExpression,
                             boolean calculateTypeForComplexReferences){
-            super();
             this.wrappedExpression = wrappedExpression;
             this.calculateTypeForComplexReferences =
                     calculateTypeForComplexReferences;
@@ -158,6 +164,18 @@ public class ExpectedTypeUtils{
                 expectedType = null;
             } else if (isArithmeticOperation(tokenType)) {
                 expectedType = type;
+            } else if (isShiftOperation(tokenType)) {
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                if (wrappedExpression.equals(lhs)) {
+                    expectedType = unaryNumericPromotion(lhs.getType());
+                } else {
+                    final PsiExpression rhs = binaryExpression.getROperand();
+                    if (rhs == null) {
+                        expectedType =  null;
+                    } else {
+                        expectedType = unaryNumericPromotion(rhs.getType());
+                    }
+                }
             } else if (ComparisonUtils.isComparisonOperation(tokenType)) {
                 final PsiExpression rhs = binaryExpression.getROperand();
                 if (rhs == null) {
@@ -207,6 +225,31 @@ public class ExpectedTypeUtils{
             } else {
                 expectedType = null;
             }
+        }
+
+        /**
+         * JLS 5.6.1 Unary Numeric Promotion
+         */
+        private static PsiType unaryNumericPromotion(PsiType type) {
+            if (type == null) {
+                return null;
+            }
+            if (type.equalsToText("java.lang.Byte") ||
+                    type.equalsToText("java.lang.Short") ||
+                    type.equalsToText("java.lang.Character") ||
+                    type.equalsToText("java.lang.Integer") ||
+                    type.equals(PsiType.BYTE) ||
+                    type.equals(PsiType.SHORT) ||
+                    type.equals(PsiType.CHAR)) {
+                return PsiType.INT;
+            } else if (type.equalsToText("java.lang.Long")) {
+                return PsiType.LONG;
+            } else if (type.equalsToText("java.lang.Float")) {
+                return PsiType.FLOAT;
+            } else if (type.equalsToText("java.lang.Double")) {
+                return PsiType.DOUBLE;
+            }
+            return type;
         }
 
         @Override public void visitPrefixExpression(
@@ -517,6 +560,11 @@ public class ExpectedTypeUtils{
         private static boolean isBooleanOperation(
                 @NotNull IElementType sign){
             return booleanOps.contains(sign);
+        }
+
+        private static boolean isShiftOperation(
+                @NotNull IElementType sign){
+            return shiftOps.contains(sign);
         }
 
         private static boolean isOperatorAssignmentOperation(
