@@ -84,6 +84,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       getReferenceElement(newExpression).bindToElement(aClass);
       aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
       Template template = templateBuilder.buildTemplate();
+      template.setToReformat(true);
 
       Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
       TextRange textRange = aClass.getTextRange();

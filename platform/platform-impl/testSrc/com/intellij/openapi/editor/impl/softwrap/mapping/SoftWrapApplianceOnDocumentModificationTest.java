@@ -33,10 +33,25 @@ import java.util.List;
  */
 public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorProcessingOnDocumentModificationTest {
 
+  private boolean mySmartHome;
+  
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    if (myEditor == null) {
+      return;
+    }
+
+    EditorSettings settings = myEditor.getSettings();
+    mySmartHome = settings.isSmartHome();
+  }
+
   @Override
   protected void tearDown() throws Exception {
     if (myEditor != null) {
-      myEditor.getSettings().setUseSoftWraps(false);
+      EditorSettings settings = myEditor.getSettings();
+      settings.setUseSoftWraps(false);
+      settings.setSmartHome(mySmartHome);
     }
     super.tearDown();
   }
@@ -650,6 +665,34 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
       result.add(softWrap.getStart());
     }
     return result;
+  }
+  
+  public void testNonSmartHome() throws IOException {
+    String text =
+      "     this is a string that starts with white space and is long enough to be soft-wrapped\n" +
+      " this is a 'prefix' text before collapsed multi-line folding that is long enough to be soft-wrapped first fold line\n" +
+      "second fold line";
+    init(200, text);
+    
+    addCollapsedFoldRegion(text.indexOf("first fold line"), text.length(), "...");
+
+    List<? extends SoftWrap> softWraps = getSoftWrapModel().getRegisteredSoftWraps();
+    assertTrue(!softWraps.isEmpty());
+
+    CaretModel caretModel = myEditor.getCaretModel();
+    SoftWrap softWrap = softWraps.get(0);
+    
+    // Test non-smart home
+    myEditor.getSettings().setSmartHome(false);
+    caretModel.moveToOffset(softWrap.getStart() + 1);
+    int visLine = caretModel.getVisualPosition().line;
+    home();
+    assertEquals(new VisualPosition(visLine, 0), caretModel.getVisualPosition());
+    
+    caretModel.moveToOffset(text.length());
+    home();
+    visLine = caretModel.getVisualPosition().line;
+    assertEquals(new VisualPosition(visLine, 0), caretModel.getVisualPosition());
   }
   
   private void init(final int visibleWidth, String fileText) throws IOException {

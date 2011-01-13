@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +38,7 @@ import javax.swing.*;
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
   private static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
+  private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
     super("Open in browser", "Open corresponding GitHub link in browser", ICON);
@@ -44,17 +46,25 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    if (GithubUtil.areCredentialsEmpty() ||
-        project == null || project.isDefault() || virtualFile == null ||
-        GithubUtil.getGithubBoundRepository(project) == null) {
-      e.getPresentation().setVisible(false);
-      e.getPresentation().setEnabled(false);
-      return;
+    final long startTime = System.nanoTime();
+    try {
+      final Project project = e.getData(PlatformDataKeys.PROJECT);
+      final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      if (GithubUtil.areCredentialsEmpty() ||
+          project == null || project.isDefault() || virtualFile == null ||
+          GithubUtil.getGithubBoundRepository(project) == null) {
+        e.getPresentation().setVisible(false);
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(true);
     }
-    e.getPresentation().setVisible(true);
-    e.getPresentation().setEnabled(true);
+    finally {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("GithubOpenInBrowserAction#update finished in: " + (System.nanoTime() - startTime) / 10e6 + "ms");
+      }
+    }
   }
 
   @Override

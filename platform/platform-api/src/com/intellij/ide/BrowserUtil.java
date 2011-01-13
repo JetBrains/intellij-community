@@ -177,7 +177,7 @@ public class BrowserUtil {
         return;
       }
 
-      command = getOpenBrowserCommand(browserPath, url);
+      command = getOpenBrowserCommand(browserPath);
     }
     catch (NullPointerException e) {
       // todo: fix the possible problem on startup, see SCR #35066
@@ -397,11 +397,23 @@ public class BrowserUtil {
     return false;
   }
 
+  public static boolean isOpenCommandSupportsArgs() {
+    return SystemInfo.isMacOSSnowLeopard;
+  }
+
+  /**
+   * @deprecated use {@link #getOpenBrowserCommand(String)} instead
+   */
   public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {
+    return getOpenBrowserCommand(browserPath);
+  }
+
+  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
     String[] command;
     if (SystemInfo.isMac) {
-      if (parameters != null && parameters.length > 1) {
-        //open -a command doesn't support additional parameters
+      File browserExecutable = new File(browserPath);
+      if (browserExecutable.isFile()) {
+        //versions before 10.6 don't allow to pass command line arguments to browser via 'open' command so we use full path to browser executable in such cases
         command = new String[] {browserPath};
       }
       else {

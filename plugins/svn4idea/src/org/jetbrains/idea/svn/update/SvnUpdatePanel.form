@@ -37,12 +37,12 @@
           <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
         </properties>
       </component>
-      <component id="1abb2" class="javax.swing.JCheckBox" binding="myStatusBox">
+      <component id="1abb2" class="javax.swing.JCheckBox" binding="myForceBox">
         <constraints>
           <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="checkbox.update.switch.configurable.run.status"/>
+          <text value="&amp;Force update"/>
         </properties>
       </component>
       <component id="e86c1" class="javax.swing.JCheckBox" binding="myLockOnDemand" custom-create="true">
