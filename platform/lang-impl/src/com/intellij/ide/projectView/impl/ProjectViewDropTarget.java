@@ -257,6 +257,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
   }
 
+  @Nullable
   protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
     if (fileList == null) return null;
     List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
@@ -294,7 +295,8 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       if (targetNode instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
         if (userObject instanceof DropTargetNode && ((DropTargetNode) userObject).canDrop(sourceNodes)) {
-          ((DropTargetNode) userObject).drop(sourceNodes);
+          final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+          ((DropTargetNode) userObject).drop(sourceNodes, dataContext);
         }
       }
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
@@ -333,6 +335,15 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
       final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
+
+      if (targetNode instanceof DefaultMutableTreeNode) {
+        final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
+        if (userObject instanceof DropTargetNode) {
+          final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+          ((DropTargetNode) userObject).dropExternalFiles(sourceFileArray, dataContext);
+          return;
+        }
+      }
       doDrop(targetNode, sourceFileArray, true);
     }
   }
