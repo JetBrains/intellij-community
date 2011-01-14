@@ -78,7 +78,8 @@ public class WeakestTypeFinder {
         Set<PsiClass> weakestTypeClasses = new HashSet();
         weakestTypeClasses.add(javaLangObjectClass);
         final Query<PsiReference> query =
-                ReferencesSearch.search(variableOrMethod);
+                ReferencesSearch.search(variableOrMethod,
+                        variableOrMethod.getUseScope());
         boolean hasUsages = false;
         for (PsiReference reference : query) {
             if (reference == null) {
