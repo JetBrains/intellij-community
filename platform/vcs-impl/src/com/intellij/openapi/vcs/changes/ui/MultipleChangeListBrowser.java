@@ -179,6 +179,11 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     return filterBySelectedChangeList(myViewer.getIncludedChanges());
   }
 
+  @NotNull
+  public Collection<Change> getChangesIncludedInAllLists() {
+    return myViewer.getIncludedChanges();
+  }
+
   private List<Change> filterBySelectedChangeList(final Collection<Change> changes) {
     List<Change> filtered = new ArrayList<Change>();
     for (Change change : changes) {

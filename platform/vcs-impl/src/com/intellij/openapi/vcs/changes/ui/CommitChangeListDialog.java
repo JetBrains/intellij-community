@@ -91,7 +91,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final Map<String, String> myListComments;
   private String myLastSelectedListName;
-  private CommitLegendPanel.ChangeInfoCalculator myChangesInfoCalculator;
+  private ChangeInfoCalculator myChangesInfoCalculator;
 
   private final PseudoMap<Object, Object> myAdditionalData;
   private String myHelpId;
@@ -785,7 +785,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     rootPane.add(browserHeader, BorderLayout.NORTH);
 
     JPanel infoPanel = new JPanel(new BorderLayout());
-    myChangesInfoCalculator = new CommitLegendPanel.ChangeInfoCalculator();
+    myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     JPanel commonPanel = new JPanel(new BorderLayout());
     commonPanel.add(myLegend.getComponent());
