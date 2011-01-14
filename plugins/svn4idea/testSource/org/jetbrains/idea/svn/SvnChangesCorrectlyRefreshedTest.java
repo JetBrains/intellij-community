@@ -62,7 +62,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
   private void sleep1000() {
     try {
-      Thread.sleep(1000);
+      Thread.sleep(300);
     }
     catch (InterruptedException e) {
       //

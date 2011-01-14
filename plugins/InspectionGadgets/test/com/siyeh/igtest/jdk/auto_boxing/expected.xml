@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;0L&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;someNumber &lt;&lt; 2&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;someNumber++&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;~someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>13</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;-someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;+someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;3&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>26</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;3&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;Boolean.TRUE &amp; false&lt;/code&gt; #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>41</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;Integer.valueOf(2) &amp; 1L&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

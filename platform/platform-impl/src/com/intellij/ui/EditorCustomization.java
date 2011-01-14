@@ -49,5 +49,13 @@ public interface EditorCustomization {
    * @param editor      editor to customize
    * @param feature     feature to apply to the given editor
    */
-  void customize(@NotNull EditorEx editor, @NotNull Feature feature);
+  void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
+
+  /**
+   * Asks to un-apply customization performed earlier during {@link #addCustomization(EditorEx, Feature)} processing (if any).
+   * 
+   * @param editor      editor to customize
+   * @param feature     feature to un-apply to the given editor
+   */
+  void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature);
 }

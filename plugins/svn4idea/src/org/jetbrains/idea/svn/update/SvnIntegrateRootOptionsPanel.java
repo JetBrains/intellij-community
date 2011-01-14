@@ -42,6 +42,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRoot = root;
     myVcs = vcs;
 
+    //myPanel.setMinimumSize(new Dimension(670, 70));
     myMergeText1.setEditable(true);
 
     myUrlLabel1.setLabelFor(myMergeText1);

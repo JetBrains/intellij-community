@@ -59,46 +59,45 @@ public class TextPanel extends JComponent {
   @Override
   protected void paintComponent(final Graphics g) {
     String s = getText();
-    if (s != null) {
-      final Rectangle bounds = getBounds();
-      final Insets insets = getInsets();
+    if (s == null) return;
+    final Rectangle bounds = getBounds();
+    final Insets insets = getInsets();
 
-      final Graphics2D g2 = (Graphics2D)g;
-      g2.setFont(getFont());
+    final Graphics2D g2 = (Graphics2D)g;
+    g2.setFont(getFont());
 
-      UIUtil.applyRenderingHints(g2);
+    UIUtil.applyRenderingHints(g2);
 
-      final FontMetrics fm = g2.getFontMetrics();
-      final int sWidth = fm.stringWidth(s);
+    final FontMetrics fm = g2.getFontMetrics();
+    final int sWidth = fm.stringWidth(s);
 
-      int x = insets.left;
-      if (myAlignment == JComponent.CENTER_ALIGNMENT || myAlignment == JComponent.RIGHT_ALIGNMENT) {
-        x = myAlignment == JComponent.CENTER_ALIGNMENT ? (bounds.width - sWidth) / 2 : bounds.width - insets.right - sWidth;
-      }
-
-      final Rectangle textR = new Rectangle();
-      final Rectangle iconR = new Rectangle();
-      final Rectangle viewR = new Rectangle(bounds);
-      textR.x = textR.y = textR.width = textR.height = 0;
-
-      viewR.width -= insets.left;
-      viewR.width -= insets.right;
-
-      if (sWidth > (bounds.width - insets.left - insets.right)) {
-        s = SwingUtilities
-          .layoutCompoundLabel(fm, s, null, SwingUtilities.CENTER, SwingUtilities.CENTER, SwingUtilities.CENTER, SwingUtilities.TRAILING,
-                               bounds, iconR, textR, 0);
-      }
-
-      final int y = UIUtil.getStringY(s, bounds, g2);
-      if (SystemInfo.isMac && myDecorate) {
-        g2.setColor(new Color(215, 215, 215));
-        g2.drawString(s, x, y + 1);
-      }
-
-      g2.setColor(getForeground());
-      g2.drawString(s, x, y);
+    int x = insets.left;
+    if (myAlignment == Component.CENTER_ALIGNMENT || myAlignment == Component.RIGHT_ALIGNMENT) {
+      x = myAlignment == Component.CENTER_ALIGNMENT ? (bounds.width - sWidth) / 2 : bounds.width - insets.right - sWidth;
     }
+
+    final Rectangle textR = new Rectangle();
+    final Rectangle iconR = new Rectangle();
+    final Rectangle viewR = new Rectangle(bounds);
+    textR.x = textR.y = textR.width = textR.height = 0;
+
+    viewR.width -= insets.left;
+    viewR.width -= insets.right;
+
+    if (sWidth > bounds.width - insets.left - insets.right) {
+      s = SwingUtilities
+        .layoutCompoundLabel(fm, s, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.TRAILING,
+                             bounds, iconR, textR, 0);
+    }
+
+    final int y = UIUtil.getStringY(s, bounds, g2);
+    if (SystemInfo.isMac && myDecorate) {
+      g2.setColor(new Color(215, 215, 215));
+      g2.drawString(s, x, y + 1);
+    }
+
+    g2.setColor(getForeground());
+    g2.drawString(s, x, y);
   }
 
   public void setTextAlignment(final float alignment) {

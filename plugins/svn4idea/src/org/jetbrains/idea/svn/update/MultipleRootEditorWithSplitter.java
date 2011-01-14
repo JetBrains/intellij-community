@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.AdjustComponentWhenShown;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -29,13 +33,30 @@ import java.awt.*;
 import java.io.File;
 import java.util.Map;
 
-public class MultipleRootsEditor {
+/**
+ * @author irengrig
+ *         Date: 1/14/11
+ *         Time: 1:17 PM
+ */
+public class MultipleRootEditorWithSplitter extends JPanel {
   private JList myList;
   private JPanel myConfigureRootPanel;
-  private JPanel myPanel;
   @NonNls private static final String EMPTY = "empty";
 
-  public MultipleRootsEditor(final Map<FilePath, SvnPanel> rootToPanel, final Project project) {
+  public MultipleRootEditorWithSplitter(final Map<FilePath, SvnPanel> rootToPanel, final Project project) {
+    super(new BorderLayout());
+
+    final Splitter splitter = new Splitter(false, 0.5f);
+    splitter.setShowDividerControls(true);
+    add(splitter, BorderLayout.CENTER);
+
+    myList = new JBList();
+    final Color borderColor = UIUtil.getBorderColor();
+    myList.setBorder(BorderFactory.createLineBorder(borderColor));
+    myConfigureRootPanel = new JPanel();
+    myConfigureRootPanel.setBorder(BorderFactory.createLineBorder(borderColor));
+    splitter.setFirstComponent(myList);
+    splitter.setSecondComponent(myConfigureRootPanel);
 
     final CardLayout layout = new CardLayout();
     myConfigureRootPanel.setLayout(layout);
@@ -44,8 +65,13 @@ public class MultipleRootsEditor {
 
     layout.addLayoutComponent(new JPanel(), EMPTY);
 
+    int minimumRightSize = 320;
     for (FilePath root : rootToPanel.keySet()) {
-      myConfigureRootPanel.add(rootToPanel.get(root).getPanel(), root.getPath());
+      final JPanel panel = rootToPanel.get(root).getPanel();
+      myConfigureRootPanel.add(panel, root.getPath());
+      if (panel.getMinimumSize().width > 0) {
+        minimumRightSize = Math.max(minimumRightSize, panel.getPreferredSize().width);
+      }
       listModel.addElement(root);
     }
 
@@ -83,12 +109,29 @@ public class MultipleRootsEditor {
     });
 
     myList.setSelectedIndex(0);
-
     myList.requestFocus();
 
-  }
+    final int finalMinimumRightSize = minimumRightSize;
+    new AdjustComponentWhenShown() {
+      @Override
+      protected boolean init() {
+        if (getWidth() < finalMinimumRightSize * 2) {
+          final int left = getWidth() - finalMinimumRightSize;
+          final float newProportion;
+          if (left < 0) {
+            newProportion = 0.2f;
+          } else {
+            newProportion = ((float) left / getWidth());
+          }
+          splitter.setProportion(newProportion);
+        }
+        return true;
+      }
 
-  public JPanel getPanel() {
-    return myPanel;
+      @Override
+      protected boolean canExecute() {
+        return getWidth() > 0;
+      }
+    }.install(splitter);
   }
 }

@@ -22,13 +22,12 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -61,22 +60,17 @@ public abstract class GitTest extends AbstractVcsTestCase {
     myMainRepo = initRepositories();
 
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
-    if (EventQueue.isDispatchThread()) {
-      initProject(myProjectDir);
-    } else {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            initProject(myProjectDir);
-            activateVCS(GitVcs.NAME);
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-          }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          initProject(myProjectDir);
+          activateVCS(GitVcs.NAME);
+        } catch (Exception e) {
+          e.printStackTrace();
         }
-      });
-    }
+      }
+    });
 
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);

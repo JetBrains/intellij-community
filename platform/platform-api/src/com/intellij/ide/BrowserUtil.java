@@ -397,7 +397,7 @@ public class BrowserUtil {
     return false;
   }
 
-  public static boolean isOpenCommandSupportsArgs() {
+  public static boolean isOpenCommandSupportArgs() {
     return SystemInfo.isMacOSSnowLeopard;
   }
 

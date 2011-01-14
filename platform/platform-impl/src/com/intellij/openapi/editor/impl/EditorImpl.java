@@ -391,6 +391,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     initComponent();
 
     myScrollingModel = new ScrollingModelImpl(this);
+    
+    if (mySettings.isUseSoftWraps()) {
+      mySettings.setAdditionalColumnsCount(0);
+    }
 
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
@@ -5423,7 +5427,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int endToUse = Math.min(lineCount, myLineWidths.size());
         if (endToUse > 0 && getSoftWrapModel().isSoftWrappingEnabled()) {
           Rectangle visibleArea = getScrollingModel().getVisibleArea();
-          startToUse = xyToLogicalPosition(visibleArea.getLocation()).line + 1;
+          startToUse = xyToLogicalPosition(visibleArea.getLocation()).line;
           endToUse = Math.min(endToUse, xyToLogicalPosition(new Point(0, visibleArea.y + visibleArea.height)).line);
         }
         int maxWidth = 0;

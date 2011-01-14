@@ -88,7 +88,7 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createConfirmation(String title, String yesText, String noText, Runnable onYes, Runnable onNo, int defaultOptionIndex);
 
   public abstract ListPopupStep createActionsStep(ActionGroup actionGroup,
-                                                  DataContext dataContext,
+                                                  @NotNull DataContext dataContext,
                                                   boolean showNumbers,
                                                   boolean showDisabledActions,
                                                   String title,
@@ -96,7 +96,7 @@ public abstract class JBPopupFactory {
                                                   boolean honorActionMnemonics);
 
   public abstract ListPopupStep createActionsStep(ActionGroup actionGroup,
-                                                  DataContext dataContext,
+                                                  @NotNull DataContext dataContext,
                                                   boolean showNumbers,
                                                   boolean showDisabledActions,
                                                   String title,
@@ -157,7 +157,7 @@ public abstract class JBPopupFactory {
    */
   public abstract ListPopup createActionGroupPopup(String title,
                                                    ActionGroup actionGroup,
-                                                   DataContext dataContext,
+                                                   @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
                                                    boolean showDisabledActions);
 
@@ -174,9 +174,9 @@ public abstract class JBPopupFactory {
    */
   public abstract ListPopup createActionGroupPopup(String title,
                                                    ActionGroup actionGroup,
-                                                   DataContext dataContext,
+                                                   @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
-                                                   boolean showDisabledActions, final @Nullable String actionPlace);
+                                                   boolean showDisabledActions, @Nullable final String actionPlace);
 
   /**
    * Creates a popup allowing to choose one of the actions from the specified action group.
@@ -193,7 +193,7 @@ public abstract class JBPopupFactory {
    */
   public abstract ListPopup createActionGroupPopup(String title,
                                                    ActionGroup actionGroup,
-                                                   DataContext dataContext,
+                                                   @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
                                                    boolean showDisabledActions,
                                                    @Nullable Runnable disposeCallback,
@@ -201,7 +201,7 @@ public abstract class JBPopupFactory {
 
   public abstract ListPopup createActionGroupPopup(String title,
                                                    ActionGroup actionGroup,
-                                                   DataContext dataContext,
+                                                   @NotNull DataContext dataContext,
                                                    boolean showNumbers,
                                                    boolean showDisabledActions,
                                                    boolean honorActionMnemonics,
@@ -237,7 +237,7 @@ public abstract class JBPopupFactory {
    *         - current selected node for tree<br>
    *         - current selected row for list<br>
    */
-  public abstract RelativePoint guessBestPopupLocation(DataContext dataContext);
+  public abstract RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext);
 
   /**
    * Returns the location where a popup invoked from the specified editor should be displayed.

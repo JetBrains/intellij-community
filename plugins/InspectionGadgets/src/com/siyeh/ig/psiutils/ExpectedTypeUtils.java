@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ import java.util.Set;
 
 public class ExpectedTypeUtils{
 
-    private ExpectedTypeUtils(){
-        super();
-    }
+    private ExpectedTypeUtils() {}
 
     @Nullable
     public static PsiType findExpectedType(
@@ -68,6 +66,9 @@ public class ExpectedTypeUtils{
         private static final Set<IElementType> booleanOps =
                 new HashSet<IElementType>(5);
 
+        private static final Set<IElementType> shiftOps =
+                new HashSet<IElementType>(3);
+
         private static final Set<IElementType> operatorAssignmentOps =
                 new HashSet<IElementType>(11);
 
@@ -91,6 +92,10 @@ public class ExpectedTypeUtils{
             booleanOps.add(JavaTokenType.OROR);
             booleanOps.add(JavaTokenType.OR);
 
+            shiftOps.add(JavaTokenType.LTLT);
+            shiftOps.add(JavaTokenType.GTGT);
+            shiftOps.add(JavaTokenType.GTGTGT);
+
             operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
             operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
             operatorAssignmentOps.add(JavaTokenType.ASTERISKEQ);
@@ -110,7 +115,6 @@ public class ExpectedTypeUtils{
 
         ExpectedTypeVisitor(PsiExpression wrappedExpression,
                             boolean calculateTypeForComplexReferences){
-            super();
             this.wrappedExpression = wrappedExpression;
             this.calculateTypeForComplexReferences =
                     calculateTypeForComplexReferences;
@@ -152,37 +156,92 @@ public class ExpectedTypeUtils{
         }
 
         @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression binaryExpression){
+                @NotNull PsiBinaryExpression binaryExpression) {
             final PsiJavaToken sign = binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             final PsiType type = binaryExpression.getType();
-            if(TypeUtils.isJavaLangString(type)){
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
                 expectedType = null;
-            } else if(isArithmeticOperation(tokenType)){
-                expectedType = type;
-            } else if(ComparisonUtils.isComparisonOperation(tokenType)){
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                final PsiType lhsType = lhs.getType();
-                if(ClassUtils.isPrimitive(lhsType)){
-                    expectedType = lhsType;
-                    return;
-                }
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if(rhs == null){
-                    expectedType = null;
-                    return;
-                }
-                final PsiType rhsType = rhs.getType();
-                if(ClassUtils.isPrimitive(rhsType)){
-                    expectedType = rhsType;
-                    return;
-                }
+                return;
+            }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            PsiType lhsType = lhs.getType();
+            if (lhsType == null) {
                 expectedType = null;
-            } else if(isBooleanOperation(tokenType)){
+                return;
+            }
+            PsiType rhsType = rhs.getType();
+            if (rhsType == null) {
+                expectedType = null;
+                return;
+            }
+            if (TypeUtils.isJavaLangString(type) ||
+                    isArithmeticOperation(tokenType) ||
+                    isBooleanOperation(tokenType)) {
                 expectedType = type;
-            } else{
+            } else if (isShiftOperation(tokenType)) {
+                if (wrappedExpression.equals(lhs)) {
+                    expectedType = unaryNumericPromotion(lhsType);
+                } else {
+                    expectedType = unaryNumericPromotion(rhsType);
+                }
+            } else if (ComparisonUtils.isComparisonOperation(tokenType)) {
+                if (!ClassUtils.isPrimitive(lhsType)) {
+                    lhsType = PsiPrimitiveType.getUnboxedType(lhsType);
+                    if (lhsType == null) {
+                        expectedType = null;
+                        return;
+                    }
+                }
+                if (!ClassUtils.isPrimitive(rhsType)) {
+                    rhsType = PsiPrimitiveType.getUnboxedType(rhsType);
+                    if (rhsType == null) {
+                        expectedType = null;
+                        return;
+                    }
+                }
+                // JLS 5.6.2 Binary Numeric Promotion
+                if (PsiType.DOUBLE.equals(lhsType) ||
+                        PsiType.DOUBLE.equals(rhsType)) {
+                    expectedType = PsiType.DOUBLE;
+                } else if (PsiType.FLOAT.equals(lhsType) ||
+                        PsiType.FLOAT.equals(rhsType)) {
+                    expectedType = PsiType.FLOAT;
+                } else if (PsiType.LONG.equals(lhsType) ||
+                        PsiType.LONG.equals(rhsType)) {
+                    expectedType = PsiType.LONG;
+                } else {
+                    expectedType = PsiType.INT;
+                }
+            } else {
                 expectedType = null;
             }
+        }
+
+        /**
+         * JLS 5.6.1 Unary Numeric Promotion
+         */
+        private static PsiType unaryNumericPromotion(PsiType type) {
+            if (type == null) {
+                return null;
+            }
+            if (type.equalsToText("java.lang.Byte") ||
+                    type.equalsToText("java.lang.Short") ||
+                    type.equalsToText("java.lang.Character") ||
+                    type.equalsToText("java.lang.Integer") ||
+                    type.equals(PsiType.BYTE) ||
+                    type.equals(PsiType.SHORT) ||
+                    type.equals(PsiType.CHAR)) {
+                return PsiType.INT;
+            } else if (type.equalsToText("java.lang.Long")) {
+                return PsiType.LONG;
+            } else if (type.equalsToText("java.lang.Float")) {
+                return PsiType.FLOAT;
+            } else if (type.equalsToText("java.lang.Double")) {
+                return PsiType.DOUBLE;
+            }
+            return type;
         }
 
         @Override public void visitPrefixExpression(
@@ -370,11 +429,11 @@ public class ExpectedTypeUtils{
                     final PsiElement parent = referenceExpression.getParent();
                     final PsiType returnType;
                     if (parent instanceof PsiMethodCallExpression) {
-                        final PsiMethodCallExpression methodCallExpression = 
+                        final PsiMethodCallExpression methodCallExpression =
                                 (PsiMethodCallExpression) parent;
                         final PsiType type = methodCallExpression.getType();
                         if (!PsiType.VOID.equals(type)) {
-                            returnType = 
+                            returnType =
                                     findExpectedType(methodCallExpression, true);
                         } else {
                             returnType = null;
@@ -493,6 +552,11 @@ public class ExpectedTypeUtils{
         private static boolean isBooleanOperation(
                 @NotNull IElementType sign){
             return booleanOps.contains(sign);
+        }
+
+        private static boolean isShiftOperation(
+                @NotNull IElementType sign){
+            return shiftOps.contains(sign);
         }
 
         private static boolean isOperatorAssignmentOperation(

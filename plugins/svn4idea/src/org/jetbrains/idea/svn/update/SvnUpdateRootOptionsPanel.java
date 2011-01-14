@@ -61,6 +61,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myVcs = vcs;
     myIsNested = FilePathUtil.isNested(roots, myRoot);
 
+    //myPanel.setMinimumSize(new Dimension(320, 70));
     myURLText.setEditable(true);
 
     myURLText.addActionListener(new ActionListener() {

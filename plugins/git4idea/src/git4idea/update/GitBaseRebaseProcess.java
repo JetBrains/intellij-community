@@ -26,12 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,22 +41,13 @@ import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitVcsSettings;
+import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
-import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -407,7 +393,7 @@ public abstract class GitBaseRebaseProcess {
       if (settings == null) {
         return false;
       }
-      boolean result = GitConvertFilesDialog.showDialogIfNeeded(myProject, settings, mySortedChanges, myExceptions);
+      boolean result = GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, settings, mySortedChanges, myExceptions);
       if (!result) {
         if (myExceptions.isEmpty()) {
           //noinspection ThrowableInstanceNeverThrown

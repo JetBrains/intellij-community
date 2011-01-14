@@ -130,6 +130,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
     mySelectionMulticaster.addListener(listener);
   }
 
+  @Override
+  public void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable) {
+    mySelectionMulticaster.addListener(listener, parentDisposable);
+  }
+
   public void removeSelectionListener(@NotNull SelectionListener listener) {
     mySelectionMulticaster.removeListener(listener);
   }
@@ -173,6 +178,11 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
 
   public void addFocusChangeListner(@NotNull FocusChangeListener listener) {
     myFocusChangeListenerMulticaster.addListener(listener);
+  }
+
+  @Override
+  public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
+    myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
   }
 
   public void removeFocusChangeListner(@NotNull FocusChangeListener listener) {

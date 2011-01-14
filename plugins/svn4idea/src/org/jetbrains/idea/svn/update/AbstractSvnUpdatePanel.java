@@ -59,8 +59,8 @@ public abstract class AbstractSvnUpdatePanel {
         configureRootsPanel.add(myRootToPanel.values().iterator().next().getPanel(), BorderLayout.CENTER);
       }
       else {
-        final MultipleRootsEditor multipleRootsEditor = new MultipleRootsEditor(myRootToPanel, myVCS.getProject());
-        configureRootsPanel.add(multipleRootsEditor.getPanel(), BorderLayout.CENTER);
+        final MultipleRootEditorWithSplitter multipleRootsEditor = new MultipleRootEditorWithSplitter(myRootToPanel, myVCS.getProject());
+        configureRootsPanel.add(multipleRootsEditor, BorderLayout.CENTER);
       }
     }
   }

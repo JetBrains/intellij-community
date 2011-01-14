@@ -49,7 +49,6 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-    Editor result = null;
 
     if (project == null) return null;
 
@@ -59,6 +58,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
       splitters = ((DockableEditorTabbedContainer)c).getSplitters();
     }
 
+    Editor result = null;
     if (splitters != null && splitters.getCurrentWindow() != null) {
       EditorWithProviderComposite editor = splitters.getCurrentWindow().getSelectedEditor();
       if (editor != null) {
