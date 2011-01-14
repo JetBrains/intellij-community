@@ -71,4 +71,19 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
     <description>Auto-boxing &lt;code&gt;Integer.valueOf(2) &amp; 1L&lt;/code&gt; #loc</description>
   </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>45</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;8&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoBoxing.java</file>
+    <line>46</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-boxing</problem_class>
+    <description>Auto-boxing &lt;code&gt;(byte)7&lt;/code&gt; #loc</description>
+  </problem>
+
 </problems>

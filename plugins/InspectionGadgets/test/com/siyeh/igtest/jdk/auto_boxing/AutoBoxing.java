@@ -40,4 +40,9 @@ public class AutoBoxing {
         Boolean c = Boolean.TRUE & false;
         Long d = Integer.valueOf(2) & 1L;
     }
+
+    void constantBoxing() {
+        Byte s = 8;
+        Short j = (byte)7;
+    }
 }
