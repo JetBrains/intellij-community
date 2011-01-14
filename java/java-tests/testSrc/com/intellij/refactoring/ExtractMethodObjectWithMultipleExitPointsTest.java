@@ -92,4 +92,9 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
   public void testExtractedIncExpression() throws Exception {
     doTest();
   }
+
+
+  public void testWithInnerClasses() throws Exception {
+    doTest();
+  }
 }
