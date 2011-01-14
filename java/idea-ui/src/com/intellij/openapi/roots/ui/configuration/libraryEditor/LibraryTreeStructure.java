@@ -56,7 +56,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
     if (element == myRootElement) {
       ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
       final LibraryEditor parentEditor = myParentEditor.getLibraryEditor();
-      for (OrderRootType type : OrderRootType.getAllTypes()) {
+      for (OrderRootType type : myComponentDescriptor.getRootTypes()) {
         final String[] urls = parentEditor.getUrls(type);
         if (urls.length > 0) {
           OrderRootTypePresentation presentation = myComponentDescriptor.getRootTypePresentation(type);

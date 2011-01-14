@@ -17,6 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +41,9 @@ public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootB
 
   @Override
   public VirtualFile[] selectFiles(final @NotNull JComponent parent, @Nullable VirtualFile initialSelection,
-                                   final @Nullable Module contextModule, @Nullable String libraryName) {
+                                   final @Nullable Module contextModule, @NotNull LibraryEditor libraryEditor) {
     final FileChooserDescriptor chooserDescriptor = createChooserDescriptor();
-    chooserDescriptor.setTitle(getChooserTitle(libraryName));
+    chooserDescriptor.setTitle(getChooserTitle(libraryEditor.getName()));
     chooserDescriptor.setDescription(getChooserDescription());
     if (contextModule != null) {
       chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, contextModule);
