@@ -1,8 +1,5 @@
 Types:
 PsiLocalVariable:vn4 : java.lang.String
-PsiLocalVariable:vn6 : java.lang.String
-PsiLocalVariable:vn7 : java.lang.String
-PsiLocalVariable:vn8 : java.lang.String
 PsiParameter:pn : java.lang.String
 PsiReferenceExpression:pn : java.lang.String
 PsiReferenceExpression:pn : java.lang.String

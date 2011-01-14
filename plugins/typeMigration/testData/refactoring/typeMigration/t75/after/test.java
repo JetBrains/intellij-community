@@ -5,8 +5,8 @@ class Test {
       int vn3 = pn % pn;
       String vn4 = pn + pn;
       int vn5 = pn - pn;
-      String vn6 = pn << pn;
-      String vn7 = pn >> pn;
-      String vn8 = pn >>> pn;
+      int vn6 = pn << pn;
+      int vn7 = pn >> pn;
+      int vn8 = pn >>> pn;
   }
 }
