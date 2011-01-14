@@ -70,7 +70,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
       final JPanel panel = rootToPanel.get(root).getPanel();
       myConfigureRootPanel.add(panel, root.getPath());
       if (panel.getMinimumSize().width > 0) {
-        minimumRightSize = Math.max(minimumRightSize, panel.getMinimumSize().width);
+        minimumRightSize = Math.max(minimumRightSize, panel.getPreferredSize().width);
       }
       listModel.addElement(root);
     }

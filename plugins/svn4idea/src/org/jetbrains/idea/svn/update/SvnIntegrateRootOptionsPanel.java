@@ -24,7 +24,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -43,7 +42,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRoot = root;
     myVcs = vcs;
 
-    myPanel.setMinimumSize(new Dimension(670, 70));
+    //myPanel.setMinimumSize(new Dimension(670, 70));
     myMergeText1.setEditable(true);
 
     myUrlLabel1.setLabelFor(myMergeText1);
