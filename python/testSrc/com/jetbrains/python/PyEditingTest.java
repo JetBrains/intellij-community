@@ -233,4 +233,8 @@ public class PyEditingTest extends PyLightFixtureTestCase {
   public void testFirstParamStaticmethod() {
     doTypingTest('(');
   }
+
+  public void testFirstParamDuplicateColon() {  // PY-2652
+    doTypingTest('(');
+  }
 }
