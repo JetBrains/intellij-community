@@ -285,7 +285,7 @@ public class PyBlock implements ASTBlock {
         return createSpaces(0);
       }
     }
-    if (type2 == PyElementTypes.ANNOTATION) {
+    if (parentType == PyElementTypes.FUNCTION_DECLARATION && type2 == PyElementTypes.ANNOTATION) {
       return createSpaces(1);
     }
 
