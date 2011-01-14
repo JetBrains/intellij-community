@@ -35,18 +35,18 @@ import java.util.Map;
 
 public class UnnecessaryBoxingInspection extends BaseInspection {
 
-    @NonNls static final Map<String, String> s_boxingArgs =
+    @NonNls static final Map<String, String> boxedPrimitiveMap =
             new HashMap<String, String>(8);
 
     static {
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_SHORT, "short");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_LONG, "long");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
-        s_boxingArgs.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_SHORT, "short");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_LONG, "long");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
+        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
     }
 
     @Override
@@ -111,7 +111,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                                             @NotNull PsiType toType) {
             final String toTypeText = toType.getCanonicalText();
             final String fromTypeText = fromType.getCanonicalText();
-            final String unboxedType = s_boxingArgs.get(toTypeText);
+            final String unboxedType = boxedPrimitiveMap.get(toTypeText);
             if (fromTypeText.equals(unboxedType)) {
                 return "";
             } else {
@@ -140,7 +140,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             }
             final String constructorTypeText =
                     constructorType.getCanonicalText();
-            if (!s_boxingArgs.containsKey(constructorTypeText)) {
+            if (!boxedPrimitiveMap.containsKey(constructorTypeText)) {
                 return;
             }
             final PsiMethod constructor = expression.resolveConstructor();
@@ -153,12 +153,12 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
                 return;
             }
             final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiParameter arg = parameters[0];
-            final PsiType argumentType = arg.getType();
-            final String argumentTypeText = argumentType.getCanonicalText();
+            final PsiParameter parameter = parameters[0];
+            final PsiType parameterType = parameter.getType();
+            final String parameterTypeText = parameterType.getCanonicalText();
             final String boxableConstructorType =
-                    s_boxingArgs.get(constructorTypeText);
-            if (!boxableConstructorType.equals(argumentTypeText)) {
+                    boxedPrimitiveMap.get(constructorTypeText);
+            if (!boxableConstructorType.equals(parameterTypeText)) {
                 return;
             }
             if (!canBeUnboxed(expression)) {
@@ -174,18 +174,18 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             }
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] expressions = argumentList.getExpressions();
-            if (expressions.length != 1) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 1) {
                 return;
             }
-            if (!(expressions[0].getType() instanceof PsiPrimitiveType)) {
+            if (!(arguments[0].getType() instanceof PsiPrimitiveType)) {
                 return;
             }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             @NonNls
             final String referenceName = methodExpression.getReferenceName();
-            if (referenceName == null || !referenceName.equals("valueOf")) {
+            if (!"valueOf".equals(referenceName)) {
                 return;
             }
             final PsiExpression qualifierExpression =
@@ -196,7 +196,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)qualifierExpression;
             final String canonicalText = referenceExpression.getCanonicalText();
-            if (s_boxingArgs.get(canonicalText) == null) {
+            if (!boxedPrimitiveMap.containsKey(canonicalText)) {
                 return;
             }
             if (!canBeUnboxed(expression)) {
