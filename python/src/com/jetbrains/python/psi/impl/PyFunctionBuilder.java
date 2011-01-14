@@ -22,6 +22,7 @@ public class PyFunctionBuilder {
   private final List<String> myParameters = new ArrayList<String>();
   private final List<String> myStatements = new ArrayList<String>();
   private final List<String> myDecorators = new ArrayList<String>();
+  private String myAnnotation = null;
 
   public PyFunctionBuilder(String name) {
     myName = name;
@@ -35,6 +36,11 @@ public class PyFunctionBuilder {
       name = baseName + uniqueIndex;
     }
     myParameters.add(name);
+    return this;
+  }
+
+  public PyFunctionBuilder annotation(String text) {
+    myAnnotation = text;
     return this;
   }
 
@@ -65,7 +71,11 @@ public class PyFunctionBuilder {
     builder.append("def ");
     builder.append(myName).append("(");
     builder.append(StringUtil.join(myParameters, ", "));
-    builder.append("):");
+    builder.append(")");
+    if (myAnnotation != null) {
+      builder.append(myAnnotation);
+    }
+    builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList("pass") : myStatements;
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
     int indentSize = codeStyleSettings.getIndentOptions(PythonFileType.INSTANCE).INDENT_SIZE;

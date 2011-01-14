@@ -78,8 +78,11 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
     doTest3k();
   }
 
-
   public void testTypeAnnotations() {  // PY-2547
+    doTest3k();
+  }
+
+  public void testReturnAnnotation() {  // PY-2690
     doTest3k();
   }
 }
