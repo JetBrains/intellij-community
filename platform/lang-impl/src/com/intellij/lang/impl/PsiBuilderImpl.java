@@ -1205,6 +1205,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         if (oldNode instanceof LeafElement) {
+          if (type instanceof ForeignLeafType) return ThreeState.NO;
+
           return ((LeafElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
@@ -1250,7 +1252,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
-        if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof ForeignLeafType) {
+        boolean isForeign1 = n1 instanceof ForeignLeafPsiElement;
+        boolean isForeign2 = n2.getTokenType() instanceof ForeignLeafType;
+        if (isForeign1 != isForeign2) return false;
+
+        if (isForeign1 && isForeign2) {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
         }
 
