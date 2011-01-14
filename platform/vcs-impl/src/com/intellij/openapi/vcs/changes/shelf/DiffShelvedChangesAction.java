@@ -186,12 +186,16 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   private static class ShelvedChangeDiffRequestFactory implements PatchMergeRequestFactory {
     public static final ShelvedChangeDiffRequestFactory INSTANCE = new ShelvedChangeDiffRequestFactory();
 
-    public MergeRequest createMergeRequest(final String leftText, final String rightText, final String originalContent, @NotNull final VirtualFile file,
+    public MergeRequest createMergeRequest(final String leftText,
+                                           final String rightText,
+                                           final String originalContent,
+                                           @NotNull final VirtualFile file,
                                            final Project project) {
       MergeRequest request = DiffRequestFactory.getInstance().create3WayDiffRequest(leftText, rightText, originalContent,
                                                                                     project,
+                                                                                    null,
                                                                                     null);
-      request.setVersionTitles(new String[] {
+      request.setVersionTitles(new String[]{
         "Current Version",
         "Base Version",
         "Shelved Version"

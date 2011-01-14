@@ -39,13 +39,24 @@ public abstract class DiffRequestFactory {
    * @param originalContent The version of the content before changes.
    * @param file The file which is being merged.
    * @param project The project in the context of which the operation is executed.
-   * @param actionButtonPresentation Specifies the text of the OK/Apply button in the dialog and possibly an additional action which is
+   * @param okButtonPresentation Specifies the text of the OK/Apply button in the dialog and possibly an additional action which is
+   *                                 executed when the button is pressed.
+   * @param cancelButtonPresentation Specifies the text of the Cancel button in the dialog and possibly an additional action which is
    *                                 executed when the button is pressed.
    * @return The merge operation request.
    */
-  public abstract MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, @NotNull VirtualFile file, Project project,
-                                  @Nullable ActionButtonPresentation actionButtonPresentation);
+  public abstract MergeRequest createMergeRequest(String leftText,
+                                                  String rightText,
+                                                  String originalContent,
+                                                  @NotNull VirtualFile file,
+                                                  Project project,
+                                                  @Nullable ActionButtonPresentation okButtonPresentation,
+                                                  @Nullable ActionButtonPresentation cancelButtonPresentation);
 
-  public abstract MergeRequest create3WayDiffRequest(String leftText, String rightText, String originalContent,
-                                                     Project project, @Nullable ActionButtonPresentation actionButtonPresentation);
+  public abstract MergeRequest create3WayDiffRequest(String leftText,
+                                                     String rightText,
+                                                     String originalContent,
+                                                     Project project,
+                                                     @Nullable ActionButtonPresentation okButtonPresentation,
+                                                     @Nullable ActionButtonPresentation cancelButtonPresentation);
 }

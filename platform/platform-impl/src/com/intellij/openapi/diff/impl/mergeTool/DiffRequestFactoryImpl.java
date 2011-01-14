@@ -18,10 +18,7 @@ package com.intellij.openapi.diff.impl.mergeTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.ActionButtonPresentation;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -43,14 +40,20 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                          String originalContent,
                                          @NotNull VirtualFile file,
                                          Project project,
-                                         @Nullable final ActionButtonPresentation actionButtonPresentation) {
+                                         @Nullable final ActionButtonPresentation okButtonPresentation,
+                                         @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project, actionButtonPresentation);
+    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project, okButtonPresentation,
+                                cancelButtonPresentation);
   }
 
-  public MergeRequest create3WayDiffRequest(final String leftText, final String rightText, final String originalContent, final Project project,
-                                            @Nullable final ActionButtonPresentation actionButtonPresentation) {
-    return new MergeRequestImpl(leftText, originalContent, rightText, project, actionButtonPresentation);
+  public MergeRequest create3WayDiffRequest(final String leftText,
+                                            final String rightText,
+                                            final String originalContent,
+                                            final Project project,
+                                            @Nullable final ActionButtonPresentation okButtonPresentation,
+                                            @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    return new MergeRequestImpl(leftText, originalContent, rightText, project, okButtonPresentation, cancelButtonPresentation);
   }
 
   private MergeVersion createMergeVersion(VirtualFile file,
