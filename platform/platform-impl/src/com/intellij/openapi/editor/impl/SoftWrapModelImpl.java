@@ -84,6 +84,19 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private boolean myUseSoftWraps;
 
   /**
+   * Standard IJ editor starts showing horizontal scroll bar event when text line ends couple of symbols before the right visual
+   * area edge (exact value of columns to use for such preliminary scrolling is identified by
+   * {@link EditorSettings#getAdditionalColumnsCount() additionalColumnsCount} value).
+   * <p/>
+   * However, we want to avoid using horizontal scrolling within soft wraps whenever possible. Hence, we set that additional
+   * columns property to zero when soft wraps are used and restore it if soft wraps are turned off.
+   * <p/>
+   * Current field holds initial <code>'additional columns count'</code> property value that is to be restored if
+   * soft wraps are turned off.
+   */
+  private int myAdditionalColumnsCount;
+
+  /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
    * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
    * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model 
@@ -139,7 +152,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
     applianceManager.addListener(myVisualSizeManager);
-    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    EditorSettings settings = myEditor.getSettings();
+    myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
+    myUseSoftWraps = settings.isUseSoftWraps();
   }
 
   /**
@@ -147,9 +162,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   public void reinitSettings() {
     boolean softWrapsUsedBefore = myUseSoftWraps;
-    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    EditorSettings settings = myEditor.getSettings();
+    myUseSoftWraps = settings.isUseSoftWraps();
     if (myUseSoftWraps && !softWrapsUsedBefore) {
       myApplianceManager.reset();
+      myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
+      settings.setAdditionalColumnsCount(0);
+    }
+    else if (!myUseSoftWraps && softWrapsUsedBefore) {
+      settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
     }
   }
 

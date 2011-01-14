@@ -173,6 +173,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       if (PsiType.BYTE.equals(lType) || PsiType.CHAR.equals(lType) || PsiType.SHORT.equals(lType)) {
         return PsiType.INT;
       }
+      if (lType instanceof PsiClassType) lType = PsiPrimitiveType.getUnboxedType(lType);
       return lType;
     }
     if (sign == JavaTokenType.EQEQ ||

@@ -42,9 +42,9 @@ import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
-import git4idea.ui.GitConvertFilesDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,7 +130,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     Map<VirtualFile, List<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
-    if (GitConvertFilesDialog.showDialogIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
+    if (GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, List<Change>> entry : sortedChanges.entrySet()) {
         Set<FilePath> files = new HashSet<FilePath>();
         final VirtualFile root = entry.getKey();
