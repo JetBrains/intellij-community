@@ -35,7 +35,7 @@ public class ChangeVariableCommand extends AbstractFrameCommand {
   protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final PyDebugValue value = ProtocolParser.parseValue(response.getPayload());
-    myNewValue = new PyDebugValue(myVariableName, value.getType(), value.getValue(), value.isContainer(), null, myDebugProcess);
+    myNewValue = new PyDebugValue(myVariableName, value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
   }
 
   public PyDebugValue getNewValue() {

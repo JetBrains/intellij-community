@@ -9,6 +9,7 @@ try:
     __setFalse = False
 except:
     import __builtin__
+
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
@@ -25,6 +26,7 @@ USE_PSYCO_OPTIMIZATION = True
 
 #Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
 import sys #Note: the sys import must be here anyways (others depend on it)
+
 GetFrame = sys._getframe
 
 #Used to determine the maximum size of each variable passed to eclipse -- having a big value here may make
@@ -32,7 +34,7 @@ GetFrame = sys._getframe
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 500
 
-import threading 
+import threading
 import os
 
 _nextThreadIdLock = threading.Lock()
@@ -51,9 +53,14 @@ except AttributeError:
     pass #Not all versions have sys.version_info
 
 try:
-    IS_64_BITS = sys.maxsize>2**32
+    IS_64_BITS = sys.maxsize > 2 ** 32
 except AttributeError:
-    IS_64_BITS = False
+    try:
+        import struct
+        IS_64_BITS = struct.calcsize("P") * 8 > 32
+    except:
+        IS_64_BITS = False
+
 
 
 #=======================================================================================================================
@@ -61,6 +68,7 @@ except AttributeError:
 #=======================================================================================================================
 try:
     import org.python.core.PyDictionary #@UnresolvedImport @UnusedImport -- just to check if it could be valid
+
     def DictContains(d, key):
         return d.has_key(key)
 except:
@@ -74,15 +82,14 @@ except:
 # NextId
 #=======================================================================================================================
 class NextId:
-    
     def __init__(self):
         self._id = 0
-        
+
     def __call__(self):
         #No need to synchronize here
         self._id += 1
         return self._id
-    
+
 _nextThreadId = NextId()
 
 #=======================================================================================================================
@@ -102,16 +109,17 @@ def GetThreadId(thread):
                     try:
                         #Jython does not have it!
                         import java.lang.management.ManagementFactory #@UnresolvedImport -- just for jython
+
                         pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
                         pid = pid.replace('@', '_')
                     except:
                         #ok, no pid available (will be unable to debug multiple processes)
                         pid = '000001'
-                    
+
                 thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, _nextThreadId())
         finally:
             _nextThreadIdLock.release()
-        
+
     return thread.__pydevd_id__
 
 #===============================================================================
@@ -142,22 +150,22 @@ class Null:
 
     def __str__(self):
         return "Null"
-    
+
     def __len__(self):
         return 0
-    
+
     def __getitem__(self):
         return self
-    
+
     def __setitem__(self, *args, **kwargs):
         pass
-    
+
     def write(self, *args, **kwargs):
         pass
-    
+
     def __nonzero__(self):
         return 0
-    
+
 if __name__ == '__main__':
     if Null():
         sys.stdout.write('here\n')

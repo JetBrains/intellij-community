@@ -23,17 +23,19 @@ public class PyDebugValue extends XValue {
   private final boolean myContainer;
   private final PyDebugValue myParent;
   private final IPyDebugProcess myDebugProcess;
+  private final boolean myErrorOnEval;
 
-  public PyDebugValue(final String name, final String type, final String value, final boolean container) {
-    this(name, type, value, container, null, null);
+  public PyDebugValue(final String name, final String type, final String value, final boolean container, boolean errorOnEval) {
+    this(name, type, value, container, errorOnEval, null, null);
   }
 
   public PyDebugValue(final String name, final String type, final String value, final boolean container,
-                      final PyDebugValue parent, final IPyDebugProcess debugProcess) {
+                      boolean errorOnEval, final PyDebugValue parent, final IPyDebugProcess debugProcess) {
     myName = name;
     myType = type;
     myValue = value;
     myContainer = container;
+    myErrorOnEval = errorOnEval;
     myParent = parent;
     myDebugProcess = debugProcess;
   }
@@ -60,6 +62,10 @@ public class PyDebugValue extends XValue {
 
   public boolean isContainer() {
     return myContainer;
+  }
+
+  public boolean isErrorOnEval() {
+    return myErrorOnEval;
   }
 
   public PyDebugValue getParent() {
@@ -118,6 +124,7 @@ public class PyDebugValue extends XValue {
       node.setFullValueEvaluator(new PyFullValueEvaluator("Show full value", myDebugProcess, myName));
       value = value.substring(0, MAX_VALUE) + "...";
     }
+
     node.setPresentation(myName, getValueIcon(), myType, value, myContainer);
   }
 
@@ -159,9 +166,5 @@ public class PyDebugValue extends XValue {
     else {
       return DebuggerIcons.VALUE_ICON;
     }
-  }
-
-  boolean isException() {
-    return myValue.startsWith("Traceback (most recent call last):");
   }
 }

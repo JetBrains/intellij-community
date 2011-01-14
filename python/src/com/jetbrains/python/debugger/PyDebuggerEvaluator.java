@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
-  private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", "None", false, null, null);
+  private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", "None", false, false, null, null);
 
   private final PyDebugProcess myDebugProcess;
 
@@ -36,7 +36,12 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
     try {
       // todo: think on getting results from EXEC
       final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);
-      callback.evaluated(value);
+      if (value.isErrorOnEval()) {
+        callback.errorOccurred("{" + value.getType() + "}" + value.getValue());
+      }
+      else {
+        callback.evaluated(value);
+      }
     }
     catch (PyDebuggerException e) {
       callback.errorOccurred(e.getTracebackError());

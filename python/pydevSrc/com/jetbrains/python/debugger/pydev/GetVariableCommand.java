@@ -1,9 +1,6 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-
-import java.util.List;
 
 
 public class GetVariableCommand extends GetFrameCommand {
@@ -26,7 +23,7 @@ public class GetVariableCommand extends GetFrameCommand {
 
   @Override
   protected PyDebugValue extend(final PyDebugValue value) {
-    return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), myParent, myDebugProcess);
+    return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), myParent, myDebugProcess);
   }
 
 }

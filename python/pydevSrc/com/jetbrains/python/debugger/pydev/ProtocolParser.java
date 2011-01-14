@@ -120,12 +120,13 @@ public class ProtocolParser {
     final String type = readString(reader, "type", null);
     String value = readString(reader, "value", null);
     final String isContainer = readString(reader, "isContainer", "");
+    final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
 
-    return new PyDebugValue(name, type, value, "True".equals(isContainer));
+    return new PyDebugValue(name, type, value, "True".equals(isContainer), "True".equals(isErrorOnEval));
   }
 
   private static XppReader openReader(final String text, final boolean checkForContent) throws PyDebuggerException {
