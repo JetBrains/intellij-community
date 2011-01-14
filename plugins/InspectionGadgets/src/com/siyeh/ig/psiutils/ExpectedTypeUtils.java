@@ -160,39 +160,33 @@ public class ExpectedTypeUtils{
             final PsiJavaToken sign = binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             final PsiType type = binaryExpression.getType();
-            if (TypeUtils.isJavaLangString(type)) {
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs == null) {
                 expectedType = null;
-            } else if (isArithmeticOperation(tokenType)) {
+                return;
+            }
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            PsiType lhsType = lhs.getType();
+            if (lhsType == null) {
+                expectedType = null;
+                return;
+            }
+            PsiType rhsType = rhs.getType();
+            if (rhsType == null) {
+                expectedType = null;
+                return;
+            }
+            if (TypeUtils.isJavaLangString(type) ||
+                    isArithmeticOperation(tokenType) ||
+                    isBooleanOperation(tokenType)) {
                 expectedType = type;
             } else if (isShiftOperation(tokenType)) {
-                final PsiExpression lhs = binaryExpression.getLOperand();
                 if (wrappedExpression.equals(lhs)) {
-                    expectedType = unaryNumericPromotion(lhs.getType());
+                    expectedType = unaryNumericPromotion(lhsType);
                 } else {
-                    final PsiExpression rhs = binaryExpression.getROperand();
-                    if (rhs == null) {
-                        expectedType =  null;
-                    } else {
-                        expectedType = unaryNumericPromotion(rhs.getType());
-                    }
+                    expectedType = unaryNumericPromotion(rhsType);
                 }
             } else if (ComparisonUtils.isComparisonOperation(tokenType)) {
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs == null) {
-                    expectedType = null;
-                    return;
-                }
-                final PsiExpression lhs = binaryExpression.getLOperand();
-                PsiType lhsType = lhs.getType();
-                if (lhsType == null) {
-                    expectedType = null;
-                    return;
-                }
-                PsiType rhsType = rhs.getType();
-                if (rhsType == null) {
-                    expectedType = null;
-                    return;
-                }
                 if (!ClassUtils.isPrimitive(lhsType)) {
                     lhsType = PsiPrimitiveType.getUnboxedType(lhsType);
                     if (lhsType == null) {
@@ -220,8 +214,6 @@ public class ExpectedTypeUtils{
                 } else {
                     expectedType = PsiType.INT;
                 }
-            } else if (isBooleanOperation(tokenType)) {
-                expectedType = type;
             } else {
                 expectedType = null;
             }

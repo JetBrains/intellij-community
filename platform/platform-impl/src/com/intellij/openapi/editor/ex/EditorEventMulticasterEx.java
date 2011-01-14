@@ -33,5 +33,6 @@ public interface EditorEventMulticasterEx extends EditorEventMulticaster{
   void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   void addFocusChangeListner(@NotNull FocusChangeListener listener);
+  void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable);
   void removeFocusChangeListner(@NotNull FocusChangeListener listener);
 }

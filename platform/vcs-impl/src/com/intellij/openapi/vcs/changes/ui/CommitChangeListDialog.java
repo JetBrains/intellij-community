@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.Alarm;
@@ -49,6 +48,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -94,6 +95,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final PseudoMap<Object, Object> myAdditionalData;
   private String myHelpId;
+  
+  private final JCheckBox myCheckSpellingBox;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -261,6 +264,23 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     }
 
+    myCheckSpellingBox = new JCheckBox(VcsBundle.message("checkbox.check.commit.message.spelling"));
+    myCheckSpellingBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+        boolean checkSpelling = e.getStateChange() == ItemEvent.SELECTED;
+        if (configuration != null) {
+          configuration.CHECK_COMMIT_MESSAGE_SPELLING = checkSpelling;
+        }
+        myCommitMessageArea.setCheckSpelling(checkSpelling);
+      }
+    });
+    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+    if (configuration != null) {
+      myCheckSpellingBox.setSelected(configuration.CHECK_COMMIT_MESSAGE_SPELLING);
+    }
+    
     myActionName = VcsBundle.message("commit.dialog.title");
 
     myAdditionalOptionsPanel = new JPanel();
@@ -767,7 +787,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     JPanel infoPanel = new JPanel(new BorderLayout());
     myChangesInfoCalculator = new CommitLegendPanel.ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    infoPanel.add(myLegend.getComponent(), BorderLayout.NORTH);
+    JPanel commonPanel = new JPanel(new BorderLayout());
+    commonPanel.add(myLegend.getComponent());
+    commonPanel.add(myCheckSpellingBox, BorderLayout.SOUTH);
+    infoPanel.add(commonPanel, BorderLayout.NORTH);
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
