@@ -60,7 +60,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         string.replace(st);
       }
       if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
-        String result = convertDoubleToSingleQuoted(stringText);
+        String result = convertDoubleToSingleQuoted(string.getStringValue());
         PyStringLiteralExpression st = elementGenerator.createStringLiteralAlreadyEscaped(result);
         string.replace(st);
       }
@@ -68,7 +68,8 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
   }
 
   private static String convertDoubleToSingleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder stringBuilder = new StringBuilder("'");
+
     boolean skipNext = false;
     char[] charArr = stringText.toCharArray();
     for (int i = 0; i != charArr.length; ++i) {
@@ -78,7 +79,8 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         continue;
       }
       if (ch == '"') {
-          stringBuilder.append('\'');
+        continue;
+      //    stringBuilder.append('\'');
       }
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
@@ -91,11 +93,13 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         stringBuilder.append(ch);
       }
     }
+
+    stringBuilder.append("'");
     return stringBuilder.toString();
   }
 
   private static String convertSingleToDoubleQuoted(String stringText) {
-    StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder stringBuilder = new StringBuilder("\"");
     boolean skipNext = false;
     char[] charArr = stringText.toCharArray();
     for (int i = 0; i != charArr.length; ++i) {
@@ -105,7 +109,8 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         continue;
       }
       if (ch == '\'') {
-        stringBuilder.append('"');
+        continue;
+        //stringBuilder.append('"');
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");
@@ -118,6 +123,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
         stringBuilder.append(ch);
       }
     }
+    stringBuilder.append("\"");
     return stringBuilder.toString();
   }
 }
