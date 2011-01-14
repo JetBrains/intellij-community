@@ -42,6 +42,7 @@ public interface EditorEventMulticaster {
   void removeCaretListener(@NotNull CaretListener listener);
 
   void addSelectionListener(@NotNull SelectionListener listener);
+  void addSelectionListener(@NotNull SelectionListener listener, @NotNull Disposable parentDisposable);
   void removeSelectionListener(@NotNull SelectionListener listener);
 
   void addVisibleAreaListener(@NotNull VisibleAreaListener listener);

@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -25,20 +23,15 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -80,7 +73,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
 
   @Override
   public float getAlignment() {
-    return JComponent.CENTER_ALIGNMENT;
+    return Component.CENTER_ALIGNMENT;
   }
 
   public String getTooltipText() {
@@ -110,18 +103,11 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     };
   }
 
-  public void dispose() {
-    final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.removeCaretListener(this);
-    multicaster.removeSelectionListener(this);
-    super.dispose();
-  }
-
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addCaretListener(this);
-    multicaster.addSelectionListener(this);
+    multicaster.addCaretListener(this, this);
+    multicaster.addSelectionListener(this, this);
   }
 
   private static void appendLogicalPosition(LogicalPosition caret, StringBuilder message) {
@@ -150,12 +136,12 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   private void updatePosition(final Editor editor) {
     if (editor == null) {
       myText = "";
-      myStatusBar.updateWidget(ID());
-    } else {
+    }
+    else {
       if (!isOurEditor(editor)) return;
       myText = getPositionText(editor);
-      myStatusBar.updateWidget(ID());
     }
+    myStatusBar.updateWidget(ID());
   }
 
   private String getPositionText(Editor editor) {
