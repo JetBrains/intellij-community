@@ -46,6 +46,11 @@ public interface ActionInfo {
           return VcsBundle.message("action.display.name.update.scope", scopeName);
         }
 
+        @Override
+        protected String getActionNameForDimensions() {
+          return "update";
+        }
+
         protected boolean isToBeShown() {
           return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
         }
@@ -89,6 +94,11 @@ public interface ActionInfo {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
           return VcsBundle.message("action.display.name.check.scope.status", scopeName);
+        }
+
+        @Override
+        protected String getActionNameForDimensions() {
+          return "status";
         }
 
         protected boolean isToBeShown() {
@@ -138,6 +148,11 @@ public interface ActionInfo {
       return new UpdateOrStatusOptionsDialog(project, envToConfMap) {
         protected String getRealTitle() {
           return VcsBundle.message("action.display.name.integrate.scope", scopeName);
+        }
+
+        @Override
+        protected String getActionNameForDimensions() {
+          return "integrate";
         }
 
         protected boolean canBeHidden() {
