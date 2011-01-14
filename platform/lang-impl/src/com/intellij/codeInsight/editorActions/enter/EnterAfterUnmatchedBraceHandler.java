@@ -84,16 +84,40 @@ public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
     document.insertString(offset, "\n}");
     document.insertString(caretOffset, "\n");
     PsiDocumentManager.getInstance(project).commitDocument(document);
+    long stamp = document.getModificationStamp();
+    boolean closingBraceIndentAdjusted;
     try {
       CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(caretOffset, offset + 2));
-      //CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
     finally {
+      closingBraceIndentAdjusted = stamp != document.getModificationStamp();
       document.deleteString(caretOffset, caretOffset + 1);
     }
+    
+    // There is a possible case that formatter was unable to adjust line indent for the closing brace (that is the case for plain text
+    // document for example). Hence, we're trying to do the manually.
+    if (!closingBraceIndentAdjusted) {
+      int line = document.getLineNumber(offset);
+      StringBuilder buffer = new StringBuilder();
+      int start = document.getLineStartOffset(line);
+      int end = document.getLineEndOffset(line);
+      for (int i = start; i < end; i++) {
+        char c = text.charAt(i);
+        if (c != ' ' && c != '\t') {
+          break;
+        }
+        else {
+          buffer.append(c);
+        }
+      }
+      if (buffer.length() > 0) {
+        document.insertString(offset + 1, buffer);
+      }
+    }
+    
     return Result.DefaultForceIndent;
   }
 
