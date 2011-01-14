@@ -89,7 +89,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
         for (EditorCustomization.Feature feature : features) {
           for (EditorCustomization customization : customizations) {
             if (customization.getSupportedFeatures().contains(feature)) {
-              customization.customize(ex, feature);
+              customization.addCustomization(ex, feature);
               break;
             }
           }

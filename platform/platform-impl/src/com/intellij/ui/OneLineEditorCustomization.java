@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.AbstractUnappliableEditorCustomization;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,12 +25,12 @@ import java.util.Set;
 /**
  * @author Kirill Likhodedov
  */
-public class OneLineEditorCustomization  implements EditorCustomization {
+public class OneLineEditorCustomization  extends AbstractUnappliableEditorCustomization {
   public Set<Feature> getSupportedFeatures() {
     return EnumSet.of(Feature.ONE_LINE);
   }
 
-  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
     if (Feature.ONE_LINE.equals(feature)) {
       editor.setOneLineMode(true);
     }

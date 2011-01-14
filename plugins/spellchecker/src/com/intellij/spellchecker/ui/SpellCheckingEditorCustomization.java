@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
@@ -120,7 +121,7 @@ public class SpellCheckingEditorCustomization implements EditorCustomization {
   }
 
   @Override
-  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
     if (INSPECTION_PROFILE_WRAPPER == null) {
       return;
     }
@@ -136,5 +137,28 @@ public class SpellCheckingEditorCustomization implements EditorCustomization {
     }
     file.putUserData(InspectionProfileWrapper.KEY, INSPECTION_PROFILE_WRAPPER);
     editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
+    updateRepresentation(project, file);
+  }
+
+  @Override
+  public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
+    Project project = editor.getProject();
+    if (project == null) {
+      return;
+    }
+
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) {
+      return;
+    }
+    file.putUserData(InspectionProfileWrapper.KEY, null);
+    updateRepresentation(project, file);
+  }
+  
+  private static void updateRepresentation(@NotNull Project project, @NotNull PsiFile file) {
+    DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
+    if (analyzer != null) {
+      analyzer.restart(file);
+    }
   }
 }

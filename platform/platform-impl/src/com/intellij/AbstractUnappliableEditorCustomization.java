@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij;
 
-import com.intellij.AbstractUnappliableEditorCustomization;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 /**
- * Editor customization that can make target editor soft wraps-aware.
- * <p/>
- * Thread-safe.
- *
+ * Basic super class for {@link EditorCustomization editor customizations} that don't consider un-applying feature.
+ * 
  * @author Denis Zhdanov
- * @since Aug 20, 2010 4:54:48 PM
+ * @since 1/14/11 12:52 PM
  */
-public class SoftWrapsEditorCustomization extends AbstractUnappliableEditorCustomization {
+public abstract class AbstractUnappliableEditorCustomization implements EditorCustomization {
 
   @Override
-  public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.SOFT_WRAP);
-  }
-
-  @Override
-  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setUseSoftWraps(true);
+  public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
+    // Do nothing
   }
 }
