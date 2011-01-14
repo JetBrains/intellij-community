@@ -5,10 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyWithItem;
-import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,7 +31,8 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     List<PyElement> result = new ArrayList<PyElement>();
     if (items != null) {
       for (PyWithItem item : items) {
-        result.add(item.getTargetExpression());
+        PyExpression targetExpression = item.getTargetExpression();
+        result.addAll(PyUtil.flattenedParens(targetExpression));
       }
     }
     return result;
