@@ -17,7 +17,9 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.ReentrantLock2;
@@ -39,6 +41,15 @@ public class NotificationModel {
 
   public void addListener(@NotNull final NotificationModelListener listener) {
     myListeners.add(listener);
+  }
+  public void addListener(@NotNull final NotificationModelListener listener, @NotNull Disposable parentDisposable) {
+    addListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeListener(listener);
+      }
+    });
   }
 
   public void removeListener(@NotNull final NotificationModelListener listener) {

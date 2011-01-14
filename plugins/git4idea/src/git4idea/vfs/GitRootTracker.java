@@ -169,7 +169,7 @@ public class GitRootTracker implements VcsListener {
     fileManager.addVirtualFileListener(myFileListener);
     myVirtualFileManagerListener = new VirtualFileManagerAdapter() {
       @Override
-      public void afterRefreshFinish(boolean asynchonous) {
+      public void afterRefreshFinish(boolean asynchronous) {
         if (!myRootsInvalidated.compareAndSet(true, false)) {
           return;
         }
