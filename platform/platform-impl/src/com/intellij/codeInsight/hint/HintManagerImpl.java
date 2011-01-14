@@ -377,7 +377,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     Dimension size = hint.getComponent().getPreferredSize();
 
     if (hint.isRealPopup()) {
-      final Point editorCorner = editor.getComponent().getLocation();
+      final Point editorCorner = editor.getContentComponent().getLocation();
       SwingUtilities.convertPointToScreen(editorCorner, layeredPane);
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(editorCorner.x, editorCorner.y);
 
