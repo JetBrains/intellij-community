@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,4 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public interface LibraryEditorComponent<P extends LibraryProperties> {
   @NotNull
   P getProperties();
+  
+  LibraryEditor getLibraryEditor();
 }

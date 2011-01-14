@@ -744,6 +744,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerStyleInspections() {
+        m_inspectionClasses.add(BoxingBoxedValueInspection.class);
         m_inspectionClasses.add(CallToStringConcatCanBeReplacedByOperatorInspection.class);
         m_inspectionClasses.add(CStyleArrayDeclarationInspection.class);
         m_inspectionClasses.add(ChainedEqualityInspection.class);

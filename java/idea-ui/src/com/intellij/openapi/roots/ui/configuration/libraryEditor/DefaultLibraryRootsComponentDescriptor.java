@@ -166,7 +166,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     public VirtualFile[] selectFiles(@NotNull JComponent parent,
                                      @Nullable VirtualFile initialSelection,
                                      @Nullable Module contextModule,
-                                     @Nullable String libraryName) {
+                                     @NotNull LibraryEditor libraryEditor) {
       final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(parent);
       if (vFile != null) {
         return new VirtualFile[]{vFile};

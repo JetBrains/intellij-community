@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -217,7 +217,9 @@ public class JavaClassReferenceSet {
   }
 
   public boolean canReferencePackage(int index) {
-    return index < myReferences.length - 1;
+    if (index == 0 || index == myReferences.length - 1) return false;
+    String text = getElement().getText();
+    return text.charAt(myReferences[index].getRangeInElement().getEndOffset()) != '$';
   }
 
   public boolean isSoft() {

@@ -319,21 +319,21 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
     long t1 = System.nanoTime();
     final StubElement lighterTree = NEW_BUILDER.buildStubTree(file);
-    t1 = (System.nanoTime() - t1)/1000;
+    t1 = Math.max((System.nanoTime() - t1)/1000, 1);
     assertFalse(fileNode.isParsed());
 
     long t2 = System.nanoTime();
     final StubElement originalTree = OLD_BUILDER.buildStubTree(file);
-    t2 = (System.nanoTime() - t2)/1000;
+    t2 = Math.max((System.nanoTime() - t2)/1000, 1);
     assertTrue(fileNode.isParsed());
 
     long t3 = System.nanoTime();
     final StubElement lighterTree2 = NEW_BUILDER.buildStubTree(file);  // build over AST
-    t3 = (System.nanoTime() - t3)/1000;
+    t3 = Math.max((System.nanoTime() - t3)/1000, 1);
 
     long t4 = System.nanoTime();
     OLD_BUILDER.buildStubTree(file);
-    t4 = (System.nanoTime() - t4)/1000;
+    t4 = Math.max((System.nanoTime() - t4)/1000, 1);
 
     final String lightStr = DebugUtil.stubTreeToString(lighterTree);
     final String originalStr = DebugUtil.stubTreeToString(originalTree);
