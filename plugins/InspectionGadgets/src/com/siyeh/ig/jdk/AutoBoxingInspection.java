@@ -63,9 +63,9 @@ public class AutoBoxingInspection extends BaseInspection {
 
     @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<String>();
     static {
-        convertableBoxedClassNames.add("java.lang.Byte");
-        convertableBoxedClassNames.add("java.lang.Char");
-        convertableBoxedClassNames.add("java.lang.Short");
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_CHARACTER);
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_SHORT);
     }
 
     @Override
