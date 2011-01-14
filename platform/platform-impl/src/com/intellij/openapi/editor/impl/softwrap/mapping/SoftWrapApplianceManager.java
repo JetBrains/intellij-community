@@ -505,6 +505,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   private SoftWrap registerSoftWrap(int minOffset, int preferredOffset, int maxOffset, int spaceSize, LogicalLineData lineData) {
     int softWrapOffset = calculateBackwardSpaceOffsetIfPossible(minOffset, preferredOffset);
     if (softWrapOffset < 0) {
+      softWrapOffset = calculateBackwardOffsetForEasternLanguageIfPossible(minOffset, preferredOffset);
+    }
+    if (softWrapOffset < 0) {
       Document document = myEditor.getDocument();
 
       // Performance optimization implied by profiling results analysis.
@@ -566,6 +569,33 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     for (int i = preferredOffset - 1; i >= minOffsetToUse; i--) {
       char c = myContext.text.charAt(i);
       if (c == ' ') {
+        return i + 1;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * There is a possible case that current line holds eastern language symbols (e.g. japanese text). We want to allow soft
+   * wrap just after such symbols and this method encapsulates the logic that tries to calculate soft wraps offset on that basis.
+   * 
+   * @param minOffset         min offset to use (inclusive)
+   * @param preferredOffset   max offset to use (inclusive)
+   * @return                  soft wrap offset that belongs to <code>[minOffset; preferredOffset]</code> interval if any;
+   *                          <code>'-1'</code> otherwise
+   */
+  public int calculateBackwardOffsetForEasternLanguageIfPossible(int minOffset, int preferredOffset) {
+    // There is a possible case that we have a long line that contains many non-white space symbols eligible for performing
+    // soft wrap that are preceded by white space symbol. We don't want to create soft wrap that is located so far from the
+    // preferred position then, hence, we check white space symbol existence not more than specific number of symbols back.
+    int maxTrackBackSymbolsNumber = 10;
+    int minOffsetToUse = minOffset;
+    if (preferredOffset - minOffset > maxTrackBackSymbolsNumber) {
+      minOffsetToUse = preferredOffset - maxTrackBackSymbolsNumber;
+    }
+    for (int i = preferredOffset - 1; i >= minOffsetToUse; i--) {
+      char c = myContext.text.charAt(i);
+      if (c >= 0x2f00) { // Check this document for eastern languages unicode ranges - http://www.unicode.org/charts
         return i + 1;
       }
     }
