@@ -1694,25 +1694,26 @@ class ModuleRedeclarator(object):
                     #
                     # sort and output every bucket
         if self.used_imports:
-            self.out("# imports", 0)
-            self.out("", 0)
+            self.imports_buf.out(0, "# imports")
+            self.imports_buf.out(0, "")
             for mod_name in sortedNoCase(self.used_imports.keys()):
                 names = self.used_imports[mod_name]
                 if names:
-                    self.out("from % s import %s" % (mod_name, ", ".join(names)), 0)
+                    self.imports_buf.out(0, "from % s import %s" % (mod_name, ", ".join(names)))
                     self._defined[mod_name] = True
                     for n in names:
                         self._defined[n] = True
-            self.out("", 0) # empty line after group
+            self.imports_buf.out(0, "") # empty line after group
         #
         omitted_names = self.OMIT_NAME_IN_MODULE.get(p_name, [])
         if vars_simple:
+            out = self.functions_buf.out
             prefix = "" # try to group variables by common prefix
             PREFIX_LEN = 2 # default prefix length if we can't guess better
-            self.out("# Variables with simple values", 0)
+            out(0, "# Variables with simple values")
             for item_name in sortedNoCase(vars_simple.keys()):
                 if item_name in omitted_names:
-                  self.out("# definition of " + item_name + " omitted", 0)
+                  out(0, "# definition of " + item_name + " omitted")
                   continue
                 item = vars_simple[item_name]
                 # track the prefix
@@ -1722,39 +1723,41 @@ class ModuleRedeclarator(object):
                         prefix_pos = PREFIX_LEN
                     beg = item_name[0:prefix_pos]
                     if prefix != beg:
-                        self.out("", 0) # space out from other prefix
+                        out(0, "") # space out from other prefix
                         prefix = beg
                 else:
                     prefix = ""
                 # output
                 replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
                 if replacement is not None:
-                    self.out(item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced", 0)
+                    out(0, item_name, " = ", replacement, " # real value of type ", str(type(item)), " replaced")
                 elif self.isSkippedInModule(p_name, item_name):
                     t_item = type(item)
-                    self.out(item_name + " = " + self.inventInitializer(t_item) +  " # real value of type " + str(t_item) + " skipped", 0)
+                    out(0, item_name, " = ", self.inventInitializer(t_item),  " # real value of type ", str(t_item), " skipped")
                 else:
-                    self.fmtValue(item, 0, prefix=item_name + " = ")
+                    self.fmtValue(out, item, 0, prefix=item_name + " = ")
                 self._defined[item_name] = True
-            self.out("", 0) # empty line after vars
+            out(0, "") # empty line after vars
         #
         if funcs:
-            self.out("# functions", 0)
-            self.out("", 0)
+            out = self.functions_buf.out
+            out(0, "# functions")
+            out(0, "")
             for item_name in sortedNoCase(funcs.keys()):
                 if item_name in omitted_names:
-                  self.out("# definition of " + item_name + " omitted", 0)
+                  out(0, "# definition of ", item_name, " omitted")
                   continue
                 item = funcs[item_name]
-                self.redoFunction(self.functions_buf.out, item, item_name, 0, p_modname=p_name)
+                self.redoFunction(out, self.functions_buf.out, item, item_name, 0, p_modname=p_name)
                 self._defined[item_name] = True
-                self.out("", 0) # empty line after each item
+                out(0, "") # empty line after each item
         else:
-            self.out("# no functions", 0)
+            self.functions_buf.out(0, "# no functions")
         #
         if classes:
-            self.out("# classes", 0)
-            self.out("", 0)
+            out = self.functions_buf.out
+            out(0, "# classes")
+            out(0, "")
             # sort classes so that inheritance order is preserved
             cls_list = [] # items are (class_name, mro_tuple)
             for cls_name in sortedNoCase(classes.keys()):
@@ -1768,41 +1771,42 @@ class ModuleRedeclarator(object):
                 cls_list.insert(ins_index, (cls_name, getMRO(cls)))
             for item_name in [cls_item[0] for cls_item in cls_list]:
                 if item_name in omitted_names:
-                  self.out("# definition of " + item_name + " omitted", 0)
+                  out(0, "# definition of ", item_name, " omitted")
                   continue
                 item = classes[item_name]
-                self.redoClass(self.classes_buf.out, item, item_name, 0, p_modname=p_name)
+                self.redoClass(out, item, item_name, 0, p_modname=p_name)
                 self._defined[item_name] = True
-                self.out("", 0) # empty line after each item
+                out(0, "") # empty line after each item
         else:
-            self.out("# no classes", 0)
+            self.classes_buf.out(0, "# no classes")
         #
         if vars_complex:
-            self.out("# variables with complex values", 0)
-            self.out("", 0)
+            out = self.footer_buf.out
+            out(0, "# variables with complex values")
+            out(0, "")
             for item_name in sortedNoCase(vars_complex.keys()):
                 if item_name in omitted_names:
-                  self.out("# definition of " + item_name + " omitted", 0)
+                  out(0, "# definition of " + item_name + " omitted")
                   continue
                 item = vars_complex[item_name]
                 replacement = self.REPLACE_MODULE_VALUES.get((p_name, item_name), None)
                 if replacement is not None:
-                    self.out(item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced", 0)
+                    out(0, item_name + " = " + replacement + " # real value of type " + str(type(item)) + " replaced")
                 elif self.isSkippedInModule(p_name, item_name):
                     t_item = type(item)
-                    self.out(item_name + " = " + self.inventInitializer(t_item) +  " # real value of type " + str(t_item) + " skipped", 0)
+                    out(0, item_name + " = " + self.inventInitializer(t_item) +  " # real value of type " + str(t_item) + " skipped")
                 else:
-                    self.fmtValue(item, 0, prefix=item_name + " = ", as_name=item_name)
+                    self.fmtValue(out, item, 0, prefix=item_name + " = ", as_name=item_name)
                 self._defined[item_name] = True
-                self.out("", 0) # empty line after each item
+                out(0, "") # empty line after each item
         values_to_add = self.ADD_VALUE_IN_MODULE.get(p_name, None)
         if values_to_add:
-            self.out("# intermittent names", 0)
+            self.footer_buf.out(0, "# intermittent names")
             for v in values_to_add:
-                self.out(v, 0)
+                self.footer_buf.out(0, v)
 
 
-def build_output_name(subdir, name):
+def buildOutputName(subdir, name):
     global action
     quals = name.split(".")
     dirname = subdir
@@ -1829,7 +1833,7 @@ def build_output_name(subdir, name):
     return fname
 
 action = None
-def redo_module(name, fname, imported_module_names):
+def redoModule(name, fname, imported_module_names):
     global action
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
@@ -1875,21 +1879,21 @@ if __name__ == "__main__":
         fopen = open
 
     # handle cmdline
-    helptext = """Generates interface skeletons for python modules.
-  Usage: generator [options] [name ...]
-  Every "name" is a (qualified) module name, e.g. "foo.bar"
-  Output files will be named as modules plus ".py" suffix.
-  Normally every name processed will be printed and stdout flushed. 
-  Options are:
-  -h -- prints this help message.
-  -d dir -- output dir, must be writable. If not given, current dir is used. 
-  -b -- use names from sys.builtin_module_names
-  -q -- quiet, do not print anything on stdout. Errors still go to stderr.
-  -u -- update, only recreate skeletons for newer files, and skip unchanged.
-  -x -- die on exceptions with a stacktrace; only for debugging.
-  -c modules -- import CLR assemblies with specified names
-  -p -- run CLR profiler
-  """
+    helptext = \
+        'Generates interface skeletons for python modules.' '\n'\
+        'Usage: generator [options] [name ...]' '\n'\
+        'Every "name" is a (qualified) module name, e.g. "foo.bar"' '\n'\
+        'Output files will be named as modules plus ".py" suffix.' '\n'\
+        'Normally every name processed will be printed and stdout flushed.' '\n'\
+        'Options are:' '\n'\
+        ' -h -- prints this help message.' '\n'\
+        ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'\
+        ' -b -- use names from sys.builtin_module_names' '\n'\
+        ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'\
+        ' -u -- update, only recreate skeletons for newer files, and skip unchanged.' '\n'\
+        ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'\
+        ' -c modules -- import CLR assemblies with specified names' '\n'\
+        ' -p -- run CLR profiler ' '\n'
     opts, fnames = getopt(sys.argv[1:], "d:hbquxc:p")
     opts = dict(opts)
     if not opts or '-h' in opts:
@@ -1936,7 +1940,7 @@ if __name__ == "__main__":
             sys.stdout.flush()
         action = "doing nothing"
         try:
-            fname = build_output_name(subdir, name)
+            fname = buildOutputName(subdir, name)
 
             old_modules = list(sys.modules.keys())
             imported_module_names = []
@@ -1965,7 +1969,7 @@ if __name__ == "__main__":
             if imported_module_names is None:
                 imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
 
-            redo_module(name, fname, imported_module_names)
+            redoModule(name, fname, imported_module_names)
             # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
             # restore all of them
             if imported_module_names:
@@ -1976,8 +1980,8 @@ if __name__ == "__main__":
                         if not quiet:
                             sys.stdout.write(m + "\n")
                             sys.stdout.flush()
-                        fname = build_output_name(subdir, m)
-                        redo_module(m, fname, imported_module_names)
+                        fname = buildOutputName(subdir, m)
+                        redoModule(m, fname, imported_module_names)
         except:
             sys.stderr.write("Failed to process " + name + " while " + action + "\n")
             if debug_mode:
