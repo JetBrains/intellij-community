@@ -85,7 +85,7 @@ public class GitStashUtils {
     handler.setNoSSH(true);
     handler.addParameters("pop");
     handler.ignoreErrorCode(1);
-    if (QUIET_STASH_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).getVersion())) {
+    if (QUIET_STASH_SUPPORTED.isOlderOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("--quiet");
     }
     handler.run();

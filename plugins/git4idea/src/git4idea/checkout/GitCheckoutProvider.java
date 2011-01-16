@@ -24,6 +24,7 @@ import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.config.GitVersion;
@@ -74,6 +75,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
                               final String parentDirectory) {
     final GitLineHandler handler = clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
     GitTask task = new GitTask(project, handler, GitBundle.message("cloning.repository", sourceRepositoryURL));
+    task.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     task.executeAsync(new GitTaskResultHandlerAdapter() {
       @Override
       public void onSuccess() {
@@ -115,13 +117,14 @@ public class GitCheckoutProvider implements CheckoutProvider {
    */
   public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
     GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.CLONE);
-    if (VERBOSE_CLONE_SUPPORTED.isLessOrEqual(GitVcs.getInstance(project).getVersion())) {
+    if (VERBOSE_CLONE_SUPPORTED.isOlderOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("-v");
     }
     if (originName != null && originName.length() > 0) {
       handler.addParameters("-o", originName);
     }
     handler.addParameters(url, name);
+    handler.addProgressParameter();
     return handler;
   }
 }

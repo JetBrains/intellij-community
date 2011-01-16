@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -120,6 +121,7 @@ public class AutoPopupController implements Disposable {
 
   public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (DumbService.isDumb(myProject)) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -136,14 +138,13 @@ public class AutoPopupController implements Disposable {
       final PsiFile file1 = file;
       final Runnable request = new Runnable(){
         public void run(){
-          if (!editor.isDisposed()) {
-            documentManager.commitAllDocuments();
-            int lbraceOffset = editor.getCaretModel().getOffset() - 1;
-            try {
-              new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
-            }
-            catch (IndexNotReadyException ignored) { //anything can happen on alarm
-            }
+          if (myProject.isDisposed() || DumbService.isDumb(myProject) || editor.isDisposed()) return;
+          documentManager.commitAllDocuments();
+          int lbraceOffset = editor.getCaretModel().getOffset() - 1;
+          try {
+            new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+          }
+          catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }
         }
       };
