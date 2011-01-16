@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidLibraryManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
@@ -142,8 +143,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   private void configurePaths(AndroidFacet facet, MavenProject project) {
     Module module = facet.getModule();
-    String modulePath = module.getModuleFilePath();
-    String moduleDirPath = FileUtil.toSystemIndependentName(new File(modulePath).getParent());
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     AndroidFacetConfiguration configuration = facet.getConfiguration();
 
     String resFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", true, true);

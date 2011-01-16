@@ -89,4 +89,8 @@ public interface StructureViewModel extends TreeModel {
     boolean isAlwaysLeaf(StructureViewTreeElement element);
 
   }
+
+  interface ExpandInfoProvider {
+    boolean isAutoExpand(StructureViewTreeElement element);
+  }
 }

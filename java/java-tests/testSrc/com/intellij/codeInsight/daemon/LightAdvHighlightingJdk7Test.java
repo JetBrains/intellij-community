@@ -77,6 +77,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testDiamondMisc() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDynamicallyAddIgnoredAnnotations() throws Exception {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {

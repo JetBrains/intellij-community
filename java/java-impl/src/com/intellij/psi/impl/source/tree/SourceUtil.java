@@ -33,10 +33,7 @@ public class SourceUtil {
   private SourceUtil() { }
 
   public static String getTextSkipWhiteSpaceAndComments(final ASTNode element) {
-    int length = AstBufferUtil.toBuffer(element, null, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
-    char[] buffer = new char[length];
-    AstBufferUtil.toBuffer(element, buffer, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
-    return new String(buffer);
+    return AstBufferUtil.getTextSkippingTokens(element, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
   }
 
   public static String getTextSkipWhiteSpaceAndComments(final LighterAST tree, final LighterASTNode node) {

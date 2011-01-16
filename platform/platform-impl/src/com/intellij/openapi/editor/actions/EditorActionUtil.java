@@ -215,7 +215,12 @@ public class EditorActionUtil {
 
     if (currentVisCaret.line > caretLogLineStartVis.line) {
       // Caret is located not at the first visual line of soft-wrapped logical line.
-      moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret, currentVisCaret.line - caretLogLineStartVis.line);
+      if (editorSettings.isSmartHome()) {
+        moveCaretToStartOfSoftWrappedLine(editor, currentVisCaret, currentVisCaret.line - caretLogLineStartVis.line);
+      }
+      else {
+        caretModel.moveToVisualPosition(new VisualPosition(currentVisCaret.line, 0));
+      }
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
@@ -228,8 +233,8 @@ public class EditorActionUtil {
     }
     logLineToUse++;
 
-    if (logLineToUse >= document.getLineCount()) {
-      editor.getCaretModel().moveToVisualPosition(new VisualPosition(logLineToUse, 0));
+    if (logLineToUse >= document.getLineCount() || !editorSettings.isSmartHome()) {
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(logLineToUse, 0));
     }
     else if (logLineToUse == logCaretLine) {
       int line = currentVisCaret.line;

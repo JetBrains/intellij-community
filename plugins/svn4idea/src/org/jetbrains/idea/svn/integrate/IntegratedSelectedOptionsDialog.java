@@ -44,7 +44,6 @@ import java.util.*;
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JPanel contentPane;
   private JCheckBox myDryRunCheckbox;
-  private JCheckBox myStatusBox;
   private JList myWorkingCopiesList;
   private JComponent myToolbar;
   private JLabel mySourceInfoLabel;
@@ -99,7 +98,6 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
     myDryRunCheckbox.setSelected(svnConfig.MERGE_DRY_RUN);
-    myStatusBox.setSelected(svnConfig.UPDATE_RUN_STATUS);
     myIgnoreWhitespacesCheckBox.setSelected(svnConfig.IGNORE_SPACES_IN_MERGE);
 
     mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
@@ -179,7 +177,6 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     setTitle(SvnBundle.message("dialog.Subversion.select.working.copy.title"));
     myIgnoreWhitespacesCheckBox.setVisible(false);
     myDryRunCheckbox.setVisible(false);
-    myStatusBox.setVisible(false);
     myWcListTitleLabel.setText(SvnBundle.message("dialog.Subversion.select.working.copy.wcopy.list.title"));
   }
 
@@ -222,7 +219,6 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   public void saveOptions() {
     SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
     svnConfig.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
-    svnConfig.UPDATE_RUN_STATUS = myStatusBox.isSelected();
     svnConfig.IGNORE_SPACES_IN_MERGE = myIgnoreWhitespacesCheckBox.isSelected();
   }
 

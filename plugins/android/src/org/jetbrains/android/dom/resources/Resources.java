@@ -40,6 +40,18 @@ public interface Resources extends AndroidDomElement {
   List<Style> getStyles();
   Style addStyle();
 
+  List<StringArray> getArrays();
+  StringArray addArray();
+
+  List<BoolElement> getBools();
+  BoolElement addBool();
+
+  List<IntegerElement> getIntegers();
+  IntegerElement addInteger();
+
+  List<IntegerArray> getIntegerArrays();
+  IntegerArray addIntegerArray();
+
   List<StringArray> getStringArrays();
   StringArray addStringArray();
 

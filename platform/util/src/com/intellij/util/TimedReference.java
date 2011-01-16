@@ -35,4 +35,8 @@ public class TimedReference<T> extends Timed<T> {
     poll();
     myT = t;
   }
+
+  public static void disposeTimed(boolean force) {
+    Timed.disposeTimed(force);
+  }
 }

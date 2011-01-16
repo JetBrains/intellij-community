@@ -123,6 +123,8 @@ public class PsiDiamondType extends PsiType {
             }
           }
         }
+      } else if (parent instanceof PsiVariable) {
+        return getComponentTypes(((PsiVariable)parent).getType());
       }
     }
     return NULL_TYPES;

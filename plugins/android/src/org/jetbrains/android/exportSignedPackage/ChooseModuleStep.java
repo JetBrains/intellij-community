@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.module.Module;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -32,6 +33,8 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 class ChooseModuleStep extends ExportSignedPackageWizardStep {
+  public static final String MODULE_PROPERTY = "ExportedModule";
+
   private JComboBox myModuleCombo;
   private JPanel myContentPanel;
   private CheckModulePanel myCheckModulePanel;
@@ -41,7 +44,19 @@ class ChooseModuleStep extends ExportSignedPackageWizardStep {
   protected ChooseModuleStep(ExportSignedPackageWizard wizard, List<AndroidFacet> facets) {
     myWizard = wizard;
     assert facets.size() > 0;
-    myModuleCombo.setModel(new CollectionComboBoxModel(facets, facets.get(0)));
+
+    AndroidFacet selection = facets.get(0);
+    String module = PropertiesComponent.getInstance(wizard.getProject()).getValue(MODULE_PROPERTY);
+    if (module != null) {
+      for (AndroidFacet facet : facets) {
+        if (module.equals(facet.getModule().getName())) {
+          selection = facet;
+          break;
+        }
+      }
+    }
+
+    myModuleCombo.setModel(new CollectionComboBoxModel(facets, selection));
     myModuleCombo.setRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

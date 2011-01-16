@@ -57,7 +57,6 @@ public class TriggerAdditionOrDeletion {
     if (myExisting.isEmpty() && myDeleted.isEmpty()) return;
     
     final SortByVcsRoots<FilePath> sortByVcsRoots = new SortByVcsRoots<FilePath>(myProject, new Convertor.IntoSelf());
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
 
     if (! myExisting.isEmpty()) {
       processAddition(sortByVcsRoots);

@@ -15,48 +15,32 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrMethodStubImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author ilyas
  */
-public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMethod> {
+public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMethod> {
 
-  public GrMethodElementType() {
-    super("method definition");
-  }
-
-  public GrMethod createElement(ASTNode node) {
-    return new GrMethodImpl(node);
-  }
-
-  public GrMethod createPsi(GrMethodStub stub) {
-    return new GrMethodImpl(stub);
+  public GrMethodElementType(final String debugName) {
+    super(debugName);
   }
 
   public GrMethodStub createStub(GrMethod psi, StubElement parentStub) {
 
-    return new GrMethodStubImpl(parentStub, StringRef.fromString(psi.getName()), GrTypeDefinitionElementType.getAnnotationNames(psi),
-                                psi.getNamedParametersArray());
+    return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
+                                psi.getNamedParametersArray(), this);
   }
 
   public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {
@@ -69,7 +53,7 @@ public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMetho
     StringRef ref = dataStream.readName();
     final String[] annNames = GrStubUtils.readStringArray(dataStream);
     String[] namedParameters = GrStubUtils.readStringArray(dataStream);
-    return new GrMethodStubImpl(parentStub, ref, annNames, namedParameters);
+    return new GrMethodStub(parentStub, ref, annNames, namedParameters, this);
   }
 
   public void indexStub(GrMethodStub stub, IndexSink sink) {

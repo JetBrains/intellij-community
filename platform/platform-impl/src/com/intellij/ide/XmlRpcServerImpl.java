@@ -53,8 +53,11 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
     final int currentPriority = thread.getPriority();
     try {
       thread.setPriority(Thread.NORM_PRIORITY - 2);
-      myWebServer = new IdeaAwareWebServer(getPortNumber(), getBindAddress(), new IdeaAwareXmlRpcServer());
+      final InetAddress address = getBindAddress();
+      final int port = getPortNumber();
+      myWebServer = new IdeaAwareWebServer(port, address, new IdeaAwareXmlRpcServer());
       myWebServer.start();
+      LOG.info("XmlRpc server listening at " + address + ":" + port);
     }
     catch (Exception e) {
       LOG.error(e);

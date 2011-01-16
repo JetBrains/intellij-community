@@ -25,7 +25,7 @@ import com.intellij.psi.StubBasedPsiElement;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrInterfaceDefinition extends GrTypeDefinition, GrTypeParameterListOwner, StubBasedPsiElement<GrTypeDefinitionStub> {
+public interface GrInterfaceDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
   @Nullable
   public GrImplementsClause getImplementsClause();
 }

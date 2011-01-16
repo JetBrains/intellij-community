@@ -44,6 +44,12 @@ public class ArrayUtil {
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
+  public static final ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
+    @Override
+    public String[] create(int count) {
+      return newStringArray(count);
+    }
+  };
 
   @NotNull
   public static byte[] realloc(@NotNull byte[] array, final int newSize) {
@@ -145,6 +151,20 @@ public class ArrayUtil {
       return a1;
     }
     T[] highlights = (T[])Array.newInstance(aClass, a1.length + a2.length);
+    System.arraycopy(a1, 0, highlights, 0, a1.length);
+    System.arraycopy(a2, 0, highlights, a1.length, a2.length);
+    return highlights;
+  }
+
+  @NotNull
+  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull ArrayFactory<T> factory) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    T[] highlights = factory.create(a1.length + a2.length);
     System.arraycopy(a1, 0, highlights, 0, a1.length);
     System.arraycopy(a2, 0, highlights, a1.length, a2.length);
     return highlights;

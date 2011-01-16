@@ -18,17 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrModifierList extends GroovyPsiElement, PsiModifierList, StubBasedPsiElement<GrModifierListStub> {
+public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
   @NotNull
   PsiElement[] getModifiers();
 

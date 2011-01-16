@@ -22,7 +22,7 @@ public class GeneratorTest extends LightGroovyTestCase {
     return TestUtils.getTestDataPath() + "groovy/stubGenerator";
   }
 
-public void testArrayType1() throws Throwable { doTest(); }
+  public void testArrayType1() throws Throwable { doTest(); }
   public void testAtInterface() throws Throwable { doTest(); }
   public void testDefInInterface() throws Throwable { doTest(); }
   public void testExtends1() throws Throwable { doTest(); }
@@ -56,6 +56,15 @@ public void testArrayType1() throws Throwable { doTest(); }
   public void testSynchronizedProperty() throws Throwable { doTest(); }
   public void testVarargs() throws Throwable { doTest(); }
   public void testThrowsCheckedException() throws Throwable { doTest(); }
+  public void testSubclassProperty() throws Throwable { doTest(); }
+
+  public void testRawReturnTypeInImplementation() throws Throwable {
+    myFixture.addClass("package java.util.concurrent;" +
+                       "public interface Callable<V>   {" +
+                       "  V call() throws java.lang.Exception;" +
+                       "}");
+    doTest();
+  }
 
   public void testCheckedExceptionInConstructorDelegate() throws Throwable {
     myFixture.addClass("package foo;" +
@@ -73,6 +82,11 @@ public void testArrayType1() throws Throwable { doTest(); }
 
   public void testImmutableAnno() throws Throwable {
     myFixture.addClass("package groovy.lang; public @interface Immutable {}");
+    doTest();
+  }
+
+  public void testDelegateAnno() throws Throwable {
+    myFixture.addClass("package groovy.lang; public @interface Delegate {}");
     doTest();
   }
 

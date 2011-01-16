@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class AutoBoxingInspection extends BaseInspection {
 
@@ -57,6 +59,13 @@ public class AutoBoxingInspection extends BaseInspection {
         s_boxingClasses.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
         s_boxingClasses.put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
         s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
+    }
+
+    @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<String>();
+    static {
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_CHARACTER);
+        convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_SHORT);
     }
 
     @Override
@@ -298,32 +307,48 @@ public class AutoBoxingInspection extends BaseInspection {
                 return;
             }
             final PsiType expressionType = expression.getType();
-            if(expressionType == null) {
+            if (expressionType == null) {
                 return;
             }
-            if(expressionType.equals(PsiType.VOID)) {
+            if (expressionType.equals(PsiType.VOID)) {
                 return;
             }
-            if(!TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
+            if (!TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
                 return;
             }
             final PsiPrimitiveType primitiveType =
                     (PsiPrimitiveType)expressionType;
             final PsiClassType boxedType =
                     primitiveType.getBoxedType(expression);
-            if(boxedType == null){
+            if (boxedType == null) {
                 return;
             }
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression, false);
-            if(expectedType == null) {
+            if (expectedType == null) {
                 return;
             }
-            if(ClassUtils.isPrimitive(expectedType)) {
+            if (ClassUtils.isPrimitive(expectedType)) {
                 return;
             }
-            if(!expectedType.isAssignableFrom(boxedType)){
-                return;
+            if (!expectedType.isAssignableFrom(boxedType)) {
+                // JLS 5.2 Assignment Conversion
+                // check if a narrowing primitive conversion is applicable
+                if (!(expectedType instanceof PsiClassType) ||
+                        !PsiUtil.isConstantExpression(expression)) {
+                    return;
+                }
+                final PsiClassType classType = (PsiClassType)expectedType;
+                final String className = classType.getCanonicalText();
+                if (!convertableBoxedClassNames.contains(className)) {
+                    return;
+                }
+                if (!PsiType.BYTE.equals(expressionType) &&
+                        !PsiType.CHAR.equals(expressionType) &&
+                        !PsiType.SHORT.equals(expressionType) &&
+                        !PsiType.INT.equals(expressionType)) {
+                    return;
+                }
             }
             if (ignoreAddedToCollection && isAddedToCollection(expression)) {
                 return;

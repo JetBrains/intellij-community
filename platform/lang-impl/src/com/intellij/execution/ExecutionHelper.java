@@ -16,8 +16,11 @@
 
 package com.intellij.execution;
 
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -44,6 +48,9 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -133,19 +140,35 @@ public class ExecutionHelper {
     }
   }
 
-  @Nullable
-  public static ProcessHandler findRunningConsole(final Project project,
-                                                  @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
-    final ProcessHandler[] processes = ExecutionManager.getInstance(project).getRunningProcesses();
-    for (ProcessHandler process : processes) {
-      if (process instanceof OSProcessHandler && !process.isProcessTerminated()) {
-        final String commandLine = ((OSProcessHandler)process).getCommandLine();
-        if (cmdLineMatcher.fun(commandLine).booleanValue()) {
-          return process;
+  public static Collection<RunContentDescriptor> findRunningConsole(final Project project,
+                                                                    @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
+    final ExecutionManager executionManager = ExecutionManager.getInstance(project);
+    final ToolWindow runToolWindow = ToolWindowManager.getInstance(project).getToolWindow(DefaultRunExecutor.getRunExecutorInstance().getId());
+    if (runToolWindow != null && runToolWindow.isVisible()) {
+      final RunContentDescriptor selectedContent = executionManager.getContentManager().getSelectedContent();
+      if (selectedContent != null){
+        final ProcessHandler processHandler = selectedContent.getProcessHandler();
+        if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
+          final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
+          if (cmdLineMatcher.fun(commandLine).booleanValue()) {
+            return Collections.singletonList(selectedContent);
+          }
         }
       }
     }
-    return null;
+
+    final ArrayList<RunContentDescriptor> result = new ArrayList<RunContentDescriptor>();
+    final RunContentDescriptor[] runContentDescriptors = ((RunContentManagerImpl)executionManager.getContentManager()).getAllDescriptors();
+    for (RunContentDescriptor runContentDescriptor : runContentDescriptors) {
+      final ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
+      if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
+        final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
+        if (cmdLineMatcher.fun(commandLine).booleanValue()) {
+          result.add(runContentDescriptor);
+        }
+      }
+    }
+    return result;
   }
 
   public static class RailsErrorViewPanel extends NewErrorTreeViewPanel {

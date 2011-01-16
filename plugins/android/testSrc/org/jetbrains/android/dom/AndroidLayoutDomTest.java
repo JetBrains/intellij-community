@@ -145,7 +145,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testLayoutAttributeValuesCompletion() throws Throwable {
-    doTestCompletionVariants("av10.xml", "fill_parent", "wrap_content", "@android:");
+    doTestCompletionVariants("av10.xml", "fill_parent", "match_parent", "wrap_content", "@android:");
     doTestCompletionVariants("av11.xml", "center", "center_horizontal", "center_vertical");
   }
 

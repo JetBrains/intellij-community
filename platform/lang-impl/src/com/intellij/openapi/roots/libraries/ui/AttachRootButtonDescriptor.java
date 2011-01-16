@@ -14,6 +14,7 @@ package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public abstract class AttachRootButtonDescriptor {
   }
 
   public abstract VirtualFile[] selectFiles(@NotNull JComponent parent, @Nullable VirtualFile initialSelection,
-                                            @Nullable Module contextModule, @Nullable String libraryName);
+                                            @Nullable Module contextModule, @NotNull LibraryEditor libraryEditor);
 
   public String getButtonText() {
     return myButtonText;

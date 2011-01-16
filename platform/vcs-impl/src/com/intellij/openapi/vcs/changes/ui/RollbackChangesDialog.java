@@ -40,6 +40,9 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Runnable myAfterVcsRefreshInAwt;
   private final MultipleChangeListBrowser myBrowser;
   @Nullable private JCheckBox myDeleteLocallyAddedFiles;
+  private final ChangeInfoCalculator myInfoCalculator;
+  private final CommitLegendPanel myCommitLegendPanel;
+  private Runnable myListChangeListener;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
     rollbackChanges(project, changes, true);
@@ -82,7 +85,19 @@ public class RollbackChangesDialog extends DialogWrapper {
     myProject = project;
     myRefreshSynchronously = refreshSynchronously;
     myAfterVcsRefreshInAwt = afterVcsRefreshInAwt;
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, null, null);
+
+    myInfoCalculator = new ChangeInfoCalculator();
+    myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator);
+    myListChangeListener = new Runnable() {
+      @Override
+      public void run() {
+        if (myBrowser != null) {
+          myInfoCalculator.update(changes, new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
+          myCommitLegendPanel.update();
+        }
+      }
+    };
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
     myBrowser.setToggleActionTitle("Include in rollback");
 
     setOKButtonText(VcsBundle.message("changes.action.rollback.text"));
@@ -119,6 +134,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     }
 
     init();
+    myListChangeListener.run();
   }
 
   @Override
@@ -130,20 +146,52 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    new RollbackWorker(myProject, myRefreshSynchronously).doRollback(myBrowser.getCurrentIncludedChanges(),
+    new RollbackWorker(myProject, myRefreshSynchronously).doRollback(myBrowser.getChangesIncludedInAllLists(),
                                                                      myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
                                                                      myAfterVcsRefreshInAwt, null);
   }
 
   @Nullable
   protected JComponent createCenterPanel() {
+    JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gb =
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                             new Insets(1, 1, 1, 1), 0, 0);
+
+    JComponent browserHeader = myBrowser.getHeaderPanel();
+    myBrowser.remove(browserHeader);
+    gb.fill = GridBagConstraints.HORIZONTAL;
+    gb.weightx = 1;
+    gb.gridwidth = 2;
+    panel.add(browserHeader, gb);
+
+    final JPanel border = new JPanel(new BorderLayout());
+    border.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+    border.add(myBrowser, BorderLayout.CENTER);
+    gb.fill = GridBagConstraints.BOTH;
+    gb.weighty = 1;
+    gb.gridwidth = 1;
+    gb.gridheight = 3;
+    ++ gb.gridy;
+    panel.add(border, gb);
+
+    final JPanel commitLegendPanel = myCommitLegendPanel.getComponent();
+    commitLegendPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    gb.fill = GridBagConstraints.NONE;
+    gb.weightx = 0;
+    gb.weighty = 0;
+    gb.gridheight = 1;
+    ++ gb.gridx;
+    panel.add(commitLegendPanel, gb);
+
     if (myDeleteLocallyAddedFiles != null) {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(myBrowser, BorderLayout.CENTER);
-      panel.add(myDeleteLocallyAddedFiles, BorderLayout.SOUTH);
-      return panel;
+      ++ gb.gridy;
+      panel.add(new JSeparator(), gb);
+      ++ gb.gridy;
+      panel.add(myDeleteLocallyAddedFiles, gb);
     }
-    return myBrowser;
+
+    return panel;
   }
 
   public JComponent getPreferredFocusedComponent() {

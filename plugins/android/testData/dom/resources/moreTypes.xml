@@ -1,0 +1,17 @@
+<resources>
+  <bool name="bool1">true</bool>
+  <bool name="bool2"><error>0</error></bool>
+  <integer name="int1">10</integer>
+  <integer name="int2"><error>false</error></integer>
+  <integer-array name="array">
+      <item>4</item>
+      <item>8</item>
+      <item>16</item>
+      <item><error>1.2</error></item>
+    </integer-array>
+  <array name="colors">
+      <item>#FFFF0000</item>
+      <item>#FF00FF00</item>
+      <item>#FF0000FF</item>
+  </array>
+</resources>

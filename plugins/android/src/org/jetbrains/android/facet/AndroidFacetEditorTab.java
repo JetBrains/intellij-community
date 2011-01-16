@@ -401,7 +401,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   @Nullable
   private String toRelativePath(String absPath) {
     absPath = FileUtil.toSystemIndependentName(absPath);
-    String moduleDirPath = new File(myContext.getModule().getModuleFilePath()).getParent();
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(myContext.getModule());
     if (moduleDirPath != null) {
       moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
       //if (VfsUtil.isAncestor(new File(moduleDirPath), new File(absPath), true)) {
@@ -729,7 +729,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   @Nullable
   private String toAbsolutePath(String genRelativePath) {
-    String moduleDirPath = new File(myContext.getModule().getModuleFilePath()).getParent();
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(myContext.getModule());
     if (moduleDirPath == null) return null;
     try {
       return new File(moduleDirPath + genRelativePath).getCanonicalPath();
@@ -776,8 +776,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         else {
           initialFile = module.getModuleFile();
           if (initialFile == null) {
-            String p = new File(myContext.getModule().getModuleFilePath()).getParent();
-            initialFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(p));
+            String p = AndroidRootUtil.getModuleDirPath(myContext.getModule());
+            if (p != null) {
+              initialFile = LocalFileSystem.getInstance().findFileByPath(p);
+            }
           }
         }
       }
@@ -833,8 +835,10 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       initialFile = myContext.getModule().getModuleFile();
     }
     if (initialFile == null) {
-      String p = new File(myContext.getModule().getModuleFilePath()).getParent();
-      initialFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(p));
+      String p = AndroidRootUtil.getModuleDirPath(myContext.getModule());
+      if (p != null) {
+        initialFile = LocalFileSystem.getInstance().findFileByPath(p);
+      }
     }
     return FileChooser
       .chooseFiles(myContentPanel, new FileChooserDescriptor(chooseManifest, !chooseManifest, false, false, false, chooseMultiple) {

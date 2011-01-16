@@ -44,6 +44,8 @@ public interface SMTRunnerEventsListener {
   void onTestFailed(@NotNull SMTestProxy test);
   void onTestIgnored(@NotNull SMTestProxy test);
 
+  void onFinish();
+
   void onSuiteFinished(@NotNull SMTestProxy suite);
   void onSuiteStarted(@NotNull SMTestProxy suite);
 

@@ -46,6 +46,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
@@ -58,8 +59,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
@@ -496,31 +495,18 @@ public class GitLogUI implements Disposable {
     buttonPanel.add(myMoreButton);
     jPanel.add(buttonPanel, BorderLayout.SOUTH);*/
 
-    final ComponentListener listener = new ComponentListener() {
+    new AdjustComponentWhenShown() {
       @Override
-      public void componentResized(ComponentEvent e) {
-        if (myStarted) {
-          if (adjustColumnSizes(scrollPane)) {
-            myJBTable.removeComponentListener(this);
-          }
-        }
+      protected boolean init() {
+        return adjustColumnSizes(scrollPane);
       }
+
       @Override
-      public void componentMoved(ComponentEvent e) {
+      protected boolean canExecute() {
+        return myStarted;
       }
-      @Override
-      public void componentShown(ComponentEvent e) {
-        if (myStarted) {
-          if (adjustColumnSizes(scrollPane)) {
-            myJBTable.removeComponentListener(this);
-          }
-        }
-      }
-      @Override
-      public void componentHidden(ComponentEvent e) {
-      }
-    };
-    myJBTable.addComponentListener(listener);
+    }.install(myJBTable);
+
     myMyChangeListener = new GitTableScrollChangeListener(myJBTable, myDetailsCache, myTableModel, new Runnable() {
       @Override
       public void run() {

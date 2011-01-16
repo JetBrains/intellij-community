@@ -39,7 +39,6 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
-  public static boolean DEBUG = false;
   private final TreeChangeEventImpl myEvent;
   private final PsiFileImpl myFile;
   private final PsiManagerEx myPsiManager;
@@ -84,9 +83,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
         ((CompositeElement)newNode.getTreeParent()).subtreeChanged();
       }
 
-      if (DEBUG) {
-        DebugUtil.checkTreeStructure(parent);
-      }
+      DebugUtil.checkTreeStructureIfConfigured(parent);
     }
   }
 
@@ -105,9 +102,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     ((TreeElement)child).rawRemove();
     ((CompositeElement)parent).subtreeChanged();
 
-    if (DEBUG) {
-      DebugUtil.checkTreeStructure(parent);
-    }
+    DebugUtil.checkTreeStructureIfConfigured(parent);
   }
 
   public void nodeInserted(@NotNull final ASTNode oldParent, @NotNull ASTNode node, final int pos) {
@@ -133,9 +128,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     ((TreeElement)node).clearCaches();
     ((CompositeElement)oldParent).subtreeChanged();
 
-    if (DEBUG) {
-      DebugUtil.checkTreeStructure(oldParent);
-    }
+    DebugUtil.checkTreeStructureIfConfigured(oldParent);
   }
 
   public TreeChangeEventImpl getEvent() {

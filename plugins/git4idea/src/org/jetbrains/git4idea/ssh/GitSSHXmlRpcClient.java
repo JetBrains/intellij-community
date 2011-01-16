@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.util.Vector;
 
 /**
@@ -43,7 +42,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   GitSSHXmlRpcClient(final int port, final boolean batchMode) throws IOException {
     //noinspection HardCodedStringLiteral
-    myClient = batchMode ? null : new XmlRpcClientLite(Inet4Address.getLocalHost().getHostAddress(), port);
+    myClient = batchMode ? null : new XmlRpcClientLite("127.0.0.1", port);
   }
 
   /**

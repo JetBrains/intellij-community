@@ -19,6 +19,7 @@ package com.intellij.ide.structureView.newStructureView;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
@@ -87,9 +88,27 @@ class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+    StructureViewModel model = myStructureModel;
+    if (model instanceof TreeModelWrapper) {
+      model = ((TreeModelWrapper) model).getModel();
+    }
+    if (model instanceof StructureViewModel.ExpandInfoProvider) {
+      StructureViewModel.ExpandInfoProvider provider = (StructureViewModel.ExpandInfoProvider)model;
+      Object element = nodeDescriptor.getElement();
+      StructureViewTreeElement value = null;
+      if (element instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
+        StructureViewComponent.StructureViewTreeElementWrapper wrapper = (StructureViewComponent.StructureViewTreeElementWrapper)element;
+        if (wrapper.getValue() instanceof StructureViewTreeElement) {
+          value = (StructureViewTreeElement)wrapper.getValue();
+        }
+      }
+      if (value != null) {
+        return provider.isAutoExpand(value);
+      }
+    }
     // expand root node & its immediate children
     final NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
-    return super.isAutoExpandNode(parent == null? nodeDescriptor : parent);
+    return super.isAutoExpandNode(parent == null ? nodeDescriptor : parent);
   }
 
   protected final boolean isSmartExpand() {

@@ -46,12 +46,6 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
     return project.getPicoContainer().getComponentInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable") == null;
   }
 
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return "Libraries";
-  }
-
   @Override
   public JComponent createComponent() {
     return myPanel.getPanel();

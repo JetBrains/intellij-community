@@ -25,15 +25,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -80,13 +84,21 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public static void addLibraryChildren(final OrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final VirtualFile[] files = entry.getFiles(OrderRootType.CLASSES);
+    VirtualFile[] files =
+      entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {
-      final PsiDirectory psiDir = psiManager.findDirectory(file);
-      if (psiDir == null) {
-        continue;
+      if (file.isDirectory()) {
+        final PsiDirectory psiDir = psiManager.findDirectory(file);
+        if (psiDir == null) {
+          continue;
+        }
+        children.add(new PsiDirectoryNode(project, psiDir, node.getSettings()));
       }
-      children.add(new PsiDirectoryNode(project, psiDir, node.getSettings()));
+      else {
+        final PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile == null) continue;
+        children.add(new PsiFileNode(project, psiFile, node.getSettings()));
+      }
     }
   }
 
@@ -115,5 +127,27 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   public void navigate(final boolean requestFocus) {
     Module module = getValue().getModule();
     ProjectSettingsService.getInstance(myProject).openModuleLibrarySettings(module);
+  }
+
+  static VirtualFile[] getLibraryRoots(LibraryOrderEntry orderEntry) {
+    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+    final Library library = orderEntry.getLibrary();
+    OrderRootType[] rootTypes = LibraryType.DEFAULT_EXTERNAL_ROOT_TYPES;
+    if (library instanceof LibraryEx) {
+      LibraryType libraryType = ((LibraryEx)library).getType();
+      if (libraryType != null) {
+        rootTypes = libraryType.getExternalRootTypes();
+        if (libraryType.isFileBased()) {
+          for (OrderRootType rootType : rootTypes) {
+            files.addAll(Arrays.asList(library.getFiles(rootType)));
+          }
+          return files.toArray(new VirtualFile[files.size()]);
+        }
+      }
+    }
+    for (OrderRootType rootType : rootTypes) {
+      files.addAll(Arrays.asList(orderEntry.getRootFiles(rootType)));
+    }
+    return files.toArray(new VirtualFile[files.size()]);
   }
 }

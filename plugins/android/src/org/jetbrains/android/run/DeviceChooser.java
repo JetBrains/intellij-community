@@ -319,6 +319,9 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
 
     @Nullable
     public Object getValueAt(int rowIndex, int columnIndex) {
+      if (rowIndex >= myDevices.length) {
+        return null;
+      }
       IDevice device = myDevices[rowIndex];
       switch (columnIndex) {
         case 0:

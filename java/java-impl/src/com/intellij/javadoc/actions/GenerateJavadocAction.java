@@ -22,9 +22,11 @@ import com.intellij.javadoc.JavadocBundle;
 import com.intellij.javadoc.JavadocConfigurable;
 import com.intellij.javadoc.JavadocGenerationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 
 public final class GenerateJavadocAction extends BaseAnalysisAction{
   private JavadocConfigurable myConfigurable;
@@ -41,11 +43,22 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(Project project, final BaseAnalysisActionDialog dialog) {
     myConfigurable = JavadocGenerationManager.getInstance(project).getConfiguration().createConfigurable();
     final JComponent component = myConfigurable.createComponent();
     myConfigurable.reset();
+    myConfigurable.getOutputDirField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        updateAvailability(dialog);
+      }
+    });
+    updateAvailability(dialog);
     return component;
+  }
+
+  private void updateAvailability(BaseAnalysisActionDialog dialog) {
+    dialog.setOKActionEnabled(!myConfigurable.getOutputDir().isEmpty());
   }
 
   @Override

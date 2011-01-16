@@ -23,6 +23,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -81,6 +82,14 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     return createClassFromTemplate(dir, name, templateName);
   }
 
+  @Override
+  public PsiClass createClass(@NotNull PsiDirectory dir,
+                              @NotNull String name,
+                              @NotNull String templateName,
+                              boolean askForUndefinedVariables) throws IncorrectOperationException {
+    return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables);
+  }
+
   @NotNull
   public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME;
@@ -112,6 +121,13 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir, String name, String templateName) throws IncorrectOperationException {
+    return createClassFromTemplate(dir, name, templateName, false);
+  }
+
+  private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir,
+                                                  String name,
+                                                  String templateName,
+                                                  boolean askToDefineVariables) throws IncorrectOperationException {
     checkCreateClassOrInterface(dir, name);
 
     FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
@@ -125,7 +141,8 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
     PsiElement element;
     try {
-      element = FileTemplateUtil.createFromTemplate(template, fileName, properties, dir);
+      element = askToDefineVariables ? new CreateFromTemplateDialog(dir.getProject(), dir, template, null, properties).create()
+                                     : FileTemplateUtil.createFromTemplate(template, fileName, properties, dir);
     }
     catch (IncorrectOperationException e) {
       throw e;

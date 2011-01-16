@@ -16,30 +16,23 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationMethodStub;
-
-import java.util.Collections;
-import java.util.Set;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 04.06.2007
  */
-public class GrAnnotationMethodImpl extends GrMethodBaseImpl<GrAnnotationMethodStub>
-    implements GrAnnotationMethod, StubBasedPsiElement<GrAnnotationMethodStub> {
+public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnotationMethod {
 
   public GrAnnotationMethodImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public GrAnnotationMethodImpl(final GrAnnotationMethodStub stub) {
+  public GrAnnotationMethodImpl(final GrMethodStub stub) {
     super(stub, GroovyElementTypes.ANNOTATION_METHOD);
   }
 
@@ -56,13 +49,4 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl<GrAnnotationMethodS
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    final GrAnnotationMethodStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
-    }
-    return super.getName();
-  }
 }

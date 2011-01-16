@@ -355,7 +355,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sl"
+    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk"
   ));
 
   private boolean inInitState() {

@@ -16,18 +16,42 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-
-import java.util.Set;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 
 /**
  * @author ilyas
  */
-public interface GrMethodStub extends NamedStub<GrMethod> {
+public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMethod> {
+  private final StringRef myName;
+  private final String[] myAnnotations;
+  private final String[] myNamedParameters;
 
-  String[] getAnnotations();
+  public GrMethodStub(StubElement parent,
+                      StringRef name,
+                      final String[] annotations,
+                      final @NotNull String[] namedParameters,
+                      final GrMethodElementType elementType) {
+    super(parent, elementType);
+    myName = name;
+    myAnnotations = annotations;
+    myNamedParameters = namedParameters;
+  }
+
+  public String getName() {
+    return StringRef.toString(myName);
+  }
+
+  public String[] getAnnotations() {
+    return myAnnotations;
+  }
 
   @NotNull
-  String[] getNamedParameters();
+  public String[] getNamedParameters() {
+    return myNamedParameters;
+  }
 }

@@ -33,7 +33,10 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnChangeProvider;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.update.SvnStatusWorker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -234,16 +237,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void prepareAndShowResults() {
     // todo unite into one window??
     if (! myAccomulatedFiles.isEmpty()) {
-      if (SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
-        doStatus(new Consumer<UpdatedFiles>() {
-          public void consume(final UpdatedFiles updatedFiles) {
-            myAccomulatedFiles.accomulateFiles(updatedFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS_LOCALS);
-            showUpdateTree();
-          }
-        });
-      } else {
-        showUpdateTree();
-      }
+      showUpdateTree();
     }
     if (! myExceptions.isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("message.title.vcs.update.errors", myExceptions.size()));

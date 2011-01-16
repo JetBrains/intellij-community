@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -111,18 +110,6 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   @Override
   public boolean isSoft() {
     return true;
-  }
-
-  private boolean isWsdl() {
-    final VirtualFile virtualFile = getElement().getContainingFile().getVirtualFile();
-    return virtualFile != null && "wsdl".equalsIgnoreCase(virtualFile.getExtension());
-    //final XmlFile file = (XmlFile)getElement().getContainingFile();
-    //final XmlDocument xml = file.getDocument();
-    //if (xml != null) {
-    //  final XmlTag rootTag = xml.getRootTag();
-    //  return rootTag != null && "definitions".equals(rootTag.getLocalName()) && rootTag.getNamespace().equals(XmlUtil.WSDL_SCHEMA_URI);
-    //}
-    //return false;
   }
 
   @Override

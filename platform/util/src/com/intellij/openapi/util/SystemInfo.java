@@ -76,7 +76,7 @@ public class SystemInfo {
   public static final boolean isMacOSLeopard = isLeopard();
 
   /**
-   * Running under MacOS X version 10.5 or later;
+   * Running under MacOS X version 10.6 or later;
    *
    * @since 9.0
    */

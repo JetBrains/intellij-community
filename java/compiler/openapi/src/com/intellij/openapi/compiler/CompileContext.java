@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -75,6 +76,7 @@ public interface CompileContext extends UserDataHolder {
    *
    * @return the progress indicator instance.
    */
+  @NotNull
   ProgressIndicator getProgressIndicator();
 
   /**

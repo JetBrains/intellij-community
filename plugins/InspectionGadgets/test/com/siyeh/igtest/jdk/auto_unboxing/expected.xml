@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;someNumber&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>15</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;new Integer(3)&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;new Integer(3)&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;new Integer(3)&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;value&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;value&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>36</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;Boolean.TRUE&lt;/code&gt; #loc</description>
+  </problem>
+
+
+  <problem>
+    <file>AutoUnboxing.java</file>
+    <line>37</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Auto-unboxing</problem_class>
+    <description>Auto-unboxing &lt;code&gt;Integer.valueOf(2)&lt;/code&gt; #loc</description>
+  </problem>
+
+</problems>

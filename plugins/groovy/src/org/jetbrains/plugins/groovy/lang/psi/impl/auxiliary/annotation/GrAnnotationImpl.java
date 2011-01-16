@@ -17,25 +17,27 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotation {
+public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
     public PsiAnnotation fun(Project project, String text) {
       return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
@@ -44,6 +46,15 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
 
   public GrAnnotationImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrAnnotationImpl(GrAnnotationStub stub) {
+    super(stub, GroovyElementTypes.ANNOTATION);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -94,6 +105,11 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
   }
 
   public GrCodeReferenceElement getClassReference() {
+    final GrAnnotationStub stub = getStub();
+    if (stub != null) {
+      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getAnnotationName(), this);
+    }
+
     return findChildByClass(GrCodeReferenceElement.class);
   }
 

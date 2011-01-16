@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -329,7 +330,8 @@ public class DebugUtil {
     }
   }
 
-  public static void checkTreeStructure(@NotNull ASTNode anyElement) {
+  public static void checkTreeStructure(@Nullable ASTNode anyElement) {
+    if (anyElement == null) return;
     ASTNode root = anyElement;
     while (root.getTreeParent() != null) {
       root = root.getTreeParent();
@@ -491,4 +493,10 @@ public class DebugUtil {
       LOG.error(e);
     }
   }
+  public static void checkTreeStructureIfConfigured(ASTNode element) {
+    if (CHECK){
+      checkTreeStructure(element);
+    }
+  }
+
 }

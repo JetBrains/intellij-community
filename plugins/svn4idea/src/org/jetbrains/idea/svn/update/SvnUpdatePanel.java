@@ -28,7 +28,7 @@ import java.util.Collection;
 
 public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   private JPanel myConfigureRootsPanel;
-  private JCheckBox myStatusBox;
+  private JCheckBox myForceBox;
   private JPanel myPanel;
   private JCheckBox myLockOnDemand;
   private DepthCombo myDepthCombo;
@@ -49,10 +49,18 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setVisible(descend);
     myDepthLabel.setLabelFor(myDepthCombo);
 
-    myLockOnDemand.setSelected(SvnConfiguration.getInstance(myVCS.getProject()).UPDATE_LOCK_ON_DEMAND);
+    final SvnConfiguration svnConfiguration = SvnConfiguration.getInstance(myVCS.getProject());
+    myLockOnDemand.setSelected(svnConfiguration.UPDATE_LOCK_ON_DEMAND);
     myLockOnDemand.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SvnConfiguration.getInstance(myVCS.getProject()).UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+        svnConfiguration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+      }
+    });
+    myForceBox.setSelected(svnConfiguration.FORCE_UPDATE);
+    myForceBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        svnConfiguration.FORCE_UPDATE = myForceBox.isSelected();
       }
     });
   }
@@ -67,10 +75,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
 
   protected JComponent getPanel() {
     return myPanel;
-  }
-
-  protected JCheckBox getStatusBox() {
-    return myStatusBox;
   }
 
   protected DepthCombo getDepthBox() {
@@ -88,5 +92,6 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
         return toolTip;
       }
     };
+    myDepthCombo = new DepthCombo(true);
   }
 }

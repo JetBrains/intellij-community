@@ -17,6 +17,7 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -621,53 +622,39 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     List<VirtualFile> addedVFiles = new ArrayList<VirtualFile>();
     Map<VirtualFile, File> copyFromMap = new HashMap<VirtualFile, File>();
     final Set<VirtualFile> recursiveItems = new HashSet<VirtualFile>();
-    for (Iterator<AddedFileInfo> it = myAddedFiles.iterator(); it.hasNext();) {
-      AddedFileInfo addedFileInfo = it.next();
-      if (addedFileInfo.myProject == project) {
-        it.remove();
-        final File ioFile = new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName);
-        VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
-        if (addedFile == null) {
-          addedFile = myLfs.refreshAndFindFileByIoFile(ioFile);
-        }
-        if (addedFile != null) {
-          final SVNStatus fileStatus = getFileStatus(vcs, ioFile);
-          if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
-            boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
-            if (!isIgnored) {
-              addedVFiles.add(addedFile);
-              copyFromMap.put(addedFile, addedFileInfo.myCopyFrom);
-              if (addedFileInfo.myRecursive) {
-                recursiveItems.add(addedFile);
-              }
-            }
-          }
-        }
-      }
-    }
+    fillAddedFiles(project, vcs, addedVFiles, copyFromMap, recursiveItems);
     if (addedVFiles.isEmpty()) return;
     final VcsShowConfirmationOption.Value value = vcs.getAddConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
-      Collection<VirtualFile> filesToProcess;
-      if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-        filesToProcess = addedVFiles;
-      }
-      else {
-        final String singleFilePrompt;
-        if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
-          singleFilePrompt = SvnBundle.getString("confirmation.text.add.dir");
-        }
-        else {
-          singleFilePrompt = SvnBundle.getString("confirmation.text.add.file");
-        }
-        filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
-                                                        null,
-                                                        SvnBundle.message("confirmation.title.add.file"), singleFilePrompt,
-                                                        vcs.getAddConfirmation());
-      }
+      final Collection<VirtualFile> filesToProcess = promptAboutAddition(vcs, addedVFiles, value, vcsHelper);
       if (filesToProcess != null) {
         final List<VcsException> exceptions = new ArrayList<VcsException>();
+        runInBackground(project, "Adding files to Subversion",
+                        createAdditionRunnable(project, vcs, copyFromMap, filesToProcess, exceptions));
+        if (!exceptions.isEmpty()) {
+          vcsHelper.showErrors(exceptions, SvnBundle.message("add.files.errors.title"));
+        }
+      }
+    }
+  }
+
+  private void runInBackground(final Project project, final String name, final Runnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, name, false, project);
+    } else {
+      runnable.run();
+    }
+  }
+
+  private Runnable createAdditionRunnable(final Project project,
+                               final SvnVcs vcs,
+                               final Map<VirtualFile, File> copyFromMap,
+                               final Collection<VirtualFile> filesToProcess,
+                               final List<VcsException> exceptions) {
+    return new Runnable() {
+      @Override
+      public void run() {
         SVNWCClient wcClient = vcs.createWCClient();
         final SVNCopyClient copyClient = vcs.createCopyClient();
         for(VirtualFile file: filesToProcess) {
@@ -702,8 +689,60 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
             exceptions.add(new VcsException(e));
           }
         }
-        if (!exceptions.isEmpty()) {
-          vcsHelper.showErrors(exceptions, SvnBundle.message("add.files.errors.title"));
+      }
+    };
+  }
+
+  private Collection<VirtualFile> promptAboutAddition(SvnVcs vcs,
+                                                      List<VirtualFile> addedVFiles,
+                                                      VcsShowConfirmationOption.Value value,
+                                                      AbstractVcsHelper vcsHelper) {
+    Collection<VirtualFile> filesToProcess;
+    if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      filesToProcess = addedVFiles;
+    }
+    else {
+      final String singleFilePrompt;
+      if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
+        singleFilePrompt = SvnBundle.getString("confirmation.text.add.dir");
+      }
+      else {
+        singleFilePrompt = SvnBundle.getString("confirmation.text.add.file");
+      }
+      filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
+                                                      null,
+                                                      SvnBundle.message("confirmation.title.add.file"), singleFilePrompt,
+                                                      vcs.getAddConfirmation());
+    }
+    return filesToProcess;
+  }
+
+  private void fillAddedFiles(Project project,
+                              SvnVcs vcs,
+                              List<VirtualFile> addedVFiles,
+                              Map<VirtualFile, File> copyFromMap,
+                              Set<VirtualFile> recursiveItems) {
+    for (Iterator<AddedFileInfo> it = myAddedFiles.iterator(); it.hasNext();) {
+      AddedFileInfo addedFileInfo = it.next();
+      if (addedFileInfo.myProject == project) {
+        it.remove();
+        final File ioFile = new File(getIOFile(addedFileInfo.myDir), addedFileInfo.myName);
+        VirtualFile addedFile = addedFileInfo.myDir.findChild(addedFileInfo.myName);
+        if (addedFile == null) {
+          addedFile = myLfs.refreshAndFindFileByIoFile(ioFile);
+        }
+        if (addedFile != null) {
+          final SVNStatus fileStatus = getFileStatus(vcs, ioFile);
+          if (fileStatus == null || fileStatus.getContentsStatus() != SVNStatusType.STATUS_IGNORED) {
+            boolean isIgnored = ChangeListManager.getInstance(addedFileInfo.myProject).isIgnoredFile(addedFile);
+            if (!isIgnored) {
+              addedVFiles.add(addedFile);
+              copyFromMap.put(addedFile, addedFileInfo.myCopyFrom);
+              if (addedFileInfo.myRecursive) {
+                recursiveItems.add(addedFile);
+              }
+            }
+          }
         }
       }
     }
@@ -711,57 +750,17 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private void processDeletedFiles(Project project) {
     final List<FilePath> deletedFiles = new ArrayList<FilePath>();
-    for (Iterator<DeletedFileInfo> it = myDeletedFiles.iterator(); it.hasNext();) {
-      DeletedFileInfo deletedFileInfo = it.next();
-      if (deletedFileInfo.myProject == project) {
-        it.remove();
-        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(deletedFileInfo.myFile);
-        deletedFiles.add(filePath);
-      }
-    }
+    fillDeletedFiles(project, deletedFiles);
     if (deletedFiles.isEmpty() || myUndoingMove) return;
     SvnVcs vcs = SvnVcs.getInstance(project);
     final VcsShowConfirmationOption.Value value = vcs.getDeleteConfirmation().getValue();
     if (value != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
       final AbstractVcsHelper vcsHelper = AbstractVcsHelper.getInstance(project);
       Collection<FilePath> filesToProcess;
-      if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-        filesToProcess = new ArrayList<FilePath>(deletedFiles);
-      }
-      else {
-
-        final String singleFilePrompt;
-        if (deletedFiles.size() == 1 && deletedFiles.get(0).isDirectory()) {
-          singleFilePrompt = SvnBundle.getString("confirmation.text.delete.dir");
-        }
-        else {
-          singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
-        }
-        final Collection<FilePath> files = vcsHelper
-          .selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"), null,
-                                    SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
-        filesToProcess = files == null ? null : new ArrayList<FilePath>(files);
-      }
+      filesToProcess = promptAboutDeletion(deletedFiles, vcs, value, vcsHelper);
       if (filesToProcess != null) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
-        SVNWCClient wcClient = vcs.createWCClient();
-        for(FilePath file: filesToProcess) {
-          VirtualFile vFile = file.getVirtualFile();  // for deleted directories
-          File ioFile = new File(file.getPath());
-          try {
-            wcClient.doDelete(ioFile, true, false);
-            if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
-              vFile.refresh(true, true);
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile);
-            }
-            else {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-            }
-          }
-          catch (SVNException e) {
-            exceptions.add(new VcsException(e));
-          }
-        }
+        runInBackground(project, "Deleting files from Subversion", createDeleteRunnable(project, vcs, filesToProcess, exceptions));
         if (!exceptions.isEmpty()) {
           vcsHelper.showErrors(exceptions, SvnBundle.message("delete.files.errors.title"));
         }
@@ -781,14 +780,83 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
   }
 
-  private void processMovedFiles(final Project project) {
-    for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext();) {
-      MovedFileInfo movedFileInfo = iterator.next();
-      if (movedFileInfo.myProject == project) {
-        doMove(SvnVcs.getInstance(project), movedFileInfo.mySrc, movedFileInfo.myDst);
-        iterator.remove();
+  private Runnable createDeleteRunnable(final Project project,
+                                        final SvnVcs vcs,
+                                        final Collection<FilePath> filesToProcess,
+                                        final List<VcsException> exceptions) {
+    return new Runnable() {
+      public void run() {
+        SVNWCClient wcClient = vcs.createWCClient();
+        for(FilePath file: filesToProcess) {
+          VirtualFile vFile = file.getVirtualFile();  // for deleted directories
+          File ioFile = new File(file.getPath());
+          try {
+            wcClient.doDelete(ioFile, true, false);
+            if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+              vFile.refresh(true, true);
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile);
+            }
+            else {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            }
+          }
+          catch (SVNException e) {
+            exceptions.add(new VcsException(e));
+          }
+        }
+      }
+    };
+  }
+
+  private Collection<FilePath> promptAboutDeletion(List<FilePath> deletedFiles,
+                                                   SvnVcs vcs,
+                                                   VcsShowConfirmationOption.Value value,
+                                                   AbstractVcsHelper vcsHelper) {
+    Collection<FilePath> filesToProcess;
+    if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      filesToProcess = new ArrayList<FilePath>(deletedFiles);
+    }
+    else {
+
+      final String singleFilePrompt;
+      if (deletedFiles.size() == 1 && deletedFiles.get(0).isDirectory()) {
+        singleFilePrompt = SvnBundle.getString("confirmation.text.delete.dir");
+      }
+      else {
+        singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
+      }
+      final Collection<FilePath> files = vcsHelper
+        .selectFilePathsToProcess(deletedFiles, SvnBundle.message("confirmation.title.delete.multiple.files"), null,
+                                  SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
+      filesToProcess = files == null ? null : new ArrayList<FilePath>(files);
+    }
+    return filesToProcess;
+  }
+
+  private void fillDeletedFiles(Project project, List<FilePath> deletedFiles) {
+    for (Iterator<DeletedFileInfo> it = myDeletedFiles.iterator(); it.hasNext();) {
+      DeletedFileInfo deletedFileInfo = it.next();
+      if (deletedFileInfo.myProject == project) {
+        it.remove();
+        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(deletedFileInfo.myFile);
+        deletedFiles.add(filePath);
       }
     }
+  }
+
+  private void processMovedFiles(final Project project) {
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        for (Iterator<MovedFileInfo> iterator = myMovedFiles.iterator(); iterator.hasNext();) {
+          MovedFileInfo movedFileInfo = iterator.next();
+          if (movedFileInfo.myProject == project) {
+            doMove(SvnVcs.getInstance(project), movedFileInfo.mySrc, movedFileInfo.myDst);
+            iterator.remove();
+          }
+        }
+      }
+    };
+    runInBackground(project, "Moving files in Subversion", runnable);
   }
 
   @Nullable

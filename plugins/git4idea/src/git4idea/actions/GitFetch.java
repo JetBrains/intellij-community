@@ -18,10 +18,12 @@ package git4idea.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitFetchDialog;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,35 +33,35 @@ import java.util.Set;
  * Git "fetch" action
  */
 public class GitFetch extends GitRepositoryAction {
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @NotNull
   protected String getActionName() {
     return GitBundle.getString("fetch.action.name");
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected void perform(@NotNull final Project project,
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    GitFetchDialog d = new GitFetchDialog(project, gitRoots, defaultRoot);
+    final GitFetchDialog d = new GitFetchDialog(project, gitRoots, defaultRoot);
     d.show();
     if (!d.isOK()) {
       return;
     }
     final GitLineHandler h = d.fetchHandler();
-    try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.message("fetching.title", d.getRemote()), h.printableCommandLine());
-      // note that fetch does not affects checked out sources
-    }
-    finally {
-      exceptions.addAll(h.errors());
-    }
+    GitTask fetchTash = new GitTask(project, h, GitBundle.message("fetching.title", d.getRemote()));
+    fetchTash.executeAsync(new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void onSuccess() {
+        GitUIUtil.notifySuccess(project, "Fetched successfully", "Fetched " + d.getRemote());
+      }
+
+      @Override
+      protected void onFailure() {
+        GitUIUtil.notifyGitErrors(project, "Error fetching " + d.getRemote(), "", h.errors());
+      }
+    });
   }
+
 }

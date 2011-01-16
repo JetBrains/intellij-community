@@ -21,34 +21,52 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AstBufferUtil {
   private AstBufferUtil() {}
 
-  public static int toBuffer(ASTNode element, char[] buffer, int offset) {
+  public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset) {
     return toBuffer(element, buffer, offset, null);
   }
 
-  public static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
-    if (element instanceof ForeignLeafPsiElement ||
-        skipTypes != null && skipTypes.contains(element.getElementType())) {
-      return offset;
-    }
+  public static int toBuffer(@NotNull final ASTNode element, @Nullable final char[] buffer, int offset, @Nullable final TokenSet skipTypes) {
+    final int[] result = {offset};
 
-    if (element instanceof LeafElement) {
-      return ((LeafElement)element).copyTo(buffer, offset);
-    }
+    ((TreeElement)element).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      public void visitLeaf(LeafElement element) {
+        if (element instanceof ForeignLeafPsiElement ||
+            skipTypes != null && skipTypes.contains(element.getElementType())) {
+          return;
+        }
 
-    if (element instanceof LazyParseableElement) {
-      LazyParseableElement lpe = (LazyParseableElement)element;
-      int lpeResult = lpe.copyTo(buffer, offset);
-      if (lpeResult > 0) return lpeResult;
-    }
+        result[0] = element.copyTo(buffer, result[0]);
+      }
 
-    int curOffset = offset;
-    for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      curOffset = toBuffer(child, buffer, curOffset, skipTypes);
-    }
-    return curOffset;
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        if (element instanceof LazyParseableElement) {
+          LazyParseableElement lpe = (LazyParseableElement)element;
+          int lpeResult = lpe.copyTo(buffer, result[0]);
+          if (lpeResult > 0) {
+            result[0] = lpeResult;
+            return;
+          }
+        }
+
+        super.visitComposite(composite);
+      }
+    });
+
+    return result[0];
+  }
+
+  public static String getTextSkippingTokens(@NotNull ASTNode element, @Nullable TokenSet skipTypes) {
+    int length = toBuffer(element, null, 0, skipTypes);
+    char[] buffer = new char[length];
+    toBuffer(element, buffer, 0, skipTypes);
+    return new String(buffer);
   }
 }

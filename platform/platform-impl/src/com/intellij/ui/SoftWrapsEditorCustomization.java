@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.AbstractUnappliableEditorCustomization;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since Aug 20, 2010 4:54:48 PM
  */
-public class SoftWrapsEditorCustomization implements EditorCustomization {
+public class SoftWrapsEditorCustomization extends AbstractUnappliableEditorCustomization {
 
   @Override
   public Set<Feature> getSupportedFeatures() {
@@ -37,7 +38,7 @@ public class SoftWrapsEditorCustomization implements EditorCustomization {
   }
 
   @Override
-  public void customize(@NotNull EditorEx editor, @NotNull Feature feature) {
+  public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
     editor.getSettings().setUseSoftWraps(true);
   }
 }

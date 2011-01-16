@@ -19,6 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -37,15 +39,21 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub> implements GrModifierList {
+public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
+  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = new ArrayFactory<GrAnnotation>() {
+    @Override
+    public GrAnnotation[] create(int count) {
+      return new GrAnnotation[count];
+    }
+  };
 
   static {
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.PUBLIC, GrModifierFlags.PUBLIC_MASK);
@@ -65,6 +73,11 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   public GrModifierListImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public GrModifierListImpl(GrModifierListStub stub) {
@@ -225,7 +238,7 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return findChildrenByClass(GrAnnotation.class);
+    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, ARRAY_FACTORY);
   }
 
   @NotNull
@@ -235,12 +248,22 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    PsiElement child = getFirstChild();
-    while (child != null) {
-      if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
-        return (PsiAnnotation)child;
+    final GrModifierListStub stub = getStub();
+    if (stub != null) {
+      for (StubElement stubElement : stub.getChildrenStubs()) {
+        final PsiElement child = stubElement.getPsi();
+        if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
+          return (PsiAnnotation)child;
+        }
       }
-      child = child.getNextSibling();
+    } else {
+      PsiElement child = getFirstChild();
+      while (child != null) {
+        if (child instanceof PsiAnnotation && qualifiedName.equals(((PsiAnnotation)child).getQualifiedName())) {
+          return (PsiAnnotation)child;
+        }
+        child = child.getNextSibling();
+      }
     }
     return null;
   }

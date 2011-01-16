@@ -23,10 +23,11 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -35,13 +36,17 @@ import java.util.ArrayList;
 /**
  * @author Maxim.Medvedev
  */
-public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrReferenceListStub>
-  implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
+public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
 
   private PsiClassType[] cachedTypes = null;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public GrReferenceListImpl(final GrReferenceListStub stub, IStubElementType elementType) {
@@ -50,6 +55,16 @@ public abstract class GrReferenceListImpl extends GroovyBaseElementImpl<GrRefere
 
   @NotNull
   public GrCodeReferenceElement[] getReferenceElements() {
+    final GrReferenceListStub stub = getStub();
+    if (stub != null) {
+      final String[] baseClasses = stub.getBaseClasses();
+      final GrCodeReferenceElement[] result = new GrCodeReferenceElement[baseClasses.length];
+      for (int i = 0; i < baseClasses.length; i++) {
+        result[i] = GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClasses[i], this);
+      }
+      return result;
+    }
+
     return findChildrenByClass(GrCodeReferenceElement.class);
   }
 

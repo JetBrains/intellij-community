@@ -120,7 +120,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   }
 
   protected static int getCategory(PsiElement element) {
-    if (element instanceof PsiField) return 1;
+    if (element instanceof PsiField || element instanceof PsiTypeParameter) return 1;
     if (element instanceof PsiClass || element instanceof PsiClassInitializer) return 2;
     if (element instanceof PsiMethod) {
       if (((PsiMethod)element).hasModifierProperty(PsiModifier.ABSTRACT)) {

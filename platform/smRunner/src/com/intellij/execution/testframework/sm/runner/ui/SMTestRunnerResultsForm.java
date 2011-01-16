@@ -145,6 +145,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
     myTreeView.setTestResultsViewer(this);
+    addTestsTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
+        if (selectedTest instanceof SMTestProxy) {
+          myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
+        }
+      }
+    });
 
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
@@ -261,6 +270,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
     //Do nothing
+  }
+
+  @Override
+  public void onFinish() {
+    SMTestProxy root = getTestsRootNode();
+    if (root != null) {
+      selectAndNotify(root);
+    }
   }
 
   /**

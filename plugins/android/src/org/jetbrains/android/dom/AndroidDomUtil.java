@@ -74,6 +74,10 @@ public class AndroidDomUtil {
         return "dimen";
       case String:
         return "string";
+      case Integer:
+        return "integer";
+      case Boolean:
+        return "bool";
       default:
         return null;
     }
@@ -224,7 +228,7 @@ public class AndroidDomUtil {
     if (element instanceof LayoutElement) {
       return new String[]{"requestFocus"};
     }
-    if (element instanceof Group || element instanceof StringArray || element instanceof Style) {
+    if (element instanceof Group || element instanceof StringArray || element instanceof IntegerArray || element instanceof Style) {
       return new String[]{"item"};
     }
     if (element instanceof Item) {
@@ -240,8 +244,8 @@ public class AndroidDomUtil {
       return new String[]{"attr"};
     }
     if (element instanceof Resources) {
-      return new String[]{"string", "drawable", "dimen", "color", "style", "string-array", "declare-styleable", "attr", "item",
-        "eat-comment"};
+      return new String[]{"string", "drawable", "dimen", "color", "style", "string-array", "integer-array", "array", "declare-styleable",
+        "integer", "bool", "attr", "item", "eat-comment"};
     }
     if (element instanceof StyledText) {
       return new String[]{"b", "i", "u"};

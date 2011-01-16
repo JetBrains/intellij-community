@@ -274,6 +274,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
+      public void visitClass(PsiClass aClass) {
+      }
+
+      @Override
       public void visitDeclarationStatement(final PsiDeclarationStatement statement) {
         super.visitDeclarationStatement(statement);
         final PsiElement[] declaredElements = statement.getDeclaredElements();//todo

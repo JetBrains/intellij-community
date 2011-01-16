@@ -24,6 +24,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -37,6 +38,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -57,6 +59,8 @@ import java.security.cert.X509Certificate;
  * @author Eugene.Kudelevsky
  */
 class ApkStep extends ExportSignedPackageWizardStep {
+  public static final String APK_PATH_PROPERTY = "ExportedApkPath";
+
   private TextFieldWithBrowseButton myApkPathField;
   private JPanel myContentPanel;
   private JLabel myApkPathLabel;
@@ -91,10 +95,19 @@ class ApkStep extends ExportSignedPackageWizardStep {
   public void _init() {
     if (myInited) return;
     Module module = myWizard.getFacet().getModule();
-    String contentRootPath = getContentRootPath(module);
-    if (contentRootPath != null) {
-      String defaultPath = FileUtil.toSystemDependentName(contentRootPath + "/" + module.getName() + ".apk");
-      myApkPathField.setText(defaultPath);
+
+    PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
+    String lastModule = properties.getValue(ChooseModuleStep.MODULE_PROPERTY);
+    String lastApkPath = properties.getValue(APK_PATH_PROPERTY);
+    if (lastApkPath != null && module.getName().equals(lastModule)) {
+      myApkPathField.setText(FileUtil.toSystemDependentName(lastApkPath));
+    }
+    else {
+      String contentRootPath = getContentRootPath(module);
+      if (contentRootPath != null) {
+        String defaultPath = FileUtil.toSystemDependentName(contentRootPath + "/" + module.getName() + ".apk");
+        myApkPathField.setText(defaultPath);
+      }
     }
     myInited = true;
   }
@@ -224,6 +237,12 @@ class ApkStep extends ExportSignedPackageWizardStep {
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
     }
+
+    AndroidFacet facet = myWizard.getFacet();
+    PropertiesComponent properties = PropertiesComponent.getInstance(myWizard.getProject());
+    properties.setValue(ChooseModuleStep.MODULE_PROPERTY, facet != null ? facet.getModule().getName() : "");
+    properties.setValue(APK_PATH_PROPERTY, apkPath);
+
     File folder = new File(apkPath).getParentFile();
     if (folder == null) {
       throw new CommitStepException(AndroidBundle.message("android.cannot.create.file.error", apkPath));

@@ -59,8 +59,8 @@ public abstract class AbstractSvnUpdatePanel {
         configureRootsPanel.add(myRootToPanel.values().iterator().next().getPanel(), BorderLayout.CENTER);
       }
       else {
-        final MultipleRootsEditor multipleRootsEditor = new MultipleRootsEditor(myRootToPanel, myVCS.getProject());
-        configureRootsPanel.add(multipleRootsEditor.getPanel(), BorderLayout.CENTER);
+        final MultipleRootEditorWithSplitter multipleRootsEditor = new MultipleRootEditorWithSplitter(myRootToPanel, myVCS.getProject());
+        configureRootsPanel.add(multipleRootsEditor, BorderLayout.CENTER);
       }
     }
   }
@@ -70,7 +70,6 @@ public abstract class AbstractSvnUpdatePanel {
   protected abstract JPanel getRootsPanel();
 
   public void reset(final SvnConfiguration configuration) {
-    getStatusBox().setSelected(configuration.UPDATE_RUN_STATUS);
     getDepthBox().setSelectedItem(configuration.UPDATE_DEPTH);
 
     for (FilePath filePath : myRootToPanel.keySet()) {
@@ -80,8 +79,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
-    configuration.UPDATE_RUN_STATUS = getStatusBox().isSelected();
-    configuration.UPDATE_DEPTH = getDepthBox().getSelectedItem();
+    configuration.UPDATE_DEPTH = getDepthBox().getDepth();
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       final SvnPanel svnPanel = myRootToPanel.get(filePath);
@@ -107,8 +105,6 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   protected abstract JComponent getPanel();
-
-  protected abstract JCheckBox getStatusBox();
 
   protected abstract DepthCombo getDepthBox();
 }

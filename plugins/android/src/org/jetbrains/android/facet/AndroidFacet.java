@@ -553,13 +553,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   }
 
   @Nullable
-  private String getModuleDirPath() {
-    String moduleFilePath = getModule().getModuleFilePath();
-    String moduleDirPath = new File(moduleFilePath).getParent();
-    if (moduleDirPath != null) {
-      moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
-    }
-    return moduleDirPath;
+  public String getModuleDirPath() {
+    return AndroidRootUtil.getModuleDirPath(getModule());
   }
 
   @Nullable
