@@ -49,6 +49,7 @@ public class GitTask {
   private final GitHandler myHandler;
   private final String myTitle;
   private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
+  private GitProgressAnalyzer myProgressAnalyzer;
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -63,7 +64,8 @@ public class GitTask {
   public GitTaskResult execute() {
     ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, true, myTitle);
+        addListeners(this, indicator);
+        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
       }
 
       @Override
@@ -81,7 +83,6 @@ public class GitTask {
       }
     };
 
-    addListeners(task);
     ProgressManager.getInstance().run(task);
     return myResult.get();
   }
@@ -93,7 +94,8 @@ public class GitTask {
   public void executeAsync(final GitTaskResultHandler resultHandler) {
     BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, true, myTitle);
+        addListeners(this, indicator);
+        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
       }
 
       @Override
@@ -113,13 +115,15 @@ public class GitTask {
       }
     };
 
-    addListeners(task);
     GitVcs.runInBackground(task);
   }
 
-  private void addListeners(final TaskExecution task) {
+  private void addListeners(final TaskExecution task, final ProgressIndicator indicator) {
+    if (indicator != null) {
+      indicator.setIndeterminate(myProgressAnalyzer == null);
+    }
     // When receives an error line, adds a VcsException to the GitHandler.
-    final GitLineHandlerListener errorListener = new GitLineHandlerListener() {
+    final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
         if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
@@ -139,12 +143,22 @@ public class GitTask {
         if (GitHandlerUtil.isErrorLine(line.trim())) {
           myHandler.addError(new VcsException(line));
         }
+        if (indicator != null) {
+          indicator.setText2(line);
+        }
+        if (myProgressAnalyzer != null && indicator != null) {
+          final double fraction = myProgressAnalyzer.analyzeProgress(line);
+          if (fraction >= 0) {
+            indicator.setFraction(fraction);
+          }
+        }
       }
     };
 
-    myHandler.addListener(errorListener);
     if (myHandler instanceof GitLineHandler) {
-      ((GitLineHandler)myHandler).addLineListener(errorListener);
+      ((GitLineHandler)myHandler).addLineListener(listener);
+    } else {
+      myHandler.addListener(listener);
     }
 
     // disposes the timer
@@ -159,6 +173,10 @@ public class GitTask {
         task.dispose();
       }
     });
+  }
+
+  public void setProgressAnalyzer(GitProgressAnalyzer progressAnalyzer) {
+    myProgressAnalyzer = progressAnalyzer;
   }
 
   /**

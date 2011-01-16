@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
@@ -50,8 +51,9 @@ public class GitFetch extends GitRepositoryAction {
       return;
     }
     final GitLineHandler h = d.fetchHandler();
-    GitTask fetchTash = new GitTask(project, h, GitBundle.message("fetching.title", d.getRemote()));
-    fetchTash.executeAsync(new GitTaskResultHandlerAdapter() {
+    GitTask fetchTask = new GitTask(project, h, GitBundle.message("fetching.title", d.getRemote()));
+    fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+    fetchTask.executeAsync(new GitTaskResultHandlerAdapter() {
       @Override
       protected void onSuccess() {
         GitUIUtil.notifySuccess(project, "Fetched successfully", "Fetched " + d.getRemote());
