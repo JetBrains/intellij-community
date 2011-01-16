@@ -832,12 +832,12 @@ public class ProjectWrapper {
         return myModules.values();
     }
 
-    private ProjectWrapper(final String prjDir) {
+    private ProjectWrapper(final String prjDir, final String setupScript) {
         myProject = new Project(new GantBinding());
         myRoot = new File(prjDir).getAbsolutePath();
         myProjectSnapshot = myHomeDir + File.separator + myJPSDir + File.separator + myRoot.replace(File.separatorChar, myFileSeparatorReplacement);
 
-        IdeaProjectLoader.loadFromPath(myProject, getAbsolutePath(myIDEADir));
+        IdeaProjectLoader.loadFromPath(myProject, getAbsolutePath(myIDEADir), setupScript);
 
         for (Module m : myProject.getModules().values()) {
             myModules.put(m.getName(), new ModuleWrapper(m));
@@ -960,8 +960,8 @@ public class ProjectWrapper {
         }
     }
 
-    public static ProjectWrapper load(final String path) {
-        return new ProjectWrapper(path);
+    public static ProjectWrapper load(final String path, final String setupScript) {
+        return new ProjectWrapper(path, setupScript);
     }
 
     public void report(final String module) {
@@ -1058,7 +1058,7 @@ public class ProjectWrapper {
         if (structureChanged() && !force) {
             System.out.println("Project \"" + myRoot + "\" structure changed, building all modules.");
             clean();
-            makeModules(myProject.getModules().values(), tests);
+            makeModules(myProject.getModules().values(), tests, true);
             return;
         }
 
@@ -1079,11 +1079,13 @@ public class ProjectWrapper {
         for (Module m : modules)
             System.out.println("  " + m.getName());
 
-        makeModules(modules, tests);
+        makeModules(modules, tests, force);
     }
 
-    private void makeModules(final Collection<Module> initial, final boolean tests) {
+    private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
         final Set<Module> modules = new HashSet<Module>();
+        final Set<Module> visited = new HashSet<Module>();
+
         final Map<Module, Set<Module>> reversedDependencies = new HashMap<Module, Set<Module>>();
 
         for (Module m : myProject.getModules().values()) {
@@ -1104,20 +1106,31 @@ public class ProjectWrapper {
         }
 
         new Object() {
-            public void run(final Collection<Module> initial) {
+            public void run(final Collection<Module> initial, final boolean force) {
                 if (initial == null)
                     return;
 
                 for (Module module : initial) {
-                    if (modules.contains(module))
+                    if (visited.contains(module))
                         continue;
 
-                    modules.add(module);
+                    visited.add(module);
 
-                    run(reversedDependencies.get(module));
+                    if (force || getModule(module.getName()).isOutdated(tests, myHistory)) {
+                        modules.add(module);
+                        run (reversedDependencies.get(module), true);
+                    }
+                    else {
+                        run (reversedDependencies.get(module), false);
+                    }
                 }
             }
-        }.run(initial);
+        }.run(initial, force);
+
+        if (modules.size() == 0 && !force) {
+            System.out.println("All requested modules are up-to-date.");
+            return;
+        }
 
         myProject.makeSelected(modules, tests);
         rescan();
@@ -1126,8 +1139,6 @@ public class ProjectWrapper {
     public void makeModule(final String modName, final boolean force, final boolean tests) {
         final Module module = myProject.getModules().get(modName);
         final List<Module> list = new ArrayList<Module>();
-
-        list.add(module);
 
         if (module == null) {
             System.err.println("Module \"" + modName + "\" not found in project \"" + myRoot + "\"");
@@ -1140,12 +1151,8 @@ public class ProjectWrapper {
             return;
         }
 
-        final ModuleWrapper h = getModule(modName);
-        if (h != null && !h.isOutdated(tests, myHistory) && !force) {
-            System.out.println("Module \"" + modName + "\" in project \"" + myRoot + "\" is up-to-date.");
-            return;
-        }
+        list.add(module);
 
-        makeModules(list, tests);
+        makeModules(list, tests, force);
     }
 }

@@ -14,7 +14,7 @@ class LazyInitializeableObject {
   }
 
   def forceInit () {
-    initializer.init()
+    if (initializer != null) initializer.init()
   }
 }
 

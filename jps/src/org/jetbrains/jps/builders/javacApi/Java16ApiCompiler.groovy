@@ -30,6 +30,11 @@ class Java16ApiCompiler {
 
   def compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
     List<String> options = []
+
+    if (customArgs != null) {
+      options << customArgs
+    }
+
     if (sourceLevel != null) {
       options << "-source"
       options << sourceLevel
@@ -42,6 +47,7 @@ class Java16ApiCompiler {
     options << "-nowarn"
 //    options << "-verbose"
 
+    chunk.getSdk()
     List<File> filesToCompile = []
     Set<File> excluded = state.excludes.collect { new File(it.toString()) }
     state.sourceRoots.each {
@@ -51,12 +57,19 @@ class Java16ApiCompiler {
     if (filesToCompile.size() > 0) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, [new File(state.targetFolder)])
       List<File> classpath = []
+      List<File> bootclasspath = []
+
       Sdk sdk = chunk.getSdk()
+
       if (sdk != null) {
-        sdk.classpath.each { classpath << new File(String.valueOf(it)) }
+        sdk.classpath.each { bootclasspath << new File (String.valueOf(it)) }
+
+        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, bootclasspath)
       }
+
       state.classpath.each { classpath << new File(String.valueOf(it)) }
       fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)
+
       Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
       Project project = chunk.project
       StringWriter out = new StringWriter()

@@ -71,7 +71,12 @@ class ModuleChunk extends DagNode<Module> {
   }
 
   def getSdk() {
-    return representativeModule().sdk
+    Module m = representativeModule()
+
+    if (m.sdk == null)
+      return m.project.projectSdk
+
+    return m.sdk
   }
 
   def getAt(String key) {

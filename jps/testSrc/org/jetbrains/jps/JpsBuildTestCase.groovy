@@ -42,7 +42,7 @@ abstract class JpsBuildTestCase extends TestCase {
     def binding = new GantBinding()
     binding.includeTool << Jps
     def project = new Project(binding)
-    IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables)
+    IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables, null)
     return project
   }
 

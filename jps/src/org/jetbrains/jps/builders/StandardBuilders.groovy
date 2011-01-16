@@ -23,7 +23,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     String customArgs = module["javac_args"]
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
-      if (sourceLevel == null || version.startsWith(sourceLevel)) {
+      if ( true ) { // */ sourceLevel == null || version.startsWith(sourceLevel)) {
         if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
           return
         }

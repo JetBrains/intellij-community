@@ -26,6 +26,7 @@ public class Main {
 
     static {
         final Options.Descriptor[] descrs = {
+                new Options.Descriptor("script", "script", "s", Options.ArgumentSpecifier.MANDATORY, "specify script for project library/sdk setup; use prefix '@' to specify script file"),
                 new Options.Descriptor("inspect", "inspect", "i", Options.ArgumentSpecifier.OPTIONAL, "list relevant information for the whole project or specified module"),
                 new Options.Descriptor("save", "save", "s", Options.ArgumentSpecifier.NONE, "collect and save project information"),
                 new Options.Descriptor("clean", "clean", "c", Options.ArgumentSpecifier.NONE, "clean project"),
@@ -71,6 +72,15 @@ public class Main {
         return myOptions.get("clean") instanceof Options.Switch;
     }
 
+    private static String getScript () {
+        final Options.Argument arg = myOptions.get("script");
+
+        if (arg instanceof Options.Value)
+            return ((Options.Value) arg).get();
+
+        return null;
+    }
+
     private static void checkConsistency() {
         int test = 0;
 
@@ -111,7 +121,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        System.out.println("JetBrains.com build server. (C) JetBrains.com, 2010.\n");
+        System.out.println("JetBrains.com build server. (C) JetBrains.com, 2010-2011.\n");
 
         final List<String> notes = myOptions.parse(args);
 
@@ -140,7 +150,7 @@ public class Main {
             switch (getAction()) {
                 case CLEAN:
                     System.out.println("Cleaning project \"" + prj + "\"");
-                    project = ProjectWrapper.load(prj);
+                    project = ProjectWrapper.load(prj, getScript());
 
                     project.clean();
                     project.save();
@@ -149,7 +159,7 @@ public class Main {
 
                 case REBUILD:
                     System.out.println("Rebuilding project \"" + prj + "\"");
-                    project = ProjectWrapper.load(prj);
+                    project = ProjectWrapper.load(prj, getScript());
                     project.rebuild();
                     project.save();
                     saved = true;
@@ -162,13 +172,13 @@ public class Main {
                         final String module = ((Options.Value) make).get();
 
                         System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
-                        project = ProjectWrapper.load(prj);
+                        project = ProjectWrapper.load(prj, getScript());
                         project.makeModule(module, doForce(), doTests());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
                         System.out.println("Making project \"" + prj + "\"");
-                        project = ProjectWrapper.load(prj);
+                        project = ProjectWrapper.load(prj, getScript());
                         project.make(doForce(), doTests());
                         project.save();
                         saved = true;
@@ -179,14 +189,14 @@ public class Main {
             final Options.Argument inspect = doInspect();
 
             if (inspect instanceof Options.Switch) {
-                project = ProjectWrapper.load(prj);
+                project = ProjectWrapper.load(prj, getScript());
                 project.report();
                 if (doSave()) {
                     project.save();
                     saved = true;
                 }
             } else if (inspect instanceof Options.Value) {
-                project = ProjectWrapper.load(prj);
+                project = ProjectWrapper.load(prj, getScript());
                 project.report(((Options.Value) inspect).get());
                 if (doSave()) {
                     project.save();
@@ -195,7 +205,7 @@ public class Main {
             }
 
             if (doSave() && !saved) {
-                project = ProjectWrapper.load(prj);
+                project = ProjectWrapper.load(prj, getScript());
                 project.save();
             }
         }
