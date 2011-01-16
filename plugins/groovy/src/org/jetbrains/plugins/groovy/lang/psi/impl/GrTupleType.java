@@ -53,7 +53,9 @@ public class GrTupleType extends GrLiteralClassType {
   @NotNull
   public PsiType[] getParameters() {
     if (myComponentTypes.length == 0) return RAW_PARAMETERS;
-    return new PsiType[]{getLeastUpperBound(myComponentTypes)};
+    final PsiType leastUpperBound = getLeastUpperBound(myComponentTypes);
+    if (leastUpperBound == PsiType.NULL) return RAW_PARAMETERS;
+    return new PsiType[]{leastUpperBound};
   }
 
   public String getInternalCanonicalText() {

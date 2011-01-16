@@ -169,4 +169,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testImplicitCallMethod() {
     assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).getType().getCanonicalText());
   }
+
+  public void testTupleWithNullInIt() {
+    assertTypeEquals("java.util.List", "A.groovy");
+  }
 }
