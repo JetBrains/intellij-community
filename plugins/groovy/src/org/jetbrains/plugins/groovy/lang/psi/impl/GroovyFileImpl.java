@@ -218,7 +218,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
       PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage != null && !aPackage.processDeclarations(processor, state, lastParent, place)) return false;
+      if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
+        @Override
+        public boolean execute(PsiElement element, ResolveState state) {
+          if (element instanceof PsiPackage) return true;
+          return super.execute(element, state);
+        }
+      }, state, lastParent, place)) {
+        return false;
+      }
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {

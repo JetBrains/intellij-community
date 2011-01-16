@@ -363,6 +363,13 @@ class A {
     assert myFixture.editor.document.text.contains("static Zzzzzzz")
   }
 
+  public void testDontCompleteSubpackageOfImplicitlyImported() {
+    myFixture.addFileToProject "A.groovy", """
+in<caret>"""
+    myFixture.testCompletionVariants "A.groovy", "int", "interface" //don't complete 'instrument' from 'java.lang'
+  }
+
+
   public void testEatingThisReference() {
     configure "def x = []; x.<caret> this"
     myFixture.completeBasic()
