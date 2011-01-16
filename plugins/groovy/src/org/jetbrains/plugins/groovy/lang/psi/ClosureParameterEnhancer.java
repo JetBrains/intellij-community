@@ -72,6 +72,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("findLastIndexOf");
     iterations.add("findIndexValues");
     iterations.add("findIndexOf");
+    iterations.add("count");
 
   }
 
