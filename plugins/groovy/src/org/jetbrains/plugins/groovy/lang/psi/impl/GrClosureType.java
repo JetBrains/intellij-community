@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class GrClosureType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
+    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
   }
 
   public String getClassName() {
@@ -137,10 +138,10 @@ public class GrClosureType extends PsiClassType {
   public String getCanonicalText() {
     final PsiType[] typeArgs = getParameters();
     if (typeArgs.length == 0 || typeArgs[0] == null) {
-      return GrClosableBlock.GROOVY_LANG_CLOSURE;
+      return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
     }
     else {
-      return GrClosableBlock.GROOVY_LANG_CLOSURE + "<" + typeArgs[0].getCanonicalText() + ">";
+      return GroovyCommonClassNames.GROOVY_LANG_CLOSURE + "<" + typeArgs[0].getCanonicalText() + ">";
     }
   }
 
@@ -193,7 +194,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public boolean equalsToText(@NonNls String text) {
-    return text.equals(GrClosableBlock.GROOVY_LANG_CLOSURE);
+    return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
   @NotNull

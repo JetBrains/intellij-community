@@ -22,7 +22,6 @@ public class GrStringUtil {
   private static final String QUOTE = "'";
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
-  public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
 
   private GrStringUtil() {
   }

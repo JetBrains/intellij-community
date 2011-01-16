@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -92,7 +93,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     if (!ResolveUtil.processElement(processor, getOwner(), state)) return false;
 
-    final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
+    final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {
       if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
 

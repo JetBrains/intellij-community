@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.dsl.toplevel.*
 
 /**
@@ -71,7 +72,7 @@ class ClosureScope extends Scope {
 
     // Enhance only unqualified expressions
     if (!args.ctype) {
-      result << ClassContextFilter.subtypeOf(GrClosableBlock.GROOVY_LANG_CLOSURE)
+      result << ClassContextFilter.subtypeOf(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)
     }
     result
   }

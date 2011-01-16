@@ -23,13 +23,13 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -123,13 +123,13 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return false;
 
-    return GrClosableBlock.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
+    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 
   @Nullable
   private static PsiType getClosureCallOrCurryReturnType(GrMethodCall callExpression, GrReferenceExpression refExpr, PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
-    if (clazz != null && GrClosableBlock.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
+    if (clazz != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
       if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
         GrExpression qualifier = refExpr.getQualifierExpression();
         if (qualifier != null) {

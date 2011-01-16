@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class GroovyOverrideImplementUtil {
       final PsiMethod method = (PsiMethod)info.getElement();
       if (method != null) {
         final PsiClass psiClass = method.getContainingClass();
-        if (psiClass != null && GrTypeDefinition.DEFAULT_BASE_CLASS_NAME.equals(psiClass.getQualifiedName())) {
+        if (psiClass != null && GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(psiClass.getQualifiedName())) {
           iterator.remove();
         }
       }
@@ -372,7 +373,7 @@ public class GroovyOverrideImplementUtil {
     methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
       public boolean value(CandidateInfo candidateInfo) {
         //noinspection ConstantConditions
-        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME
+        return !GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME
           .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
       }
     });

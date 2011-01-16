@@ -860,7 +860,7 @@ public class PsiUtil {
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
           && method.getParameterList().getParametersCount() == 0) {
         final PsiType type = getSmartReturnType(method);
-        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GrClosableBlock.GROOVY_LANG_CLOSURE))) {
+        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
           return true;
         }
       }

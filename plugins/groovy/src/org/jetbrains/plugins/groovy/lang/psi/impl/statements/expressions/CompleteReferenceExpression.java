@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -209,7 +210,7 @@ public class CompleteReferenceExpression {
         }
       }
       final PsiClassType type = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory()
-        .createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
+        .createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
       getVariantsFromQualifierType(refExpr, processor, type, project);
     }
     else {
