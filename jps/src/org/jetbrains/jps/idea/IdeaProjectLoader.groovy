@@ -140,6 +140,12 @@ public class IdeaProjectLoader {
       }
       project.props["compiler.resources.id"] = "compiler.resources"
     }
+
+    def javacComponentTag = getComponent(root, "JavacSettings");
+    project.props["compiler.javac.options"] = [:];
+    javacComponentTag?.option?.each {Node optionTag ->
+      project.props["compiler.javac.options"][optionTag."@name"] = optionTag."@value";
+    }
   }
 
   private String convertPattern(String pattern) {

@@ -20,7 +20,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
     String sourceLevel = module["sourceLevel"]
     String targetLevel = module["targetLevel"]
-    String customArgs = module["javac_args"]
+    String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
       if (sourceLevel == null || version.startsWith(sourceLevel)) {
@@ -38,9 +38,18 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     if (sourceLevel != null) params.source = sourceLevel
     if (targetLevel != null) params.target = targetLevel
 
-    params.memoryMaximumSize = "512m"
+    def javacOpts = module.project.props["compiler.javac.options"];
+    def memHeapSize = javacOpts["MAXIMUM_HEAP_SIZE"] == null ? "512m" : javacOpts["MAXIMUM_HEAP_SIZE"] + "m";
+    def boolean debugInfo = !"false".equals(javacOpts["DEBUGGING_INFO"]);
+    def boolean nowarn = "true".equals(javacOpts["GENERATE_NO_WARNINGS"]);
+    def boolean deprecation = !"false".equals(javacOpts["DEPRECATION"]);
+    customArgs = javacOpts["ADDITIONAL_OPTIONS_STRING"];
+
     params.fork = "true"
-    params.debug = "on"
+    params.memoryMaximumSize = memHeapSize;
+    params.debug = String.valueOf(debugInfo);
+    params.nowarn = String.valueOf(nowarn);
+    params.deprecation = String.valueOf(deprecation);
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
