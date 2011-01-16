@@ -33,6 +33,16 @@ package git4idea.config;
  */
 public enum GitVersionSpecialty {
 
+  /**
+   * This version of git has "--progress" parameter in long-going commands (such as clone or fetch).
+   */
+  ABLE_TO_USE_PROGRESS {
+    @Override
+    public boolean existsIn(GitVersion version) {
+      return generallyValid(version) && version.isLaterOrEqual(new GitVersion(1, 7, 1, 1));
+    }
+  },
+
   DOESNT_GET_PARAMETERS_FROM_RUNNERW {
     @Override
     public boolean existsIn(GitVersion version) {
