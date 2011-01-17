@@ -103,7 +103,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     final List<PsiElement> list = getTargetElements();
     if (list.isEmpty()) {
       if (myEmptyText != null) {
-        final JLabel renderer = HintUtil.createErrorLabel(myEmptyText);
+        final JComponent renderer = HintUtil.createErrorLabel(myEmptyText);
         final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
         if (event != null) {
           popup.show(new RelativePoint(event));

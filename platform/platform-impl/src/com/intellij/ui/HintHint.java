@@ -48,6 +48,9 @@ public class HintHint {
   private int myPositionChangeX;
   private int myPositionChangeY;
 
+  public HintHint() {
+  }
+
   public HintHint(MouseEvent e) {
     this(e.getComponent(), e.getPoint());
   }

@@ -571,14 +571,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
-    JLabel label = HintUtil.createErrorLabel(text);
+    JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
   public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
-    JLabel label = HintUtil.createInformationLabel(text);
+    JComponent label = HintUtil.createInformationLabel(text);
     showInformationHint(editor, label);
   }
 
@@ -594,7 +594,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, short constraint, int flags, int timeout) {
-    JLabel label = HintUtil.createErrorLabel(hintText);
+    JComponent label = HintUtil.createErrorLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
     final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
@@ -610,7 +610,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                int offset2,
                                @NotNull QuestionAction action) {
 
-    JLabel label = HintUtil.createQuestionLabel(hintText);
+    JComponent label = HintUtil.createQuestionLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }

@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredSideBorder;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -41,15 +44,20 @@ public class HintUtil {
   private HintUtil() {
   }
 
-  public static JLabel createInformationLabel(String text) {
-    JLabel label = new HintLabel();
-    label.setText(text);
+  public static JComponent createInformationLabel(String text) {
+    HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+
+    HintLabel label = new HintLabel();
+    label.setText(text, hintHint);
     label.setIcon(INFORMATION_ICON);
-    label.setBorder(createHintBorder());
-    label.setForeground(Color.black);
-    label.setFont(getBoldFont());
-    label.setBackground(INFORMATION_COLOR);
-    label.setOpaque(true);
+
+    if (!hintHint.isAwtTooltip()) {
+      label.setBorder(createHintBorder());
+      label.setForeground(Color.black);
+      label.setFont(getBoldFont());
+      label.setBackground(INFORMATION_COLOR);
+      label.setOpaque(true);
+    }
 
     return label;
   }
@@ -65,16 +73,20 @@ public class HintUtil {
     return createInformationLabel(text, INFORMATION_ICON);
   }
 
-  public static JLabel createQuestionLabel(String text) {
-    JLabel label = new HintLabel();
-    label.setText(text);
+  public static JComponent createQuestionLabel(String text) {
+    HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+
+    HintLabel label = new HintLabel();
+    label.setText(text, hintHint);
     label.setIcon(QUESTION_ICON);
-//    label.setBorder(BorderFactory.createLineBorder(Color.black));
-    label.setBorder(createHintBorder());
-    label.setForeground(Color.black);
-    label.setFont(getBoldFont());
-    label.setBackground(QUESTION_COLOR);
-    label.setOpaque(true);
+
+    if (!hintHint.isAwtTooltip()) {
+      label.setBorder(createHintBorder());
+      label.setForeground(Color.black);
+      label.setFont(getBoldFont());
+      label.setBackground(QUESTION_COLOR);
+      label.setOpaque(true);
+    }
     return label;
   }
 
@@ -87,26 +99,27 @@ public class HintUtil {
     highlighted.setFont(getBoldFont());
     text.appendToComponent(highlighted);
 
-    Box box = Box.createHorizontalBox();
-    box.setBorder(new ColoredSideBorder(Color.white, Color.white, Color.gray, Color.gray, 1));
-    box.setForeground(Color.black);
-    box.setBackground(INFORMATION_COLOR);
-    box.add(highlighted);
-    box.setOpaque(true);
-    return box;
+    HintLabel label = new HintLabel();
+    label.setText(highlighted);
+
+    return label;
   }
 
-  public static JLabel createErrorLabel(String text) {
-    JLabel label = new HintLabel();
-    label.setText(text.replaceAll("\n"," "));
+  public static JComponent createErrorLabel(String text) {
+    HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    HintLabel label = new HintLabel();
+    label.setText(text, hintHint);
     label.setIcon(ERROR_ICON);
-//    label.setBorder(BorderFactory.createLineBorder(Color.black));
-    label.setBorder(createHintBorder()
-    );
-    label.setForeground(Color.black);
-    label.setFont(getBoldFont());
-    label.setBackground(ERROR_COLOR);
-    label.setOpaque(true);
+
+    if (!hintHint.isAwtTooltip()) {
+      label.setBorder(createHintBorder()
+      );
+      label.setForeground(Color.black);
+      label.setFont(getBoldFont());
+      label.setBackground(ERROR_COLOR);
+      label.setOpaque(true);
+    }
+
     return label;
   }
 
@@ -128,27 +141,75 @@ public class HintUtil {
     return label;
   }
 
-  private static class HintLabel extends JLabel {
-    public void setText(String s) {
-      if (s == null) {
-        super.setText(null);
-      }
-      else {
-        final int length = s.length();
+  private static class HintLabel extends JPanel {
 
-        final String alignedText;
-        if (length < 100 && !s.contains("\n")) {
-          alignedText = s;
-        } else {
-          alignedText = s.replaceAll("(\n)|(\r\n)", " \n ");
-        }
-        super.setText(" " + alignedText + " ");
+    private JEditorPane myPane;
+    private SimpleColoredComponent myColored;
+    private JLabel myIcon;
+
+    private HintLabel() {
+      setLayout(new BorderLayout());
+    }
+
+
+    public void setText(SimpleColoredComponent colored) {
+      clearText();
+
+      myColored = colored;
+      add(myColored, BorderLayout.CENTER);
+
+      setOpaque(true);
+      setBackground(colored.getBackground());
+
+      revalidate();
+      repaint();
+    }
+
+    public void setText(String s, HintHint hintHint) {
+      clearText();
+
+      if (s != null) {
+        myPane = IdeTooltipManager.initPane(s, hintHint, null);
+        add(myPane, BorderLayout.CENTER);
       }
+
+      setOpaque(true);
+      setBackground(hintHint.getTextBackground());
+
+      revalidate();
+      repaint();
+    }
+
+    private void clearText() {
+      if (myPane != null) {
+        remove(myPane);
+        myPane = null;
+      }
+
+      if (myColored != null) {
+        remove(myColored);
+        myColored = null;
+      }
+    }
+
+    public void setIcon(Icon icon) {
+      if (myIcon != null) {
+        remove(myIcon);
+      }
+
+      myIcon = new JLabel(icon, JLabel.CENTER);
+      myIcon.setVerticalAlignment(JLabel.TOP);
+
+      add(myIcon, BorderLayout.WEST);
+
+      revalidate();
+      repaint();
     }
 
     @Override
     public String toString() {
-      return "Hint: '" + getText() + "'";
+      return "Hint: text='" + (myPane != null ? myPane.getText() : "") + "'";
     }
+
   }
 }

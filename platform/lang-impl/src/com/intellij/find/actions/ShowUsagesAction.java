@@ -254,7 +254,7 @@ public class ShowUsagesAction extends AnAction {
   private JComponent createHintComponent(String text, final FindUsagesHandler handler, final RelativePoint popupPosition, final Editor editor,
                                          final Runnable cancelAction,
                                          int maxUsages) {
-    JLabel label = HintUtil.createInformationLabel(text);
+    JComponent label = HintUtil.createInformationLabel(text);
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, cancelAction);
     JPanel panel = new JPanel(new BorderLayout());
     button.setBackground(label.getBackground());
