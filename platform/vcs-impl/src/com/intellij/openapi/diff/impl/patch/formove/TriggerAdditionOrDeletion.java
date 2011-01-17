@@ -146,7 +146,11 @@ public class TriggerAdditionOrDeletion {
     } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
       final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeDeleted, "Select files to remove from " + vcs.getDisplayName(), null,
         "Schedule for deletion", "Do you want to schedule the following file for deletion from " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      toBeDeleted.retainAll(files);
+      if (files == null) {
+        toBeDeleted.clear();
+      } else {
+        toBeDeleted.retainAll(files);
+      }
     }
   }
 
