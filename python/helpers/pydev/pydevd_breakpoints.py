@@ -108,6 +108,8 @@ def update_exception_hook():
         restore_pm_excepthook()
 
 def get_class( kls ):
+    if IS_PY24 and "BaseException" == kls:
+        kls = "Exception"
     parts = kls.split('.')
     module = ".".join(parts[:-1])
     if module == "":

@@ -44,11 +44,14 @@ _nextThreadIdLock = threading.Lock()
 #=======================================================================================================================
 IS_PY3K = False
 IS_PY27 = False
+IS_PY24 = False
 try:
     if sys.version_info[0] >= 3:
         IS_PY3K = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
+    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
+        IS_PY24 = True
 except AttributeError:
     pass #Not all versions have sys.version_info
 
