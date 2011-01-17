@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.JavaTestUtil;
+import org.junit.Assert;
 
 /**
  * @author dsl
@@ -37,6 +38,19 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
 
   public void testStaticImport4() throws Exception {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
+  }
+
+  public void testRename2OverrideFinal() throws Exception {
+    try {
+      doTest("p.B", "void method()", "finalMethod");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Assert.assertEquals("Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"\n" +
+                          "Method finalMethod() will override\n" +
+                          "a method of the base class <b><code>p.A</code></b>.", e.getMessage());
+      return;
+    }
+    fail("Conflicts were not found");
   }
 
   public void testAlignedMultilineParameters() throws Exception {
