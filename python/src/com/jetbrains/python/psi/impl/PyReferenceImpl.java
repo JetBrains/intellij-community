@@ -234,7 +234,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
       while (one instanceof PyFunction);
       if (one instanceof PyClass) {
-        return one;
+        PyArgumentList superClassExpressionList = ((PyClass)one).getSuperClassExpressionList();
+        if (superClassExpressionList == null || !PsiTreeUtil.isAncestor(superClassExpressionList, myElement, false)) {
+          return one;
+        }
       }
     }
     

@@ -388,4 +388,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testWithParentheses() {
     assertResolvesTo(LanguageLevel.PYTHON27, PyTargetExpression.class, "MockClass1");
   }
+
+  public void testPrivateInsideModule() {  // PY-2618
+    assertResolvesTo(PyClass.class, "__VeryPrivate");
+  }
 }
