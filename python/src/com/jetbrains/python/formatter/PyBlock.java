@@ -277,6 +277,18 @@ public class PyBlock implements ASTBlock {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, false, 1);
     }
 
+    if (parentType == PyElementTypes.ANNOTATION) {
+      if (type1 == PyTokenTypes.GT) {
+        return createSpaces(1);
+      }
+      if (type1 == PyTokenTypes.MINUS && type2 == PyTokenTypes.GT) {
+        return createSpaces(0);
+      }
+    }
+    if (parentType == PyElementTypes.FUNCTION_DECLARATION && type2 == PyElementTypes.ANNOTATION) {
+      return createSpaces(1);
+    }
+
     if (type1 == PyTokenTypes.COLON) {
       if (type2 == PyElementTypes.STATEMENT_LIST) {
         return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
@@ -338,7 +350,7 @@ public class PyBlock implements ASTBlock {
       if (parentType == PyElementTypes.NAMED_PARAMETER ||
           parentType == PyElementTypes.STAR_ARGUMENT_EXPRESSION ||
           parentType == PyElementTypes.STAR_EXPRESSION) {
-        return Spacing.createSpacing(0, 0, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        return createSpaces(0);
       }
       return getSpacingForOption(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
     }
@@ -392,8 +404,11 @@ public class PyBlock implements ASTBlock {
   }
 
   private Spacing getSpacingForOption(boolean isOptionSet) {
-    int spaces = isOptionSet ? 1 : 0;
-    return Spacing.createSpacing(spaces, spaces, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    return createSpaces(isOptionSet ? 1 : 0);
+  }
+
+  private Spacing createSpaces(int count) {
+    return Spacing.createSpacing(count, count, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   private static boolean isStatementOrDeclaration(final IElementType type) {

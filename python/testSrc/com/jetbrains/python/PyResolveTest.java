@@ -384,4 +384,8 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement element = doResolve();
     assertNull(element);
   }
+
+  public void testWithParentheses() {
+    assertResolvesTo(LanguageLevel.PYTHON27, PyTargetExpression.class, "MockClass1");
+  }
 }

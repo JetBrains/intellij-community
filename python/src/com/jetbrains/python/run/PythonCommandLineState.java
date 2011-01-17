@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -23,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
@@ -198,7 +198,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
       if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
         final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
         for (VirtualFile file : addedPaths) {
-          pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+          if (file.getFileSystem() instanceof JarFileSystem) {
+            VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+            if (realFile != null) {
+              pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
+            }
+          }
+          else {
+            pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+          }
         }
       }
       PythonSdkFlavor.initPythonPath(envs, passParentEnvs, pathList);

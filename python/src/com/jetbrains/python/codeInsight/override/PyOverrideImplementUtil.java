@@ -149,6 +149,10 @@ public class PyOverrideImplementUtil {
     if (decorators != null && decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
       pyFunctionBuilder.decorate(PyNames.CLASSMETHOD);
     }
+    PyAnnotation anno = baseFunction.getAnnotation();
+    if (anno != null) {
+      pyFunctionBuilder.annotation(anno.getText());
+    }
     final PyParameter[] baseParams = baseFunction.getParameterList().getParameters();
     for (PyParameter parameter : baseParams) {
       pyFunctionBuilder.parameter(parameter.getText());

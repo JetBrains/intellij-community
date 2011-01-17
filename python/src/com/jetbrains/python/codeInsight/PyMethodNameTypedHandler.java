@@ -14,7 +14,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
 
 /**
@@ -55,7 +54,13 @@ public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
                 else if (flags.isStaticMethod()) pname="";
                 documentManager.commitDocument(document);
                 // TODO: only print the ")" if Settings require it
-                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, "("+pname+"):", true);
+                int caretOffset = editor.getCaretModel().getOffset();
+                String textToType = "(" + pname + ")";
+                CharSequence chars = editor.getDocument().getCharsSequence();
+                if (caretOffset == chars.length() || chars.charAt(caretOffset) != ':') {
+                  textToType += ':';
+                }
+                EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, textToType, true);
                 editor.getCaretModel().moveToOffset(offset + 1 + pname.length()); // right after param name
                 return Result.STOP;
               }
