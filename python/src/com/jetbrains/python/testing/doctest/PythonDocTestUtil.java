@@ -43,20 +43,18 @@ public class PythonDocTestUtil {
   }
 
   public static boolean isDocTestClass(PyClass pyClass) {
-    List<PyStatement> result = Lists.newArrayList();
     for (PyFunction cls : pyClass.getMethods()) {
       if (isDocTestFunction(cls)) {
-        result.add(cls);
+        return true;
       }
     }
     if (pyClass.getDocStringExpression() != null) {
       PyStringLiteralExpression docString = pyClass.getDocStringExpression();
       if (docString != null && hasExample(docString.getStringValue())) {
-        result.add(pyClass);
+        return true;
       }
     }
-    if (result.isEmpty()) return false;
-    return true; 
+    return false;
   }
 
   private static boolean hasExample(String docString) {
