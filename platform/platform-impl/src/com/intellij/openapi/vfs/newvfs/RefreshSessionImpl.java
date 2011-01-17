@@ -120,7 +120,7 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction() {
+  protected void fireEventsInWriteAction() {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
