@@ -170,14 +170,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void processClose(final MouseEvent e) {
     final IdeEventQueue queue = IdeEventQueue.getInstance();
 
-    if (isLineNumbersShown()) {
-      if (e.getX() >= getLineNumberAreaOffset() && getLineNumberAreaOffset() + getLineNumberAreaWidth() >= e.getX()) {
-        queue.blockNextEvents(e);
-        myEditor.getSettings().setLineNumbersShown(false);
-        e.consume();
-        return;
-      }
-    }
+    // See IDEA-59553 for rationale on why this feature is disabled
+    //if (isLineNumbersShown()) {
+    //  if (e.getX() >= getLineNumberAreaOffset() && getLineNumberAreaOffset() + getLineNumberAreaWidth() >= e.getX()) {
+    //    queue.blockNextEvents(e);
+    //    myEditor.getSettings().setLineNumbersShown(false);
+    //    e.consume();
+    //    return;
+    //  }
+    //}
 
     if (getGutterRenderer(e) != null) return;
 
