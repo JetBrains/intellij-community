@@ -262,7 +262,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setShowCallout(true)
       .setCalloutShift(tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
-      .setPositionChangeYShift(tooltip.getPositionChangeY());
+      .setPositionChangeYShift(tooltip.getPositionChangeY())
+      .setHideOnKeyOutside(!tooltip.isExplicitClose());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
