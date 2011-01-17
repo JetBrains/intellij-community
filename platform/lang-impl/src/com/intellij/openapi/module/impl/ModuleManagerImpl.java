@@ -117,7 +117,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
     myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       public void projectComponentsInitialized(final Project project) {
+        long start = System.currentTimeMillis();
         loadModules(myModuleModel);
+        LOG.info(myModuleModel.getModules().length + " modules loaded in " + (System.currentTimeMillis() - start) + " ms");
       }
     });
 
