@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -452,9 +453,17 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                                  final short constraint,
                                                  final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
-    Dimension hintSize = hint.getComponent().getPreferredSize();
+
     JComponent editorComponent = editor.getComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+
+    IdeTooltip ideTooltip = hint.getCurrentIdeTooltip();
+    if (ideTooltip != null) {
+      Point point = ideTooltip.getPoint();
+      return SwingUtilities.convertPoint(ideTooltip.getComponent(), point, layeredPane);
+    }
+
+    Dimension hintSize = hint.getComponent().getPreferredSize();
     int layeredPaneHeight = layeredPane.getHeight();
 
     switch (constraint) {
@@ -674,7 +683,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myQuestionHint = hint;
   }
 
-  private static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
+  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
     HintHint hintInfo = new HintHint(editor, p);
     boolean showByBalloon = Registry.is("editor.balloonHints");
     if (showByBalloon) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.codeInsight.lookup.LookupManager;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +129,10 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false, pos.getSecond());
+        HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
+        hintHint.setExplicitClose(true);
+
+        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false, hintHint);
         new ParameterInfoController(project,
                                     editor,
                                     elementStart,
