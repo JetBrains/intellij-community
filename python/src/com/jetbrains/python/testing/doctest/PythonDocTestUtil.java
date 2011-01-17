@@ -4,11 +4,15 @@ import com.google.common.collect.Lists;
 import com.jetbrains.python.psi.*;
 
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * User: catherine
  */
 public class PythonDocTestUtil {
+
+  private PythonDocTestUtil() {
+  }
 
   public static List<PyElement> getDocTestCasesFromFile(PyFile file) {
     List<PyElement> result = Lists.newArrayList();
@@ -23,8 +27,8 @@ public class PythonDocTestUtil {
       }
     }
     if (file.getDocStringExpression() != null) {
-      PythonDocStringParser parser = new PythonDocStringParser(file.getDocStringExpression().getStringValue());
-      if (!parser.hasExample()) {
+      PyStringLiteralExpression docString = file.getDocStringExpression();
+      if (docString != null && hasExample(docString.getStringValue())) {
         result.add(file);
       }
     }
@@ -33,25 +37,36 @@ public class PythonDocTestUtil {
 
   public static boolean isDocTestFunction(PyFunction pyFunction) {
     if (pyFunction.getDocStringExpression() == null) return false;
-    PythonDocStringParser parser = new PythonDocStringParser(pyFunction.getDocStringExpression().getStringValue());
-    if (!parser.hasExample()) return false;
+    PyStringLiteralExpression docString = pyFunction.getDocStringExpression();
+    if (docString != null && !hasExample(docString.getStringValue())) return false;
     return true;
   }
 
   public static boolean isDocTestClass(PyClass pyClass) {
-    List<PyStatement> result = Lists.newArrayList();
     for (PyFunction cls : pyClass.getMethods()) {
       if (isDocTestFunction(cls)) {
-        result.add(cls);
+        return true;
       }
     }
     if (pyClass.getDocStringExpression() != null) {
-      PythonDocStringParser parser = new PythonDocStringParser(pyClass.getDocStringExpression().getStringValue());
-      if (parser.hasExample()) {
-        result.add(pyClass);
+      PyStringLiteralExpression docString = pyClass.getDocStringExpression();
+      if (docString != null && hasExample(docString.getStringValue())) {
+        return true;
       }
     }
-    if (result.isEmpty()) return false;
-    return true; 
+    return false;
+  }
+
+  private static boolean hasExample(String docString) {
+    boolean hasExample = false;
+    StringTokenizer tokenizer = new StringTokenizer(docString, "\n");
+    while (tokenizer.hasMoreTokens()) {
+      String str = tokenizer.nextToken().trim();
+      if (str.startsWith(">>>")) {
+        hasExample = true;
+        break;
+      }
+    }
+    return hasExample;
   }
 }

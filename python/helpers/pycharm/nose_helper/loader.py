@@ -114,7 +114,7 @@ class TestLoader(unittest.TestLoader):
             raise
         except:
             exc = sys.exc_info()
-            return Failure(exc[0], exc[1])
+            return Failure(exc[0], exc[1], exc[2])
 
     def _makeTest(self, obj, parent=None):
         """Given a test object and its parent, return a test case
