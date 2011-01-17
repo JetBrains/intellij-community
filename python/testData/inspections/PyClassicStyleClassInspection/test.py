@@ -11,3 +11,5 @@ class C(A, B, object):
 class D(C):
     pass
 
+class E:
+    __metaclass__ = None

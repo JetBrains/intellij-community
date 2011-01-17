@@ -78,6 +78,8 @@ public interface PyClass extends
 
   List<PyTargetExpression> getClassAttributes();
 
+  PyTargetExpression findClassAttribute(String name, boolean inherited);
+
   List<PyTargetExpression> getInstanceAttributes();
 
   /**
