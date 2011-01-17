@@ -45,6 +45,7 @@ datafile
 datafiles
 datetime
 deallocate
+dedent
 deduplicate
 deferrable
 desc
@@ -211,6 +212,7 @@ refactoring
 reindex
 renderer
 resetlogs
+resize
 rlike
 rollup
 rowdependencies
