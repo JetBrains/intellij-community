@@ -46,7 +46,7 @@ public class PyCallByClassInspection extends PyInspection {
   @NotNull
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.INFO;
+    return HighlightDisplayLevel.WEAK_WARNING;
   }
 
   @NotNull

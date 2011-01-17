@@ -244,7 +244,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             PsiTreeUtil.getParentOfType(node, PyImportElement.class), PyTryExceptStatement.class, PyIfStatement.class
           ) != null
         )) {
-          severity = HighlightSeverity.INFO;
+          severity = HighlightSeverity.WEAK_WARNING;
           String errmsg = PyBundle.message("INSP.module.$0.not.found", ref_text);
           description_buf.append(errmsg);
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning

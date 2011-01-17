@@ -26,7 +26,7 @@ public class PyNestedDecoratorsInspection extends PyInspection {
 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.INFO;
+    return HighlightDisplayLevel.WEAK_WARNING;
   }
 
   @NotNull
