@@ -45,7 +45,7 @@ public class PyDebugSupportUtils {
           if (element != null && element instanceof PyLiteralExpression) {
             return null;
           }
-          if (element != null && isSimpleEnough(element)) {
+          if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {
             return element.getTextRange();
           }
         }
