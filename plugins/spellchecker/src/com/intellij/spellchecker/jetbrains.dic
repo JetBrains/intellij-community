@@ -221,6 +221,8 @@ rubymine
 runtime
 savepoint
 schemas
+scriptlet
+scriptlets
 securefile
 serializable
 serializer
