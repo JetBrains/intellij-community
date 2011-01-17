@@ -112,6 +112,9 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
+    if (processHandler == null) {
+      return;
+    }
     processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(ProcessEvent event) {}
