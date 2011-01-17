@@ -198,7 +198,7 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
-  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib"]
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib", "jcip-annotations"]
 
   project.clean()
   modules.each {
