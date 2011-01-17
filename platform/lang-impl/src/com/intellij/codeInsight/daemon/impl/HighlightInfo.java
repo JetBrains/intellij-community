@@ -122,6 +122,9 @@ public class HighlightInfo implements Segment {
     if (severity == HighlightSeverity.INFO){
       return scheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
     }
+    if (severity == HighlightSeverity.WEAK_WARNING){
+      return scheme.getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getErrorStripeColor();
+    }
     if (severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
       return scheme.getAttributes(CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING).getErrorStripeColor();
     }
@@ -389,7 +392,8 @@ public class HighlightInfo implements Segment {
     return severity == HighlightSeverity.ERROR
            ? HighlightInfoType.ERROR
            : severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-             : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
+             : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO
+                                                  : severity == HighlightSeverity.WEAK_WARNING ? HighlightInfoType.WEAK_WARNING : HighlightInfoType.INFORMATION;
   }
 
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
@@ -402,7 +406,8 @@ public class HighlightInfo implements Segment {
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
-             severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO : ProblemHighlightType.INFORMATION;
+             severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
+             severity == HighlightSeverity.WEAK_WARNING? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
   }
 
 

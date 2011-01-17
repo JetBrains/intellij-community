@@ -37,7 +37,12 @@ public class HighlightDisplayLevel {
   public static final HighlightDisplayLevel ERROR = new HighlightDisplayLevel(HighlightSeverity.ERROR, createIconByMask(CodeInsightColors.ERRORS_ATTRIBUTES));
   public static final HighlightDisplayLevel WARNING = new HighlightDisplayLevel(HighlightSeverity.WARNING, createIconByMask(CodeInsightColors.WARNINGS_ATTRIBUTES));
   public static final HighlightDisplayLevel DO_NOT_SHOW = new HighlightDisplayLevel(HighlightSeverity.INFORMATION, createIconByMask(new Color(30, 160, 0)));
+  /**
+   * use #WEAK_WARNING instead
+   */
+  @Deprecated
   public static final HighlightDisplayLevel INFO = new HighlightDisplayLevel(HighlightSeverity.INFO, DO_NOT_SHOW.getIcon());
+  public static final HighlightDisplayLevel WEAK_WARNING = new HighlightDisplayLevel(HighlightSeverity.WEAK_WARNING, DO_NOT_SHOW.getIcon());
 
   private Icon myIcon;
   private final HighlightSeverity mySeverity;

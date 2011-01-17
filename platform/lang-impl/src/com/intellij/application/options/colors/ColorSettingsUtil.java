@@ -81,7 +81,7 @@ public class ColorSettingsUtil {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
-    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.weak.warning"), CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
 

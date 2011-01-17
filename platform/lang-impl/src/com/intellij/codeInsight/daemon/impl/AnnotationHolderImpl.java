@@ -30,6 +30,7 @@ import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -84,6 +85,23 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   public Annotation createInformationAnnotation(@NotNull TextRange range, String message) {
     return createAnnotation(range, HighlightSeverity.INFO, message);
+  }
+
+  @Override
+  public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
+    assertMyFile(elt);
+    return createAnnotation(elt.getTextRange(), HighlightSeverity.WEAK_WARNING, message);
+  }
+
+  @Override
+  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message) {
+    assertMyFile(node.getPsi());
+    return createAnnotation(node.getTextRange(), HighlightSeverity.WEAK_WARNING, message);
+  }
+
+  @Override
+  public Annotation createWeakWarningAnnotation(@NotNull TextRange range, String message) {
+    return createAnnotation(range, HighlightSeverity.WEAK_WARNING, message);
   }
 
   public Annotation createInfoAnnotation(@NotNull PsiElement elt, String message) {

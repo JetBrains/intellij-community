@@ -259,6 +259,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES.getExternalName(), Color.red);
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WARNINGS_ATTRIBUTES.getExternalName(), Color.yellow);
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.INFO_ATTRIBUTES.getExternalName(), Color.yellow.brighter());
+    DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.WEAK_WARNING_ATTRIBUTES.getExternalName(), Color.yellow.brighter());
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES.getExternalName(), Color.yellow);
     DEFAULT_ERROR_STRIPE_COLOR.put(CodeInsightColors.DEPRECATED_ATTRIBUTES.getExternalName(), Color.yellow);

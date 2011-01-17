@@ -60,12 +60,10 @@ abstract class CommonAnnotationHolder<C> {
         return myHolder.createErrorAnnotation(element, message);
       } else if (severity == HighlightSeverity.WARNING) {
         return myHolder.createWarningAnnotation(element, message);
-      } else if (severity == HighlightSeverity.INFO) {
-        return myHolder.createInformationAnnotation(element, message);
-      } else if (severity == HighlightSeverity.INFORMATION) {
-        return myHolder.createInfoAnnotation(element, message);
+      } else if (severity == HighlightSeverity.WEAK_WARNING || severity == HighlightSeverity.INFO) {
+        return myHolder.createWeakWarningAnnotation(element, message);
       } else {
-        return myHolder.createInformationAnnotation(element, message);
+        return myHolder.createInfoAnnotation(element, message);
       }
     }
   }

@@ -61,6 +61,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     STANDART_SEVERITIES.put(HighlightSeverity.ERROR.toString(), HighlightInfoType.ERROR);
     STANDART_SEVERITIES.put(HighlightSeverity.WARNING.toString(), HighlightInfoType.WARNING);
     STANDART_SEVERITIES.put(HighlightSeverity.INFO.toString(), HighlightInfoType.INFO);
+    STANDART_SEVERITIES.put(HighlightSeverity.WEAK_WARNING.toString(), HighlightInfoType.WEAK_WARNING);
     STANDART_SEVERITIES.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.toString(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
@@ -164,7 +165,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     myReadOrder = new JDOMExternalizableStringList();
     myReadOrder.addAll(myOrder);
 
-    final List<String> knownSeverities = createCurrentSeverities();
+    final List<String> knownSeverities = getDefaultOrder();
     myOrder.retainAll(knownSeverities);
 
     if (myOrder.isEmpty()) {
