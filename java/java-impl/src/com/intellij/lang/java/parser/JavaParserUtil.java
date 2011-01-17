@@ -20,7 +20,9 @@ import com.intellij.lang.*;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
@@ -43,6 +45,8 @@ import java.util.List;
 
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
+  private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
+  private static final Key<ParserExtender> PARSER_EXTENDER_KEY = Key.create("JavaParserUtil.ParserExtender");
 
   public interface ParserWrapper {
     void parse(PsiBuilder builder);
@@ -50,6 +54,10 @@ public class JavaParserUtil {
 
   public interface MarkingParserWrapper {
     @Nullable PsiBuilder.Marker parse(PsiBuilder builder);
+  }
+
+  public interface ParserExtender extends MarkingParserWrapper {
+    boolean enroll(PsiBuilder builder);
   }
 
   public static final WhitespacesAndCommentsBinder GREEDY_RIGHT_EDGE_PROCESSOR = new WhitespacesAndCommentsBinder() {
@@ -143,6 +151,24 @@ public class JavaParserUtil {
     final LanguageLevel level = builder.getUserDataUnprotected(LANG_LEVEL_KEY);
     assert level != null : builder;
     return level;
+  }
+
+  public static void setParseStatementCodeBlocksDeep(final PsiBuilder builder, final boolean deep) {
+    builder.putUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS, deep);
+  }
+
+  public static boolean isParseStatementCodeBlocksDeep(final PsiBuilder builder) {
+    return Boolean.TRUE.equals(builder.getUserDataUnprotected(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
+  }
+
+  public static void setParserExtender(final PsiBuilder builder, final ParserExtender extender) {
+    builder.putUserDataUnprotected(PARSER_EXTENDER_KEY, extender);
+  }
+
+  @Nullable
+  public static ParserExtender getParserExtender(final PsiBuilder builder) {
+    final ParserExtender extender = builder.getUserDataUnprotected(PARSER_EXTENDER_KEY);
+    return extender != null && extender.enroll(builder) ? extender : null;
   }
 
   @NotNull
@@ -291,6 +317,22 @@ public class JavaParserUtil {
     };
   }
 
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<Pair<IElementType, String>> condition) {
+    return new PsiBuilderAdapter(builder) {
+      @Override
+      public IElementType getTokenType() {
+        final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
+        return condition.value(input) ? null : super.getTokenType();
+      }
+
+      @Override
+      public boolean eof() {
+        final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
+        return condition.value(input) || super.eof();
+      }
+    };
+  }
+
   public static class PsiBuilderAdapter implements PsiBuilder {
     protected final PsiBuilder myDelegate;
 
@@ -298,23 +340,27 @@ public class JavaParserUtil {
       myDelegate = delegate;
     }
 
+    @Override
     public Project getProject() {
       return myDelegate.getProject();
     }
 
+    @Override
     public CharSequence getOriginalText() {
       return myDelegate.getOriginalText();
     }
 
+    @Override
     public void advanceLexer() {
       myDelegate.advanceLexer();
     }
 
-    @Nullable
+    @Override @Nullable
     public IElementType getTokenType() {
       return myDelegate.getTokenType();
     }
 
+    @Override
     public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
       myDelegate.setTokenTypeRemapper(remapper);
     }
@@ -344,53 +390,62 @@ public class JavaParserUtil {
       return myDelegate.rawTokenTypeStart(steps);
     }
 
-    @Nullable @NonNls
+    @Override @Nullable @NonNls
     public String getTokenText() {
       return myDelegate.getTokenText();
     }
 
+    @Override
     public int getCurrentOffset() {
       return myDelegate.getCurrentOffset();
     }
 
+    @Override
     public Marker mark() {
       return myDelegate.mark();
     }
 
+    @Override
     public void error(final String messageText) {
       myDelegate.error(messageText);
     }
 
+    @Override
     public boolean eof() {
       return myDelegate.eof();
     }
 
+    @Override
     public ASTNode getTreeBuilt() {
       return myDelegate.getTreeBuilt();
     }
 
+    @Override
     public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
       return myDelegate.getLightTree();
     }
 
+    @Override
     public void setDebugMode(final boolean dbgMode) {
       myDelegate.setDebugMode(dbgMode);
     }
 
+    @Override
     public void enforceCommentTokens(final TokenSet tokens) {
       myDelegate.enforceCommentTokens(tokens);
     }
 
-    @Nullable
+    @Override @Nullable
     public LighterASTNode getLatestDoneMarker() {
       return myDelegate.getLatestDoneMarker();
     }
 
-    @Nullable
+    @Override @Nullable
     public <T> T getUserData(@NotNull final Key<T> key) {
       return myDelegate.getUserData(key);
     }
 
+    @Override
     public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
       myDelegate.putUserData(key, value);
     }
@@ -401,7 +456,7 @@ public class JavaParserUtil {
     }
 
     @Override
-    public <T> void putUserDataUnprotected(@NotNull Key<T> key, @Nullable T value) {
+    public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
       myDelegate.putUserDataUnprotected(key, value);
     }
   }
