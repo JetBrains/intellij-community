@@ -142,13 +142,8 @@ public class PyCallExpressionHelper {
     }
     if (resolved instanceof Callable) {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-      PyExpression lastQualifier = resolveResult != null ? resolveResult.getLastQualifier() : null;
-      boolean is_by_instance = isConstructorCall || isQualifiedByInstance((Callable)resolved, lastQualifier, context);
-      if (lastQualifier != null) {
-        PyType qualifier_type = context.getType(lastQualifier);
-        is_by_instance |=
-          (qualifier_type != null && qualifier_type instanceof PyClassType && !((PyClassType)qualifier_type).isDefinition());
-      }
+      List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
+      boolean is_by_instance = isConstructorCall || isQualifiedByInstance((Callable)resolved, qualifiers, context);
       final Callable callable = (Callable)resolved;
       int implicitOffset = getImplicitArgumentCount(callable, wrappedFlag, flags, is_by_instance);
       if (!isConstructorCall && PyNames.NEW.equals(callable.getName())) {
@@ -182,7 +177,7 @@ public class PyCallExpressionHelper {
       return 1;
     }
     QualifiedResolveResult followed = callReference.followAssignmentsChain(typeContext);
-    return getImplicitArgumentCount(functionBeingCalled, null, null, isQualifiedByInstance(functionBeingCalled, followed.getLastQualifier(), typeContext));
+    return getImplicitArgumentCount(functionBeingCalled, null, null, isQualifiedByInstance(functionBeingCalled, followed.getQualifiers(), typeContext));
   }
 
   /**
@@ -238,17 +233,24 @@ public class PyCallExpressionHelper {
     return implicit_offset;
   }
 
-  private static boolean isQualifiedByInstance(Callable resolved, PyExpression lastQualifier, TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(Callable resolved, List<PyExpression> qualifiers, TypeEvalContext context) {
     // true = call by instance
-    PyFunction method = resolved.asMethod();
-    if (method != null) {
-      if (lastQualifier == null) return true; // unqualified + method = implicit constructor call
-      PyType qtype = context.getType(lastQualifier);
-      if (qtype != null) {
-        if (qtype instanceof PyClassType) {
-          if (!((PyClassType)qtype).isDefinition()) {
-            return false;
-          }
+    if (qualifiers.isEmpty()) {
+      return resolved.asMethod() != null; // unqualified + method = implicit constructor call
+    }
+    for (PyExpression qualifier : qualifiers) {
+      if (isQualifiedByInstance(resolved, qualifier, context)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isQualifiedByInstance(Callable resolved, PyExpression qualifier, TypeEvalContext context) {
+    PyType qtype = context.getType(qualifier);
+    if (qtype != null) {
+      if (qtype instanceof PyClassType) {
+        if (((PyClassType)qtype).isDefinition()) {
           PyClass resolvedParent = PsiTreeUtil.getParentOfType(resolved, PyClass.class);
           if (resolvedParent != null) {
             final PyClass qualifierClass = ((PyClassType)qtype).getPyClass();
@@ -257,11 +259,10 @@ public class PyCallExpressionHelper {
             }
           }
         }
-        // TODO: handle UnionType
       }
-      return true; // NOTE. best guess: unknown qualifier is more probably an instance.
+      // TODO: handle UnionType
     }
-    return false;
+    return true; // NOTE. best guess: unknown qualifier is more probably an instance.
   }
 
   static boolean isCalleeText(PyCallExpression pyCallExpression, String[] nameCandidates) {

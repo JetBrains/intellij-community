@@ -47,7 +47,7 @@ public class PyClassicStyleClassInspection extends PyInspection {
         if (superClassExpressions.length == 0) {
           registerProblem(nameNode.getPsi(), "Old-style class", new TransformClassicClassQuickFix());
         } else {
-          registerProblem(nameNode.getPsi(), "Old-style class, because all classes from whom it inherited are old-style",
+          registerProblem(nameNode.getPsi(), "Old-style class, because all classes from whom it inherits are old-style",
                           new TransformClassicClassQuickFix());
         }
       }

@@ -16,31 +16,31 @@ import java.util.EnumSet;
  */
 public class PyResolveCalleeTest extends PyLightFixtureTestCase {
 
-  private PyCallExpression.PyMarkedCallee resolveCallee() throws Exception {
+  private PyCallExpression.PyMarkedCallee resolveCallee() {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");
     PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
     return call.resolveCallee(TypeEvalContext.fast());
   }
 
-  public void testInstanceCall() throws Exception {
+  public void testInstanceCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
-  public void testClassCall() throws Exception {
+  public void testClassCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
 
-  public void testDecoCall() throws Exception {
+  public void testDecoCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
-  public void testDecoParamCall() throws Exception {
+  public void testDecoParamCall() {
     PyCallExpression.PyMarkedCallee resolved = resolveCallee();
     assertNotNull(resolved.getCallable());
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));

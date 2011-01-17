@@ -655,6 +655,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result;
   }
 
+  @Override
+  public PyTargetExpression findClassAttribute(String name, boolean inherited) {
+    final NameFinder<PyTargetExpression> processor = new NameFinder<PyTargetExpression>(name);
+    visitClassAttributes(processor, inherited);
+    return processor.getResult();
+  }
+
   public List<PyTargetExpression> getInstanceAttributes() {
     if (myInstanceAttributes == null) {
       myInstanceAttributes = collectInstanceAttributes();
@@ -747,6 +754,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           return true;
         }
       }
+    }
+    if (pyClass.findClassAttribute(PyNames.METACLASS, false) != null) {
+      return true;
     }
     return false;
   }
