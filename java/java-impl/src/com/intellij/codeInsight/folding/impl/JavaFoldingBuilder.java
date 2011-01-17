@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,9 +44,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
@@ -115,6 +114,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     addAnnotationsToFold(aClass.getModifierList(), list, document);
 
     PsiElement[] children = aClass.getChildren();
+    Set<PsiElement> processedComments = new HashSet<PsiElement>();
     for (PsiElement child : children) {
       ProgressManager.checkCanceled();
 
@@ -132,7 +132,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
         PsiCodeBlock body = method.getBody();
         if (body != null) {
-          addCodeBlockFolds(body, list, document, quick);
+          addCodeBlockFolds(body, list, processedComments, document, quick);
         }
       }
       else if (child instanceof PsiField) {
@@ -146,18 +146,21 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
         addAnnotationsToFold(field.getModifierList(), list, document);
         PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
-          addCodeBlockFolds(initializer, list, document, quick);
+          addCodeBlockFolds(initializer, list, processedComments, document, quick);
         } else if (field instanceof PsiEnumConstant) {
-          addCodeBlockFolds(field, list, document, quick);
+          addCodeBlockFolds(field, list, processedComments, document, quick);
         }
       }
       else if (child instanceof PsiClassInitializer) {
         PsiClassInitializer initializer = (PsiClassInitializer)child;
         addToFold(list, initializer, document, true);
-        addCodeBlockFolds(initializer, list, document, quick);
+        addCodeBlockFolds(initializer, list, processedComments, document, quick);
       }
       else if (child instanceof PsiClass) {
         addElementsToFold(list, (PsiClass)child, document, true, quick);
+      }
+      else if (child instanceof PsiComment) {
+        addCommentFolds((PsiComment)child, processedComments, list);
       }
     }
   }
@@ -183,8 +186,11 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     else if (element instanceof PsiAnnotation) {
       return "@{...}";
     }
-    if (element instanceof PsiReferenceParameterList) {
+    else if (element instanceof PsiReferenceParameterList) {
       return SMILEY;
+    }
+    else if (element instanceof PsiComment) {
+      return "//...";
     }
     return "...";
   }
@@ -225,6 +231,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     }
     else if (element instanceof PsiAnnotation) {
       return settings.isCollapseAnnotations();
+    }
+    else if (element instanceof PsiComment) {
+      return settings.isCollapseEndOfLineComments();
     }
     else {
       LOG.error("Unknown element:" + element);
@@ -349,10 +358,12 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     }
   }
 
-  private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements, final Document document, final boolean quick) {
+  private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements,
+                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick) 
+  {
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitClass(PsiClass aClass) {
-        if (!addClosureFolding(aClass, document, foldElements, quick)) {
+        if (!addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
           addToFold(foldElements, aClass, document, true);
           addElementsToFold(foldElements, aClass, document, false, quick);
         }
@@ -371,9 +382,64 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
         super.visitNewExpression(expression);
       }
+
+      @Override
+      public void visitComment(PsiComment comment) {
+        addCommentFolds(comment, processedComments, foldElements);
+        super.visitComment(comment);
+      }
     });
   }
 
+  /**
+   * We want to allow to fold subsequent single line comments like
+   * <pre>
+   *     // this is comment line 1
+   *     // this is comment line 2
+   * </pre>
+   * 
+   * @param comment             comment to check
+   * @param processedComments   set that contains already processed elements. It is necessary because we process all elements of
+   *                            the PSI tree, hence, this method may be called for both comments from the example above. However,
+   *                            we want to create fold region during the first comment processing, put second comment to it and
+   *                            skip processing when current method is called for the second element
+   * @param foldElements        fold descriptors holder to store newly created descriptor (if any)
+   */
+  private static void addCommentFolds(@NotNull PsiComment comment, @NotNull Set<PsiElement> processedComments,
+                                      @NotNull List<FoldingDescriptor> foldElements) 
+  {
+    if (processedComments.contains(comment) || comment.getTokenType() != JavaTokenType.END_OF_LINE_COMMENT) {
+      return;
+    }
+
+    PsiElement end = null;
+    for (PsiElement current = comment.getNextSibling(); current != null; current = current.getNextSibling()) {
+      ASTNode node = current.getNode();
+      if (node == null) {
+        break;
+      }
+      IElementType elementType = node.getElementType();
+      if (elementType == JavaTokenType.END_OF_LINE_COMMENT) {
+        end = current;
+        // We don't want to process, say, the second comment in case of three subsequent comments when it's being examined
+        // during all elements traversal. I.e. we expect to start from the first comment and grab as many subsequent
+        // comments as possible during the single iteration.
+        processedComments.add(current);
+        continue;
+      }
+      if (elementType == JavaTokenType.WHITE_SPACE) {
+        continue;
+      }
+      break;
+    }
+
+    if (end != null) {
+      foldElements.add(
+        new FoldingDescriptor(comment, new TextRange(comment.getTextRange().getStartOffset(), end.getTextRange().getEndOffset()))
+      );
+    }
+  }
+  
   private static void addMethodGenericParametersFolding(PsiMethodCallExpression expression, List<FoldingDescriptor> foldElements, Document document, boolean quick) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiReferenceParameterList list = methodExpression.getParameterList();
@@ -485,7 +551,8 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     return anonymousClass.getMethods().length == 1;
   }
 
-  private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements, final boolean quick) {
+  private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
+                                    @NotNull Set<PsiElement> processedComments, final boolean quick) {
     if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
       return false;
     }
@@ -595,7 +662,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
                     }
                   });
               }
-              addCodeBlockFolds(body, foldElements, document, quick);
+              addCodeBlockFolds(body, foldElements, processedComments, document, quick);
             }
           }
         }
