@@ -396,7 +396,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
-    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER));
+    adjustEditorHintPosition(hint, editor, p, UNDER);
+  }
+
+  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, short constraint) {
+    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint));
   }
 
   public void hideAllHints() {

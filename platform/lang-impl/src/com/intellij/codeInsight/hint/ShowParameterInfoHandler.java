@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -102,13 +103,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Point p = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint);
+    final Pair<Point, Short> pos = ShowParameterInfoContext.chooseBestHintPosition(project, editor, -1, -1, hint);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (!editor.getComponent().isShowing()) return;
-        hintManager.showEditorHint(hint, editor, p,
+        hintManager.showEditorHint(hint, editor, pos.getFirst(),
                                    HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManagerImpl.UPDATE_BY_SCROLLING,
-                                   0, false);
+                                   0, false, pos.getSecond());
       }
     });
   }
@@ -125,7 +126,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   interface BestLocationPointProvider {
     @NotNull
-    Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset);
+    Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset);
   }
 
 }
