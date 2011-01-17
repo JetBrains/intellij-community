@@ -135,7 +135,11 @@ public class TriggerAdditionOrDeletion {
     } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
       final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeAdded, "Select files to add to " + vcs.getDisplayName(), null,
         "Schedule for addition", "Do you want to schedule the following file for addition to " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      toBeAdded.retainAll(files);
+      if (files == null) {
+        toBeAdded.clear();
+      } else {
+        toBeAdded.retainAll(files);
+      }
     }
   }
 
