@@ -88,6 +88,14 @@ public class GitTask {
   }
 
   /**
+   * Executes the task synchronously, with a modal progress dialog.
+   * @param resultHandler callback which will be called after task execution.
+   */
+  public void execute(GitTaskResultHandler resultHandler) {
+    resultHandler.run(execute());
+  }
+
+  /**
    * Executes this task asynchronously, in backgrond. Calls the resultHandler when finished.
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
