@@ -43,11 +43,13 @@ public class CommitCompletionContributor extends CompletionContributor {
       if (dataContext != null) {
         ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
         if (lists != null) {
+          CompletionResultSet insensitive = result.caseInsensitive();
           for (ChangeList list : lists) {
             for (Change change : list.getChanges()) {
               VirtualFile virtualFile = change.getVirtualFile();
               if (virtualFile != null) {
-                result.addElement(LookupElementBuilder.create(virtualFile.getName()).setIcon(virtualFile.getIcon()));
+                insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
+                  setIcon(virtualFile.getIcon()));
               }
             }
           }
