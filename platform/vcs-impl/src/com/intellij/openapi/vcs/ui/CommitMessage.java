@@ -40,7 +40,7 @@ import java.util.Set;
 
 public class CommitMessage extends JPanel implements Disposable {
 
-  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.<DataContext>create("");
+  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private final Project         myProject;
 
