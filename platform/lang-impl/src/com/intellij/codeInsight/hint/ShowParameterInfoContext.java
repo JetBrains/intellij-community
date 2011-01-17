@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
@@ -123,11 +124,11 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Point p = provider.getBestPointPosition(hint, element, elementStart);
+    final Pair<Point, Short> pos = provider.getBestPointPosition(hint, element, elementStart);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        hintManager.showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false);
+        hintManager.showEditorHint(hint, editor, pos.getFirst(), HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING | HintManagerImpl.HIDE_BY_OTHER_HINT, 0, false, pos.getSecond());
         new ParameterInfoController(project,
                                     editor,
                                     elementStart,
@@ -153,7 +154,7 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
   /**
    * @return Point in layered pane coordinate system
    */
-  static Point chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
+  static Pair<Point, Short> chooseBestHintPosition(Project project, Editor editor, int line, int col, LightweightHint hint) {
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
@@ -180,53 +181,56 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
     boolean p2Ok = p2.y >= 0;
 
     if (isLookupShown) {
-      if (p2Ok) return p2;
-      if (p1Ok) return p1;
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
+      if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
     }
     else {
-      if (p1Ok) return p1;
-      if (p2Ok) return p2;
+      if (p1Ok) return new Pair<Point, Short>(p1, HintManagerImpl.UNDER);
+      if (p2Ok) return new Pair<Point, Short>(p2, HintManagerImpl.ABOVE);
     }
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
-    return aboveSpace > underSpace ? new Point(p2.x, 0) : p1;
+    return aboveSpace > underSpace ? new Pair<Point, Short>(new Point(p2.x, 0), HintManagerImpl.UNDER) : new Pair<Point, Short>(p1, HintManagerImpl.ABOVE);
   }
 
   static class MyBestLocationPointProvider implements ShowParameterInfoHandler.BestLocationPointProvider {
     private final Editor myEditor;
     private int previousOffset = -1;
     private Point previousBestPoint;
+    private Short previousBestPosition;
 
     public MyBestLocationPointProvider(final Editor editor) {
       myEditor = editor;
     }
 
     @NotNull
-    public Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset) {
+    public Pair<Point, Short> getBestPointPosition(LightweightHint hint, final PsiElement list, int offset) {
       final TextRange textRange = list.getTextRange();
       offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
-      if (previousOffset == offset) return previousBestPoint;
+      if (previousOffset == offset) return new Pair<Point, Short>(previousBestPoint, previousBestPosition);
 
       String listText = list.getText();
       final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
       final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
-      Point p;
+      Pair<Point, Short> position;
 
       if (!isMultiline) {
-        p = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint);
+        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint);
       }
       else {
-        p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);
+        Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManagerImpl.ABOVE);
         Dimension hintSize = hint.getComponent().getPreferredSize();
         JComponent editorComponent = myEditor.getComponent();
         JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
         p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
         p.x = Math.max(p.x, 0);
+        position = new Pair<Point, Short>(p, HintManagerImpl.ABOVE);
       }
-      previousBestPoint = p;
+      previousBestPoint = position.getFirst();
+      previousBestPosition = position.getSecond();
       previousOffset = offset;
-      return p;
+      return position;
     }
   }
 }

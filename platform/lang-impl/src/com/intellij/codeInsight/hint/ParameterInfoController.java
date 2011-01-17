@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -282,7 +283,8 @@ public class ParameterInfoController {
       myHandler.updateParameterInfo(elementForUpdating, context);
       if (myHint.isVisible() && myEditor.getComponent().getRootPane() != null) {
         myComponent.update();
-        HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
+        Pair<Point,Short> pos = myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating, offset);
+        HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
     else {
