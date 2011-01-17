@@ -174,7 +174,7 @@ public class DeclarationParser {
     }
   }
 
-  private static void parseClassBodyDeclarations(final PsiBuilder builder, final boolean isAnnotation) {
+  public static void parseClassBodyDeclarations(final PsiBuilder builder, final boolean isAnnotation) {
     final Context context = isAnnotation ? Context.ANNOTATION_INTERFACE : Context.CLASS;
 
     PsiBuilder.Marker invalidElements = null;

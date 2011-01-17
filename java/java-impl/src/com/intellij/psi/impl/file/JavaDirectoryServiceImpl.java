@@ -154,10 +154,10 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
     final PsiJavaFile file = (PsiJavaFile)element.getContainingFile();
     PsiClass[] classes = file.getClasses();
-    if (classes.length != 1 || !name.equals(classes[0].getName())) {
+    if (classes.length < 1) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
     }
-    return file.getClasses()[0];
+    return classes[0];
   }
 
   private static String getIncorrectTemplateMessage(String templateName) {

@@ -217,16 +217,21 @@ public abstract class JspSpiUtil {
     }
   }
 
+  @Nullable
+  public static IElementType getJspElementType(@NotNull final JspElementType.Kind kind) {
+    final JspSpiUtil spiUtil = getJspSpiUtil();
+    return spiUtil != null ? spiUtil._getJspElementType(kind) : null;
+  }
+
+  @Nullable
   public static IElementType getJspScriptletType() {
-    JspSpiUtil spiUtil = getJspSpiUtil();
-    return spiUtil != null ? spiUtil._getJspScriptletType():null;
+    return getJspElementType(JspElementType.Kind.JSP_SCRIPTLET);
   }
 
+  @Nullable
   public static IElementType getJspExpressionType() {
-    JspSpiUtil spiUtil = getJspSpiUtil();
-    return spiUtil != null ? spiUtil._getJspExpressionType():null;
+    return getJspElementType(JspElementType.Kind.JSP_EXPRESSION);
   }
 
-  protected abstract IElementType _getJspExpressionType();
-  protected abstract IElementType _getJspScriptletType();
+  protected abstract IElementType _getJspElementType(@NotNull final JspElementType.Kind kind);
 }
