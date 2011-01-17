@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -39,6 +40,10 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    HintManager.getInstance().showErrorHint(PlatformDataKeys.EDITOR.getData(e.getDataContext()), "<html>Fuck<br>Fuck again</html>");
+    if (true) return;
+
+
     final Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (p != null) {
       ToolWindowManager.getInstance(p)

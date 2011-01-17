@@ -489,7 +489,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     if (hintHint.isAwtTooltip()) {
-      Dimension size = layeredPane.getSize();
+      Dimension size = layeredPane != null ? layeredPane.getSize() : new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
       int fitWidth = (int)(size.width * 0.8);
       Dimension prefSizeOriginal = pane.getPreferredSize();
       if (prefSizeOriginal.width > fitWidth) {
