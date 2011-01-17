@@ -237,10 +237,12 @@ public class ApplyPatchAction extends DumbAwareAction {
                                            final Project project) {
       MergeRequest request;
       if (myReadOnly) {
-        request = DiffRequestFactory.getInstance().create3WayDiffRequest(leftText, rightText, originalContent, project, null);
+        request = DiffRequestFactory.getInstance()
+          .create3WayDiffRequest(leftText, rightText, originalContent, project, null, null);
       } else {
         request = DiffRequestFactory.getInstance().createMergeRequest(leftText, rightText, originalContent,
-                                                                                 file, project, ActionButtonPresentation.createApplyButton());
+                                                                      file, project, ActionButtonPresentation.APPLY,
+                                                                      ActionButtonPresentation.CANCEL_WITH_PROMPT);
       }
 
       request.setVersionTitles(new String[] {

@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -99,12 +100,8 @@ public class GitBranches implements GitReferenceListener {
     }
   }
 
-  public void addListener(GitBranchesListener listener) {
-    myListeners.addListener(listener);
-  }
-
-  public void removeListener(GitBranchesListener listener) {
-    myListeners.removeListener(listener);
+  public void addListener(@NotNull GitBranchesListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.addListener(listener,parentDisposable);
   }
 
   /**

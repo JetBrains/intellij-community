@@ -49,6 +49,7 @@ public class Disposer {
   private Disposer() {
   }
 
+  @NotNull
   public static Disposable newDisposable() {
     return new Disposable() {
       public void dispose() {
@@ -78,26 +79,27 @@ public class Disposer {
     }
   }
 
-  public static boolean isDisposed(Disposable disposable) {
+  public static boolean isDisposed(@NotNull Disposable disposable) {
     return !ourTree.containsKey(disposable);
   }
 
-  public static Disposable get(String key) {
+  public static Disposable get(@NotNull String key) {
     return ourKeyDisposables.get(key);
   }
 
-  public static void dispose(Disposable disposable) {
+  public static void dispose(@NotNull Disposable disposable) {
     dispose(disposable, true);
   }
 
-  public static void dispose(Disposable disposable, boolean processUnregistered) {
+  public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
     ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
   }
 
-  public static void disposeChildAndReplace(Disposable toDipose, Disposable toReplace) {
+  public static void disposeChildAndReplace(@NotNull Disposable toDipose, @NotNull Disposable toReplace) {
     ourTree.executeChildAndReplace(toDipose, toReplace, true, ourDisposeAction);
   }
 
+  @NotNull
   public static ObjectTree<Disposable> getTree() {
     return ourTree;
   }
@@ -120,7 +122,7 @@ public class Disposer {
     return ourDebugMode;
   }
 
-  public static void clearOwnFields(Object object) {
+  public static void clearOwnFields(@NotNull Object object) {
     final Field[] all = object.getClass().getDeclaredFields();
     for (Field each : all) {
       if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;

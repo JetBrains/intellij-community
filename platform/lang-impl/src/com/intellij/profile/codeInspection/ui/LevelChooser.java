@@ -76,7 +76,7 @@ public class LevelChooser extends ComboboxWithBrowseButton {
     }
     severities.add(HighlightSeverity.ERROR);
     severities.add(HighlightSeverity.WARNING);
-    severities.add(HighlightSeverity.INFO);
+    severities.add(HighlightSeverity.WEAK_WARNING);
     severities.add(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
     for (HighlightSeverity severity : severities) {
       model.addElement(severity);

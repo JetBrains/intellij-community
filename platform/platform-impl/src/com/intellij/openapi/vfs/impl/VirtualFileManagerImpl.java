@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -186,6 +187,17 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
 
   public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.add(listener);
+  }
+
+  @Override
+  public void addVirtualFileManagerListener(@NotNull final VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
+    addVirtualFileManagerListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeVirtualFileManagerListener(listener);
+      }
+    });
   }
 
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {

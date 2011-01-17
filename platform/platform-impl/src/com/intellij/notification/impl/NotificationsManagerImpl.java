@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -274,6 +275,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   public void addListener(@NotNull final NotificationModelListener notificationListener) {
     myModel.addListener(notificationListener);
+  }
+  public void addListener(@NotNull final NotificationModelListener notificationListener, @NotNull Disposable parentDisposable) {
+    myModel.addListener(notificationListener,parentDisposable);
   }
 
   public int count(@Nullable final Project project) {

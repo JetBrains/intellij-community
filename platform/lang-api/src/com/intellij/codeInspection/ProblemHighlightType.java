@@ -33,8 +33,13 @@ public enum ProblemHighlightType {
   /** The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   GENERIC_ERROR,
 
-  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level */
+  @Deprecated
+  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level
+   * use #WEAK_WARNING instead*/
   INFO,
+
+  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WEAK_WARNING} severity level */
+  WEAK_WARNING,
 
   /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#DO_NOT_SHOW} severity level */
   INFORMATION

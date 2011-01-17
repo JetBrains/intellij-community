@@ -481,7 +481,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
         }
         else if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.INFO_ATTRIBUTES);
+          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
         }
         else {
           return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
@@ -490,6 +490,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
       case INFO:
         return HighlightInfoType.INFO;
+       case WEAK_WARNING:
+        return HighlightInfoType.WEAK_WARNING;
       case ERROR:
         return HighlightInfoType.WRONG_REF;
       case GENERIC_ERROR:

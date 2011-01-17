@@ -46,30 +46,41 @@ public class MergeRequestImpl extends MergeRequest {
   private String[] myVersionTitles = null;
   private int myResult = DialogWrapper.CANCEL_EXIT_CODE;
   private String myHelpId;
-  @Nullable private final ActionButtonPresentation myActionButtonPresentation;
+  @Nullable private final ActionButtonPresentation myOkButtonPresentation;
+  @Nullable private final ActionButtonPresentation myCancelButtonPresentation;
 
   public MergeRequestImpl(String left,
                           MergeVersion base,
                           String right,
                           Project project,
-                          @Nullable final ActionButtonPresentation actionButtonPresentation) {
-    super(project);
-    myActionButtonPresentation = actionButtonPresentation;
-    myDiffContents[0] = new SimpleContent(left);
-    myDiffContents[1] = new MergeContent(base);
-    myDiffContents[2] = new SimpleContent(right);
+                          @Nullable final ActionButtonPresentation okButtonPresentation,
+                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    this(new SimpleContent(left), new MergeContent(base, project), new SimpleContent(right), project, okButtonPresentation,
+         cancelButtonPresentation);
   }
 
   public MergeRequestImpl(String left,
                           String base,
                           String right,
                           Project project,
-                          @Nullable final ActionButtonPresentation actionButtonPresentation) {
+                          @Nullable final ActionButtonPresentation okButtonPresentation,
+                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    this(new SimpleContent(left), new SimpleContent(base), new SimpleContent(right), project, okButtonPresentation,
+         cancelButtonPresentation);
+  }
+
+  private MergeRequestImpl(DiffContent left,
+                           DiffContent base,
+                           DiffContent right,
+                           Project project,
+                           @Nullable final ActionButtonPresentation okButtonPresentation,
+                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     super(project);
-    myActionButtonPresentation = actionButtonPresentation;
-    myDiffContents[0] = new SimpleContent(left);
-    myDiffContents[1] = new SimpleContent(base);
-    myDiffContents[2] = new SimpleContent(right);
+    myOkButtonPresentation = okButtonPresentation;
+    myCancelButtonPresentation = cancelButtonPresentation;
+    myDiffContents[0] = left;
+    myDiffContents[1] = base;
+    myDiffContents[2] = right;
   }
 
   public DiffContent[] getContents() { return myDiffContents; }
@@ -123,53 +134,58 @@ public class MergeRequestImpl extends MergeRequest {
       }, "", null);
   }
 
+  private static void configureAction(DialogBuilder builder,
+                                      DialogBuilder.CustomizableAction customizableAction,
+                                      ActionButtonPresentation presentation) {
+    customizableAction.setText(presentation.getName());
+
+    String actionName = presentation.getName();
+    final int index = actionName.indexOf('&');
+    final char mnemonic;
+    if (index >= 0 && index < actionName.length() - 1) {
+      mnemonic = actionName.charAt(index + 1);
+      actionName = actionName.substring(0, index) + actionName.substring(index + 1);
+    }
+    else {
+      mnemonic = 0;
+    }
+    final Action action = ((DialogBuilder.ActionDescriptor)customizableAction).getAction(builder.getDialogWrapper());
+    action.putValue(Action.NAME, actionName);
+    if (mnemonic > 0) {
+      action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemonic));
+    }
+  }
+
   public void setActions(final DialogBuilder builder, MergePanel2 mergePanel) {
-    if (builder.getOkAction() == null && myActionButtonPresentation != null) {
-      builder.addOkAction();
-    }
-    if (builder.getCancelAction() == null) {
-      builder.addCancelAction();
-    }
+    builder.removeAllActions(); // otherwise dialog will get default actions (OK, Cancel)
 
-    if (myActionButtonPresentation != null) {
-      builder.getOkAction().setText(myActionButtonPresentation.getName());
+    if (myOkButtonPresentation != null) {
+      if (builder.getOkAction() == null) {
+        builder.addOkAction();
+      }
 
-      builder.setOkActionEnabled(myActionButtonPresentation.isEnabled());
-      final Action action = ((DialogBuilder.ActionDescriptor)builder.getOkAction()).getAction(builder.getDialogWrapper());
-      String actionName = myActionButtonPresentation.getName();
-      final int index = actionName.indexOf('&');
-      final char mnemonic;
-      if (index >= 0 && index < actionName.length() - 1) {
-        mnemonic = actionName.charAt(index + 1);
-        actionName = actionName.substring(0, index) + actionName.substring(index + 1);
-      } else {
-        mnemonic = 0;
-      }
-      action.putValue(Action.NAME, actionName);
-      if (mnemonic > 0) {
-        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemonic));
-      }
+      configureAction(builder, builder.getOkAction(), myOkButtonPresentation);
       builder.setOkOperation(new Runnable() {
         public void run() {
-          final DataContext dataContext = DataManager.getInstance().getDataContext(builder.getCenterPanel());
-          myActionButtonPresentation.run(PlatformDataKeys.DIFF_VIEWER.getData(dataContext));
-          if (myActionButtonPresentation.closeDialog()) {
-            builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-          }
+          myOkButtonPresentation.run(builder.getDialogWrapper());
         }
       });
     }
-    if (getMergeContent() != null) {
+
+    if (myCancelButtonPresentation != null) {
+      if (builder.getCancelAction() == null) {
+        builder.addCancelAction();
+      }
+
+      configureAction(builder, builder.getCancelAction(), myCancelButtonPresentation);
       builder.setCancelOperation(new Runnable() {
         public void run() {
-          if (Messages.showYesNoDialog(getProject(),
-                                       DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
-                                       DiffBundle.message("cancel.visual.merge.dialog.title"),
-                                       Messages.getQuestionIcon()) == 0) {
-            builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
-          }
+          myCancelButtonPresentation.run(builder.getDialogWrapper());
         }
       });
+    }
+
+    if (getMergeContent() != null) {
       new AllResolvedListener(mergePanel, builder.getDialogWrapper());
     }
   }
@@ -182,18 +198,20 @@ public class MergeRequestImpl extends MergeRequest {
     myHelpId = helpId;
   }
 
-  private class MergeContent extends DiffContent {
+  private static class MergeContent extends DiffContent {
     private final MergeVersion myTarget;
     private final Document myWorkingDocument;
+    private final Project myProject;
 
-    private MergeContent(MergeVersion target) {
+    private MergeContent(MergeVersion target, Project project) {
       myTarget = target;
-      myWorkingDocument = myTarget.createWorkingDocument(getProject());
+      myProject = project;
+      myWorkingDocument = myTarget.createWorkingDocument(project);
       LOG.assertTrue(myWorkingDocument.isWritable());
     }
 
     public void applyChanges() {
-      myTarget.applyText(myWorkingDocument.getText(), getProject());
+      myTarget.applyText(myWorkingDocument.getText(), myProject);
     }
 
     public Document getDocument() { return myWorkingDocument; }
@@ -201,7 +219,7 @@ public class MergeRequestImpl extends MergeRequest {
     public OpenFileDescriptor getOpenFileDescriptor(int offset) {
       VirtualFile file = getFile();
       if (file == null) return null;
-      return new OpenFileDescriptor(getProject(), file, offset);
+      return new OpenFileDescriptor(myProject, file, offset);
     }
 
     public VirtualFile getFile() {
@@ -235,7 +253,6 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     public void run() {
-      if (!myActionButtonPresentation.closeDialog()) return;
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;

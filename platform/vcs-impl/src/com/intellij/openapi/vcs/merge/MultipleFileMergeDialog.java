@@ -22,7 +22,6 @@ import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -284,16 +283,14 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         break;
       }
 
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      final String contentWithMergeMarkers = document == null ? null : document.getText();
-
       String leftText = decodeContent(file, mergeData.CURRENT);
       String rightText = decodeContent(file, mergeData.LAST);
       String originalText = decodeContent(file, mergeData.ORIGINAL);
 
       DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
       MergeRequest request = diffRequestFactory
-        .createMergeRequest(leftText, rightText, originalText, file, myProject, ActionButtonPresentation.createApplyButton());
+        .createMergeRequest(leftText, rightText, originalText, file, myProject, ActionButtonPresentation.APPLY,
+                            ActionButtonPresentation.CANCEL_WITH_PROMPT);
       String lastVersionTitle;
       if (mergeData.LAST_REVISION_NUMBER != null) {
         lastVersionTitle = VcsBundle.message("merge.version.title.last.version.number", mergeData.LAST_REVISION_NUMBER.asString());

@@ -58,6 +58,8 @@ public abstract class JavaCodeFoldingSettings {
   public abstract void setCollapseI18nMessages(boolean value);
 
   public abstract boolean isCollapseSuppressWarnings();
-
   public abstract void setCollapseSuppressWarnings(boolean value);
+
+  public abstract boolean isCollapseEndOfLineComments();
+  public abstract void setCollapseEndOfLineComments(boolean value);
 }

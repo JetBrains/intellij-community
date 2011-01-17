@@ -32,7 +32,6 @@ import java.awt.event.MouseEvent;
  * User: spLeaner
  */
 public interface StatusBarWidget extends Disposable {
-
   enum PlatformType {
     DEFAULT, MAC
   }
@@ -46,9 +45,7 @@ public interface StatusBarWidget extends Disposable {
   void install(@NotNull final StatusBar statusBar);
 
   interface Multiframe extends StatusBarWidget {
-
     StatusBarWidget copy();
-
   }
 
   interface WidgetPresentation {
@@ -75,7 +72,7 @@ public interface StatusBarWidget extends Disposable {
   }
 
   interface MultipleTextValuesPresentation extends WidgetPresentation {
-    @NotNull
+    @Nullable("null means the widget is unable to show the popup")
     ListPopup getPopupStep();
 
     @Nullable
@@ -129,7 +126,7 @@ public interface StatusBarWidget extends Disposable {
     }
 
     public Insets getBorderInsets(Component c) {
-      return new Insets(2, SystemInfo.isMac ? 4 : 4, 2, 2);
+      return new Insets(2, 4, 2, 2);
     }
 
     public boolean isBorderOpaque() {

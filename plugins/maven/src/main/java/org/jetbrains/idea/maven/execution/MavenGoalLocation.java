@@ -17,17 +17,15 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 
 import java.util.List;
 
 public class MavenGoalLocation extends PsiLocation<PsiFile> {
   private final List<String> myGoals;
 
-  public MavenGoalLocation(Project p, VirtualFile f, List<String> goals) {
-    super(p, PsiManager.getInstance(p).findFile(f));
+  public MavenGoalLocation(Project p, PsiFile file, List<String> goals) {
+    super(p, file);
     myGoals = goals;
   }
 

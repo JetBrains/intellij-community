@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionAction {
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.psi.impl.beanProperties.CreateBeanPropertyFix");
+  private static final CreateBeanPropertyFix[] NO_FIXES = new CreateBeanPropertyFix[0];
 
   protected final String myPropertyName;
   @NotNull protected final PsiClass myPsiClass;
@@ -54,12 +55,13 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
   }
 
   private static Object[] create(final String propertyName, final PsiClass psiClass, PsiType type, final boolean createSetter) {
+    if (psiClass instanceof PsiCompiledElement) return NO_FIXES;
     if (type == null) {
       final Project project = psiClass.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiClass aClass = facade.findClass("java.lang.String", GlobalSearchScope.allScope(project));
       if (aClass == null) {
-        return new CreateBeanPropertyFix[0];
+        return NO_FIXES;
       }
       type = facade.getElementFactory().createType(aClass);
     }

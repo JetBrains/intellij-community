@@ -55,13 +55,12 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
   }
 
   public void dispose() {
-    getManager().removeListener(this); // clean up
     cancelPopup();
   }
 
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
-    getManager().addListener(this);
+    getManager().addListener(this,this);
   }
 
   private void cancelPopup() {
@@ -101,8 +100,10 @@ public class IdeNotificationArea implements StatusBarWidget, StatusBarWidget.Ico
 
     if (popup != null && popup.isVisible()) {
       popup.cancel();
-    } else {
-      myPopupRef = new WeakReference<JBPopup>(NotificationsListPanel.show(getProject(), (JComponent) myStatusBar));
+    }
+    else {
+      JBPopup jbPopup = NotificationsListPanel.show(getProject(), (JComponent)myStatusBar);
+      myPopupRef = new WeakReference<JBPopup>(jbPopup);
     }
   }
 
