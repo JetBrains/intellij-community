@@ -89,6 +89,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
   private String debugPort;
   private File myTempFile;
   private BackgroundableProcessIndicator mySearchForTestIndicator;
+  private ServerSocket myServerSocket;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
@@ -117,16 +118,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    OSProcessHandler processHandler = null;
-    try {
-      processHandler = startProcess();
-    }
-    catch (ExecutionException e) {
-      if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
-        mySearchForTestIndicator.cancel();
-      }
-      throw e;
-    }
+    OSProcessHandler processHandler = startProcess();
     final TreeRootNode unboundOutputRoot = new TreeRootNode();
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings, unboundOutputRoot,
                                                             executor);
@@ -167,7 +159,22 @@ public class TestNGRunnableState extends JavaCommandLineState {
       public void startNotified(final ProcessEvent event) {
         TestNGRemoteListener listener = new TestNGRemoteListener(console, unboundOutputRoot);
         client.prepareListening(listener, port);
-
+        final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
+        mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
+          @Override
+          public void cancel() {
+            try {//ensure that serverSocket.accept was interrupted
+              if (!myServerSocket.isClosed()) {
+                new Socket(InetAddress.getLocalHost(), myServerSocket.getLocalPort());
+              }
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+            super.cancel();
+          }
+        };
+        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
       }
 
       @Override
@@ -324,27 +331,11 @@ public class TestNGRunnableState extends JavaCommandLineState {
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }*/
     try {
-      final ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
-      javaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
+      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
+      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
       myTempFile = FileUtil.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
-      final SearchingForTestsTask task = createSearchingForTestsTask(serverSocket, is15, config, myTempFile);
-      mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
-        @Override
-        public void cancel() {
-          try {//ensure that serverSocket.accept was interrupted
-            if (!serverSocket.isClosed()) {
-              new Socket(InetAddress.getLocalHost(), serverSocket.getLocalPort());
-            }
-          }
-          catch (Throwable e) {
-            LOG.info(e);
-          }
-          super.cancel();
-        }
-      };
-      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -367,9 +358,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
     return javaParameters;
   }
 
-  protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket, boolean is15,
+  protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
                                                               final TestNGConfiguration config,
                                                               final File tempFile) {
-    return new SearchingForTestsTask(serverSocket, is15, config, tempFile, client);
+    return new SearchingForTestsTask(serverSocket, config, tempFile, client);
   }
 }

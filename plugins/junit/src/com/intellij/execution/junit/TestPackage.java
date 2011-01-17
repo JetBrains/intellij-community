@@ -21,6 +21,8 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -53,6 +55,7 @@ import java.util.Collection;
 
 public class TestPackage extends TestObject {
   private BackgroundableProcessIndicator mySearchForTestsIndicator;
+  private ServerSocket myServerSocket;
 
   public TestPackage(final Project project,
                      final JUnitConfiguration configuration,
@@ -68,22 +71,57 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    try {
-      return super.execute(executor, runner);
-    }
-    catch (ExecutionException e) {
-      if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
-        mySearchForTestsIndicator.cancel(); //ensure that search for tests stops anyway
+  protected JUnitProcessHandler createHandler() throws ExecutionException {
+    final JUnitProcessHandler handler = super.createHandler();
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(ProcessEvent event) {
+        super.startNotified(event);
+        final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
+        final TestClassFilter filter;
+        try {
+          filter = getClassFilter(data);
+        }
+        catch (CantRunException e) {
+          //should not happen
+          return;
+        }
+        findTestsWithProgress(new FindCallback() {
+          public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
+            addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+              @Nullable
+              public String fun(PsiElement element) {
+                if (element instanceof PsiClass) {
+                  return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+                }
+                else if (element instanceof PsiMethod) {
+                  PsiMethod method = (PsiMethod)element;
+                  return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+                }
+                else {
+                  return null;
+                }
+              }
+            }, data.getPackageName(), false, isJunit4);
+          }
+        }, filter);
       }
-      throw e;
-    }
+
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        handler.removeProcessListener(this);
+        if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
+          mySearchForTestsIndicator.cancel(); //ensure that search for tests stops anyway
+        }
+      }
+    });
+    return handler;
   }
 
   protected void initialize() throws ExecutionException {
     super.initialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
-    final TestClassFilter filter = getClassFilter(data);
+    getClassFilter(data);//check if junit found
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -109,27 +147,8 @@ public class TestPackage extends TestObject {
     }
 
     try {
-      final ServerSocket serverSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
-      myJavaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
-      findTestsWithProgress(new FindCallback() {
-        public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-          addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
-            @Nullable
-            public String fun(PsiElement element) {
-              if (element instanceof PsiClass) {
-                return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
-              }
-              else if (element instanceof PsiMethod) {
-                PsiMethod method = (PsiMethod)element;
-                return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-              }
-              else {
-                return null;
-              }
-            }
-          }, data.getPackageName(), false, isJunit4);
-        }
-      }, filter, serverSocket);
+      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName(null));
+      myJavaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -192,7 +211,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter, final ServerSocket serverSocket) {
+  private void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
@@ -209,7 +228,7 @@ public class TestPackage extends TestObject {
         
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            mySocket = serverSocket.accept();
+            mySocket = myServerSocket.accept();
           }
           catch (IOException e) {
             LOG.info(e);
@@ -251,7 +270,7 @@ public class TestPackage extends TestObject {
             }
 
             try {
-              serverSocket.close();
+              myServerSocket.close();
             }
             catch (Throwable e) {
               LOG.info(e);
@@ -263,8 +282,8 @@ public class TestPackage extends TestObject {
       @Override
       public void cancel() {
         try {//ensure that serverSocket.accept was interrupted
-          if (!serverSocket.isClosed()) {
-            new Socket(InetAddress.getLocalHost(), serverSocket.getLocalPort());
+          if (!myServerSocket.isClosed()) {
+            new Socket(InetAddress.getLocalHost(), myServerSocket.getLocalPort());
           }
         }
         catch (Throwable e) {
