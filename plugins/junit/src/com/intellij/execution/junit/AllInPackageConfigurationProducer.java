@@ -20,9 +20,16 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
+import junit.framework.Test;
+import junit.framework.TestCase;
 
 public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
   private PsiPackage myPackage = null;
@@ -32,6 +39,18 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
     final PsiElement element = location.getPsiElement();
     myPackage = checkPackage(element);
     if (myPackage == null) return null;
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    boolean junitJarFound = false;
+    for (PsiDirectory directory : myPackage.getDirectories()) {
+      final Module module = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
+      if (module != null) {
+        if (facade.findClass(JUnitUtil.TESTCASE_CLASS, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)) != null) {
+          junitJarFound = true;
+          break;
+        }
+      }
+    }
+    if (!junitJarFound) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     final JUnitConfiguration.Data data = configuration.getPersistentData();
