@@ -136,8 +136,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   public void testPyClassicStyleClassInspection() {
-    LocalInspectionTool inspection = new PyClassicStyleClassInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyClassicStyleClassInspection.class);
   }
 
   public void testPyExceptClausesOrderInspection() {
