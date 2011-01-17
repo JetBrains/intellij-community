@@ -57,7 +57,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   public String getName() {
-    return "PyImportedModuleType:" + myImportedModule.toString();
+    return "imported module " + myImportedModule.getImportedPrefix().toString();
   }
 
   @Override
