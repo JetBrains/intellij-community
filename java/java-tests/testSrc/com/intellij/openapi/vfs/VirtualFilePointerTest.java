@@ -1,21 +1,27 @@
 package com.intellij.openapi.vfs;
 
+import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  *  @author dsl
@@ -23,7 +29,13 @@ import java.util.ArrayList;
 public class VirtualFilePointerTest extends IdeaTestCase {
   private VirtualFilePointerManager myVirtualFilePointerManager;
 
-  static class LoggingListener implements VirtualFilePointerListener {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myVirtualFilePointerManager = VirtualFilePointerManager.getInstance();
+  }
+
+  private static class LoggingListener implements VirtualFilePointerListener {
     private final ArrayList<String> myLog = new ArrayList<String>();
 
     @Override
@@ -100,7 +112,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
     };
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
-      public void run () {
+      public void run() {
         VirtualFileManager.getInstance().refresh(false);
         final VirtualFile virtualFile = getVirtualFile(tempDirectory);
         virtualFile.refresh(false, true);
@@ -165,7 +177,7 @@ public class VirtualFilePointerTest extends IdeaTestCase {
     };
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
-      public void run () {
+      public void run() {
         VirtualFileManager.getInstance().refresh(false);
         final VirtualFile virtualFile = getVirtualFile(tempDirectory);
         virtualFile.refresh(false, true);
@@ -392,9 +404,87 @@ public class VirtualFilePointerTest extends IdeaTestCase {
     });
   }
 
+  public void testThreads() throws IOException, InterruptedException {
+    final File ioTempDir = createTempDirectory();
+    final File ioPtrBase = new File(ioTempDir, "parent");
+    final File ioPtr = new File(ioPtrBase, "f1");
+    final File ioSand = new File(ioTempDir, "sand");
+    final File ioSandPtr = new File(ioSand, "f2");
+    ioSandPtr.getParentFile().mkdirs();
+    ioSandPtr.createNewFile();
+    ioPtr.getParentFile().mkdirs();
+    ioPtr.createNewFile();
+
+    doVfsRefresh();
+    final VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
+    assertTrue(pointer.isValid());
+    final VirtualFile virtualFile = pointer.getFile();
+    assertNotNull(virtualFile);
+    assertTrue(virtualFile.isValid());
+
+    VirtualFileAdapter listener = new VirtualFileAdapter() {
+      @Override
+      public void fileCreated(VirtualFileEvent event) {
+        doit(pointer);
+      }
+
+      @Override
+      public void fileDeleted(VirtualFileEvent event) {
+        doit(pointer);
+      }
+    };
+    VirtualFileManager.getInstance().addVirtualFileListener(listener, getTestRootDisposable());
+
+    System.out.println("------------------");
+
+    for (int i=0;i<1000;i++) {
+      assertNotNull(pointer.getFile());
+      FileUtil.delete(ioPtrBase);
+      doVfsRefresh();
+
+      // ptr is now null, cached as map
+
+      final VirtualFile v = LocalFileSystem.getInstance().findFileByIoFile(ioSandPtr);
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          v.delete(this); //inc FS modCount
+          LocalFileSystem.getInstance().findFileByIoFile(ioSand).createChildData(this, ioSandPtr.getName());
+        }
+      }.execute().throwException();
+
+      // ptr is still null
+
+      assertTrue(ioPtrBase.mkdirs());
+      assertTrue(ioPtr.createNewFile());
+
+      doit(pointer);
+      doVfsRefresh();
+    }
+  }
+
+  private static void doit(final VirtualFilePointer pointer) {
+    if (((VirtualFilePointerImpl)pointer).isDisposed()) return;
+    boolean b = JobUtil.invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), new Processor<Object>() {
+      @Override
+      public boolean process(Object o) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            VirtualFile file = pointer.getFile();
+            if (file != null && !file.isValid()) {
+              throw new IncorrectOperationException("I've caught it. I am that good");
+            }
+          }
+        });
+
+        return true;
+      }
+    }, false, null);
+    assertTrue(b);
+  }
+
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myVirtualFilePointerManager = VirtualFilePointerManager.getInstance();
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

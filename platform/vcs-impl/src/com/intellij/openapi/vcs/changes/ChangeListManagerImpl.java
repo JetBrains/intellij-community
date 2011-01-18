@@ -695,6 +695,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             }
             multicaster.changesRemoved(changes, lists.get(entry.getKey()));
           }
+          for (String listName : map.keySet()) {
+            final LocalChangeList byName = myWorker.getCopyByName(listName);
+            if (byName != null && byName.getChanges().isEmpty() && ! byName.isDefault() && ! byName.isReadOnly()) {
+              myWorker.removeChangeList(listName);
+            }
+          }
         }
       }
     };

@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
@@ -61,7 +60,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class PopupFactoryImpl extends JBPopupFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
   private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
@@ -106,7 +104,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           boolean showNumbers,
                                           boolean useAlphaAsNumbers,
                                           boolean showDisabledActions,
@@ -119,7 +117,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           boolean showNumbers,
                                           boolean showDisabledActions,
                                           boolean honorActionMnemonics,
@@ -131,7 +129,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static ListPopup createActionGroupPopup(final String title,
                                                   final ActionGroup actionGroup,
-                                                  DataContext dataContext,
+                                                  @NotNull DataContext dataContext,
                                                   boolean showNumbers,
                                                   boolean useAlphaAsNumbers,
                                                   boolean showDisabledActions,
@@ -180,7 +178,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         AnAction action = actionItem.getAction();
         Presentation presentation = new Presentation();
         presentation.setDescription(action.getTemplatePresentation().getDescription());
-        final String actualActionPlace = (actionPlace == null) ? ActionPlaces.UNKNOWN : actionPlace;
+        final String actualActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
         action.update(new AnActionEvent(null, DataManager.getInstance().getDataContext(component), actualActionPlace, presentation,
                                         ActionManager.getInstance(), 0));
         ActionMenu.showDescriptionInStatusBar(true, component, presentation.getDescription());
@@ -190,7 +188,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
   public ListPopup createActionGroupPopup(final String title,
                                           final ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           boolean showNumbers,
                                           boolean showDisabledActions,
                                           boolean honorActionMnemonics,
@@ -203,7 +201,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public ListPopup createActionGroupPopup(String title,
                                           ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
                                           boolean showDisabledActions) {
     return createActionGroupPopup(title, actionGroup, dataContext,
@@ -216,7 +214,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public ListPopup createActionGroupPopup(String title,
                                           ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
                                           boolean showDisabledActions,
                                           @Nullable String actionPlace) {
@@ -230,7 +228,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public ListPopup createActionGroupPopup(String title,
                                           ActionGroup actionGroup,
-                                          DataContext dataContext,
+                                          @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
                                           boolean showDisabledActions,
                                           Runnable disposeCallback,
@@ -245,7 +243,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public ListPopupStep createActionsStep(final ActionGroup actionGroup,
-                                         final DataContext dataContext,
+                                         @NotNull DataContext dataContext,
                                          final boolean showNumbers,
                                          final boolean showDisabledActions,
                                          final String title,
@@ -254,7 +252,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
   }
 
-  private static ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
+  private static ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
     final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
@@ -265,7 +263,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                autoSelectionEnabled);
   }
 
-  public ListPopupStep createActionsStep(ActionGroup actionGroup, DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
+  public ListPopupStep createActionsStep(ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
                                          String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
                                          final boolean autoSelectionEnabled) {
     return createActionsStep(actionGroup, dataContext, showNumbers, true, showDisabledActions, title, component, honorActionMnemonics,
@@ -301,7 +299,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
  
-  public RelativePoint guessBestPopupLocation(DataContext dataContext) {
+  public RelativePoint guessBestPopupLocation(@NotNull DataContext dataContext) {
     KeyboardFocusManager focusManager=KeyboardFocusManager.getCurrentKeyboardFocusManager();
     Component component = focusManager.getFocusOwner();
     JComponent focusOwner=component instanceof JComponent ? (JComponent)component : null;
@@ -573,7 +571,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @NotNull
     private String myActionPlace;
 
-    private ActionStepBuilder(final DataContext dataContext,
+    private ActionStepBuilder(@NotNull DataContext dataContext,
                              final boolean showNumbers,
                              final boolean useAlphaAsNumbers,
                              final boolean showDisabled,

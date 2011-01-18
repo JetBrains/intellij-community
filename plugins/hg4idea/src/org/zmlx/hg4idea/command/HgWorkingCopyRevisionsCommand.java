@@ -14,14 +14,16 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Commands to get revision numbers. These are: parents, id, tip.
@@ -119,8 +121,9 @@ public class HgWorkingCopyRevisionsCommand {
   /**
    * Returns the list of revisions returned by one mercurial commands (parents, identify, tip).
    * Executed a command on the whole repository or on the given file.
-   * If the list contains more than one element ('hg parents' executed during merge), it is sorted by revision number, so that
-   * the latest revision number is the first element of the list.
+   * During a merge, the returned list contains 2 revision numbers. The order of these numbers is
+   * important: the first parent was the parent of the working directory from <em>before</em>
+   * the merge, the second parent is the changeset that was merged in.
    * @param repo     repository to execute on.
    * @param command  command to execute.
    * @param file     file which revisions are wanted. If <code><b>null</b></code> then repository revisions are considered.
@@ -150,15 +153,7 @@ public class HgWorkingCopyRevisionsCommand {
       final String[] parts = StringUtils.split(line, '|');
       revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
-
-    // sort by descending revision number
-    if (revisions.size() > 1) {
-      Collections.sort(revisions, new Comparator<HgRevisionNumber>() {
-        @Override public int compare(HgRevisionNumber o1, HgRevisionNumber o2) {
-          return o2.compareTo(o1);
-        }
-      });
-    }
+    
     return revisions;
   }
 

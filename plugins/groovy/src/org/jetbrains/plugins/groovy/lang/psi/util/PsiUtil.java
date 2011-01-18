@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -134,8 +135,16 @@ public class PsiUtil {
     }
 
     //check for default constructor
-    if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+    if (method.isConstructor()) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0 && argumentTypes.length == 1) {
+        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+      }
+      if (parameters.length == 1 &&
+          argumentTypes.length == 0 &&
+          InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
+        return false;
+      }
     }
     LOG.assertTrue(signature != null);
     if (GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place)) {
@@ -354,7 +363,7 @@ public class PsiUtil {
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
-    return isStaticsOK(owner, place, owner);
+    return isStaticsOK(owner, place, null);
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, PsiElement resolveContext) {
@@ -363,6 +372,7 @@ public class PsiUtil {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
         if (qualifier != null) {
           PsiClass containingClass = ((PsiMember)owner).getContainingClass();
+          final boolean isStatic = owner.hasModifierProperty(PsiModifier.STATIC) && !(ResolveUtil.isInUseScope(resolveContext));
           if (qualifier instanceof GrReferenceExpression) {
             if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
               //invoke static members of class from A.class.foo()
@@ -391,7 +401,7 @@ public class PsiUtil {
                 return true;
               }
 
-              if (owner.hasModifierProperty(PsiModifier.STATIC)) {
+              if (isStatic) {
                 return true;
               }
 
@@ -427,7 +437,7 @@ public class PsiUtil {
           if (owner instanceof PsiClass) {
             return false;
           }
-          return !(owner.hasModifierProperty(PsiModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
+          return !(isStatic && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
         }
         else {
           if (((PsiMember)owner).getContainingClass() == null) return true;
@@ -460,7 +470,7 @@ public class PsiUtil {
   public static boolean isAccessible(PsiElement place, PsiMember member) {
 
     if (PsiTreeUtil.getParentOfType(place, GrDocComment.class) != null) return true;
-    if (!member.isPhysical()) {
+    if (member instanceof LightElement) {
       return true;
     }
 
@@ -850,7 +860,7 @@ public class PsiUtil {
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
           && method.getParameterList().getParametersCount() == 0) {
         final PsiType type = getSmartReturnType(method);
-        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GrClosableBlock.GROOVY_LANG_CLOSURE))) {
+        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
           return true;
         }
       }

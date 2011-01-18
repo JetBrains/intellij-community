@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -26,7 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
-  Disposable my = Disposer.newDisposable();
+  private final Disposable my = Disposer.newDisposable();
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -88,7 +86,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       @Override
       public void run() {
         infos.clear();
-        DaemonCodeAnalyzerImpl.getInstance(getProject()).restart();
+        DaemonCodeAnalyzer.getInstance(getProject()).restart();
         List<HighlightInfo> h = doHighlighting();
         infos.addAll(h);
       }

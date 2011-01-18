@@ -36,10 +36,15 @@ public class HippieBackwardCompletionAction extends BaseCodeInsightAction implem
   }
 
   protected CodeInsightActionHandler getHandler() {
-    return new HippieWordCompletionHandler(HippieWordCompletionHandler.Direction.BACKWARD);
+    return new HippieWordCompletionHandler(false);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+    return true;
+  }
+
+  @Override
+  protected boolean isValidForLookup() {
     return true;
   }
 }

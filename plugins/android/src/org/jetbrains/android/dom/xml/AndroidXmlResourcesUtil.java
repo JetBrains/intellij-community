@@ -40,6 +40,11 @@ public class AndroidXmlResourcesUtil {
     AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("searchable", "Searchable");
     AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("actionkey", "SearchableActionKey");
     AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("intent", "Intent");
+    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Keyboard", "Keyboard");
+    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Row", "Keyboard_Row");
+    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Key", "Keyboard_Key");
+    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("device-admin", "DeviceAdmin");
+    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("account-authenticator", "AccountAuthenticator");
   }
 
   private AndroidXmlResourcesUtil() {
@@ -50,6 +55,7 @@ public class AndroidXmlResourcesUtil {
     List<String> result = new ArrayList<String>();
     result.addAll(AndroidDomExtender.getPreferencesClassMap(facet).keySet());
     result.addAll(SPECIAL_STYLEABLE_NAMES.keySet());
+    result.add("Keyboard");
     return result;
   }
 }

@@ -42,8 +42,8 @@ public class GrTupleDeclarationImpl extends GroovyPsiElementImpl implements GrTu
   @Nullable
   public GrExpression getInitializerGroovy() {
     final PsiElement parent = getParent();
-    if (parent == null || !(parent instanceof GrMultipleVariableDeclarationImpl)) return null;
-    return ((GrMultipleVariableDeclarationImpl)parent).getInitializerGroovy();
+    if (parent == null || !(parent instanceof GrVariableDeclarationBase.GrMultipleVariables)) return null;
+    return ((GrVariableDeclarationBase.GrMultipleVariables)parent).getInitializerGroovy();
   }
 
   public int getVariableNumber(@NotNull GrVariable variable) {

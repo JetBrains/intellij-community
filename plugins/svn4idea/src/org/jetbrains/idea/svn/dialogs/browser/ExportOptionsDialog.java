@@ -62,7 +62,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   public SVNDepth getDepth() {
-    return myDepth.getSelectedItem();
+    return myDepth.getDepth();
   }
 
   public boolean isForce() {
@@ -131,7 +131,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     depthLabel.setToolTipText(SvnBundle.message("label.depth.description"));
     panel.add(depthLabel, gc);
     ++ gc.gridx;
-    myDepth = new DepthCombo();
+    myDepth = new DepthCombo(false);
     panel.add(myDepth, gc);
     depthLabel.setLabelFor(myDepth);
 

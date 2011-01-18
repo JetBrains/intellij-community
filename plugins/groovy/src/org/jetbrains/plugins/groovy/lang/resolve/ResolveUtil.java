@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -48,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -166,6 +166,7 @@ public class ResolveUtil {
 
   private static final Key<PsiType> COMPARABLE = Key.create(CommonClassNames.JAVA_LANG_COMPARABLE);
   private static final Key<PsiType> SERIALIZABLE = Key.create(CommonClassNames.JAVA_IO_SERIALIZABLE);
+  private static final Key<PsiType> STRING = Key.create(CommonClassNames.JAVA_LANG_STRING);
 
   private static void collectSuperTypes(PsiType type, Map<String, PsiType> visited, Project project) {
     String qName = rawCanonicalText(type);
@@ -184,6 +185,10 @@ public class ResolveUtil {
       PsiType serializable = createTypeFromText(project, SERIALIZABLE, CommonClassNames.JAVA_IO_SERIALIZABLE);
       collectSuperTypes(comparable, visited, project);
       collectSuperTypes(serializable, visited, project);
+    }
+
+    if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(qName)) {
+      collectSuperTypes(createTypeFromText(project, STRING, CommonClassNames.JAVA_LANG_STRING), visited, project);
     }
 
   }
@@ -459,27 +464,24 @@ public class ResolveUtil {
     final PsiElement parent = place.getParent();
     GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
     if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
-    } else if (parent instanceof GrConstructorInvocation) {
-      final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
+      variants = ((GrCallExpression)parent).getCallVariants(place instanceof GrExpression ? (GrExpression)place : null);
+    }
+    else if (parent instanceof GrConstructorInvocation) {
+      final PsiClass clazz = ((GrConstructorInvocation)parent).getDelegatedClass();
       if (clazz != null) {
         final PsiMethod[] constructors = clazz.getConstructors();
         variants = getConstructorResolveResult(constructors, place);
       }
-    } else if (parent instanceof GrAnonymousClassDefinition) {
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
       final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
       if (element instanceof PsiClass) {
         final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
         variants = getConstructorResolveResult(constructors, place);
       }
     }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrExpression funExpr = ((GrApplicationStatement) parent).getInvokedExpression();
-      if (funExpr instanceof GrReferenceExpression) {
-        variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
-      }
-    } else if (place instanceof GrReferenceExpression) {
-      variants = ((GrReferenceExpression) place).getSameNameVariants();
+    else if (place instanceof GrReferenceExpression) {
+      variants = ((GrReferenceExpression)place).getSameNameVariants();
     }
     return variants;
   }
@@ -517,10 +519,10 @@ public class ResolveUtil {
   }
 
   public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    return isInUseScope(resolveResult.getCurrentFileResolveContext());
+    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext());
   }
 
-  public static boolean isInUseScope(GroovyPsiElement context) {
+  public static boolean isInUseScope(PsiElement context) {
     if (context instanceof GrMethodCall) {
       final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
       if (expression instanceof GrReferenceExpression) {
@@ -579,5 +581,34 @@ public class ResolveUtil {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
+                                                          @Nullable String methodName,
+                                                          @NotNull GroovyPsiElement place,
+                                                          @Nullable PsiType[] argumentTypes) {
+    if (methodName != null) {
+      MethodResolverProcessor processor =
+        new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
+      final ResolveState state;
+      if (thisType instanceof PsiClassType) {
+        final PsiClassType classtype = (PsiClassType)thisType;
+        final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
+        final PsiClass lClass = resolveResult.getElement();
+        state = ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor());
+        if (lClass != null) {
+          lClass.processDeclarations(processor, state, null, place);
+        }
+      }
+      else {
+        state = ResolveState.initial();
+      }
+
+      processNonCodeMethods(thisType, processor, place, state);
+      processCategoryMembers(place, processor);
+      return processor.getCandidates();
+    }
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 }

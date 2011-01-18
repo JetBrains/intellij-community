@@ -203,7 +203,7 @@ public class RngSchemaValidator implements ExternalAnnotator {
           RelaxIncludeIndex.processBackwardDependencies((XmlFile)psiFile, processor);
           if (processor.isFound()) {
             // files that are included from other files do not need a <start> element.
-            myHolder.createInformationAnnotation(node, message);
+            myHolder.createWeakWarningAnnotation(node, message);
             return;
           }
         }

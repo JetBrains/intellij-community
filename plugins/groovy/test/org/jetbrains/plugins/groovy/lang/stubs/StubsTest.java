@@ -24,6 +24,7 @@ public class StubsTest extends LightCodeInsightFixtureTestCase {
   public void testStub1() throws Throwable { doTest(); }
   public void testStub_field1() throws Throwable { doTest(); }
   public void testStub_method1() throws Throwable { doTest(); }
+  public void testTypeParameters() throws Throwable { doTest(); }
 
   @Override
   protected String getBasePath() {
@@ -56,8 +57,6 @@ public class StubsTest extends LightCodeInsightFixtureTestCase {
             append(element instanceof NamedStub ? " : " + ((NamedStub) element).getName() : "").
             append("]\n");
     for (StubElement stubElement : ((List<StubElement>) element.getChildrenStubs())) {
-      PsiElement child = stubElement.getPsi();
-      Assert.assertTrue(child.getParent() == psi);
       getStubsTreeImpl(stubElement, buffer, offset + "  ");
     }
   }

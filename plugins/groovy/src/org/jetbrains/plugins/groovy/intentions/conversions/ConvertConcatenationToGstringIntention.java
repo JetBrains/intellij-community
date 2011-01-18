@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Maxim.Medvedev
@@ -172,7 +173,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       final PsiClassType stringType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, element.getResolveScope());
-      final PsiClassType gstringType = factory.createTypeByFQClassName(GrStringUtil.GROOVY_LANG_GSTRING, element.getResolveScope());
+      final PsiClassType gstringType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_GSTRING, element.getResolveScope());
       if (!(TypeConversionUtil.isAssignable(stringType, type) || TypeConversionUtil.isAssignable(gstringType, type))) return false;
 
       return true;

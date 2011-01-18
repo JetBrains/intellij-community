@@ -262,7 +262,7 @@ public abstract class UsefulTestCase extends TestCase {
     final StringBuilder builder = new StringBuilder();
     for (final Object o : collection) {
       if (o instanceof THashSet) {
-        builder.append(new TreeSet<Object>((Collection<Object>)o));
+        builder.append(new TreeSet<Object>((THashSet)o));
       }
       else {
         builder.append(o);
@@ -423,7 +423,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void printThreadDump() {
-    PerformanceWatcher.getInstance().dumpThreadsToConsole();
+    PerformanceWatcher.dumpThreadsToConsole();
   }
 
   public static void assertEmpty(final Object[] array) {
@@ -642,9 +642,9 @@ public abstract class UsefulTestCase extends TestCase {
     assertNull(throwableName);
   }
 
-  private void assertExceptionOccurred(boolean shouldOccur,
-                                       AbstractExceptionCase exceptionCase,
-                                       String expectedErrorMsg) throws Throwable {
+  private static void assertExceptionOccurred(boolean shouldOccur,
+                                              AbstractExceptionCase exceptionCase,
+                                              String expectedErrorMsg) throws Throwable {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();

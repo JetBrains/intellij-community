@@ -44,7 +44,7 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
 
   public MyResult step(DiffChainContext context) {
     final MergeRequest request = DiffRequestFactory.getInstance()
-      .create3WayDiffRequest(myTexts.getLocal().toString(), myTexts.getPatched(), myTexts.getBase().toString(), myProject, null);
+      .create3WayDiffRequest(myTexts.getLocal().toString(), myTexts.getPatched(), myTexts.getBase().toString(), myProject, null, null);
     request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", myFile.getPresentableUrl()));
     request.setVersionTitles(new String[] {"Current Version", "Base Version", myAfterTitle});
     return new MyResult(request, DiffPresentationReturnValue.useRequest);

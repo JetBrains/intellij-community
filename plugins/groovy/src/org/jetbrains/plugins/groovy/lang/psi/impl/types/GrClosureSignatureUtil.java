@@ -163,6 +163,7 @@ public class GrClosureSignatureUtil {
                                                                Arg[] args,
                                                                Function<Arg, PsiType> typeComputer,
                                                                @NotNull GroovyPsiElement context, boolean partial) {
+    if (checkForOnlyMapParam(signature, args)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return null;
     int optional = getOptionalParamCount(signature, false);
@@ -177,6 +178,14 @@ public class GrClosureSignatureUtil {
       return new ParameterMapperForVararg<Arg>(context, params, args, typeComputer).isApplicable(partial);
     }
     return null;
+  }
+
+  private static <Arg> boolean checkForOnlyMapParam(@NotNull GrClosureSignature signature, Arg[] args) {
+    if (args.length > 0) return false;
+    final GrClosureParameter[] parameters = signature.getParameters();
+    if (parameters.length != 1) return false;
+    final PsiType type = parameters[0].getType();
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
   }
 
   @Nullable

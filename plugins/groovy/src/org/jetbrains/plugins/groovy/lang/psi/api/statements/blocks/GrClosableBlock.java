@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParametersOwner {
   GrClosableBlock[] EMPTY_ARRAY = new GrClosableBlock[0];
 
-  String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
   String OWNER_NAME = "owner";
   String IT_PARAMETER_NAME = "it";
 

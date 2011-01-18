@@ -274,6 +274,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
+      public void visitClass(PsiClass aClass) {
+      }
+
+      @Override
       public void visitDeclarationStatement(final PsiDeclarationStatement statement) {
         super.visitDeclarationStatement(statement);
         final PsiElement[] declaredElements = statement.getDeclaredElements();//todo
@@ -342,6 +346,13 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           LOG.assertTrue(declaration != null);
           declaration.replace(assignmentStatement);
         } else {
+          if (statement instanceof PsiReturnStatement) {
+            final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+            if (!(returnValue instanceof PsiReferenceExpression || returnValue == null || returnValue instanceof PsiLiteralExpression)) {
+              statement.getParent()
+                .addBefore(myElementFactory.createStatementFromText(returnValue.getText() + ";", returnValue), statement);
+            }
+          }
           statement.replace(replacement);
         }
       } else {
@@ -691,6 +702,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           methodCallStatement.getParent().addBefore(declarationStatement, methodCallStatement);
           final PsiExpression conditionExpression = ((PsiIfStatement)methodCallStatement).getCondition();
           conditionExpression.replace(myElementFactory.createExpressionFromText(object + ".is()", myInnerMethod));
+        } else if (myElements[0] instanceof PsiExpression){
+          methodCallStatement.getParent().addBefore(declarationStatement, methodCallStatement);
         } else {
           methodCallStatement.replace(declarationStatement);
         }
@@ -720,6 +733,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           if (st != null) {
             addToMethodCallLocation(st);
           }
+        }
+        if (myElements[0] instanceof PsiAssignmentExpression) {
+          getMethodCall().getParent().replace(((PsiAssignmentExpression)getMethodCall().getParent()).getLExpression());
+        } else if (myElements[0] instanceof PsiPostfixExpression || myElements[0] instanceof PsiPrefixExpression) {
+          getMethodCall().getParent().replace(((PsiBinaryExpression)getMethodCall().getParent()).getLOperand());
         }
       }
       else {

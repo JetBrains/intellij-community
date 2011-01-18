@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkAdapter;
+import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -29,8 +30,6 @@ import java.awt.*;
  * @date 10/20/10
  */
 public class GithubLoginPanel {
-  private static final String SIGNUP_FOR_FREE_ACOUNT = "https://github.com/signup/free";
-
   private JTextField myLoginTextField;
   private JPasswordField myPasswordField;
   private JTextPane mySignupTextField;
@@ -44,7 +43,7 @@ public class GithubLoginPanel {
       }
     });
     mySignupTextField.setText(
-      "<html>Do not have an account? <a href=\"" + SIGNUP_FOR_FREE_ACOUNT + "\">" + "Signup for free" + "</a></html>");
+      "<html>Do not have an account? <a href=\"" + GithubUtil.GITHUB_HOST + "\">" + "Signup" + "</a></html>");
     mySignupTextField.setBackground(myPane.getBackground());
     mySignupTextField.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {

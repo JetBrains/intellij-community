@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,8 +112,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return PsiTreeUtil.getChildOfType(tag, GrDocReferenceElement.class);
   }
 
-  public GrCodeReferenceElement createReferenceElementFromText(String refName) {
-    PsiFile file = createGroovyFile("(" + refName + " " + ")foo");
+  public GrCodeReferenceElement createReferenceElementFromText(String refName, final PsiElement context) {
+    PsiFile file = createGroovyFile("(" + refName + " " + ")foo", false, context);
     GrTypeElement typeElement = ((GrTypeCastExpression) ((GroovyFileBase) file).getTopStatements()[0]).getCastTypeElement();
     return ((GrClassTypeElement) typeElement).getReferenceElement();
   }
@@ -240,8 +239,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return (GrClosableBlock) node.getPsi();
   }
 
-  private GroovyFileImpl createDummyFile(String s, boolean isPhisical) {
-    return (GroovyFileImpl) PsiFileFactory.getInstance(myProject).createFileFromText("DUMMY__." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis(), isPhisical);
+  private GroovyFileImpl createDummyFile(String text, boolean physical) {
+    final String fileName = "DUMMY__." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
+    final long stamp = System.currentTimeMillis();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    return (GroovyFileImpl) factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text, stamp, physical);
   }
 
   private GroovyFileImpl createDummyFile(String s) {
@@ -291,8 +293,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @NotNull
-  public GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException {
-    final GroovyFileBase file = createDummyFile("def " + typeText + " someVar");
+  public GrTypeElement createTypeElement(String typeText, final PsiElement context) throws IncorrectOperationException {
+    final GroovyFileBase file = createGroovyFile("def " + typeText + " someVar", false, context);
 
     GrTopStatement[] topStatements = file.getTopStatements();
 

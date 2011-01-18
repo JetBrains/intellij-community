@@ -138,6 +138,10 @@ public interface EditorEx extends Editor {
   SoftWrapModelEx getSoftWrapModel();
 
   @NotNull
+  @Override
+  ScrollingModelEx getScrollingModel();
+
+  @NotNull
   LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos, boolean softWrapAware);
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset, boolean softWrapAware);

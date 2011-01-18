@@ -673,7 +673,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   public void addMessage(PsiElement context, String message, int type) {
     if (message != null && message.length() > 0) {
       if (context instanceof XmlTag && XmlExtension.getExtension(context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
-        HighlightInfoType infoType = type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+        HighlightInfoType infoType = type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
         addElementsForTag((XmlTag)context, message, infoType, null);
       }
       else {
@@ -685,7 +685,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   public void addMessage(final PsiElement context, final String message, final ErrorType type, final IntentionAction... fixes) {
     if (message != null && message.length() > 0) {
       final PsiFile containingFile = context.getContainingFile();
-      final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.INFO;
+      final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
 
       if (context instanceof XmlTag && XmlExtension.getExtension(containingFile).shouldBeHighlightedAsTag((XmlTag)context)) {
         addElementsForTagWithManyQuickFixes((XmlTag)context, message, defaultInfoType, fixes);
@@ -713,11 +713,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     }
   }
 
-  public boolean suitableForFile(final PsiFile file) {
+  public boolean suitableForFile(@NotNull final PsiFile file) {
     return file instanceof XmlFile;
   }
 
-  public void visit(final PsiElement element, final HighlightInfoHolder holder) {
+  public void visit(@NotNull final PsiElement element, @NotNull final HighlightInfoHolder holder) {
     element.accept(this);
 
     List<HighlightInfo> result = myResult;
@@ -725,7 +725,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     myResult = null;
   }
 
-  public boolean analyze(Runnable action, final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(@NotNull Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
     try {
       action.run();
     }
@@ -735,6 +735,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return true;
   }
 
+  @NotNull
   public HighlightVisitor clone() {
     return new XmlHighlightVisitor();
   }

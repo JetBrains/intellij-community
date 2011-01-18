@@ -1111,8 +1111,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
       else if (item instanceof ErrorItem) {
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)item).myMessage);
+        final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildren(errorElement);
       }
       else if (item instanceof DoneMarker) {
@@ -1152,11 +1151,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static CompositeElement createComposite(final StartMarker marker) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
-      CompositeElement childNode = new PsiErrorElementImpl();
-      if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
-        ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
-      }
-      return childNode;
+      String message = marker.myDoneMarker instanceof DoneWithErrorMarker ? ((DoneWithErrorMarker)marker.myDoneMarker).myMessage : null;
+      return Factory.createErrorElement(message);
     }
 
     if (type == null) {
@@ -1209,6 +1205,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         if (oldNode instanceof LeafElement) {
+          if (type instanceof ForeignLeafType) return ThreeState.NO;
+
           return ((LeafElement)oldNode).textMatches(token.getText())
                  ? ThreeState.YES
                  : ThreeState.NO;
@@ -1254,7 +1252,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean hashCodesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof LeafElement && n2 instanceof Token) {
-        if (n1 instanceof ForeignLeafPsiElement && n2.getTokenType() instanceof ForeignLeafType) {
+        boolean isForeign1 = n1 instanceof ForeignLeafPsiElement;
+        boolean isForeign2 = n2.getTokenType() instanceof ForeignLeafType;
+        if (isForeign1 != isForeign2) return false;
+
+        if (isForeign1 && isForeign2) {
           return n1.getText().equals(((ForeignLeafType)n2.getTokenType()).getValue());
         }
 
@@ -1435,13 +1437,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return token.myBuilder.createLeaf(token.getTokenType(), token.myTokenStart, token.myTokenEnd);
       }
       else if (n instanceof ErrorItem) {
-        final PsiErrorElementImpl errorElement = new PsiErrorElementImpl();
-        errorElement.setErrorDescription(((ErrorItem)n).myMessage);
-        return errorElement;
+        return Factory.createErrorElement(((ErrorItem)n).myMessage);
       }
       else {
         final StartMarker startMarker = (StartMarker)n;
-        final CompositeElement composite = (n == myRoot) ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
+        final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
                                                          : createComposite(startMarker);
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;

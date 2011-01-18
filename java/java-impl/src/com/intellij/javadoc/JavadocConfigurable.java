@@ -153,4 +153,8 @@ public final class JavadocConfigurable implements Configurable {
   public String getOutputDir() {
     return myPanel.myTfOutputDir.getText();
   }
+
+  public JTextField getOutputDirField() {
+    return myPanel.myTfOutputDir.getTextField();
+  }
 }

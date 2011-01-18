@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -43,16 +44,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableBaseImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
  */
-public class GrParameterImpl extends GrVariableImpl implements GrParameter {
+public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> implements GrParameter, StubBasedPsiElement<GrParameterStub> {
   public GrParameterImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrParameterImpl(GrParameterStub stub) {
+    super(stub, GroovyElementTypes.PARAMETER);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -169,7 +179,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
 
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
-    return findChildByClass(GrTypeElement.class);
+    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
   }
 
   @Nullable
@@ -200,15 +210,6 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     }
 
     return new LocalSearchScope(scope);
-  }
-
-  @NotNull
-  public String getName() {
-    return getNameIdentifierGroovy().getText();
-  }
-
-  public int getTextOffset() {
-    return getNameIdentifierGroovy().getTextRange().getStartOffset();
   }
 
   @NotNull

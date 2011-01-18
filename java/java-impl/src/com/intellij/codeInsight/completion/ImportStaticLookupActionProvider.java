@@ -28,8 +28,6 @@ public class ImportStaticLookupActionProvider implements LookupActionProvider {
     consumer.consume(new LookupElementAction(icon, "Import statically") {
       @Override
       public Result performLookupAction() {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.IMPORT_STATIC);
-
         item.setShouldBeImported(!item.willBeImported());
         return Result.REFRESH_ITEM;
       }

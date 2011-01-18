@@ -114,11 +114,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
     if (argumentsSupplied() && method.hasTypeParameters()) {
       PsiType[] argTypes = myArgumentTypes;
+      final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      assert argTypes != null;
       if (method instanceof GrGdkMethod) {
-        assert argTypes != null;
         //type inference should be performed from static method
         PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
-        final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
         if (ResolveUtil.isInWithContext(resolveContext)) {
           newArgTypes[0] = ((GrExpression)resolveContext).getType();
         }
@@ -131,6 +131,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
         method = ((GrGdkMethod) method).getStaticMethod();
         LOG.assertTrue(method.isValid());
       }
+      else if (ResolveUtil.isInUseScope(resolveContext)) {
+        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
+        newArgTypes[0] = myThisType;
+        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
+        argTypes = newArgTypes;
+      }
+
       return inferMethodTypeParameters(method, substitutor, typeParameters, argTypes);
     }
 

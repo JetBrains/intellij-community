@@ -159,7 +159,7 @@ public class SaveAsTemplateAction extends AnAction {
     dialog.apply();
     template.applyOptions(options);
     template.applyContext(context);
-    templateSettings.setLastSelectedTemplateKey(template.getKey());
+    templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
     return false;
   }
 

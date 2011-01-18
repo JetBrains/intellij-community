@@ -49,10 +49,7 @@ public class GitTask {
   private final GitHandler myHandler;
   private final String myTitle;
   private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
-
-  public interface ResultHandler {
-    void run(GitTaskResult result);
-  }
+  private GitProgressAnalyzer myProgressAnalyzer;
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -67,7 +64,8 @@ public class GitTask {
   public GitTaskResult execute() {
     ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, true, myTitle);
+        addListeners(this, indicator);
+        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
       }
 
       @Override
@@ -85,19 +83,27 @@ public class GitTask {
       }
     };
 
-    addListeners(task);
     ProgressManager.getInstance().run(task);
     return myResult.get();
+  }
+
+  /**
+   * Executes the task synchronously, with a modal progress dialog.
+   * @param resultHandler callback which will be called after task execution.
+   */
+  public void execute(GitTaskResultHandler resultHandler) {
+    resultHandler.run(execute());
   }
 
   /**
    * Executes this task asynchronously, in backgrond. Calls the resultHandler when finished.
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
-  public void executeAsync(final ResultHandler resultHandler) {
+  public void executeAsync(final GitTaskResultHandler resultHandler) {
     BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
       public void execute(ProgressIndicator indicator) {
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, true, myTitle);
+        addListeners(this, indicator);
+        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
       }
 
       @Override
@@ -117,13 +123,15 @@ public class GitTask {
       }
     };
 
-    addListeners(task);
-    GitVcs.getInstance(myProject).runInBackground(task);
+    GitVcs.runInBackground(task);
   }
 
-  private void addListeners(final TaskExecution task) {
+  private void addListeners(final TaskExecution task, final ProgressIndicator indicator) {
+    if (indicator != null) {
+      indicator.setIndeterminate(myProgressAnalyzer == null);
+    }
     // When receives an error line, adds a VcsException to the GitHandler.
-    final GitLineHandlerListener errorListener = new GitLineHandlerListener() {
+    final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
         if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
@@ -143,12 +151,22 @@ public class GitTask {
         if (GitHandlerUtil.isErrorLine(line.trim())) {
           myHandler.addError(new VcsException(line));
         }
+        if (indicator != null) {
+          indicator.setText2(line);
+        }
+        if (myProgressAnalyzer != null && indicator != null) {
+          final double fraction = myProgressAnalyzer.analyzeProgress(line);
+          if (fraction >= 0) {
+            indicator.setFraction(fraction);
+          }
+        }
       }
     };
 
-    myHandler.addListener(errorListener);
     if (myHandler instanceof GitLineHandler) {
-      ((GitLineHandler)myHandler).addLineListener(errorListener);
+      ((GitLineHandler)myHandler).addLineListener(listener);
+    } else {
+      myHandler.addListener(listener);
     }
 
     // disposes the timer
@@ -163,6 +181,10 @@ public class GitTask {
         task.dispose();
       }
     });
+  }
+
+  public void setProgressAnalyzer(GitProgressAnalyzer progressAnalyzer) {
+    myProgressAnalyzer = progressAnalyzer;
   }
 
   /**
@@ -242,10 +264,13 @@ public class GitTask {
         @Override
         public void run() {
           if (myIndicator != null && myIndicator.isCanceled()) {
-            if (myHandler != null) {
-              myHandler.destroyProcess();
+            try {
+              if (myHandler != null) {
+                myHandler.destroyProcess();
+              }
+            } finally {
+              Disposer.dispose(GitTaskDelegate.this);
             }
-            Disposer.dispose(GitTaskDelegate.this);
           }
         }
       }, 0, 200);

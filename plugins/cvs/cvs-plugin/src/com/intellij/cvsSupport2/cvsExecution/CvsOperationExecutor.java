@@ -102,7 +102,7 @@ public class CvsOperationExecutor {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
           myResult.addAllWarnings(handler.getWarnings());
           handler.runComplitingActivities();
-          if ((myProject == null) || (myProject != null && !myProject.isDisposed())) {
+          if (myProject == null || myProject != null && !myProject.isDisposed()) {
             showErrors(handler.getErrorsExceptAborted(), handler.getWarnings(), tabbedWindow);
           }
         }
@@ -118,7 +118,7 @@ public class CvsOperationExecutor {
           }
           finally {
 
-            if ((myProject != null) && (handler != CvsHandler.NULL)) {
+            if (myProject != null && handler != CvsHandler.NULL) {
               StatusBar.Info.set(getStatusMessage(handler), myProject);
             }
           }
@@ -194,7 +194,7 @@ public class CvsOperationExecutor {
   }
 
   private static boolean isInProgress() {
-    return (ProgressManager.getInstance().getProgressIndicator() != null);
+    return ProgressManager.getInstance().getProgressIndicator() != null;
   }
 
   protected void showErrors(final List<VcsException> errors, CvsTabbedWindow tabbedWindow) {
@@ -289,6 +289,7 @@ public class CvsOperationExecutor {
   @Nullable
   public CvsTabbedWindow openTabbedWindow(final CvsHandler output) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
+    if (myProject != null && myProject.isDefault()) return null;
     if (myProject != null) {
       if (myConfiguration != null && myConfiguration.SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {

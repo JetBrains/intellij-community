@@ -402,7 +402,7 @@ public class JavaDocExternalFilter {
     if (isClassDoc) {
       boolean skip = false;
 
-      while (((read = buf.readLine()) != null) && !read.toUpperCase().equals(DL)) {
+      while (((read = buf.readLine()) != null) && !read.toUpperCase().trim().equals(DL)) {
         if (read.toUpperCase().indexOf(H2) != -1) { // read=class name in <H2>
           data.append(H2);
           skip = true;

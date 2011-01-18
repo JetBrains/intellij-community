@@ -101,12 +101,16 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
             public void consume(Object variant) {
               PsiType type = null;
 
-              final Object o;
+              Object o;
               if (variant instanceof LookupElement) {
                 o = ((LookupElement)variant).getObject();
               }
               else {
                 o = variant;
+              }
+              if (o instanceof GroovyResolveResult) {
+                if (!((GroovyResolveResult)o).isAccessible()) return;
+                o = ((GroovyResolveResult)o).getElement();
               }
 
               if (o instanceof PsiElement) {
@@ -319,6 +323,9 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }*/
     if (element instanceof GrExpression) {
       return ((GrExpression)element).getType();
+    }
+    if (element instanceof PsiField) {
+      return ((PsiField)element).getType();
     }
 
     return null;

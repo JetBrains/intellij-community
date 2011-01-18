@@ -191,6 +191,7 @@ public class SSHMain {
   private void authenticate(final Connection c) throws IOException {
     LinkedList<String> methods = new LinkedList<String>(myHost.getPreferredMethods());
     String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
+    System.err.println("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
     if (lastSuccessfulMethod != null && lastSuccessfulMethod.length() > 0 && methods.remove(lastSuccessfulMethod)) {
       methods.addFirst(lastSuccessfulMethod);
     }

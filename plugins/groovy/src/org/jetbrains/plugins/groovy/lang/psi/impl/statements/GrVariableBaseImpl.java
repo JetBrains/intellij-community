@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -52,7 +52,7 @@ import javax.swing.*;
 /**
  * @author ilyas
  */
-public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBaseElementImpl<T> implements GrVariable {
+public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubElementBase<T> implements GrVariable {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
 
   private final ThreadLocal<Boolean> isInferringType = new ThreadLocal<Boolean>();
@@ -63,6 +63,11 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
 
   protected GrVariableBaseImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getParentByTree();
   }
 
   @Nullable
@@ -110,10 +115,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GroovyBa
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(property);
-  }
-
-  public String getElementToCompare() {
-    return getName();
   }
 
   @NotNull

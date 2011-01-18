@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literal
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author Maxim.Medvedev
@@ -28,5 +28,5 @@ public interface GrStringInjection extends GroovyPsiElement {
   GrClosableBlock getClosableBlock();
 
   @Nullable
-  GrReferenceExpression getReferenceExpression();
+  GrExpression getExpression();
 }

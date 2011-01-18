@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,26 +40,61 @@ import java.nio.charset.Charset;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
   private static final byte DIRTY_FLAG = 0x01;
+  private static final String EMPTY = "";
 
-  private volatile String myName;
+  private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
   private volatile byte myFlags = 0;
   private volatile int myId;
 
   public VirtualFileSystemEntry(final String name, final VirtualDirectoryImpl parent, int id) {
-    myName = name.replace('\\', '/');  // note: on Unix-style FS names may contain backslashes
+    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
     myParent = parent;
     myId = id;
   }
 
+  protected static Object encodeName(String name) {
+    int length = name.length();
+    if (length == 0) return EMPTY;
+
+    if (!IOUtil.isAscii(name)) return name;
+
+    byte[] bytes = new byte[length];
+    for (int i = 0; i < length; i++) {
+      bytes[i] = (byte)name.charAt(i);
+    }
+    return bytes;
+  }
+
   @NotNull
   public String getName() {
+    String name = decodeName();
+
     // TODO: HACK!!! Get to simpler solution.
     if (myParent == null && getFileSystem() instanceof JarFileSystem) {
-      String jarName = myName.substring(0, myName.length() - JarFileSystem.JAR_SEPARATOR.length());
+      String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
       return jarName.substring(jarName.lastIndexOf('/') + 1);
     }
 
+    return name;
+  }
+
+  private String decodeName() {
+    Object name = rawName();
+    if (name instanceof String) {
+      return (String)name;
+    }
+
+    byte[] bytes = (byte[])name;
+    int length = bytes.length;
+    char[] chars = new char[length];
+    for (int i = 0; i < length; i++) {
+      chars[i] = (char)bytes[i];
+    }
+    return new String(chars);
+  }
+
+  protected final Object rawName() {
     return myName;
   }
 
@@ -76,12 +112,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
     }
 
-    if (myName.length() > 0) {
-      final int len = builder.length();
-      if (len > 0 && builder.charAt(len - 1) != '/') {
-        builder.append('/');
+    Object o = rawName();
+    if (o == EMPTY) return;
+
+    final int oldLen = builder.length();
+    if (oldLen > 0 && builder.charAt(oldLen - 1) != '/') {
+      builder.append('/');
+    }
+
+    if (o instanceof String) {
+      builder.append((String)o);
+    } else {
+      byte[] bytes = (byte[]) o;
+      int len = bytes.length;
+      int start = builder.length();
+      builder.setLength(start + len);
+      for (int i = 0; i < len; i++) {
+        builder.setCharAt(start + i, (char)bytes[i]);
       }
-      builder.append(myName);
     }
   }
 
@@ -239,13 +287,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getUrl();
   }
 
-  public void setName(final String newName) {
-    if (newName != null && newName.length() == 0) {
+  public void setName(@NotNull final String newName) {
+    if (newName.length() == 0) {
       throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
     }
 
     myParent.removeChild(this);
-    myName = newName != null? newName.replace('\\', '/') : null;
+    myName = encodeName(newName.replace('\\', '/'));
     myParent.addChild(this);
   }
 

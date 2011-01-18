@@ -54,6 +54,7 @@ public class GitCommand {
   public static final GitCommand TAG = meta("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
   public static final GitCommand VERSION = meta("version");
+  public static final GitCommand GC = write("gc");
 
   // these commands modify .git/index
   private static final GitCommand[] INDEX_MODIFIERS = {ADD, BRANCH, CHECKOUT, COMMIT, MERGE, RESET, RM, STASH};

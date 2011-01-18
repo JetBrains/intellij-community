@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -43,6 +45,8 @@ import java.util.Map;
  */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(id = "other", file = "$APP_CONFIG$/browsers.xml")})
 public class BrowsersConfiguration implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.browsers.BrowsersConfiguration");
+
   public static enum BrowserFamily {
     EXPLORER(XmlBundle.message("browsers.explorer"), "iexplore", null, null, IconLoader.getIcon("/xml/browsers/explorer16.png")),
     SAFARI(XmlBundle.message("browsers.safari"), "safari", "safari", "Safari", IconLoader.getIcon("/xml/browsers/safari16.png")),
@@ -182,14 +186,8 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
       url = BrowserUtil.escapeUrl(url);
       try {
         final BrowserSpecificSettings specificSettings = settings.getBrowserSpecificSettings();
-        String[] parameters;
-        if (specificSettings != null) {
-          parameters = ArrayUtil.append(specificSettings.getAdditionalParameters(), url);
-        }
-        else {
-          parameters = new String[]{url};
-        }
-        launchBrowser(path, parameters);
+        String[] parameters = specificSettings != null ? specificSettings.getAdditionalParameters() : ArrayUtil.EMPTY_STRING_ARRAY;
+        launchBrowser(path, url, parameters);
       }
       catch (IOException e) {
         Messages.showErrorDialog(e.getMessage(), XmlBundle.message("browser.error"));
@@ -201,10 +199,35 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  /**
+   * @deprecated use {@link #launchBrowser(com.intellij.ide.browsers.BrowsersConfiguration.BrowserFamily, String)} instead
+   */
   public static void launchBrowser(@NonNls @NotNull String browserPath, @NonNls String... parameters) throws IOException {
-    final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath, parameters);
-    Runtime.getRuntime().exec(ArrayUtil.mergeArrays(command, parameters, String.class));
+    launchBrowser(browserPath, parameters[parameters.length - 1], Arrays.copyOf(parameters, parameters.length-1));
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void launchBrowser(@NonNls @NotNull String browserPath, String url, @NonNls String... browserArgs) throws IOException {
+    final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath);
+    String[] args = {url};
+    if (browserArgs.length > 0) {
+      if (SystemInfo.isMac && "open".equals(command[0])) {
+        if (BrowserUtil.isOpenCommandSupportArgs()) {
+          args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs, ArrayUtil.STRING_ARRAY_FACTORY);
+        }
+        else {
+          LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " + Arrays.toString(args));
+        }
+      }
+      else {
+        args = ArrayUtil.append(browserArgs, url);
+      }
+    }
+    final String[] commandLine = ArrayUtil.mergeArrays(command, args, ArrayUtil.STRING_ARRAY_FACTORY);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Launching browser: " + Arrays.toString(commandLine));
+    }
+    Runtime.getRuntime().exec(commandLine);
   }
 
   @Nullable

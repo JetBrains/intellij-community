@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.SvnWCRootCrawler;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -71,13 +70,6 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
     catch (SVNException e) {
       myExceptions.add(new VcsException(e));
     }
-    if (!SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
-      return result;
-    }
-
-    final SvnStatusWorker statusWorker = new SvnStatusWorker(myVcs, result, root, myPostUpdateFiles, myIsTotalUpdate, myExceptions);
-    statusWorker.doStatus();
-    
     return result;
   }
 

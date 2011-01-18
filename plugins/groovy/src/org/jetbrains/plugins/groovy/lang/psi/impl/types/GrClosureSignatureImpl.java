@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -31,7 +30,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   private final boolean myIsVarargs;
   @Nullable private final PsiType myReturnType;
   @NotNull private final GrClosureParameter[] myParameters;
-  @NotNull private PsiSubstitutor mySubstitutor;
+  @NotNull private final PsiSubstitutor mySubstitutor;
 
   public GrClosureSignatureImpl(@NotNull PsiParameter[] parameters, @Nullable PsiType returnType, @NotNull PsiSubstitutor substitutor) {
     myReturnType = substitutor.substitute(returnType);
@@ -41,7 +40,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       myParameters[i] = new GrClosureParameterImpl(parameters[i], substitutor);
     }
     if (length > 0) {
-      myIsVarargs = /*parameters[length - 1].isVarArgs() ||*/ myParameters[length - 1].getType() instanceof PsiArrayType;
+      myIsVarargs = myParameters[length - 1].getType() instanceof PsiArrayType;
     }
     else {
       myIsVarargs = false;
@@ -57,6 +56,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
+    mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
 

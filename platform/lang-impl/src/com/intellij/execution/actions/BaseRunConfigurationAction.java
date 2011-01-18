@@ -71,12 +71,14 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
           final String actionName = configuration instanceof LocatableConfiguration
                                     ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
                                     : configurationType.getDisplayName();
-          children[chldIdx++] = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
+          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               perform(producer, context);
             }
           };
+          anAction.getTemplatePresentation().setText(actionName, false);
+          children[chldIdx++] = anAction;
         }
         return children;
       }

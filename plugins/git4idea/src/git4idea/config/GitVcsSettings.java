@@ -46,8 +46,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   private SshExecutable mySshExecutable = DEFAULT_SSH; // IDEA SSH should be used instead of native SSH.
   private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
   private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT; // The type of update operation to perform
-  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.PROJECT_LINE_SEPARATORS; // The crlf conversion policy
-  private boolean myAskBeforeLineSeparatorConversion = true; // If true, the dialog is shown with conversion options
+  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.CONVERT; // The crlf conversion policy
   private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH; // The policy used in push active branches dialog
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -73,23 +72,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    */
   public void setPushActiveBranchesRebaseSavePolicy(UpdateChangesPolicy pushActiveBranchesRebaseSavePolicy) {
     myPushActiveBranchesRebaseSavePolicy = pushActiveBranchesRebaseSavePolicy;
-  }
-
-  /**
-   * @return true if before converting line separators user is asked
-   */
-  public boolean askBeforeLineSeparatorConversion() {
-    return myAskBeforeLineSeparatorConversion;
-  }
-
-  /**
-   * Modify user notification policy about line separators
-   *
-   * @param askBeforeLineSeparatorConversion
-   *         a new policy value
-   */
-  public void setAskBeforeLineSeparatorConversion(boolean askBeforeLineSeparatorConversion) {
-    myAskBeforeLineSeparatorConversion = askBeforeLineSeparatorConversion;
   }
 
   /**
@@ -177,14 +159,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return myCommitAuthors.toArray(new String[myCommitAuthors.size()]);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public State getState() {
     State s = new State();
     s.CHECKOUT_INCLUDE_TAGS = myCheckoutIncludesTags;
     s.LINE_SEPARATORS_CONVERSION = myLineSeparatorsConversion;
-    s.LINE_SEPARATORS_CONVERSION_ASK = myAskBeforeLineSeparatorConversion;
     s.PREVIOUS_COMMIT_AUTHORS = getCommitAuthors();
     s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = myPushActiveBranchesRebaseSavePolicy;
     s.SSH_EXECUTABLE = mySshExecutable;
@@ -194,13 +172,9 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return s;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void loadState(State s) {
     myCheckoutIncludesTags = s.CHECKOUT_INCLUDE_TAGS == null ? false : s.CHECKOUT_INCLUDE_TAGS;
     myLineSeparatorsConversion = s.LINE_SEPARATORS_CONVERSION;
-    myAskBeforeLineSeparatorConversion = s.LINE_SEPARATORS_CONVERSION_ASK;
     myCommitAuthors.clear();
     ContainerUtil.addAll(myCommitAuthors, s.PREVIOUS_COMMIT_AUTHORS);
     myPushActiveBranchesRebaseSavePolicy = s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY;
@@ -281,7 +255,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     /**
      * The crlf conversion policy
      */
-    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.PROJECT_LINE_SEPARATORS;
+    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
     /**
      * If true, the dialog is shown with conversion options
      */
@@ -353,6 +327,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     /**
      * The files are converted to project line separators
      */
-    PROJECT_LINE_SEPARATORS
+    CONVERT,
+    /**
+     * Show dialog and ask user what to do: convert files or leave unchanged.
+     */
+    ASK
   }
 }

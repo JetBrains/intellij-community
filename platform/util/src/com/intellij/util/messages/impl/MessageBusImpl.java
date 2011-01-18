@@ -50,14 +50,15 @@ public class MessageBusImpl implements MessageBus {
   private final ConcurrentMap<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
-  private final List<MessageBusImpl> myChildBusses = ContainerUtil.createEmptyCOWList();
+  private final List<MessageBusImpl> myChildBuses = ContainerUtil.createEmptyCOWList();
 
   private static final Object NA = new Object();
-  private final MessageBusImpl myParentBus;
+  private MessageBusImpl myParentBus;
 
   //is used for debugging purposes
   @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
   private final Object myOwner;
+  private boolean myDisposed;
 
   public MessageBusImpl() {
     this(null, null);
@@ -68,15 +69,18 @@ public class MessageBusImpl implements MessageBus {
     myParentBus = (MessageBusImpl)parentBus;
     if (myParentBus != null) {
       myParentBus.notifyChildBusCreated(this);
+      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
     }
   }
 
-  private void notifyChildBusCreated(final MessageBusImpl messageBus) {
-    myChildBusses.add(messageBus);
+  private void notifyChildBusCreated(final MessageBusImpl childBus) {
+    myChildBuses.add(childBus);
+    LOG.assertTrue(childBus.myParentBus == this);
   }
 
-  private void notifyChildBusDisposed(final MessageBusImpl bus) {
-    myChildBusses.remove(bus);
+  private void notifyChildBusDisposed(final MessageBusImpl childBus) {
+    boolean removed = myChildBuses.remove(childBus);
+    LOG.assertTrue(removed);
   }
 
   private static class DeliveryJob {
@@ -96,6 +100,7 @@ public class MessageBusImpl implements MessageBus {
 
   @NotNull
   public MessageBusConnection connect() {
+    checkNotDisposed();
     return new MessageBusConnectionImpl(this);
   }
 
@@ -109,6 +114,7 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
+    checkNotDisposed();
     L publisher = (L)mySyncPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -127,6 +133,7 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
+    checkNotDisposed();
     L publisher = (L)myAsyncPublishers.get(topic);
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
@@ -143,6 +150,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void dispose() {
+    checkNotDisposed();
     Queue<DeliveryJob> jobs = myMessageQueue.get();
     if (!jobs.isEmpty()) {
       LOG.error("Not delivered events in the queue: "+jobs);
@@ -150,10 +158,17 @@ public class MessageBusImpl implements MessageBus {
     myMessageQueue.remove();
     if (myParentBus != null) {
       myParentBus.notifyChildBusDisposed(this);
+      myParentBus = null;
     }
+    myDisposed = true;
+  }
+
+  private void checkNotDisposed() {
+    LOG.assertTrue(!myDisposed, "Already disposed");
   }
 
   private void postMessage(Message message) {
+    checkNotDisposed();
     final Topic topic = message.getTopic();
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
@@ -166,7 +181,7 @@ public class MessageBusImpl implements MessageBus {
     Topic.BroadcastDirection direction = topic.getBroadcastDirection();
 
     if (direction == Topic.BroadcastDirection.TO_CHILDREN) {
-      for (MessageBusImpl childBus : myChildBusses) {
+      for (MessageBusImpl childBus : myChildBuses) {
         childBus.postMessage(message);
       }
     }
@@ -183,7 +198,9 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private void pumpMessages() {
+    checkNotDisposed();
     if (myParentBus != null) {
+      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
       myParentBus.pumpMessages();
     }
     else {
@@ -199,12 +216,14 @@ public class MessageBusImpl implements MessageBus {
     }
     while (true);
 
-    for (MessageBusImpl childBus : myChildBusses) {
+    for (MessageBusImpl childBus : myChildBuses) {
+      LOG.assertTrue(childBus.myParentBus == this);
       childBus.doPumpMessages();
     }
   }
 
   public void notifyOnSubscription(final MessageBusConnectionImpl connection, final Topic topic) {
+    checkNotDisposed();
     List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = ContainerUtil.createEmptyCOWList();
@@ -215,6 +234,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void notifyConnectionTerminated(final MessageBusConnectionImpl connection) {
+    checkNotDisposed();
     for (List<MessageBusConnectionImpl> topicSubscribers : mySubscribers.values()) {
       topicSubscribers.remove(connection);
     }
@@ -229,6 +249,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   public void deliverSingleMessage() {
+    checkNotDisposed();
     final DeliveryJob job = myMessageQueue.get().poll();
     if (job == null) return;
     job.connection.deliverMessage(job.message);

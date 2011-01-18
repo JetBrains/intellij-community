@@ -96,4 +96,36 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   public void testPreferenceWidget() throws Throwable {
     toTestCompletion("pref_widget.xml", "pref_widget_after.xml");
   }
+
+  public void testKeyboard() throws Throwable {
+    doTestHighlighting("keyboard.xml");
+  }
+
+  public void testKeyboard1() throws Throwable {
+    toTestCompletion("keyboard1.xml", "keyboard1_after.xml");
+  }
+
+  public void testDeviceAdmin() throws Throwable {
+    doTestHighlighting("deviceAdmin.xml");
+  }
+
+  public void testDeviceAdmin1() throws Throwable {
+    toTestCompletion("deviceAdmin1.xml", "deviceAdmin1_after.xml");
+  }
+
+  public void testDeviceAdmin2() throws Throwable {
+    toTestCompletion("deviceAdmin2.xml", "deviceAdmin2_after.xml");
+  }
+
+  public void testDeviceAdmin3() throws Throwable {
+    toTestCompletion("deviceAdmin3.xml", "deviceAdmin3_after.xml");
+  }
+
+  public void testAccountAuthenticator() throws Throwable {
+    toTestCompletion("accountAuthenticator.xml", "accountAuthenticator_after.xml");
+  }
+
+  public void testAccountAuthenticator1() throws Throwable {
+    toTestCompletion("accountAuthenticator1.xml", "accountAuthenticator1_after.xml");
+  }
 }

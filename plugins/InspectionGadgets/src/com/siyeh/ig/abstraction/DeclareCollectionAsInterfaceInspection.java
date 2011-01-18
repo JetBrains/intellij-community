@@ -17,10 +17,12 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -32,7 +34,7 @@ import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -153,7 +155,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             extends BaseInspectionVisitor {
 
         @Override public void visitVariable(@NotNull PsiVariable variable) {
-            if (isOnTheFly() && variable.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (isOnTheFly() &&
+                    variable.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
@@ -231,7 +234,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                     method.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
-            if (isOnTheFly() && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+            if (isOnTheFly() &&
+                    method.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             final PsiType type = method.getReturnType();
@@ -277,6 +281,22 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
                 final PsiClass weakling = weaklingList.get(0);
                 registerError(nameElement, weakling.getQualifiedName());
             }
+        }
+
+        private boolean isCheapEnoughToSearch(PsiNamedElement element) {
+            final String name = element.getName();
+            if (name == null) {
+                return false;
+            }
+            final ProgressManager progressManager =
+                    ProgressManager.getInstance();
+            final PsiManager manager = element.getManager();
+            final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            final GlobalSearchScope scope =
+                    GlobalSearchScope.projectScope(element.getProject());
+            return searchHelper.isCheapEnoughToSearch(name, scope, null,
+                    progressManager.getProgressIndicator()) !=
+                    PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
         }
     }
 }

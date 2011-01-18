@@ -42,10 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.Map;
 
@@ -103,7 +102,7 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType getOverloadedOperatorType(PsiType thisType, String operatorName, GroovyPsiElement place, PsiType[] argumentTypes) {
-    final GroovyResolveResult[] candidates = getOverloadedOperatorCandidates(thisType, operatorName, place, argumentTypes);
+    final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, operatorName, place, argumentTypes);
     if (candidates.length == 1) {
       final PsiElement element = candidates[0].getElement();
       if (element instanceof PsiMethod) {
@@ -119,34 +118,7 @@ public class TypesUtil {
                                                                       IElementType tokenType,
                                                                       GroovyPsiElement place,
                                                                       PsiType[] argumentTypes) {
-    return getOverloadedOperatorCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
-  }
-  @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(PsiType thisType,
-                                                                      String operatorName,
-                                                                      GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes) {
-    if (operatorName != null) {
-      MethodResolverProcessor processor =
-        new MethodResolverProcessor(operatorName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
-      final ResolveState state;
-      if (thisType instanceof PsiClassType) {
-        final PsiClassType classtype = (PsiClassType)thisType;
-        final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
-        final PsiClass lClass = resolveResult.getElement();
-        state = ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor());
-        if (lClass != null) {
-          lClass.processDeclarations(processor, state, null, place);
-        }
-      }
-      else {
-        state = ResolveState.initial();
-      }
-
-      ResolveUtil.processNonCodeMethods(thisType, processor, place, state);
-      return processor.getCandidates();
-    }
-    return GroovyResolveResult.EMPTY_ARRAY;
+    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
@@ -323,7 +295,7 @@ public class TypesUtil {
       }
     }
 
-    if (typeEqualsToText(rType, GrStringUtil.GROOVY_LANG_GSTRING)) {
+    if (typeEqualsToText(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
       final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
       if (javaLangString != null &&
           isAssignable(lType, JavaPsiFacade.getElementFactory(manager.getProject()).createType(javaLangString), manager, scope)) {
@@ -454,11 +426,11 @@ public class TypesUtil {
         }
       }
     }
-    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
              CommonClassNames.JAVA_LANG_STRING.equals(type2.getInternalCanonicalText())) {
       return type2;
     }
-    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
              CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
       return type1;
     }

@@ -59,12 +59,12 @@ public abstract class ProjectJdkTable {
   }
 
   /**
-   * @deprecated use #JDK_TABLE_TOPIC instead
+   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
   public abstract void addListener(Listener listener);
 
   /**
-   * @deprecated use #JDK_TABLE_TOPIC instead
+   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
   public abstract void removeListener(Listener listener);
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -400,7 +401,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
-    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER));
+    adjustEditorHintPosition(hint, editor, p, UNDER);
+  }
+
+  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, short constraint) {
+    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint));
   }
 
   public void hideAllHints() {
@@ -448,9 +453,17 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                                  final short constraint,
                                                  final Rectangle lookupBounds,
                                                  final LogicalPosition pos) {
-    Dimension hintSize = hint.getComponent().getPreferredSize();
+
     JComponent editorComponent = editor.getComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+
+    IdeTooltip ideTooltip = hint.getCurrentIdeTooltip();
+    if (ideTooltip != null) {
+      Point point = ideTooltip.getPoint();
+      return SwingUtilities.convertPoint(ideTooltip.getComponent(), point, layeredPane);
+    }
+
+    Dimension hintSize = hint.getComponent().getPreferredSize();
     int layeredPaneHeight = layeredPane.getHeight();
 
     switch (constraint) {
@@ -575,14 +588,14 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
-    JLabel label = HintUtil.createErrorLabel(text);
+    JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, ABOVE);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false);
   }
 
   public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
-    JLabel label = HintUtil.createInformationLabel(text);
+    JComponent label = HintUtil.createInformationLabel(text);
     showInformationHint(editor, label);
   }
 
@@ -598,7 +611,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
   }
 
   public void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, short constraint, int flags, int timeout) {
-    JLabel label = HintUtil.createErrorLabel(hintText);
+    JComponent label = HintUtil.createErrorLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     final LogicalPosition pos1 = editor.offsetToLogicalPosition(offset1);
     final LogicalPosition pos2 = editor.offsetToLogicalPosition(offset2);
@@ -614,7 +627,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                int offset2,
                                @NotNull QuestionAction action) {
 
-    JLabel label = HintUtil.createQuestionLabel(hintText);
+    JComponent label = HintUtil.createQuestionLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }
@@ -670,7 +683,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myQuestionHint = hint;
   }
 
-  private static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
+  public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, short constraint) {
     HintHint hintInfo = new HintHint(editor, p);
     boolean showByBalloon = Registry.is("editor.balloonHints");
     if (showByBalloon) {

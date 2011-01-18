@@ -64,6 +64,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   private boolean mySorted;
 
   public PsiMultiReference(@NotNull PsiReference[] references, PsiElement element){
+    assert references.length > 0;
     myReferences = references;
     myElement = element;
   }

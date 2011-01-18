@@ -73,13 +73,13 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
           }
 
           final List<DebuggerSession> sessions = new ArrayList<DebuggerSession>();
-          Collection<DebuggerSession> debuggerSessions = (DebuggerManagerEx.getInstanceEx(myProject)).getSessions();
+          Collection<DebuggerSession> debuggerSessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
           for (final DebuggerSession debuggerSession : debuggerSessions) {
             if (debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses()) {
               sessions.add(debuggerSession);
             }
           }
-          if (sessions.size() > 0) {
+          if (!sessions.isEmpty()) {
             hotSwapSessions(sessions);
           }
         }
@@ -155,7 +155,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
               modifiedClasses.keySet().retainAll(dialog.getSessionsToReload());
             }
 
-            if (modifiedClasses.size() > 0) {
+            if (!modifiedClasses.isEmpty()) {
               final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
               application.executeOnPooledThread(new Runnable() {
                 public void run() {

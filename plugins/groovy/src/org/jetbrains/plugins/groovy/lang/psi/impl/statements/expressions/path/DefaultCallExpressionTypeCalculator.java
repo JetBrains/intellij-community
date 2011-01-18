@@ -23,13 +23,13 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -53,7 +53,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
           PsiMethod method = (PsiMethod) resolved;
           if (resolveResult.isInvokedOnProperty()) {
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);
-            returnType = checkForClosure(propertyType);
+            returnType = extractReturnTypeFromType(propertyType, true, callExpression);
           } else {
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
@@ -63,7 +63,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         } else if (resolved instanceof GrVariable) {
           PsiType refType = refExpr.getType();
           final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
-          returnType = checkForClosure(type);
+          returnType = extractReturnTypeFromType(type, false, callExpression);
         }
         if (returnType == null) return null;
         returnType = resolveResult.getSubstitutor().substitute(returnType);
@@ -82,13 +82,14 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
         return ResolveUtil.getListTypeForSpreadOperator(refExpr, result);
       }
     }
-
-    return null;
+    else {
+      return extractReturnTypeFromType(invoked.getType(), false, callExpression);
+    }
   }
 
   @Nullable
-  private static PsiType checkForClosure(PsiType type) {
-    PsiType returnType = type;
+  private static PsiType extractReturnTypeFromType(PsiType type, boolean returnTypeIfFail, GrMethodCall callExpression) {
+    PsiType returnType = returnTypeIfFail ? type: null;
     if (type instanceof GrClosureType) {
       returnType = ((GrClosureType) type).getSignature().getReturnType();
     }
@@ -97,6 +98,19 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       final PsiType[] parameters = ((PsiClassType)type).getParameters();
       if (parameters.length == 1) {
         returnType = parameters[0];
+      }
+    }
+    else if (type instanceof PsiClassType) {
+      final GroovyResolveResult[] calls = ResolveUtil
+        .getMethodCandidates(type, "call", callExpression, PsiUtil.getArgumentTypes(callExpression.getInvokedExpression(), false));
+      returnType = null;
+      final PsiManager manager = callExpression.getManager();
+      for (GroovyResolveResult call : calls) {
+        final PsiElement element = call.getElement();
+        if (element instanceof PsiMethod) {
+          final PsiType substituted = call.getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
+          returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
+        }
       }
     }
     return returnType;
@@ -109,13 +123,13 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     final PsiClass psiClass = ((PsiClassType)type).resolve();
     if (psiClass == null) return false;
 
-    return GrClosableBlock.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
+    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 
   @Nullable
   private static PsiType getClosureCallOrCurryReturnType(GrMethodCall callExpression, GrReferenceExpression refExpr, PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
-    if (clazz != null && GrClosableBlock.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
+    if (clazz != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
       if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
         GrExpression qualifier = refExpr.getQualifierExpression();
         if (qualifier != null) {

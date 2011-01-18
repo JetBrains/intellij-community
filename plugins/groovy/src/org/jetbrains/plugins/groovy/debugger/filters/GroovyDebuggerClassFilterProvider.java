@@ -19,6 +19,7 @@ import com.intellij.execution.filters.StackFrameFilter;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class GroovyDebuggerClassFilterProvider extends StackFrameFilter implemen
   }
 
   public boolean isAuxiliaryFrame(String className, String methodName) {
-    if (className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethods") ||
+    if (className.equals(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS) ||
         className.equals("org.codehaus.groovy.runtime.DefaultGroovyMethodsSupport")) {
       return false;
     }

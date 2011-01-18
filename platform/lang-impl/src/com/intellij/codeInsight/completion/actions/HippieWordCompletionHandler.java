@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -39,19 +40,17 @@ import java.util.*;
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");
-  private final Direction myDirection;
+  private final boolean myForward;
 
-  public HippieWordCompletionHandler(final Direction direction) {
-    myDirection = direction;
-  }
-
-  enum Direction {
-    FORWARD,
-    BACKWARD
+  public HippieWordCompletionHandler(boolean forward) {
+    myForward = forward;
   }
 
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+
+    LookupManager.getInstance(project).hideActiveLookup();
+
     final CharSequence charsSequence = editor.getDocument().getCharsSequence();
 
     final CompletionData data = computeData(editor, charsSequence);
@@ -118,7 +117,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     if (lastProposedVariant == null) {
       CompletionVariant result = null;
 
-      if (myDirection == Direction.FORWARD) {
+      if (myForward) {
         for (CompletionVariant variant : variants) {
           if (variant.offset < data.startOffset) {
             result = variant;
@@ -141,7 +140,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
 
 
-    if (myDirection == Direction.FORWARD) {
+    if (myForward) {
       CompletionVariant result = null;
       for (CompletionVariant variant : variants) {
         if (variant == lastProposedVariant) {

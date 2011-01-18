@@ -19,11 +19,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.File;
 
 /**
  * @author Eugene.Kudelevsky
@@ -50,9 +50,9 @@ public class AndroidTestPropertiesEditor {
     else if (AndroidFacet.getInstance(module) == null) {
       throw new ConfigurationException(AndroidBundle.message("android.wizard.tested.module.without.facet.error"));
     }
-    String moduleDirPath = new File(module.getModuleFilePath()).getParent();
+    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     if (moduleDirPath == null) {
-      throw new ConfigurationException(AndroidBundle.message("android.wizard.cannot.find.module.parent.dir.error", moduleDirPath));
+      throw new ConfigurationException(AndroidBundle.message("android.wizard.cannot.find.module.parent.dir.error", module.getName()));
     }
   }
 

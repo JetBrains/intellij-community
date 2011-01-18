@@ -7,11 +7,12 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -71,20 +72,22 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("findLastIndexOf");
     iterations.add("findIndexValues");
     iterations.add("findIndexOf");
+    iterations.add("count");
 
   }
 
   @Override
   @Nullable
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    final PsiElement parent = closure.getParent();
-    if (!(parent instanceof GrMethodCallExpression)) {
+    PsiElement parent = closure.getParent();
+    if (parent instanceof GrArgumentList) parent = parent.getParent();
+    if (!(parent instanceof GrMethodCall)) {
       return null;
     }
     PsiElementFactory factory = JavaPsiFacade.getInstance(closure.getProject()).getElementFactory();
-    String methodName = findMethodName((GrMethodCallExpression)parent);
+    String methodName = findMethodName((GrMethodCall)parent);
 
-    GrExpression expression = ((GrMethodCallExpression)parent).getInvokedExpression();
+    GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
     final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
     if (!(resolved instanceof GrGdkMethod)) return null;
@@ -174,7 +177,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       }
     }
     else if ("withStream".equals(methodName)) {
-      final PsiMethod method = ((GrMethodCallExpression)parent).resolveMethod();
+      final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length > 0) {
@@ -266,7 +269,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   @Nullable
-  private static String findMethodName(@NotNull GrMethodCallExpression methodCall) {
+  private static String findMethodName(@NotNull GrMethodCall methodCall) {
     GrExpression expression = methodCall.getInvokedExpression();
     if (expression instanceof GrReferenceExpression) {
       return ((GrReferenceExpression)expression).getReferenceName();

@@ -50,9 +50,9 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
         return new TestNGRunnableState(env, configuration) {
           @Override
-          protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket, boolean is15,
+          protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
                                                                       final TestNGConfiguration config, final File tempFile) {
-            return new SearchingForTestsTask(serverSocket, is15, config, tempFile, client) {
+            return new SearchingForTestsTask(serverSocket, config, tempFile, client) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
                 for (AbstractTestProxy proxy : failedTests) {

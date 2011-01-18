@@ -33,23 +33,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EditorBasedWidget extends FileEditorManagerAdapter implements StatusBarWidget {
-
   protected StatusBar myStatusBar;
   private Project myProject;
 
   protected MessageBusConnection myConnection;
   private boolean myDisposed;
 
-  protected EditorBasedWidget(Project project) {
+  protected EditorBasedWidget(@NotNull Project project) {
     myProject = project;
-    myConnection = myProject.getMessageBus().connect();
+    myConnection = myProject.getMessageBus().connect(this);
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
   }
 
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-    Editor result = null;
 
     if (project == null) return null;
 
@@ -59,6 +57,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
       splitters = ((DockableEditorTabbedContainer)c).getSplitters();
     }
 
+    Editor result = null;
     if (splitters != null && splitters.getCurrentWindow() != null) {
       EditorWithProviderComposite editor = splitters.getCurrentWindow().getSelectedEditor();
       if (editor != null) {
@@ -82,8 +81,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
 
 
   protected boolean isOurEditor(Editor editor) {
-    if (editor == null) return false;
-    return getEditor() == editor;
+    return editor != null && getEditor() == editor;
   }
 
   @Nullable
@@ -110,10 +108,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     myDisposed = true;
 
     myStatusBar = null;
-    if (myConnection != null) {
-      myConnection.disconnect();
-      myConnection = null;
-    }
+    myConnection = null;
     myProject = null;
   }
 

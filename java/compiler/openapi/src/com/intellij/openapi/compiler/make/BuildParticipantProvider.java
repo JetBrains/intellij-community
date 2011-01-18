@@ -23,6 +23,8 @@ import java.util.Collection;
 
 /**
  * @author nik
+ *
+ * @deprecated use interfaces from {@link com.intellij.openapi.compiler.Compiler}'s hierarchy instead
  */
 public abstract class BuildParticipantProvider {
   public static final ExtensionPointName<BuildParticipantProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.buildParticipantProvider");

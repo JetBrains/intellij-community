@@ -66,7 +66,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
 
         if (namespacePrefix != null && namespacePrefix.length() > 0) {
-          final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getDocument().getRootTag();
+          final XmlTag rootTag = ((XmlFile)myDescriptorTag.getContainingFile()).getRootTag();
           String elementFormDefault;
 
           if (rootTag != null && 
@@ -290,6 +290,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getAttributeDescriptorImpl(attributeName,context);
   }
 
+  @Nullable
   private XmlAttributeDescriptor getAttributeDescriptorImpl(final String attributeName, XmlTag context) {
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
@@ -324,6 +325,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getAttributeDescriptorImpl(attribute.getName(),attribute.getParent());
   }
 
+  @Nullable
   private XmlAttributeDescriptor getAttribute(String attributeName, String namespace, XmlTag context, String qName) {
     XmlAttributeDescriptor[] descriptors = getAttributesDescriptors(context);
 
@@ -358,6 +360,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return CONTENT_TYPE_MIXED;
   }
 
+  @Nullable
   public XmlElementDescriptor getElementDescriptor(final String name) {
       final String localName = XmlUtil.findLocalNameByQualifiedName(name);
       final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(name);
@@ -367,6 +370,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getElementDescriptor(localName, namespace, null, name);
   }
 
+  @Nullable
   protected XmlElementDescriptor getElementDescriptor(final String localName, final String namespace, XmlElement context, String fullName) {
     XmlElementDescriptor[] elements = getElementsDescriptorsImpl(context);
 
@@ -375,16 +379,15 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       final String namespaceByContext = element.getNamespaceByContext(context);
 
       if (element.getName().equals(localName)) {
-        if ( namespace == null ||
-             namespace.equals(namespaceByContext) ||
-             namespaceByContext.equals(XmlUtil.EMPTY_URI) ||
-             element.getName(context).equals(fullName)
+        if (namespace == null ||
+            namespace.equals(namespaceByContext) ||
+            namespaceByContext.equals(XmlUtil.EMPTY_URI) ||
+            element.getName(context).equals(fullName) || (namespace.length() == 0) &&
+                                                         element.getDefaultName().equals(fullName)
            ) {
           return element;
-        } else if ((namespace == null || namespace.length() == 0) &&
-                   element.getDefaultName().equals(fullName)) {
-          return element;
-        } else {
+        }
+        else {
           final XmlNSDescriptor descriptor = context instanceof XmlTag? ((XmlTag)context).getNSDescriptor(namespace, true) : null;
 
           // schema's targetNamespace could be different from file systemId used as NS
@@ -443,13 +446,14 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return getName();
   }
 
+  @Nullable
   private String getNS(){
     return XmlUtil.findNamespacePrefixByURI((XmlFile) myDescriptorTag.getContainingFile(), getNamespace());
   }
 
   public String getDefaultName() {
     final PsiFile psiFile = myDescriptorTag.getContainingFile();
-    XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getDocument().getRootTag():null;
+    XmlTag rootTag = psiFile instanceof XmlFile ?((XmlFile)psiFile).getRootTag():null;
 
     if (rootTag != null && QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT))) {
       return getQualifiedName();

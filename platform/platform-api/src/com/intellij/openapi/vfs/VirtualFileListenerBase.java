@@ -17,6 +17,9 @@
 package com.intellij.openapi.vfs;
 
 @Deprecated
+/**
+ * use {@link com.intellij.openapi.vfs.VirtualFileAdapter} instead
+ */
 public class VirtualFileListenerBase implements VirtualFileListener{
   public void propertyChanged(VirtualFilePropertyEvent event) {}
   public void contentsChanged(VirtualFileEvent event) {}

@@ -177,7 +177,7 @@ public class UnixProcessManager {
 
   public static String[] getPSCmd() {
     if (SystemInfo.isLinux) {
-      return new String[]{"ps", "e", "--format", "%P%p%a"};
+      return new String[]{"ps", "-e", "e", "--format", "%P%p%a"};
     }
     else if (SystemInfo.isMac) {
       return new String[]{"ps", "-ax", "-E", "-o", "ppid,pid,command"};

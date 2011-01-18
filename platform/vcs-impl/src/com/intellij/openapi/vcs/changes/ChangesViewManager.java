@@ -210,6 +210,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @Override
   public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    if (myProject == null || myProject.isDisposed()) { return; }
     int was = myRepaintAlarm.cancelAllRequests();
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule refresh, was " + was);

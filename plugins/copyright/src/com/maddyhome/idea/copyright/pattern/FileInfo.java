@@ -37,7 +37,29 @@ public class FileInfo
         return getVirtualFile() != null ? getVirtualFile().getName() : "";
     }
 
+    public String getClassName()
+    {
+        if (file instanceof PsiJavaFile)
+        {
+            return ((PsiJavaFile)file).getClasses()[0].getName();
+        }
+        else
+        {
+            return getFileName();
+        }
+    }
 
+    public String getQualifiedClassName()
+    {
+        if (file instanceof PsiJavaFile)
+        {
+            return ((PsiJavaFile)file).getClasses()[0].getQualifiedName();
+        }
+        else
+        {
+            return getPathName();
+        }
+    }
 
     public DateInfo getLastModified()
     {

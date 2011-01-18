@@ -63,6 +63,7 @@ public class GitRebaseAbort extends GitRepositoryAction {
         defaultRoot = gitRoots.get(0);
       }
       GitRebaseActionDialog d = new GitRebaseActionDialog(project, getActionName(), gitRoots, defaultRoot);
+      d.show();
       root = d.selectRoot();
       if (root == null) {
         return;

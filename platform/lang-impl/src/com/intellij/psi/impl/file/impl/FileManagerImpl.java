@@ -878,7 +878,7 @@ public class FileManagerImpl implements FileManager {
               if (vFile.isDirectory()) {
                 PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
                 if (psiDir != null) {
-                  if (myFileTypeManager.isFileIgnored(vFile.getName())) {
+                  if (myFileTypeManager.isFileIgnored(vFile)) {
                     removeFilesAndDirsRecursively(vFile);
 
                     treeEvent.setChild(psiDir);
@@ -957,7 +957,7 @@ public class FileManagerImpl implements FileManager {
       final PsiDirectory oldParentDir = findDirectory(event.getOldParent());
       final PsiDirectory newParentDir = findDirectory(event.getNewParent());
       if (oldParentDir == null && newParentDir == null) return;
-      if (myFileTypeManager.isFileIgnored(vFile.getName())) return;
+      if (myFileTypeManager.isFileIgnored(vFile)) return;
 
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {

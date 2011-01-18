@@ -22,7 +22,6 @@ public class GrStringUtil {
   private static final String QUOTE = "'";
   private static final String DOUBLE_QUOTES = "\"";
   private static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
-  public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
 
   private GrStringUtil() {
   }
@@ -203,8 +202,8 @@ public class GrStringUtil {
     StringBuilder newString = new StringBuilder();
 
     for (PsiElement child = grString.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof GrStringInjection && ((GrStringInjection)child).getReferenceExpression() != null) {
-        final GrReferenceExpression refExpr = ((GrStringInjection)child).getReferenceExpression();
+      if (child instanceof GrStringInjection && ((GrStringInjection)child).getExpression() != null) {
+        final GrExpression refExpr = ((GrStringInjection)child).getExpression();
         newString.append("${").append(refExpr != null ? refExpr.getText() : "").append('}');
       }
       else {
@@ -245,7 +244,7 @@ public class GrStringUtil {
     final PsiElement child = gString.getChildren()[0];
     if (!(child instanceof GrStringInjection)) return false;
 
-    final PsiElement refExprCopy = ((GrStringInjection)child).getReferenceExpression();
+    final PsiElement refExprCopy = ((GrStringInjection)child).getExpression();
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;
 
     final GrReferenceExpression refExpr = (GrReferenceExpression)statements[0];

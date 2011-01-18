@@ -54,6 +54,7 @@ public class PlatformInspectionsConfigurable implements ErrorsConfigurable {
   }
 
   public void reset() {
+    getPanel().setVisible(true);
     getPanel().reset();
   }
 

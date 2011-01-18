@@ -253,7 +253,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final JUnitProcessHandler handler = JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+    final JUnitProcessHandler handler = createHandler();
     for(final RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(myConfiguration, handler);
     }
@@ -348,6 +348,10 @@ public abstract class TestObject implements JavaCommandLine {
     return result;
   }
 
+  protected JUnitProcessHandler createHandler() throws ExecutionException {
+    return JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+  }
+
 
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
                                                 boolean createTempFile,
@@ -359,7 +363,7 @@ public abstract class TestObject implements JavaCommandLine {
         myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
       }
 
-      final PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
+      final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
         writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);

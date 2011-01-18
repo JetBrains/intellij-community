@@ -249,6 +249,26 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       registerSubtags("actionkey", XmlResourceElement.class, registrar, registeredSubtags);
     }
 
+    // for keyboard api
+    if (tagName.equals("Keyboard")) {
+      registerSubtags("Row", XmlResourceElement.class, registrar, registeredSubtags);
+    }
+    else if (tagName.equals("Row")) {
+      registerSubtags("Key", XmlResourceElement.class, registrar, registeredSubtags);
+    }
+
+    // for device-admin api
+    if (tagName.equals("device-admin")) {
+      registerSubtags("uses-policies", XmlResourceElement.class, registrar, registeredSubtags);
+    }
+    else if (tagName.equals("uses-policies")) {
+      registerSubtags("limit-password", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("watch-login", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("reset-password", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("force-lock", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("wipe-data", XmlResourceElement.class, registrar, registeredSubtags);
+    }
+
     // for preferences
     Map<String, PsiClass> prefClassMap = getPreferencesClassMap(facet);
     String prefClassName = element.getXmlTag().getName();

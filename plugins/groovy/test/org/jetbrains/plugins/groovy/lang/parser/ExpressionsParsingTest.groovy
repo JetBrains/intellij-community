@@ -243,6 +243,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testcommandExpr$multiArgs() {doTest()}
   public void testcommandExpr$RHS() {doTest()}
   public void testcommandExpr$oddArgCount() {doTest()}
+  public void testcommandExpr$indexAccess1() {doTest()}
+  public void testcommandExpr$indexAccess2() {doTest()}
+  public void testcommandExpr$indexAccess3() {doTest()}
+  public void testcommandExpr$closureArg2() {doTest()}
   /*def testCommandExpr$() {doTest()}
   def testCommandExpr$() {doTest()}
   def testCommandExpr$() {doTest()}

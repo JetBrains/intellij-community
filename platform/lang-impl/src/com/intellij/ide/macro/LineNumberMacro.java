@@ -17,30 +17,15 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
 
-public final class LineNumberMacro extends Macro {
-  public String getName() {
-    return "LineNumber";
+public final class LineNumberMacro extends EditorMacro {
+  public LineNumberMacro() {
+    super("LineNumber", IdeBundle.message("macro.line.number"));
   }
 
-  public String getDescription() {
-    return IdeBundle.message("macro.line.number");
-  }
-
-  public String expand(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return null;
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive()){
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-      if (editor != null){
-        return String.valueOf(editor.getCaretModel().getLogicalPosition().line + 1);
-      }
-    }
-    return null;
+  @Override
+  protected String expand(Editor editor) {
+    return String.valueOf(editor.getCaretModel().getLogicalPosition().line + 1);
   }
 }

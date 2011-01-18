@@ -15,17 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.impl.GrModifierListStubImpl;
 
 import java.io.IOException;
 
@@ -38,18 +34,13 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
   }
 
   @Override
-  public PsiElement createElement(ASTNode node) {
-    return new GrModifierListImpl(node);
-  }
-
-  @Override
   public GrModifierList createPsi(GrModifierListStub stub) {
     return new GrModifierListImpl(stub);
   }
 
   @Override
   public GrModifierListStub createStub(GrModifierList psi, StubElement parentStub) {
-    return new GrModifierListStubImpl(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStubImpl.buildFlags(psi));
+    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStub.buildFlags(psi));
   }
 
   public void serialize(GrModifierListStub stub, StubOutputStream dataStream) throws IOException {
@@ -57,7 +48,7 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
   }
 
   public GrModifierListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new GrModifierListStubImpl(parentStub, GroovyElementTypes.MODIFIERS, dataStream.readVarInt());
+    return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, dataStream.readVarInt());
   }
 
 }

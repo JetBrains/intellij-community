@@ -78,23 +78,27 @@ abstract class Timed<T> implements Disposable {
     service.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         try {
-          final Timed[] references = ourReferences.keySet().toArray(new Timed[ourReferences.size()]);
-          for (Timed timed : references) {
-            if (timed == null) continue;
-            synchronized (timed) {
-              if (timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
-                timed.dispose();
-              }
-              else {
-                timed.myLastCheckedAccessCount = timed.myAccessCount;
-              }
-            }
-          }
+          disposeTimed(false);
         }
         catch (Throwable e) {
           LOG.error(e);
         }
       }
     }, 60, 60, TimeUnit.SECONDS);
+  }
+
+  static void disposeTimed(boolean force) {
+    final Timed[] references = ourReferences.keySet().toArray(new Timed[ourReferences.size()]);
+    for (Timed timed : references) {
+      if (timed == null) continue;
+      synchronized (timed) {
+        if (force || timed.myLastCheckedAccessCount == timed.myAccessCount && !timed.isLocked()) {
+          timed.dispose();
+        }
+        else {
+          timed.myLastCheckedAccessCount = timed.myAccessCount;
+        }
+      }
+    }
   }
 }

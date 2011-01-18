@@ -51,28 +51,35 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
+  private final boolean myHighlightErrorElements;
+  private final boolean myRunAnnotators;
   private final DumbService myDumbService;
 
-  public DefaultHighlightVisitor(Project project) {
+  public DefaultHighlightVisitor(@NotNull Project project) {
+    this(project, true, true);
+  }
+  public DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators) {
     myProject = project;
+    myHighlightErrorElements = highlightErrorElements;
+    myRunAnnotators = runAnnotators;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
   }
                                                      
-  public boolean suitableForFile(final PsiFile file) {
+  public boolean suitableForFile(@NotNull final PsiFile file) {
     return true;
   }
 
-  public void visit(PsiElement element, HighlightInfoHolder holder) {
+  public void visit(@NotNull PsiElement element, @NotNull HighlightInfoHolder holder) {
     if (element instanceof PsiErrorElement) {
-      visitErrorElement((PsiErrorElement)element, holder);
+      if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element, holder);
     }
     else {
-      runAnnotators(element, holder, myAnnotationHolder);
+      if (myRunAnnotators) runAnnotators(element, holder, myAnnotationHolder);
     }
   }
 
-  public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
+  public boolean analyze(@NotNull final Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
     try {
       action.run();
     }
@@ -82,8 +89,9 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return true;
   }
 
+  @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators);
   }
 
   public int order() {
@@ -142,12 +150,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     for(HighlightErrorFilter errorFilter: myErrorFilters) {
       if (!errorFilter.shouldHighlightErrorElement(element)) return;
     }
-
     HighlightInfo info = createErrorElementInfo(element);
     myHolder.add(info);
   }
 
-  public static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
+  private static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
     TextRange range = element.getTextRange();
     if (!range.isEmpty()) {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());

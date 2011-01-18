@@ -632,4 +632,8 @@ class Zoo {
 
     assertEquals "map", resolved.parameterList.parameters[0].name
   }
+
+  public void testResolveCategories() {
+    assertNotNull resolve("A.groovy")
+  }
 }

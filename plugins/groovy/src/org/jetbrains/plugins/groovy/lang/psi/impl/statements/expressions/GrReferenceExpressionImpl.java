@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
@@ -402,7 +403,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (resolved instanceof PsiMethod) {
         return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
       }
-      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
+      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     }
     PsiType result = null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -422,7 +423,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else
     if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-        return facade.getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
+        return facade.getElementFactory().createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
       }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
@@ -722,7 +723,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           return;
         }
       }
-      if (!ResolveUtil.processCategoryMembers(this, processor)) return;
     }
     else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(getProject()).getArrayClass();
@@ -738,6 +738,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       state = ResolveState.initial();
     }
 
+    if (!ResolveUtil.processCategoryMembers(this, processor)) return;
     ResolveUtil.processNonCodeMethods(qualifierType, processor, this, state);
   }
 

@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.ConcurrencyUtil;
@@ -154,6 +155,13 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
         myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
           public void extensionAdded(@NotNull final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
             synchronized (lock) {
+              if (bean.getKey() == null) {
+                if (pluginDescriptor != null) {
+                  throw new PluginException("No key specified for extension of class " + bean.getInstance().getClass(), pluginDescriptor.getPluginId());
+                }
+                LOG.error("No key specified for extension of class " + bean.getInstance().getClass());
+                return;
+              }
               myCache.remove(bean.getKey());
               for (ExtensionPointListener<T> listener : myListeners) {
                 listener.extensionAdded(bean.getInstance(), null);

@@ -18,6 +18,7 @@ package org.jetbrains.android.resourceManagers;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.android.AndroidFileTemplateProvider;
@@ -250,6 +252,9 @@ public class LocalResourceManager extends ResourceManager {
     if (resFile == null) return null;
     final Resources resources = loadDomElement(myModule, resFile, Resources.class);
     if (resources == null) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new IncorrectOperationException("invalid strings.xml");
+      }
       Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("not.resource.file.error", resourceFileName),
                                CommonBundle.getErrorTitle());
       return null;
@@ -267,22 +272,29 @@ public class LocalResourceManager extends ResourceManager {
     if (type.equals("string")) {
       return resources.addString();
     }
-    if (type.equals("dimen")) {
+    else if (type.equals("dimen")) {
       return resources.addDimen();
     }
-    if (type.equals("color")) {
+    else if (type.equals("color")) {
       return resources.addColor();
     }
-    if (type.equals("drawable")) {
+    else if (type.equals("drawable")) {
       return resources.addDrawable();
     }
-    if (type.equals("style")) {
+    else if (type.equals("style")) {
       return resources.addStyle();
     }
-    if (type.equals("array")) {
+    else if (type.equals("array")) {
+      // todo: choose among string-array, integer-array and array
       return resources.addStringArray();
     }
-    if (type.equals("id")) {
+    else if (type.equals("integer")) {
+      return resources.addInteger();
+    }
+    else if (type.equals("bool")) {
+      return resources.addBool();
+    }
+    else if (type.equals("id")) {
       Item item = resources.addItem();
       item.getType().setValue("id");
       return item;

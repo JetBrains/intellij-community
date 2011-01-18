@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -85,8 +86,13 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
      PsiDirectory dir = directory;
      String className = newName;
 
-     if (newName.contains(".")) {
-       String[] names = newName.split("\\.");
+    final String extension = StringUtil.getShortName(templateName);
+    if (StringUtil.isNotEmpty(extension)) {
+      className = StringUtil.trimEnd(className, "." + extension);
+    }
+
+    if (className.contains(".")) {
+       String[] names = className.split("\\.");
 
        for (int i = 0; i < names.length - 1; i++) {
          String name = names[i];

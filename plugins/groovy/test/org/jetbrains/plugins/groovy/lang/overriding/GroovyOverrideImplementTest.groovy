@@ -66,6 +66,25 @@ class Test {
 """
   }
 
+  public void testMethodTypeParameters() {
+    myFixture.addFileToProject "v.java", """
+class Base<E> {
+  public <T> T[] toArray(T[] t) {return (T[])new Object[0];}
+}
+"""
+    myFixture.configureByText "a.groovy", """
+class Test<T> extends Base<T> {<caret>}
+"""
+    generateImplementation(findMethod("Base", "toArray"))
+    myFixture.checkResult """
+class Test<T> extends Base<T> {
+  @Override def <T> T[] toArray(T[] t) {
+    return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
+  }
+}
+"""
+  }
+
   private def generateImplementation(PsiMethod method) {
     GrTypeDefinition clazz = ((PsiClassOwner) myFixture.file).classes[0]
     GroovyOverrideImplementUtil.generateImplementation myFixture.editor, myFixture.file, clazz, method, PsiSubstitutor.EMPTY

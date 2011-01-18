@@ -7,7 +7,7 @@ else b = 3
 2(3) READ o
 3(4) assertion: o instanceof String
 4(5) WRITE b
-5(17) element: Assignment expression MAYBE_RETURN
+5(18) element: Assignment expression MAYBE_RETURN
 6(7) READ o
 7(8) assertion: ! o instanceof String
 8(9,13) element: IF statement
@@ -19,4 +19,6 @@ else b = 3
 14(15) assertion: o instanceof Integer
 15(16) WRITE b
 16(17) element: Assignment expression MAYBE_RETURN
-17() element: null
+17(18) element: IF statement
+18(19) element: IF statement
+19() element: null

@@ -114,6 +114,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
                    tokenType.equals(JavaTokenType.AND)){
             if(isTrue(lhs)){
                 return rhsText;
+            } else if (isFalse(lhs) || isFalse(rhs)) {
+                return "false";
             } else{
                 return lhsText;
             }
@@ -298,7 +300,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
         private  boolean andExpressionIsPointless(PsiExpression lhs,
                                                   PsiExpression rhs){
-            return isTrue(lhs) || isTrue(rhs);
+            return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
         }
 
         private  boolean orExpressionIsPointless(PsiExpression lhs,

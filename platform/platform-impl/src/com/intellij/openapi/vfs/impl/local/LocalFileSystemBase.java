@@ -48,12 +48,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Nullable
   public VirtualFile findFileByPath(@NotNull String path) {
-    /*
-    if (File.separatorChar == '\\') {
-      if (path.indexOf('\\') >= 0) return null;
-    }
-    */
-
     String canonicalPath = getVfsCanonicalPath(path);
     if (canonicalPath == null) return null;
     return super.findFileByPath(canonicalPath);

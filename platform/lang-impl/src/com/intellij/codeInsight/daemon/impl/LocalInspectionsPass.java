@@ -244,7 +244,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     indicator.checkCanceled();
 
     myInfos = new ArrayList<HighlightInfo>();
-    addHighlightsFromResults(myInfos);
+    addHighlightsFromResults(myInfos, ignoreSuppressed);
   }
 
   private void visitPriorityElementsAndInit(@NotNull List<LocalInspectionTool> tools,
@@ -380,7 +380,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   public Collection<HighlightInfo> getHighlights() {
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
 
-    addHighlightsFromResults(highlights);
+    addHighlightsFromResults(highlights, true);
     return highlights;
   }
 
@@ -407,7 +407,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionTool tool,
-                                          boolean ignoreSuppressed,
+                                          final boolean ignoreSuppressed,
                                           @NotNull final ProgressIndicator indicator) {
     if (ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(descriptor.getPsiElement(), tool)) {
       return;
@@ -440,7 +440,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
             infos.clear();
-            createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor);
+            createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, ignoreSuppressed);
             for (HighlightInfo info : infos) {
               final EditorColorsScheme colorsScheme = getColorsScheme();
 
@@ -481,7 +481,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
         }
         else if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.INFO_ATTRIBUTES);
+          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
         }
         else {
           return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
@@ -490,6 +490,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
       case INFO:
         return HighlightInfoType.INFO;
+       case WEAK_WARNING:
+        return HighlightInfoType.WEAK_WARNING;
       case ERROR:
         return HighlightInfoType.WRONG_REF;
       case GENERIC_ERROR:
@@ -508,7 +510,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
   }
 
-  private void addHighlightsFromResults(final List<HighlightInfo> outInfos) {
+  private void addHighlightsFromResults(final List<HighlightInfo> outInfos, boolean ignoreSuppressed) {
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
@@ -523,7 +525,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         LocalInspectionTool tool = inspectionResult.tool;
         HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
         for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor);
+          createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor,
+                                        ignoreSuppressed);
         }
       }
     }
@@ -536,10 +539,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              Document documentRange,
                                              LocalInspectionTool tool,
                                              HighlightSeverity severity,
-                                             ProblemDescriptor descriptor) {
+                                             ProblemDescriptor descriptor, boolean ignoreSuppressed) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return;
-    if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) return;
+    if (ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) return;
     HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
     HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered);
     if (info == null) return;
@@ -677,7 +680,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     for (final LocalInspectionTool tool : tools) {
       indicator.checkCanceled();
-      if (host != null && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
+      if (host != null && ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(host, tool)) {
         continue;
       }
       ProblemsHolder holder = new ProblemsHolder(iManager, injectedPsi, isOnTheFly) {

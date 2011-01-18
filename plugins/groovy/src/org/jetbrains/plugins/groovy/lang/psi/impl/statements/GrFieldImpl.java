@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -54,14 +55,12 @@ import javax.swing.*;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField {
+public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
   private GrAccessorMethod mySetter;
   private GrAccessorMethod[] myGetters;
 
   private boolean mySetterInitialized = false;
   private boolean myGettersInitialized = false;
-
-  private volatile CachedValue<PsiType> myEnhancedType;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -75,8 +74,28 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     super(stub, nodeType);
   }
 
+  @Override
+  public PsiElement getParent() {
+    return getParentByStub();
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitField(this);
+  }
+
+  @Override
+  public GrTypeElement getTypeElementGroovy() {
+    final GrFieldStub stub = getStub();
+    if (stub != null) {
+      final String typeText = stub.getTypeText();
+      if (typeText == null) {
+        return null;
+      }
+
+      return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(typeText, this);
+    }
+
+    return super.getTypeElementGroovy();
   }
 
   public String toString() {
@@ -159,7 +178,6 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetterInitialized = myGettersInitialized = false;
     mySetter = null;
     myGetters = GrAccessorMethod.EMPTY_ARRAY;
-    myEnhancedType = null;
   }
 
   @NotNull

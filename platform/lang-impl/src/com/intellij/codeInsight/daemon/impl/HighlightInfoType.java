@@ -86,7 +86,12 @@ public interface HighlightInfoType {
   HighlightInfoType IMPLICIT_ANONYMOUS_CLASS_PARAMETER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
 
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
+  /**
+   * use #WEAK_WARNING instead
+   */
+  @Deprecated
   HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
+  HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
   HighlightSeverity INJECTED_FRAGMENT_SEVERITY = new HighlightSeverity("INJECTED_FRAGMENT_SEVERITY", HighlightSeverity.INFORMATION.myVal-1);
   HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
@@ -219,7 +224,8 @@ public interface HighlightInfoType {
              ? infoType.getAttributesKey()
              : severity == HighlightSeverity.ERROR
                ? CodeInsightColors.ERRORS_ATTRIBUTES
-               : severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES;
+               : severity == HighlightSeverity.WARNING ? CodeInsightColors.WARNINGS_ATTRIBUTES
+                                                       : severity == HighlightSeverity.WEAK_WARNING ? CodeInsightColors.WEAK_WARNING_ATTRIBUTES : CodeInsightColors.INFO_ATTRIBUTES;
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})

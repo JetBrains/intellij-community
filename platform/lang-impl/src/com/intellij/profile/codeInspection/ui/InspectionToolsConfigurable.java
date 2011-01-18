@@ -225,7 +225,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private void addProfile(InspectionProfileImpl model) {
     final String modelName = model.getName();
     final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
-    panel.reset();
     myPanel.add(modelName, panel);
     if (!myPanels.containsKey(modelName)) {
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
@@ -336,7 +335,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       final String profileName = profile.getName();
       final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, profileName, ((InspectionProfileImpl)profile).getModifiableModel());
       myPanels.put(profileName, panel);
-      panel.reset();
       myPanel.add(profileName, panel);
     }
     final InspectionProfileImpl inspectionProfile = getCurrentProfile();

@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -87,7 +88,7 @@ public class GantMemberContributor extends NonCodeMembersContributor {
     for (GrArgumentLabel label : GantUtils.getScriptTargets((GroovyFile)file)) {
       final String targetName = label.getName();
       if (targetName != null) {
-        final PsiNamedElement variable = new LightVariableBuilder(targetName, GrClosableBlock.GROOVY_LANG_CLOSURE, label).
+        final PsiNamedElement variable = new LightVariableBuilder(targetName, GroovyCommonClassNames.GROOVY_LANG_CLOSURE, label).
           setBaseIcon(GantIcons.GANT_TARGET);
         if (!ResolveUtil.processElement(processor, variable, state)) {
           return;

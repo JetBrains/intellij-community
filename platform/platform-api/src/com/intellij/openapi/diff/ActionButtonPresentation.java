@@ -16,35 +16,38 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 
-public class ActionButtonPresentation {
-  private final boolean myIsEnabled;
-  private final boolean myCloseDialog;
+public abstract class ActionButtonPresentation {
   private final String myName;
 
-  public static ActionButtonPresentation createApplyButton(){
-    return new ActionButtonPresentation(true, CommonBundle.getApplyButtonText(), true);
-  }
+  public static final ActionButtonPresentation APPLY = new ActionButtonPresentation(CommonBundle.getApplyButtonText()) {
+    @Override
+    public void run(DialogWrapper dialog) {
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
+  };
 
-  public ActionButtonPresentation(final boolean isEnabled, final String name, final boolean closeDialog) {
-    myIsEnabled = isEnabled;
+  public static ActionButtonPresentation CANCEL_WITH_PROMPT = new ActionButtonPresentation(CommonBundle.getCancelButtonText()) {
+    @Override
+    public void run(DialogWrapper dialog) {
+      if (Messages.showYesNoDialog(dialog.getRootPane(),
+                                   DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message"),
+                                   DiffBundle.message("cancel.visual.merge.dialog.title"),
+                                   Messages.getQuestionIcon()) == 0) {
+        dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      }
+    }
+  };
+
+  public ActionButtonPresentation(final String name) {
     myName = name;
-    myCloseDialog = closeDialog;
-  }
-
-  public boolean isEnabled() {
-    return myIsEnabled;
   }
 
   public String getName() {
     return myName;
   }
 
-  public boolean closeDialog() {
-    return myCloseDialog;
-  }
-
-  public void run(DiffViewer diffViewer){
-
-  }
+  public abstract void run(DialogWrapper dialog);
 }

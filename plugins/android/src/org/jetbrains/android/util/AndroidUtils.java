@@ -98,7 +98,6 @@ public class AndroidUtils {
   public static final String SYSTEM_RESOURCE_PACKAGE = "android";
   public static final String R_JAVA_FILENAME = "R.java";
   public static final String ANDROID_PACKAGE = "android";
-  public static final String CONTEXT = ANDROID_PACKAGE + ".content.Context";
   public static final String VIEW_CLASS_NAME = ANDROID_PACKAGE + ".view.View";
   public static final String PREFERENCE_CLASS_NAME = ANDROID_PACKAGE + ".preference.Preference";
   public static final String ANIMATION_PACKAGE = "android.view.animation";
@@ -378,7 +377,7 @@ public class AndroidUtils {
 
   public static void navigateTo(@NotNull PsiElement[] targets, @Nullable RelativePoint pointToShowPopup) {
     if (targets.length == 0) {
-      final JLabel renderer = HintUtil.createErrorLabel("Empty text");
+      final JComponent renderer = HintUtil.createErrorLabel("Empty text");
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
       if (pointToShowPopup != null) {
         popup.show(pointToShowPopup);
@@ -406,10 +405,9 @@ public class AndroidUtils {
     }
   }
 
-  @Nullable
-  public static String executeCommand(GeneralCommandLine commandLine) throws ExecutionException {
+  public static boolean executeCommand(GeneralCommandLine commandLine, final StringBuilder messageBuilder) throws ExecutionException {
+    LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
-    final StringBuilder messageBuilder = new StringBuilder();
     handler.addProcessListener(new ProcessAdapter() {
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
         messageBuilder.append(event.getText());
@@ -420,10 +418,12 @@ public class AndroidUtils {
       handler.waitFor();
     }
     catch (ProcessCanceledException e) {
-      return null;
+      return false;
     }
+    String message = messageBuilder.toString();
+    LOG.info(message);
     int exitCode = handler.getProcess().exitValue();
-    return exitCode != 0 ? messageBuilder.toString() : null;
+    return exitCode == 0;
   }
 
   public static void runExternalToolInSeparateThread(@NotNull final Project project,
@@ -436,23 +436,27 @@ public class AndroidUtils {
     });
   }
 
-  public static void runExternalTool(final Project project,
-                                     GeneralCommandLine commandLine,
-                                     ProcessHandler processHandler) {
+  @Nullable
+  public static String runExternalTool(final Project project,
+                                       GeneralCommandLine commandLine,
+                                       ProcessHandler processHandler) {
     String[] commands = commandLine.getCommands();
     String command = StringUtil.join(commands, " ");
     LOG.info("Execute: " + command);
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       processHandler.notifyTextAvailable(command + '\n', ProcessOutputTypes.STDOUT);
     }
+    StringBuilder messageBuilder = new StringBuilder();
     String result;
+    boolean success = false;
     try {
-      result = executeCommand(commandLine);
+      success = executeCommand(commandLine, messageBuilder);
+      result = messageBuilder.toString();
     }
     catch (ExecutionException e) {
       result = e.getMessage();
     }
-    if (result != null) {
+    if (result != null && !success) {
       final String errorMessage = result;
       if (processHandler != null) {
         processHandler.notifyTextAvailable(errorMessage + '\n', ProcessOutputTypes.STDERR);
@@ -466,6 +470,7 @@ public class AndroidUtils {
         });
       }
     }
+    return result;
   }
 
   public static String getSimpleNameByRelativePath(String relativePath) {

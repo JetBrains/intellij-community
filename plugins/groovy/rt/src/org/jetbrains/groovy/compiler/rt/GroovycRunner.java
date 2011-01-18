@@ -408,10 +408,6 @@ public class GroovycRunner {
     unit.addPhaseOperation(new CompilationUnit.PrimaryClassNodeOperation() {
       public void call(final SourceUnit source, final GeneratorContext context, final ClassNode node) throws CompilationFailedException {
         final String name = node.getNameWithoutPackage();
-        if ("package-info".equals(name)) {
-          return;
-        }
-
         System.out.println(PRESENTABLE_MESSAGE + "Generating stub for " + name);
         try {
           stubGenerator.generateClass(node);
@@ -435,7 +431,7 @@ public class GroovycRunner {
             catch (NoClassDefFoundError e) {
               final String ncdfe = e.getMessage();
               
-              throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name + "; try compiling " + ncdfe + " explicitly", e);
+              throw new RuntimeException("Groovyc error: " + ncdfe + " class not found while resolving class " + name, e);
             }
             catch (LinkageError e) {
               throw new RuntimeException("Problem loading class " + name, e);

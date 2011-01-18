@@ -825,6 +825,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
+  public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
+  public void testOnlyExceptionsInCatch() throws Throwable { doTest() }
+
+  public void testTopLevelClassesFromPackaged() throws Throwable {
+    myFixture.addClass "public class Fooooo {}"
+    final text = "package foo; class Bar { Fooo<caret> }"
+    def file = myFixture.addFileToProject("foo/Bar.java", text)
+    myFixture.configureFromExistingVirtualFile file.virtualFile
+    assertEmpty myFixture.completeBasic()
+    myFixture.checkResult text
+  }
+
   public void testRightShift() throws Throwable {
     configure()
     assertStringItems("myField1", "myField2");

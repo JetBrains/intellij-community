@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static com.intellij.psi.util.PsiUtil.substituteTypeParameter;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
@@ -88,9 +89,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         }
 
         PsiType overloadedOperatorType = null;
-        GroovyResolveResult[] candidates = TypesUtil.getOverloadedOperatorCandidates(thisType, "getAt", this, argTypes);
+        GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, argTypes);
         if (candidates.length != 1) {
-          candidates = TypesUtil.getOverloadedOperatorCandidates(thisType, "getAt", this, new PsiType[]{
+          candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", this, new PsiType[]{
             new GrTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), getResolveScope())});
         }
         if (candidates.length == 1) {

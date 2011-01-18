@@ -133,7 +133,7 @@ public class RollbackAction extends AnAction implements DumbAware {
       }
       myChangesSet = changes != null && changes.length > 0;
       if (myChangesSet) {
-        if (ChangesUtil.allChangesInOneList(project, changes)) {
+        if (ChangesUtil.allChangesInOneListOrWholeListsSelected(project, changes)) {
           myChanges = changes;
         }
       }

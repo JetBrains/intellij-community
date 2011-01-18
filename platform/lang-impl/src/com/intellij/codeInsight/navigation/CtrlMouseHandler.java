@@ -513,10 +513,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
         if (text == null) return;
 
-        JLabel label = HintUtil.createInformationLabel(text);
-        label.setUI(new MultiLineLabelUI());
-        Font FONT = UIUtil.getLabelFont();
-        label.setFont(FONT);
+        JComponent label = HintUtil.createInformationLabel(text);
         final LightweightHint hint = new LightweightHint(label);
         final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
         label.addMouseMotionListener(new MouseMotionAdapter() {

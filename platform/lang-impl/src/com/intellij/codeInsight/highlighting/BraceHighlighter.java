@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +77,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
         }
       }
     };
-    eventMulticaster.addSelectionListener(mySelectionListener);
+    eventMulticaster.addSelectionListener(mySelectionListener, myProject);
 
     DocumentListener documentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
@@ -101,7 +99,7 @@ public class BraceHighlighter extends AbstractProjectComponent {
         updateBraces(editor, myAlarm);
       }
     };
-    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener);
+    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener, myProject);
 
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
 
@@ -110,14 +108,6 @@ public class BraceHighlighter extends AbstractProjectComponent {
         myAlarm.cancelAllRequests();
       }
     }, myProject);
-
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-        ((EditorEventMulticasterEx)eventMulticaster).removeFocusChangeListner(myFocusChangeListener);
-        eventMulticaster.removeSelectionListener(mySelectionListener);
-      }
-    });
   }
 
   static void updateBraces(@NotNull final Editor editor, @NotNull final Alarm alarm) {

@@ -56,6 +56,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("an5.xml", "an5_after.xml");
   }
 
+  /*public void testCommonPrefixIdea63531() throws Throwable {
+    toTestCompletion("commonPrefixIdea63531.xml", "commonPrefixIdea63531_after.xml");
+  }*/
+
   public void testHighlighting() throws Throwable {
     doTestHighlighting("hl.xml");
   }
@@ -141,7 +145,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testLayoutAttributeValuesCompletion() throws Throwable {
-    doTestCompletionVariants("av10.xml", "fill_parent", "wrap_content", "@android:");
+    doTestCompletionVariants("av10.xml", "fill_parent", "match_parent", "wrap_content", "@android:");
     doTestCompletionVariants("av11.xml", "center", "center_horizontal", "center_vertical");
   }
 

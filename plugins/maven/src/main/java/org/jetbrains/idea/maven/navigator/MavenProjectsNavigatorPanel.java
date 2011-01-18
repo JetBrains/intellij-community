@@ -23,6 +23,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -159,7 +161,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     List<String> goals = extractGoals();
     if (file == null || goals == null) return null;
 
-    return new MavenGoalLocation(myProject, file, extractGoals());
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, extractGoals());
   }
 
   private List<String> extractGoals() {

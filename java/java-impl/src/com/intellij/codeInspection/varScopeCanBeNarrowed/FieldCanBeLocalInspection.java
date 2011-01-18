@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -190,7 +191,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          if (!(field.getType() instanceof PsiPrimitiveType) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
+          if (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
             PsiElement parent = body.getParent();
             if (!(parent instanceof PsiMethod) ||
                 !((PsiMethod)parent).isConstructor() ||
@@ -206,6 +207,16 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     catch (AnalysisCanceledException e) {
       candidates.clear();
     }
+  }
+
+  private static boolean isImmutableState(PsiType type) {
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+    if (PsiPrimitiveType.getUnboxedType(type) != null) {
+      return true;
+    }
+    return Comparing.strEqual(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
   }
 
   private static Collection<PsiVariable> getWrittenVariables(ControlFlow controlFlow, Ref<Collection<PsiVariable>> writtenVariables) {

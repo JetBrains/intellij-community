@@ -111,7 +111,7 @@ public class ExtractMethodUtil {
   static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
     ArrayList<String> conflicts = new ArrayList<String>();
     GrMemberOwner owner = helper.getOwner();
-    PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.class);
+    PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.ARRAY_FACTORY);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
       public int computeHashCode(PsiMethod method) {
         return method.getSignature(PsiSubstitutor.EMPTY).hashCode();

@@ -42,7 +42,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -206,57 +205,54 @@ public class GroovyCompletionUtil {
 
   public static List<Object> getCompletionVariants(GroovyResolveResult[] candidates) {
     List<Object> result = CollectionFactory.arrayList();
-    Outer:
     for (GroovyResolveResult candidate : candidates) {
-      final PsiElement element = candidate.getElement();
-      final PsiElement context = candidate.getCurrentFileResolveContext();
-      if (context instanceof GrImportStatement && element != null) {
-        final String importedName = ((GrImportStatement)context).getImportedName();
-        if (importedName != null) {
-          final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
-          if (importReference != null) {
-            for (GroovyResolveResult r : importReference.multiResolve(false)) {
-              final PsiElement resolved = r.getElement();
-              if (context.getManager().areElementsEquivalent(resolved, element)) {
-                result.add(generateLookupForImportedElement(candidate, importedName));
-                continue Outer;
-              }
-              else {
-                if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                  result.add(generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName)));
-                  continue Outer;
-                }
-              }
+      result.add(createCompletionVariant(candidate));
+    }
 
+    return result;
+  }
+
+  public static Object createCompletionVariant(GroovyResolveResult candidate) {
+    final PsiElement element = candidate.getElement();
+    final PsiElement context = candidate.getCurrentFileResolveContext();
+    if (context instanceof GrImportStatement && element != null) {
+      final String importedName = ((GrImportStatement)context).getImportedName();
+      if (importedName != null) {
+        final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
+        if (importReference != null) {
+          for (GroovyResolveResult r : importReference.multiResolve(false)) {
+            final PsiElement resolved = r.getElement();
+            if (context.getManager().areElementsEquivalent(resolved, element)) {
+              return generateLookupForImportedElement(candidate, importedName);
+            }
+            else {
+              if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
+                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+              }
             }
           }
         }
       }
-      else if (element instanceof PsiMethod) {
-        final PsiMethod method;
-        if (ResolveUtil.isInUseScope(candidate)) {
-          method = generateMethodInCategory(candidate);
-        }
-        else {
-          method = (PsiMethod)element;
-        }
-        result.add(setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate,
-                                                                                                      ((PsiMethod)element).getName())));
-        continue;
+    }
+    else if (element instanceof PsiMethod) {
+      final PsiMethod method;
+      if (ResolveUtil.isInUseScope(candidate)) {
+        method = generateMethodInCategory(candidate);
       }
-      if (element instanceof PsiClass) {
-        result.add(createClassLookupItem((PsiClass)element));
-        continue;
+      else {
+        method = (PsiMethod)element;
       }
-
-      if (element instanceof PsiNamedElement) {
-        result.add(setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create((PsiNamedElement)element)));
-        continue;
-      }
-      result.add(element);
+      return setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
+    }
+    if (element instanceof PsiClass) {
+      return createClassLookupItem((PsiClass)element);
     }
 
-    return result;
+    if (element instanceof PsiNamedElement) {
+      return setupLookupBuilder(element, candidate.getSubstitutor(),
+                                LookupElementBuilder.create(candidate, ((PsiNamedElement)element).getName()));
+    }
+    return candidate;
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {

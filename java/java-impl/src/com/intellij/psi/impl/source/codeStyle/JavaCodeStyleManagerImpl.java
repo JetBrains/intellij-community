@@ -52,6 +52,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
+  @NonNls private static final String SET_PREFIX = "set";
 
   private final Project myProject;
 
@@ -768,6 +769,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               if (TypeConversionUtil.areTypesAssignmentCompatible(parms[index].getType(), expr)) {
                 name = variableNameToPropertyName(name, VariableKind.PARAMETER);
                 String[] names = getSuggestionsByName(name, variableKind, false);
+                if (expressions.length == 1) {
+                  final String methodName = method.getName();
+                  String[] words = NameUtil.nameToWords(methodName);
+                  if (words.length > 0) {
+                    final String firstWord = words[0];
+                    if (SET_PREFIX.equals(firstWord)) {
+                      final String propertyName = methodName.substring(firstWord.length());
+                      final String[] setterNames = getSuggestionsByName(propertyName, variableKind, false);
+                      names = ArrayUtil.mergeArrays(names, setterNames, String.class);
+                    }
+                  }
+                }
                 return new NamesByExprInfo(name, names);
               }
             }

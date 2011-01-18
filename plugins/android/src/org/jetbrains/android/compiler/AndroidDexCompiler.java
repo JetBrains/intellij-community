@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,6 +40,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,13 +74,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
   @NotNull
   public ProcessingItem[] getProcessingItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      //saveDocuments();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return ProcessingItem.EMPTY_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
@@ -134,8 +130,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
 
     public ProcessingItem[] compute() {
-      CompileScope compileScope = myContext.getCompileScope();
-      Module[] modules = compileScope.getAffectedModules();
+      Module[] modules = ModuleManager.getInstance(myContext.getProject()).getModules();
       List<ProcessingItem> items = new ArrayList<ProcessingItem>();
       for (Module module : modules) {
         AndroidFacet facet = FacetManager.getInstance(module).getFacetByType(AndroidFacet.ID);
@@ -145,27 +140,25 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
           if (outputDir != null) {
             AndroidFacetConfiguration configuration = facet.getConfiguration();
             AndroidPlatform platform = configuration.getAndroidPlatform();
-            if (platform != null) {
-              Set<VirtualFile> files = new HashSet<VirtualFile>();
-              addModuleOutputDir(files, outputDir);
-              files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
-              for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
-                addModuleOutputDir(files, file);
-              }
-              VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
-              if (outputDirForTests != null) {
-                addModuleOutputDir(files, outputDirForTests);
-              }
-              IAndroidTarget target = configuration.getAndroidTarget();
-              if (target != null) {
-                //Set<String> excludedFiles = new HashSet<String>();
-                //collectClassFilesInLibraryModules(facet, excludedFiles);
-
-                outputDir = getOutputDirectoryForDex(module);
-
-                items.add(new DexItem(module, outputDir, target, files, Collections.<String>emptySet()));
-              }
+            if (platform == null) {
+              myContext.addMessage(CompilerMessageCategory.ERROR,
+                                   AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+              continue;
             }
+            Set<VirtualFile> files = new HashSet<VirtualFile>();
+            addModuleOutputDir(files, outputDir);
+            files.addAll(AndroidRootUtil.getExternalLibraries(module, platform.getLibrary()));
+            for (VirtualFile file : AndroidRootUtil.getDependentModules(module, outputDir)) {
+              addModuleOutputDir(files, file);
+            }
+            VirtualFile outputDirForTests = extension.getCompilerOutputPathForTests();
+            if (outputDirForTests != null) {
+              addModuleOutputDir(files, outputDirForTests);
+            }
+
+            outputDir = getOutputDirectoryForDex(module);
+
+            items.add(new DexItem(module, outputDir, platform.getTarget(), files, Collections.<String>emptySet()));
           }
         }
       }

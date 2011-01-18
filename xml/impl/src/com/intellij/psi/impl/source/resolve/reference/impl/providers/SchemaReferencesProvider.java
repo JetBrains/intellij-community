@@ -521,7 +521,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       processor.namespace = namespace;
 
       final XmlNSDescriptorImpl xmlNSDescriptor = ((XmlNSDescriptorImpl)nsDescriptor);
-      xmlNSDescriptor.processTagsInNamespace(
+      XmlNSDescriptorImpl.processTagsInNamespace(
         xmlNSDescriptor.getTag(),
         tagNames,
         processor

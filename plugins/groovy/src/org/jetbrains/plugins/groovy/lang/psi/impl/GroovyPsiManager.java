@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ConcurrencyUtil;
@@ -37,7 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ven
@@ -91,15 +96,48 @@ public class GroovyPsiManager {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
+
+  private final ThreadLocal<Multiset<GroovyPsiElement>> inferring = new ThreadLocal<Multiset<GroovyPsiElement>>(){
+    @Override
+    protected Multiset<GroovyPsiElement> initialValue() {
+      return HashMultiset.create();
+    }
+  };
+
+  private boolean lock(GroovyPsiElement element) {
+    final Multiset<GroovyPsiElement> set = inferring.get();
+    boolean alreadyContains = set.contains(element);
+    inferring.get().add(element);
+    return alreadyContains;
+  }
+
+  private void unlock(GroovyPsiElement element) {
+    inferring.get().remove(element);
+  }
+
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(T element, Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);
     if (type == null) {
-      type = calculator.fun(element);
-      if (type == null) {
-        type = PsiType.NULL;
+      try {
+        boolean locked = lock(element);
+        type = calculator.fun(element);
+        if (type == null) {
+          type = PsiType.NULL;
+        }
+        if (locked) {
+          final PsiType alreadyInferred = myCalculatedTypes.get(element);
+          if (alreadyInferred != null) {
+            type = alreadyInferred;
+          }
+        }
+        else {
+          type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
+        }
       }
-      type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, element, type);
+      finally {
+        unlock(element);
+      }
     }
     if (!type.isValid()) {
       LOG.error("Type is invalid: " + type + "; element: " + element + " of class " + element.getClass());

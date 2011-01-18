@@ -31,7 +31,7 @@ import java.util.Collections;
 public class IntegerConverter extends ResolvingConverter<String> {
   public static final IntegerConverter INSTANCE = new IntegerConverter();
 
-  private IntegerConverter() {
+  public IntegerConverter() {
   }
 
   @NotNull

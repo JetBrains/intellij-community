@@ -31,6 +31,8 @@ public class SMTRunnerEventsAdapter implements SMTRunnerEventsListener {
   public void onTestFailed(@NotNull final SMTestProxy test) {}
   public void onTestIgnored(@NotNull final SMTestProxy test) {}
 
+  public void onFinish() {}
+
   public void onSuiteStarted(@NotNull final SMTestProxy suite) {}
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {}
 

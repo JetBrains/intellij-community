@@ -18,6 +18,7 @@ package com.intellij.ide.browsers.firefox;
 import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -79,10 +80,10 @@ public class FirefoxSettings extends BrowserSpecificSettings {
     final List<FirefoxProfile> profiles = FirefoxUtil.computeProfiles(getProfilesIniFile());
     if (profiles.size() >= 2) {
       final FirefoxProfile profile = FirefoxUtil.findProfileByNameOrDefault(myProfile, profiles);
-      if (profile != null) {
+      if (profile != null && !profile.isDefault()) {
         return new String[] {"-P", profile.getName()};
       }
     }
-    return super.getAdditionalParameters();
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

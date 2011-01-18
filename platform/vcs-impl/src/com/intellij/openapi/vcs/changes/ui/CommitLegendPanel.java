@@ -18,14 +18,11 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author max
@@ -92,10 +89,6 @@ public class CommitLegendPanel {
     myHeadingPanel = (JPanel)SeparatorFactory.createSeparator(VcsBundle.message("commit.legend.summary"), null);
   }
 
-  private interface Filter<T> {
-    boolean matches(T item);
-  }
-
   private static void updateCategory(JLabel totalLabel,
                                      JLabel includedLabel,
                                      int totalCnt,
@@ -121,69 +114,5 @@ public class CommitLegendPanel {
     int getIncludedNew();
     int getIncludedModified();
     int getIncludedDeleted();
-  }
-
-  public static class ChangeInfoCalculator implements InfoCalculator {
-    private List<Change> myDisplayedChanges;
-    private List<Change> myIncludedChanges;
-
-    public ChangeInfoCalculator() {
-      myDisplayedChanges = Collections.emptyList();
-      myIncludedChanges = Collections.emptyList();
-    }
-
-    public void update(final List<Change> displayedChanges, final List<Change> includedChanges) {
-      myDisplayedChanges = displayedChanges;
-      myIncludedChanges = includedChanges;
-    }
-
-    public int getNew() {
-      return countMatchingItems(myDisplayedChanges, NEW_FILTER);
-    }
-
-    public int getModified() {
-      return countMatchingItems(myDisplayedChanges, MODIFIED_FILTER);
-    }
-
-    public int getDeleted() {
-      return countMatchingItems(myDisplayedChanges, DELETED_FILTER);
-    }
-
-    public int getIncludedNew() {
-      return countMatchingItems(myIncludedChanges, NEW_FILTER);
-    }
-
-    public int getIncludedModified() {
-      return countMatchingItems(myIncludedChanges, MODIFIED_FILTER);
-    }
-
-    public int getIncludedDeleted() {
-      return countMatchingItems(myIncludedChanges, DELETED_FILTER);
-    }
-
-    private static final Filter<Change> MODIFIED_FILTER = new Filter<Change>() {
-      public boolean matches(final Change item) {
-        return item.getType() == Change.Type.MODIFICATION || item.getType() == Change.Type.MOVED;
-      }
-    };
-    private static final Filter<Change> NEW_FILTER = new Filter<Change>() {
-      public boolean matches(final Change item) {
-        return item.getType() == Change.Type.NEW;
-      }
-    };
-    private static final Filter<Change> DELETED_FILTER = new Filter<Change>() {
-      public boolean matches(final Change item) {
-        return item.getType() == Change.Type.DELETED;
-      }
-    };
-
-    private static <T> int countMatchingItems(List<T> items, Filter<T> filter) {
-      int count = 0;
-      for (T item : items) {
-        if (filter.matches(item)) count++;
-      }
-
-      return count;
-    }
   }
 }

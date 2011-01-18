@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -60,6 +60,11 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     init();
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
+  }
+
   private static Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
     final HashMap<AbstractVcs, Configurable> result = new HashMap<AbstractVcs, Configurable>();
     for (Configurable configurable : confs.keySet()) {
@@ -69,6 +74,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   protected abstract String getRealTitle();
+  protected abstract String getActionNameForDimensions();
 
   private void addComponent(AbstractVcs vcs, Configurable configurable, String constraint) {
     myEnvToConfMap.put(vcs, configurable);

@@ -47,6 +47,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -418,6 +419,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
       }
     }
+    else if (dialog != null) {
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
     return AnnotationPlace.IN_CODE;
   }
 
@@ -434,7 +438,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     else if (entry instanceof ModuleSourceOrderEntry) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
       model.setRootUrls(AnnotationOrderRootType.getInstance(), ArrayUtil.mergeArrays(
-        model.getRootUrls(AnnotationOrderRootType.getInstance()), new String[]{vFile.getUrl()}, String.class));
+        model.getRootUrls(AnnotationOrderRootType.getInstance()), new String[]{vFile.getUrl()}, ArrayUtil.STRING_ARRAY_FACTORY));
       model.commit();
     }
     else if (entry instanceof JdkOrderEntry) {

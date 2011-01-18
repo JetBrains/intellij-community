@@ -23,7 +23,6 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeDefinitionElementType;
 
 /**
  * @author ilyas
@@ -41,7 +40,7 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
     isScript = file.isScript();
     final GrPackageDefinition definition = file.getPackageDefinition();
     if (definition != null) {
-      myAnnotations = GrTypeDefinitionElementType.getAnnotationNames(definition);
+      myAnnotations = GrStubUtils.getAnnotationNames(definition);
     } else {
       myAnnotations = ArrayUtil.EMPTY_STRING_ARRAY;
     }

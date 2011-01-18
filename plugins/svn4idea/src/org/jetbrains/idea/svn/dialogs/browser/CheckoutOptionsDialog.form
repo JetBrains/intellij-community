@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.jetbrains.idea.svn.dialogs.browser.CheckoutOptionsDialog">
   <grid id="c0dc8" binding="myTopPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
-      <xy x="10" y="10" width="397" height="149"/>
+      <xy x="10" y="10" width="437" height="149"/>
     </constraints>
     <properties/>
     <border type="none">
@@ -64,7 +64,7 @@
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
             </constraints>
           </nested-form>
-          <component id="13941" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo">
+          <component id="13941" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo" custom-create="true">
             <constraints>
               <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
@@ -81,7 +81,7 @@
               <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
             </properties>
           </component>
-          <scrollpane class="com.intellij.ui.components.JBScrollPane" id="cd7a3">
+          <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
               <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>

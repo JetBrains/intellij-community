@@ -15,15 +15,18 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
@@ -32,14 +35,24 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class CommitMessage extends JPanel implements Disposable {
 
+  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
+  private final Project         myProject;
 
   public CommitMessage(Project project) {
     super(new BorderLayout());
-    myEditorField = createEditorField(project);
+    boolean checkSpelling = true;
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    if (configuration != null) {
+      checkSpelling = configuration.CHECK_COMMIT_MESSAGE_SPELLING;
+    }
+    myEditorField = createEditorField(project, checkSpelling);
+    myProject = project;
     
     // Note that we assume here that editor used for commit message processing uses font family implied by LAF (in contrast,
     // IJ code editor uses monospaced font). Hence, we don't need any special actions here
@@ -64,11 +77,17 @@ public class CommitMessage extends JPanel implements Disposable {
     setBorder(BorderFactory.createEmptyBorder());
   }
 
-  private static EditorTextField createEditorField(final Project project) {
+  private static EditorTextField createEditorField(final Project project, final boolean checkSpelling) {
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    return service.getEditorField(
-      FileTypes.PLAIN_TEXT.getLanguage(), project, EditorCustomization.Feature.SOFT_WRAP, EditorCustomization.Feature.SPELL_CHECK
+    Set<EditorCustomization.Feature> features = EnumSet.of(EditorCustomization.Feature.SOFT_WRAP);
+    if (checkSpelling) {
+      features.add(EditorCustomization.Feature.SPELL_CHECK);
+    }
+    EditorTextField editorField = service.getEditorField(
+      FileTypes.PLAIN_TEXT.getLanguage(), project, features.toArray(new EditorCustomization.Feature[features.size()])
     );
+    editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
+    return editorField;
   }
 
   @Nullable
@@ -98,6 +117,26 @@ public class CommitMessage extends JPanel implements Disposable {
     myEditorField.selectAll();
   }
 
+  public void setCheckSpelling(boolean check) {
+    Editor editor = myEditorField.getEditor();
+    if (!(editor instanceof EditorEx)) {
+      return;
+    }
+    EditorEx editorEx = (EditorEx)editor;
+    EditorCustomization[] customizations = Extensions.getExtensions(EditorCustomization.EP_NAME, myProject);
+    EditorCustomization.Feature feature = EditorCustomization.Feature.SPELL_CHECK;
+    for (EditorCustomization customization : customizations) {
+      if (customization.getSupportedFeatures().contains(feature)) {
+        if (check) {
+          customization.addCustomization(editorEx, feature);
+        }
+        else {
+          customization.removeCustomization(editorEx, feature);
+        }
+      }
+    }
+  }
+  
   public void dispose() {
   }
 }

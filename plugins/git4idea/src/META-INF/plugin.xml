@@ -57,6 +57,7 @@
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
+      <action id="Git.Gc" class="git4idea.actions.GitGcAction" text="Run Garbage Collector"/>
       <separator/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
@@ -107,6 +108,9 @@
     <projectService
         serviceInterface="git4idea.branch.GitBranches"
         serviceImplementation="git4idea.branch.GitBranches"/>
+    <projectService
+        serviceInterface="git4idea.DialogManager"
+        serviceImplementation="git4idea.DialogManager"/>
 
     <applicationService
         serviceInterface="git4idea.config.GitVcsApplicationSettings"

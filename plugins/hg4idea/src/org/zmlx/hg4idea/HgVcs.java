@@ -25,7 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryChangeListener;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -99,7 +102,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
-  private boolean started = false;
   private HgVFSListener myVFSListener;
   private RepositoryChangeListener myDirStateChangeListener;
   private final HgMergeProvider myMergeProvider;
@@ -136,38 +138,22 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public ChangeProvider getChangeProvider() {
-    if (!started) {
-      return null;
-    }
-
     return changeProvider;
   }
 
   @Nullable
   @Override
   public RollbackEnvironment createRollbackEnvironment() {
-    if (!started) {
-      return null;
-    }
-
     return rollbackEnvironment;
   }
 
   @Override
   public DiffProvider getDiffProvider() {
-    if (!started) {
-      return null;
-    }
-
     return diffProvider;
   }
 
   @Override
   public VcsHistoryProvider getVcsHistoryProvider() {
-    if (!started) {
-      return null;
-    }
-
     return historyProvider;
   }
 
@@ -179,19 +165,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   @Override
   public CheckinEnvironment createCheckinEnvironment() {
-    if (!started) {
-      return null;
-    }
-
     return checkinEnvironment;
   }
 
   @Override
   public AnnotationProvider getAnnotationProvider() {
-    if (!started) {
-      return null;
-    }
-
     return annotationProvider;
   }
 
@@ -203,27 +181,16 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   @Override
   public UpdateEnvironment createUpdateEnvironment() {
-    if (!started) {
-      return null;
-    }
-
     return updateEnvironment;
   }
 
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
-    if (!started) {
-      return null;
-    }
-
     return integrateEnvironment;
   }
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    if (!started) {
-      return null;
-    }
     return null;
 //    return commitedChangesProvider;
   }
@@ -270,23 +237,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return HgUtil.getNearestHgRoot(dir) != null;
   }
 
-  public boolean isStarted() {
-    return started;
-  }
-
-  @Override
-  protected void shutdown() throws VcsException {
-    started = false;
-  }
-
   @Override
   public void activate() {
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getExecutableValidator().checkExecutableAndShowDialogIfNeeded();
     }
-    started = true;
-
     // status bar
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
@@ -340,10 +296,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void deactivate() {
-    if (!started) {
-      return;
-    }
-
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {
       messageBusConnection.disconnect();

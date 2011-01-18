@@ -84,6 +84,19 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private boolean myUseSoftWraps;
 
   /**
+   * Standard IJ editor starts showing horizontal scroll bar event when text line ends couple of symbols before the right visual
+   * area edge (exact value of columns to use for such preliminary scrolling is identified by
+   * {@link EditorSettings#getAdditionalColumnsCount() additionalColumnsCount} value).
+   * <p/>
+   * However, we want to avoid using horizontal scrolling within soft wraps whenever possible. Hence, we set that additional
+   * columns property to zero when soft wraps are used and restore it if soft wraps are turned off.
+   * <p/>
+   * Current field holds initial <code>'additional columns count'</code> property value that is to be restored if
+   * soft wraps are turned off.
+   */
+  private int myAdditionalColumnsCount;
+
+  /**
    * Soft wraps need to be kept up-to-date on all editor modification (changing text, adding/removing/expanding/collapsing fold
    * regions etc). Hence, we need to react to all types of target changes. However, soft wraps processing uses various information
    * provided by editor and there is a possible case that that information is inconsistent during update time (e.g. fold model 
@@ -93,6 +106,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * Current field serves as a flag that indicates if all preliminary actions necessary for successful soft wraps processing is done. 
    */
   private boolean myUpdateInProgress;
+
+  /**
+   * There is a possible case that target document is changed while its editor is inactive (e.g. user opens two editors for classes
+   * <code>'Part'</code> and <code>'Whole'</code>; activates editor for the class <code>'Whole'</code> and performs 'rename class'
+   * for <code>'Part'</code> from it). Soft wraps cache is not recalculated during that because corresponding editor is not shown
+   * and we lack information about visible area width. Hence, we will need to recalculate the whole soft wraps cache as soon
+   * as target editor becomes visible.
+   * <p/>
+   * Current field serves as a flag for that <code>'dirty document, need complete soft wraps cache recalculation'</code> state. 
+   */
+  private boolean myDirty;
 
   public SoftWrapModelImpl(@NotNull EditorEx editor) {
     this(editor, new SoftWrapsStorage(), new CompositeSoftWrapPainter(editor));
@@ -128,7 +152,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     myDocumentListeners.add(myApplianceManager);
     myFoldListeners.add(myApplianceManager);
     applianceManager.addListener(myVisualSizeManager);
-    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    EditorSettings settings = myEditor.getSettings();
+    myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
+    myUseSoftWraps = settings.isUseSoftWraps();
   }
 
   /**
@@ -136,9 +162,15 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    */
   public void reinitSettings() {
     boolean softWrapsUsedBefore = myUseSoftWraps;
-    myUseSoftWraps = myEditor.getSettings().isUseSoftWraps();
+    EditorSettings settings = myEditor.getSettings();
+    myUseSoftWraps = settings.isUseSoftWraps();
     if (myUseSoftWraps && !softWrapsUsedBefore) {
       myApplianceManager.reset();
+      myAdditionalColumnsCount = settings.getAdditionalColumnsCount();
+      settings.setAdditionalColumnsCount(0);
+    }
+    else if (!myUseSoftWraps && softWrapsUsedBefore) {
+      settings.setAdditionalColumnsCount(myAdditionalColumnsCount);
     }
   }
 
@@ -375,6 +407,11 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return useSoftWraps;
     }
 
+    if (myDirty) {
+      myApplianceManager.reset();
+      myDirty = false;
+    }
+    
     myApplianceManager.recalculateIfNecessary();
     return true;
     //
@@ -505,6 +542,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   public void beforeDocumentChange(DocumentEvent event) {
     myUpdateInProgress = true;
     if (!isSoftWrappingEnabled()) {
+      myDirty = true;
       return;
     }
     for (DocumentListener listener : myDocumentListeners) {
@@ -527,6 +565,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
     myUpdateInProgress = true;
     if (!isSoftWrappingEnabled() || !region.isValid()) {
+      myDirty = true;
       return;
     }
     for (FoldingListener listener : myFoldListeners) {

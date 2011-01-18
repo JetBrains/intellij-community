@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class GroovyOverrideImplementUtil {
       final PsiMethod method = (PsiMethod)info.getElement();
       if (method != null) {
         final PsiClass psiClass = method.getContainingClass();
-        if (psiClass != null && GrTypeDefinition.DEFAULT_BASE_CLASS_NAME.equals(psiClass.getQualifiedName())) {
+        if (psiClass != null && GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(psiClass.getQualifiedName())) {
           iterator.remove();
         }
       }
@@ -251,14 +252,33 @@ public class GroovyOverrideImplementUtil {
     StringBuffer buffer = new StringBuffer();
     final boolean hasModifiers = writeMethodModifiers(buffer, superMethod.getModifierList(), GROOVY_MODIFIERS);
 
+    final PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
+    final List<PsiTypeParameter> typeParameters = new ArrayList<PsiTypeParameter>();
+    final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+    for (PsiTypeParameter parameter : superTypeParameters) {
+      if (!map.containsKey(parameter)) {
+        typeParameters.add(parameter);
+      }
+    }
+
     final PsiType returnType = substitutor.substitute(getSuperReturnType(superMethod));
-    if (!hasModifiers && returnType == null) {
+    if (!hasModifiers && returnType == null || typeParameters.size() > 0) {
       buffer.append("def ");
     }
 
+    if (typeParameters.size() > 0) {
+      buffer.append('<');
+      for (PsiTypeParameter parameter : typeParameters) {
+        buffer.append(parameter.getText());
+        buffer.append(", ");
+      }
+      buffer.replace(buffer.length() - 2, buffer.length(), ">");
+    }
+
     if (superMethod.isConstructor()) {
-       buffer.append(aClass.getName());
-    } else {
+      buffer.append(aClass.getName());
+    }
+    else {
       if (returnType != null) {
         buffer.append(returnType.getCanonicalText()).append(" ");
       }
@@ -276,7 +296,8 @@ public class GroovyOverrideImplementUtil {
       final String paramName = parameter.getName();
       if (paramName != null) {
         buffer.append(paramName);
-      } else if (parameter instanceof PsiCompiledElement) {
+      }
+      else if (parameter instanceof PsiCompiledElement) {
         buffer.append(((PsiParameter)((PsiCompiledElement)parameter).getMirror()).getName());
       }
     }
@@ -352,7 +373,7 @@ public class GroovyOverrideImplementUtil {
     methodsToImplement = ContainerUtil.findAll(methodsToImplement, new Condition<CandidateInfo>() {
       public boolean value(CandidateInfo candidateInfo) {
         //noinspection ConstantConditions
-        return !GrTypeDefinition.DEFAULT_BASE_CLASS_NAME
+        return !GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME
           .equals(((PsiMethod)candidateInfo.getElement()).getContainingClass().getQualifiedName());
       }
     });

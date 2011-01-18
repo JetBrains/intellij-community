@@ -26,4 +26,32 @@ public class UnnecessaryBoxing {
         return foo == null ? Integer.valueOf(0) : bar;
     }
 
+    void noUnboxing(Object val) {
+        if (val == Integer.valueOf(0)) {
+
+        } else if (Integer.valueOf(1) == val) {}
+        boolean b = true;
+        Boolean.valueOf(b).toString();
+    }
+
+    public Integer getBar() {
+        return null;
+    }
+
+    void doItNow(UnnecessaryBoxing foo) {
+        Integer bla = foo == null ? Integer.valueOf(0) : foo.getBar();
+    }
+
+    private int i;
+
+    private String s;
+
+    public <T>T get(Class<T> type) {
+        if (type == Integer.class) {
+            return (T) new Integer(i);
+        } else if (type == String.class) {
+            return (T) s;
+        }
+        return null;
+    }
 }

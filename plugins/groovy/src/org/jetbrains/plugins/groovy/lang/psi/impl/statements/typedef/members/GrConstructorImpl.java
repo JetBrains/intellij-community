@@ -19,18 +19,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 26.03.2007
  */
 public class GrConstructorImpl extends GrMethodBaseImpl implements GrConstructor {
   public GrConstructorImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  public GrConstructorImpl(GrMethodStub stub) {
+    super(stub, GroovyElementTypes.CONSTRUCTOR_DEFINITION);
   }
 
   public String toString() {

@@ -101,7 +101,7 @@ public class CharsetToolkit {
    *
    * @param buffer the byte buffer of which we want to know the encoding.
    */
-  public CharsetToolkit(byte[] buffer) {
+  public CharsetToolkit(@NotNull byte[] buffer) {
     this.buffer = buffer;
     defaultCharset = getDefaultSystemCharset();
   }
@@ -112,7 +112,7 @@ public class CharsetToolkit {
    * @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
    */
-  public CharsetToolkit(byte[] buffer, Charset defaultCharset) {
+  public CharsetToolkit(@NotNull byte[] buffer, Charset defaultCharset) {
     this.buffer = buffer;
     if (defaultCharset != null)
       this.defaultCharset = defaultCharset;
@@ -142,7 +142,6 @@ public class CharsetToolkit {
 
   /**
    * Retrieves the default Charset
-   * @return
    */
   public Charset getDefaultCharset() {
     return defaultCharset;
@@ -197,7 +196,8 @@ public class CharsetToolkit {
     return null;
   }
 
-  public static String bytesToString(final byte[] bytes) {
+  @NotNull
+  public static String bytesToString(@NotNull byte[] bytes) {
     Charset charset = new CharsetToolkit(bytes, EncodingManager.getInstance().getDefaultCharset()).guessEncoding(bytes.length);
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
@@ -209,6 +209,8 @@ public class CharsetToolkit {
     VALID_UTF8,
     INVALID_UTF8,
   }
+
+  @NotNull
   public GuessedEncoding guessFromContent(int guess_length) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
@@ -303,11 +305,11 @@ public class CharsetToolkit {
     return guessEncoding(guess_length, defaultCharset);
   }
 
-  public static Charset guessEncoding(File f, int bufferLength) throws IOException {
+  public static Charset guessEncoding(@NotNull File f, int bufferLength) throws IOException {
     return guessEncoding(f, bufferLength, EncodingManager.getInstance().getDefaultCharset());
   }
 
-  public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws IOException {
+  public static Charset guessEncoding(@NotNull File f, int bufferLength, Charset defaultCharset) throws IOException {
     FileInputStream fis = new FileInputStream(f);
     byte[] buffer = new byte[bufferLength];
     int read;
@@ -403,7 +405,7 @@ public class CharsetToolkit {
    * @param bom a buffer.
    * @return true if the buffer has a BOM for UTF8.
    */
-  public static boolean hasUTF8Bom(byte[] bom) {
+  public static boolean hasUTF8Bom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF8_BOM);
   }
 
@@ -414,7 +416,7 @@ public class CharsetToolkit {
    * @param bom a buffer.
    * @return true if the buffer has a BOM for UTF-16 Low Endian.
    */
-  public static boolean hasUTF16LEBom(byte[] bom) {
+  public static boolean hasUTF16LEBom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF16LE_BOM);
   }
 
@@ -425,7 +427,7 @@ public class CharsetToolkit {
    * @param bom a buffer.
    * @return true if the buffer has a BOM for UTF-16 Big Endian.
    */
-  public static boolean hasUTF16BEBom(byte[] bom) {
+  public static boolean hasUTF16BEBom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF16BE_BOM);
   }
 
@@ -435,11 +437,14 @@ public class CharsetToolkit {
    *
    * @return an array of <code>Charset</code>s.
    */
+  @NotNull
   public static Charset[] getAvailableCharsets() {
     Collection<Charset> collection = Charset.availableCharsets().values();
     return collection.toArray(new Charset[collection.size()]);
   }
-  public static byte[] getUtf8Bytes(String s) {
+
+  @NotNull
+  public static byte[] getUtf8Bytes(@NotNull String s) {
     try {
       return s.getBytes(UTF8);
     }
@@ -448,7 +453,7 @@ public class CharsetToolkit {
     }
   }
 
-  public static int getBOMLength(byte[] content, Charset charset) {
+  public static int getBOMLength(@NotNull byte[] content, Charset charset) {
     if (Patches.SUN_BUG_ID_4508058) {
       if (charset != null && charset.name().contains(UTF8) && hasUTF8Bom(content)) {
         return UTF8_BOM.length;

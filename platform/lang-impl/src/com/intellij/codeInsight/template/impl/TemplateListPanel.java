@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
@@ -94,7 +95,7 @@ class TemplateListPanel extends JPanel {
       }
     });
 
-    initTemplates(groups, templateSettings.getLastSelectedTemplateKey());
+    initTemplates(groups, templateSettings.getLastSelectedTemplateGroup(), templateSettings.getLastSelectedTemplateKey());
 
 
 
@@ -678,9 +679,9 @@ class TemplateListPanel extends JPanel {
           TemplateSettings templateSettings = TemplateSettings.getInstance();
           TemplateImpl template = getTemplate(selected);
           if (template != null) {
-            templateSettings.setLastSelectedTemplateKey(template.getKey());
+            templateSettings.setLastSelectedTemplate(template.getGroupName(), template.getKey());
           } else {
-            templateSettings.setLastSelectedTemplateKey(null);
+            templateSettings.setLastSelectedTemplate(null, null);
           }
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getPathForRow(selected).getLastPathComponent();
           enableExportButton = false;
@@ -894,7 +895,7 @@ class TemplateListPanel extends JPanel {
     ((DefaultTreeModel)myTree.getModel()).nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
   }
 
-  private void initTemplates(List<TemplateGroup> groups, String lastSelectedKey) {
+  private void initTemplates(List<TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     myTemplateGroups.clear();
     for (TemplateGroup group : groups) {
@@ -918,7 +919,7 @@ class TemplateListPanel extends JPanel {
         node.setChecked(!template.isDeactivated());
         groupNode.add(node);
 
-        if (lastSelectedKey != null && lastSelectedKey.equals(template.getKey())) {
+        if (Comparing.equal(group.getName(), lastSelectedGroup) && Comparing.equal(template.getKey(), lastSelectedKey)) {
           nodeToSelect = node;
         }
       }

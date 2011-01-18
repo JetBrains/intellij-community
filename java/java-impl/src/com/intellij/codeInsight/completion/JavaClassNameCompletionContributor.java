@@ -28,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,19 +37,16 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * @author peter
  */
 public class JavaClassNameCompletionContributor extends CompletionContributor {
-  private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(
-      psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
   private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
-  private static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_METHOD_THROWS_CLAUSE = psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(
-      PsiMethod.class).andNot(psiElement().inside(PsiCodeBlock.class)).andNot(psiElement().inside(PsiParameterList.class));
 
   public JavaClassNameCompletionContributor() {
     extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
@@ -63,9 +59,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         final PsiElement insertedElement = parameters.getPosition();
 
         final ElementFilter filter =
-          AFTER_THROW_NEW.accepts(insertedElement) ? new AssignableFromFilter("java.lang.Throwable") :
+          or(JavaSmartCompletionContributor.AFTER_THROW_NEW,
+             JavaCompletionContributor.INSIDE_METHOD_THROWS_CLAUSE,
+             JavaCompletionContributor.IN_CATCH_TYPE).accepts(insertedElement) ? new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE) :
           IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
-          INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement) ? new ThisOrAnyInnerFilter(new AssignableFromFilter("java.lang.Throwable")) :
           TrueFilter.INSTANCE;
 
 

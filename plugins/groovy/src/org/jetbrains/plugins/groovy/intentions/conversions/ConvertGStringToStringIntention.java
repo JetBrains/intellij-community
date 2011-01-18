@@ -30,9 +30,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -67,8 +65,8 @@ public class ConvertGStringToStringIntention extends Intention {
         if (((GrStringInjection)child).getClosableBlock() != null) {
           text = prepareClosableBlock(((GrStringInjection)child).getClosableBlock());
         }
-        else if (((GrStringInjection)child).getReferenceExpression() != null) {
-          text = prepareExpression(((GrStringInjection)child).getReferenceExpression());
+        else if (((GrStringInjection)child).getExpression() != null) {
+          text = prepareExpression(((GrStringInjection)child).getExpression());
         }
         else {
           text = child.getText();
@@ -111,6 +109,7 @@ public class ConvertGStringToStringIntention extends Intention {
   }
 
   private static String prepareExpression(GrExpression expr) {
+    if (expr instanceof GrThisSuperReferenceExpression) return expr.getText();
     String text = expr.getText();
 
     final PsiType type = expr.getType();

@@ -60,7 +60,8 @@ public class MergeFilesAction extends AnAction implements DumbAware {
 
       Project project = PlatformDataKeys.PROJECT.getData(context);
       final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,
-                                                                          ActionButtonPresentation.createApplyButton());
+                                                                          ActionButtonPresentation.APPLY,
+                                                                          ActionButtonPresentation.CANCEL_WITH_PROMPT);
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
                                              files[1].getPresentableUrl(),
                                              files[2].getPresentableUrl()});
@@ -73,7 +74,7 @@ public class MergeFilesAction extends AnAction implements DumbAware {
                                DiffBundle.message("merge.files.dialog.title"));
     }
   }
-  private String createValidContent(String str) {
+  private static String createValidContent(String str) {
     String[] strings = LineTokenizer.tokenize(str.toCharArray(), false, false);
     StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {

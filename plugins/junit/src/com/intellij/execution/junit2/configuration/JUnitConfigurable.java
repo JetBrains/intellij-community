@@ -195,24 +195,24 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private void changePanel () {
     if (myAllInPackageButton.isSelected()) {
       myPackagePanel.setVisible(true);
-      myPackage.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
     }
     else if (myClassButton.isSelected()){
       myPackagePanel.setVisible(false);
+      myPattern.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(false);
     }
     else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
+      myPattern.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(true);
     } else {
-      myPackagePanel.setVisible(true);
+      myPackagePanel.setVisible(false);
       myPattern.setVisible(true);
-      myPackage.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
     }

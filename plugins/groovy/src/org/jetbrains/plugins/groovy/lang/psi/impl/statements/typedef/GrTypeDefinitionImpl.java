@@ -61,7 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyBaseElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
@@ -76,7 +76,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeDefinitionStub> implements GrTypeDefinition {
+public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
   private volatile PsiClass[] myInnerClasses;
   private volatile List<PsiMethod> myMethods;
@@ -89,6 +89,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   protected GrTypeDefinitionImpl(GrTypeDefinitionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getDefinitionParent();
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -126,7 +131,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrTypeDefinitionBody getBody() {
-    return (GrTypeDefinitionBody)findChildByType(GroovyElementTypes.CLASS_BODY);
+    return getStubOrPsiChild(GroovyElementTypes.CLASS_BODY);
   }
 
   @NotNull
@@ -168,12 +173,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrExtendsClause getExtendsClause() {
-    return (GrExtendsClause)findChildByType(GroovyElementTypes.EXTENDS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.EXTENDS_CLAUSE);
   }
 
   @Nullable
   public GrImplementsClause getImplementsClause() {
-    return (GrImplementsClause)findChildByType(GroovyElementTypes.IMPLEMENTS_CLAUSE);
+    return getStubOrPsiChild(GroovyElementTypes.IMPLEMENTS_CLAUSE);
   }
 
   public String[] getSuperClassNames() {
@@ -181,7 +186,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     if (stub != null) {
       return stub.getSuperClassNames();
     }
-    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), String.class);
+    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), ArrayUtil.STRING_ARRAY_FACTORY);
   }
 
   protected String[] getImplementsNames() {
@@ -544,7 +549,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrModifierList getModifierList() {
-    return (GrModifierList)findChildByType(GroovyElementTypes.MODIFIERS);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {
@@ -567,7 +572,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    return (GrTypeParameterList)findChildByType(GroovyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(GroovyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @NotNull

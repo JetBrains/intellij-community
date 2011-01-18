@@ -84,6 +84,8 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
   public void testSmartCastCompletionWithRParenth() {doSmartTest();}
 
+  public void testDontCompletePrivateMembers() {doSmartCompletion "foo1", "foo2"}
+
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text
   }

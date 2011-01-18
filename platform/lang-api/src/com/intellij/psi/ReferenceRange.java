@@ -64,7 +64,8 @@ public class ReferenceRange {
 
       return false;
     }
-    return ref.getRangeInElement().containsOffset(offset);
+    TextRange rangeInElement = ref.getRangeInElement();
+    return rangeInElement != null && rangeInElement.containsOffset(offset);
   }
 
   public static boolean containsRangeInElement(PsiReference ref, TextRange rangeInElement) {
@@ -75,6 +76,7 @@ public class ReferenceRange {
 
       return false;
     }
-    return ref.getRangeInElement().contains(rangeInElement);
+    TextRange rangeInElement1 = ref.getRangeInElement();
+    return rangeInElement1 != null && rangeInElement1.contains(rangeInElement);
   }
 }

@@ -27,6 +27,7 @@ import java.util.LinkedList;
  * The processor itself is passed in the constructor and is called from that thread.
  * By default processing starts when the first element is added to the queue, though there is an 'autostart' option which holds
  * the processor until {@link #start()} is called.</p>
+ *
  * @param <T> type of queue elements.
  */
 public class QueueProcessor<T> {
@@ -43,8 +44,8 @@ public class QueueProcessor<T> {
    *
    * @param processor processor of queue elements.
    * @param autostart if <code>true</code> (which is by default), the queue will be processed immediately when it receives the first element.
-   * If <code>false</code>, then it will wait for the {@link #start()} command.
-   * After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
+   *                  If <code>false</code>, then it will wait for the {@link #start()} command.
+   *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
   public QueueProcessor(Consumer<T> processor, boolean autostart) {
     myProcessor = processor;
@@ -131,16 +132,17 @@ public class QueueProcessor<T> {
       try {
         myProcessor.consume(next);
       }
-      catch (Exception e) {
+      catch (Throwable e) {
         LOG.warn(e);
       }
-
-      synchronized (myQueue) {
-        next = myQueue.poll();
-        if (next == null) {
-          isProcessing = false;
-          myQueue.notifyAll();
-          return;
+      finally {
+        synchronized (myQueue) {
+          next = myQueue.poll();
+          if (next == null) {
+            isProcessing = false;
+            myQueue.notifyAll();
+            return;
+          }
         }
       }
     }

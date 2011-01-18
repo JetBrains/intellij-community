@@ -272,7 +272,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
     public final void actionPerformed(ActionEvent e) {
       VirtualFile toSelect = getFileToSelect();
-      final VirtualFile[] files = myDescriptor.selectFiles(myPanel, toSelect, myContextModule, getLibraryEditor().getName());
+      final VirtualFile[] files = myDescriptor.selectFiles(myPanel, toSelect, myContextModule, getLibraryEditor());
       if (files.length == 0) return;
 
       final VirtualFile[] attachedFiles = attachFiles(myDescriptor.scanForActualRoots(files, myPanel), myDescriptor.getRootType(), myDescriptor.addAsJarDirectories());

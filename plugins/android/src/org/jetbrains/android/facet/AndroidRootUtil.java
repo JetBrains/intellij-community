@@ -25,12 +25,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.HashSet;
 
 
 /**
@@ -74,6 +75,13 @@ public class AndroidRootUtil {
 
   @Nullable
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+
+    if (contentRoots.length == 1) {
+      String absPath = FileUtil.toSystemIndependentName(contentRoots[0].getPath() + relativePath);
+      return LocalFileSystem.getInstance().findFileByPath(absPath);
+    }
+
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
     if (moduleDirPath != null) {
       String absPath = FileUtil.toSystemIndependentName(moduleDirPath + relativePath);
@@ -84,7 +92,7 @@ public class AndroidRootUtil {
     }
 
     if (lookInContentRoot) {
-      for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+      for (VirtualFile contentRoot : contentRoots) {
         String absPath = FileUtil.toSystemIndependentName(contentRoot.getPath() + relativePath);
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absPath);
         if (file != null) {
@@ -142,8 +150,12 @@ public class AndroidRootUtil {
 
   private static void fillExternalLibrariesAndModules(final Module module,
                                                       final Set<VirtualFile> outputDirs,
-                                                      @Nullable final Collection<VirtualFile> libraries,
-                                                      final Library platformLibrary) {
+                                                      @Nullable final Set<VirtualFile> libraries,
+                                                      final Library platformLibrary,
+                                                      final Set<Module> visited) {
+    if (!visited.add(module)) {
+      return;
+    }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         ModuleRootManager manager = ModuleRootManager.getInstance(module);
@@ -171,31 +183,25 @@ public class AndroidRootUtil {
             }
           }
           else if (entry instanceof ModuleOrderEntry) {
-            Module module = ((ModuleOrderEntry)entry).getModule();
-            if (module == null) {
+            Module depModule = ((ModuleOrderEntry)entry).getModule();
+            if (depModule == null) {
               continue;
             }
-            AndroidFacet facet = AndroidFacet.getInstance(module);
-            if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
-              continue;
-            }
-            CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
-            if (extension != null) {
-              VirtualFile classDir = extension.getCompilerOutputPath();
-              boolean added = false;
-              if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
-                outputDirs.add(classDir);
-                added = true;
-              }
-              VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
-              if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
-                outputDirs.add(classDirForTests);
-                added = true;
-              }
-              if (added) {
-                fillExternalLibrariesAndModules(module, outputDirs, libraries, platformLibrary);
+            AndroidFacet facet = AndroidFacet.getInstance(depModule);
+            if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
+              CompilerModuleExtension extension = CompilerModuleExtension.getInstance(depModule);
+              if (extension != null) {
+                VirtualFile classDir = extension.getCompilerOutputPath();
+                if (!outputDirs.contains(classDir) && classDir != null && classDir.exists()) {
+                  outputDirs.add(classDir);
+                }
+                VirtualFile classDirForTests = extension.getCompilerOutputPathForTests();
+                if (!outputDirs.contains(classDirForTests) && classDirForTests != null && classDirForTests.exists()) {
+                  outputDirs.add(classDirForTests);
+                }
               }
             }
+            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, platformLibrary, visited);
           }
         }
       }
@@ -205,15 +211,15 @@ public class AndroidRootUtil {
   @NotNull
   public static List<VirtualFile> getExternalLibraries(Module module, Library platformLibrary) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    List<VirtualFile> libs = new OrderedSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, libs, platformLibrary);
+    OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
+    fillExternalLibrariesAndModules(module, files, libs, platformLibrary, new HashSet<Module>());
     return libs;
   }
 
   @NotNull
   public static Set<VirtualFile> getDependentModules(Module module, VirtualFile moduleOutputDir) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, null, null);
+    fillExternalLibrariesAndModules(module, files, null, null, new HashSet<Module>());
     files.remove(moduleOutputDir);
     return files;
   }
@@ -233,5 +239,21 @@ public class AndroidRootUtil {
       }
     }
     return result.toArray(new VirtualFile[result.size()]);
+  }
+
+  @Nullable
+  public static String getModuleDirPath(Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+
+    if (contentRoots.length == 1) {
+      return contentRoots[0].getPath();
+    }
+
+    String moduleFilePath = module.getModuleFilePath();
+    String moduleDirPath = new File(moduleFilePath).getParent();
+    if (moduleDirPath != null) {
+      moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
+    }
+    return moduleDirPath;
   }
 }

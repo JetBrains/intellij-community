@@ -89,7 +89,7 @@ public class TreeViewUtil {
     int subpackagesCount = 0;
     int directoriesCount = 0;
     for (VirtualFile file : files) {
-      if (FileTypeManager.getInstance().isFileIgnored(file.getName())) continue;
+      if (FileTypeManager.getInstance().isFileIgnored(file)) continue;
       if (!file.isDirectory()) return false;
       PsiDirectory childDir = manager.findDirectory(file);
       if (childDir != null) {

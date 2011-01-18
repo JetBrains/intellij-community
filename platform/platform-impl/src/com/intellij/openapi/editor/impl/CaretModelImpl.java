@@ -284,7 +284,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           }
         }
         else {
-          selectionModel.setSelection(selectionStart, getOffset());
+          selectionModel.setSelection(selectionStart, getVisualPosition(), getOffset());
         }
       }
     }

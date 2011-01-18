@@ -45,7 +45,8 @@ public class MavenRehighlighter extends SimpleProjectComponent {
   }
 
   public void initComponent() {
-    myQueue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, myProject);
+    myQueue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, myProject, null, true);
+    myQueue.setPassThrough(false);
 
     MavenProjectsManager m = MavenProjectsManager.getInstance(myProject);
 

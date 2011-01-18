@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -253,13 +255,15 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
 
       if (parent instanceof GrCall) {
+        final PsiType type = referenceExpression.getType();
         if (resolved != null ) {
           if (resolved instanceof PsiMethod) {
-              checkMethodApplicability(resolveResult, referenceExpression);
-            }
-            else {
-              checkClosureApplicability(resolveResult, referenceExpression.getType(), referenceExpression);
-            }
+            checkMethodApplicability(resolveResult, referenceExpression);
+          }
+          else {
+            checkCallApplicability(type, referenceExpression);
+          }
+
         }
         else if (results.length > 0) {
           for (GroovyResolveResult result : results) {
@@ -268,7 +272,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               if (!checkMethodApplicability(result, referenceExpression)) return;
             }
             else {
-              if (!checkClosureApplicability(result, referenceExpression.getType(), referenceExpression)) return;
+              if (!checkCallApplicability(type, referenceExpression)) return;
             }
           }
 
@@ -278,6 +282,25 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           registerError(elementToHighlight, message);
         }
       }
+    }
+
+    @Override
+    public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+      super.visitMethodCallExpression(methodCallExpression);
+      checkMethodCall(methodCallExpression);
+    }
+
+    @Override
+    public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+      super.visitApplicationStatement(applicationStatement);
+      checkMethodCall(applicationStatement);
+    }
+
+    private void checkMethodCall(GrMethodCall call) {
+      final GrExpression expression = call.getInvokedExpression();
+      if (expression instanceof GrReferenceExpression) return; //it checks in visitRefExpr(...)
+      final PsiType type = expression.getType();
+      checkCallApplicability(type, expression);
     }
 
     private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,
@@ -302,22 +325,33 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       registerError(elementToHighlight, message);
     }
 
-    private boolean checkClosureApplicability(GroovyResolveResult resolveResult, PsiType type, GroovyPsiElement place) {
-      final PsiElement element = resolveResult.getElement();
-      if (!(element instanceof GrVariable)) return true;
-      if (!(type instanceof GrClosureType)) return true;
-      final GrVariable variable = (GrVariable)element;
-      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
-      if (argumentTypes == null) return true;
+    private boolean checkCallApplicability(PsiType type, GroovyPsiElement place) {
+      if (type instanceof GrClosureType) {
+        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
+        if (argumentTypes == null) return true;
 
-      if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return true;
+        if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return true;
 
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
-      if (elementToHighlight == null) elementToHighlight = place;
-      registerError(elementToHighlight, message);
-      return false;
+        final String typesString = buildArgTypesList(argumentTypes);
+        String message = GroovyBundle.message("cannot.apply.method.or.closure", place.getText(), typesString);
+        PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
+        if (elementToHighlight == null) elementToHighlight = place;
+        registerError(elementToHighlight, message);
+        return false;
+      }
+      else if (type != null) {
+        final GroovyResolveResult[] calls =
+          ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true));
+        for (GroovyResolveResult result : calls) {
+          PsiElement resolved = result.getElement();
+          if (resolved instanceof PsiMethod) {
+            if (!checkMethodApplicability(result, place)) return false;
+          }
+        }
+
+        return true;
+      }
+      return true;
     }
 
     private static String buildArgTypesList(PsiType[] argTypes) {
@@ -371,7 +405,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           PsiType returnType = method.getReturnType();
           if (returnType != null) {
             final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
-              .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
+              .createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
             if (TypesUtil.isAssignable(closureType, returnType, place)) {
               return true;
             }

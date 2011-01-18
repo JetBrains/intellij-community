@@ -117,16 +117,15 @@ public class JobImpl<T> implements Job<T> {
 
     submitTasks(tasks, callerHasReadAccess, false);
 
-    while (!isDone() && JobSchedulerImpl.stealAndRunTask()) {
-      int i = 0;
-    }
-
     // in case of imbalanced tasks one huge task can stuck running and we would fall to waitForTermination instead of doing useful work
     //// http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
     //for (PrioritizedFutureTask task : tasks) {
     //  task.run();
     //}
     //
+    while (!isDone() && JobSchedulerImpl.stealAndRunTask()) {
+      int i = 0;
+    }
 
     waitForTermination();
     return null;
@@ -135,8 +134,8 @@ public class JobImpl<T> implements Job<T> {
   public void waitForTermination() throws Throwable {
     Throwable ex = null;
     PrioritizedFutureTask[] tasks = getTasks();
-    try {
-      for (PrioritizedFutureTask f : tasks) {
+    for (PrioritizedFutureTask f : tasks) {
+      try {
         // this loop is for workaround of mysterious bug
         // when sometimes future hangs inside parkAndCheckForInterrupt() during unbounded get()
         while(true) {
@@ -152,16 +151,16 @@ public class JobImpl<T> implements Job<T> {
           }
         }
       }
-    }
-    catch (CancellationException ignore) {
-      // already cancelled
-    }
-    catch (ExecutionException e) {
-      cancel();
+      catch (CancellationException ignore) {
+        // already cancelled
+      }
+      catch (ExecutionException e) {
+        cancel();
 
-      Throwable cause = e.getCause();
-      if (cause != null) {
-        ex = cause;
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          ex = cause;
+        }
       }
     }
 

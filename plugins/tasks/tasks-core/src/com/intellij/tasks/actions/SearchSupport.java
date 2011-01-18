@@ -288,7 +288,7 @@ public abstract class SearchSupport<T extends Task> {
 
   private void showNoSuggestions() {
     hideCurrentPopup();
-    final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
+    final JComponent message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
     builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).
       setFocusOwners(new Component[] {myTextField});

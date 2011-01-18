@@ -74,8 +74,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final Document doc = highlighter.getDocument();
       if (startOffset >= doc.getTextLength()) return;
 
+      final int endOffset = highlighter.getEndOffset();
+      final int endLine = doc.getLineNumber(endOffset);
+
       int off;
       int startLine = doc.getLineNumber(startOffset);
+      IndentGuideDescriptor descriptor = editor.getIndentsModel().getDescriptor(startLine, endLine);
+
+      int lineShift = 1;
       final CharSequence chars = doc.getCharsSequence();
       do {
         int pos = doc.getLineStartOffset(startLine);
@@ -85,13 +91,19 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       while (startLine > 1 && off < doc.getTextLength() && chars.charAt(off) == '\n');
 
       final VisualPosition startPosition = editor.offsetToVisualPosition(off);
-      if (startPosition.column <= 0) return;
+      int indentColumn = startPosition.column;
+      
+      // It's considered that indent guide can cross not only white space but comments, javadocs etc. Hence, there is a possible
+      // case that the first indent guide line is, say, single-line comment where comment symbols ('//') are located at the first
+      // visual column. We need to calculate correct indent guide column then.
+      if (indentColumn <= 0 && descriptor != null) {
+        indentColumn = descriptor.indentLevel;
+        lineShift = 0;
+      }
+      if (indentColumn <= 0) return;
 
       final FoldingModel foldingModel = editor.getFoldingModel();
       if (foldingModel.isOffsetCollapsed(off)) return;
-
-      final int endOffset = highlighter.getEndOffset();
-      final int endLine = doc.getLineNumber(endOffset);
 
       final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(off)));
       final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
@@ -104,13 +116,13 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         final CaretModel caretModel = editor.getCaretModel();
         final int caretOffset = caretModel.getOffset();
         selected =
-          caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == startPosition.column;
+          caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;
       }
       else {
         selected = false;
       }
 
-      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line + 1, startPosition.column));
+      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line + lineShift, indentColumn));
       final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, endPosition.column));
       int maxY = end.y;
@@ -148,14 +160,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         int newY = start.y;
         SoftWrapModel softWrapModel = editor.getSoftWrapModel();
         int lineHeight = editor.getLineHeight();
-        for (int i = startLine + 1; i < endLine && newY < maxY; i++) {
+        for (int i = startLine + lineShift; i < endLine && newY < maxY; i++) {
           List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForLine(i);
           int logicalLineHeight = softWraps.size() * lineHeight;
-          if (i > startLine + 1) {
+          if (i > startLine + lineShift) {
             logicalLineHeight += lineHeight; // We assume that initial 'y' value points just below the target line.
           }
-          if (!softWraps.isEmpty() && softWraps.get(0).getIndentInColumns() < startPosition.column) {
-            if (y < newY || i > startLine + 1) { // There is a possible case that soft wrap is located on indent start line.
+          if (!softWraps.isEmpty() && softWraps.get(0).getIndentInColumns() < indentColumn) {
+            if (y < newY || i > startLine + lineShift) { // There is a possible case that soft wrap is located on indent start line.
               g.drawLine(start.x + 2, y, start.x + 2, newY + lineHeight);
             }
             newY += logicalLineHeight;

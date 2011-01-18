@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiType;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -15,6 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @date: 27.03.2007
  */
 public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration {
+  ArrayFactory<GrVariableDeclaration> ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
+    @Override
+    public GrVariableDeclaration[] create(int count) {
+      return new GrVariableDeclaration[count];
+    }
+  };
+
   @Nullable
   GrTypeElement getTypeElementGroovy();
 

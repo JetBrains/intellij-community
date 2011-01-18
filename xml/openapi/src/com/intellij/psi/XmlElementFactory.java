@@ -59,11 +59,10 @@ public abstract class XmlElementFactory {
    *
    * @param text the text of an XML tag (which can contain attributes and subtags).
    * @return the created tag instance.
-   * @deprecated Use #createTagFromText(String text, Language language)
    * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid XML fragment.
+   * @see #createTagFromText(String text, Language language)
    */
   @NotNull
-  @Deprecated
   public abstract XmlTag createTagFromText(@NotNull @NonNls String text) throws IncorrectOperationException;
 
   /**
@@ -73,6 +72,7 @@ public abstract class XmlElementFactory {
    * @param language the language for tag to be created.
    * @return the created tag instance.
    * @throws com.intellij.util.IncorrectOperationException if the text does not specify a valid XML fragment.
+   * @see #createTagFromText(String)
    */
   @NotNull
   public abstract XmlTag createTagFromText(@NotNull @NonNls String text, @NotNull Language language) throws IncorrectOperationException;
@@ -83,10 +83,8 @@ public abstract class XmlElementFactory {
    * @param name  the name of the attribute to create.
    * @param value the value of the attribute to create.
    * @return the created attribute instance.
-   * @deprecated
    * @throws IncorrectOperationException if either <code>name</code> or <code>value</code> are not valid.
    */
   @NotNull
-  @Deprecated
   public abstract XmlAttribute createXmlAttribute(@NotNull @NonNls String name, String value) throws IncorrectOperationException;
 }

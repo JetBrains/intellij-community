@@ -32,6 +32,7 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
@@ -40,7 +41,14 @@ import org.jetbrains.git4idea.ssh.GitSSHService;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -311,6 +319,18 @@ public abstract class GitHandler {
   }
 
   /**
+   * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
+   * @return is "--progress" parameter supported by this version of Git.
+   */
+  public boolean addProgressParameter() {
+    if (GitVersionSpecialty.ABLE_TO_USE_PROGRESS.existsIn(myVcs.getVersion())) {
+      addParameters("--progress");
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * check that process is not started yet
    *
    * @throws IllegalStateException if process has been already started
@@ -370,11 +390,11 @@ public abstract class GitHandler {
     }
 
     try {
+      LOG.info(myCommandLine.getCommandLineString());
       // setup environment
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
-        LOG.info(myCommandLine.getCommandLineString());
       }
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
@@ -465,7 +485,7 @@ public abstract class GitHandler {
   public void waitFor() {
     checkStarted();
     try {
-      if (myInputProcessor != null) {
+      if (myInputProcessor != null && myProcess != null) {
         myInputProcessor.process(myProcess.getOutputStream());
       }
     }

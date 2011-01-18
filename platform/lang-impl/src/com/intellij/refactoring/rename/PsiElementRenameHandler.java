@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -135,6 +136,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (element == null) return;
 
     final RenameDialog dialog = processor.createRenameDialog(project, element, nameSuggestionContext, editor);
+
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();
       if (strings != null && strings.length > 0) {
@@ -144,8 +146,14 @@ public class PsiElementRenameHandler implements RenameHandler {
         defaultName = "undefined"; // need to avoid show dialog in test
       }
     }
+
     if (defaultName != null) {
-      dialog.performRename(defaultName);
+      try {
+        dialog.performRename(defaultName);
+      }
+      finally {
+        dialog.close(DialogWrapper.CANCEL_EXIT_CODE); // to avoid dialog leak
+      }
     }
     else {
       dialog.show();

@@ -34,4 +34,12 @@ public abstract class LibraryRootsComponentDescriptor {
    */
   @NotNull
   public abstract List<? extends AttachRootButtonDescriptor> createAttachButtons();
+
+  /**
+   * @return Array of root types supported by a library type associated with the roots
+   *         component descriptor. All persistent root types are returned by default. 
+   */
+  public OrderRootType[] getRootTypes() {
+    return OrderRootType.getAllTypes();
+  }
 }

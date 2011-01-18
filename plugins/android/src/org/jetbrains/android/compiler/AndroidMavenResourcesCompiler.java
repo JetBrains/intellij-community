@@ -16,11 +16,11 @@
 package org.jetbrains.android.compiler;
 
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidMavenExecutor;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -52,12 +53,7 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
   public GenerationItem[] getGenerationItems(CompileContext context) {
-    Module[] affectedModules = context.getCompileScope().getAffectedModules();
-    if (affectedModules.length > 0) {
-      Application application = ApplicationManager.getApplication();
-      return application.runReadAction(new PrepareAction(context));
-    }
-    return EMPTY_GENERATION_ITEM_ARRAY;
+    return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }
 
   public GenerationItem[] generate(final CompileContext context, final GenerationItem[] items, VirtualFile outputRootDirectory) {
@@ -215,20 +211,25 @@ public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
       if (myContext.getProject().isDisposed()) {
         return EMPTY_GENERATION_ITEM_ARRAY;
       }
-      Module[] modules = myContext.getCompileScope().getAffectedModules();
+      Module[] modules = ModuleManager.getInstance(myContext.getProject()).getModules();
       List<GenerationItem> items = new ArrayList<GenerationItem>();
       for (Module module : modules) {
         MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myContext.getProject());
         if (mavenProjectsManager != null && mavenProjectsManager.isMavenizedModule(module)) {
           AndroidFacet facet = AndroidFacet.getInstance(module);
           if (facet != null && facet.getConfiguration().RUN_PROCESS_RESOURCES_MAVEN_TASK) {
-            Manifest manifest = facet.getManifest();
-            String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
-            if (aPackage != null) {
-              MavenProject mavenProject = mavenProjectsManager.findProject(module);
-              if (mavenProject != null) {
-                items.add(new MyGenerationItem(module, aPackage, mavenProject.getGeneratedSourcesDirectory(false) + "/r"));
+            MavenProject mavenProject = mavenProjectsManager.findProject(module);
+            if (mavenProject != null) {
+              Manifest manifest = facet.getManifest();
+              String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+              if (aPackage == null) {
+                VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+                myContext.addMessage(CompilerMessageCategory.ERROR,
+                                     "Cannot find package value in AndroidManifest.xml for module " + module.getName(),
+                                     manifestFile != null ? manifestFile.getUrl() : null, -1, -1);
+                continue;
               }
+              items.add(new MyGenerationItem(module, aPackage, mavenProject.getGeneratedSourcesDirectory(false) + "/r"));
             }
           }
         }

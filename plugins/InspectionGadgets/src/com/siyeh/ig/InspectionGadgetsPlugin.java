@@ -100,7 +100,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private final List<Class<? extends InspectionProfileEntry>> m_inspectionClasses =
             new ArrayList();
     private volatile InspectionGadgetsTelemetry telemetry = null;
-    public volatile boolean telemetryEnabled = false;
+    private volatile boolean telemetryEnabled = false;
 
     public static void main(String[] args) throws FileNotFoundException {
         final PrintStream out;
@@ -744,6 +744,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerStyleInspections() {
+        m_inspectionClasses.add(BoxingBoxedValueInspection.class);
         m_inspectionClasses.add(CallToStringConcatCanBeReplacedByOperatorInspection.class);
         m_inspectionClasses.add(CStyleArrayDeclarationInspection.class);
         m_inspectionClasses.add(ChainedEqualityInspection.class);
@@ -1114,8 +1115,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnconstructableTestCaseInspection.class);
     }
 
-    public void disposeComponent() {
-    }
+    public void disposeComponent() {}
 
     public boolean isTelemetryEnabled() {
         return telemetryEnabled;

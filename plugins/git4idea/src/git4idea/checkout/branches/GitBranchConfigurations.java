@@ -193,22 +193,8 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
     };
   }
 
-  /**
-   * Add listener
-   *
-   * @param l the listener
-   */
-  public void addConfigurationListener(GitBranchConfigurationsListener l) {
-    myListeners.addListener(l);
-  }
-
-  /**
-   * Remove listener
-   *
-   * @param l the listener
-   */
-  public void removeConfigurationListener(GitBranchConfigurationsListener l) {
-    myListeners.removeListener(l);
+  public void addConfigurationListener(@NotNull GitBranchConfigurationsListener listener, @NotNull Disposable parentDisposable) {
+    myListeners.addListener(listener,parentDisposable);
   }
 
   /**
