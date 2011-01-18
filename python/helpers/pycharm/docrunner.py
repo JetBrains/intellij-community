@@ -93,6 +93,10 @@ class DocTestRunner(doctest.DocTestRunner):
                     else:
                         self.optionflags &= ~optionflag
 
+            if hasattr(doctest, 'SKIP'):
+              if self.optionflags & doctest.SKIP:
+                continue
+
             tries += 1
             if not quiet:
                 self.report_start(out, test, example)
