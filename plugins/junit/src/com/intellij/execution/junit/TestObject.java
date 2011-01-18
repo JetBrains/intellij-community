@@ -363,7 +363,7 @@ public abstract class TestObject implements JavaCommandLine {
         myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
       }
 
-      final PrintWriter writer = new PrintWriter(new FileWriter(myTempFile));
+      final PrintWriter writer = new PrintWriter(myTempFile, "UTF-8");
       try {
         writer.println(junit4 ? JUnitStarter.JUNIT4_PARAMETER : "-junit3");
         writer.println(packageName);
