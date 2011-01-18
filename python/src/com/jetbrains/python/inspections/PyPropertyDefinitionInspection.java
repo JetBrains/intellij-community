@@ -245,7 +245,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       PyParameter[] parameters = param_list.getParameters();
       if (parameters.length > 0 && ! PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.INFO, null,
+          parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING, null,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }
     }
