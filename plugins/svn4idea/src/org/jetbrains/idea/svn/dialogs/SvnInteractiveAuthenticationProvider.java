@@ -72,7 +72,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
 
-    final boolean authCredsOn = authMayBeStored && myManager.authCredsOn(url);
+    final boolean authCredsOn = authMayBeStored && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
 
     final String userName =
       previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
