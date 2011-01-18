@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.RenameableUsage;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +38,8 @@ public abstract class AutomaticUsageRenamer<T> {
     myNewName = newName;
     List<T> elements = new ArrayList<T>(renamedElements);
     Collections.sort(elements, new Comparator<T>() {
-      private int compareNullable(@Nullable String s1, @Nullable String s2) {
-        if (s1 != null) {
-          return s2 == null ? 1 : s1.compareTo(s2);
-        }
-        return s2 == null ? 0 : -1;
-      }
-
       public int compare(T o1, T o2) {
-        int i = compareNullable(getSourceName(o1), getSourceName(o2));
+        int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
         if (i != 0) return i;
         return getName(o1).compareTo(getName(o2));
       }
