@@ -23,7 +23,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,7 +37,9 @@ public abstract class LangScriptingContextConfigurable implements Configurable, 
 
   public LangScriptingContextConfigurable(Project project, LangScriptingContextProvider provider) {
     myLibManager = new ScriptingLibraryManager(project, provider.getLibraryType());
-    myPanel = useDedicatedLibraryUI(project) ? new ScriptingLibrariesPanel(provider, project, myLibManager) : new ScriptingLibrariesPanelStub();
+    myPanel = useDedicatedLibraryUI(project)
+              ? new ScriptingLibrariesPanel(provider, project, myLibManager)
+              : new ScriptingLibrariesPanelStub(project);
     myContextsConfigurable = new ScriptingContextsConfigurable(this, project, provider.getLibraryMappings(project));
   }
 

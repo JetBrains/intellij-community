@@ -40,10 +40,10 @@ public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
   private JBTable myLibraryTable;
   private ScriptingLibraryTableModel myLibTableModel;
   private String mySelectedLibName;
-  private Project myProject;
   private LangScriptingContextProvider myProvider;
 
   public ScriptingLibrariesPanel(LangScriptingContextProvider provider, Project project, ScriptingLibraryManager libraryManager) {
+    super(project);
     myProvider = provider;
     myLibTableModel = new ScriptingLibraryTableModel(libraryManager);
     myLibraryTable.setModel(myLibTableModel);
@@ -70,7 +70,6 @@ public class ScriptingLibrariesPanel extends ScriptingLibrariesPanelStub {
     myRemoveLibraryButton.setEnabled(false);
     myEditLibraryButton.setEnabled(false);
     myLibraryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myProject = project;
     myLibraryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
