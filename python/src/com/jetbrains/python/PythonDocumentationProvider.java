@@ -2,12 +2,15 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
-import com.intellij.openapi.diff.impl.patch.PatchLine;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -163,40 +166,51 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     return cat;
   }
 
-  private static @NotNull ChainIterable<String> combUpDocString(@NotNull String docstring) {
+  private static @NotNull ChainIterable<String> combUpDocString(Project project, @NotNull String docstring) {
     ChainIterable<String> cat = new ChainIterable<String>();
     // detect common indentation
-    String[] fragments = Pattern.compile("\n").split(docstring);
+    String[] lines = LineTokenizer.tokenize(docstring, false);
     Pattern spaces_pat = Pattern.compile("^\\s+");
     boolean is_first = true;
-    final int IMPOSSIBLY_BIG = 999999;
-    int cut_width = IMPOSSIBLY_BIG;
-    for (String frag : fragments) {
+    int cut_width = Integer.MAX_VALUE;
+    int firstIndentedLine = 0;
+    for (String frag : lines) {
       if (frag.length() == 0) continue;
       int pad_width = 0;
       final Matcher matcher = spaces_pat.matcher(frag);
       if (matcher.find()) {
         pad_width = matcher.end();
-        if (is_first) {
-          is_first = false;
-          if (pad_width == 0) continue; // first line may have zero padding // first line may have zero padding
+      }
+      if (is_first) {
+        is_first = false;
+        if (pad_width == 0) {    // first line may have zero padding
+          firstIndentedLine = 1;
+          continue;
         }
       }
       if (pad_width < cut_width) cut_width = pad_width;
     }
     // remove common indentation
-    if (cut_width > 0 && cut_width < IMPOSSIBLY_BIG) {
-      for (int i=0; i < fragments.length; i+= 1) {
-        if (fragments[i].length() > 0) fragments[i] = fragments[i].substring(cut_width);
+    if (cut_width > 0 && cut_width < Integer.MAX_VALUE) {
+      for (int i = firstIndentedLine; i < lines.length; i+= 1) {
+        if (lines[i].length() > 0) lines[i] = lines[i].substring(cut_width);
       }
     }
     // reconstruct back, dropping first empty fragment as needed
     is_first = true;
-    for (String frag : fragments) {
-      if (is_first && spaces_pat.matcher(frag).matches()) continue; // ignore all initial whitespace
+    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
+    for (String line : lines) {
+      if (is_first && spaces_pat.matcher(line).matches()) continue; // ignore all initial whitespace
       if (is_first) is_first = false;
       else cat.add(BR);
-      cat.add(combUp(frag));
+      int leadingTabs = 0;
+      while (leadingTabs < line.length() && line.charAt(leadingTabs) == '\t') {
+        leadingTabs++;
+      }
+      if (leadingTabs > 0) {
+        line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
+      }
+      cat.add(combUp(line));
     }
     return cat;
   }
@@ -321,7 +335,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         }
       }
       if (docString != null) {
-        doc_cat.add(BR).add(combUpDocString(docString));
+        doc_cat.add(BR).add(combUpDocString(element.getProject(), docString));
       }
     }
     else if (is_property) {
@@ -440,7 +454,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
             }
             epilog_cat
               .add(BR).add(BR)
-              .addWith(TagCode, combUpDocString(inherited_doc))
+              .addWith(TagCode, combUpDocString(fun.getProject(), inherited_doc))
             ;
             not_found = false;
             break;
@@ -462,7 +476,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                 PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
                 String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
                 if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-                  doc_cat.add(combUpDocString(predefined_doc));
+                  doc_cat.add(combUpDocString(fun.getProject(), predefined_doc));
                   epilog_cat.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
                 }
               }

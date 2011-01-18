@@ -5,11 +5,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -27,23 +29,33 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     myProvider = new PythonDocumentationProvider();
   }
 
-  private void checkByHTML(String text) throws Exception {
+  private void checkByHTML(String text) {
     assertNotNull(text);
-    String filePath = "/quickdoc/" + getTestName(false) + ".html";
+    checkByHTML(text, "/quickdoc/" + getTestName(false) + ".html");
+  }
+
+  private void checkByHTML(String text, @TestDataFile String filePath) {
     final String fullPath = getTestDataPath() + filePath;
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);
 
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
+    String loadedText;
+    try {
+      loadedText = VfsUtil.loadText(vFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    String fileText = StringUtil.convertLineSeparators(loadedText, "\n");
     assertEquals(fileText.trim(), text.trim());
   }
 
   @Override
-  protected Map<String, PsiElement> loadTest() throws Exception {
+  protected Map<String, PsiElement> loadTest() {
     return configureByFile("/quickdoc/" + getTestName(false) + ".py");
   }
 
-  private void checkRefDocPair() throws Exception {
+  private void checkRefDocPair() {
     Map<String, PsiElement> marks = loadTest();
     assertEquals(2, marks.size());
     final PsiElement original_elt = marks.get("<the_doc>");
@@ -59,7 +71,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
   }
 
-  private void checkHTMLOnly() throws Exception {
+  private void checkHTMLOnly() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement original_elt = marks.get("<the_ref>");
     PsiElement ref_elt = original_elt.getParent(); // ident -> expr
@@ -67,7 +79,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
   }
 
-  private void checkHover() throws Exception {
+  private void checkHover() {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement original_elt = marks.get("<the_ref>");
     PsiElement ref_elt = original_elt.getParent(); // ident -> expr
@@ -75,39 +87,43 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.getQuickNavigateInfo(doc_owner, original_elt));
   }
 
-  public void testDirectFunc() throws Exception {
+  public void testDirectFunc() {
     checkRefDocPair();
   }
 
-  public void testDirectClass() throws Exception {
+  public void testIndented() {
     checkRefDocPair();
   }
 
-  public void testClassConstructor() throws Exception {
+  public void testDirectClass() {
     checkRefDocPair();
   }
 
-  public void testClassUndocumentedConstructor() throws Exception {
+  public void testClassConstructor() {
+    checkRefDocPair();
+  }
+
+  public void testClassUndocumentedConstructor() {
     checkHTMLOnly();
   }
 
-  public void testClassUndocumentedEmptyConstructor() throws Exception {
+  public void testClassUndocumentedEmptyConstructor() {
     checkHTMLOnly();
   }
 
-  public void testCallFunc() throws Exception {
+  public void testCallFunc() {
     checkRefDocPair();
   }
 
-  public void testModule() throws Exception {
+  public void testModule() {
     checkRefDocPair();
   }
 
-  public void testMethod() throws Exception {
+  public void testMethod() {
     checkRefDocPair();
   }
 
-  public void testInheritedMethod() throws Exception {
+  public void testInheritedMethod() {
     Map<String, PsiElement> marks = loadTest();
     assertEquals(2, marks.size());
     PsiElement doc_elt = marks.get("<the_doc>").getParent(); // ident -> expr
@@ -122,11 +138,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkByHTML(myProvider.generateDoc(doc_owner, null));
   }
 
-  public void testPropNewGetter() throws Exception {
+  public void testPropNewGetter() {
     checkHTMLOnly();
   }
 
-  public void testPropNewSetter() throws Exception {
+  public void testPropNewSetter() {
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
@@ -139,7 +155,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     }
   }
 
-  public void testPropNewDeleter() throws Exception {
+  public void testPropNewDeleter() {
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON26);
@@ -152,32 +168,32 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     }
   }
 
-  public void testPropOldGetter() throws Exception {
+  public void testPropOldGetter() {
     checkHTMLOnly();
   }
 
 
-  public void testPropOldSetter() throws Exception {
+  public void testPropOldSetter() {
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>");
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyTargetExpression)(ref_elt.getParent())).getReference().resolve();
     checkByHTML(myProvider.generateDoc(doc_owner, ref_elt));
   }
 
-  public void testPropOldDeleter() throws Exception {
+  public void testPropOldDeleter() {
     checkHTMLOnly();
   }
 
-  public void testHoverOverClass() throws Exception {
+  public void testHoverOverClass() {
     checkHover();
   }
 
 
-  public void testHoverOverFunction() throws Exception {
+  public void testHoverOverFunction() {
     checkHover();
   }
 
-  public void testHoverOverMethod() throws Exception {
+  public void testHoverOverMethod() {
     checkHover();
   }
 }
