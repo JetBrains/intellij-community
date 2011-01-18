@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -23,6 +22,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,6 +95,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("JD_P_AT_EMPTY_LINES", ApplicationBundle.message("checkbox.generate.p.on.empty.lines"), OTHER_GROUP);
     initBooleanField("JD_KEEP_EMPTY_LINES", ApplicationBundle.message("checkbox.keep.empty.lines"), OTHER_GROUP);
     initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"), OTHER_GROUP);
+    initBooleanField("JD_PRESERVE_LINE_FEEDS", ApplicationBundle.message("checkbox.preserve.line.feeds"), OTHER_GROUP);
   }
 
   protected int getRightMargin() {
@@ -108,6 +109,9 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
            "   * This is a method description that is long enough to exceed right margin.\n" +
            "   *\n" +
            "   * Another paragraph of the description placed after blank line.\n" +
+           "   * <p/>\n" +
+           "   * Line with manual\n" +
+           "   * line feed.\n" +
            "   * @param i short named parameter description\n" +
            "   * @param longParameterName long named parameter description\n" +
            "   * @param missingDescription\n" +

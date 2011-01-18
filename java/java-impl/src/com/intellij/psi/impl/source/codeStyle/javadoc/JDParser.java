@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -235,98 +238,58 @@ public class JDParser {
   }
 
   /**
-   * Breaks the specified string by stripping all lineseparators and then wrapping the text to the
-   * specified width
+   * Processes all lines (char sequences separated by line feed symbol) from the given string slitting them if necessary 
+   * ensuring that every returned line contains less symbols than the given width. 
    * 
    * @param s     the specified string
    * @param width width of the wrapped text
    * @return array of strings (lines)
    */
-  private ArrayList<String> toArrayWrapping(String s, int width) {
-    if (s == null) return null;
-    s = s.trim();
-    if (s.length() == 0) return null;
-
-    ArrayList<String> listParagraphs = new ArrayList<String>();
-    StringBuffer sb = new StringBuffer();
-    ArrayList<Boolean> markers = new ArrayList<Boolean>();
-    ArrayList<String> list = toArray(s, "\n", markers);
-    Boolean[] marks = (Boolean[])markers.toArray(new Boolean[markers.size()]);
-    markers.clear();
-    for (int i = 0; i < list.size(); i++) {
-      String s1 = list.get(i);
-      if (marks[i].booleanValue()) {
-        if (sb.length() != 0) {
-          listParagraphs.add(sb.toString());
-          markers.add(Boolean.valueOf(false));
-          sb.setLength(0);
-        }
-        listParagraphs.add(s1);
-        markers.add(marks[i]);
-      }
-      else {
-        if (s1.length() == 0) {
-          if (sb.length() != 0) {
-            listParagraphs.add(sb.toString());
-            markers.add(Boolean.valueOf(false));
-            sb.setLength(0);
-          }
-          listParagraphs.add("");
-          markers.add(marks[i]);
-        }
-        else {
-          if (sb.length() != 0) sb.append(' ');
-          sb.append(s1);
-        }
-      }
+  @Nullable
+  private List<String> toArrayWrapping(String s, int width) {
+    List<String> list = new ArrayList<String>();
+    List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
+    if (pairs == null) {
+      return null;
     }
-    if (sb.length() != 0) {
-      listParagraphs.add(sb.toString());
-      markers.add(Boolean.valueOf(false));
-    }
-
-    list.clear();
-    // each line is a praragraph, which has to be wrapped later
-    for (int i = 0; i < listParagraphs.size(); i++) {
-      String seq = listParagraphs.get(i);
-
-      boolean isMarked = (markers.get(i)).booleanValue();
+    for (Pair<String, Boolean> pair : pairs) {
+      String seq = pair.getFirst();
+      boolean isMarked = pair.getSecond();
 
       if (seq.length() == 0) {
         // keep empty lines
         list.add("");
+        continue;
       }
-      else {
-        for (; ;) {
-          if (seq.length() < width) {
-            // keep remaining line and proceed with next paragraph
+      while (true) {
+        if (seq.length() < width) {
+          // keep remaining line and proceed with next paragraph
+          seq = isMarked ? seq : seq.trim();
+          list.add(seq);
+          break;
+        }
+        else {
+          // wrap paragraph
+
+          int wrapPos = Math.min(seq.length() - 1, width);
+          wrapPos = seq.lastIndexOf(' ', wrapPos);
+
+          // either the only word is too long or it looks better to wrap
+          // after the border
+          if (wrapPos <= 2 * width / 3) {
+            wrapPos = Math.min(seq.length() - 1, width);
+            wrapPos = seq.indexOf(' ', wrapPos);
+          }
+
+          // wrap now
+          if (wrapPos >= seq.length() - 1 || wrapPos < 0) {
             seq = isMarked ? seq : seq.trim();
             list.add(seq);
             break;
           }
           else {
-            // wrap paragraph
-
-            int wrapPos = Math.min(seq.length() - 1, width);
-            wrapPos = seq.lastIndexOf(' ', wrapPos);
-
-            // either the only word is too long or it looks better to wrap
-            // after the border
-            if (wrapPos <= 2 * width / 3) {
-              wrapPos = Math.min(seq.length() - 1, width);
-              wrapPos = seq.indexOf(' ', wrapPos);
-            }
-
-            // wrap now
-            if (wrapPos >= seq.length() - 1 || wrapPos == -1) {
-              seq = isMarked ? seq : seq.trim();
-              list.add(seq);
-              break;
-            }
-            else {
-              list.add(seq.substring(0, wrapPos));
-              seq = seq.substring(wrapPos + 1);
-            }
+            list.add(seq.substring(0, wrapPos));
+            seq = seq.substring(wrapPos + 1);
           }
         }
       }
@@ -335,6 +298,58 @@ public class JDParser {
     return list;
   }
 
+  /**
+   * Processes given string and produces on its basis set of pairs like <code>'(string; flag)'</code> where <code>'string'</code>
+   * is interested line and <code>'flag'</code> indicates if it is wrapped to {@code <pre>} tag.
+   * 
+   * @param s   string to process
+   * @return    processing result
+   */
+  @Nullable
+  private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s) {
+    if (s == null) return null;
+    s = s.trim();
+    if (s == null /* just to make inspection happy*/ || s.isEmpty()) return null;
+
+    List<Pair<String, Boolean>> result = new ArrayList<Pair<String, Boolean>>();
+    
+    StringBuilder sb = new StringBuilder();
+    ArrayList<Boolean> markers = new ArrayList<Boolean>();
+    ArrayList<String> list = toArray(s, "\n", markers);
+    Boolean[] marks = markers.toArray(new Boolean[markers.size()]);
+    markers.clear();
+    for (int i = 0; i < list.size(); i++) {
+      String s1 = list.get(i);
+      if (marks[i].booleanValue()) {
+        if (sb.length() != 0) {
+          result.add(new Pair<String, Boolean>(sb.toString(), false));
+          sb.setLength(0);
+        }
+        result.add(new Pair<String, Boolean>(s1, marks[i]));
+      }
+      else {
+        if (s1.isEmpty()) {
+          if (sb.length() != 0) {
+            result.add(new Pair<String, Boolean>(sb.toString(), false));
+            sb.setLength(0);
+          }
+          result.add(new Pair<String, Boolean>("", marks[i]));
+        }
+        else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
+          result.add(new Pair<String, Boolean>(s1, marks[i]));
+        }
+        else {
+          if (sb.length() != 0) sb.append(' ');
+          sb.append(s1);
+        }
+      }
+    }
+    if (!mySettings.JD_PRESERVE_LINE_FEEDS && sb.length() != 0) {
+      result.add(new Pair<String, Boolean>(sb.toString(), false));
+    }
+    return result;
+  }
+  
   static abstract class TagParser {
 
     abstract boolean parse(String tag, String line, JDComment c);
@@ -475,7 +490,7 @@ public class JDParser {
     if (add_prefix_to_first_line) {
       sb.append(prefix);
     }
-    ArrayList<String> list = mySettings.WRAP_COMMENTS
+    List<String> list = mySettings.WRAP_COMMENTS
                              ? toArrayWrapping(s, mySettings.RIGHT_MARGIN - prefix.length())
                              : toArray(s, "\n", new ArrayList<Boolean>());
     if (list == null) {
