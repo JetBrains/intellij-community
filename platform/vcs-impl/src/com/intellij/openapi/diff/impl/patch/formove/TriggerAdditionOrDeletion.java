@@ -135,7 +135,11 @@ public class TriggerAdditionOrDeletion {
     } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
       final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeAdded, "Select files to add to " + vcs.getDisplayName(), null,
         "Schedule for addition", "Do you want to schedule the following file for addition to " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      toBeAdded.retainAll(files);
+      if (files == null) {
+        toBeAdded.clear();
+      } else {
+        toBeAdded.retainAll(files);
+      }
     }
   }
 
@@ -146,7 +150,11 @@ public class TriggerAdditionOrDeletion {
     } else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
       final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(toBeDeleted, "Select files to remove from " + vcs.getDisplayName(), null,
         "Schedule for deletion", "Do you want to schedule the following file for deletion from " + vcs.getDisplayName() + "\n{0}", confirmationOption);
-      toBeDeleted.retainAll(files);
+      if (files == null) {
+        toBeDeleted.clear();
+      } else {
+        toBeDeleted.retainAll(files);
+      }
     }
   }
 

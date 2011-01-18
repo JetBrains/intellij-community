@@ -19,35 +19,21 @@ import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsBinaryContentRevision;
 import com.intellij.cvsSupport2.changeBrowser.CvsContentRevision;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
-import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
-import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
 
 public class CvsDiffProvider implements DiffProvider{
   private final Project myProject;
@@ -121,53 +107,5 @@ public class CvsDiffProvider implements DiffProvider{
       return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
     }
     return new ItemLatestState(new CvsRevisionNumber(stickyHead), (! entry.isRemoved()), false);
-  }
-
-  @Nullable
-  private String getBranchHeadRevision(final VirtualFile parent, final String name, final String currentRevNumber) {
-    final int[] subRevisions = new CvsRevisionNumber(currentRevNumber).getSubRevisions();
-    if (subRevisions == null || subRevisions.length < 2) return currentRevNumber;
-
-    final int[] top = new int[subRevisions.length - 1];
-    System.arraycopy(subRevisions, 1, top, 0, subRevisions.length - 1);
-    final String branchRoot = StringUtil.join(top, ".");
-
-    final LocalPathIndifferentLogOperation operation = new LocalPathIndifferentLogOperation(new File(parent.getPath(), name));
-    final Ref<Boolean> logSuccess = new Ref<Boolean>(Boolean.TRUE);
-    final ModalityContext context = ModalityContextImpl.NON_MODAL;
-    final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
-      CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
-      public void addError(VcsException ex) {
-        logSuccess.set(Boolean.FALSE);
-      }
-      public void addWarning(VcsException ex) {
-      }
-      public List getErrors() {
-        return null;
-      }
-    }, context, PostCvsActivity.DEAF);
-    try {
-      // should already be logged in
-      //operation.login(context);
-      operation.execute(cvsExecutionEnvironment);
-    }
-    catch (VcsException e) {
-      //
-    }
-    catch (CommandAbortedException e) {
-      //
-    }
-    if (Boolean.TRUE.equals(logSuccess.get())) {
-      final Collection<CvsRevisionNumber> numberCollection = operation.getAllRevisions();
-      if (numberCollection == null) return null;
-      
-      for (CvsRevisionNumber revisionNumber : numberCollection) {
-        final String stringPresentation = revisionNumber.asString();
-        if (stringPresentation.startsWith(branchRoot)) {
-          return stringPresentation;
-        }
-      }
-    }
-    return null;
   }
 }

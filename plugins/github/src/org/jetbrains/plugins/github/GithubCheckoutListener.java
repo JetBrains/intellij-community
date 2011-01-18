@@ -2,7 +2,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.checkout.CheckoutListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.TaskManager;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author oleg
@@ -32,48 +31,57 @@ public class GithubCheckoutListener implements CheckoutListener {
   @Override
   public void processOpenedProject(final Project lastOpenedProject) {
     final GithubSettings settings = GithubSettings.getInstance();
-    final String name = getGithubProjectName(lastOpenedProject);
-    if (name != null) {
-      processProject(lastOpenedProject, settings, name);
+    final Pair<String, String> info = getGithubProjectInfo(lastOpenedProject);
+    if (info != null) {
+      processProject(lastOpenedProject, settings, info.first, info.second);
     }
   }
 
   @Nullable
-  private String getGithubProjectName(final Project project) {
+  private Pair<String, String> getGithubProjectInfo(final Project project) {
     final VirtualFile root = project.getBaseDir();
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (gitDetected) {
-      try {
-        final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-        for (GitRemote gitRemote : gitRemotes) {
-          String url = gitRemote.fetchUrl();
-          if (url.contains("github.com")) {
-            final int i = url.lastIndexOf("/");
-            if (i == -1){
-              return project.getName();
-            }
-            url = url.substring(i + 1);
-            if (url.endsWith(".git")){
-              url = url.substring(0, url.length() - 4);
-            }
-            return url;
-          }
-        }
+      final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(project, root);
+      if (gitRemote == null) {
+        return null;
       }
-      catch (VcsException e2) {
-        // ingore
+      String url = gitRemote.fetchUrl();
+      if (url.contains("github.com")) {
+        int i = url.lastIndexOf("/");
+        if (i == -1){
+          return null;
+        }
+        String name = url.substring(i + 1);
+        if (name.endsWith(".git")){
+          name = name.substring(0, name.length() - 4);
+        }
+        url = url.substring(0, i);
+        // We don't want https://
+        if (url.startsWith("https://")){
+          url = url.substring(8);
+        }
+        i = url.lastIndexOf(':');
+        if (i == -1) {
+          i = url.lastIndexOf('/');
+        }
+        if (i == -1){
+          return null;
+        }
+        final String author = url.substring(i + 1);
+        return Pair.create(author, name);
       }
     }
     return null;
   }
 
-  private void processProject(final Project openedProject, final GithubSettings settings, final String name) {
+  private void processProject(final Project openedProject, final GithubSettings settings, final String author, final String name) {
     // try to enable git tasks integration
     final Runnable taskInitializationRunnable = new Runnable() {
       public void run() {
         try {
-          enableGithubTrackerIntergation(openedProject, settings.getLogin(), settings.getPassword(), name);
+          enableGithubTrackerIntergation(openedProject, settings.getLogin(), settings.getPassword(), author, name);
         }
         catch (Exception e) {
           // Ignore it
@@ -87,7 +95,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     }
   }
 
-  private void enableGithubTrackerIntergation(final Project project, final String login, final String password, final String name) {
+  private void enableGithubTrackerIntergation(final Project project, final String login, final String password, final String author, final String name) {
     // Look for github repository type
     final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     final TaskRepository[] allRepositories = manager.getAllRepositories();
@@ -100,12 +108,11 @@ public class GithubCheckoutListener implements CheckoutListener {
     final GitHubRepository repository = new GitHubRepository(new GitHubRepositoryType());
     repository.setUsername(login);
     repository.setPassword(password);
+    repository.setRepoAuthor(author);
     repository.setRepoName(name);
-    repository.setRepoAuthor(login);
     final ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>(Arrays.asList(allRepositories));
     repositories.add(repository);
     manager.setRepositories(repositories);
   }
-
 
 }

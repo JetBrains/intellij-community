@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.Comparator;
 
@@ -57,10 +58,6 @@ public class WeightBasedComparator implements Comparator<NodeDescriptor> {
   }
 
   protected static int compareToString(final NodeDescriptor first, final NodeDescriptor second) {
-    String s1 = first.toString();
-    String s2 = second.toString();
-    if (s1 == null) return s2 == null ? 0 : -1;
-    if (s2 == null) return +1;
-    return s1.compareToIgnoreCase(s2);
+    return StringUtil.compare(first.toString(), second.toString(), true);
   }
 }

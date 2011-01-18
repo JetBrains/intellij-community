@@ -1824,24 +1824,6 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                  "int someVariable = a ?\n" + "                   x :\n" + "                   y;");
   }
 
-
-
-  public void testRightMargin() throws Exception {
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 35;//      |
-    doTextTest(
-      "/** Here is one-line java-doc comment */" +
-      "class Foo {\n" +
-      "}",
-      "/**\n" +
-      " * Here is one-line java-doc\n" +
-      " * comment\n" +
-      " */\n" +
-      "class Foo {\n" +
-      "}");
-
-  }
-
   public void testRightMargin_2() throws Exception {
     getSettings().RIGHT_MARGIN = 65;
     getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
@@ -2094,15 +2076,7 @@ public void testSCR260() throws Exception {
     doTest();
   }
 
-  public void testSCR11296() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.RIGHT_MARGIN = 50;
-    settings.WRAP_COMMENTS = true;
-    settings.ENABLE_JAVADOC_FORMATTING = true;
-    settings.JD_P_AT_EMPTY_LINES = false;
-    settings.JD_KEEP_EMPTY_LINES = false;
-    doTest();
-  }
+  
 
   public void testSCR547() throws Exception {
     doTextTest("class Foo { \n" +
@@ -2123,7 +2097,6 @@ public void testSCR260() throws Exception {
      "    };\n" +
      "}");
   }
-
 
   public void testSCR479() throws Exception {
     final CodeStyleSettings settings = getSettings();
@@ -2200,23 +2173,6 @@ public void testSCR260() throws Exception {
     settings.THROWS_LIST_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
     settings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
     doTest();
-  }
-
-  public void testSCR2632() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 20;
-
-    doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
-               "/**\n" +
-               " * <p/>\n" +
-               " * Another paragraph\n" +
-               " * of the description\n" +
-               " * placed after\n" +
-               " * blank line.\n" +
-               " */\n" +
-               "class A {\n" +
-               "}");
   }
 
   public void testSCR1486() throws Exception {

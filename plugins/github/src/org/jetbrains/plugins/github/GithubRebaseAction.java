@@ -19,12 +19,15 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
@@ -80,7 +83,13 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     try {
       // Check that given repository is properly configured git repository
-      final GitRemote githubRemote = GithubUtil.getGithubBoundRepository(project);
+      final GitRemote githubRemote = GithubUtil.accessToGithubWithModalProgress(project, new Computable<GitRemote>(){
+        @Override
+        public GitRemote compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Reading branches information");
+          return GithubUtil.getGithubBoundRepository(project);
+        }
+      });
       final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       LOG.assertTrue(githubRemote != null);
 
@@ -132,28 +141,41 @@ public class GithubRebaseAction extends DumbAwareAction {
           return;
         }
 
-        LOG.info("Adding GitHub as a remote host");
-        final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-        addRemoteHandler.setNoSSH(true);
-        addRemoteHandler.setSilent(true);
-        final String remoteName = parent.substring(0, parent.lastIndexOf('/'));
-        addRemoteHandler.addParameters("add", remoteName, parentRepoUrl);
-        addRemoteHandler.run();
-        if (addRemoteHandler.getExitCode() != 0) {
-          Messages.showErrorDialog("Failed to add GitHub remote: '" + parentRepoUrl + "'", CANNOT_PERFORM_GITHUB_REBASE);
-          return;
-        }
+        GithubUtil.accessToGithubWithModalProgress(project, new Runnable() {
+          public void run() {
+            try {
+              LOG.info("Adding GitHub parent as a remote host");
+              ProgressManager.getInstance().getProgressIndicator().setText("Adding GitHub parent as a remote host");
+              final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
+              addRemoteHandler.setNoSSH(true);
+              addRemoteHandler.setSilent(true);
+              final String remoteName = parent.substring(0, parent.lastIndexOf('/'));
+              addRemoteHandler.addParameters("add", remoteName, parentRepoUrl);
+              addRemoteHandler.run();
+              if (addRemoteHandler.getExitCode() != 0) {
+                showErrorMessageInEDT(project, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
+                return;
+              }
 
-        LOG.info("Updating remotes");
-        final GitSimpleHandler updateRemotesHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-        updateRemotesHandler.setNoSSH(true);
-        updateRemotesHandler.setSilent(true);
-        updateRemotesHandler.addParameters("update");
-        updateRemotesHandler.run();
-        if (updateRemotesHandler.getExitCode() != 0) {
-          Messages.showErrorDialog("Failed to update remotes", CANNOT_PERFORM_GITHUB_REBASE);
-          return;
-        }
+              LOG.info("Updating remotes");
+              ProgressManager.getInstance().getProgressIndicator().setText("Updating remotes");
+              final GitSimpleHandler updateRemotesHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
+              updateRemotesHandler.setNoSSH(true);
+              updateRemotesHandler.setSilent(true);
+              updateRemotesHandler.addParameters("update");
+              updateRemotesHandler.run();
+              if (updateRemotesHandler.getExitCode() != 0) {
+                showErrorMessageInEDT(project, "Failed to update remotes");
+                return;
+              }
+            }
+            catch (VcsException e1) {
+              final String message = "Error happened during git operation: " + e1.getMessage();
+              showErrorMessageInEDT(project, message);
+              return;
+            }
+          }
+        });
       }
 
       BasicAction.saveAll();
@@ -167,5 +189,14 @@ public class GithubRebaseAction extends DumbAwareAction {
       Messages.showErrorDialog(project, "Error happened during git operation: " + e1.getMessage(), CANNOT_PERFORM_GITHUB_REBASE);
       return;
     }
+  }
+
+  private void showErrorMessageInEDT(final Project project, final String message) {
+    UIUtil.invokeLaterIfNeeded(new Runnable(){
+      @Override
+      public void run() {
+        Messages.showErrorDialog(project, message, CANNOT_PERFORM_GITHUB_REBASE);
+      }
+    });
   }
 }

@@ -44,11 +44,11 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   public CvsOperationOnFiles() {
   }
 
-  public synchronized void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException {
+  public synchronized void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
     synchronized (CvsOperation.class) {
       if (!myFiles.isEmpty()) {
         try {
-          super.execute(executionEnvironment);
+          super.execute(executionEnvironment, underReadAction);
         } finally {
           clearCachedEntriesForProcessedFiles();
         }

@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -94,9 +95,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       case COLUMN_NAME:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            String name1 = o1.getName();
-            String name2 = o2.getName();
-            return compareStrings(name1, name2);
+            return StringUtil.compare(o1.getName(), o2.getName(), true);
           }
         };
 
@@ -120,9 +119,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       case COLUMN_CATEGORY:
         return new Comparator<IdeaPluginDescriptor>() {
           public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
-            String cat1 = o1.getCategory();
-            String cat2 = o2.getCategory();
-            return compareStrings(cat1, cat2);
+            return StringUtil.compare(o1.getCategory(), o2.getCategory(), true);
           }
         };
 
@@ -145,21 +142,6 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
             return 0;
           }
         };
-    }
-  }
-
-  public static int compareStrings(String str1, String str2) {
-    if (str1 == null && str2 == null) {
-      return 0;
-    }
-    else if (str1 == null) {
-      return -1;
-    }
-    else if (str2 == null) {
-      return 1;
-    }
-    else {
-      return str1.compareToIgnoreCase(str2);
     }
   }
 

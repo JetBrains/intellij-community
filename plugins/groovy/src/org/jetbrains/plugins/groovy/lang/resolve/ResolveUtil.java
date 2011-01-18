@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -370,16 +369,16 @@ public class ResolveUtil {
   }
 
   private static boolean categoryIteration(PsiElement place, ResolverProcessor processor, PsiElement prev, Ref<Boolean> result) {
-    if (!(place instanceof GrMethodCallExpression)) return false;
+    if (!(place instanceof GrMethodCall)) return false;
 
-    final GrMethodCallExpression call = (GrMethodCallExpression)place;
+    final GrMethodCall call = (GrMethodCall)place;
     final GrExpression invoked = call.getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression) || !"use".equals(((GrReferenceExpression)invoked).getReferenceName())) return false;
 
     final GrClosableBlock[] closures = call.getClosureArguments();
     if (closures.length != 1 || !closures[0].equals(prev)) return false;
 
-    if (!useCategoryClass(call)) return false;
+    if (!(call.resolveMethod() instanceof GrGdkMethod)) return false;
 
     final GrArgumentList argList = call.getArgumentList();
     if (argList == null) return false;
@@ -397,10 +396,6 @@ public class ResolveUtil {
       }
     }
     return true;
-  }
-
-  private static boolean useCategoryClass(GrMethodCallExpression call) {
-    return call.resolveMethod() instanceof GrGdkMethod;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {

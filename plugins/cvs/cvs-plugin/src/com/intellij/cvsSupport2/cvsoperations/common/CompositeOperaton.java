@@ -46,12 +46,12 @@ public class CompositeOperaton extends CvsOperation {
     }
   }
 
-  public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException {
+  public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException {
     CvsEntriesManager.getInstance().lockSynchronizationActions();
     try{
       for (final CvsOperation cvsOperation : getSubOperations()) {
         myCurrentOperation = cvsOperation;
-        myCurrentOperation.execute(executionEnvironment);
+        myCurrentOperation.execute(executionEnvironment, underReadAction);
       }
     } finally {
       CvsEntriesManager.getInstance().unlockSynchronizationActions();

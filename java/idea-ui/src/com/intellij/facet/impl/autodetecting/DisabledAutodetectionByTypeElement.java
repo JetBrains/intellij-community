@@ -16,15 +16,16 @@
 
 package com.intellij.facet.impl.autodetecting;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -33,8 +34,14 @@ import java.util.List;
 */
 @Tag("facet-type")
 public class DisabledAutodetectionByTypeElement {
+  public static final Comparator<DisabledAutodetectionByTypeElement> COMPARATOR = new Comparator<DisabledAutodetectionByTypeElement>() {
+    @Override
+    public int compare(DisabledAutodetectionByTypeElement o1, DisabledAutodetectionByTypeElement o2) {
+      return StringUtil.compare(o1.getFacetTypeId(), o2.getFacetTypeId(), true);
+    }
+  };
   private String myFacetTypeId;
-  private List<DisabledAutodetectionInModuleElement> myModuleElements = new ArrayList<DisabledAutodetectionInModuleElement>();
+  private List<DisabledAutodetectionInModuleElement> myModuleElements = new SortedList<DisabledAutodetectionInModuleElement>(DisabledAutodetectionInModuleElement.COMPARATOR);
   
   public DisabledAutodetectionByTypeElement() {
   }

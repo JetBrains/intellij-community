@@ -92,18 +92,6 @@ public class SortedList<T> extends AbstractList<T>{
     myDelegate = null;
   }
 
-  @Override
-  public Iterator<T> iterator() {
-    ensureLinearized();
-    return myDelegate.iterator();
-  }
-
-  @Override
-  public ListIterator<T> listIterator() {
-    ensureLinearized();
-    return myDelegate.listIterator();
-  }
-
   public int size() {
     ensureLinearized();
     return myDelegate.size();

@@ -33,7 +33,7 @@ public abstract class CvsOperation {
 
   private final Collection<Runnable> myFinishActions = new ArrayList<Runnable>();
 
-  public abstract void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException, CommandAbortedException;
+  public abstract void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException;
 
   public abstract void appendSelfCvsRootProvider(@NotNull final Collection<CvsRootProvider> roots) throws CannotFindCvsRootException;
 

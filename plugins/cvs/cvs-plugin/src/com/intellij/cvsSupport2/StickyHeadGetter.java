@@ -139,7 +139,7 @@ public abstract class StickyHeadGetter {
     try {
       // should already be logged in
       //operation.login(context);
-      operation.execute(cvsExecutionEnvironment);
+      operation.execute(cvsExecutionEnvironment, false);
     }
     catch (VcsException e) {
       //
