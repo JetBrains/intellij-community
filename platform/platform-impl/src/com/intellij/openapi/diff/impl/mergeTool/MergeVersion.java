@@ -47,11 +47,11 @@ public interface MergeVersion {
 
   FileType getContentType();
 
-  String getTextBeforeMerge();
+  void restoreOriginalContent(Project project);
 
   class MergeDocumentVersion implements MergeVersion {
     private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeVersion.MergeDocumentVersion");
-    private final Document myDocument;
+    protected final Document myDocument;
     private final String myOriginalText;
     private String myTextBeforeMerge;
 
@@ -82,18 +82,35 @@ public interface MergeVersion {
     public void applyText(final String text, final Project project) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
-
-          FileDocumentManager.getInstance().saveDocument(myDocument);
-          final VirtualFile file = getFile();
-          if (file != null) {
-            final FileType fileType = file.getFileType();
-            if (fileType instanceof ProjectFileType || fileType instanceof WorkspaceFileType || fileType instanceof ModuleFileType) {
-              ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
-            }
-          }
+          doApplyText(text, project);
         }
       });
+    }
+
+    protected void doApplyText(String text, Project project) {
+      setDocumentText(myDocument, text, DiffBundle.message("save.merge.result.command.name"), project);
+
+      FileDocumentManager.getInstance().saveDocument(myDocument);
+      final VirtualFile file = getFile();
+      if (file != null) {
+        final FileType fileType = file.getFileType();
+        if (fileType instanceof ProjectFileType || fileType instanceof WorkspaceFileType || fileType instanceof ModuleFileType) {
+          ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
+        }
+      }
+    }
+
+    @Override
+    public void restoreOriginalContent(final Project project) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          doRestoreOriginalContent(project);
+        }
+      });
+    }
+
+    protected void doRestoreOriginalContent(Project project) {
+      setDocumentText(myDocument, myTextBeforeMerge, "", project);
     }
 
     public VirtualFile getFile() {
@@ -112,16 +129,12 @@ public interface MergeVersion {
       return FileTypeManager.getInstance().getFileTypeByFile(file);
     }
 
-    private static void setDocumentText(final Document document, final String startingText, String name, Project project) {
+    private static void setDocumentText(final Document document, final String text, String name, Project project) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
-          document.replaceString(0, document.getTextLength(), startingText);
+          document.replaceString(0, document.getTextLength(), text);
         }
       }, name, null);
-    }
-
-    public String getTextBeforeMerge() {
-      return myTextBeforeMerge;
     }
   }
 }

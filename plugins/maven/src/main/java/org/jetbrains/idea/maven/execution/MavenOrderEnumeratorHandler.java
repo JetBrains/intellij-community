@@ -82,9 +82,11 @@ public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
   private boolean shouldAddArtifact(MavenArtifact artifact, boolean productionOnly, boolean runtimeOnly, boolean compileOnly) {
     if (productionOnly) {
       String scope = artifact.getScope();
-      if (compileOnly && MavenConstants.SCOPE_RUNTIME.endsWith(scope)) return false;
-      if (runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(scope)) return false;
-      if (MavenConstants.SCOPE_TEST.equals(scope)) return false;
+      if (scope != null) {
+        if (compileOnly && MavenConstants.SCOPE_RUNTIME.endsWith(scope)) return false;
+        if (runtimeOnly && MavenConstants.SCOPE_PROVIDEED.equals(scope)) return false;
+        if (MavenConstants.SCOPE_TEST.equals(scope)) return false;
+      }
     }
     return true;
   }

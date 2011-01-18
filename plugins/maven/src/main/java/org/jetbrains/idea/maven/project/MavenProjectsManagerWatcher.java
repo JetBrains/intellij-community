@@ -152,6 +152,7 @@ public class MavenProjectsManagerWatcher {
     Disposer.register(myChangedDocumentsQueue, new Disposable() {
       public void dispose() {
         myGeneralSettings.removeListener(mySettingsPathsChangesListener);
+        mySettingsFilesPointers.clear();
       }
     });
     updateSettingsFilePointers();

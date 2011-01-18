@@ -243,6 +243,14 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     this.filler = filler;
   }
 
+  public boolean isTrim() {
+    return trim;
+  }
+
+  public void setTrim(boolean trim) {
+    this.trim = trim;
+  }
+
   public int fileTypeOverride;
   public boolean relativeBefore;
   public boolean addBlankAfter;
@@ -256,4 +264,5 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
   public int lenAfter;
   public boolean box;
   public char filler;
+  public boolean trim;
 }

@@ -23,7 +23,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import static git4idea.config.GitVersion.Type;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kirill Likhodedov
@@ -33,7 +35,8 @@ public class GitVersionTest {
   private static final TestGitVersion[] commonTests = {
     new TestGitVersion("git version 1.6.4", 1, 6, 4, 0),
     new TestGitVersion("git version 1.7.3.3", 1, 7, 3, 3),
-    new TestGitVersion("git version 1.7.3.5.gb27be", 1, 7, 3, 5)
+    new TestGitVersion("git version 1.7.3.5.gb27be", 1, 7, 3, 5),
+    new TestGitVersion("git version 1.7.4-rc1", 1, 7, 4, 0)
   };
 
   private static final TestGitVersion[] msysTests = {

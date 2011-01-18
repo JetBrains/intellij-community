@@ -15,17 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -57,6 +52,15 @@ public class MergeRequestImpl extends MergeRequest {
                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
     this(new SimpleContent(left), new MergeContent(base, project), new SimpleContent(right), project, okButtonPresentation,
          cancelButtonPresentation);
+  }
+
+  public MergeRequestImpl(DiffContent left,
+                          MergeVersion base,
+                          DiffContent right,
+                          Project project,
+                          @Nullable final ActionButtonPresentation okButtonPresentation,
+                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+    this(left, new MergeContent(base, project), right, project, okButtonPresentation, cancelButtonPresentation);
   }
 
   public MergeRequestImpl(String left,
@@ -121,17 +125,7 @@ public class MergeRequestImpl extends MergeRequest {
   public void restoreOriginalContent() {
     final MergeContent mergeContent = getMergeContent();
     if (mergeContent == null) return;
-    CommandProcessor.getInstance().executeCommand(
-      getProject(),
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              FileDocumentManager.getInstance().getDocument(mergeContent.getFile()).setText(mergeContent.getOriginalText());
-            }
-          });
-        }
-      }, "", null);
+    mergeContent.restoreOriginalContent();
   }
 
   private static void configureAction(DialogBuilder builder,
@@ -234,8 +228,8 @@ public class MergeRequestImpl extends MergeRequest {
       return myTarget.getBytes();
     }
 
-    public String getOriginalText() {
-      return myTarget.getTextBeforeMerge();
+    public void restoreOriginalContent() {
+      myTarget.restoreOriginalContent(myProject);
     }
   }
 
