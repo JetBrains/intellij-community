@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,10 +99,10 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new InnerClassCanBeStaticVisitor();
+        return new InnerClassMayBeStaticVisitor();
     }
 
-    private static class InnerClassCanBeStaticVisitor
+    private static class InnerClassMayBeStaticVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
@@ -110,6 +110,9 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
             if (aClass.getContainingClass() != null &&
                     !aClass.hasModifierProperty(PsiModifier.STATIC)) {
                 // inner class cannot have static declarations
+                return;
+            }
+            if (aClass instanceof PsiAnonymousClass) {
                 return;
             }
             final PsiClass[] innerClasses = aClass.getInnerClasses();
