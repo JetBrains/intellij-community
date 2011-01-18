@@ -164,8 +164,13 @@ public class GroovyPsiManager {
     }
   };
 
+  @Nullable
   public static PsiType inferType(PsiElement element, Computable<PsiType> computable) {
     final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
+    if (curr.size() > 7) { //don't end up walking the whole project PSI
+      return null;
+    }
+
     try {
       curr.add(element);
       return computable.compute();
