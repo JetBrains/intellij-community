@@ -101,17 +101,17 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   abstract protected Command createCommand(CvsRootProvider root,
                                            CvsExecutionEnvironment cvsExecutionEnvironment);
 
-  public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException,
+  public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException,
                                                                            CommandAbortedException {
     CvsEntriesManager.getInstance().lockSynchronizationActions();
     try {
       if (runInExclusiveLock()) {
         synchronized (CvsOperation.class) {
-          doExecute(executionEnvironment);
+          doExecute(executionEnvironment, underReadAction);
         }
       }
       else {
-        doExecute(executionEnvironment);
+        doExecute(executionEnvironment, underReadAction);
       }
     }
     finally {
@@ -124,34 +124,51 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     roots.addAll(getAllCvsRoots());
   }
 
-  private void doExecute(final CvsExecutionEnvironment executionEnvironment) throws VcsException {
-    ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
-    Collection<CvsRootProvider> allCvsRoots;
-    try {
-      allCvsRoots = getAllCvsRoots();
-    }
-    catch (CannotFindCvsRootException e) {
-      throw createVcsExceptionOn(e, null);
-    }
+  private void doExecute(final CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException {
+    final VcsException[] exc = new VcsException[1];
+    final Runnable action = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
+          Collection<CvsRootProvider> allCvsRoots;
+          try {
+            allCvsRoots = getAllCvsRoots();
+          }
+          catch (CannotFindCvsRootException e) {
+            throw createVcsExceptionOn(e, null);
+          }
 
-    for (CvsRootProvider cvsRootProvider : allCvsRoots) {
-      try {
-        myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
-        execute(cvsRootProvider, executionEnvironment, statistics, executionEnvironment.getExecutor());
-      }
-      catch (IOCommandException e) {
-        LOG.info(e);
-        throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
-      }
-      catch (CommandException e) {
-        LOG.info(e);
-        Exception underlyingException = e.getUnderlyingException();
-        if (underlyingException != null) {
-          LOG.info(underlyingException);
+          for (CvsRootProvider cvsRootProvider : allCvsRoots) {
+            try {
+              myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
+              execute(cvsRootProvider, executionEnvironment, statistics, executionEnvironment.getExecutor());
+            }
+            catch (IOCommandException e) {
+              LOG.info(e);
+              throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
+            }
+            catch (CommandException e) {
+              LOG.info(e);
+              Exception underlyingException = e.getUnderlyingException();
+              if (underlyingException != null) {
+                LOG.info(underlyingException);
+              }
+              throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
+            }
+          }
         }
-        throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
+        catch (VcsException e) {
+          exc[0] = e;
+        }
       }
+    };
+    if (underReadAction) {
+      ApplicationManager.getApplication().runReadAction(action);
+    } else {
+      action.run();
     }
+    if (exc[0] != null) throw exc[0];
   }
 
   private static VcsException createVcsExceptionOn(Exception e, String cvsRoot) {
