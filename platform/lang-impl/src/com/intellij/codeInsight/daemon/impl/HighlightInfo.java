@@ -400,7 +400,7 @@ public class HighlightInfo implements Segment {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
     if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
-    return ProblemHighlightType.INFO;
+    return ProblemHighlightType.WEAK_WARNING;
   }
 
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
