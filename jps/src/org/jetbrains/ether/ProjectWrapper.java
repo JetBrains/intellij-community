@@ -740,8 +740,8 @@ public class ProjectWrapper {
                 final StringWriter as = new StringWriter();
                 final StringWriter bs = new StringWriter();
 
-                final BufferedWriter bas = new BufferedWriter (as);
-                final BufferedWriter bbs = new BufferedWriter (bs);
+                final BufferedWriter bas = new BufferedWriter(as);
+                final BufferedWriter bbs = new BufferedWriter(bs);
 
                 weaken(a).write(bas);
                 weaken(b).write(bbs);
@@ -1084,15 +1084,25 @@ public class ProjectWrapper {
 
     private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
         final Set<Module> modules = new HashSet<Module>();
-        final Set<Module> visited = new HashSet<Module>();
+        final Set<Module> marked = new HashSet<Module>();
+        final Map<Module, Boolean> visited = new HashMap<Module, Boolean>();
+        final Set<Module> frontier = new HashSet<Module>();
 
         final Map<Module, Set<Module>> reversedDependencies = new HashMap<Module, Set<Module>>();
 
+        DotPrinter.header();
+
         for (Module m : myProject.getModules().values()) {
+
+            DotPrinter.node (m.getName());
+
             for (Module.ModuleDependency mdep : m.getDependencies()) {
                 final ClasspathItem cpi = mdep.getItem();
 
                 if (cpi instanceof Module) {
+
+                    DotPrinter.edge (((Module) cpi).getName(), m.getName());
+
                     Set<Module> sm = reversedDependencies.get(cpi);
 
                     if (sm == null) {
@@ -1105,27 +1115,74 @@ public class ProjectWrapper {
             }
         }
 
+        DotPrinter.footer();
+
+        // Building "upper" subgraph
+
+        DotPrinter.header();
+
+        new Object() {
+            public void run(final Collection<Module> initial) {
+                if (initial == null)
+                    return;
+
+                for (Module module : initial) {
+                    if (marked.contains(module))
+                        continue;
+
+                    DotPrinter.node (module.getName());
+
+                    final List<Module> dep = new ArrayList<Module>();
+
+                    for (Module.ModuleDependency d : module.getDependencies()) {
+                        final ClasspathItem cpi = d.getItem();
+
+                        if (cpi instanceof Module) {
+                            DotPrinter.edge (((Module) cpi).getName (), module.getName ());
+                            dep.add((Module) cpi);
+                        }
+                    }
+
+                    if (dep.size() == 0) {
+                        frontier.add(module);
+                    }
+
+                    marked.add(module);
+
+                    run(dep);
+                }
+            }
+        }.run(initial);
+
+        DotPrinter.footer();
+
+        // Traverse "upper" subgraph and collect outdated modules and their descendants
         new Object() {
             public void run(final Collection<Module> initial, final boolean force) {
                 if (initial == null)
                     return;
 
                 for (Module module : initial) {
-                    if (visited.contains(module))
+                    if (!marked.contains(module))
                         continue;
 
-                    visited.add(module);
+                    final Boolean property = visited.get(module);
 
-                    if (force || getModule(module.getName()).isOutdated(tests, myHistory)) {
-                        modules.add(module);
-                        run (reversedDependencies.get(module), true);
-                    }
-                    else {
-                        run (reversedDependencies.get(module), false);
+                    if (property == null || !property && force) {
+                        if (force || getModule(module.getName()).isOutdated(tests, myHistory)) {
+                            visited.put(module, true);
+                            modules.add(module);
+                            run(reversedDependencies.get(module), true);
+                        } else {
+                            if (property == null) {
+                                visited.put (module, false);
+                            }
+                            run(reversedDependencies.get(module), false);
+                        }
                     }
                 }
             }
-        }.run(initial, force);
+        }.run(frontier, force);
 
         if (modules.size() == 0 && !force) {
             System.out.println("All requested modules are up-to-date.");

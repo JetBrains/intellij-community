@@ -34,10 +34,15 @@ public class Main {
                 new Options.Descriptor("make", "make", "m", Options.ArgumentSpecifier.OPTIONAL, "make the whole project or specified module"),
                 new Options.Descriptor("tests", "tests", "t", Options.ArgumentSpecifier.NONE, "make tests as well"),
                 new Options.Descriptor("force", "force", "f", Options.ArgumentSpecifier.NONE, "force actions"),
-                new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE, "show help on options")
+                new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE, "show help on options"),
+                new Options.Descriptor("debug", "debug", "d", Options.ArgumentSpecifier.NONE, "debug info (for development purposes)")
         };
 
         myOptions = new Options(descrs);
+    }
+
+    private static boolean doDebug () {
+        return myOptions.get ("debug") instanceof Options.Switch;
     }
 
     private static boolean doSave() {
@@ -141,6 +146,10 @@ public class Main {
 
         if (projects.isEmpty() && !doHelp()) {
             System.out.println("Nothing to do; use --help or -h option to see the help.\n");
+        }
+
+        if (doDebug()) {
+            DotPrinter.setPrintStream(System.out);
         }
 
         for (String prj : projects) {
