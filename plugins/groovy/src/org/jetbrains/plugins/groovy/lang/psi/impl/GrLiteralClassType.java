@@ -16,11 +16,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 public abstract class GrLiteralClassType extends PsiClassType {
   protected final GlobalSearchScope myScope;
   protected final JavaPsiFacade myFacade;
+  private final GroovyPsiManager myGroovyPsiManager;
 
   public GrLiteralClassType(LanguageLevel languageLevel, GlobalSearchScope scope, JavaPsiFacade facade) {
     super(languageLevel);
     myScope = scope;
     myFacade = facade;
+    myGroovyPsiManager = GroovyPsiManager.getInstance(myFacade.getProject());
   }
 
   protected abstract String getJavaClassName();
@@ -119,7 +121,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @NotNull
   public PsiClassType rawType() {
-    return myFacade.getElementFactory().createTypeByFQClassName(getJavaClassName(), myScope);
+    return myGroovyPsiManager.createTypeByFQClassName(getJavaClassName(), myScope);
   }
 
   public boolean equalsToText(@NonNls String text) {

@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -334,7 +335,7 @@ public class TypesUtil {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
-        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+        return GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(boxedTypeName, resolveScope);
       }
     }
 
@@ -360,9 +361,8 @@ public class TypesUtil {
     return null;
   }
 
-  public static PsiClassType createType(String fqName, PsiElement context) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
-    return facade.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
+  public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
+    return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context);
   }
 
   public static PsiClassType getJavaLangObject(PsiElement context) {
@@ -437,7 +437,7 @@ public class TypesUtil {
     }
     final String typeName = getPsiTypeName(elemType);
     if (typeName != null) {
-      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeByFQClassName(typeName, context.getResolveScope());
+      return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(typeName, context);
     }
     return null;
   }

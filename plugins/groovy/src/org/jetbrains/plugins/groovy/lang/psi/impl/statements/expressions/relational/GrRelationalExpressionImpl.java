@@ -21,6 +21,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRelationalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
@@ -37,6 +38,6 @@ public class GrRelationalExpressionImpl extends GrBinaryExpressionImpl implement
   }
 
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Boolean", getResolveScope());
+    return getTypeByFQName("java.lang.Boolean");
   }
 }

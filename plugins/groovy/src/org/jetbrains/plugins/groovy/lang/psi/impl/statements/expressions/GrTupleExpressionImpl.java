@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 /**
  * @author ilyas
@@ -37,7 +38,6 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
   }
 
   public PsiType getType() {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    return facade.getElementFactory().createTypeByFQClassName("java.util.List", getResolveScope());
+    return getTypeByFQName("java.util.List");
   }
 }
