@@ -177,18 +177,21 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     final VirtualFile file = getSelectedFile();
     Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
     String text;
+    String toolTip;
     if (file != null) {
       Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
       if (charset == null) charset = file.getCharset();
 
-      text = charset.displayName();// + " (" + result.first +")";
+      text = charset.displayName();
       actionEnabled = result.second;
+      toolTip = result.first;
     }
     else {
       text = "";
       actionEnabled = false;
+      toolTip = "";
     }
-    myComponent.setToolTipText(result.first);
+    myComponent.setToolTipText(toolTip);
     myComponent.setText(text);
     myStatusBar.updateWidget(ID());
   }

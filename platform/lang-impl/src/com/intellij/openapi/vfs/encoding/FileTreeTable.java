@@ -106,6 +106,10 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
                                                                       SimpleDataContext.getProjectContext(getProject()));
         AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
+        changeAction.getTemplatePresentation().setDescription(null);
+        if (myVirtualFile == null) {
+          changeAction.getTemplatePresentation().setEnabled(true); // enable changing encoding for tree root (entire project)
+        }
         editorComponent = comboComponent;
         comboComponent.addComponentListener(new ComponentAdapter() {
           @Override
