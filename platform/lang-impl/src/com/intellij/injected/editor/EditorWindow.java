@@ -206,7 +206,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @NotNull
-  public ScrollingModel getScrollingModel() {
+  public ScrollingModelEx getScrollingModel() {
     return myDelegate.getScrollingModel();
   }
 

@@ -21,7 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,7 +50,7 @@ public class OpenFileXmlRpcHandler {
         });
         if (virtualFile == null) return;
 
-        Project project = ProjectUtil.guessProjectForFile(virtualFile);
+        Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
         if (project == null) return;
 
         FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();

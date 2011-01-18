@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
@@ -280,8 +281,14 @@ public class LaterInvocator {
       }
 
 
-      ModalityStateEx currentModality = (ModalityStateEx)(ourModalEntities.isEmpty() ? ApplicationManager.getApplication()
-          .getNoneModalityState() : new ModalityStateEx(ourModalEntities.toArray()));
+      ModalityStateEx currentModality;
+      if (ourModalEntities.isEmpty()) {
+        Application application = ApplicationManager.getApplication();
+        currentModality = application == null ? (ModalityStateEx)ModalityState.NON_MODAL : (ModalityStateEx)application.getNoneModalityState();
+      }
+      else {
+        currentModality = new ModalityStateEx(ourModalEntities.toArray());
+      }
 
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);

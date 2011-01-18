@@ -253,7 +253,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private boolean myOutputPaused;
 
-  private Editor myEditor;
+  private EditorEx myEditor;
 
   private final Object LOCK = new Object();
 
@@ -799,7 +799,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     boolean cycleUsed = USE_CYCLIC_BUFFER && document.getTextLength() + text.length() > CYCLIC_BUFFER_SIZE;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        document.insertString(document.getTextLength(), text);
+        int offset = myEditor.getCaretModel().getOffset();
+        boolean preserveCurrentVisualArea = offset < document.getTextLength();
+        if (preserveCurrentVisualArea) {
+          myEditor.getScrollingModel().accumulateViewportChanges();
+        }
+        try {
+          document.insertString(document.getTextLength(), text);
+        }
+        finally {
+          if (preserveCurrentVisualArea) {
+            myEditor.getScrollingModel().flushViewportChanges();
+          }
+        }
         if (!contentTypes.isEmpty()) {
           for (ChangeListener each : myListeners) {
             each.contentAdded(contentTypes);
@@ -904,15 +916,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
   }
 
-  private Editor createEditor() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Editor>() {
-      public Editor compute() {
+  private EditorEx createEditor() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<EditorEx>() {
+      public EditorEx compute() {
         return doCreateEditor();
       }
     });
   }
 
-  private Editor doCreateEditor() {
+  private EditorEx doCreateEditor() {
     final EditorEx editor = createRealEditor();
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       public void mouseReleased(final EditorMouseEvent e) {

@@ -97,7 +97,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         PsiMethod method = (PsiMethod)body.getParent();
         final PsiIdentifier name = method.getNameIdentifier();
         if (name != null) { // Might be null for synthetic methods like JSP page.
-          holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.INFO);
+          holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);
         }
       }
     }
