@@ -289,7 +289,7 @@ class ProjectBuilder {
     return dst
   }
 
-  private ClasspathKind getCompileClasspathKind(boolean tests) {
+  public ClasspathKind getCompileClasspathKind(boolean tests) {
     return tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE
   }
 

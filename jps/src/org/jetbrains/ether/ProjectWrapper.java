@@ -1083,6 +1083,8 @@ public class ProjectWrapper {
     }
 
     private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
+        final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
+
         final Set<Module> modules = new HashSet<Module>();
         final Set<Module> marked = new HashSet<Module>();
         final Map<Module, Boolean> visited = new HashMap<Module, Boolean>();
@@ -1096,11 +1098,8 @@ public class ProjectWrapper {
 
             DotPrinter.node (m.getName());
 
-            for (Module.ModuleDependency mdep : m.getDependencies()) {
-                final ClasspathItem cpi = mdep.getItem();
-
+            for (ClasspathItem cpi : m.getClasspath(kind)) {
                 if (cpi instanceof Module) {
-
                     DotPrinter.edge (((Module) cpi).getName(), m.getName());
 
                     Set<Module> sm = reversedDependencies.get(cpi);
@@ -1134,9 +1133,7 @@ public class ProjectWrapper {
 
                     final List<Module> dep = new ArrayList<Module>();
 
-                    for (Module.ModuleDependency d : module.getDependencies()) {
-                        final ClasspathItem cpi = d.getItem();
-
+                    for (ClasspathItem cpi : module.getClasspath(kind)) {
                         if (cpi instanceof Module) {
                             DotPrinter.edge (((Module) cpi).getName (), module.getName ());
                             dep.add((Module) cpi);

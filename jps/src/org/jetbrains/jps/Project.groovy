@@ -260,4 +260,8 @@ class Project {
       }
     }
   }
+
+  def ClasspathKind getCompileClasspathKind (final boolean tests) {
+    return builder.getCompileClasspathKind (tests)
+  }                           \
 }
