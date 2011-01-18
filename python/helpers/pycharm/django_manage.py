@@ -2,8 +2,12 @@
 from pycharm.fix_getpass import fixGetpass
 from pycharm import django_settings
 import os
-from runpy import run_module
 from django.core.management import execute_manager
+
+try:
+  from runpy import run_module
+except ImportError:
+  from pycharm.runpy_compat import run_module
 
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
