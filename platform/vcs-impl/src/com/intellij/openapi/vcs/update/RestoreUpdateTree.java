@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
   private final Project myProject;
@@ -63,6 +64,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "RestoreUpdateTree";
   }

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -174,6 +175,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     return null;
   }
 
+  @NotNull
   public String getComponentName() {
     return "DebuggerSettings";
   }

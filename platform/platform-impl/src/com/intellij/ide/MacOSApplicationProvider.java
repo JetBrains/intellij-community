@@ -31,6 +31,7 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -38,6 +39,7 @@ import java.io.File;
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
+  @NotNull
   public String getComponentName() {
     return "MACOSApplicationProvider";
   }

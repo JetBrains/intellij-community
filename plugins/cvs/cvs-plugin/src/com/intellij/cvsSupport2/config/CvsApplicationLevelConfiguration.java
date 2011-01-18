@@ -72,6 +72,7 @@ public class CvsApplicationLevelConfiguration implements ApplicationComponent, J
     return ServiceManager.getService(CvsApplicationLevelConfiguration.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CvsApplicationLevelConfiguration";
   }

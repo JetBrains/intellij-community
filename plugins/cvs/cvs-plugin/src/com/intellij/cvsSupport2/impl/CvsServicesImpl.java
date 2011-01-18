@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import java.io.File;
@@ -108,6 +109,7 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
       .getScrambledPasswordForCvsRoot(cvsRoot);
   }
 
+  @NotNull
   public String getComponentName() {
     return "CvsServices";
   }

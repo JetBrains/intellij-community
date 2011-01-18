@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -359,6 +360,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "SvnConfiguration";
   }

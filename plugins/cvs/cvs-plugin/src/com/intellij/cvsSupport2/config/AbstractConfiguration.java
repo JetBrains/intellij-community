@@ -22,6 +22,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * author: lesya
@@ -48,6 +49,7 @@ public class AbstractConfiguration implements JDOMExternalizable, ProjectCompone
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return myName;
   }

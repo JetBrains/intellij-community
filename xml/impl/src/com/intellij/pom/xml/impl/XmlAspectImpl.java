@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -219,6 +220,7 @@ public class XmlAspectImpl implements XmlAspect {
 
   public void disposeComponent() { }
 
+  @NotNull
   public String getComponentName() {
     return "XML POM aspect";
   }

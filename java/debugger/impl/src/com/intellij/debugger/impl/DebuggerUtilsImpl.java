@@ -39,12 +39,14 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.net.NetUtils;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
+  @NotNull
   public String getComponentName() {
     return "DebuggerUtils";
   }

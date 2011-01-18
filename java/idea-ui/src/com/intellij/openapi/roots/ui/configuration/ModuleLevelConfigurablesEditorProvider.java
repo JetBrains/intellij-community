@@ -22,6 +22,7 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ModuleConfigurableEP;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public class ModuleLevelConfigurablesEditorProvider implements ModuleConfigurati
   public void moduleAdded() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "ModuleLevelConfigurablesEditorProvider";
   }

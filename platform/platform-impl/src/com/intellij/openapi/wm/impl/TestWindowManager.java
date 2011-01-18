@@ -282,6 +282,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
   }
 
+  @NotNull
   public final String getComponentName() {
     return "TestWindowManager";
   }
