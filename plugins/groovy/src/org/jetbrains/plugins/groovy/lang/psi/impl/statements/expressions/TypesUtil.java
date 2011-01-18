@@ -78,16 +78,7 @@ public class TypesUtil {
     String lCanonical = lType.getCanonicalText();
     String rCanonical = rType.getCanonicalText();
     if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
-      int lRank = TYPE_TO_RANK.get(lCanonical);
-      int rRank = TYPE_TO_RANK.get(rCanonical);
-      int resultRank = Math.max(lRank, rRank);
-      String qName = RANK_TO_TYPE.get(resultRank);
-      if (qName == null) return null;
-      assert lType instanceof PsiClassType;
-      assert rType instanceof PsiClassType;
-      //lType.getResolveScope()!=null && rType.getResolveScope()!=null
-      return JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(qName, lType.getResolveScope().intersectWith(
-        rType.getResolveScope()));
+      return TYPE_TO_RANK.get(lCanonical) > TYPE_TO_RANK.get(rCanonical) ? lType : rType;
     }
     return null;
   }
