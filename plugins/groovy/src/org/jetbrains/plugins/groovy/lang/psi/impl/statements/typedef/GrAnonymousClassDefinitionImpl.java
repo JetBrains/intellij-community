@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author Maxim.Medvedev
@@ -138,7 +138,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiClass getSuperClass() {
     final PsiClass psiClass = getBaseClass();
     if (psiClass != null && !psiClass.isInterface()) return psiClass;
-    return JavaPsiFacade.getInstance(getProject()).findClass(GrClassImplUtil.GROOVY_OBJECT_SUPPORT, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, getResolveScope());
   }
 
   private PsiClassType createTypeByName(String className) {
@@ -162,14 +162,14 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
     if (baseClass != null) {
       if (baseClass.isInterface()) {
-        return new PsiClassType[]{createTypeByName(GrClassImplUtil.GROOVY_OBJECT_SUPPORT)};
+        return new PsiClassType[]{createTypeByName(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT)};
       }
       else {
         if (baseClass instanceof GrTypeDefinition) {
           return new PsiClassType[]{getBaseClassType()};
         }
         else {
-          return new PsiClassType[]{getBaseClassType(), createTypeByName(GrClassImplUtil.GROOVY_OBJECT_SUPPORT)};
+          return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT)};
         }
       }
     }
@@ -191,9 +191,9 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiClassType[] getImplementsListTypes() {
     final PsiClass baseClass = getBaseClass();
     if (baseClass != null && baseClass.isInterface()) {
-      return new PsiClassType[]{getBaseClassType(), createTypeByName(DEFAULT_BASE_CLASS_NAME)};
+      return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};
     }
-    return new PsiClassType[]{createTypeByName(DEFAULT_BASE_CLASS_NAME)};
+    return new PsiClassType[]{createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};
   }
 
   @Override

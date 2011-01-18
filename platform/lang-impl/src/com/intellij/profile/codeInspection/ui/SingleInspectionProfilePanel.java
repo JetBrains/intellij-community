@@ -576,7 +576,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
     severities.add(HighlightSeverity.ERROR);
     severities.add(HighlightSeverity.WARNING);
-    severities.add(HighlightSeverity.INFO);
+    severities.add(HighlightSeverity.WEAK_WARNING);
     final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
       severityRegistrar.getRegisteredHighlightingInfoTypes();
     for (SeverityRegistrar.SeverityBasedTextAttributes info : infoTypes) {

@@ -175,6 +175,7 @@ public abstract class VirtualFileManager implements ModificationTracker{
   }
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
+  public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 }

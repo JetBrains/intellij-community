@@ -16,13 +16,17 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -94,6 +98,13 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
 
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        hideCurrent(null, action, event);
+      }
+    }, ApplicationManager.getApplication());
+
     processEnabled();
   }
 
@@ -106,19 +117,19 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
       boolean canShow = true;
       if (me.getComponent() != myCurrentComponent) {
-        canShow = hideCurrent(me);
+        canShow = hideCurrent(me, null, null);
       }
       if (canShow) {
         maybeShowFor(c, me);
       }
     } else if (me.getID() == MouseEvent.MOUSE_EXITED) {
       if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
-        hideCurrent(me);
+        hideCurrent(me, null, null);
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
-          if (hideCurrent(me)) {
+          if (hideCurrent(me, null, null)) {
             maybeShowFor(c, me);
           }
         } else {
@@ -133,10 +144,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
-        hideCurrent(me);
+        hideCurrent(me, null, null);
       }
     } else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
-      hideCurrent(me);
+      hideCurrent(me, null, null);
     }
   }
 
@@ -177,7 +188,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
     myAlarm.cancelAllRequests();
 
-    hideCurrent(null);
+    hideCurrent(null, null, null);
 
     myQueuedComponent = tooltip.getComponent();
     myQueuedTooltip = tooltip;
@@ -190,7 +201,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
 
         if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
-          hideCurrent(null);
+          hideCurrent(null, null, null);
           return;
         }
 
@@ -198,7 +209,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           show(tooltip, null);
         }
         else {
-          hideCurrent(null);
+          hideCurrent(null, null, null);
         }
       }
     };
@@ -251,7 +262,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setShowCallout(true)
       .setCalloutShift(tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
-      .setPositionChangeYShift(tooltip.getPositionChangeY());
+      .setPositionChangeYShift(tooltip.getPositionChangeY())
+      .setHideOnKeyOutside(!tooltip.isExplicitClose());
     tooltip.getTipComponent().setForeground(fg);
     tooltip.getTipComponent().setBorder(new EmptyBorder(1, 3, 2, 3));
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
@@ -276,7 +288,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       @Override
       public void run() {
         if (myCurrentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
-          hideCurrent(null);
+          hideCurrent(null, null, null);
         }
       }
     }, tooltip.getDismissDelay());
@@ -330,17 +342,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return useSystem;
   }
 
-  private boolean hideCurrent(@Nullable MouseEvent me) {
+  private boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
 
     if (myCurrentTooltip == null) return true;
 
-    if (me != null && myCurrentTipUi != null) {
-      boolean isInside = myCurrentTipUi.isInsideBalloon(me);
-      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInside));
-      boolean implicitMouseMove = me.getID() == MouseEvent.MOUSE_MOVED || me.getID() == MouseEvent.MOUSE_EXITED || me.getID() == MouseEvent.MOUSE_ENTERED;
+    if (myCurrentTipUi != null) {
+      boolean isInside = me != null && myCurrentTipUi.isInsideBalloon(me);
+      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInside, action, event));
+      boolean implicitMouseMove = me != null && (me.getID() == MouseEvent.MOUSE_MOVED || me.getID() == MouseEvent.MOUSE_EXITED || me.getID() == MouseEvent.MOUSE_ENTERED);
 
       if (!canAutoHide || (myCurrentTooltip.isExplicitClose() && implicitMouseMove)) {
         if (myHideRunnable != null) {
@@ -417,7 +429,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public void hide(IdeTooltip tooltip) {
     if (myCurrentTooltip == tooltip || tooltip == null) {
-      hideCurrent(null);
+      hideCurrent(null, null, null);
     }
   }
 
@@ -489,7 +501,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     if (hintHint.isAwtTooltip()) {
-      Dimension size = layeredPane.getSize();
+      Dimension size = layeredPane != null ? layeredPane.getSize() : new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
       int fitWidth = (int)(size.width * 0.8);
       Dimension prefSizeOriginal = pane.getPreferredSize();
       if (prefSizeOriginal.width > fitWidth) {

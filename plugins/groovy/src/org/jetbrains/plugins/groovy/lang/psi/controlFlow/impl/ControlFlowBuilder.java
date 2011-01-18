@@ -390,6 +390,50 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     final InstructionImpl head = myHead;
     final GrStatement thenBranch = ifStatement.getThenBranch();
+    InstructionImpl thenEnd = null;
+    if (thenBranch != null) {
+      if (condition != null) {
+        condition.accept(this);
+      }
+      thenBranch.accept(this);
+      handlePossibleReturn(thenBranch);
+      thenEnd = myHead;
+    }
+
+    myHead = head;
+    final GrStatement elseBranch = ifStatement.getElseBranch();
+    InstructionImpl elseEnd = null;
+    if (elseBranch != null) {
+      if (condition != null) {
+        myNegate = !myNegate;
+        final boolean old = myAssertionsOnly;
+        myAssertionsOnly = true;
+        condition.accept(this);
+        myNegate = !myNegate;
+        myAssertionsOnly = old;
+      }
+
+      elseBranch.accept(this);
+      handlePossibleReturn(elseBranch);
+      elseEnd = myHead;
+    }
+
+
+    if (thenBranch != null || elseBranch != null) {
+      final InstructionImpl end = new IfEndInstruction(ifStatement, myInstructionNumber++);
+      addNode(end);
+      if (thenEnd != null) addEdge(thenEnd, end);
+      if (elseEnd != null) addEdge(elseEnd, end);
+    }
+    finishNode(ifInstruction);
+
+
+
+    /*InstructionImpl ifInstruction = startNode(ifStatement);
+    final GrCondition condition = ifStatement.getCondition();
+
+    final InstructionImpl head = myHead;
+    final GrStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
       if (condition != null) {
         condition.accept(this);
@@ -416,7 +460,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       addPendingEdge(ifStatement, myHead);
     }
 
-    finishNode(ifInstruction);
+    finishNode(ifInstruction);*/
   }
 
   public void visitForStatement(GrForStatement forStatement) {
@@ -815,4 +859,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     return false;
   }
+
+
 }

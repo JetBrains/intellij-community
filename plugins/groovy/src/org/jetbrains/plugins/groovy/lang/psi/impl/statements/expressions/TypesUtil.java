@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -295,7 +295,7 @@ public class TypesUtil {
       }
     }
 
-    if (typeEqualsToText(rType, GrStringUtil.GROOVY_LANG_GSTRING)) {
+    if (typeEqualsToText(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
       final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
       if (javaLangString != null &&
           isAssignable(lType, JavaPsiFacade.getElementFactory(manager.getProject()).createType(javaLangString), manager, scope)) {
@@ -426,11 +426,11 @@ public class TypesUtil {
         }
       }
     }
-    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&
              CommonClassNames.JAVA_LANG_STRING.equals(type2.getInternalCanonicalText())) {
       return type2;
     }
-    else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
+    else if (GroovyCommonClassNames.GROOVY_LANG_GSTRING.equals(type2.getCanonicalText()) &&
              CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
       return type1;
     }

@@ -34,12 +34,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
@@ -158,7 +158,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public PsiClass getSuperClass() {
-    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, getResolveScope());
   }
 
   public PsiClass[] getInterfaces() {
@@ -179,7 +179,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   @NotNull
   public PsiClassType[] getSuperTypes() {
     return new PsiClassType[]{
-      JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME,
+      JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT,
                                                                                           getResolveScope())};
   }
 

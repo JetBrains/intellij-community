@@ -11,6 +11,7 @@ class A  {
   }
 }
 -----
+as
 assert
 boolean
 byte

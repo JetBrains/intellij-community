@@ -410,7 +410,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
     if (!isExplicit) return;
 
-    final JLabel message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
+    final JComponent message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
     builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {myPathTextField});
     myNoSuggestionsPopup = builder.createPopup();

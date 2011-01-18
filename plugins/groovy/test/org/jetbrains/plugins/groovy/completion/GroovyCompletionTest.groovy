@@ -363,6 +363,13 @@ class A {
     assert myFixture.editor.document.text.contains("static Zzzzzzz")
   }
 
+  public void testDontCompleteSubpackageOfImplicitlyImported() {
+    myFixture.addFileToProject "A.groovy", """
+in<caret>"""
+    myFixture.testCompletionVariants "A.groovy", "int", "interface" //don't complete 'instrument' from 'java.lang'
+  }
+
+
   public void testEatingThisReference() {
     configure "def x = []; x.<caret> this"
     myFixture.completeBasic()
@@ -446,6 +453,28 @@ try {} catch (AbcdException"""
     myFixture.checkResult text
   }
 
+  public void testLocalVarOverlaysField() {
+    myFixture.configureByText "a.groovy", """
+class A {
+  def myVar = 2
 
+  def foo() {
+    def myVar = 3
+    print myVa<caret>
+  }
+}"""
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+  def myVar = 2
+
+  def foo() {
+    def myVar = 3
+    print myVar<caret>
+  }
+}"""
+
+  }
 
 }

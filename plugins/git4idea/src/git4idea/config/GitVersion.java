@@ -52,7 +52,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   public static final GitVersion MIN = new GitVersion(1, 6, 0, 0);
 
-  private static final Pattern FORMAT = Pattern.compile("git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\d\\w]*", Pattern.CASE_INSENSITIVE);
+  private static final Pattern FORMAT = Pattern.compile("git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(msysgit))?[\\.\\-\\d\\w]*", Pattern.CASE_INSENSITIVE);
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 
   private final int myMajor; // Major version number
@@ -204,13 +204,17 @@ public final class GitVersion implements Comparable<GitVersion> {
   }
 
   /**
-   * Compare version number
-   *
-   * @param gitVersion a git revision to compare with
-   * @return the comparison result
+   * @return true if this version is older or the same than the given one.
    */
-  public boolean isLessOrEqual(final GitVersion gitVersion) {
+  public boolean isOlderOrEqual(final GitVersion gitVersion) {
     return gitVersion != null && compareTo(gitVersion) <= 0;
+  }
+
+  /**
+   * @return true if this version is later or the same than the given one.
+   */
+  public boolean isLaterOrEqual(GitVersion version) {
+    return version != null && compareTo(version) >= 0;
   }
 
   public Type getType() {

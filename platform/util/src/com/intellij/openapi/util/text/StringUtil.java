@@ -1800,6 +1800,13 @@ public class StringUtil {
     return res;
   }
 
+  public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
+    if (s1 == s2) return 0;
+    if (s1 == null) return -1;
+    if (s2 == null) return 1;
+    return ignoreCase ? s1.compareToIgnoreCase(s2) : s1.compareTo(s2);
+  }
+
   public static int hashCode(@NotNull CharSequence s) {
     int result = 0;
     for (int i = 0; i < s.length(); i++) {

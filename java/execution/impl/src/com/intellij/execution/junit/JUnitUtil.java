@@ -42,7 +42,7 @@ import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
-  @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
+  @NonNls public static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls private static final String TEST_ANNOTATION = "org.junit.Test";

@@ -58,11 +58,9 @@ import java.util.Map;
 public class GrClassImplUtil {
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
     public boolean value(PsiClassType psiClassType) {
-      return TypesUtil.typeEqualsToText(psiClassType, GrTypeDefinition.DEFAULT_BASE_CLASS_NAME);
+      return TypesUtil.typeEqualsToText(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
     }
   };
-
-  public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
 
   private GrClassImplUtil() {
   }
@@ -95,7 +93,7 @@ public class GrClassImplUtil {
       if (superClass instanceof GrTypeDefinition && !superClass.isInterface()) return extendsTypes;
     }
 
-    PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
+    PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
     if (grObSupport != null) {
       final PsiClassType type = JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport);
       return ArrayUtil.append(extendsTypes, type, PsiClassType.ARRAY_FACTORY);
@@ -116,7 +114,7 @@ public class GrClassImplUtil {
 
   private static PsiClassType getGroovyObjectType(GrTypeDefinition grType) {
     return JavaPsiFacade.getInstance(grType.getProject()).getElementFactory()
-      .createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, grType.getResolveScope());
+      .createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, grType.getResolveScope());
   }
 
   @NotNull

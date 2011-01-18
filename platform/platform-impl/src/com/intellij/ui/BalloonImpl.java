@@ -380,12 +380,6 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
                                                                            KeyEvent.KEY_EVENT_MASK);
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        hide();
-      }
-    }, this);
   }
 
   private Rectangle getRecForPosition(Position position, boolean adjust) {

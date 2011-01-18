@@ -91,6 +91,10 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   }
 
   @Override
+  public void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
+  }
+
+  @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
   }
 

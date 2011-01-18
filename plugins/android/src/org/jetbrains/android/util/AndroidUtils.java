@@ -377,7 +377,7 @@ public class AndroidUtils {
 
   public static void navigateTo(@NotNull PsiElement[] targets, @Nullable RelativePoint pointToShowPopup) {
     if (targets.length == 0) {
-      final JLabel renderer = HintUtil.createErrorLabel("Empty text");
+      final JComponent renderer = HintUtil.createErrorLabel("Empty text");
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
       if (pointToShowPopup != null) {
         popup.show(pointToShowPopup);

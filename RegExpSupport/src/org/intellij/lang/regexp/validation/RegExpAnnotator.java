@@ -98,7 +98,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (text.startsWith("\\") && isRedundantEscape(ch, text)) {
         final ASTNode astNode = ch.getNode().getFirstChildNode();
         if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-          final Annotation a = myHolder.createInformationAnnotation(ch, "Redundant character escape");
+          final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
           registerFix(a, new RemoveRedundantEscapeAction(ch));
         }
       }
@@ -238,27 +238,27 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       }
       else if (max == min) {
         if (max == 1) { // TODO: is this safe when reluctant or possesive modifier is present?
-          final Annotation a = myHolder.createInformationAnnotation(quantifier, "Single repetition");
+          final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Single repetition");
           registerFix(a, new SimplifyQuantifierAction(quantifier, null));
         }
         else {
           final ASTNode node = quantifier.getNode();
           if (node.findChildByType(RegExpTT.COMMA) != null) {
-            final Annotation a = myHolder.createInformationAnnotation(quantifier, "Fixed repetition range");
+            final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Fixed repetition range");
             registerFix(a, new SimplifyQuantifierAction(quantifier, "{" + max + "}"));
           }
         }
       }
       else if (min == 0 && max == 1) {
-        final Annotation a = myHolder.createInformationAnnotation(quantifier, "Repetition range replaceable by '?'");
+        final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '?'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "?"));
       }
       else if (min == 0 && max == Integer.MAX_VALUE) {
-        final Annotation a = myHolder.createInformationAnnotation(quantifier, "Repetition range replaceable by '*'");
+        final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '*'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "*"));
       }
       else if (min == 1 && max == Integer.MAX_VALUE) {
-        final Annotation a = myHolder.createInformationAnnotation(quantifier, "Repetition range replaceable by '+'");
+        final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '+'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "+"));
       }
     }

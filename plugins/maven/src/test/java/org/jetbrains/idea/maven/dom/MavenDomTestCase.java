@@ -49,6 +49,7 @@ import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.Function;
@@ -75,6 +76,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture);
     myFixture.setUp();
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true); // org.jetbrains.idea.maven.utils.MavenRehighlighter
 
     myFixture.enableInspections(MavenModelInspection.class);
 

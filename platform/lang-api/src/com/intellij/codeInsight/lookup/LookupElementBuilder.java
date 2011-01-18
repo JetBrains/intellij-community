@@ -120,6 +120,11 @@ public class LookupElementBuilder extends LookupElement {
     return myCaseSensitive;
   }
 
+  /**
+   * @param caseSensitive if this lookup item should be completed in the same letter case as prefix
+   * @return modified builder
+   * @see com.intellij.codeInsight.completion.CompletionResultSet#caseInsensitive()
+   */
   public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
                                     myAllLookupStrings, caseSensitive);

@@ -495,7 +495,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @NotNull
-  public ScrollingModel getScrollingModel() {
+  public ScrollingModelEx getScrollingModel() {
     return myScrollingModel;
   }
 

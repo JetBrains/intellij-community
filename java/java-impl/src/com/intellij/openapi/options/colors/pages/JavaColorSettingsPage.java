@@ -90,7 +90,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("unusedField", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
     ourTags.put("error", CodeInsightColors.ERRORS_ATTRIBUTES);
     ourTags.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
-    ourTags.put("info", CodeInsightColors.INFO_ATTRIBUTES);
+    ourTags.put("weak_warning", CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
     ourTags.put("server_problems", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
     ourTags.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);

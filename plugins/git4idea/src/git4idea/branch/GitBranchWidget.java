@@ -34,16 +34,14 @@ import java.awt.event.MouseEvent;
  * Status bar widget which displays the current branch for the file currently open in the editor.
  * @author Kirill Likhodedov
  */
-public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe,
-                                                                         GitBranchesListener {
-
+public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, GitBranchesListener {
   private volatile String myCurrentBranchName = "";
   private final GitBranches myBranches;
 
   public GitBranchWidget(Project project) {
     super(project);
     myBranches = GitBranches.getInstance(project);
-    myBranches.addListener(this);
+    myBranches.addListener(this,this);
   }
 
   @Override
@@ -115,11 +113,6 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     update();
   }
 
-  @Override
-  public void dispose() {
-    myBranches.removeListener(this);
-  }
-
   private void update() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -134,7 +127,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     }, new Condition() {
       public boolean value(Object o) {
         Project project = getProject();
-        return isDisposed() || (project != null) && ((!project.isOpen()) || project.isDisposed()) || myStatusBar == null;
+        return isDisposed() || project != null && (!project.isOpen() || project.isDisposed()) || myStatusBar == null;
       }
     });
   }

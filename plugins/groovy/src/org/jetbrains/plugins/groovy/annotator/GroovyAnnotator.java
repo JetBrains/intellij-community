@@ -892,7 +892,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.hasModifierProperty(GrModifier.ABSTRACT)) return;
-    if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
+    if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
     Collection<CandidateInfo> collection = GroovyOverrideImplementUtil.getMethodsToImplement(typeDefinition);

@@ -15,12 +15,18 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+
 import java.awt.event.InputEvent;
 
 public class TooltipEvent {
 
   private InputEvent myInputEvent;
   private boolean myIsEventInsideBalloon;
+
+  private AnAction myAction;
+  private AnActionEvent myActionEvent;
 
   public TooltipEvent(InputEvent inputEvent) {
     myInputEvent = inputEvent;
@@ -31,11 +37,26 @@ public class TooltipEvent {
     myIsEventInsideBalloon = isInside;
   }
 
+  public TooltipEvent(InputEvent inputEvent, boolean isEventInsideBalloon, AnAction action, AnActionEvent actionEvent) {
+    myInputEvent = inputEvent;
+    myIsEventInsideBalloon = isEventInsideBalloon;
+    myAction = action;
+    myActionEvent = actionEvent;
+  }
+
   public InputEvent getInputEvent() {
     return myInputEvent;
   }
 
   public boolean isIsEventInsideBalloon() {
     return myIsEventInsideBalloon;
+  }
+
+  public AnAction getAction() {
+    return myAction;
+  }
+
+  public AnActionEvent getActionEvent() {
+    return myActionEvent;
   }
 }

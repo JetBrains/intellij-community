@@ -8,4 +8,4 @@ class A {
   }
 }
 
-new A().methoda a<caret>
+new A().methoda ar<caret>

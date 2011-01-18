@@ -39,3 +39,11 @@ class C extends JComponent {
         }
     }
 }
+class D {
+
+    void foo() {
+        new Object() {
+            class Y {}
+        }
+    }
+}

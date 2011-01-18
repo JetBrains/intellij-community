@@ -15,27 +15,32 @@
  */
 package com.intellij.psi.jsp;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.jsp.IJspElementType;
 
 /**
  * @author peter
+ * todo[r.sh] replace usages with JspElementTypeEx in implementation modules
  */
-public interface JspElementType extends JspTokenType /*extends BaseJspElementType, ELElementType*/ {
-  IElementType HOLDER_TEMPLATE_DATA = new IJspElementType("HOLDER_TEMPLATE_DATA");
+public interface JspElementType extends JspTokenType {
+  enum Kind {
+    HOLDER_TEMPLATE_DATA, JSP_TEMPLATE_EXPRESSION, HOLDER_METHOD, JSP_TEMPLATE_STATEMENT, JSP_CLASS_LEVEL_DECLARATION_STATEMENT,
+    JSP_CODE_BLOCK, JSP_WHILE_STATEMENT, JSP_BLOCK_STATEMENT, JSP_CLASS, JSP_METHOD_CALL, JSP_EXPRESSION, JSP_SCRIPTLET
+  }
 
-  IElementType JSP_TEMPLATE_EXPRESSION = new IElementType("JSP_TEMPLATE_EXPRESSION", StdLanguages.JAVA);
-  IElementType HOLDER_METHOD = new IJspElementType("HOLDER_METHOD");
+  IElementType HOLDER_TEMPLATE_DATA = JspSpiUtil.getJspElementType(Kind.HOLDER_TEMPLATE_DATA);
+
+  IElementType JSP_TEMPLATE_EXPRESSION = JspSpiUtil.getJspElementType(Kind.JSP_TEMPLATE_EXPRESSION);
+  IElementType HOLDER_METHOD = JspSpiUtil.getJspElementType(Kind.HOLDER_METHOD);
   
-  IElementType JSP_TEMPLATE_STATEMENT = new IElementType("JSP_TEMPLATE_STATEMENT", StdLanguages.JAVA);
-  IElementType JSP_CLASS_LEVEL_DECLARATION_STATEMENT = new IElementType("JSP_CLASS_LEVEL_DECLARATION_STATEMENT", StdLanguages.JAVA);
-  IElementType JSP_CODE_BLOCK = new IElementType("JSP_CODE_BLOCK", StdLanguages.JAVA);
-  IElementType JSP_WHILE_STATEMENT = new IElementType("JSP_DO_WHILE_STATEMENT", StdLanguages.JAVA);
-  IElementType JSP_BLOCK_STATEMENT = new IElementType("JSP_BLOCK_STATEMENT", StdLanguages.JAVA);
+  IElementType JSP_TEMPLATE_STATEMENT = JspSpiUtil.getJspElementType(Kind.JSP_TEMPLATE_STATEMENT);
+  IElementType JSP_CLASS_LEVEL_DECLARATION_STATEMENT = JspSpiUtil.getJspElementType(Kind.JSP_CLASS_LEVEL_DECLARATION_STATEMENT);
+  IElementType JSP_CODE_BLOCK = JspSpiUtil.getJspElementType(Kind.JSP_CODE_BLOCK);
+  IElementType JSP_WHILE_STATEMENT = JspSpiUtil.getJspElementType(Kind.JSP_WHILE_STATEMENT);
+  IElementType JSP_BLOCK_STATEMENT = JspSpiUtil.getJspElementType(Kind.JSP_BLOCK_STATEMENT);
 
-  IElementType JSP_CLASS = new IJspElementType("JSP_CLASS");
-  IElementType JSP_METHOD_CALL = new IElementType("JSP_METHOD_CALL", StdLanguages.JAVA);
+  IElementType JSP_CLASS = JspSpiUtil.getJspElementType(Kind.JSP_CLASS);
+  IElementType JSP_METHOD_CALL = JspSpiUtil.getJspElementType(Kind.JSP_METHOD_CALL);
+
   IElementType JSP_EXPRESSION = JspSpiUtil.getJspExpressionType();
   IElementType JSP_SCRIPTLET = JspSpiUtil.getJspScriptletType();
 }

@@ -127,7 +127,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
         public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
-            if (PsiType.INT != type) {
+            if (!PsiType.INT.equals(type)) {
                 return;
             }
             PsiElement parent = expression.getParent();
@@ -141,7 +141,7 @@ public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
             final PsiTypeCastExpression typeCastExpression =
                     (PsiTypeCastExpression) parent;
             final PsiType castType = typeCastExpression.getType();
-            if (PsiType.LONG != castType) {
+            if (!PsiType.LONG.equals(castType)) {
                 return;
             }
             registerError(typeCastExpression, typeCastExpression);

@@ -135,8 +135,16 @@ public class PsiUtil {
     }
 
     //check for default constructor
-    if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+    if (method.isConstructor()) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0 && argumentTypes.length == 1) {
+        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
+      }
+      if (parameters.length == 1 &&
+          argumentTypes.length == 0 &&
+          InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
+        return false;
+      }
     }
     LOG.assertTrue(signature != null);
     if (GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place)) {
@@ -852,7 +860,7 @@ public class PsiUtil {
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
           && method.getParameterList().getParametersCount() == 0) {
         final PsiType type = getSmartReturnType(method);
-        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GrClosableBlock.GROOVY_LANG_CLOSURE))) {
+        if (type != null && (TypesUtil.typeEqualsToText(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.typeEqualsToText(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
           return true;
         }
       }

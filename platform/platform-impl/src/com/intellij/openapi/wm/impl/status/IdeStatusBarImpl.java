@@ -16,7 +16,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
@@ -34,6 +33,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,10 +54,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.IdeStatusBarImpl");
-
   private InfoAndProgressPanel myInfoAndProgressPanel;
-  private IdeStatusBarImpl myMaster;
   private IdeFrame myFrame;
 
   private enum Position {LEFT, RIGHT, CENTER}
@@ -74,9 +71,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private String myInfo;
   private String myRequestor;
 
-  private List<String> myCustomComponentIds = new ArrayList<String>();
+  private final List<String> myCustomComponentIds = new ArrayList<String>();
 
-  private Set<IdeStatusBarImpl> myChildren = new HashSet<IdeStatusBarImpl>();
+  private final Set<IdeStatusBarImpl> myChildren = new HashSet<IdeStatusBarImpl>();
 
   private static class WidgetBean {
     JComponent component;
@@ -150,8 +147,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   IdeStatusBarImpl(IdeStatusBarImpl master) {
-    myMaster = master;
-
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
@@ -238,7 +233,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     final Set<String> keySet = myWidgetMap.keySet();
-    final String[] keys = keySet.toArray(new String[keySet.size()]);
+    final String[] keys = ArrayUtil.toStringArray(keySet);
     for (final String key : keys) {
       final WidgetBean value = myWidgetMap.get(key);
       if (value.widget instanceof CustomStatusBarWidget && value.component == c) {
@@ -297,7 +292,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       panel = myCenterPanel;
     }
 
-    final JComponent c = widget instanceof CustomStatusBarWidget ? ((CustomStatusBarWidget)widget).getComponent() : wrap(widget);
+    final JComponent c = wrap(widget);
     if (Position.RIGHT == pos && panel.getComponentCount() > 0) {
       String wid;
       boolean before;
@@ -459,6 +454,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
+    if (widget instanceof CustomStatusBarWidget) return ((CustomStatusBarWidget)widget).getComponent();
     final StatusBarWidget.WidgetPresentation presentation =
       widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
     assert presentation != null : "Presentation should not be null!";
@@ -593,8 +589,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
   private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
     private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
-
-    private StatusBarWidget.MultipleTextValuesPresentation myPresentation;
+    private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
       super(presentation.getMaxValue());
@@ -606,6 +601,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         @Override
         public void mouseClicked(final MouseEvent e) {
           final ListPopup popup = myPresentation.getPopupStep();
+          if (popup == null) return;
           final Dimension dimension = popup.getContent().getPreferredSize();
           final Point at = new Point(0, -dimension.height);
           popup.show(new RelativePoint(e.getComponent(), at));
@@ -615,7 +611,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
-    @SuppressWarnings({"unchecked"})
     public void beforeUpdate() {
       setText(myPresentation.getSelectedValue());
     }
@@ -627,8 +622,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       if (getText() != null) {
         final Rectangle r = getBounds();
         final Insets insets = getInsets();
-        ARROWS_ICON
-          .paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+        ARROWS_ICON.paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
       }
     }
 
@@ -640,8 +634,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static final class TextPresentationWrapper extends TextPanel implements StatusBarWrapper {
-    private StatusBarWidget.TextPresentation myPresentation;
-    private Consumer<MouseEvent> myClickConsumer;
+    private final StatusBarWidget.TextPresentation myPresentation;
+    private final Consumer<MouseEvent> myClickConsumer;
     private boolean myMouseOver;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
@@ -681,8 +675,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static final class IconPresentationWrapper extends JComponent implements StatusBarWrapper {
-    private StatusBarWidget.IconPresentation myPresentation;
-    private Consumer<MouseEvent> myClickConsumer;
+    private final StatusBarWidget.IconPresentation myPresentation;
+    private final Consumer<MouseEvent> myClickConsumer;
     private Icon myIcon;
 
     private IconPresentationWrapper(@NotNull final StatusBarWidget.IconPresentation presentation) {

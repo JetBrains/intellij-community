@@ -218,7 +218,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
       PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage != null && !aPackage.processDeclarations(processor, state, lastParent, place)) return false;
+      if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
+        @Override
+        public boolean execute(PsiElement element, ResolveState state) {
+          if (element instanceof PsiPackage) return true;
+          return super.execute(element, state);
+        }
+      }, state, lastParent, place)) {
+        return false;
+      }
     }
 
     for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
@@ -415,6 +423,28 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     catch (IncorrectOperationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Nullable
+  @Override
+  public GrPackageDefinition setPackage(@Nullable GrPackageDefinition newPackage) {
+    final GrPackageDefinition oldPackage = getPackageDefinition();
+    if (oldPackage == null) {
+      if (newPackage != null) {
+        final GrPackageDefinition result = (GrPackageDefinition)addAfter(newPackage, null);
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode().getTreeNext());
+        return result;
+      }
+    }
+    else {
+      if (newPackage != null) {
+        return (GrPackageDefinition)oldPackage.replace(newPackage);
+      }
+      else {
+        oldPackage.delete();
+      }
+    }
+    return null;
   }
 
   public void clearCaches() {

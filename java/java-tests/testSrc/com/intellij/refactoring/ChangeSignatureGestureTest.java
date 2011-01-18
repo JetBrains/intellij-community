@@ -22,6 +22,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
@@ -39,10 +40,11 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   private void doTest(final Runnable run, boolean shouldShow, final String hint) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(getProject());
-    final Document document = myFixture.getEditor().getDocument();
+    final EditorEx editor = (EditorEx)myFixture.getEditor();
+    final Document document = editor.getDocument();
     try {
       PsiManager.getInstance(getProject()).addPsiTreeChangeListener(detector);
-      detector.addDocListener(document);
+      detector.addDocListener(editor.getVirtualFile());
       new WriteCommandAction.Simple(getProject()) {
         @Override
         protected void run() throws Throwable {
@@ -62,7 +64,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       }
     }
     finally {
-      detector.removeDocListener(document);
+      detector.removeDocListener(document, editor.getVirtualFile());
       PsiManager.getInstance(getProject()).removePsiTreeChangeListener(detector);
     }
   }

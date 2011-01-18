@@ -42,23 +42,27 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testMoveScriptBasic() throws Exception {
-    doTest("moveScriptBasic", new String[]{"a/Script.groovy"}, "b");
+    doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
-  public void testUpdateRefs() throws Exception {
-    doTest("updateReferences", new String[]{"a/Script.groovy"}, "b");
+  public void testUpdateReferences() throws Exception {
+    doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
   public void testMultiMove() throws Exception {
-    doTest("multiMove", new String[]{"a/Script.groovy", "a/Script2.groovy"}, "b");
+    doTest(new String[]{"a/Script.groovy", "a/Script2.groovy"}, "b");
   }
 
   public void testScriptWithClasses() {
-    doTest("scriptWithClasses", new String[]{"a/Foo.groovy"}, "b");
+    doTest(new String[]{"a/Foo.groovy"}, "b");
   }
 
   public void testFileWithTwoClasses() {
-    doTest("fileWithTwoClasses", new String[]{"a/Foo.groovy"}, "b");
+    doTest(new String[]{"a/Foo.groovy"}, "b");
+  }
+
+  public void testMoveToSamePackage() {
+    doTest(new String[]{"a/Foo.groovy"}, "b");
   }
 
   private void performAction(String[] fileNames, String newDirName, String dir) {
@@ -90,7 +94,8 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
-  private void doTest(String testName, String[] fileNames, String newDirName) {
+  private void doTest(String[] fileNames, String newDirName) {
+    String testName = getTestName(true);
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
     performAction(fileNames, newDirName, VfsUtil.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));

@@ -40,6 +40,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   protected static final int PREFERED = -1;
   private final ConfigurationFactory myConfigurationFactory;
   private RunnerAndConfigurationSettings myConfiguration;
+  protected boolean isClone;
 
   public RuntimeConfigurationProducer(final ConfigurationType configurationType) {
     this(configurationType.getConfigurationFactories()[0]);
@@ -61,7 +62,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
         final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
-        final RunnerAndConfigurationSettings configuration = findExistingByElement(_location, configurations, context);
+        final RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, configurations, context);
         if (configuration != null) {
           result.myConfiguration = configuration;
         }
@@ -73,6 +74,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   @Nullable
   public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location, ConfigurationContext context) {
+    assert isClone;
     final RunManager runManager = RunManager.getInstance(location.getProject());
     final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
     return findExistingByElement(location, configurations, context);
@@ -81,6 +83,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public abstract PsiElement getSourceElement();
 
   public RunnerAndConfigurationSettings getConfiguration() {
+    assert isClone;
     return myConfiguration;
   }
 
@@ -91,12 +94,16 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
                                                                  @NotNull final RunnerAndConfigurationSettings[] existingConfigurations,
                                                                  ConfigurationContext context) {
+    assert isClone;
     return null;
   }
 
   public RuntimeConfigurationProducer clone() {
+    assert !isClone;
     try {
-      return (RuntimeConfigurationProducer)super.clone();
+      RuntimeConfigurationProducer clone = (RuntimeConfigurationProducer)super.clone();
+      clone.isClone = true;
+      return clone;
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
@@ -104,6 +111,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, @Nullable final ConfigurationContext context) {
+    assert isClone;
     if (context != null) {
       final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null){
@@ -136,14 +144,15 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     public int compare(final RuntimeConfigurationProducer producer1, final RuntimeConfigurationProducer producer2) {
       final PsiElement psiElement1 = producer1.getSourceElement();
       final PsiElement psiElement2 = producer2.getSourceElement();
-      if (doesContains(psiElement1, psiElement2)) return -PREFERED;
-      if (doesContains(psiElement2, psiElement1)) return PREFERED;
+      if (doesContain(psiElement1, psiElement2)) return -PREFERED;
+      if (doesContain(psiElement2, psiElement1)) return PREFERED;
       return producer1.compareTo(producer2);
     }
 
-    private static boolean doesContains(final PsiElement container, PsiElement element) {
-      while ((element = element.getParent()) != null)
+    private static boolean doesContain(final PsiElement container, PsiElement element) {
+      while ((element = element.getParent()) != null) {
         if (container.equals(element)) return true;
+      }
       return false;
     }
   }

@@ -22,11 +22,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
-import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitPullDialog;
+import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,26 +57,30 @@ public class GitPull extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
-    GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
+    final GitPullDialog dialog = new GitPullDialog(project, gitRoots, defaultRoot);
     dialog.show();
     if (!dialog.isOK()) {
       return;
     }
-    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
-    GitLineHandler h = dialog.pullHandler();
+    final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
+    final GitLineHandler h = dialog.pullHandler();
     final VirtualFile root = dialog.gitRoot();
     affectedRoots.add(root);
-    GitRevisionNumber currentRev = GitRevisionNumber.resolve(project, root, "HEAD");
-    try {
-      GitHandlerUtil.doSynchronously(h, GitBundle.message("pulling.title", dialog.getRemote()), h.printableCommandLine());
-    }
-    finally {
-      exceptions.addAll(h.errors());
-    }
-    if (exceptions.size() != 0) {
-      return;
-    }
-    GitMergeUtil.showUpdates(this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+    final GitRevisionNumber currentRev = GitRevisionNumber.resolve(project, root, "HEAD");
+
+    GitTask pullTask = new GitTask(project, h, GitBundle.message("pulling.title", dialog.getRemote()));
+    pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+    pullTask.execute(new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void onSuccess() {
+        GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+      }
+
+      @Override
+      protected void onFailure() {
+        GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", h.errors());
+      }
+    });
   }
 
 }

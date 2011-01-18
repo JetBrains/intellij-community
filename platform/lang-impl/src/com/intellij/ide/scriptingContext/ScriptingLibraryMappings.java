@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryManager;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,10 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   public void reset() {
     myLibraryManager.reset();
+    for (CompoundLibrary container: myCompoundLibMap.values()) {
+      container.reset();
+    }
+    myProjectLibs.reset();
   }
   
   private void updateMappings() {
@@ -74,7 +79,9 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     for (ScriptingLibraryTable.LibraryModel value : map.values()) {
       if (value instanceof CompoundLibrary) {
         CompoundLibrary container = (CompoundLibrary) value;
-        for (ScriptingLibraryTable.LibraryModel libraryModel : container.getLibraries()) {
+        ScriptingLibraryTable.LibraryModel[] libModels =
+          container.getLibraries().toArray(new ScriptingLibraryTable.LibraryModel[container.getLibraryCount()]); 
+        for (ScriptingLibraryTable.LibraryModel libraryModel : libModels) {
           String libName = libraryModel.getName(); 
           if (myLibraryManager.getLibraryByName(libName) == null) {
             container.removeLibrary(libName); 
@@ -119,8 +126,9 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
             //
             // In case if there is a single module (like in Web/PhpStorm), just use it without checking whether it contains the source file 
             // or not. Otherwise add dependency to a module containing the source file.
+            // Note: file == null means project.
             //
-            if (module.getModuleScope().contains(file) || modules.length == 1) {
+            if (file == null || module.getModuleScope().contains(file) || modules.length == 1) {
               ScriptingLibraryTable.LibraryModel container = mappings.get(file);
               assert container instanceof CompoundLibrary;
               for (ScriptingLibraryTable.LibraryModel libModel : ((CompoundLibrary)container).getLibraries()) {
@@ -190,6 +198,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
         compoundLib.toggleLibrary(libraryModel);
       }
     }
+    compoundLib.applyChanges();
     if (file == null) {
       myProjectLibs = compoundLib;
     }
@@ -285,6 +294,7 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
 
   public static class CompoundLibrary extends  ScriptingLibraryTable.LibraryModel {
     private final Map<String, ScriptingLibraryTable.LibraryModel> myLibraries = new TreeMap<String, ScriptingLibraryTable.LibraryModel>();
+    private final Map<String, ScriptingLibraryTable.LibraryModel> myOldLibraries = new TreeMap<String, ScriptingLibraryTable.LibraryModel>(); 
 
     public CompoundLibrary() {
       super(null);
@@ -338,6 +348,32 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     @Override
     public boolean isEmpty() {
       return myLibraries.isEmpty();
+    }
+    
+    public int getLibraryCount() {
+      return myLibraries.size();
+    }
+    
+    public void applyChanges() {
+      myOldLibraries.clear();
+      myOldLibraries.putAll(myLibraries);
+    }
+
+
+    public boolean isModified() {
+      if (myOldLibraries == null) return false;
+      for (String libName: myLibraries.keySet()) {
+        if (!myOldLibraries.containsKey(libName)) return true;
+      }
+      for (String libName : ArrayUtil.toStringArray(myOldLibraries.keySet())) {
+        if (!myLibraries.containsKey(libName)) return true;
+      }
+      return false;
+    }
+    
+    public void reset() {
+      myLibraries.clear();
+      myLibraries.putAll(myOldLibraries);
     }
   }
 

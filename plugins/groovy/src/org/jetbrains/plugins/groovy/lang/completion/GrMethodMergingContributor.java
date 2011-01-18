@@ -18,9 +18,12 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.ArrayList;
 
@@ -93,7 +96,7 @@ public class GrMethodMergingContributor extends CompletionContributor {
     final PsiParameter[] params = method.getParameterList().getParameters();
     for (PsiParameter param : params) {
       final PsiType type = param.getType();
-      if (!TypesUtil.typeEqualsToText(type, GrClosableBlock.GROOVY_LANG_CLOSURE)) {
+      if (!TypesUtil.typeEqualsToText(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
         return false;
       }
     }

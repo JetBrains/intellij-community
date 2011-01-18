@@ -34,8 +34,6 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 
 public class StatementParser {
-  private static final boolean DEEP_PARSE_BLOCKS_IN_STATEMENTS = false;
-
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
@@ -46,8 +44,13 @@ public class StatementParser {
 
   @Nullable
   public static PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder) {
+    return parseCodeBlock(builder, false);
+  }
+
+  @Nullable
+  public static PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder, final boolean isStatement) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
-    else if (DEEP_PARSE_BLOCKS_IN_STATEMENTS) return parseCodeBlockDeep(builder, false);
+    else if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
 
     final PsiBuilder.Marker codeBlock = builder.mark();
     builder.advanceLexer();
@@ -166,10 +169,10 @@ public class StatementParser {
 
   @Nullable
   public static PsiBuilder.Marker parseStatement(final PsiBuilder builder) {
+    final ParserExtender extender = getParserExtender(builder);
+    if (extender != null) return extender.parse(builder);
+
     final IElementType tokenType = builder.getTokenType();
-
-    // todo: custom parsers (?)
-
     if (tokenType == JavaTokenType.IF_KEYWORD) {
       return parseIfStatement(builder);
     }
@@ -507,7 +510,7 @@ public class StatementParser {
       return statement;
     }
 
-    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
     if (body == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
     }
@@ -595,7 +598,7 @@ public class StatementParser {
       return statement;
     }
 
-    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
     if (body == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
     }
@@ -609,7 +612,7 @@ public class StatementParser {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker tryBlock = parseCodeBlock(builder);
+    final PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
     if (tryBlock == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
       done(statement, JavaElementType.TRY_STATEMENT);
@@ -627,7 +630,7 @@ public class StatementParser {
     }
 
     if (expect(builder, JavaTokenType.FINALLY_KEYWORD)) {
-      final PsiBuilder.Marker finallyBlock = parseCodeBlock(builder);
+      final PsiBuilder.Marker finallyBlock = parseCodeBlock(builder, true);
       if (finallyBlock == null) {
         error(builder, JavaErrorMessages.message("expected.lbrace"));
       }
@@ -659,7 +662,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker body = parseCodeBlock(builder);
+    final PsiBuilder.Marker body = parseCodeBlock(builder, true);
     if (body == null) {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
       done(section, JavaElementType.CATCH_SECTION);
@@ -699,7 +702,7 @@ public class StatementParser {
   @NotNull
   private static PsiBuilder.Marker parseBlockStatement(final PsiBuilder builder) {
     final PsiBuilder.Marker statement = builder.mark();
-    parseCodeBlock(builder);
+    parseCodeBlock(builder, true);
     done(statement, JavaElementType.BLOCK_STATEMENT);
     return statement;
   }

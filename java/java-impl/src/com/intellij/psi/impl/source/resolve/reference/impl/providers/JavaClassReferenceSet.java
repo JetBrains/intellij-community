@@ -217,7 +217,7 @@ public class JavaClassReferenceSet {
   }
 
   public boolean canReferencePackage(int index) {
-    if (index == 0 || index == myReferences.length - 1) return false;
+    if (index == myReferences.length - 1) return false;
     String text = getElement().getText();
     return text.charAt(myReferences[index].getRangeInElement().getEndOffset()) != '$';
   }

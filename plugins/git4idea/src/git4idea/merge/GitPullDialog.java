@@ -216,6 +216,7 @@ public class GitPullDialog extends DialogWrapper {
     h.addParameters(getRemote());
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
     h.addParameters(ArrayUtil.toStringArray(markedBranches));
+    h.addProgressParameter();
     return h;
   }
 

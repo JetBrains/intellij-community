@@ -129,7 +129,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private void registerSimpleExprsCompletion() {
-    String[] exprs = {"true", "false", "null", "super", "new", "this"};
+    String[] exprs = {"true", "false", "null", "super", "new", "this", "as"};
     registerStandardCompletion(new SimpleExpressionFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {

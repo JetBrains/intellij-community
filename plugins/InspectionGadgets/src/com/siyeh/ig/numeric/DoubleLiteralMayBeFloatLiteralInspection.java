@@ -54,7 +54,7 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
                 (PsiTypeCastExpression) infos[0];
         final StringBuilder replacementText =
                 buildReplacementText(typeCastExpression, new StringBuilder());
-        return new IntLiteralMayBeLongLiteralFix(replacementText.toString());
+        return new DoubleLiteralMayBeFloatLiteralFix(replacementText.toString());
     }
 
     private static StringBuilder buildReplacementText(
@@ -86,12 +86,12 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
         return out;
     }
 
-    private static class IntLiteralMayBeLongLiteralFix
+    private static class DoubleLiteralMayBeFloatLiteralFix
             extends InspectionGadgetsFix {
 
         private final String replacementString;
 
-        public IntLiteralMayBeLongLiteralFix(String replacementString) {
+        public DoubleLiteralMayBeFloatLiteralFix(String replacementString) {
             this.replacementString = replacementString;
         }
 
@@ -117,17 +117,17 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new IntLiteralMayBeLongLiteralVisitor();
+        return new DoubleLiteralMayBeFloatLiteralVisitor();
     }
 
-    private static class IntLiteralMayBeLongLiteralVisitor
+    private static class DoubleLiteralMayBeFloatLiteralVisitor
             extends BaseInspectionVisitor {
 
         @Override
         public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
-            if (PsiType.DOUBLE != type) {
+            if (!PsiType.DOUBLE.equals(type)) {
                 return;
             }
             PsiElement parent = expression.getParent();
@@ -141,7 +141,7 @@ public class DoubleLiteralMayBeFloatLiteralInspection extends BaseInspection {
             final PsiTypeCastExpression typeCastExpression =
                     (PsiTypeCastExpression) parent;
             final PsiType castType = typeCastExpression.getType();
-            if (PsiType.FLOAT != castType) {
+            if (!PsiType.FLOAT.equals(castType)) {
                 return;
             }
             registerError(typeCastExpression, typeCastExpression);

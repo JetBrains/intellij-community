@@ -20,6 +20,7 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -137,6 +138,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           protected boolean canAutohideOn(TooltipEvent event) {
             if (event.getInputEvent() instanceof MouseEvent) {
               return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
+            } else if (event.getAction() != null) {
+              return false;
             } else {
               return true;
             }

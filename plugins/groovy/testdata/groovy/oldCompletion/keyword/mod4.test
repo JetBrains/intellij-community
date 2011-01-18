@@ -1,6 +1,7 @@
 <caret>def foo(){}
 -----
 abstract
+as
 assert
 boolean
 byte

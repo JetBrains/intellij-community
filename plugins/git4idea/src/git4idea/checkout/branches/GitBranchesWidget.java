@@ -16,12 +16,7 @@
 package git4idea.checkout.branches;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,15 +51,8 @@ import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -149,8 +138,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
     myConfigurations = configurations;
     myDefaultForeground = getForeground();
     myConfigurationsListener = new MyGitBranchConfigurationsListener();
-    myConfigurations.addConfigurationListener(myConfigurationsListener);
-    Disposer.register(myConfigurations, this);
+    myConfigurations.addConfigurationListener(myConfigurationsListener, this);
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -233,7 +221,6 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
    */
   @Override
   public void dispose() {
-    myConfigurations.removeConfigurationListener(myConfigurationsListener);
   }
 
   /**
@@ -260,7 +247,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   /**
    * Show popup is if it is not shown.
    */
-  void showPopup() {
+  private void showPopup() {
     if (!myPopupEnabled) {
       return;
     }
@@ -348,7 +335,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   /**
    * @return the action group for popup
    */
-  ActionGroup getPopupActionGroup() {
+  private ActionGroup getPopupActionGroup() {
     if (myPopupActionGroup == null) {
       myPopupActionGroup = new DefaultActionGroup(null, false);
       myPopupActionGroup.addAction(new DumbAwareAction("Manage Configurations ...") {
@@ -391,7 +378,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
    * @return escaped text
    */
   private static String escapeActionText(String t) {
-    return t.replaceAll("_", "__");
+    return StringUtil.replace(t, "_", "__");
   }
 
   /**
@@ -400,10 +387,10 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
   private void updateLabel() {
     cancelPopup();
     final GitBranchConfigurations.SpecialStatus status = myConfigurations.getSpecialStatus();
-    String text;
     myPopupEnabled = false;
     Color color = Color.RED;
     String tooltip;
+    String text;
     switch (status) {
       case CHECKOUT_IN_PROGRESS:
         text = "Checkout...";

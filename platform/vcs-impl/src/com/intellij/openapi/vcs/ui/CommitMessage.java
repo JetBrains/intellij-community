@@ -15,17 +15,16 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.EditorCustomization;
@@ -41,6 +40,7 @@ import java.util.Set;
 
 public class CommitMessage extends JPanel implements Disposable {
 
+  public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private final Project         myProject;
 
@@ -83,9 +83,11 @@ public class CommitMessage extends JPanel implements Disposable {
     if (checkSpelling) {
       features.add(EditorCustomization.Feature.SPELL_CHECK);
     }
-    return service.getEditorField(
+    EditorTextField editorField = service.getEditorField(
       FileTypes.PLAIN_TEXT.getLanguage(), project, features.toArray(new EditorCustomization.Feature[features.size()])
     );
+    editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
+    return editorField;
   }
 
   @Nullable

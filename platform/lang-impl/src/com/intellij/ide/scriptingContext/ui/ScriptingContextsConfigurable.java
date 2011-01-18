@@ -18,14 +18,17 @@ package com.intellij.ide.scriptingContext.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.scriptingContext.LangScriptingContextConfigurable;
 import com.intellij.ide.scriptingContext.ScriptingLibraryMappings;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.scripting.ScriptingLibraryTable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.tree.LanguagePerFileConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author Rustam Vishnyakov
@@ -86,4 +89,28 @@ public class ScriptingContextsConfigurable extends LanguagePerFileConfigurable<S
   public String getHelpTopic() {
     return myParent.getUsageScopeHelpTopic();
   }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    Map<VirtualFile,ScriptingLibraryTable.LibraryModel> libMappings = myScriptingLibraryMappings.getMappings();
+    for (ScriptingLibraryTable.LibraryModel libraryModel : libMappings.values()) {
+      if (libraryModel instanceof ScriptingLibraryMappings.CompoundLibrary) {
+        ((ScriptingLibraryMappings.CompoundLibrary)libraryModel).applyChanges();
+      }
+    }
+  }
+
+  @Override
+  public boolean isModified() {
+    if (super.isModified()) return true;
+    Map<VirtualFile,ScriptingLibraryTable.LibraryModel> libMappings = myScriptingLibraryMappings.getMappings();
+    for (ScriptingLibraryTable.LibraryModel libraryModel : libMappings.values()) {
+      if (libraryModel instanceof ScriptingLibraryMappings.CompoundLibrary) {
+        if (((ScriptingLibraryMappings.CompoundLibrary)libraryModel).isModified()) return true;
+      }
+    }
+    return false;
+  }
+
 }

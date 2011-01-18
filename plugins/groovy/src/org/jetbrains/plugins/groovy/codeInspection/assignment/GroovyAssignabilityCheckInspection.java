@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -404,7 +405,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           PsiType returnType = method.getReturnType();
           if (returnType != null) {
             final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
-              .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
+              .createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
             if (TypesUtil.isAssignable(closureType, returnType, place)) {
               return true;
             }

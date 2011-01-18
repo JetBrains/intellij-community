@@ -122,7 +122,7 @@ public class GroovyToJavaGenerator {
         return generateStubs((GroovyFile)PsiManager.getInstance(myProject).findFile(item));
       }
     });
-    return writeStubs(outputRootDirectory, output);
+    return writeStubs(outputRootDirectory, output, item);
   }
 
   public Map<String, String> generateStubs(GroovyFile file) {
@@ -159,13 +159,13 @@ public class GroovyToJavaGenerator {
     return output;
   }
 
-  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output) {
+  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output, VirtualFile src) {
     final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
     for (String relativePath : output.keySet()) {
       final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
       FileUtil.createIfDoesntExist(stubFile);
       try {
-        FileUtil.writeToFile(stubFile, output.get(relativePath).getBytes());
+        FileUtil.writeToFile(stubFile, output.get(relativePath).getBytes(src.getCharset()));
       }
       catch (IOException e) {
         LOG.error(e);

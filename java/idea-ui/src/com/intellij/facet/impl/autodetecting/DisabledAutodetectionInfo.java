@@ -16,20 +16,19 @@
 
 package com.intellij.facet.impl.autodetecting;
 
+import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Iterator;
 
 /**
  * @author nik
  */
 public class DisabledAutodetectionInfo {
-  private List<DisabledAutodetectionByTypeElement> myElements = new ArrayList<DisabledAutodetectionByTypeElement>();
+  private List<DisabledAutodetectionByTypeElement> myElements = new SortedList<DisabledAutodetectionByTypeElement>(DisabledAutodetectionByTypeElement.COMPARATOR);
 
   @Tag("autodetection-disabled")
   @AbstractCollection(surroundWithTag = false)
@@ -47,13 +46,9 @@ public class DisabledAutodetectionInfo {
   }
 
   public void replaceElement(@NotNull String facetTypeId, @Nullable DisabledAutodetectionByTypeElement element) {
-    Iterator<DisabledAutodetectionByTypeElement> iterator = myElements.iterator();
-    while (iterator.hasNext()) {
-      DisabledAutodetectionByTypeElement typeElement = iterator.next();
-      if (typeElement.getFacetTypeId().equals(facetTypeId)) {
-        iterator.remove();
-        break;
-      }
+    final DisabledAutodetectionByTypeElement old = findElement(facetTypeId);
+    if (old != null) {
+      myElements.remove(old);
     }
     if (element != null) {
       myElements.add(element);

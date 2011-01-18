@@ -33,6 +33,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -147,6 +148,27 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
     findCollisionsAgainstNewName(methodToRename, newName, result);
+    final PsiClass containingClass = methodToRename.getContainingClass();
+    if (containingClass != null) {
+      final PsiMethod patternMethod = (PsiMethod)methodToRename.copy();
+      try {
+        patternMethod.setName(newName);
+        final PsiMethod methodInBaseClass = containingClass.findMethodBySignature(patternMethod, true);
+        if (methodInBaseClass != null && methodInBaseClass.getContainingClass() != containingClass) {
+          if (methodInBaseClass.hasModifierProperty(PsiModifier.FINAL)) {
+            result.add(new UnresolvableCollisionUsageInfo(methodInBaseClass, methodToRename) {
+              @Override
+              public String getDescription() {
+                return "Renaming method will override final \"" + RefactoringUIUtil.getDescription(methodInBaseClass, true) + "\"";
+              }
+            });
+          }
+        }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement, String> conflicts) {

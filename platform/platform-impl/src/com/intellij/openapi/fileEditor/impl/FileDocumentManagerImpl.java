@@ -449,11 +449,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         }
       };
 
-      if (unitTestMode) {
-        askReloadRunnable.run();
-      } else {
-        IdeEventQueue.getInstance().addIdleListener(askReloadRunnable, 2000);
-      }
+      askReloadRunnable.run();
     }
     else {
       reloadFromDisk(document);

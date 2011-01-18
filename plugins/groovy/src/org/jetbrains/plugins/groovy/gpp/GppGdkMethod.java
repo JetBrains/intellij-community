@@ -21,10 +21,10 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 
 /**
@@ -60,7 +60,7 @@ public class GppGdkMethod extends GrGdkMethodImpl implements DominanceAwareMetho
   private static PsiType eliminateOneMethodInterfaces(PsiParameter plusParameter, PsiParameter[] gdkParameters, int i) {
     PsiType type = plusParameter.getType();
     if (i < gdkParameters.length &&
-        gdkParameters[i].getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE) &&
+        gdkParameters[i].getType().equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) &&
         GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(type) != null) {
       return gdkParameters[i].getType();
     }

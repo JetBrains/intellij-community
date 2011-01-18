@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
 
 import java.util.ArrayList;
@@ -596,6 +597,13 @@ public class ControlFlowUtils {
     if (first == last) return true;
     if (last instanceof MaybeReturnInstruction) {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
+    }
+    else if (last instanceof IfEndInstruction) {
+      visited[last.num()] = true;
+      for (Instruction instruction : last.allPred()) {
+        if (!visitAllExitPointsInner(instruction, first, visited, visitor)) return false;
+      }
+      return true;
     }
 
     PsiElement element = last.getElement();

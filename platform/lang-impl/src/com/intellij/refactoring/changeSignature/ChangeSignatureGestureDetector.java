@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -214,12 +215,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   public void editorCreated(EditorFactoryEvent event) {
     final Editor editor = event.getEditor();
     if (editor.getProject() != myProject) return;
-    addDocListener(editor.getDocument());
+    addDocListener(((EditorEx)editor).getVirtualFile());
   }
 
-  public void addDocListener(Document document) {
-    final VirtualFile file = myDocumentManager.getFile(document);
-    if (file != null && file.isValid() && !myListenerMap.containsKey(file)) {
+  public void addDocListener(VirtualFile file) {
+    if (file == null) return;
+    final Document document = myDocumentManager.getDocument(file);
+    if (file.isValid() && !myListenerMap.containsKey(file)) {
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
       document.addDocumentListener(adapter);
       myListenerMap.put(file, adapter);
@@ -228,20 +230,17 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   @Override
   public void editorReleased(EditorFactoryEvent event) {
-    removeDocListener(event.getEditor().getDocument());
-  }
-
-  public void removeDocListener(Document document) {
-    final VirtualFile file = myDocumentManager.getFile(document);
+    final EditorEx editor = (EditorEx)event.getEditor();
+    final VirtualFile file = editor.getVirtualFile();
     if (file != null && file.isValid()) {
       if (myFileEditorManager.isFileOpen(file)) {
         return;
       }
     }
-    removeDocListener(document, file);
+    removeDocListener(editor.getDocument(), file);
   }
 
-  private void removeDocListener(Document document, VirtualFile file) {
+  public void removeDocListener(Document document, VirtualFile file) {
     final MyDocumentChangeAdapter adapter = myListenerMap.remove(file);
     if (adapter != null) {
       document.removeDocumentListener(adapter);

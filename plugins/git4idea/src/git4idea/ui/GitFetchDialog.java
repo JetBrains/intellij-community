@@ -206,6 +206,7 @@ public class GitFetchDialog extends DialogWrapper {
     }
     h.addParameters(getRemote());
     h.addParameters(myRefspecs.getReferences());
+    h.addProgressParameter();
     return h;
   }
 

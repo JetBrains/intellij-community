@@ -78,6 +78,11 @@ public class GrPropertyForCompletion extends LightFieldBuilder {
   }
 
   @Override
+  public String toString() {
+    return getName();
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     if (!(another instanceof GrPropertyForCompletion)) return false;
     if (!((GrPropertyForCompletion)another).getName().equals(getName())) return false;
