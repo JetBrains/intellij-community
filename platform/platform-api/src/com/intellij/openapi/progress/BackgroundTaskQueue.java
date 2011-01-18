@@ -55,11 +55,6 @@ public class BackgroundTaskQueue implements Consumer<Task.Backgroundable> {
   }
 
   public void run(Task.Backgroundable task) {
-    myProcessor.add(task);
-  }
-
-  @Override
-  public void consume(final Task.Backgroundable task) {
     if (ApplicationManager.getApplication().isUnitTestMode()) { // test tasks are executed in this thread without the progress manager
       final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       task.run(indicator);
@@ -68,7 +63,14 @@ public class BackgroundTaskQueue implements Consumer<Task.Backgroundable> {
       } else {
         task.onSuccess();
       }
-    } else if (task.isConditionalModal() && !task.shouldStartInBackground()) { // modal tasks are executed synchronously
+    } else {
+      myProcessor.add(task);
+    }
+  }
+
+  @Override
+  public void consume(final Task.Backgroundable task) {
+    if (task.isConditionalModal() && !task.shouldStartInBackground()) { // modal tasks are executed synchronously
         ProgressManager.getInstance().run(task);
     } else {
       final Object LOCK = new Object();
@@ -117,6 +119,11 @@ public class BackgroundTaskQueue implements Consumer<Task.Backgroundable> {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           task.run(indicator);
+        }
+
+        @Override
+        public boolean isHeadless() {
+          return task.isHeadless();
         }
       };
 

@@ -43,7 +43,7 @@ public class GithubUtil {
 
   public static <T> T accessToGithubWithModalProgress(final Project project, final Computable<T> computable) throws CancelledException {
     final Ref<T> result = new Ref<T>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to github", true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(computable.compute());
       }
@@ -54,6 +54,19 @@ public class GithubUtil {
       }
     });
     return result.get();
+  }
+
+  public static void accessToGithubWithModalProgress(final Project project, final Runnable runnable) throws CancelledException {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        runnable.run();
+      }
+
+      @Override
+      public void onCancel() {
+        throw new CancelledException();
+      }
+    });
   }
 
   public static boolean testConnection(final String login, final String password) {
@@ -167,7 +180,10 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
-    if (areCredentialsEmpty()){
+    return checkCredentials(project, null, null);
+  }
+  public static boolean checkCredentials(final Project project, @Nullable final String login, @Nullable final String password) {
+    if (login == null && password == null && areCredentialsEmpty()){
       return false;
     }
     try {
@@ -175,6 +191,9 @@ public class GithubUtil {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          if (login != null && password != null){
+            return testConnection(login, password);
+          }
           final GithubSettings settings = GithubSettings.getInstance();
           return testConnection(settings.getLogin(), settings.getPassword());
         }

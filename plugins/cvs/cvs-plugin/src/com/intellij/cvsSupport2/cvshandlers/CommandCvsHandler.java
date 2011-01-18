@@ -45,7 +45,6 @@ import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.errorHandling.CvsProcessException;
 import com.intellij.cvsSupport2.errorHandling.InvalidModuleDescriptionException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -336,26 +335,30 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   public void internalRun(final ModalityContext executor, final boolean runInReadAction) {
     if (! login(executor)) return;
 
-    try {
-      final CvsExecutionEnvironment executionEnvironment = new CvsExecutionEnvironment(myCompositeListener,
-                                                                                 getProgressListener(),
-                                                                                 myErrorMessageProcessor,
-                                                                                 executor,
-                                                                                 getPostActivityHandler());
-      runOperation(executionEnvironment, runInReadAction, myCvsOperation);
-      onOperationFinished(executor);
+    final CvsExecutionEnvironment executionEnvironment = new CvsExecutionEnvironment(myCompositeListener,
+                                                                                     getProgressListener(),
+                                                                                     myErrorMessageProcessor,
+                                                                                     executor,
+                                                                                     getPostActivityHandler());
+    if (! runOperation(executionEnvironment, runInReadAction, myCvsOperation)) return;
+    onOperationFinished(executor);
 
-      while (!myPostActivities.isEmpty()) {
-        CvsOperation cvsOperation = myPostActivities.get(0);
-        runOperation(executionEnvironment, runInReadAction, cvsOperation);
-        myPostActivities.remove(cvsOperation);
-      }
+    while (!myPostActivities.isEmpty()) {
+      CvsOperation cvsOperation = myPostActivities.get(0);
+      if (! runOperation(executionEnvironment, runInReadAction, cvsOperation)) return;
+      myPostActivities.remove(cvsOperation);
+    }
+  }
+
+  private boolean runOperation(final CvsExecutionEnvironment executionEnvironment,
+                            final boolean runInReadAction,
+                            final CvsOperation cvsOperation) {
+    try {
+      cvsOperation.execute(executionEnvironment, runInReadAction);
+      return true;
     }
     catch (VcsException e) {
       myErrors.add(e);
-    }
-    catch (ProcessCanceledException e) {
-      myIsCanceled = true;
     }
     catch (InvalidModuleDescriptionException ex) {
       myErrors.add(new CvsException(ex, ex.getCvsRoot()));
@@ -364,49 +367,20 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       myErrors.add(new VcsException(CvsBundle.message("exception.text.entries.file.is.corrupted", e.getEntriesFile())));
     }
     catch (CvsProcessException ex) {
-      myErrors.add(new CvsException(ex, myCvsOperation.getLastProcessedCvsRoot()));
+      myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
+    }
+    catch (CommandAbortedException ex) {
+      LOG.error(ex);
+      myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
+    }
+    catch(ProcessCanceledException ex) {
+      myIsCanceled = true;
     }
     catch (Exception ex) {
       LOG.error(ex);
       myErrors.add(new CvsException(ex, myCvsOperation.getLastProcessedCvsRoot()));
     }
-
-  }
-
-  private void runOperation(final CvsExecutionEnvironment executionEnvironment,
-                            final boolean runInReadAction,
-                            final CvsOperation cvsOperation)
-    throws VcsException, CommandAbortedException {
-    if (runInReadAction) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          try {
-            cvsOperation.execute(executionEnvironment);
-          }
-          catch (VcsException e) {
-            myErrors.add(e);
-          }
-          catch (InvalidModuleDescriptionException ex) {
-            myErrors.add(new CvsException(ex, ex.getCvsRoot()));
-          }
-          catch (InvalidEntryFormatException e) {
-            myErrors.add(new VcsException(CvsBundle.message("exception.text.entries.file.is.corrupted", e.getEntriesFile())));
-          }
-          catch (CvsProcessException ex) {
-            myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
-          }
-          catch (CommandAbortedException ex) {
-            LOG.error(ex);
-            myErrors.add(new CvsException(ex, cvsOperation.getLastProcessedCvsRoot()));
-          }
-          catch(ProcessCanceledException ex) {
-            myIsCanceled = true;
-          }
-        }
-      });
-    } else {
-      cvsOperation.execute(executionEnvironment);
-    }
+    return false;
   }
 
   protected void onOperationFinished(ModalityContext modalityContext) {

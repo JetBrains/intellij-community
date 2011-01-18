@@ -51,7 +51,7 @@ public class GithubLoginDialog extends DialogWrapper {
   protected void doOKAction() {
     final String login = myGithubLoginPanel.getLogin();
     final String password = myGithubLoginPanel.getPassword();
-    if (GithubUtil.checkCredentials(myProject)) {
+    if (GithubUtil.checkCredentials(myProject, login, password)) {
       final GithubSettings settings = GithubSettings.getInstance();
       settings.setLogin(login);
       settings.setPassword(password);

@@ -163,7 +163,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   private static void handleOverwrite(final int offset, final Document document) {
     final CharSequence sequence = document.getCharsSequence();
     int i = offset;
-    while (i < sequence.length() && (Character.isJavaIdentifierPart(sequence.charAt(i)) || sequence.charAt(i) == '\'')) i++;
+    while (i < sequence.length() && Character.isJavaIdentifierPart(sequence.charAt(i))) i++;
     document.deleteString(offset, i);
   }
 
