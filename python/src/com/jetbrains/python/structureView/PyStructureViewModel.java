@@ -38,4 +38,9 @@ public class PyStructureViewModel extends StructureViewModelBase implements Stru
   public boolean isAutoExpand(StructureViewTreeElement element) {
     return element.getValue() instanceof PsiFile;
   }
+
+  @Override
+  public boolean isSmartExpand() {
+    return false;
+  }
 }
