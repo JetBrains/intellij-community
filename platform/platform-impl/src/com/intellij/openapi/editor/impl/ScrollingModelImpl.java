@@ -30,11 +30,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ScrollingModelImpl implements ScrollingModel {
+public class ScrollingModelImpl implements ScrollingModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.ScrollingModelImpl");
 
   private final EditorImpl myEditor;
@@ -57,6 +57,9 @@ public class ScrollingModelImpl implements ScrollingModel {
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean myAnimationDisabled = false;
   private final DocumentAdapter myDocumentListener;
+  private int myAccumulatedXOffset = -1;
+  private int myAccumulatedYOffset = -1;
+  private boolean myAccumulateViewportChanges;
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -273,6 +276,12 @@ public class ScrollingModelImpl implements ScrollingModel {
   }
 
   private void scrollToOffsets(int hOffset, int vOffset) {
+    if (myAccumulateViewportChanges) {
+      myAccumulatedXOffset = hOffset;
+      myAccumulatedYOffset = vOffset;
+      return;
+    }
+    
     cancelAnimatedScrolling(false);
 
     VisibleEditorsTracker editorsTracker = VisibleEditorsTracker.getInstance();
@@ -353,6 +362,21 @@ public class ScrollingModelImpl implements ScrollingModel {
 
   public boolean isScrollingNow() {
     return myCurrentAnimationRequest != null;
+  }
+
+  @Override
+  public void accumulateViewportChanges() {
+    myAccumulateViewportChanges = true;
+  }
+
+  @Override
+  public void flushViewportChanges() {
+    myAccumulateViewportChanges = false;
+    if (myAccumulatedXOffset >= 0 && myAccumulatedYOffset >= 0) {
+      scrollToOffsets(myAccumulatedXOffset, myAccumulatedYOffset);
+      myAccumulatedXOffset = myAccumulatedYOffset = -1;
+      cancelAnimatedScrolling(true);
+    }
   }
 
   private class AnimatedScrollingRunnable {
