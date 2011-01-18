@@ -43,7 +43,7 @@ public class GithubUtil {
 
   public static <T> T accessToGithubWithModalProgress(final Project project, final Computable<T> computable) throws CancelledException {
     final Ref<T> result = new Ref<T>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Access to github", true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(computable.compute());
       }
@@ -54,6 +54,19 @@ public class GithubUtil {
       }
     });
     return result.get();
+  }
+
+  public static void accessToGithubWithModalProgress(final Project project, final Runnable runnable) throws CancelledException {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        runnable.run();
+      }
+
+      @Override
+      public void onCancel() {
+        throw new CancelledException();
+      }
+    });
   }
 
   public static boolean testConnection(final String login, final String password) {
