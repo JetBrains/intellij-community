@@ -180,7 +180,10 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
-    if (areCredentialsEmpty()){
+    return checkCredentials(project, null, null);
+  }
+  public static boolean checkCredentials(final Project project, @Nullable final String login, @Nullable final String password) {
+    if (login == null && password == null && areCredentialsEmpty()){
       return false;
     }
     try {
@@ -188,6 +191,9 @@ public class GithubUtil {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+          if (login != null && password != null){
+            return testConnection(login, password);
+          }
           final GithubSettings settings = GithubSettings.getInstance();
           return testConnection(settings.getLogin(), settings.getPassword());
         }
