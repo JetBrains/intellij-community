@@ -112,6 +112,13 @@ class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected final boolean isSmartExpand() {
+    StructureViewModel model = myStructureModel;
+    if (model instanceof TreeModelWrapper) {
+      model = ((TreeModelWrapper) model).getModel();
+    }
+    if (model instanceof StructureViewModel.ExpandInfoProvider) {
+      return ((StructureViewModel.ExpandInfoProvider)model).isSmartExpand();
+    }
     return false;
   }
 
