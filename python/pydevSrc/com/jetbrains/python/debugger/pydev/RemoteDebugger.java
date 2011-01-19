@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,14 +126,14 @@ public class RemoteDebugger {
     return command.getValue();
   }
 
-  public List<PyDebugValue> loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
+  public XValueChildrenList loadFrame(final String threadId, final String frameId) throws PyDebuggerException {
     final GetFrameCommand command = new GetFrameCommand(this, threadId, frameId);
     command.execute();
     return command.getVariables();
   }
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
-  public List<PyDebugValue> loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
+  public XValueChildrenList loadVariable(final String threadId, final String frameId, final PyDebugValue var) throws PyDebuggerException {
     setTempVariable(threadId, frameId, var);
     final GetVariableCommand command = new GetVariableCommand(this, threadId, frameId, composeName(var), var);
     command.execute();

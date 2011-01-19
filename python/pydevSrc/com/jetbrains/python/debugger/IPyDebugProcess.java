@@ -1,8 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-
-import java.util.List;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 
 /**
  * @author yole
@@ -12,7 +11,7 @@ public interface IPyDebugProcess {
 
   void threadSuspended(PyThreadInfo thread);
 
-  List<PyDebugValue> loadVariable(PyDebugValue pyDebugValue) throws PyDebuggerException;
+  XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 
