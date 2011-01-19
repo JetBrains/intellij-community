@@ -17,7 +17,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -40,7 +40,7 @@ import java.util.Arrays;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfiguration implements ApplicationComponent, JDOMExternalizable {
+public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
@@ -83,11 +83,6 @@ public class TodoConfiguration implements ApplicationComponent, JDOMExternalizab
   @NotNull
   public String getComponentName() {
     return "TodoConfiguration";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   @NotNull

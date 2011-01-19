@@ -16,8 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -34,21 +33,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent, Cloneable {
+public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.DebuggerSettings");
   public static final int SOCKET_TRANSPORT = 0;
   public static final int SHMEM_TRANSPORT = 1;
 
-  public static final @NonNls String SUSPEND_ALL = "SuspendAll";
-  public static final @NonNls String SUSPEND_THREAD = "SuspendThread";
-  public static final @NonNls String SUSPEND_NONE = "SuspendNone";
+  @NonNls public static final String SUSPEND_ALL = "SuspendAll";
+  @NonNls public static final String SUSPEND_THREAD = "SuspendThread";
+  @NonNls public static final String SUSPEND_NONE = "SuspendNone";
 
-  public static final @NonNls String EVALUATE_FRAGMENT = "EvaluateFragment";
-  public static final @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
+  @NonNls public static final String EVALUATE_FRAGMENT = "EvaluateFragment";
+  @NonNls public static final String EVALUATE_EXPRESSION = "EvaluateExpression";
 
-  public static final @NonNls String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
-  public static final @NonNls String RUN_HOTSWAP_NEVER = "RunHotswapNever";
-  public static final @NonNls String RUN_HOTSWAP_ASK = "RunHotswapAsk";
+  @NonNls public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
+  @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
+  @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
 
   public boolean TRACING_FILTERS_ENABLED;
   public int VALUE_LOOKUP_DELAY; // ms
@@ -75,11 +74,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   private Map<String, ContentState> myContentStates = new HashMap<String, ContentState>();
 
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {}
-
   public ClassFilter[] getSteppingFilters() {
     final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
     for (int idx = 0; idx < rv.length; idx++) {
@@ -89,7 +83,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   }
 
   void setSteppingFilters(ClassFilter[] steppingFilters) {
-    mySteppingFilters = (steppingFilters != null)? steppingFilters : ClassFilter.EMPTY_ARRAY;
+    mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -116,9 +110,8 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    Element element;
     for (ClassFilter mySteppingFilter : mySteppingFilters) {
-      element = new Element("filter");
+      Element element = new Element("filter");
       parentNode.addContent(element);
       mySteppingFilter.writeExternal(element);
     }
@@ -179,17 +172,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String getComponentName() {
     return "DebuggerSettings";
   }
-
-  public ContentState getContentState(String type) {
-    ContentState state = myContentStates.get(type);
-    if (state == null) {
-      state = new ContentState(type);
-      myContentStates.put(type, state);
-    }
-
-    return state;
-  }
-
 
   public static class ContentState implements Cloneable {
 
@@ -264,7 +246,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     }
 
     public double getSplitProportion(double defaultValue) {
-      return (mySplitProportion <= 0 || mySplitProportion >= 1) ? defaultValue : mySplitProportion;
+      return mySplitProportion <= 0 || mySplitProportion >= 1 ? defaultValue : mySplitProportion;
     }
 
     public void setDetached(final boolean detached) {
@@ -287,10 +269,4 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
       return (ContentState)super.clone();
     }
   }
-
-  public RunnerLayoutSettings getLayoutSettings() {
-    return RunnerLayoutSettings.getInstance();
-  }
-
-
 }

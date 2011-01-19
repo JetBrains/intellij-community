@@ -15,7 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections.ssh;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * author: lesya
  */
-public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExternalizable, SSHPasswordProvider {
+public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizable, SSHPasswordProvider {
 
   private final Map<String, String> myCvsRootToPasswordMap = new HashMap<String, String>();
   private final Map<String, String> myCvsRootToStoringPasswordMap = new HashMap<String, String>();
@@ -58,11 +58,6 @@ public class SSHPasswordProviderImpl implements ApplicationComponent, JDOMExtern
   @NotNull
   public String getComponentName() {
     return "SSHPasswordProvider";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   @Nullable

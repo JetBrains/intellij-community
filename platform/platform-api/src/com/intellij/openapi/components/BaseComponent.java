@@ -15,25 +15,13 @@
  */
 package com.intellij.openapi.components;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
 /**
  * The base interface class for all components.
  *
  * @see ApplicationComponent
  * @see ProjectComponent
  */
-public interface BaseComponent {
-  /**
-   * Unique name of this component. If there is another component with the same name or
-   * name is null internal assertion will occur.
-   *
-   * @return the name of this component
-   */
-  @NonNls @NotNull
-  String getComponentName();
-
+public interface BaseComponent extends NamedComponent {
   /**
    *  Component should do initialization and communication with another components in this method.
    */
