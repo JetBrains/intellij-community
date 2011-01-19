@@ -25,6 +25,22 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XValue extends XValueContainer {
+  private final String myName;
+
+  /**
+   * @deprecated use {@link #XValue(String)} instead
+   */
+  protected XValue() {
+    myName = null;
+  }
+
+  protected XValue(@NotNull String name) {
+    myName = name;
+  }
+
+  public String getName() {
+    return myName;
+  }
 
   /**
    * Start computing presentation of the value in the debugger tree and call {@link XValueNode#setPresentation(String, javax.swing.Icon, String, String, boolean)}

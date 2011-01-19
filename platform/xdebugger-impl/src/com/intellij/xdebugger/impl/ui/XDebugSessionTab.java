@@ -115,17 +115,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private static DefaultActionGroup createTopToolbar() {
-    DefaultActionGroup stepping = new DefaultActionGroup();
+    DefaultActionGroup group = new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
-    stepping.add(actionManager.getAction(XDebuggerActions.SHOW_EXECUTION_POINT));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(XDebuggerActions.STEP_OVER));
-    stepping.add(actionManager.getAction(XDebuggerActions.STEP_INTO));
-    stepping.add(actionManager.getAction(XDebuggerActions.FORCE_STEP_INTO));
-    stepping.add(actionManager.getAction(XDebuggerActions.STEP_OUT));
-    stepping.addSeparator();
-    stepping.add(actionManager.getAction(XDebuggerActions.RUN_TO_CURSOR));
-    return stepping;
+    group.add(actionManager.getAction(XDebuggerActions.SHOW_EXECUTION_POINT));
+    group.addSeparator();
+    group.add(actionManager.getAction(XDebuggerActions.STEP_OVER));
+    group.add(actionManager.getAction(XDebuggerActions.STEP_INTO));
+    group.add(actionManager.getAction(XDebuggerActions.FORCE_STEP_INTO));
+    group.add(actionManager.getAction(XDebuggerActions.STEP_OUT));
+    group.add(actionManager.getAction(XDebuggerActions.RUN_TO_CURSOR));
+    group.addSeparator();
+    group.add(actionManager.getAction(XDebuggerActions.TOGGLE_SORT_VALUES));
+    return group;
   }
 
   public XDebugSessionData saveData() {

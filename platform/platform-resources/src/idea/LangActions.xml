@@ -668,6 +668,7 @@
       <action id="XDebugger.MuteBreakpoints" class="com.intellij.xdebugger.impl.actions.MuteBreakpointAction"
               icon="/debugger/muteBreakpoints.png"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
+      <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="/objectBrowser/sorted.png"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">

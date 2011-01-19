@@ -57,5 +57,7 @@ public interface XDebuggerActions {
 
   @NonNls String MUTE_BREAKPOINTS = "XDebugger.MuteBreakpoints";
 
+  @NonNls String TOGGLE_SORT_VALUES = "XDebugger.ToggleSortValues";
+
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
 }

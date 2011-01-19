@@ -31,9 +31,9 @@ import javax.swing.*;
  */
 public interface XValueNode extends Obsolescent {
 
-  void setPresentation(@NonNls @NotNull String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
-  void setPresentation(@NonNls @NotNull String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(String, javax.swing.Icon, String, String, boolean)}
@@ -42,4 +42,14 @@ public interface XValueNode extends Obsolescent {
    * @param fullValueEvaluator will be used to obtain full text of the value
    */
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
+
+  /**
+   * @deprecated pass {@code name} to {@link XValue#XValue(String)} constructor and use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead of this method
+   */
+  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
+
+  /**
+   * @deprecated pass {@code name} to {@link XValue#XValue(String)} constructor and use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead of this method
+   */
+  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 }
