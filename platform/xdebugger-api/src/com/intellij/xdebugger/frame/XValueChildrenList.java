@@ -35,6 +35,10 @@ public class XValueChildrenList {
     myValues = new ArrayList<XValue>();
   }
 
+  public static XValueChildrenList singleton(String name, @NotNull XValue value) {
+    return new XValueChildrenList(Collections.singletonList(name), Collections.singletonList(value));
+  }
+
   private XValueChildrenList(List<String> names, List<XValue> values) {
     myNames = names;
     myValues = values;
