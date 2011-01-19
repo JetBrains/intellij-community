@@ -60,6 +60,8 @@ public class GroovyPsiManager {
   private static final Set<String> ourPopularClasses = Sets.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
                                                                        GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME,
                                                                        GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT,
+                                                                       CommonClassNames.JAVA_UTIL_LIST,
+                                                                       CommonClassNames.JAVA_UTIL_COLLECTION,
                                                                        CommonClassNames.JAVA_LANG_STRING);
   private final Project myProject;
 
@@ -82,6 +84,11 @@ public class GroovyPsiManager {
         dropTypesCache();
       }
     });
+    ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnChange(new Runnable() {
+      public void run() {
+        myClassCache.clear();
+      }
+    });
 
     myTypeInferenceHelper = new TypeInferenceHelper(myProject);
 
@@ -91,6 +98,7 @@ public class GroovyPsiManager {
 
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
+        myClassCache.clear();
       }
     });
   }
@@ -101,7 +109,6 @@ public class GroovyPsiManager {
 
   public void dropTypesCache() {
     myCalculatedTypes.clear();
-    myClassCache.clear();
   }
 
   public static boolean isInheritorCached(@Nullable PsiType type, @NotNull String baseClassName) {
@@ -137,6 +144,11 @@ public class GroovyPsiManager {
       map = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
       myClassCache.put(fqName, new SoftReference<Map<GlobalSearchScope, PsiClass>>(map));
     }
+    PsiClass cached = map.get(resolveScope);
+    if (cached != null) {
+      return cached;
+    }
+
     PsiClass result = JavaPsiFacade.getInstance(myProject).findClass(fqName, resolveScope);
     if (result != null) {
       map.put(resolveScope, result);
