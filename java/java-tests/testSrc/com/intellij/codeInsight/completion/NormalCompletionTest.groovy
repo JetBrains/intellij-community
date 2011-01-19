@@ -881,6 +881,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testInstanceMagicMethod() throws Exception { doTest() }
 
+  public void testNoDotOverwrite() throws Exception { doTest('.') }
+
   public void testNoMethodsInParameterType() {
     configure()
     assertOrderedEquals myFixture.lookupElementStrings, "final", "float"

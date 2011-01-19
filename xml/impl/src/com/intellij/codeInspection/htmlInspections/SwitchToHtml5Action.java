@@ -16,17 +16,21 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class SwitchToHtml5Action implements LocalQuickFix {
+public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
 
   @NotNull
   @Override
@@ -36,12 +40,37 @@ public class SwitchToHtml5Action implements LocalQuickFix {
 
   @NotNull
   @Override
+  public String getText() {
+    return getFamilyName();
+  }
+
+  @NotNull
+  @Override
   public String getFamilyName() {
     return getName();
   }
 
   @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    applyFix(project);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    applyFix(project);
+  }
+
+  private static void applyFix(Project project) {
     ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(XmlUtil.HTML5_SCHEMA_LOCATION, project);
   }
 }

@@ -15,13 +15,11 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -74,12 +72,7 @@ public class PropertiesFilesManager extends AbstractProjectComponent {
         }
       }
     };
-    EncodingManager.getInstance().addPropertyChangeListener(myListener);
-    Disposer.register(myProject, new Disposable() {
-      public void dispose() {
-        EncodingManager.getInstance().removePropertyChangeListener(myListener);
-      }
-    });
+    EncodingManager.getInstance().addPropertyChangeListener(myListener,myProject);
   }
 
   @NotNull

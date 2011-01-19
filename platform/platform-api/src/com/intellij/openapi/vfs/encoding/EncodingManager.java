@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,9 +79,13 @@ public abstract class EncodingManager {
   public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
-  public abstract void addPropertyChangeListener(PropertyChangeListener listener);
+  /**
+   * @deprecated use {@link EncodingManager#addPropertyChangeListener(java.beans.PropertyChangeListener, com.intellij.openapi.Disposable)} instead
+   */
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removePropertyChangeListener(PropertyChangeListener listener);
+  public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 }

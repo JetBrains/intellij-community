@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package p1.p2;
 
-package com.intellij.ide.projectView.impl.nodes;
-
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiFileSystemItem;
-
-import javax.swing.tree.TreeNode;
-
-/**
- * @author yole
- */
-public interface DropTargetNode {
-  boolean canDrop(TreeNode[] sourceNodes);
-
-  void drop(TreeNode[] sourceNodes, DataContext dataContext);
-  void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext);
+public class MyApplication extends android.app.Application {
 }

@@ -29,7 +29,6 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
-import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -52,7 +51,7 @@ public class ConfigurationUtil {
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiMethod[]>() {
           public PsiMethod[] compute() {
-            return JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);
+            return JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
           }
         }
     );

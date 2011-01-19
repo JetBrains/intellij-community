@@ -139,4 +139,14 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals(2, ((PsiMethod)myItems[2].getObject()).getParameterList().getParametersCount());
   }
 
+  public void testStatsForClassNameInExpression() throws Throwable {
+    final VirtualFile foo = getSourceRoot().createChildDirectory(this, "foo");
+    VfsUtil.saveText(foo.createChildData(this, "FooBar.java"), "package foo; public interface FooBar {}");
+    VfsUtil.saveText(foo.createChildData(this, "FooBee.java"), "package foo; public interface FooBee {}");
+
+    checkPreferredItems(0, "FooBar", "FooBee");
+    incUseCount(getLookup(), 1);
+    assertPreferredItems(0, "FooBee", "FooBar");
+  }
+
 }

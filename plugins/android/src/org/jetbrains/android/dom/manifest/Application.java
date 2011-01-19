@@ -55,6 +55,10 @@ public interface Application extends ManifestElement {
   @ExtendClass("android.app.Activity")
   AndroidAttributeValue<PsiClass> getManageSpaceActivity();
 
+  @Convert(PackageClassConverter.class)
+  @ExtendClass("android.app.Application")
+  AndroidAttributeValue<PsiClass> getName();
+
   @Convert(ResourceReferenceConverter.class)
   @ResourceType("string")
   AndroidAttributeValue<ResourceValue> getLabel();

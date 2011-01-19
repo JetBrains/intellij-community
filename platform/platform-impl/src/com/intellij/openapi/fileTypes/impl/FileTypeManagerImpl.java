@@ -27,13 +27,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.ExternalInfo;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -893,10 +897,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @NotNull
   public String getComponentName() {
-    if ("Idea".equals(System.getProperty("idea.platform.prefix"))) {
-      return "CommunityFileTypes";
-    }
-    return "FileTypeManager";
+    return PlatformUtils.isCommunity() ? "CommunityFileTypes" : "FileTypeManager";
   }
 
   public FileTypeAssocTable getExtensionMap() {

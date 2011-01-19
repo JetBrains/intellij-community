@@ -56,7 +56,7 @@ public class FileTreeTable extends AbstractFileTreeTable<Charset> {
           setText(t.displayName());
         }
         else if (file != null) {
-          Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
+          Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
           if (charset != null) {
             setText(charset.displayName());
           }
