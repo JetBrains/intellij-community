@@ -163,6 +163,9 @@ public class JBTabsImpl extends JComponent
   private TabInfo myDropInfo;
   private int myDropInfoIndex;
 
+  private TabInfo myOldSelection;
+  private SelectionChangeHandler mySelectionChangeHandler;
+
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
   }
@@ -698,6 +701,19 @@ public class JBTabsImpl extends JComponent
   }
 
   private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+    if (mySelectionChangeHandler != null) {
+      return mySelectionChangeHandler.execute(info, requestFocus, new ActiveRunnable() {
+        @Override
+        public ActionCallback run() {
+          return executeSelectionChange(info, requestFocus);
+        }
+      });
+    } else {
+      return executeSelectionChange(info, requestFocus);
+    }
+  }
+
+  private ActionCallback executeSelectionChange(TabInfo info, boolean requestFocus) {
     if (mySelectedInfo != null && mySelectedInfo.equals(info)) {
       if (!requestFocus) {
         return new ActionCallback.Done();
@@ -751,8 +767,14 @@ public class JBTabsImpl extends JComponent
 
   private void fireBeforeSelectionChanged(TabInfo oldInfo, TabInfo newInfo) {
     if (oldInfo != newInfo) {
-      for (TabsListener eachListener : myTabListeners) {
-        eachListener.beforeSelectionChanged(oldInfo, newInfo);
+      myOldSelection = oldInfo;
+      try {
+        for (TabsListener eachListener : myTabListeners) {
+          eachListener.beforeSelectionChanged(oldInfo, newInfo);
+        }
+      }
+      finally {
+        myOldSelection = null;
       }
     }
   }
@@ -1041,6 +1063,8 @@ public class JBTabsImpl extends JComponent
 
   @Nullable
   public TabInfo getSelectedInfo() {
+    if (myOldSelection != null) return myOldSelection;
+
     if (!myVisibleInfos.contains(mySelectedInfo)) {
       mySelectedInfo = null;
     }
@@ -2429,6 +2453,12 @@ public class JBTabsImpl extends JComponent
 
   public JBTabs removeListener(@NotNull final TabsListener listener) {
     myTabListeners.remove(listener);
+    return this;
+  }
+
+  @Override
+  public JBTabs setSelectionChangeHandler(SelectionChangeHandler handler) {
+    mySelectionChangeHandler = handler;
     return this;
   }
 
