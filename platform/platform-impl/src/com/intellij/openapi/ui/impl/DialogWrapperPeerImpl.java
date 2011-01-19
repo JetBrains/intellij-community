@@ -587,6 +587,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
       pack();
+
+      Dimension packedSize = getSize();
+      Dimension minSize = getMinimumSize();
+      setSize(Math.max(packedSize.width, minSize.width), Math.max(packedSize.height, minSize.height));
+
       setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
 
       // Restore dialog's size and location
