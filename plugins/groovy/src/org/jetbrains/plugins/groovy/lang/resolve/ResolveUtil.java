@@ -233,11 +233,6 @@ public class ResolveUtil {
     return result;
   }
 
-  public static boolean isInheritor(PsiType type, @NotNull String baseClass, Project project) {
-    return getAllSuperTypes(type, project).keySet().contains(baseClass);
-  }
-
-
   @NotNull
   private static String rawCanonicalText(@NotNull PsiType type) {
     final String result = type.getCanonicalText();
