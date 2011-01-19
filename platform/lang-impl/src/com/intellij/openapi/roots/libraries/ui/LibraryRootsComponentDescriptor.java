@@ -12,6 +12,8 @@
  */
 package com.intellij.openapi.roots.libraries.ui;
 
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,5 +43,14 @@ public abstract class LibraryRootsComponentDescriptor {
    */
   public OrderRootType[] getRootTypes() {
     return OrderRootType.getAllTypes();
+  }
+
+  /**
+   * @param project The current project.
+   * @return A configurable which contains additional library settings in File/Settings.
+   */
+  @Nullable
+  public Configurable getAdditionalSettingsConfigurable(Project project) {
+    return null;
   }
 }
