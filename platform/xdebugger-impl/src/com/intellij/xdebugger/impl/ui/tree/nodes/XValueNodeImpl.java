@@ -48,9 +48,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private String mySeparator;
   private boolean myChanged;
 
-  public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, final XValue value) {
+  public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final XValue value) {
     super(tree, parent, value);
-    myName = value.getName();
+    myName = name;
     if (myName != null) {
       myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
       myText.append(XDebuggerUIConstants.EQ_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);

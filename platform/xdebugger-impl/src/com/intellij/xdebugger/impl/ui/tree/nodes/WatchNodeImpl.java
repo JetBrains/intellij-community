@@ -27,7 +27,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
 
   public WatchNodeImpl(final @NotNull XDebuggerTree tree, final @NotNull WatchesRootNode parent, final @NotNull XValue result,
                        final @NotNull String expression) {
-    super(tree, parent, result);
+    super(tree, parent, expression, result);
     myExpression = expression;
   }
 

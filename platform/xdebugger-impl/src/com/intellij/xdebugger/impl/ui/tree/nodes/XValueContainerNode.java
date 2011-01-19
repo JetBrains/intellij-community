@@ -16,10 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.containers.SortedList;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -63,7 +60,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
-  public void addChildren(final List<? extends XValue> children, final boolean last) {
+  @Override
+  public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         if (myValueChildren == null) {
@@ -75,8 +73,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
           }
         }
         List<XValueContainerNode<?>> newChildren = new ArrayList<XValueContainerNode<?>>();
-        for (XValue child : children) {
-          XValueNodeImpl node = createChildNode(child);
+        for (int i = 0; i < children.size(); i++) {
+          XValueNodeImpl node = new XValueNodeImpl(myTree, XValueContainerNode.this, children.getName(i), children.getValue(i));
           myValueChildren.add(node);
           newChildren.add(node);
         }
@@ -94,16 +92,20 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     });
   }
 
+  public void addChildren(final List<? extends XValue> children, final boolean last) {
+    final XValueChildrenList list = new XValueChildrenList();
+    for (XValue child : children) {
+      list.add(null, child);
+    }
+    addChildren(list, last);
+  }
+
   public void tooManyChildren(final int remaining) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         setMessageNode(MessageTreeNode.createEllipsisNode(myTree, XValueContainerNode.this, remaining));
       }
     });
-  }
-
-  private XValueNodeImpl createChildNode(final XValue child) {
-    return new XValueNodeImpl(myTree, this, child);
   }
 
   public boolean isObsolete() {

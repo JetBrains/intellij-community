@@ -86,7 +86,7 @@ public class XValueHint extends AbstractValueHint {
 
           @Override
           public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren) {
-            setPresentation(result.getName(), icon, type, separator, value, hasChildren);
+            setPresentation(myExpression, icon, type, separator, value, hasChildren);
           }
 
           public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
