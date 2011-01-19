@@ -67,7 +67,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator,
                               @NonNls @NotNull String value, boolean hasChildren) {
-    setPresentation(null, icon, type, separator, hasChildren);
+    setPresentation(null, icon, type, separator, value, hasChildren);
   }
 
   public void setPresentation(final String name, @Nullable final Icon icon, @Nullable final String type, @NotNull final String value,

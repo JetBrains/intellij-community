@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public abstract class XValue extends XValueContainer {
-  private final String myName;
+  protected final String myName;
 
   /**
    * @deprecated use {@link #XValue(String)} instead
@@ -34,7 +35,7 @@ public abstract class XValue extends XValueContainer {
     myName = null;
   }
 
-  protected XValue(@NotNull String name) {
+  protected XValue(@NotNull @NonNls String name) {
     myName = name;
   }
 
