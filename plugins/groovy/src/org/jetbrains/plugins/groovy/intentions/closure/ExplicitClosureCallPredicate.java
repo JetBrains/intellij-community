@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 class ExplicitClosureCallPredicate implements PsiElementPredicate {
 
@@ -50,7 +51,7 @@ class ExplicitClosureCallPredicate implements PsiElementPredicate {
         if (qualifierType == null) {
             return false;
         }
-        if (!qualifierType.equalsToText("groovy.lang.Closure")) {
+        if (!qualifierType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
             return false;
         }
         return !ErrorUtil.containsError(element);
