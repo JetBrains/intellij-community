@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,9 @@ public class ExpandToNormalAnnotationIntention extends MutablyNamedIntention {
                 text.append(nameReferenceElement.getText());
             }
             text.append("(value = ");
-            text.append(value.getText());
+            if (value != null) {
+                text.append(value.getText());
+            }
             text.append(')');
         }
         return text.toString();

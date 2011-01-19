@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -45,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,17 +87,18 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        updateEncodingFromContent(e.getDocument());
+        queueUpdateEncodingFromContent(e.getDocument());
       }
     }, this);
     editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
       public void editorCreated(EditorFactoryEvent event) {
-        updateEncodingFromContent(event.getEditor().getDocument());
+        queueUpdateEncodingFromContent(event.getEditor().getDocument());
       }
     }, this);
   }
 
+  @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
   private boolean pollAndHandleDocument() {
     final Document document = myChangedDocuments.poll();
     if (document == null) return false;
@@ -106,7 +109,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         Project project = guessProject(virtualFile);
         if (project != null && project.isDisposed()) return;
         Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        Charset oldCached = getCachedCharsetFromContent(document);
         document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+        ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
       }
     });
     return true;
@@ -123,7 +128,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   }
 
-  public void updateEncodingFromContent(@NotNull Document document) {
+  public void queueUpdateEncodingFromContent(@NotNull Document document) {
     myChangedDocuments.offer(document);
     addCacheEncodingAlarm();
   }
@@ -244,11 +249,22 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener){
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener){
+  @Override
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    myPropertyChangeSupport.addPropertyChangeListener(listener);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removePropertyChangeListener(listener);
+      }
+    });
+  }
+
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
   void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {

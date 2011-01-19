@@ -23,6 +23,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
@@ -71,7 +72,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     documentManager.addListener(new PsiDocumentManager.Listener() {
       public void documentCreated(Document document, PsiFile psiFile) {
         if (document != null) {
-          ((EncodingManagerImpl)EncodingManager.getInstance()).updateEncodingFromContent(document);
+          ((EncodingManagerImpl)EncodingManager.getInstance()).queueUpdateEncodingFromContent(document);
         }
       }
 
@@ -274,11 +275,16 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener){
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener){
     EncodingManager.getInstance().addPropertyChangeListener(listener);
   }
 
-  public void removePropertyChangeListener(PropertyChangeListener listener){
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    EncodingManager.getInstance().addPropertyChangeListener(listener,parentDisposable);
+  }
+
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     EncodingManager.getInstance().removePropertyChangeListener(listener);
   }
 
