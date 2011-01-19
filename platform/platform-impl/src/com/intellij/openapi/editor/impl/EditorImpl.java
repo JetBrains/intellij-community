@@ -54,12 +54,14 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
@@ -3351,7 +3353,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void requestFocus() {
-    myEditorComponent.requestFocus();
+    IdeFocusManager.getInstance(myProject).requestFocus(myEditorComponent, true);
   }
 
   private void validateMousePointer(MouseEvent e) {
@@ -4536,7 +4538,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myCommandProcessor != null) {
         Runnable runnable = new Runnable() {
           public void run() {
-            processMousePressed(e);
+            if (processMousePressed(e)) {
+              IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
+            }
           }
         };
         myCommandProcessor.executeCommand(myProject, runnable, "", DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument());
@@ -4610,7 +4614,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    private void processMousePressed(MouseEvent e) {
+    private boolean processMousePressed(MouseEvent e) {
+      boolean isNavigation = false;
+
       myInitialMouseEvent = e;
 
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > 1000) {
@@ -4640,7 +4646,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           y = myGutterComponent.getHeadCenterY(range);
           getScrollingModel().scrollVertically(y - scrollShift);
           myGutterComponent.updateSize();
-          return;
+          return isNavigation;
         }
       }
 
@@ -4652,19 +4658,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else {
             myGutterComponent.mousePressed(e);
           }
-          if (e.isConsumed()) return;
+          if (e.isConsumed()) return isNavigation;
         }
         x = 0;
       }
 
       int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+
+      int oldStart = mySelectionModel.getSelectionStart();
+      int oldEnd = mySelectionModel.getSelectionEnd();
+
       moveCaretToScreenPos(x, y);
 
-      if (e.isPopupTrigger()) return;
+      if (e.isPopupTrigger()) return isNavigation;
 
       requestFocus();
 
       int caretOffset = getCaretModel().getOffset();
+
+      int newStart = mySelectionModel.getSelectionStart();
+      int newEnd = mySelectionModel.getSelectionEnd();
+      if (oldStart != newStart && oldEnd != newEnd) {
+        if (oldStart == oldEnd && newStart == newEnd) {
+          isNavigation = true;
+        }
+      }
 
       myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
       myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
@@ -4686,7 +4704,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);
         mySavedSelectionStart = mySelectionModel.getSelectionStart();
         mySavedSelectionEnd = mySelectionModel.getSelectionEnd();
-        return;
+        return isNavigation;
       }
 
       if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
@@ -4728,6 +4746,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       }
+
+      return isNavigation;
     }
   }
 
