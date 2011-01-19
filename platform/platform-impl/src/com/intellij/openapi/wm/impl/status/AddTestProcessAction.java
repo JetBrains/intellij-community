@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import java.awt.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AddTestProcessAction extends AnAction implements DumbAware {
@@ -40,7 +42,27 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    HintManager.getInstance().showErrorHint(PlatformDataKeys.EDITOR.getData(e.getDataContext()), "<html>Fuck<br>Fuck again</html>");
+
+    DialogWrapper fuck = new DialogWrapper(false) {
+
+      {
+        init();
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JLabel label = new JLabel("Fuck");
+        panel.add(label, BorderLayout.CENTER);
+        panel.setMinimumSize(label.getPreferredSize());
+        panel.setPreferredSize(new Dimension(-1, -1));
+        return panel;
+      }
+    };
+
+    fuck.show();
+
+
     if (true) return;
 
 
