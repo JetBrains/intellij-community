@@ -30,6 +30,11 @@ public class XValueChildrenList {
   private List<String> myNames;
   private List<XValue> myValues;
 
+  public XValueChildrenList(int initialCapacity) {
+    myNames = new ArrayList<String>(initialCapacity);
+    myValues = new ArrayList<XValue>(initialCapacity);
+  }
+
   public XValueChildrenList() {
     myNames = new ArrayList<String>();
     myValues = new ArrayList<XValue>();
