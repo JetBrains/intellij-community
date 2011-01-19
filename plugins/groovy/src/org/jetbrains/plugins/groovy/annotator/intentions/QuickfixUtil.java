@@ -18,9 +18,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -184,19 +182,6 @@ public class QuickfixUtil {
     return typeText;
   }
 
-  public static Module getModuleByPsiFile(PsiFile containingFile) {
-    VirtualFile file;
-    if (containingFile != null) {
-      file = containingFile.getVirtualFile();
-      if (file == null) return null;
-    } else {
-      return null;
-    }
-
-    return ProjectRootManager.getInstance(containingFile.getProject()).getFileIndex().getModuleForFile(file);
-  }
-
-
   public static DynamicElementSettings createSettings(GrReferenceExpression referenceExpression) {
     DynamicElementSettings settings = new DynamicElementSettings();
     final PsiClass containingClass = findTargetClass(referenceExpression);
@@ -215,7 +200,7 @@ public class QuickfixUtil {
     if (isCall(referenceExpression)) {
       List<PsiType> unboxedTypes = new ArrayList<PsiType>();
       for (PsiType type : PsiUtil.getArgumentTypes(referenceExpression, false)) {
-        unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWraperAndEraseGenerics(type));
+        unboxedTypes.add(TypesUtil.unboxPrimitiveTypeWrapperAndEraseGenerics(type));
       }
       final PsiType[] types = unboxedTypes.toArray(new PsiType[unboxedTypes.size()]);
       final String[] names = getMethodArgumentsNames(referenceExpression.getProject(), types);

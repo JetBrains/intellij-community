@@ -31,7 +31,6 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.cvsIntegration.CvsModule;
 import com.intellij.openapi.cvsIntegration.CvsRepository;
 import com.intellij.openapi.cvsIntegration.CvsResult;
@@ -52,7 +51,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class CvsServicesImpl extends CvsServices implements ApplicationComponent {
+public class CvsServicesImpl extends CvsServices {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.impl.CvsServicesImpl");
 
@@ -82,7 +81,7 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
     return result;
   }
 
-  private ComparableVcsRevisionOnOperation createCvsVersionOn(CvsModule module, Project project) {
+  private static ComparableVcsRevisionOnOperation createCvsVersionOn(CvsModule module, Project project) {
     final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance()
       .getConfigurationForCvsRoot(module.getRepository()
         .getStringRepresentation());
@@ -106,15 +105,6 @@ public class CvsServicesImpl extends CvsServices implements ApplicationComponent
   public String getScrambledPasswordForPServerCvsRoot(String cvsRoot) {
     return PServerLoginProvider.getInstance()
       .getScrambledPasswordForCvsRoot(cvsRoot);
-  }
-
-  public String getComponentName() {
-    return "CvsServices";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public boolean saveRepository(CvsRepository repository) {

@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -43,7 +45,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,21 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       addCacheEncodingAlarm();
     }
   };
+
+  public EncodingManagerImpl(EditorFactory editorFactory) {
+    editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        updateEncodingFromContent(e.getDocument());
+      }
+    }, this);
+    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorCreated(EditorFactoryEvent event) {
+        updateEncodingFromContent(event.getEditor().getDocument());
+      }
+    }, this);
+  }
 
   private boolean pollAndHandleDocument() {
     final Document document = myChangedDocuments.poll();
@@ -119,26 +135,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return document.getUserData(CACHED_CHARSET_FROM_CONTENT);
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "EncodingManager";
-  }
-
-  public void initComponent() {
-    final DocumentAdapter myDocumentListener = new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        updateEncodingFromContent(e.getDocument());
-      }
-    };
-
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, this);
-  }
-
-  public void disposeComponent() {
   }
 
   public Element getState() {

@@ -1094,7 +1094,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int offsetToVisualLine(int offset) {
     int textLength = getDocument().getTextLength();
     if (offset >= textLength) {
-      int result = getVisibleLineCount();
+      int result = Math.max(0, getVisibleLineCount() - 1); // lines are 0 based
       if (textLength > 0 && getDocument().getCharsSequence().charAt(textLength - 1) == '\n') {
         result++;
       }

@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,6 +48,7 @@ public class ModuleEditorState implements ProjectComponent, JDOMExternalizable{
   public void projectClosed() {
   }
 
+  @NotNull
   public String getComponentName() {
     return "ModuleEditorState";
   }

@@ -36,6 +36,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -634,6 +635,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

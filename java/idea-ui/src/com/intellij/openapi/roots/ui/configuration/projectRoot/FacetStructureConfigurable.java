@@ -273,6 +273,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return "reference.settingsdialog.project.structure.facet";
   }
 
+  @NotNull
   public String getId() {
     return "project.facets";
   }

@@ -45,15 +45,6 @@ import java.io.IOException;
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsImpl");
 
-  public String getComponentName() {
-    return "DebuggerUtils";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
-  }
-
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);

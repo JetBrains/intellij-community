@@ -21,8 +21,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,6 +39,7 @@ public class OldModuleRootsKeeper implements ModuleComponent, JDOMExternalizable
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "ModuleRootManager";
   }

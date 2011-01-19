@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,6 +88,7 @@ public class ProjectConfigurableWrapper implements SearchableConfigurable {
     return myDelegate.getIcon();
   }
 
+  @NotNull
   @NonNls
   public String getId() {
     return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getId() : "";

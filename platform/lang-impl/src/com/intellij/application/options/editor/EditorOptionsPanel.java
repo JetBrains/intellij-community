@@ -38,6 +38,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -419,6 +420,7 @@ public class EditorOptionsPanel {
   }
 
   public class MyConfigurable implements SearchableConfigurable {
+    @NotNull
     public String getId() {
       return "Editor.Behavior";
     }

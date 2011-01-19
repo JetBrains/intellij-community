@@ -97,7 +97,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause)parent).getIteratedExpression();
       if (iteratedExpression instanceof GrRangeExpression) {
-        return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, this);
+        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, this);
       }
       else if (iteratedExpression != null) {
         PsiType result = ClosureParameterEnhancer.findTypeForIteration(iteratedExpression, factory, this);
@@ -106,7 +106,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
         }
       }
     } else if (parent instanceof GrCatchClause) {
-      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, this);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, this);
     }
 
     return GrVariableEnhancer.getEnhancedType(this);
@@ -126,7 +126,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   public PsiType getType() {
     PsiType type = super.getType();
     if (isMainMethodFirstUntypedParameter()) {
-      return GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName("java.lang.String", this).createArrayType();
+      return TypesUtil.createTypeByFQClassName("java.lang.String", this).createArrayType();
     }
     if (getParent() instanceof GrForClause) { //inside for loop
       final PsiType typeGroovy = getTypeGroovy();

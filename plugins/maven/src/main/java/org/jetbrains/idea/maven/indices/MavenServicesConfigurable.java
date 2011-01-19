@@ -32,6 +32,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.services.MavenServicesManager;
 import org.jetbrains.idea.maven.utils.RepositoryAttachHandler;
@@ -221,6 +222,7 @@ public class MavenServicesConfigurable extends BaseConfigurable implements Searc
     return "reference.settings.project.maven.repository.indices";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

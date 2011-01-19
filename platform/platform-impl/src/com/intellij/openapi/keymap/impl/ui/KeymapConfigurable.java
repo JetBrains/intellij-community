@@ -19,6 +19,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -46,6 +47,7 @@ public class KeymapConfigurable extends SearchableConfigurable.Parent.Abstract {
     return new Configurable[]{keymap, quickLists};
   }
 
+  @NotNull
   public String getId() {
     return "preferences.keymap.keymap";
   }

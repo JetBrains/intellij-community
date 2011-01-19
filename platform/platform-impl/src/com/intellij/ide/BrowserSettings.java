@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,6 +31,7 @@ public class BrowserSettings implements Configurable, SearchableConfigurable {
   private static final Icon ICON = IconLoader.getIcon("/general/browsersettings.png");
   private BrowserSettingsPanel mySettingsPanel;
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

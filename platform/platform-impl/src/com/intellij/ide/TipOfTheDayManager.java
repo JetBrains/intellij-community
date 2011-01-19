@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 public class TipOfTheDayManager extends ProjectManagerAdapter implements ApplicationComponent {
   private boolean myDoNotShowThisTime = false;
@@ -38,6 +39,7 @@ public class TipOfTheDayManager extends ProjectManagerAdapter implements Applica
     projectManager.addProjectManagerListener(this);
   }
 
+  @NotNull
   public String getComponentName() {
     return "TipOfTheDayManager";
   }

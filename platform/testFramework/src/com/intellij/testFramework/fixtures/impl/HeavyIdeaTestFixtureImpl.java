@@ -45,18 +45,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.EditorListenerTracker;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.ThreadTracker;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -103,30 +100,26 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       moduleFixtureBuilder.getFixture().tearDown();
     }
 
+    InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        UIUtil.dispatchAllInvocationEvents();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
             Disposer.dispose(myProject);
+            myProject = null;
           }
         });
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      SwingUtilities.invokeAndWait(runnable);
-    }
+    UIUtil.invokeAndWaitIfNeeded(runnable);
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
       assert deleted : "Can't delete " + fileToDelete;
     }
-
-    InjectedLanguageManagerImpl injectedLanguageManager = (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject());
 
     super.tearDown();
 
@@ -152,8 +145,6 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         for (ModuleFixtureBuilder moduleFixtureBuilder: myModuleFixtureBuilders) {
           moduleFixtureBuilder.getFixture().setUp();
         }
-
-        //PropertiesReferenceManager.getInstance(myProject).projectOpened();
 
         StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
         sm.runStartupActivities();

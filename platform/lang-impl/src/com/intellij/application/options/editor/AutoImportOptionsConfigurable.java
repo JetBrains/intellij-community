@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.CompositeConfigurable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +63,7 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
     return myPanel;
   }
 
+  @NotNull
   public String getId() {
     return "editor.preferences.import";
   }

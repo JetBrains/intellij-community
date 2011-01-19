@@ -20,6 +20,8 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,6 +37,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
+  public static final Key<FileType> FILE_TYPE_KEY = Key.<FileType>create("file type");
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
@@ -152,4 +155,11 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract void setFlag(int flag_mask, boolean value);
 
   public abstract boolean getFlag(int flag_mask);
+
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    FileType fileType = getUserData(FILE_TYPE_KEY);
+    return fileType == null ? super.getFileType() : fileType;
+  }
 }

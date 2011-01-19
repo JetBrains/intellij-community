@@ -946,6 +946,15 @@ public class FileManagerImpl implements FileManager {
               treeEvent.setNewValue(event.getNewValue());
               myManager.propertyChanged(treeEvent);
             }
+            else if (VirtualFile.PROP_ENCODING.equals(propertyName)) {
+              if (oldPsiFile == null) return;
+
+              treeEvent.setElement(oldPsiFile);
+              treeEvent.setPropertyName(VirtualFile.PROP_ENCODING);
+              treeEvent.setOldValue(event.getOldValue());
+              treeEvent.setNewValue(event.getNewValue());
+              myManager.propertyChanged(treeEvent);
+            }
           }
         }
       );

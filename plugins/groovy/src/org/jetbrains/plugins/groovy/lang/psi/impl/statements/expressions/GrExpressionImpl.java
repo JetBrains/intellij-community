@@ -5,14 +5,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
@@ -37,6 +35,6 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
   }
 
   public PsiType getTypeByFQName(@NotNull String fqName) {
-    return GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName(fqName, this);
+    return TypesUtil.createTypeByFQClassName(fqName, this);
   }
 }

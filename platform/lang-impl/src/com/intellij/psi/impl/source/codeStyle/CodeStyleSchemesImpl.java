@@ -17,8 +17,8 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeProcessor;
@@ -46,7 +46,7 @@ import java.util.Collection;
  * @author MYakovlev
  *         Date: Jul 16, 2002
  */
-public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent, JDOMExternalizable, ApplicationComponent {
+public class CodeStyleSchemesImpl extends CodeStyleSchemes implements ExportableComponent, JDOMExternalizable, NamedComponent {
   @NonNls private static final String DEFAULT_SCHEME_NAME = "Default";
 
   public String CURRENT_SCHEME_NAME = DEFAULT_SCHEME_NAME;
@@ -198,14 +198,6 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   @Override
   public String getComponentName() {
     return "CodeStyleSchemes";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   public SchemesManager<CodeStyleScheme, CodeStyleSchemeImpl> getSchemesManager() {

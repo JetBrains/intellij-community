@@ -17,6 +17,9 @@ package com.intellij.openapi.editor.event;
 
 import java.util.EventListener;
 
+/**
+ * @see {@link com.intellij.openapi.editor.EditorFactory#addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener)}
+ */
 public interface EditorFactoryListener extends EventListener {
   void editorCreated(EditorFactoryEvent event);
   void editorReleased(EditorFactoryEvent event);
