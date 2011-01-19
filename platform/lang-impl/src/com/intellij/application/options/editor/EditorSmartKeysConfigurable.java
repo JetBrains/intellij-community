@@ -63,6 +63,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   private JPanel myAddonPanel;
   private JCheckBox myCbInsertPairCurlyBraceOnEnter;
   private JCheckBox myCbInsertJavadocStubOnEnter;
+  private JCheckBox myCbSurroundSelectionOnTyping;
 
   private static final String NO_REFORMAT = ApplicationBundle.message("combobox.paste.reformat.none");
   private static final String INDENT_BLOCK = ApplicationBundle.message("combobox.paste.reformat.indent.block");
@@ -152,6 +153,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     myCbInsertPairQuote.setSelected(codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
     myCbCamelWords.setSelected(editorSettings.isCamelWords());
 
+    myCbSurroundSelectionOnTyping.setSelected(codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
+
     super.reset();
   }
 
@@ -167,6 +170,7 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = myCbInsertJavadocStubOnEnter.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_BRACKET = myCbInsertPairBracket.isSelected();
     codeInsightSettings.AUTOINSERT_PAIR_QUOTE = myCbInsertPairQuote.isSelected();
+    codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED = myCbSurroundSelectionOnTyping.isSelected();
     editorSettings.setCamelWords(myCbCamelWords.isSelected());
     codeInsightSettings.REFORMAT_ON_PASTE = getReformatPastedBlockValue();
 
@@ -190,6 +194,8 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
     isModified |= isModified(myCbInsertPairBracket, codeInsightSettings.AUTOINSERT_PAIR_BRACKET);
     isModified |= isModified(myCbInsertPairQuote, codeInsightSettings.AUTOINSERT_PAIR_QUOTE);
     isModified |= isModified(myCbCamelWords, editorSettings.isCamelWords());
+
+    isModified |= isModified(myCbSurroundSelectionOnTyping, codeInsightSettings.SURROUND_SELECTION_ON_QUOTE_TYPED);
 
     return isModified;
 
