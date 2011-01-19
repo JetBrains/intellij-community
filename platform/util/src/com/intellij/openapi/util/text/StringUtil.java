@@ -858,7 +858,7 @@ public class StringUtil {
     return s;
   }
 
-  public static boolean isEmptyOrSpaces(final String s) {
+  public static boolean isEmptyOrSpaces(@Nullable final String s) {
     return s == null || s.trim().length() == 0;
   }
 
