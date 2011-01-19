@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +33,20 @@ class ChangeFileEncodingTo extends AnAction implements DumbAware {
   private final Charset myCharset;
 
   ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset) {
-    super(charset.toString(),  "Change " + (file == null ? "default" : "file '"+file.getName()+"'") +
-                               " encoding to '"+charset.displayName()+"'.", null);
+    super(charset.displayName());
     myFile = file;
     myCharset = charset;
+
+    String description;
+    if (file == null) {
+      description = "Change default encoding to '"+charset.displayName()+"'.";
+    }
+    else {
+      Pair<String, Boolean> result = ChooseFileEncodingAction.update(file);
+      boolean enabled = result.second;
+      description = enabled ? result.first + " '" + charset.displayName() + "'" : result.first;
+    }
+    getTemplatePresentation().setDescription(description);
   }
 
   public void actionPerformed(final AnActionEvent e) {

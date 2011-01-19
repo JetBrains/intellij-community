@@ -21,6 +21,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUIUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -99,6 +100,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable {
     return "reference.settings.project.maven.ignored.files";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

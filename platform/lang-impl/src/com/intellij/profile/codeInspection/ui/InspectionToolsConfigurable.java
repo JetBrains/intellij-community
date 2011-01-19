@@ -56,6 +56,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -245,6 +246,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return "preferences.inspections";
   }
 
+  @NotNull
   public String getId() {
     return ID;
   }

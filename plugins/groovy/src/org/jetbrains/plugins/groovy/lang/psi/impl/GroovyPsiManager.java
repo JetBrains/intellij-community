@@ -25,14 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,8 @@ import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ven
@@ -53,7 +56,8 @@ public class GroovyPsiManager {
 
   private GrTypeDefinition myArrayClass;
 
-  private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private final Map<String, Map<GlobalSearchScope, PsiType>> myCommonClassTypes = new ConcurrentHashMap<String, Map<GlobalSearchScope, PsiType>>();
   private final GroovyShortNamesCache myCache;
 
   private final TypeInferenceHelper myTypeInferenceHelper;
@@ -91,11 +95,17 @@ public class GroovyPsiManager {
   }
 
 
-
   public static GroovyPsiManager getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiManager.class);
   }
 
+  public PsiClassType createTypeByFQClassName(String fqName, PsiElement context) {
+    return createTypeByFQClassName(fqName, context.getResolveScope());
+  }
+
+  public PsiClassType createTypeByFQClassName(String fqName, GlobalSearchScope resolveScope) {
+    return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
+  }
 
   private final ThreadLocal<Multiset<GroovyPsiElement>> inferring = new ThreadLocal<Multiset<GroovyPsiElement>>(){
     @Override
@@ -164,8 +174,13 @@ public class GroovyPsiManager {
     }
   };
 
+  @Nullable
   public static PsiType inferType(PsiElement element, Computable<PsiType> computable) {
     final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
+    if (curr.size() > 7) { //don't end up walking the whole project PSI
+      return null;
+    }
+
     try {
       curr.add(element);
       return computable.compute();

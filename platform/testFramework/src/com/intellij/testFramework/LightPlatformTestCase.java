@@ -63,6 +63,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,6 +91,7 @@ import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.ByteArrayOutputStream;
@@ -116,6 +118,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
+  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
   private final Map<String, InspectionTool> myAvailableInspectionTools = new THashMap<String, InspectionTool>();
   private static boolean ourHaveShutdownHook;
   private ThreadTracker myThreadTracker;
@@ -149,6 +152,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ourApplication.setDataProvider(dataProvider);
   }
 
+  @TestOnly
+  public static void disposeApplication() throws Exception {
+    if (ourApplication != null) {
+      Disposer.dispose(ourApplication);
+      ourApplication = null;
+    }
+  }
+
   public static IdeaTestApplication getApplication() {
     return ourApplication;
   }
@@ -173,6 +184,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFS)ManagingFS.getInstance()).cleanPersistedContents();
   }
 
+  public static boolean isLight(Project project) {
+    String creationPlace = project.getUserData(CREATION_PLACE);
+    return creationPlace != null && StringUtil.startsWith(creationPlace, LIGHT_PROJECT_MARK);
+  }
+
   private static void initProject(final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
     final File projectFile = FileUtil.createTempFile("lighttemp", ProjectFileType.DOT_DEFAULT_EXTENSION);
@@ -192,7 +208,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-        ourProject = PlatformTestCase.createProject(projectFile, buffer.toString());
+        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK +buffer.toString());
 
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
@@ -636,7 +652,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  protected static synchronized void closeAndDeleteProject() {
+  public static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
       final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
       final File projectFile = projFile == null ? null : VfsUtil.virtualToIoFile(projFile);
@@ -645,6 +661,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (projectFile != null) {
         FileUtil.delete(projectFile);
       }
+      ourProject = null;
     }
   }
 

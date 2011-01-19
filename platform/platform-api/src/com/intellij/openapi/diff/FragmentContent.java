@@ -39,7 +39,7 @@ public class FragmentContent extends DiffContent {
   private final DiffContent myOriginal;
   private final FileType myType;
   private final MyDocumentsSynchonizer mySynchonizer;
-  public final static Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
+  public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
 
   public FragmentContent(DiffContent original, TextRange range, Project project, VirtualFile file) {
     this(original, range, project, file != null ? DiffContentUtil.getContentType(file) : null);

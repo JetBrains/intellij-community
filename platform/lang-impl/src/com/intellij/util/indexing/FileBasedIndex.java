@@ -1747,48 +1747,58 @@ public class FileBasedIndex implements ApplicationComponent {
         }
 
         if (file instanceof VirtualFileWithId) {
-          boolean oldStuff = true;
-          if (!isTooLarge(file)) {
-            for (ID<?, ?> indexId : myIndices.keySet()) {
-              try {
-                if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
-                  myFiles.add(file);
-                  oldStuff = false;
-                  break;
+          try {
+            boolean oldStuff = true;
+            if (file instanceof NewVirtualFile) {
+              file.putUserData(NewVirtualFile.FILE_TYPE_KEY, file.getFileType());
+            }
+            if (!isTooLarge(file)) {
+              for (ID<?, ?> indexId : myIndices.keySet()) {
+                try {
+                  if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
+                    myFiles.add(file);
+                    oldStuff = false;
+                    break;
+                  }
+                }
+                catch (RuntimeException e) {
+                  final Throwable cause = e.getCause();
+                  if (cause instanceof IOException || cause instanceof StorageException) {
+                    LOG.info(e);
+                    requestRebuild(indexId);
+                  }
+                  else {
+                    throw e;
+                  }
                 }
               }
-              catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof IOException || cause instanceof StorageException) {
+            }
+            FileContent fileContent = null;
+            for (ID<?, ?> indexId : myNotRequiringContentIndices) {
+              if (shouldIndexFile(file, indexId)) {
+                oldStuff = false;
+                try {
+                  if (fileContent == null) {
+                    fileContent = new FileContent(file);
+                  }
+                  updateSingleIndex(indexId, file, fileContent);
+                }
+                catch (StorageException e) {
                   LOG.info(e);
                   requestRebuild(indexId);
                 }
-                else {
-                  throw e;
-                }
               }
             }
-          }
-          FileContent fileContent = null;
-          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
-            if (shouldIndexFile(file, indexId)) {
-              oldStuff = false;
-              try {
-                if (fileContent == null) {
-                  fileContent = new FileContent(file);
-                }
-                updateSingleIndex(indexId, file, fileContent);
-              }
-              catch (StorageException e) {
-                LOG.info(e);
-                requestRebuild(indexId);
-              }
-            }
-          }
-          IndexingStamp.flushCache();
+            IndexingStamp.flushCache();
 
-          if (oldStuff && file instanceof NewVirtualFile) {
-            ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
+            if (oldStuff && file instanceof NewVirtualFile) {
+              ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
+            }
+          }
+          finally {
+            if (file instanceof NewVirtualFile) {
+              file.putUserData(NewVirtualFile.FILE_TYPE_KEY, null);
+            }
           }
         }
       }

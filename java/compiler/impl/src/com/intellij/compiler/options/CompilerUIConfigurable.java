@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -148,6 +149,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     return null;
   }
 
+  @NotNull
   public String getId() {
     return "compiler.general";
   }

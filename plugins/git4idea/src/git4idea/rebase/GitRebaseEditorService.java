@@ -16,17 +16,16 @@
 package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
-import org.jetbrains.git4idea.util.ScriptGenerator;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.util.Map;
 import java.util.Random;
@@ -34,7 +33,7 @@ import java.util.Random;
 /**
  * The service that generates editor script for
  */
-public class GitRebaseEditorService implements ApplicationComponent {
+public class GitRebaseEditorService {
   /**
    * The editor command that is set to env variable
    */
@@ -58,7 +57,7 @@ public class GitRebaseEditorService implements ApplicationComponent {
   /**
    * Random number generator
    */
-  private final static Random oursRandom = new Random();
+  private static final Random oursRandom = new Random();
   /**
    * If true, the component has been initialized
    */
@@ -92,26 +91,11 @@ public class GitRebaseEditorService implements ApplicationComponent {
   /**
    * {@inheritDoc}
    */
-  @NotNull
-  public String getComponentName() {
-    return getClass().getSimpleName();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void initComponent() {
+  private void initComponent() {
     if (!myInitialized) {
       myXmlRpcServer.addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
       myInitialized = true;
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void disposeComponent() {
-    myXmlRpcServer.removeHandler(GitRebaseEditorMain.HANDLER_NAME);
   }
 
   /**

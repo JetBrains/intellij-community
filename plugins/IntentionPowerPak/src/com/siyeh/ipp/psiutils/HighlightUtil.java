@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -25,49 +27,78 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public class HighlightUtil
-{
+public class HighlightUtil {
+
+    private HighlightUtil() {}
+
     public static void highlightElements(
-            @NotNull Collection<? extends PsiElement> elementCollection)
-    {
-        if (elementCollection.isEmpty())
-        {
+            @NotNull final Collection<? extends PsiElement> elementCollection,
+            @NotNull final String statusBarText) {
+        if (elementCollection.isEmpty()) {
             return;
         }
-        final PsiElement[] elements =
-                elementCollection.toArray(new PsiElement[elementCollection.size()]);
-        final Project project = elements[0].getProject();
-        final FileEditorManager editorManager =
-                FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager =
-                EditorColorsManager.getInstance();
-        final Editor editor = editorManager.getSelectedTextEditor();
-        if (editor == null)
-        {
-            return;
-        }
-        final EditorColorsScheme globalScheme =
-                editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes =
-                globalScheme.getAttributes(
-                        EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager =
-                HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(
-                editor, elements, textattributes, true, null);
-        final FindManager findmanager = FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if(findmodel == null)
-        {
-            findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+        final Application application = ApplicationManager.getApplication();
+        application.invokeLater(new Runnable() {
+            public void run() {
+                final PsiElement[] elements =
+                        elementCollection.toArray(
+                                new PsiElement[elementCollection.size()]);
+                final PsiElement firstElement = elements[0];
+                if (!firstElement.isValid()) {
+                    return;
+                }
+                final Project project = firstElement.getProject();
+                final FileEditorManager editorManager =
+                        FileEditorManager.getInstance(project);
+                final EditorColorsManager editorColorsManager =
+                        EditorColorsManager.getInstance();
+                final Editor editor = editorManager.getSelectedTextEditor();
+                if (editor == null) {
+                    return;
+                }
+                final EditorColorsScheme globalScheme =
+                        editorColorsManager.getGlobalScheme();
+                final TextAttributes textattributes =
+                        globalScheme.getAttributes(
+                                EditorColors.SEARCH_RESULT_ATTRIBUTES);
+                final HighlightManager highlightManager =
+                        HighlightManager.getInstance(project);
+                highlightManager.addOccurrenceHighlights(
+                        editor, elements, textattributes, true, null);
+                final FindManager findmanager =
+                        FindManager.getInstance(project);
+                FindModel findmodel = findmanager.getFindNextModel();
+                if(findmodel == null) {
+                    findmodel = findmanager.getFindInFileModel();
+                }
+                findmodel.setSearchHighlighters(true);
+                findmanager.setFindWasPerformed();
+                findmanager.setFindNextModel(findmodel);
+                application.invokeLater(new Runnable() {
+                    public void run() {
+                        final WindowManager windowManager =
+                                WindowManager.getInstance();
+                        final StatusBar statusBar =
+                                windowManager.getStatusBar(project);
+                        statusBar.setInfo(statusBarText);
+                    }
+                });
+            }
+        });
+    }
+
+    public static void highlightElement(
+            @NotNull PsiElement element, @NotNull final String statusBarText) {
+        final List<PsiElement> elements = Collections.singletonList(element);
+        highlightElements(elements, statusBarText);
     }
 }

@@ -286,6 +286,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     });
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

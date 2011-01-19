@@ -24,6 +24,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -116,7 +117,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
           }
         }
       }
-      addImportForItem(file, context.getStartOffset(), item);
+      addImportForItem(context, item);
       if (context.getTailOffset() < 0) {  //hack, hack, hack. ideally the tail offset just should survive after the importing stuff
         context.setTailOffset(context.getEditor().getCaretModel().getOffset());
       }
@@ -241,9 +242,11 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     JavaCompletionUtil.initOffsets(file, file.getProject(), offsetMap);
   }
 
-  public static void addImportForItem(PsiFile file, int startOffset, LookupElement item) throws IncorrectOperationException {
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+  public static void addImportForItem(InsertionContext context, LookupElement item) throws IncorrectOperationException {
+    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
+    int startOffset = context.getStartOffset();
+    PsiFile file = context.getFile();
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
@@ -252,8 +255,11 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       int length = lookupString.length();
       final int i = lookupString.indexOf('<');
       if (i >= 0) length = i;
+      RangeMarker savedTail = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
       final int newOffset = addImportForClass(file, startOffset, startOffset + length, aClass);
       JavaCompletionUtil.shortenReference(file, newOffset);
+      assert savedTail.isValid();
+      context.setTailOffset(savedTail.getStartOffset());
     }
     else if (o instanceof PsiType){
       PsiType type = ((PsiType)o).getDeepComponentType();

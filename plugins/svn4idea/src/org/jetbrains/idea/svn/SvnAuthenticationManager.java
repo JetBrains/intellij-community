@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.net.HttpConfigurable;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationListener;
@@ -52,28 +51,40 @@ import java.util.*;
  * @author alex
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
+  // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
+  private static final String ourMacPlaintextNicht = "svn.ourMacPlaintextNicht";
   private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class.getName());
   private final Project myProject;
-  private final File myConfigDirectory;
+  private File myConfigDirectory;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
-  // instead of ThreadLocal
-  private final Map<Thread, Boolean> myPlainTextAllowed;
   private static final ThreadLocal<Boolean> ourJustEntered = new ThreadLocal<Boolean>();
   private SvnAuthenticationInteraction myInteraction;
   private final EventDispatcher<SvnAuthenticationListener> myListener;
+  private IdeaSVNHostOptionsProvider myLocalHostOptionsProvider;
+  private ThreadLocalSavePermissions mySavePermissions;
+  private boolean myMacCryptIsOk;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
     super(configDirectory, true, null, null);
     myProject = project;
     myConfigDirectory = configDirectory;
+    myMacCryptIsOk = Boolean.getBoolean(ourMacPlaintextNicht);
     myListener = EventDispatcher.create(SvnAuthenticationListener.class);
     myConfig = SvnConfiguration.getInstance(myProject);
     if (myPersistentAuthenticationProviderProxy != null) {
       myPersistentAuthenticationProviderProxy.setProject(myProject);
     }
-    myPlainTextAllowed = Collections.synchronizedMap(new HashMap<Thread, Boolean>());
     myInteraction = new MySvnAuthenticationInteraction(myProject);
+  }
+
+  @Override
+  public IdeaSVNHostOptionsProvider getHostOptionsProvider() {
+    if (myLocalHostOptionsProvider == null) {
+      mySavePermissions = new ThreadLocalSavePermissions();
+      myLocalHostOptionsProvider = new IdeaSVNHostOptionsProvider(mySavePermissions);
+    }
+    return myLocalHostOptionsProvider;
   }
 
   public void addListener(final SvnAuthenticationListener listener) {
@@ -95,7 +106,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
   @Override
   protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName), authDir);
+    // this is a hack due to the fact this method is called from super() constructor
+    myConfigDirectory = new File(authDir.getParent());
+    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(
+      super.createCacheAuthenticationProvider(authDir, userName), authDir);
     return myPersistentAuthenticationProviderProxy;
   }
 
@@ -108,12 +122,11 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     try {
       super.acknowledgeAuthentication(accepted, kind, realm, errorMessage, authentication);
     } finally {
-      final Thread currentThread = Thread.currentThread();
-      myPlainTextAllowed.remove(currentThread);
+      mySavePermissions.remove();
     }
   }
 
-  private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+  private class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
     private final ISVNAuthenticationProvider myDelegate;
     private final File myAuthDir;
     private Project myProject;
@@ -126,22 +139,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     public void setProject(Project project) {
       myProject = project;
     }
-
-    /*private boolean passwordSpecified(final SVNAuthentication authentication) {
-      final String kind = authentication.getKind();
-      if (ISVNAuthenticationManager.SSH.equals(kind)) {
-        if (((SVNSSHAuthentication) authentication).hasPrivateKey()) {
-          return ((((SVNSSHAuthentication) authentication).getPrivateKey() != null) || (((SVNSSHAuthentication) authentication).getPrivateKeyFile() != null));
-        } else {
-          return ((SVNSSHAuthentication) authentication).getPassword() != null;
-        }
-      } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-        return ((SVNPasswordAuthentication) authentication).getPassword() != null;
-      } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-        return ((SVNSSLAuthentication) authentication).getPassword() != null;
-      }
-      return true;
-    }*/
 
     public SVNAuthentication requestClientAuthentication(final String kind, final SVNURL url, final String realm, final SVNErrorMessage errorMessage,
                                                          final SVNAuthentication previousAuth, final boolean authMayBeStored) {
@@ -174,13 +171,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
           myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, actualKind,
                                                             Boolean.TRUE.equals(withCredentials));
           try {
-            ((IPersistentAuthenticationProvider)myDelegate).saveAuthentication(auth, actualKind, realm);
+            ((ISVNPersistentAuthenticationProvider) myDelegate).saveAuthentication(auth, actualKind, realm);
           }
           catch (SVNException e) {
             if (myProject != null) {
               ApplicationManager.getApplication().invokeLater(new VcsBalloonProblemNotifier(myProject,
-                                                                                                    "<b>Problem when storing Subversion credentials:</b>&nbsp;" +
-                                                                                                    e.getMessage(), MessageType.ERROR));
+                "<b>Problem when storing Subversion credentials:</b>&nbsp;" + e.getMessage(), MessageType.ERROR));
             }
           }
           finally {
@@ -195,6 +191,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
       if (!auth.isStorageAllowed()) return;
       saveCredentialsIfAllowed(auth, actualKind, realm, actualSave);
+    }
+
+    @Override
+    public void saveFingerprints(String realm, byte[] fingerprints) {
+      ((ISVNPersistentAuthenticationProvider) myDelegate).saveFingerprints(realm, fingerprints);
+    }
+
+    @Override
+    public byte[] loadFingerprints(String realm) {
+      return ((ISVNPersistentAuthenticationProvider) myDelegate).loadFingerprints(realm);
     }
 
     private final static int maxAttempts = 10;
@@ -225,8 +231,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     // this code taken from default manager (changed for system properties reading)
       String host = url.getHost();
 
-      Map properties = getHostProperties(host);
-      String proxyHost = (String) properties.get("http-proxy-host");
+    String proxyHost = getServersPropertyIdea(host, "http-proxy-host");
     if ((proxyHost == null) || "".equals(proxyHost.trim())) {
       if (myConfig.isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
@@ -244,7 +249,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
       return null;
     }
-      String proxyExceptions = (String) properties.get("http-proxy-exceptions");
+      String proxyExceptions = getServersPropertyIdea(host, "http-proxy-exceptions");
       String proxyExceptionsSeparator = ",";
       if (proxyExceptions == null) {
           proxyExceptions = System.getProperty("http.nonProxyHosts");
@@ -258,9 +263,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
             }
         }
       }
-      String proxyPort = (String) properties.get("http-proxy-port");
-      String proxyUser = (String) properties.get("http-proxy-username");
-      String proxyPassword = (String) properties.get("http-proxy-password");
+      String proxyPort = getServersPropertyIdea(host, "http-proxy-port");
+      String proxyUser = getServersPropertyIdea(host, "http-proxy-username");
+      String proxyPassword = getServersPropertyIdea(host, "http-proxy-password");
       return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
   }
 
@@ -344,8 +349,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     String protocol = repository.getLocation().getProtocol();
     if ("http".equals(protocol) || "https".equals(protocol)) {
         String host = repository.getLocation().getHost();
-        Map properties = getHostProperties(host);
-        String timeout = (String) properties.get("http-timeout");
+        String timeout = getServersPropertyIdea(host, "http-timeout");
         if (timeout != null) {
             try {
                 return Integer.parseInt(timeout)*1000;
@@ -359,15 +363,22 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   // taken from default manager as is
-  private Map getHostProperties(String host) {
-    final SVNCompositeConfigFile serversFile = getServersFile();
-    Map globalProps = serversFile.getProperties("global");
+  private String getServersPropertyIdea(String host, final String name) {
+    final SVNCompositeConfigFile serversFile = getHostOptionsProvider().getServersFile();
+    return getPropertyIdea(host, serversFile, name);
+  }
+
+  private String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
     String groupName = getGroupName(serversFile.getProperties("groups"), host);
     if (groupName != null) {
       Map hostProps = serversFile.getProperties(groupName);
-      globalProps.putAll(hostProps);
+      final String value = (String)hostProps.get(name);
+      if (value != null) {
+        return value;
+      }
     }
-    return globalProps;
+    Map globalProps = serversFile.getProperties("global");
+    return (String) globalProps.get(name);
   }
 
   public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
@@ -409,72 +420,38 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       return null;
   }
 
-  private void setPropertyForHost(final String host, final String property, final String value) {
-    final SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
-
-    String groupName = getGroupName(userConfig.getProperties("groups"), host);
-    if (groupName != null) {
-      userConfig.setPropertyValue(groupName, property, value, true);
-    } else {
-      final SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
-      final String systemGroupName = getGroupName(systemConfig.getProperties("groups"), host);
-      if (systemGroupName != null) {
-        systemConfig.setPropertyValue(systemGroupName, property, value, true);
-      } else {
-        // global
-        userConfig.setPropertyValue("global", property, value, true);
-      }
-    }
-  }
-
   // default = yes
-  private boolean isTurned(final String value) {
+  private static boolean isTurned(final String value) {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
-  }
-
-  public boolean authCredsOn(final SVNURL url) {
-    return ! ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"))));
-  }
-
-  @Nullable
-  protected Boolean isAuthStorageEnabledMy(SVNURL url) {
-      String host = url != null ? url.getHost() : null;
-      Map properties = getHostProperties(host);
-      String storeAuthCreds = (String) properties.get("store-auth-creds");
-      if (storeAuthCreds == null) {
-          return null;
-      }
-
-      return "yes".equalsIgnoreCase(storeAuthCreds) || "on".equalsIgnoreCase(storeAuthCreds) || "true".equalsIgnoreCase(storeAuthCreds);
   }
 
   public void saveCredentialsIfAllowed(final SVNAuthentication auth, final String kind, final String realm,
                                                     final Consumer<Boolean> saveRunnable) {
     final SVNURL url = auth.getURL();
-
-    final String storeCredentials = getConfigFile().getPropertyValue("auth", "store-auth-creds");
-    if ((Boolean.FALSE.equals(isAuthStorageEnabledMy(url))) || (! isTurned(storeCredentials))) {
+    final IdeaSVNHostOptionsProvider hostOptionsProvider = getHostOptionsProvider();
+    final ISVNHostOptions hostOptions = hostOptionsProvider.getHostOptions(url);
+    if (! hostOptions.isAuthStorageEnabled()) {
       myInteraction.warnOnAuthStorageDisabled(url);
       return;
     }
     boolean passwordWillBeSaved = true;
-    final boolean passwordStorageEnabled = isStorePasswords(url);
     // check can store
-    if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! passwordStorageEnabled)) {
+    if ((! ISVNAuthenticationManager.SSL.equals(kind)) && (! hostOptions.isStorePasswords())) {
       // but it should be
       myInteraction.warnOnPasswordStorageDisabled(url);
       passwordWillBeSaved = false;
     }
-    if (ISVNAuthenticationManager.SSL.equals(kind) && (! isStoreSSLClientCertificatePassphrases(url))) {
+    if (ISVNAuthenticationManager.SSL.equals(kind) && (! hostOptionsProvider.getHostOptions(url).isStoreSSLClientCertificatePassphrases())) {
       myInteraction.warnOnSSLPassphraseStorageDisabled(url);
       passwordWillBeSaved = false;
     }
 
     // check can encrypt
-    if (passwordWillBeSaved && ( !(SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled()))) {
+    if (passwordWillBeSaved && (! ((SystemInfo.isWindows && SVNJNAUtil.isWinCryptEnabled()) ||
+      (SystemInfo.isMacOSLeopard || SystemInfo.isMacOSSnowLeopard || isLion()) && SVNJNAUtil.isMacOsKeychainEnabled() && myMacCryptIsOk))) {
       try {
         if (ISVNAuthenticationManager.SSL.equals(kind)) {
-          if (!isStorePlainTextPassphrases(realm, auth)) {
+          if (! hostOptionsProvider.getHostOptions(auth.getURL()).isStorePlainTextPassphrases(realm, auth)) {
             promptAndSaveWhenWeLackEncryption(saveRunnable,
                                               new Getter<Boolean>() {
                                                 @Override
@@ -485,7 +462,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
             return;
           }
         } else {
-          if (!isStorePlainTextPasswords(realm, auth)) {
+          if (! hostOptionsProvider.getHostOptions(auth.getURL()).isStorePlainTextPasswords(realm, auth)) {
             promptAndSaveWhenWeLackEncryption(saveRunnable,
                                               new Getter<Boolean>() {
                                                 @Override
@@ -502,16 +479,6 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
     }
     saveRunnable.consume(passwordWillBeSaved);
-  }
-
-  @Override
-  protected boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
-    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPasswords(realm, auth);
-  }
-
-  @Override
-  protected boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
-    return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread())) || super.isStorePlainTextPassphrases(realm, auth);
   }
 
   private ModalityState getCurrent() {
@@ -533,13 +500,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     final Runnable actualSave = new Runnable() {
       @Override
       public void run() {
-        final Thread currentThread = Thread.currentThread();
-        myPlainTextAllowed.put(currentThread, Boolean.TRUE.equals(saveOnce[0]));
+        mySavePermissions.put(Boolean.TRUE.equals(saveOnce[0]));
         try {
           saveRunnable.consume(saveOnce[0]);
         }
         finally {
-          myPlainTextAllowed.remove(currentThread);
+          mySavePermissions.remove();
         }
       }
     };
@@ -615,6 +581,112 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
                                                             certificateFile.getPath()),
         "Store the passphrase in plaintext?", Messages.getQuestionIcon());
       return answer == 0;
+    }
+  }
+
+  private static boolean isLion() {
+    return SystemInfo.isMac && SystemInfo.isMacOSSnowLeopard && ! SystemInfo.OS_VERSION.startsWith("10.6");
+  }
+
+  public class IdeaSVNHostOptionsProvider extends DefaultSVNHostOptionsProvider {
+    private final ThreadLocalSavePermissions mySavePermissions;
+
+    public IdeaSVNHostOptionsProvider(ThreadLocalSavePermissions savePermissions) {
+      super(myConfigDirectory);
+      mySavePermissions = savePermissions;
+    }
+
+    @Override
+    public SVNCompositeConfigFile getServersFile() {
+      return super.getServersFile();
+    }
+
+    @Override
+    public ISVNHostOptions getHostOptions(SVNURL url) {
+      return new IdeaSVNHostOptions(getServersFile(), url, mySavePermissions);
+    }
+  }
+
+  private static class ThreadLocalSavePermissions {
+    private final Map<Thread, Boolean> myPlainTextAllowed;
+
+    private ThreadLocalSavePermissions() {
+      myPlainTextAllowed = Collections.synchronizedMap(new HashMap<Thread, Boolean>());
+    }
+
+    public void put(final boolean value) {
+      myPlainTextAllowed.put(Thread.currentThread(), value);
+    }
+
+    public void remove() {
+      myPlainTextAllowed.remove(Thread.currentThread());
+    }
+
+    public boolean allowed() {
+      return Boolean.TRUE.equals(myPlainTextAllowed.get(Thread.currentThread()));
+    }
+  }
+
+  private class IdeaSVNHostOptions extends DefaultSVNHostOptions {
+    private final ThreadLocalSavePermissions mySavePermissions;
+    private SVNCompositeConfigFile myConfigFile;
+
+    private IdeaSVNHostOptions(SVNCompositeConfigFile serversFile,
+                               SVNURL url,
+                               ThreadLocalSavePermissions savePermissions) {
+      super(serversFile, url);
+      mySavePermissions = savePermissions;
+    }
+
+    public void put(final boolean value) {
+      mySavePermissions.put(value);
+    }
+
+    public void remove() {
+      mySavePermissions.remove();
+    }
+
+    @Override
+    public boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
+      return mySavePermissions.allowed() || super.isStorePlainTextPasswords(realm, auth);
+    }
+
+    @Override
+    public boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
+      return mySavePermissions.allowed() || super.isStorePlainTextPassphrases(realm, auth);
+    }
+
+    @Override
+    public boolean isAuthStorageEnabled() {
+      if (hasAuthStorageEnabledOption()) {
+        return super.isAuthStorageEnabled();
+      }
+      return isTurned(getConfigFile().getPropertyValue("auth", "store-auth-creds"));
+    }
+
+    @Override
+    public boolean isStorePasswords() {
+      final String storePasswords = getStorePasswords();
+      if (storePasswords != null) {
+        return isTurned(storePasswords);
+      }
+      final String configValue = getConfigFile().getPropertyValue("auth", "store-passwords");
+      return isTurned(configValue);
+    }
+
+    public String getStorePasswords() {
+      return getServersPropertyIdea(getHost(), "store-passwords");
+    }
+
+    private SVNCompositeConfigFile getConfigFile() {
+      if (myConfigFile == null) {
+        final File config = new File(myConfigDirectory, "config");
+        SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
+        SVNConfigFile userConfig = new SVNConfigFile(config);
+        SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+        myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
+      }
+      return myConfigFile;
     }
   }
 }

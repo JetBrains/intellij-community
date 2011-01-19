@@ -340,6 +340,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return false;
   }
 
+  @NotNull
   public String getId() {
     return "project.artifacts";
   }

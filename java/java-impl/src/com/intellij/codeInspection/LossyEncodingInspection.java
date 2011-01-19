@@ -23,10 +23,17 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -41,6 +48,37 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
+  private static final LocalQuickFix CHANGE_ENCODING_FIX = new LocalQuickFix() {
+    @NotNull
+    @Override
+    public String getName() {
+      return "Change file encoding";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      ChooseFileEncodingAction action = new ChooseFileEncodingAction(virtualFile) {
+        @Override
+        protected void chosen(VirtualFile virtualFile, Charset charset) {
+          if (virtualFile != null) {
+            EncodingManager.getInstance().setEncoding(virtualFile, charset);
+          }
+        }
+      };
+      DefaultActionGroup group = action.createGroup(false);
+      DataContext dataContext = DataManager.getInstance().getDataContext();
+      JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext, false, false, false, null, 30, null).showInBestPositionFor(dataContext);
+    }
+  };
+
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -77,19 +115,18 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
       char c = i == text.length() ? 0 : text.charAt(i);
       if (i == text.length() || isRepresentable(c, charset)) {
         if (start != -1) {
-          ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, i), InspectionsBundle.message(
-            "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+          TextRange range = new TextRange(start, i);
+          String message = InspectionsBundle.message("unsupported.character.for.the.charset", charset);
+          ProblemDescriptor descriptor = manager.createProblemDescriptor(file, range, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
+                                                                         CHANGE_ENCODING_FIX);
           descriptors.add(descriptor);
           start = -1;
-
           //do not report too many errors
           if (errorCount++ > 200) break;
         }
       }
-      else {
-        if (start == -1) {
-          start = i;
-        }
+      else if (start == -1) {
+        start = i;
       }
     }
 

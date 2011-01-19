@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,6 +92,7 @@ public class JavaCompilersTab implements SearchableConfigurable {
     return "reference.projectsettings.compiler.javacompiler";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

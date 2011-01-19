@@ -119,6 +119,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         }
     }
 
+    @NotNull
     public String getId() {
         return getHelpTopic();
     }

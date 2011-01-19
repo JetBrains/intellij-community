@@ -20,6 +20,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -69,6 +70,7 @@ public class RmicConfigurable implements SearchableConfigurable {
     return "reference.projectsettings.compiler.rmicompiler";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

@@ -28,6 +28,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -221,6 +222,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

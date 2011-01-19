@@ -22,6 +22,7 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -70,6 +71,7 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
     myComponent = null;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

@@ -20,8 +20,16 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryType;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,6 +53,24 @@ public class ProjectSettingsService {
   }
 
   public void openProjectLibrarySettings(final NamedLibraryElement value) {
+    OrderEntry orderEntry = value.getOrderEntry();
+    if (!(orderEntry instanceof LibraryOrderEntry)) return;
+    LibraryOrderEntry libOrderEntry = (LibraryOrderEntry)orderEntry;
+    Library lib = libOrderEntry.getLibrary();
+    if (lib instanceof LibraryEx) {
+      Project project = libOrderEntry.getOwnerModule().getProject();
+      LibraryType libType = ((LibraryEx)lib).getType();
+      if (libType != null) {
+        LibraryRootsComponentDescriptor libComponentDescriptor = libType.createLibraryRootsComponentDescriptor();
+        if (libComponentDescriptor != null) {
+          Configurable additionalSettingsConfigurable = libComponentDescriptor.getAdditionalSettingsConfigurable(project);
+          if (additionalSettingsConfigurable != null) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, additionalSettingsConfigurable);
+            return;
+          }
+        }
+      }
+    }
   }
 
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {

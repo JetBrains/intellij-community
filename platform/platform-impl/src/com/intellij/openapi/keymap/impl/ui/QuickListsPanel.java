@@ -40,6 +40,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -305,6 +306,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, M
     return lists;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

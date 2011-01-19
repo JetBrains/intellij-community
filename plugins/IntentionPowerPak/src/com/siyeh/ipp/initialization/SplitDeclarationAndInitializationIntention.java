@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,26 @@
  */
 package com.siyeh.ipp.initialization;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-
 public class SplitDeclarationAndInitializationIntention extends Intention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new SplitDeclarationAndInitializationPredicate();
     }
 
+    @Override
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiField field = (PsiField)element.getParent();
@@ -86,6 +87,11 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
             classInitializer = elementFactory.createClassInitializer();
             classInitializer = (PsiClassInitializer)
                     containingClass.addAfter(classInitializer, field);
+
+            // add some whitespace between the field and the class initializer
+            final PsiElement whitespace =
+                    elementFactory.createWhiteSpaceFromText("\n");
+            containingClass.addAfter(whitespace, field);
         }
         final PsiCodeBlock body = classInitializer.getBody();
         @NonNls final String initializationStatementText =
@@ -105,6 +111,8 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         codeStyleManager.reformat(field);
         codeStyleManager.reformat(classInitializer);
-        HighlightUtil.highlightElements(Collections.singleton(addedElement));
+        HighlightUtil.highlightElement(addedElement,
+                IntentionPowerPackBundle.message(
+                        "press.escape.to.remove.highlighting.message"));
     }
 }

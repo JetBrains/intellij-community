@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
@@ -62,6 +63,7 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
     mySettingsPane = null;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,6 +88,7 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable {
     return "reference.idesettings.debugger.stepping";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

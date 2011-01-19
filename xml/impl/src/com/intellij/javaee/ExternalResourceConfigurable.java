@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -336,6 +337,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
+  @NotNull
   public String getId() {
     return "preferences.externalResources";
   }

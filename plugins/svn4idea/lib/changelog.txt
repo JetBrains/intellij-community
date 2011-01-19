@@ -1,3 +1,31 @@
+== version 1.3.5 ==
+
++ Changes made in Subversion since version 1.6.12 implemented, 
+  all Subversion 1.6.15 features are supported.
+  
++ Support for OS X Keychain as credentials storage added.
++ SSL client certificate passphrase is cached in a way 
+  compatible with that of the native Subversion.
++ HTTP cookies are handled properly. 
++ SQLJet library upgraded to v1.0.4
+
++ Other minor bugfixes and improvements.
+
+== version 1.3.4 ==
+
++ Changes made in Subversion since version 1.6.11 implemented, 
+  all Subversion 1.6.12 features are supported.
+
++ Added support for SSH host fingerprints verification.
++ Name conflict status added which is reported on
+  case-insensitive filesystems for files which name differs only in case.
++ HTTP digest authentication support improved.
++ svnkit:charset property support significantly improved.
++ SQLJet library upgraded to v1.0.3
++ JNA library upgraded to v3.2.7
+
++ Other minor bugfixes and improvements.
+
 == version 1.3.3 ==
 
 + Changes made in Subversion since version 1.6.6 implemented, 

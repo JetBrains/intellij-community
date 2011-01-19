@@ -34,6 +34,7 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
@@ -558,6 +559,17 @@ public class AndroidUtils {
       if (manifest != null) {
         String aPackage = manifest.getPackage().getValue();
         result.add(aPackage);
+      }
+    }
+  }
+
+  public static void collectModulesDependingOn(Module module, Set<Module> result) {
+    if (!result.add(module)) {
+      return;
+    }
+    for (Module mod : ModuleManager.getInstance(module.getProject()).getModules()) {
+      if (ModuleRootManager.getInstance(mod).isDependsOn(module)) {
+        collectModulesDependingOn(mod, result);
       }
     }
   }

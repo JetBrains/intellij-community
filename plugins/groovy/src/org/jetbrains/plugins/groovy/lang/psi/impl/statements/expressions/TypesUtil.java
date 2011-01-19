@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -78,16 +79,7 @@ public class TypesUtil {
     String lCanonical = lType.getCanonicalText();
     String rCanonical = rType.getCanonicalText();
     if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
-      int lRank = TYPE_TO_RANK.get(lCanonical);
-      int rRank = TYPE_TO_RANK.get(rCanonical);
-      int resultRank = Math.max(lRank, rRank);
-      String qName = RANK_TO_TYPE.get(resultRank);
-      if (qName == null) return null;
-      assert lType instanceof PsiClassType;
-      assert rType instanceof PsiClassType;
-      //lType.getResolveScope()!=null && rType.getResolveScope()!=null
-      return JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName(qName, lType.getResolveScope().intersectWith(
-        rType.getResolveScope()));
+      return TYPE_TO_RANK.get(lCanonical) > TYPE_TO_RANK.get(rCanonical) ? lType : rType;
     }
     return null;
   }
@@ -343,7 +335,7 @@ public class TypesUtil {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
-        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(boxedTypeName, resolveScope);
+        return GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(boxedTypeName, resolveScope);
       }
     }
 
@@ -369,9 +361,8 @@ public class TypesUtil {
     return null;
   }
 
-  public static PsiClassType createType(String fqName, PsiElement context) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
-    return facade.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
+  public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
+    return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context);
   }
 
   public static PsiClassType getJavaLangObject(PsiElement context) {
@@ -446,7 +437,7 @@ public class TypesUtil {
     }
     final String typeName = getPsiTypeName(elemType);
     if (typeName != null) {
-      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeByFQClassName(typeName, context.getResolveScope());
+      return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(typeName, context);
     }
     return null;
   }

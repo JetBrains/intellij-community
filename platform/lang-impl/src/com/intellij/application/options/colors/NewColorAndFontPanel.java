@@ -16,8 +16,9 @@
 
 package com.intellij.application.options.colors;
 
-import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +52,8 @@ public class NewColorAndFontPanel extends JPanel {
     top.add(mySchemesPanel, BorderLayout.NORTH);
     top.add(myOptionsPanel.getPanel(), BorderLayout.CENTER);
 
-    if (myPreviewPanel.getPanel() != null) {
+    // We don't want to show non-used preview panel (it's considered to be not in use if it doesn't contain text).
+    if (myPreviewPanel.getPanel() != null && (page == null || !StringUtil.isEmptyOrSpaces(page.getDemoText()))) {
       add(top, BorderLayout.NORTH);
       add(myPreviewPanel.getPanel(), BorderLayout.CENTER);
     }

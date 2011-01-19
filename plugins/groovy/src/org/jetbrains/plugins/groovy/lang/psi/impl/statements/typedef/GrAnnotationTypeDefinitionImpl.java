@@ -22,6 +22,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
@@ -60,6 +61,6 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   private PsiClassType createAnnotationType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.annotation.Annotation", getResolveScope());
+    return GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName("java.lang.annotation.Annotation", this);
   }
 }

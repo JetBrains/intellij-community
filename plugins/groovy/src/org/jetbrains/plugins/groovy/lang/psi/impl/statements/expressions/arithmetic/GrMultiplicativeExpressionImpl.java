@@ -17,12 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -30,8 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  * @author ilyas
  */
 public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
-  private static final String DOUBLE_FQ_NAME = "java.lang.Double";
-  private static final String FLOAT_FQ_NAME = "java.lang.Float";
+  private static final String DOUBLE_FQ_NAME = CommonClassNames.JAVA_LANG_DOUBLE;
+  private static final String FLOAT_FQ_NAME = CommonClassNames.JAVA_LANG_FLOAT;
 
   public GrMultiplicativeExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -44,28 +46,26 @@ public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
   public PsiType getType() {
     GrExpression lop = getLeftOperand();
     if (findChildByType(GroovyElementTypes.mDIV) != null) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      if (lop != null) {
-        PsiType lType = lop.getType();
-        if (lType != null && isDoubleOrFloat(lType)) {
-          return factory.createTypeByFQClassName(DOUBLE_FQ_NAME, getResolveScope());
-        }
+      GroovyPsiManager factory = GroovyPsiManager.getInstance(getProject());
+      PsiType lType = lop.getType();
+      if (lType != null && isDoubleOrFloat(lType)) {
+        return getTypeByFQName(DOUBLE_FQ_NAME);
       }
 
       GrExpression rop = getRightOperand();
       if (rop != null) {
         PsiType rType = rop.getType();
         if (rType != null && isDoubleOrFloat(rType)) {
-          return factory.createTypeByFQClassName(DOUBLE_FQ_NAME, getResolveScope());
+          return getTypeByFQName(DOUBLE_FQ_NAME);
         }
       }
 
-      return factory.createTypeByFQClassName("java.math.BigDecimal", getResolveScope());
+      return getTypeByFQName("java.math.BigDecimal");
     }
-    return TypesUtil.getNumericResultType(this, lop == null ? null : lop.getType());
+    return TypesUtil.getNumericResultType(this, lop.getType());
   }
 
-  private boolean isDoubleOrFloat(PsiType type) {
+  private static boolean isDoubleOrFloat(PsiType type) {
     return type.equalsToText(DOUBLE_FQ_NAME) || type.equalsToText(FLOAT_FQ_NAME);
   }
 }
