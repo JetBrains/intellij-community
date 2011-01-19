@@ -38,6 +38,7 @@ import static org.testng.Assert.assertTrue;
 public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
+  public static final String HG_EXECUTABLE = "hg";
 
   // some shortcuts to use in tests
   protected static final String AFILE = "a.txt";
@@ -142,7 +143,7 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
    * @param commandLine command and parameters (e.g. 'status, -m').
    */
   protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
-    return runClient(HgVcs.HG_EXECUTABLE_FILE_NAME, null, workingDir, commandLine);
+    return runClient(HG_EXECUTABLE, null, workingDir, commandLine);
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {
