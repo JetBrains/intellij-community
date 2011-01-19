@@ -35,6 +35,7 @@ import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -442,6 +443,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     }
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic() + "." + fileType.getName();
   }

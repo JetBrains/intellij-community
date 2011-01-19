@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -78,6 +77,11 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
       return map;
     }
   };
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
+    public boolean acceptInput(final VirtualFile file) {
+      return file.getFileType() instanceof XmlFileType;
+    }
+  };
 
   public int getVersion() {
     return VERSION;
@@ -96,12 +100,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
-    final FileTypeManager ftManager = FileTypeManager.getInstance();
-    return new FileBasedIndex.InputFilter() {
-      public boolean acceptInput(final VirtualFile file) {
-        return ftManager.getFileTypeByFile(file) instanceof XmlFileType;
-      }
-    };
+    return INPUT_FILTER;
   }
 
   public boolean dependsOnFileContent() {

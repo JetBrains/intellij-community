@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,6 +64,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
     return "editing.templates";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

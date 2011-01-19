@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
@@ -114,7 +113,7 @@ public class GrClassImplUtil {
   }
 
   public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {
-    return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, context);
+    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, context);
   }
 
   @NotNull
@@ -129,7 +128,7 @@ public class GrClassImplUtil {
 
   public static PsiClassType createBaseClassType(GrTypeDefinition grType) {
     if (grType.isEnum()) {
-      return GroovyPsiManager.getInstance(grType.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_ENUM, grType);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ENUM, grType);
     }
     return TypesUtil.getJavaLangObject(grType);
   }

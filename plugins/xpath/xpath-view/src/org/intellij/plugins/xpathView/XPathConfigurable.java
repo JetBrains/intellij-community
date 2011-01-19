@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import org.intellij.plugins.xpathView.ui.ConfigUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ public class XPathConfigurable implements SearchableConfigurable {
         return "xpath.settings";
     }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

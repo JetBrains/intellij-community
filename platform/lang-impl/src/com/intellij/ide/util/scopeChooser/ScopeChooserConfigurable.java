@@ -345,6 +345,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
+  @NotNull
   @NonNls
   public String getId() {
     return getHelpTopic();

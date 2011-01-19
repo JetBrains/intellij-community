@@ -35,8 +35,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -244,17 +242,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   public void dispose() {
-    final List<StatusBarWidget> widgets = ContainerUtil.map(myWidgetMap.values(),
-                                                            new Function<WidgetBean, StatusBarWidget>() {
-                                                              @Override
-                                                              public StatusBarWidget fun(final WidgetBean bean) {
-                                                                return bean.widget;
-                                                              }
-                                                            });
-    for (final StatusBarWidget widget : widgets) {
-      Disposer.dispose(widget);
-    }
-
     myWidgetMap.clear();
   }
 
@@ -451,6 +438,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private void installWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos, @NotNull final JComponent c, String anchor) {
     myWidgetMap.put(widget.ID(), WidgetBean.create(widget, pos, c, anchor));
     widget.install(this);
+    Disposer.register(this, widget);
   }
 
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {

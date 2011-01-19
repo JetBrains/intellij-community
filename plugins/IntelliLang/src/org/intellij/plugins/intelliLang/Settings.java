@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -113,6 +114,7 @@ public class Settings implements SearchableConfigurable {
     mySettingsUI = null;
   }
 
+  @NotNull
   public String getId() {
     return "IntelliLang.Configuration";
   }

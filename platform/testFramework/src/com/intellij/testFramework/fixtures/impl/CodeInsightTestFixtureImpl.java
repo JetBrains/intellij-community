@@ -1040,9 +1040,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       editorManager.closeFile(openFile);
     }
 
-    myProjectFixture.tearDown();
-    myTempDirFixture.tearDown();
-
     myEditor = null;
     myFile = null;
     myPsiManager = null;
@@ -1050,6 +1047,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAvailableLocalTools.clear();
     myAvailableTools.clear();
     myFileContext = null;
+
+    myProjectFixture.tearDown();
+    myTempDirFixture.tearDown();
 
     super.tearDown();
   }

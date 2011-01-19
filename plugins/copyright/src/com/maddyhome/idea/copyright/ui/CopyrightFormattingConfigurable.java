@@ -27,6 +27,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     myPanel = new TemplateCommentPanel(null, null, null, project);
   }
 
+  @NotNull
   public String getId() {
     return "template.copyright.formatting";
   }

@@ -24,9 +24,11 @@ import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,9 +103,14 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return !modules.isEmpty();
   }
 
-  public void drop(TreeNode[] sourceNodes) {
+  public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
     final List<Module> modules = extractModules(sourceNodes);
     MoveModulesToGroupAction.doMove(modules.toArray(new Module[modules.size()]), getValue(), null);
+  }
+
+  @Override
+  public void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext) {
+    // Do nothing, N/A
   }
 
   private static List<Module> extractModules(TreeNode[] sourceNodes) {

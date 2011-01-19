@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -74,6 +75,7 @@ public class PathMacroConfigurable implements SearchableConfigurable {
     return ICON;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

@@ -23,8 +23,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
@@ -43,9 +43,12 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 
-public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, BaseComponent {
+public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
 
   private final EventDispatcher<EditorColorsListener> myListeners = EventDispatcher.create(EditorColorsListener.class);
@@ -67,12 +70,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
       FILE_SPEC,
       new BaseSchemeProcessor<EditorColorsSchemeImpl>() {
         public EditorColorsSchemeImpl readScheme(final Document document)
-          throws InvalidDataException, IOException, JDOMException {
+          throws InvalidDataException {
 
           return loadSchemeFromDocument(document, true);
         }
 
-        public Document writeScheme(final EditorColorsSchemeImpl scheme) throws WriteExternalException {
+        public Document writeScheme(final EditorColorsSchemeImpl scheme) {
           Element root = new Element(SCHEME_NODE_NAME);
           try {
             scheme.writeExternal(root);
@@ -189,8 +192,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     }
   }
 
-  private EditorColorsSchemeImpl loadScheme(@NotNull final String schemePath,
-                                            final BundledColorSchemesProvider provider)
+  private static EditorColorsSchemeImpl loadScheme(@NotNull final String schemePath,
+                                                   final BundledColorSchemesProvider provider)
     throws IOException, JDOMException, InvalidDataException {
     final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
     if (inputStream == null) {
@@ -211,8 +214,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     return loadSchemeFromDocument(document, false);
   }
 
-  private EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
-                                                        final boolean isEditable)
+  private static EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
+                                                               final boolean isEditable)
     throws InvalidDataException {
 
     final Element root = document.getRootElement();
@@ -389,11 +392,5 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   @NotNull
   public String getComponentName() {
     return "EditorColorsManagerImpl";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 }

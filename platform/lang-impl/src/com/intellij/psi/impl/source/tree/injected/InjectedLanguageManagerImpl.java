@@ -94,12 +94,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     });
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
   public void psiManagerInjectorsChanged() {
     PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(myProject);
     List<? extends LanguageInjector> injectors = psiManager.getLanguageInjectors();
@@ -316,18 +310,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         if (!processor.process(element, injector)) return;
       }
     }
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "InjectedLanguageManager";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {

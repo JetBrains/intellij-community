@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -289,6 +290,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return "reference.idesettings.debugger.dataviews";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

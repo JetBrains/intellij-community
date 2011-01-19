@@ -155,6 +155,7 @@ public class ToolManager implements ExportableApplicationComponent {
     }
   }
 
+  @NotNull
   public String getComponentName() {
     return "ToolManager";
   }

@@ -127,7 +127,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myComponent.validate();
 
     if (!myForceShowAsPopup &&
-        (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y))))) {
+        (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)), hintHint))) {
       beforeShow();
       final Dimension preferredSize = myComponent.getPreferredSize();
 
@@ -201,13 +201,19 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   }
 
-  private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation) {
-    final Rectangle lpRect = new Rectangle(pane.getLocationOnScreen().x, pane.getLocationOnScreen().y, pane.getWidth(), pane.getHeight());
-    Rectangle componentRect = new Rectangle(desiredLocation.getScreenPoint().x,
-                                            desiredLocation.getScreenPoint().y,
-                                            component.getPreferredSize().width,
-                                            component.getPreferredSize().height);
-    return lpRect.contains(componentRect);
+  private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation, HintHint hintHint) {
+    if (hintHint.isAwtTooltip()) {
+      Dimension size = component.getPreferredSize();
+      Dimension paneSize = pane.getSize();
+      return size.width < paneSize.width && size.height < paneSize.height;
+    } else {
+      final Rectangle lpRect = new Rectangle(pane.getLocationOnScreen().x, pane.getLocationOnScreen().y, pane.getWidth(), pane.getHeight());
+      Rectangle componentRect = new Rectangle(desiredLocation.getScreenPoint().x,
+                                              desiredLocation.getScreenPoint().y,
+                                              component.getPreferredSize().width,
+                                              component.getPreferredSize().height);
+      return lpRect.contains(componentRect);
+    }
   }
 
   private void fireHintHidden() {

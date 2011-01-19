@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,6 +102,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
     return null;
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

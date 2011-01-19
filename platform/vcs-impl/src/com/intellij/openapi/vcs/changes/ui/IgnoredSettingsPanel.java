@@ -33,6 +33,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -167,6 +168,7 @@ public class IgnoredSettingsPanel implements SearchableConfigurable {
     return "project.propVCSSupport.Ignored.Files";
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }
