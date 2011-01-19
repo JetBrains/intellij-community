@@ -59,6 +59,7 @@ public class AndroidManifestUtils {
       strings.add("label");
     }
     if (element instanceof Application) {
+      strings.add("name");
       strings.add("manageSpaceActivity");
       strings.add("debuggable");
     }
