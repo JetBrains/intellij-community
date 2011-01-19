@@ -30,6 +30,10 @@ import java.util.StringTokenizer;
  * @author Dmitry Skavish
  */
 public class JDParser {
+  
+  private static final String PRE_TAG_START = "<pre>";
+  private static final String PRE_TAG_END = "</pre>";
+  
   private final CodeStyleSettings mySettings;
 
   public JDParser(CodeStyleSettings settings) {
@@ -497,15 +501,24 @@ public class JDParser {
       sb.append('\n');
     }
     else {
+      boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.length() == 0 && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(prefix);
-        if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES) {
+        if (line.length() == 0 && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
           sb.append("<p/>");
         }
         else {
           sb.append(line);
+          
+          // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
+          if (PRE_TAG_START.equals(line)) {
+            insidePreTag = true;
+          }
+          else if (PRE_TAG_END.equals(line)) {
+            insidePreTag = false;
+          }
         }
         sb.append('\n');
       }
