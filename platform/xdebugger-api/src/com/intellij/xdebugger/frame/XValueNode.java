@@ -36,7 +36,7 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
-   * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(String, javax.swing.Icon, String, String, boolean)}
+   * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(javax.swing.Icon, String, String, boolean)}
    * method and call this method to provide full value.
    * This will add a link to the node and show popup with full value if an user clicks on that link.
    * @param fullValueEvaluator will be used to obtain full text of the value
@@ -44,12 +44,14 @@ public interface XValueNode extends Obsolescent {
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
 
   /**
-   * @deprecated pass {@code name} to {@link XValue#XValue(String)} constructor and use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead of this method
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead. Names for values should be passed to
+   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
    */
   void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
-   * @deprecated pass {@code name} to {@link XValue#XValue(String)} constructor and use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead of this method
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead. Names for values should be passed to
+   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
    */
   void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 }

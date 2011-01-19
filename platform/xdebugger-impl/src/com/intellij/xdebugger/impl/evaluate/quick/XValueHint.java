@@ -85,23 +85,23 @@ public class XValueHint extends AbstractValueHint {
           }
 
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren) {
-            setPresentation(myExpression, icon, type, separator, value, hasChildren);
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator, @NonNls @NotNull final String value, final boolean hasChildren) {
+            DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+              public void run() {
+                doShowHint(result, separator, value, hasChildren);
+              }
+            });
           }
 
           public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
                                       final boolean hasChildren) {
-            setPresentation(name, icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
+            setPresentation(icon, type, value, hasChildren);
           }
 
           public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                                       @NonNls @NotNull final String value,
                                       final boolean hasChildren) {
-            DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-              public void run() {
-                doShowHint(result, name, separator, value, hasChildren);
-              }
-            });
+            setPresentation(icon, type, separator, value, hasChildren);
           }
 
           public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
@@ -121,11 +121,11 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
-  private void doShowHint(final XValue xValue, final String name, final String separator, final String value, final boolean hasChildren) {
+  private void doShowHint(final XValue xValue, final String separator, final String value, final boolean hasChildren) {
     if (isHintHidden()) return;
 
     SimpleColoredText text = new SimpleColoredText();
-    text.append(name, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+    text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     text.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
@@ -136,7 +136,7 @@ public class XValueHint extends AbstractValueHint {
     else {
       component = createExpandableHintComponent(text, new Runnable() {
         public void run() {
-          showTree(xValue, name);
+          showTree(xValue, myExpression);
         }
       });
     }
