@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.InternalIterator;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -68,6 +69,7 @@ public class UserRenderersConfigurable implements SearchableConfigurable {
     return "reference.idesettings.debugger.typerenderers"; 
   }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

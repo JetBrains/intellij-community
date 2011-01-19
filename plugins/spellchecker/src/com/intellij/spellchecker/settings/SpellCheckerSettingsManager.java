@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable {
      return "reference.settings.ide.settings.spelling";
    }
 
+  @NotNull
   public String getId() {
     return getHelpTopic();
   }

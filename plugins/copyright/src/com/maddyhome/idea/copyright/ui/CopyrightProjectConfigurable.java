@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright.ui;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -98,6 +97,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return true;
   }
 
+  @NotNull
   public String getId() {
     return "copyright";
   }

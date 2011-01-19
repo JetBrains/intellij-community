@@ -138,6 +138,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
   }
 
+  @NotNull
   @NonNls
   public String getId() {
     return "project.structure";

@@ -40,7 +40,7 @@ public class EditorListenerTracker {
 
   public void checkListenersLeak() {
     try {
-// listeners may hang on default project
+      // listeners may hang on default project
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 
       EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();

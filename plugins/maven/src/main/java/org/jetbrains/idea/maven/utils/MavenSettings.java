@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenServicesConfigurable;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
@@ -97,6 +98,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     return myChildren.toArray(new Configurable[myChildren.size()]);
   }
 
+  @NotNull
   public String getId() {
     return MavenSettings.class.getSimpleName();
   }
