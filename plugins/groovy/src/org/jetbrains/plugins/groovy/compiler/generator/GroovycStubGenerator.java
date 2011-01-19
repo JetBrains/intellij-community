@@ -91,7 +91,9 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       return;
     }
 
+    //long l = System.currentTimeMillis();
     super.compile(compileContext, moduleChunk, VfsUtil.toVirtualFileArray(total), sink);
+    //System.out.println("Stub generation took " + (System.currentTimeMillis() - l));
   }
 
   @Override
