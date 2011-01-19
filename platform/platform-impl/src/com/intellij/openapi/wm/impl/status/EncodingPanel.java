@@ -18,11 +18,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -34,11 +29,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,25 +41,24 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.nio.charset.Charset;
 
 /**
  * @author cdr
  */
 public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
-  private final Alarm myUpdateAlarm;
   private final TextPanel myComponent;
   private boolean actionEnabled;
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
-    myUpdateAlarm = new Alarm(this);
 
     myComponent = new TextPanel(getMaxValue()){
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
-        EncodingPanel.this.update();
         if (actionEnabled) {
           setForeground(UIUtil.getActiveTextColor());
           if (getText() != null) {
@@ -85,6 +79,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         showPopup(e);
       }
     });
+    myComponent.setBorder(WidgetBorder.INSTANCE);
   }
 
   @Override
@@ -122,23 +117,14 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     // should update to reflect encoding-from-content
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EncodingManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
-        Editor editor = getEditor();
-        if (editor == null) return;
-        Document current = editor.getDocument();
-        if (e.getDocument() != current) return;
-
-        myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            update();
-          }
-        }, 300);
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
+          update();
+        }
       }
-    },this);
+    }, this);
   }
 
   private void showPopup(MouseEvent e) {
@@ -179,7 +165,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     String text;
     String toolTip;
     if (file != null) {
-      Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
+      Charset charset = ChooseFileEncodingAction.cachedCharsetFromContent(file);
       if (charset == null) charset = file.getCharset();
 
       text = charset.displayName();
