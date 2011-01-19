@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Simplest PyStarImportElement possible.
@@ -35,6 +34,9 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
 
   @Nullable
   public PsiElement getElementNamed(final String the_name) {
+    if (PyUtil.isClassPrivateName(the_name)) {
+      return null;
+    }
     PyFromImportStatement import_from_stmt = PsiTreeUtil.getParentOfType(this, PyFromImportStatement.class);
     if (import_from_stmt != null) {
       PyReferenceExpression from_src = import_from_stmt.getImportSource();
