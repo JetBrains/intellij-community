@@ -98,7 +98,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
 
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+    ActionManager.getInstance().addAnActionListener(new AnActionListener() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      }
+
+      @Override
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+      }
+
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
