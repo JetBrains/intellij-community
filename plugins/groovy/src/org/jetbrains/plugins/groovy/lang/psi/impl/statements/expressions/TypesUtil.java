@@ -200,11 +200,11 @@ public class TypesUtil {
     return _isAssignable(lType, rType, manager, scope, allowConversion);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
+  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement context) {
     return isAssignable(lType, rType, context, true);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context, boolean allowConversion) {
+  public static boolean isAssignable(@NotNull PsiType lType, @NotNull PsiType rType, GroovyPsiElement context, boolean allowConversion) {
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
         if (isAssignable(lType, child, context, allowConversion)) {
@@ -287,9 +287,7 @@ public class TypesUtil {
     }
 
     if (typeEqualsToText(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
-      final PsiClass javaLangString = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_LANG_STRING, scope);
-      if (javaLangString != null &&
-          isAssignable(lType, JavaPsiFacade.getElementFactory(manager.getProject()).createType(javaLangString), manager, scope)) {
+      if (isAssignable(lType, GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope)) {
         return true;
       }
     }

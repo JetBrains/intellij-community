@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
@@ -93,7 +94,7 @@ public class GrClassImplUtil {
       if (superClass instanceof GrTypeDefinition && !superClass.isInterface()) return extendsTypes;
     }
 
-    PsiClass grObSupport = JavaPsiFacade.getInstance(grType.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
+    PsiClass grObSupport = GroovyPsiManager.getInstance(grType.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
     if (grObSupport != null) {
       final PsiClassType type = JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport);
       return ArrayUtil.append(extendsTypes, type, PsiClassType.ARRAY_FACTORY);
