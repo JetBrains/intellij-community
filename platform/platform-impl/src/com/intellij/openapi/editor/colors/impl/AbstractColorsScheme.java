@@ -53,7 +53,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected Map<ColorKey, Color> myColorsMap = new HashMap<ColorKey, Color>();
   protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new HashMap<TextAttributesKey, TextAttributes>();
 
-  @NonNls private static final String DEFAULT_FONT_NAME = useMenloAsDefaultFont() ? "Menlo" : "Courier";
+  @NonNls private static final String DEFAULT_FONT_NAME = useMenloAsDefaultFont() ? "Menlo" : "Monospaced";
   @NonNls private static final String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
   @NonNls protected static final String SCHEME_NAME = "SCHEME_NAME";
   protected DefaultColorSchemesManager myDefaultColorSchemesManager;
@@ -81,7 +81,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static boolean useMenloAsDefaultFont() {
-    return "CIDR".equals("idea.platform.prefix");
+    return "CIDR".equals(System.getProperty("idea.platform.prefix"));
   }
 
   public Color getDefaultBackground() {
