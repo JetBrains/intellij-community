@@ -104,7 +104,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     final PsiParameter[] params = closure.getAllParameters();
 
     if (params.length == 1 && simpleTypes.containsKey(methodName)) {
-      return factory.createTypeByFQClassName(simpleTypes.get(methodName), closure);
+      return TypesUtil.createTypeByFQClassName(simpleTypes.get(methodName), closure);
     }
 
     if (iterations.contains(methodName)) {
@@ -127,14 +127,14 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         if (index == 0) {
           return res;
         }
-        return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
       }
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         if (params.length == 2) {
           if (index == 0) {
-            return getEntryForMap(type, factory, closure);
+            return getEntryForMap(type, closure);
           }
-          return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
         }
         if (params.length == 3) {
           if (index == 0) {
@@ -143,13 +143,13 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
           if (index == 1) {
             return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
           }
-          return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, closure);
         }
       }
     }
     else if ("inject".equals(methodName) && params.length == 2) {
       if (index == 0) {
-        return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, closure);
+        return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, closure);
       }
 
       PsiType res = findTypeForIteration(qualifier, factory, closure);
@@ -157,15 +157,16 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
         return res;
       }
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        return getEntryForMap(type, factory, closure);
+        return getEntryForMap(type, closure);
       }
     }
     else if ("eachPermutation".equals(methodName) && params.length == 1) {
       final PsiType itemType = findTypeForIteration(qualifier, factory, closure);
       if (itemType != null) {
-        return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText("java.util.ArrayList<" + itemType.getCanonicalText() + ">", closure);
+        return JavaPsiFacade.getElementFactory(closure.getProject()).createTypeFromText(
+          "java.util.ArrayList<" + itemType.getCanonicalText() + ">", closure);
       }
-      return factory.createTypeByFQClassName("java.util.ArrayList", closure);
+      return TypesUtil.createTypeByFQClassName("java.util.ArrayList", closure);
     }
     else if ("withDefault".equals(methodName)) {
       if (params.length == 1 && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
@@ -188,28 +189,29 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     else if ("withStreams".equals(methodName)) {
       if (index == 0) {
-        return factory.createTypeByFQClassName("java.io.InputStream", closure);
+        return TypesUtil.createTypeByFQClassName("java.io.InputStream", closure);
       }
-      else if (index == 1) return factory.createTypeByFQClassName("java.io.OutputStream", closure);
+      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.OutputStream", closure);
     }
     else if ("withObjectStreams".equals(methodName)) {
       if (index == 0) {
-        return factory.createTypeByFQClassName("java.io.ObjectInputStream", closure);
+        return TypesUtil.createTypeByFQClassName("java.io.ObjectInputStream", closure);
       }
-      else if (index == 1) return factory.createTypeByFQClassName("java.io.ObjectOutputStream", closure);
+      else if (index == 1) return TypesUtil.createTypeByFQClassName("java.io.ObjectOutputStream", closure);
     }
     return null;
   }
 
 
   @Nullable
-  private static PsiType getEntryForMap(PsiType map, GroovyPsiManager factory, PsiElement context) {
+  private static PsiType getEntryForMap(PsiType map, PsiElement context) {
     PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
     PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
     if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
-      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText("java.util.Map.Entry<" + key.getCanonicalText() + ", " + value.getCanonicalText() + ">", context);
+      return JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(
+        "java.util.Map.Entry<" + key.getCanonicalText() + ", " + value.getCanonicalText() + ">", context);
     }
-    return factory.createTypeByFQClassName("java.util.Map.Entry", context);
+    return TypesUtil.createTypeByFQClassName("java.util.Map.Entry", context);
   }
 
   @Nullable
@@ -225,7 +227,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
 
     if (InheritanceUtil.isInheritor(iterType, "groovy.lang.IntRange")) {
-      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, context);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, context);
     }
     if (InheritanceUtil.isInheritor(iterType, "groovy.lang.ObjectRange")) {
       PsiElement element = qualifier;
@@ -246,11 +248,11 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
 
     if (TypesUtil.typeEqualsToText(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.typeEqualsToText(iterType, "java.io.File")) {
-      return factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, context);
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, context);
     }
 
     if (InheritanceUtil.isInheritor(iterType, CommonClassNames.JAVA_UTIL_MAP)) {
-      return getEntryForMap(iterType, factory, context);
+      return getEntryForMap(iterType, context);
     }
     return null;
   }

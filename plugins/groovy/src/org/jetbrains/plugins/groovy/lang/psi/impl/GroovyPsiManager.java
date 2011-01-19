@@ -32,8 +32,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -57,7 +54,6 @@ public class GroovyPsiManager {
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private final Map<String, Map<GlobalSearchScope, PsiType>> myCommonClassTypes = new ConcurrentHashMap<String, Map<GlobalSearchScope, PsiType>>();
   private final GroovyShortNamesCache myCache;
 
   private final TypeInferenceHelper myTypeInferenceHelper;
@@ -97,10 +93,6 @@ public class GroovyPsiManager {
 
   public static GroovyPsiManager getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiManager.class);
-  }
-
-  public PsiClassType createTypeByFQClassName(String fqName, PsiElement context) {
-    return createTypeByFQClassName(fqName, context.getResolveScope());
   }
 
   public PsiClassType createTypeByFQClassName(String fqName, GlobalSearchScope resolveScope) {
