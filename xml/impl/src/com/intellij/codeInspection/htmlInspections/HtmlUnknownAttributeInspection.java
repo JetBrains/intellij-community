@@ -103,7 +103,7 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
           quickfixes[0] = new AddCustomTagOrAttributeIntentionAction(getShortName(), name, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
           quickfixes[1] = new RemoveAttributeIntentionAction(name, attribute);
           if (maySwitchToHtml5) {
-            quickfixes[2] = new SwitchToHtml5Action();
+            quickfixes[2] = new SwitchToHtml5WithHighPriorityAction();
           }
 
           holder.registerProblem(nameElement, XmlErrorMessages.message("attribute.is.not.allowed.here", name),
