@@ -55,7 +55,7 @@ public class PsiWildcardType extends PsiType {
 
   @NotNull
   public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType) && !(bound instanceof PsiCapturedWildcardType));
+    LOG.assertTrue(!(bound instanceof PsiWildcardType));
     return new PsiWildcardType(manager, true, bound);
   }
 
@@ -66,7 +66,6 @@ public class PsiWildcardType extends PsiType {
 
   public static PsiWildcardType changeBound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
     LOG.assertTrue(type.getBound() != null);
-    LOG.assertTrue(!(newBound instanceof PsiWildcardType) && !(newBound instanceof PsiCapturedWildcardType));
     return new PsiWildcardType(type.myManager, type.myIsExtending, newBound);
   }
 
