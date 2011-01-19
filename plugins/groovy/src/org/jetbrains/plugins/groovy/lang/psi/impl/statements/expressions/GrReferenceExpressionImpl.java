@@ -403,7 +403,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (resolved instanceof PsiMethod) {
         return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
       }
-      return GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
+      return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
     }
     PsiType result = null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -423,7 +423,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else
     if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-        return GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
+        return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
       }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {

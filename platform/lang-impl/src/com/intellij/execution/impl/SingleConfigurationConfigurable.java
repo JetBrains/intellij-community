@@ -54,7 +54,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     final Config configuration = (Config)getSettings().getConfiguration();
     myDisplayName = getSettings().getName();
-    myHelpTopic = null; //TODO
+    myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
     myIcon = configuration.getType().getIcon();
 
     myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
@@ -66,8 +66,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     });
 
-    getEditor().addSettingsEditorListener(new SettingsEditorListener() {
-      public void stateChanged(SettingsEditor settingsEditor) {
+    getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
+      public void stateChanged(SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
       }
     });
@@ -158,7 +158,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  public final void addNameListner(DocumentListener listener) {
+  public final void addNameListener(DocumentListener listener) {
     myNameDocument.addDocumentListener(listener);
   }
 

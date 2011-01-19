@@ -38,8 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -179,7 +179,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[]{ GroovyPsiManager.getInstance(getProject()).createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
+    return new PsiClassType[]{ TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
   }
 
   public PsiClass getContainingClass() {
