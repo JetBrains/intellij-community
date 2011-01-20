@@ -222,7 +222,7 @@ public class ExpressionParser {
       final PsiBuilder.Marker right = parseExpression(builder, toParse);
       if (right == null) {
         error(builder, toParse == ExprType.TYPE ?
-                      JavaErrorMessages.message("expected.type") : JavaErrorMessages.message("expected.expression"));
+                       JavaErrorMessages.message("expected.type") : JavaErrorMessages.message("expected.expression"));
         expression.done(toCreate);
         return expression;
       }
@@ -319,6 +319,7 @@ public class ExpressionParser {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == JavaTokenType.DOT) {
         final PsiBuilder.Marker dotPos = builder.mark();
+        final int dotOffset = builder.getCurrentOffset();
         builder.advanceLexer();
 
         final IElementType dotTokenType = builder.getTokenType();
@@ -348,25 +349,26 @@ public class ExpressionParser {
         }
         else if ((dotTokenType == JavaTokenType.THIS_KEYWORD || dotTokenType == JavaTokenType.SUPER_KEYWORD) &&
                  exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
-          if (breakPoint == BreakPoint.P2) {
+          if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
             dotPos.rollbackTo();
             startMarker.drop();
             return expr;
           }
 
           final PsiBuilder.Marker copy = startMarker.precede();
+          final int offset = builder.getCurrentOffset();
           startMarker.rollbackTo();
 
           final PsiBuilder.Marker ref = ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
-          if (ref == null || builder.getTokenType() != JavaTokenType.DOT) {
+          if (ref == null || builder.getTokenType() != JavaTokenType.DOT || builder.getCurrentOffset() != dotOffset) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P2, -1);
+            return parsePrimary(builder, BreakPoint.P2, offset);
           }
           builder.advanceLexer();
 
           if (builder.getTokenType() != dotTokenType) {
             copy.rollbackTo();
-            return parsePrimary(builder, BreakPoint.P2, -1);
+            return parsePrimary(builder, BreakPoint.P2, offset);
           }
           builder.advanceLexer();
 
@@ -689,7 +691,7 @@ public class ExpressionParser {
     else {
       if (builder.getTokenType() != JavaTokenType.LBRACKET) {
         error(builder, refOrType == null ?
-                      JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
+                       JavaErrorMessages.message("expected.lbracket") : JavaErrorMessages.message("expected.lparen.or.lbracket"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);
         return newExpr;
       }
