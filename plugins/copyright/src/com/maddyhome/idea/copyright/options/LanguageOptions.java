@@ -16,10 +16,7 @@
 
 package com.maddyhome.idea.copyright.options;
 
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 
 public class LanguageOptions implements JDOMExternalizable, Cloneable {
@@ -30,6 +27,8 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
   public static final int MIN_SEPARATOR_LENGTH = 5;
   public static final int MAX_SEPARATOR_LENGTH = 300;
   public static final char DEFAULT_FILLER = ' ';
+  
+  private static final LanguageOptions DEFAULT_SETTINGS_HOLDER = new LanguageOptions();
 
   public LanguageOptions() {
     setBlock(true);
@@ -86,7 +85,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<LanguageOptions>(this, DEFAULT_SETTINGS_HOLDER));
   }
 
   public boolean equals(Object o) {
