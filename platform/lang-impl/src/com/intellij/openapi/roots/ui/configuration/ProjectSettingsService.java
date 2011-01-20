@@ -46,15 +46,40 @@ public class ProjectSettingsService {
   public void openModuleSettings(final Module module) {
   }
 
+  public boolean canOpenModuleSettings() {
+    return false;
+  }
+
   public void openModuleLibrarySettings(final Module module) {
+  }
+
+  public boolean canOpenModuleLibrarySettings() {
+    return false;
   }
 
   public void openContentEntriesSettings(final Module module) {
   }
 
+  public boolean canOpenContentEntriesSettings() {
+    return false;
+  }
+
   public void openProjectLibrarySettings(final NamedLibraryElement value) {
+    Configurable additionalSettingsConfigurable = getLibrarySettingsConfigurable(value);
+    if (additionalSettingsConfigurable != null) {
+      LibraryOrderEntry entry = (LibraryOrderEntry) value.getOrderEntry();
+      ShowSettingsUtil.getInstance().showSettingsDialog(entry.getOwnerModule().getProject(), additionalSettingsConfigurable);
+    }
+  }
+
+  public boolean canOpenProjectLibrarySettings(final NamedLibraryElement value) {
+    return getLibrarySettingsConfigurable(value) != null;
+  }
+
+  @Nullable
+  private static Configurable getLibrarySettingsConfigurable(NamedLibraryElement value) {
     OrderEntry orderEntry = value.getOrderEntry();
-    if (!(orderEntry instanceof LibraryOrderEntry)) return;
+    if (!(orderEntry instanceof LibraryOrderEntry)) return null;
     LibraryOrderEntry libOrderEntry = (LibraryOrderEntry)orderEntry;
     Library lib = libOrderEntry.getLibrary();
     if (lib instanceof LibraryEx) {
@@ -63,14 +88,11 @@ public class ProjectSettingsService {
       if (libType != null) {
         LibraryRootsComponentDescriptor libComponentDescriptor = libType.createLibraryRootsComponentDescriptor();
         if (libComponentDescriptor != null) {
-          Configurable additionalSettingsConfigurable = libComponentDescriptor.getAdditionalSettingsConfigurable(project);
-          if (additionalSettingsConfigurable != null) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, additionalSettingsConfigurable);
-            return;
-          }
+          return libComponentDescriptor.getAdditionalSettingsConfigurable(project);
         }
       }
     }
+    return null;
   }
 
   public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
