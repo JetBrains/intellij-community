@@ -611,6 +611,7 @@ public class TemplateState implements Disposable {
             }
           }
 
+          boolean selectionCalculated = false;
           for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
             if (!calcedSegments.get(i)) {
               String variableName = myTemplate.getSegmentName(i);
@@ -618,7 +619,7 @@ public class TemplateState implements Disposable {
                 if (mySelectionCalculated) {
                   continue;
                 }
-                mySelectionCalculated = true;
+                selectionCalculated = true;
               }
               if (TemplateImpl.END.equals(variableName)) continue; // No need to update end since it can be placed over some other variable
               String newValue = getVariableValue(variableName).getText();
@@ -626,6 +627,9 @@ public class TemplateState implements Disposable {
               int end = mySegments.getSegmentEnd(i);
               replaceString(newValue, start, end, i);
             }
+          }
+          if (selectionCalculated) {
+            mySelectionCalculated = true;
           }
         }
         while (!calcedSegments.isEmpty() && maxAttempts >= 0);
