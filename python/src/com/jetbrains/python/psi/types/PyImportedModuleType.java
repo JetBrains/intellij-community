@@ -29,7 +29,10 @@ public class PyImportedModuleType implements PyType {
   }
 
   @NotNull
-  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction, PyResolveContext resolveContext) {
+  public List<? extends PsiElement> resolveMember(String name,
+                                                  PyExpression location,
+                                                  AccessDirection direction,
+                                                  PyResolveContext resolveContext) {
     final PsiElement element = myImportedModule.getElementNamed(name);
     if (element != null) {
       return new SmartList<PsiElement>(element);

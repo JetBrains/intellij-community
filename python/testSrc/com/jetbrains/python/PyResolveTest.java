@@ -392,4 +392,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testPrivateInsideModule() {  // PY-2618
     assertResolvesTo(PyClass.class, "__VeryPrivate");
   }
+
+  public void testRedeclaredInstanceVar() {  // PY-2740
+    assertResolvesTo(PyFunction.class, "jobsDoneCount");
+  }
 }

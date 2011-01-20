@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;

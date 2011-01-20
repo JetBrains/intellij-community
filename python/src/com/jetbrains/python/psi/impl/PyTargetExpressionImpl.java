@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
@@ -128,8 +129,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
         if (assignedValue != null) {
-          if (assignedValue instanceof PyReferenceExpression) {
-            final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
+          if (assignedValue instanceof PyReferenceExpressionImpl) {
+            final PyReferenceExpressionImpl refex = (PyReferenceExpressionImpl)assignedValue;
             PyType maybe_type = PyUtil.getSpecialAttributeType(refex, context);
             if (maybe_type != null) return maybe_type;
             final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
@@ -143,6 +144,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               if (target instanceof PyTargetExpression && typeFromTarget instanceof PyNoneType) {
                 // this usually means that the variable is initialized to a non-None value somewhere else where we haven't looked
                 return null;
+              }
+              Ref<PyType> typeOfProperty = refex.getTypeOfProperty(context);
+              if (typeOfProperty != null) {
+                return typeOfProperty.get();
               }
               return typeFromTarget;
             }

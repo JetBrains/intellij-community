@@ -420,7 +420,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           for (PyDecorator deco : decolist.getDecorators()) {
             PyQualifiedName deco_name = deco.getQualifiedName();
             if (deco_name != null) {
-              if (deco_name.matches("property")) {
+              if (deco_name.matches(PyNames.PROPERTY)) {
                 getter = new Maybe<PyFunction>(method);
               }
               else if (advanced && deco_name.matches(name, "setter")) {
@@ -680,7 +680,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
-        collectInstanceAttributes((PyFunctionImpl)method, result);
+        collectInstanceAttributes(method, result);
       }
     }
 
@@ -688,7 +688,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return new ArrayList<PyTargetExpression>(expressions);
   }
 
-  private static void collectInstanceAttributes(PyFunctionImpl method, final Map<String, PyTargetExpression> result) {
+  private static void collectInstanceAttributes(PyFunction method, final Map<String, PyTargetExpression> result) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
@@ -761,9 +761,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return false;
   }
 
-  public void processDeclarations(@NotNull PsiScopeProcessor processor) {
+  public void processDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
     if (!processClassLevelDeclarations(processor)) return;
-    if (!processInstanceLevelDeclarations(processor)) return;
+    if (!processInstanceLevelDeclarations(processor, location)) return;
     processor.execute(this, ResolveState.initial());
   }
 
@@ -784,8 +784,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return true;
   }
 
-  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor) {
+  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor, @Nullable PyExpression location) {
+    Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
+    PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
+    if (instanceMethod != null && instanceMethod.getContainingClass() == this) {
+      collectInstanceAttributes(instanceMethod, declarationsInMethod);
+      for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
+        if (!processor.execute(targetExpression, ResolveState.initial())) {
+          return false;
+        }
+      }
+    }
     for(PyTargetExpression expr: getInstanceAttributes()) {
+      if (declarationsInMethod.containsKey(expr.getName())) {
+        continue;
+      }
       if (!processor.execute(expr, ResolveState.initial())) return false;
     }
     return true;
