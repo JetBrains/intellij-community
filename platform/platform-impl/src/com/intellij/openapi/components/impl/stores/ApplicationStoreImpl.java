@@ -86,7 +86,7 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
 //    ProfilingUtil.startCPUProfiling();
     myApplication.initComponents();
 //    ProfilingUtil.captureCPUSnapshot();
-    LOG.info(myApplication.getComponentInterfaces().length + " application components initialized in " + (System.currentTimeMillis() - start) + " ms");
+    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + (System.currentTimeMillis() - start) + " ms");
   }
 
   public void setOptionsPath(final String path) {
