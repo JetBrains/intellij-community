@@ -50,7 +50,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   protected final Project myProject;
 
   public String PROJECT_PROFILE;
-  public boolean USE_PROJECT_PROFILE = !isPlatform();
 
   private final ApplicationProfileManager myApplicationProfileManager;
 
@@ -179,7 +178,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   public void setProjectProfile(final String projectProfile) {
     final String profileName = PROJECT_PROFILE;
     PROJECT_PROFILE = projectProfile;
-    USE_PROJECT_PROFILE = projectProfile != null;
     for (ProfileChangeAdapter adapter : myProfilesListener) {
       adapter.profileActivated(profileName != null ? getProfile(profileName) : null, projectProfile != null ?  getProfile(projectProfile) : null);
     }
@@ -187,7 +185,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
 
   @NotNull
   public Profile getProjectProfileImpl(){
-    if (isPlatform() || !USE_PROJECT_PROFILE) return myApplicationProfileManager.getRootProfile();
     if (PROJECT_PROFILE == null || myProfiles.isEmpty()){
       setProjectProfile(PROJECT_DEFAULT_PROFILE_NAME);
       final Profile projectProfile = myApplicationProfileManager.createProfile();
@@ -202,10 +199,6 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     final Profile profile = myProfiles.get(PROJECT_PROFILE);
     profile.setProfileManager(this);
     return profile;
-  }
-
-  private static boolean isPlatform() {
-    return !ApplicationNamesInfo.getInstance().getLowercaseProductName().equals("Idea");
   }
 
   public void addProfilesListener(ProfileChangeAdapter profilesListener) {
