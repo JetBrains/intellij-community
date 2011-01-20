@@ -51,7 +51,7 @@ public class GrClosureType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
+    return GroovyPsiManager.getInstance(myManager.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
   }
 
   public String getClassName() {

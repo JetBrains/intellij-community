@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -81,7 +82,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private static boolean useMenloAsDefaultFont() {
-    return "CIDR".equals(System.getProperty("idea.platform.prefix"));
+    return PlatformUtils.isCidr();
   }
 
   public Color getDefaultBackground() {

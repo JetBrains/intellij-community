@@ -93,7 +93,18 @@ public abstract class TailType {
     }
   };
   public static final TailType SPACE = new CharTailType(' ');
-  public static final TailType DOT = new CharTailType('.');
+  public static final TailType DOT = new TailType() {
+    @Override
+    public int processTail(Editor editor, int tailOffset) {
+      editor.getDocument().insertString(tailOffset, ".");
+      return moveCaret(editor, tailOffset, 1);
+    }
+
+    @Override
+    public String toString() {
+      return "DOT";
+    }
+  };
 
   public static final TailType CASE_COLON = new CharTailType(':');
   public static final TailType COND_EXPR_COLON = new TailType(){

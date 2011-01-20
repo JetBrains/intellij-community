@@ -215,13 +215,15 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   public void editorCreated(EditorFactoryEvent event) {
     final Editor editor = event.getEditor();
     if (editor.getProject() != myProject) return;
-    addDocListener(((EditorEx)editor).getVirtualFile());
+    addDocListener(editor.getDocument());
   }
 
-  public void addDocListener(VirtualFile file) {
-    if (file == null) return;
-    final Document document = myDocumentManager.getDocument(file);
-    if (file.isValid() && !myListenerMap.containsKey(file)) {
+  public void addDocListener(Document document) {
+    if (document == null) return;
+    final VirtualFile file = myDocumentManager.getFile(document);
+    if (file != null && file.isValid() && !myListenerMap.containsKey(file)) {
+      final PsiFile psiFile = myPsiManager.findFile(file);
+      if (psiFile == null || !psiFile.isPhysical()) return;
       final MyDocumentChangeAdapter adapter = new MyDocumentChangeAdapter();
       document.addDocumentListener(adapter);
       myListenerMap.put(file, adapter);
@@ -231,7 +233,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   @Override
   public void editorReleased(EditorFactoryEvent event) {
     final EditorEx editor = (EditorEx)event.getEditor();
-    final VirtualFile file = editor.getVirtualFile();
+    VirtualFile file = editor.getVirtualFile();
+    if (file == null) {
+      file = myDocumentManager.getFile(editor.getDocument());
+    }
     if (file != null && file.isValid()) {
       if (myFileEditorManager.isFileOpen(file)) {
         return;
@@ -294,7 +299,8 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
               final ChangeInfo info = LanguageChangeSignatureDetectors.createCurrentChangeInfo(element, myCurrentInfo);
               if (info != null) {
                 final TextRange textRange = info.getMethod().getTextRange();
-                myInitialText =  document.getText().substring(textRange.getStartOffset(), textRange.getEndOffset()) ;
+                if (document.getTextLength() <= textRange.getEndOffset()) return;
+                myInitialText =  document.getText(textRange);
                 myInitialChangeInfo = info;
               }
             }

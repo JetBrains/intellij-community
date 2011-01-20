@@ -1508,8 +1508,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (label.getName() == null) {
           final PsiElement nameElement = label.getNameElement();
           if (nameElement instanceof GrExpression) {
-            final PsiType stringType =
-              JavaPsiFacade.getElementFactory(arg.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_STRING, arg);
+            final PsiType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg);
             if (!TypesUtil.isAssignable(stringType, ((GrExpression)nameElement).getType(), arg)) {
               holder.createWarningAnnotation(nameElement, GroovyBundle.message("property.name.expected"));
             }

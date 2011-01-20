@@ -60,7 +60,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
     boolean enabled = result.second;
     if (myVirtualFile != null) {
-      Charset charset = charsetFromContent(myVirtualFile);
+      Charset charset = cachedCharsetFromContent(myVirtualFile);
       String prefix = charset == null ? "" : "Encoding (auto-detected):";
       if (charset == null) charset = myVirtualFile.getCharset();
       e.getPresentation().setText(prefix + " " + charset.toString());
@@ -72,7 +72,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   public static boolean isEnabled(@Nullable VirtualFile virtualFile) {
     boolean enabled = true;
     if (virtualFile != null) {
-      Charset charset = charsetFromContent(virtualFile);
+      Charset charset = cachedCharsetFromContent(virtualFile);
       if (charset != null) {
         enabled = false;
       }
@@ -97,7 +97,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
-  public static Charset charsetFromContent(final VirtualFile virtualFile) {
+  public static Charset cachedCharsetFromContent(final VirtualFile virtualFile) {
     if (virtualFile == null) return null;
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return null;
@@ -126,7 +126,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   public static Pair<String,Boolean> update(@Nullable VirtualFile virtualFile) {
     String pattern;
     boolean enabled = virtualFile != null && isEnabled(virtualFile);
-    Charset charsetFromContent = charsetFromContent(virtualFile);
+    Charset charsetFromContent = cachedCharsetFromContent(virtualFile);
     if (virtualFile != null && FileDocumentManager.getInstance().isFileModified(virtualFile)) {
       //no sense to reload file with UTF-detected chars using other encoding
       if (charsetFromContent != null) {

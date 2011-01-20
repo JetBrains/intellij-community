@@ -688,6 +688,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           }
         }
 
+        getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
+
         FileDocumentManager.getInstance().saveAllDocuments();
 
         saveSettings();

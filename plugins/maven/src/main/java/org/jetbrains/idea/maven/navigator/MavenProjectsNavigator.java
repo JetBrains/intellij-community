@@ -37,6 +37,8 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -94,7 +96,6 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
       catch (WriteExternalException e) {
         MavenLog.LOG.warn(e);
       }
-
     }
     return myState;
   }
@@ -189,6 +190,17 @@ public class MavenProjectsNavigator extends SimpleProjectComponent implements Pe
 
     RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       public void beforeRunTasksChanged() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateGoals();
+          }
+        });
+      }
+    });
+
+    MavenRunner.getInstance(myProject).getSettings().addListener(new MavenRunnerSettings.Listener() {
+      @Override
+      public void skipTestsChanged() {
         scheduleStructureRequest(new Runnable() {
           public void run() {
             myStructure.updateGoals();

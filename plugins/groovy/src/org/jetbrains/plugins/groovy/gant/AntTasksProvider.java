@@ -41,6 +41,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.net.URL;
@@ -87,8 +88,8 @@ public class AntTasksProvider {
         final Set<LightMethodBuilder> methods = new HashSet<LightMethodBuilder>();
 
         final Project project = file.getProject();
-        final PsiType closureType = JavaPsiFacade.getElementFactory(project).createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
-        final PsiClassType stringType = PsiType.getJavaLangString(file.getManager(), file.getResolveScope());
+        final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
+        final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
 
         for (String name : antObjects.keySet()) {
           methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));

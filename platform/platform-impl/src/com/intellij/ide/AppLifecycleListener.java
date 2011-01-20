@@ -32,6 +32,12 @@ public interface AppLifecycleListener {
   void projectOpenFailed();
   void welcomeScreenDisplayed();
 
+  /**
+   * Fired before saving settings and before final 'can exit?' check. App may end up not closing if some of the 'can exit?' listeners
+   * return false.
+   */
+  void appClosing();
+
   abstract class Adapter implements AppLifecycleListener {
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
     }
@@ -46,6 +52,9 @@ public interface AppLifecycleListener {
     }
 
     public void welcomeScreenDisplayed() {
+    }
+
+    public void appClosing() {
     }
   }
 }
