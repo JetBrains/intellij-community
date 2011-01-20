@@ -16,26 +16,24 @@
 package org.zmlx.hg4idea.test;
 
 /**
- * The parent of all tests, where at least two repositories communicate with each other.
- * This is used to test collaborative tasks, such as push, pull, merge and others.
+ * HgSingleUserTest is the parent of test cases for single user workflow.
+ * It doesn't include collaborate tasks such as cloning, pushing, etc.
  * @author Kirill Likhodedov
  */
-public class HgCollaborativeTestCase extends HgAbstractTestCase {
+public class HgSingleUserTest extends HgTest {
 
-  protected HgTestRepository myParentRepo;
   protected HgTestRepository myRepo;
 
   @Override
   protected HgTestRepository initRepositories() throws Exception {
-    myParentRepo = HgTestRepository.create(this);
-    myRepo = myParentRepo.cloneRepository();
+    myRepo = HgTestRepository.create(this);
     return myRepo;
   }
 
   @Override
   protected void tearDownRepositories() throws Exception {
     myRepo.getDirFixture().tearDown();
-    myParentRepo.getDirFixture().tearDown();
   }
+
 
 }

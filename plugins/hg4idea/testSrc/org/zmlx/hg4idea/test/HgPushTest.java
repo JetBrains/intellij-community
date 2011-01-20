@@ -27,7 +27,7 @@ import static org.testng.Assert.assertNotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class HgPushTestCase extends HgCollaborativeTestCase {
+public class HgPushTest extends HgCollaborativeTest {
 
   /**
    * Tests 'push' using only native commands.

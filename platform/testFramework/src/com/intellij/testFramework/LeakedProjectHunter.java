@@ -89,6 +89,7 @@ public class LeakedProjectHunter {
       Class rootClass = backLink.aClass;
       List<Field> fields = getAllFields(rootClass);
       for (Field field : fields) {
+        if (root instanceof Reference && "referent".equals(field.getName())) continue; // do not follow weak/soft refs
         Object value = field.get(root);
         if (value == null) continue;
         Class valueClass = value.getClass();
@@ -97,7 +98,6 @@ public class LeakedProjectHunter {
           processor.process(newBackLink);
         }
         else {
-          if (root instanceof Reference && "referent".equals(field.getName())) continue; // do not follow weak/soft refs
           BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
           if (toFollow(valueClass)) {
             toVisit.push(newBackLink);
@@ -113,7 +113,7 @@ public class LeakedProjectHunter {
               toVisit.push(new BackLink(oClass, o, null, backLink));
             }
           }
-          catch (ClassCastException e) {
+          catch (ClassCastException ignored) {
           }
         }
       }
@@ -133,7 +133,6 @@ public class LeakedProjectHunter {
     noFollowClasses.add("java.lang.Object");
     noFollowClasses.add("java.lang.Short");
     noFollowClasses.add("java.lang.String");
-    noFollowClasses.add("java.lang.ref.WeakReference");
   }
 
   private static boolean toFollow(Class oClass) {

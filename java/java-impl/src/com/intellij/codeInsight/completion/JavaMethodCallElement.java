@@ -213,6 +213,17 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
+  public LookupItem<PsiMethod> forceQualify() {
+    if (myContainingClass != null) {
+      String className = myContainingClass.getName();
+      if (className != null) {
+        addLookupStrings(className + "." + myMethod.getName());
+      }
+    }
+    return super.forceQualify();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 

@@ -46,7 +46,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 @SuppressWarnings({"ConstantConditions", "ThrowableResultOfMethodCallIgnored"})
-public class HgUpdateTestCase extends HgCollaborativeTestCase {
+public class HgUpdateTest extends HgCollaborativeTest {
 
   private VirtualFile projectRepoVirtualFile;
   private File projectRepo;

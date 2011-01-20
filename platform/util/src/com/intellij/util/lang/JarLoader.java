@@ -34,12 +34,11 @@ class JarLoader extends Loader {
   private final boolean myCanLockJar;
   private static final boolean myDebugTime = false;
 
-  //private SoftReference<ZipFile> myZipFileRef;
   private final TimedComputable<ZipFile> myZipFileRef = new TimedComputable<ZipFile>(null) {
     @NotNull
     protected ZipFile calc() {
       try {
-        final ZipFile zipFile = _getZipFile();
+        final ZipFile zipFile = doGetZipFile();
         if (zipFile == null) throw new RuntimeException("Can't load zip file");
         return zipFile;
       }
@@ -60,20 +59,27 @@ class JarLoader extends Loader {
   }
 
   @Nullable
-  private ZipFile getZipFile() throws IOException {
+  private ZipFile acquireZipFile() throws IOException {
     if (myCanLockJar) {
       return myZipFileRef.acquire();
     }
-    else {
-      return _getZipFile();
+    return doGetZipFile();
+  }
+
+  private void releaseZipFile(final ZipFile zipFile) throws IOException {
+    if (myCanLockJar) {
+      myZipFileRef.release();
+    }
+    else if (zipFile != null) {
+      zipFile.close();
     }
   }
 
   @Nullable
-  private ZipFile _getZipFile() throws IOException {
+  private ZipFile doGetZipFile() throws IOException {
     if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
       String s = FileUtil.unquote(myURL.getFile());
-      if (!(new File(s)).exists()) {
+      if (!new File(s).exists()) {
         throw new FileNotFoundException(s);
       }
       else {
@@ -85,48 +91,44 @@ class JarLoader extends Loader {
   }
 
   void buildCache(final ClasspathCache cache) throws IOException {
-    final ZipFile zipFile = getZipFile();
-    if (zipFile == null) return;
-    final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    ZipFile zipFile = null;
+    try {
+      zipFile = acquireZipFile();
+      if (zipFile == null) return;
+      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-    while (entries.hasMoreElements()) {
-      ZipEntry zipEntry = entries.nextElement();
-      cache.addResourceEntry(zipEntry.getName(), this);
+      while (entries.hasMoreElements()) {
+        ZipEntry zipEntry = entries.nextElement();
+        cache.addResourceEntry(zipEntry.getName(), this);
+      }
     }
-
-    releaseZipFile(zipFile);
-  }
-
-  private void releaseZipFile(final ZipFile zipFile) throws IOException {
-    if (myCanLockJar) {
-      myZipFileRef.release();
-    }
-    else {
-      zipFile.close();
+    finally {
+      releaseZipFile(zipFile);
     }
   }
 
   @Nullable
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
+    ZipFile file = null;
     try {
-      final ZipFile file = getZipFile();
+      file = acquireZipFile();
       if (file == null) return null;
-
-      try {
-        ZipEntry entry = file.getEntry(name);
-        if (entry != null) return new MyResource(entry, new URL(getBaseURL(), name));
-      }
-      finally {
-        releaseZipFile(file);
-      }
+      ZipEntry entry = file.getEntry(name);
+      if (entry != null) return new MyResource(entry, new URL(getBaseURL(), name));
     }
     catch (Exception e) {
       return null;
-    } finally {
-      final long doneFor = myDebugTime ? (System.nanoTime() - started):0;
+    }
+    finally {
+      try {
+        releaseZipFile(file);
+      }
+      catch (IOException ignored) {
+      }
+      final long doneFor = myDebugTime ? System.nanoTime() - started :0;
       if (doneFor > NS_THRESHOLD) {
-        System.out.println((doneFor/1000000) + " ms for jar loader get resource:"+name);
+        System.out.println(doneFor/1000000 + " ms for jar loader get resource:"+name);
       }
     }
 
@@ -156,24 +158,28 @@ class JarLoader extends Loader {
 
     @Nullable
     public InputStream getInputStream() throws IOException {
-      final ZipFile file = getZipFile();
-      if (file == null) return null;
-
-      final boolean[] wasReleased = new boolean[]{false};
+      final boolean[] wasReleased = {false};
+      ZipFile file = null;
 
       try {
+        file = acquireZipFile();
+        if (file == null) {
+          releaseZipFile(file);
+          return null;
+        }
 
         final InputStream inputStream = file.getInputStream(myEntry);
         if (inputStream == null) {
+          releaseZipFile(file);
           return null; // if entry was not found
         }
+        final ZipFile finalFile = file;
         return new FilterInputStream(inputStream) {
           private boolean myClosed = false;
-
           public void close() throws IOException {
             super.close();
             if (!myClosed) {
-              releaseZipFile(file);
+              releaseZipFile(finalFile);
             }
             myClosed = true;
             wasReleased[0] = true;
@@ -182,8 +188,8 @@ class JarLoader extends Loader {
       }
       catch (IOException e) {
         e.printStackTrace();
-        assert !wasReleased[0];
         releaseZipFile(file);
+        assert !wasReleased[0];
         return null;
       }
     }

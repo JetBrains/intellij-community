@@ -33,12 +33,12 @@ import java.io.IOException;
  * @author Kirill Likhodedov
  */
 public class HgTestRepository {
-  @NotNull private final HgAbstractTestCase myTest;
+  @NotNull private final HgTest myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
   private VirtualFile myDir;
   @Nullable private final HgTestRepository myParent; // cloned from
 
-  public HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir) {
+  public HgTestRepository(@NotNull HgTest test, @NotNull TempDirTestFixture dir) {
     this(test, dir, null);
   }
 
@@ -47,7 +47,7 @@ public class HgTestRepository {
    * @param dir    repository root
    * @param parent parent repository where this repository is cloned from, if one exists.
    */
-  public HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir, @Nullable HgTestRepository parent) {
+  public HgTestRepository(@NotNull HgTest test, @NotNull TempDirTestFixture dir, @Nullable HgTestRepository parent) {
     myTest = test;
     myDirFixture = dir;
     myParent = parent;
@@ -55,15 +55,15 @@ public class HgTestRepository {
 
   /**
    * Creates a new Mercurial repository in a new temporary test directory.
-   * @param testCase reference to the test case instance.
+   * @param test reference to the test case instance.
    * @return created repository.
    */
-  public static HgTestRepository create(HgAbstractTestCase testCase) throws Exception {
+  public static HgTestRepository create(HgTest test) throws Exception {
     final TempDirTestFixture dirFixture = createFixtureDir();
     final File repo = new File(dirFixture.getTempDirPath());
-    final ProcessOutput processOutput = testCase.runHg(repo, "init");
+    final ProcessOutput processOutput = test.runHg(repo, "init");
     AbstractVcsTestCase.verify(processOutput);
-    return new HgTestRepository(testCase, dirFixture);
+    return new HgTestRepository(test, dirFixture);
   }
 
   private static TempDirTestFixture createFixtureDir() throws Exception {

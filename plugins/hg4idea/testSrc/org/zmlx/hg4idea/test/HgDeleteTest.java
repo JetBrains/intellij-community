@@ -21,7 +21,7 @@ import java.io.File;
 
 import static org.testng.Assert.fail;
 
-public class HgDeleteTestCase extends HgSingleUserTestCase {
+public class HgDeleteTest extends HgSingleUserTest {
 
   @Test
   public void testDeleteUnmodifiedFile() throws Exception {

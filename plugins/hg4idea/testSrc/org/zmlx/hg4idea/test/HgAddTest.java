@@ -22,7 +22,7 @@ import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
 /**
  * Tests adding files to the Mercurial repository.
  */
-public class HgAddTestCase extends HgSingleUserTestCase {
+public class HgAddTest extends HgSingleUserTest {
 
   @BeforeMethod
   @Override

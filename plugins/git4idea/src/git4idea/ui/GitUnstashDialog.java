@@ -30,7 +30,12 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.commands.*;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitHandlerUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
@@ -166,7 +171,6 @@ public class GitUnstashDialog extends DialogWrapper {
             public void run(@NotNull ProgressIndicator indicator) {
               GitSimpleHandler h = dropHandler(stash.myStash);
               try {
-                h.setSilent(true);
                 h.run();
                 h.unsilence();
               }
