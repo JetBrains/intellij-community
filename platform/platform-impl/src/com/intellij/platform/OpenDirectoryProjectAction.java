@@ -37,7 +37,7 @@ public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
       @Override
       public void consume(final VirtualFile[] files) {
         if (files.length > 0) {
-          PlatformProjectOpenProcessor.getInstance().doOpenProject(files[0], null, false);
+          PlatformProjectOpenProcessor.getInstance().doOpenProject(files[0], project, false);
         }
       }
     });
