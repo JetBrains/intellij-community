@@ -64,7 +64,15 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     int offset = myEditor.getDocument().getTextLength() + 1;
     assertTrue(getSoftWrapModel().getRegisteredSoftWraps().isEmpty());
     type(" thisisalongtokenthatisnotexpectedtobebrokenintopartsduringsoftwrapping");
-    assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(offset));
+    SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
+    
+    // This test fails randomly at TeamCity. The logging below is intended to help analyzing the problem.
+    if (softWrap == null) {
+      fail(String.format(
+        "Expected soft wrap to be located on offset %d. Actual: %s. Document text: %s",
+        offset, getSoftWrapModel().getRegisteredSoftWraps(), myEditor.getDocument().getCharsSequence()
+      ));
+    }
   }
 
   public void testLongLineOfIdSymbolsIsNotSoftWrapped() throws Exception {
