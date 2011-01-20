@@ -767,6 +767,10 @@ public class HighlightUtil {
         if (aClass.isEnum()) {
           isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier));
         }
+
+        if (aClass.getContainingClass() instanceof PsiAnonymousClass) {
+          isAllowed &= !(PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier));
+        }
       }
     }
     else if (modifierOwner instanceof PsiMethod) {

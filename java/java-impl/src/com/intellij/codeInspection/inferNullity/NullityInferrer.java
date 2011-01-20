@@ -569,9 +569,19 @@ public class NullityInferrer {
         }
       }
       else if (parent instanceof PsiReferenceExpression) {
-        if (((PsiReferenceExpression)parent).getQualifierExpression() == expr) {
+        final PsiExpression qualifierExpression = ((PsiReferenceExpression)parent).getQualifierExpression();
+        if (qualifierExpression == expr) {
           registerNotNullAnnotation(parameter);
           return true;
+        } else {
+          PsiElement exprParent = expr.getParent();
+          while (exprParent instanceof PsiTypeCastExpression || exprParent instanceof PsiParenthesizedExpression) {
+            if (qualifierExpression == exprParent) {
+              registerNotNullAnnotation(parameter);
+              return true;
+            }
+            exprParent = exprParent.getParent();
+          }
         }
       }
       else if (parent instanceof PsiAssignmentExpression) {

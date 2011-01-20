@@ -28,7 +28,27 @@ int _tmain(int argc, _TCHAR* argv[])
 		CloseHandle(parent_process);
 	}
 
-	int rc = _texecv(argv [2], argv+2);
+	int child_argc = argc-2;
+	_TCHAR** child_argv = new _TCHAR* [child_argc+1];
+	for(int i = 0; i < child_argc; i++)
+	{
+		if (_tcschr(argv[i+2], ' '))
+		{
+			int len = _tcslen(argv[i+2]) + 3;
+			TCHAR *arg = new TCHAR[len];
+			arg[0] = '\"';
+			_tcscpy_s(arg+1, len, argv[i+2]);
+			_tcscat_s(arg, len, _T("\""));
+			child_argv[i] = arg;
+		}
+		else
+		{
+			child_argv[i] = argv[i+2];			
+		}
+	}
+	child_argv[child_argc] = '\0';
+
+	int rc = _texecv(argv [2], child_argv);
 	if (rc == -1)
 	{
 		_tprintf(_T("Error restarting process: errno is %d"), errno);

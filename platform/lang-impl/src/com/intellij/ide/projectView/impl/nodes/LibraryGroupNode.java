@@ -117,7 +117,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   public boolean canNavigate() {
-    return true;
+    return ProjectSettingsService.getInstance(myProject).canOpenModuleLibrarySettings();
   }
 
   public boolean canNavigateToSource() {

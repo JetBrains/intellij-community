@@ -80,7 +80,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private final boolean myCanMarkSources;
   private final boolean myCanMarkTestSources;
 
-  public CommonContentEntriesEditor(String moduleName, ModuleConfigurationState state, boolean canMarkSources, boolean canMarkTestSources) {
+  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, boolean canMarkSources, boolean canMarkTestSources) {
     super(state);
     myState = state;
     myModuleName = moduleName;
@@ -89,8 +89,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     myModulesProvider = state.getModulesProvider();
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       public void afterRefreshFinish(boolean asynchronous) {
+        if (state.getProject().isDisposed()) {
+          return;
+        }
         final Module module = getModule();
-        if (module == null || module.isDisposed() || module.getProject().isDisposed()) return;
+        if (module == null || module.isDisposed()) return;
         for (final ContentEntryEditor editor : myEntryToEditorMap.values()) {
           editor.update();
         }
