@@ -12,4 +12,12 @@ class Test {
     if (str.substring(0) == null) {
     }
   }
+
+  /**
+   * @param str
+   */
+  void bar(@NotNull String str) {
+    if ((str).substring(0) == null) {
+    }
+  }
 }
