@@ -25,9 +25,15 @@ import org.jetbrains.annotations.NotNull;
 */
 public class CharTailType extends TailType {
   private final char myChar;
+  private final boolean myOverwrite;
 
   public CharTailType(final char aChar) {
+    this(aChar, true);
+  }
+
+  public CharTailType(char aChar, boolean overwrite) {
     myChar = aChar;
+    myOverwrite = overwrite;
   }
 
   @Override
@@ -36,7 +42,7 @@ public class CharTailType extends TailType {
   }
 
   public int processTail(final Editor editor, final int tailOffset) {
-    return insertChar(editor, tailOffset, myChar);
+    return insertChar(editor, tailOffset, myChar, myOverwrite);
   }
 
   public boolean equals(final Object o) {

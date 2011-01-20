@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -93,7 +94,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     qualifyIfNeeded(context, item);
 
 
-    if (tailType == TailType.DOT) {
+    if (tailType == TailType.DOT || context.getCompletionChar() == '.') {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 
@@ -216,7 +217,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   protected TailType getTailType(final char completionChar, LookupItem item){
     switch(completionChar){
-      case '.': return TailType.DOT;
+      case '.': return new CharTailType('.', false);
       case ',': return TailType.COMMA;
       case ';': return TailType.SEMICOLON;
       case '=': return TailType.EQ;
