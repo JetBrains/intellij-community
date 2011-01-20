@@ -14,20 +14,20 @@ import com.jetbrains.python.psi.*;
  */
 public class PyMultiFileResolveTest extends PyResolveTestCase {
   
-  private static void checkInitPyDir(PsiElement elt, String dirname) throws Exception {
+  private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
     PyFile f = (PyFile)elt;
     assertEquals(f.getName(), "__init__.py");
     assertEquals(f.getContainingDirectory().getName(), dirname);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFile);
     assertEquals("ImportedFile.py", ((PyFile) element).getName());
   }
 
-  public void testFromImport() throws Exception {
+  public void testFromImport() {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt
     PsiElement func_elt = results[0].getElement();
@@ -37,7 +37,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
 
-  public void testFromImportStar() throws Exception {
+  public void testFromImportStar() {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import-* stmt
     PsiElement func_elt = results[0].getElement();
@@ -47,54 +47,54 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue("is import?", import_elt instanceof PyStarImportElement);
   }
 
-  public void testFromPackageImport() throws Exception {
+  public void testFromPackageImport() {
     PsiElement element = doResolve();
     checkInitPyDir(element, "mypackage");
   }
 
-  public void testFromPackageImportFile() throws Exception {
+  public void testFromPackageImportFile() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
     assertEquals("myfile.py", ((PyFile) element).getName());
   }
 
-  public void testFromQualifiedPackageImport() throws Exception {
+  public void testFromQualifiedPackageImport() {
     PsiElement element = doResolve();
     checkInitPyDir(element, "mypackage");
   }
 
-  public void testFromQualifiedFileImportClass() throws Exception {
+  public void testFromQualifiedFileImportClass() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
     assertEquals("myfile.py", ((PsiFile) element).getName());
     assertEquals("mypackage", ((PsiFile) element).getContainingDirectory().getName());
   }
 
-  public void testImportAs() throws Exception {
+  public void testImportAs() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
     assertEquals("func", ((PyFunction) element).getName());
   }
 
-  public void testFromQualifiedPackageImportFile() throws Exception {
+  public void testFromQualifiedPackageImportFile() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PsiFile);
     assertEquals("testfile.py", ((PsiFile) element).getName());
   }
 
-  public void testFromInitPyImportFunction() throws Exception {
+  public void testFromInitPyImportFunction() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyFunction);
   }
 
-  public void testTransitiveImport() throws Exception {
+  public void testTransitiveImport() {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt
     PsiElement elt = results[0].getElement();
     assertTrue("is target?", elt instanceof PyTargetExpression);
   }
 
-  public void testResolveInPkg() throws Exception {
+  public void testResolveInPkg() {
     ResolveResult[] results = doMultiResolve();
     assertTrue(results.length == 2); // func and import stmt
     PsiElement func_elt = results[0].getElement();
@@ -104,98 +104,98 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertTrue("is import?", import_elt instanceof PyImportElement);
   }
 
-  public void testCircularImport() throws Exception {
+  public void testCircularImport() {
     PsiElement element = doResolve();
     assertTrue(element == null ? "resolve failed" : element.toString(), element instanceof PyTargetExpression);
   }
 
 
-  public void testRelativeSimple() throws Exception {
+  public void testRelativeSimple() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
     PsiElement value = ((PyTargetExpression)element).findAssignedValue();
     assertEquals("local", ((PyStringLiteralExpression)value).getStringValue());
   }
 
-  public void testRelativeFromInit() throws Exception {
+  public void testRelativeFromInit() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
     PsiElement value = ((PyTargetExpression)element).findAssignedValue();
     assertEquals("unimaginable", ((PyStringLiteralExpression)value).getStringValue());
   }
 
-  public void testRelativeDotsOnly() throws Exception {
+  public void testRelativeDotsOnly() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
     PsiElement value = ((PyTargetExpression)element).findAssignedValue();
     assertEquals("silicate", ((PyStringLiteralExpression)value).getStringValue());
   }
 
-  public void testModuleValueCollision() throws Exception {
+  public void testModuleValueCollision() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyTargetExpression);
     PsiElement value = ((PyTargetExpression)element).findAssignedValue();
     assertEquals("only kidding", ((PyStringLiteralExpression)value).getStringValue());
   }
 
-  public void testModuleClassCollision() throws Exception {
+  public void testModuleClassCollision() {
     PsiElement element = doResolve();
     assertTrue(element instanceof PyClass);
     assertEquals("boo", ((PyClass)element).getName());
   }
 
-  public void testDirectoryVsClass() throws Exception {
+  public void testDirectoryVsClass() {
     assertResolvesTo(PyClass.class, "Context");
   }
 
-  public void testReimportStar() throws Exception {
+  public void testReimportStar() {
     assertResolvesTo(PyClass.class, "CharField");
   }
 
-  public void testStackOverflowOnEmptyFile() throws Exception {
+  public void testStackOverflowOnEmptyFile() {
     assertNull(doResolve());  // make sure we don't have a SOE here
   }
 
-  public void testResolveQualifiedSuperClass() throws Exception {
+  public void testResolveQualifiedSuperClass() {
     assertResolvesTo(PyFunction.class, "copy");
   }
 
-  public void testResolveQualifiedSuperClassInPackage() throws Exception {
+  public void testResolveQualifiedSuperClassInPackage() {
     assertResolvesTo(PyFunction.class, "copy");
   }
 
-  public void testNestedPackage() throws Exception {
+  public void testNestedPackage() {
     assertResolvesTo(PyFile.class, "__init__.py");
   }
 
-  public void testNestedPackageElement() throws Exception {
+  public void testNestedPackageElement() {
     PsiElement element = doResolve();
     element = element.getNavigationElement();
     assertInstanceOf(element, PyFile.class);
     assertEquals("__init__.py", ((PyFile) element).getName());
   }
 
-  public void testImportOsPath() throws Exception {
+  public void testImportOsPath() {
     assertResolvesTo(PyFunction.class, "makedir");
   }
 
-  public void testImportOsPath2() throws Exception {
+  public void testImportOsPath2() {
     assertResolvesTo(PyFunction.class, "do_stuff");
   }
 
-  public void testReimportExported() throws Exception {
+  public void testReimportExported() {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
 
-  public void testFromImportExplicit() throws Exception {
+  public void testFromImportExplicit() {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
 
-  public void testLocalImport() throws Exception {
+  public void testLocalImport() {
     assertResolvesTo(PyFunction.class, "dostuff");
   }
 
-  public void testNameConflict() throws Exception {
+  public void testNameConflict() {
     assertResolvesTo(PyFunction.class, "do_stuff", "/src/pack2.py");
   }
 
@@ -219,7 +219,12 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo", "/src/mygame/display.py");
   }
 
-  private PsiFile prepareFile() throws Exception {
+  public void testImportPrivateNameWithStar() { // PY-2717
+    PsiElement psiElement = doResolve();
+    assertNull(psiElement);
+  }
+
+  private PsiFile prepareFile() {
     String testName = getTestName(true);
     String fileName = getTestName(false) + ".py";
     myFixture.copyDirectoryToProject(testName, "");
@@ -237,7 +242,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   }
 
   @Override
-  protected PsiElement doResolve() throws Exception {
+  protected PsiElement doResolve() {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference) psiFile.findReferenceAt(offset);
@@ -261,7 +266,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     }
   }
 
-  private ResolveResult[] doMultiResolve() throws Exception {
+  private ResolveResult[] doMultiResolve() {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
