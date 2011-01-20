@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -366,7 +365,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
     GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + text + "}");
     file.setContext(context);
-    GrTopLevelDefintion definition = file.getTopLevelDefinitions()[0];
+    GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
     assert definition != null && definition instanceof GrClassDefinition;
     final PsiMethod constructor = ((GrClassDefinition) definition).getMethods()[0];
     assert constructor instanceof GrConstructorImpl;
@@ -386,11 +385,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (context != null) {
       file.setContext(context);
     }
-    GrTopLevelDefintion[] definitions = file.getTopLevelDefinitions();
+    GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
     if (definitions.length != 1) {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
-    GrTopLevelDefintion definition = definitions[0];
+    GrTopLevelDefinition definition = definitions[0];
     if (!(definition instanceof GrMethod)) {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
@@ -406,8 +405,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createGroovyFile(idText, false, null);
   }
 
-  public GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context) {
-    GroovyFileImpl file = createDummyFile(idText, isPhisical);
+  public GroovyFile createGroovyFile(String idText, boolean isPhysical, PsiElement context) {
+    GroovyFileImpl file = createDummyFile(idText, isPhysical);
     file.setContext(context);
     return file;
   }

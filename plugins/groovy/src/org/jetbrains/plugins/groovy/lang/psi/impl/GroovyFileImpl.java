@@ -47,7 +47,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -244,7 +244,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
-      if (!(run instanceof GrTopLevelDefintion) &&
+      if (!(run instanceof GrTopLevelDefinition) &&
           !(run instanceof GrImportStatement) &&
           !run.processDeclarations(processor, state, null, place)) {
         return false;

@@ -51,7 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -351,15 +351,15 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GrTopLevelDefintion findPreviousTopLevelElementByThisElement(PsiElement element) {
+  public static GrTopLevelDefinition findPreviousTopLevelElementByThisElement(PsiElement element) {
     PsiElement parent = element.getParent();
 
-    while (parent != null && !(parent instanceof GrTopLevelDefintion)) {
+    while (parent != null && !(parent instanceof GrTopLevelDefinition)) {
       parent = parent.getParent();
     }
 
     if (parent == null) return null;
-    return ((GrTopLevelDefintion)parent);
+    return ((GrTopLevelDefinition)parent);
   }
 
   public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {

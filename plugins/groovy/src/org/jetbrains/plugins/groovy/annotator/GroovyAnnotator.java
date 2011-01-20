@@ -753,7 +753,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     List<GrMethod> methods = new ArrayList<GrMethod>();
 
-    for (GrTopLevelDefintion topLevelDefinition : file.getTopLevelDefinitions()) {
+    for (GrTopLevelDefinition topLevelDefinition : file.getTopLevelDefinitions()) {
       if (topLevelDefinition instanceof GrMethod) {
         methods.add(((GrMethod)topLevelDefinition));
       }

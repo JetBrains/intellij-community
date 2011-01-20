@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -75,8 +75,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
-  public GrTopLevelDefintion[] getTopLevelDefinitions() {
-    return findChildrenByClass(GrTopLevelDefintion.class);
+  public GrTopLevelDefinition[] getTopLevelDefinitions() {
+    return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
   public GrMethod[] getTopLevelMethods() {
