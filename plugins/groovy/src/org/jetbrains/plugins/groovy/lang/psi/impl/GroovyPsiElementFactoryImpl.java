@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -385,14 +386,15 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (context != null) {
       file.setContext(context);
     }
-    try {
-      GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
-      assert defintion != null && defintion instanceof GrMethod;
-      return ((GrMethod)defintion);
+    GrTopLevelDefintion[] definitions = file.getTopLevelDefinitions();
+    if (definitions.length != 1) {
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
-    catch (Exception error) {
-      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'", error);
+    GrTopLevelDefintion definition = definitions[0];
+    if (!(definition instanceof GrMethod)) {
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
+    return ((GrMethod)definition);
   }
 
   @Override
