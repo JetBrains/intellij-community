@@ -241,9 +241,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public void init() {
     long start = System.currentTimeMillis();
+//    ProfilingUtil.startCPUProfiling();
     super.init();
+//    ProfilingUtil.captureCPUSnapshot();
     long loaded = System.currentTimeMillis();
-    LOG.info("Project components initialized in " + (loaded - start) + " ms");
+    LOG.info(getComponentInterfaces().length + " project components initialized in " + (loaded - start) + " ms");
     getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
     myProjectManagerListener = new MyProjectManagerListener();
