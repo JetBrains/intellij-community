@@ -22,7 +22,6 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 
 /**
@@ -61,7 +60,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     myComponent.setLayout(layout);
     if (text.length() > 0) {
       final JLabel label = new JLabel(text);
-      label.setFont(label.getFont().deriveFont(Font.ITALIC));
+      //label.setFont(label.getFont().deriveFont(Font.ITALIC));
       label.setForeground(UIUtil.getInactiveTextColor());
       label.setBorder(BorderFactory.createEmptyBorder(0,3,0,0));
       myComponent.add(label);

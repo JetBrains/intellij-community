@@ -22,38 +22,38 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author irengrig
  */
 public abstract class MoreAction  extends AnAction implements CustomComponentAction {
+  public static final String LOAD_MORE = "Load more";
   protected final JLabel myLabel;
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
+  private JButton myLoadMoreBtn;
 
   protected MoreAction() {
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);
-    myLabel = new JLabel("Load more");
-    //myLabel.setFont(myLabel.getFont().deriveFont(Font.ITALIC));
-    myLabel.setForeground(UIUtil.getTextFieldForeground());
-    myLabel.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 1));
-    myPanel.add(myLabel);
-    myPanel.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), BorderFactory.createEtchedBorder()));
-    final MouseAdapter mouseAdapter = new MouseAdapter() {
+    myLoadMoreBtn = new JButton(LOAD_MORE);
+    myLoadMoreBtn.setMargin(new Insets(2, 2, 2, 2));
+    myLoadMoreBtn.addActionListener(new ActionListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (myEnabled) {
-          actionPerformed(null);
-        }
+      public void actionPerformed(ActionEvent e) {
+        MoreAction.this.actionPerformed(null);
       }
-    };
-    myPanel.addMouseListener(mouseAdapter);
+    });
+    myPanel.add(myLoadMoreBtn);
+    myLabel = new JLabel("Loading...");
+    myLabel.setForeground(UIUtil.getInactiveTextColor());
+    myLabel.setBorder(BorderFactory.createEmptyBorder(1, 3, 1, 1));
+    myPanel.add(myLabel);
   }
 
   @Override
@@ -63,8 +63,10 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
 
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
-    myLabel.setText(myEnabled ? "Load more" : "Loading...");
-    myLabel.setForeground(myEnabled ? UIUtil.getTextFieldForeground() : UIUtil.getInactiveTextColor());
+    myLoadMoreBtn.setVisible(myEnabled);
+    myLabel.setVisible(! myEnabled);
+    //myLabel.setText(myEnabled ? "Load more" : "Loading...");
+    //myLabel.setForeground(myEnabled ? UIUtil.getTextFieldForeground() : UIUtil.getInactiveTextColor());
   }
 
   @Override

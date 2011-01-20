@@ -27,7 +27,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -48,17 +47,30 @@ public abstract class BasePopupAction extends AnAction implements CustomComponen
     myPanel.setLayout(layout);
     myLabel = new JLabel();
     final JLabel show = new JLabel(labeltext);
-    show.setFont(show.getFont().deriveFont(Font.ITALIC));
     show.setForeground(UIUtil.getInactiveTextColor());
     show.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 1));
-    myLabel.setFont(myLabel.getFont().deriveFont(Font.BOLD));
+    myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
     myPanel.add(show);
     myPanel.add(myLabel);
-    myPanel.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), BorderFactory.createEtchedBorder()));
+    myPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 3));
     final JLabel iconLabel = new JLabel(ARROWS_ICON);
     iconLabel.setBorder(BorderFactory.createEmptyBorder(0,0,0,2));
     myPanel.add(iconLabel, myLabel);
     final MouseAdapter mouseAdapter = new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        super.mouseEntered(e);
+        show.setForeground(UIUtil.getTextAreaForeground());
+        myLabel.setForeground(UIUtil.getTextFieldForeground());
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        super.mouseExited(e);
+        show.setForeground(UIUtil.getInactiveTextColor());
+        myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
+      }
+
       @Override
       public void mouseClicked(MouseEvent e) {
         doAction(e);
