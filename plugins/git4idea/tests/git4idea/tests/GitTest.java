@@ -41,7 +41,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
 
   public static final String GIT_EXECUTABLE_PATH = "IDEA_TEST_GIT_EXECUTABLE_PATH";
 
-  private static final String GIT_EXECUTABLE = (SystemInfo.isWindows ? "git.exe" : "git");
+  private static final String GIT_EXECUTABLE = "git";
   protected GitTestRepository myMainRepo;
   private File myProjectDir;
 

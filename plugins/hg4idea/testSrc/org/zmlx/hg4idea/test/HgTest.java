@@ -21,23 +21,31 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.ui.GuiUtils;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
 import static org.testng.Assert.assertTrue;
 
 /**
  * The ancestor of all hg4idea test cases.
  */
-public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
+public abstract class HgTest extends AbstractVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
+  public static final String HG_EXECUTABLE = "hg";
 
   // some shortcuts to use in tests
   protected static final String AFILE = "a.txt";
@@ -49,6 +57,7 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
 
   protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
   protected HgTestChangeListManager myChangeListManager;
+  private HgTestRepository myMainRepo;
 
   @BeforeMethod
   protected void setUp() throws Exception {
@@ -63,8 +72,45 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
     }
     HgVcs.setTestHgExecutablePath(myClientBinaryPath.getPath());
 
+    myMainRepo = initRepositories();
+    myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          initProject(myProjectDir);
+          activateVCS(HgVcs.VCS_NAME);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    });
+
+    myChangeListManager = new HgTestChangeListManager(myProject);
     myTraceClient = true;
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
+
+  @AfterMethod
+  protected void tearDown() throws Exception {
+    GuiUtils.runOrInvokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          tearDownProject();
+          tearDownRepositories();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    });
+  }
+
+  protected abstract HgTestRepository initRepositories() throws Exception;
+
+  protected abstract void tearDownRepositories() throws Exception;
 
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
     setStandardConfirmation(HgVcs.VCS_NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
@@ -142,7 +188,7 @@ public abstract class HgAbstractTestCase extends AbstractVcsTestCase {
    * @param commandLine command and parameters (e.g. 'status, -m').
    */
   protected ProcessOutput runHg(@Nullable File workingDir, String... commandLine) throws IOException {
-    return runClient(HgVcs.HG_EXECUTABLE_FILE_NAME, null, workingDir, commandLine);
+    return runClient(HG_EXECUTABLE, null, workingDir, commandLine);
   }
 
   protected File fillFile(File aParentDir, String[] filePath, String fileContents) throws FileNotFoundException {

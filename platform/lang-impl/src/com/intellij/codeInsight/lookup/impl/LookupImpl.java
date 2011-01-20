@@ -366,8 +366,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   private void restoreSelection(@Nullable LookupElement oldSelected, boolean choosePreselectedItem, @Nullable String oldInvariant) {
     if (oldSelected != null) {
-      if (oldSelected.isValid() && ListScrollingUtil.selectItem(myList, oldSelected)) {
-        return;
+      if (oldSelected.isValid()) {
+        myList.setSelectedValue(oldSelected, false);
+        if (myList.getSelectedValue() == oldSelected) {
+          return;
+        }
       }
 
       if (oldInvariant != null) {
@@ -380,7 +383,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
 
     if (choosePreselectedItem) {
-      ListScrollingUtil.selectItem(myList, myPreselectedItem);
+      myList.setSelectedValue(myPreselectedItem, false);
     } else {
       selectMostPreferableItem();
     }

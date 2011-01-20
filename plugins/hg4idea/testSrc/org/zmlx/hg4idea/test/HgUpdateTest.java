@@ -17,10 +17,20 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.command.HgChange;
+import org.zmlx.hg4idea.command.HgFileStatusEnum;
+import org.zmlx.hg4idea.command.HgHeadsCommand;
+import org.zmlx.hg4idea.command.HgIncomingCommand;
+import org.zmlx.hg4idea.command.HgParentsCommand;
+import org.zmlx.hg4idea.command.HgPullCommand;
+import org.zmlx.hg4idea.command.HgShowConfigCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.command.HgUpdateCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
 
 import java.io.File;
@@ -29,10 +39,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @SuppressWarnings({"ConstantConditions", "ThrowableResultOfMethodCallIgnored"})
-public class HgUpdateTestCase extends HgFromClonedTestCase {
+public class HgUpdateTest extends HgCollaborativeTest {
+
+  private VirtualFile projectRepoVirtualFile;
+  private File projectRepo;
+  private File remoteRepo;
+
+  @BeforeMethod
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    projectRepoVirtualFile = myRepo.getDir();
+    projectRepo = new File(myRepo.getDir().getPath());
+    remoteRepo = new File(myParentRepo.getDir().getPath());
+  }
 
   @Test
   public void updateKeepsWorkingAfterPull() throws Exception {

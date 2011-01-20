@@ -233,16 +233,18 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   @Override
   public void editorReleased(EditorFactoryEvent event) {
     final EditorEx editor = (EditorEx)event.getEditor();
-    VirtualFile file = editor.getVirtualFile();
+    final Document document = editor.getDocument();
+
+    VirtualFile file = myDocumentManager.getFile(document);
     if (file == null) {
-      file = myDocumentManager.getFile(editor.getDocument());
+      file = editor.getVirtualFile();
     }
     if (file != null && file.isValid()) {
       if (myFileEditorManager.isFileOpen(file)) {
         return;
       }
     }
-    removeDocListener(editor.getDocument(), file);
+    removeDocListener(document, file);
   }
 
   public void removeDocListener(Document document, VirtualFile file) {

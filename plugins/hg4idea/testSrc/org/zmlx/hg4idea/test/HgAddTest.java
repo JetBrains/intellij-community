@@ -12,7 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
@@ -20,7 +22,14 @@ import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
 /**
  * Tests adding files to the Mercurial repository.
  */
-public class HgAddTestCase extends HgSingleUserTestCase {
+public class HgAddTest extends HgSingleUserTest {
+
+  @BeforeMethod
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    doNothingSilently(VcsConfiguration.StandardConfirmation.ADD);
+  }
 
   /**
    * 1. Create a file in the file system.
@@ -29,7 +38,7 @@ public class HgAddTestCase extends HgSingleUserTestCase {
    */
   @Test
   public void fileAddedViaChangeListShouldBeAddedToHg() throws Exception {
-    final VirtualFile vf = myRepo.getDirFixture().createFile(AFILE);
+    final VirtualFile vf = createFileInCommand(AFILE, FILE_CONTENT);
     myChangeListManager.addUnversionedFilesToVcs(vf);
     verifyStatus(added(AFILE));
     myChangeListManager.checkFilesAreInList(true, vf);
@@ -43,6 +52,7 @@ public class HgAddTestCase extends HgSingleUserTestCase {
   @Test
   public void fileAddedViaHgShouldBeAddedInChangeList() throws Exception {
     final VirtualFile vf = createFileInCommand(AFILE, FILE_CONTENT);
+    myRepo.add();
     myChangeListManager.checkFilesAreInList(true, vf);
   }
 
@@ -53,9 +63,9 @@ public class HgAddTestCase extends HgSingleUserTestCase {
    */
   @Test
   public void filesInDirsAddedViaChangeListShouldBeAddedToHg() throws Exception {
-    final VirtualFile afile = myRepo.getDirFixture().createFile(AFILE);
-    final VirtualFile bdir = myRepo.getDirFixture().findOrCreateDir(BDIR);
-    final VirtualFile bfile = myRepo.getDirFixture().createFile(BFILE_PATH);
+    final VirtualFile afile = createFileInCommand(AFILE, FILE_CONTENT);
+    final VirtualFile bdir = createDirInCommand(myWorkingCopyDir, BDIR);
+    final VirtualFile bfile = createFileInCommand(bdir, BFILE, FILE_CONTENT);
     myChangeListManager.addUnversionedFilesToVcs(afile, bdir, bfile);
     verifyStatus(added(AFILE), added(BFILE_PATH));
     myChangeListManager.checkFilesAreInList(true, afile, bfile);
@@ -71,6 +81,7 @@ public class HgAddTestCase extends HgSingleUserTestCase {
     final VirtualFile afile = createFileInCommand(AFILE, FILE_CONTENT);
     final VirtualFile bdir = createDirInCommand(myWorkingCopyDir, BDIR);
     final VirtualFile bfile = createFileInCommand(bdir, BFILE, FILE_CONTENT);
+    myRepo.add();
     verifyStatus(added(AFILE), added(BFILE_PATH));
     myChangeListManager.checkFilesAreInList(true, afile, bfile);
   }

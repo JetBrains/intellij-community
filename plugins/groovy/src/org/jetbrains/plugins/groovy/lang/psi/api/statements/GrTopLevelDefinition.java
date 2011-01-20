@@ -22,6 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 /**
  * author ven
  */
-public interface GrTopLevelDefintion extends GrNamedElement, GrTopStatement {
-  GrTopLevelDefintion[] EMPTY_ARRAY = new GrTopLevelDefintion[0];
+public interface GrTopLevelDefinition extends GrNamedElement, GrTopStatement {
+  GrTopLevelDefinition[] EMPTY_ARRAY = new GrTopLevelDefinition[0];
 }

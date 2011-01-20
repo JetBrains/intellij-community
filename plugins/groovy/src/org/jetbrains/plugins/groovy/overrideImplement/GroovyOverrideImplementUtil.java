@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -138,7 +138,7 @@ public class GroovyOverrideImplementUtil {
           final int caretPosition = editor.getCaretModel().getOffset();
           final PsiElement atCaret = file.findElementAt(caretPosition);
 
-          final GrTopLevelDefintion previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
+          final GrTopLevelDefinition previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(atCaret);
 
           if (atCaret != null && atCaret.getParent() instanceof GrTypeDefinitionBody) {
             if (GroovyTokenTypes.mRCURLY.equals(atCaret.getNode().getElementType())) {

@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 
 import static org.testng.Assert.assertEquals;
 
-public class HgRevertTestCase extends HgSingleUserTestCase {
+public class HgRevertTest extends HgSingleUserTest {
   @Test
   public void testRevertToCurrentRevision() throws Exception {
     fillFile(myProjectDir, new String[]{"file.txt"}, "initial contents");

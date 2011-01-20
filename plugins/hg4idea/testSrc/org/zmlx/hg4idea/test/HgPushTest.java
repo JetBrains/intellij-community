@@ -27,7 +27,7 @@ import static org.testng.Assert.assertNotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class HgPushTestCase extends HgCollaborativeTestCase {
+public class HgPushTest extends HgCollaborativeTest {
 
   /**
    * Tests 'push' using only native commands.
@@ -35,13 +35,13 @@ public class HgPushTestCase extends HgCollaborativeTestCase {
    */
   @Test
   public void testNativeCommands() throws Exception {
-    myRepo.getDirFixture().createFile(AFILE);
+    createFileInCommand(AFILE, "initial content");
     myRepo.add();
     myRepo.commit();
     myRepo.push();
 
     myParentRepo.update();
-    assertNotNull(myParentRepo.getDirFixture().getFile(AFILE));
+    assertNotNull(myParentRepo.getDir().findChild(AFILE));
   }
 
   /**
@@ -53,7 +53,7 @@ public class HgPushTestCase extends HgCollaborativeTestCase {
    */
   @Test
   public void testHgPushCommand() throws Exception {
-   final VirtualFile vf = myRepo.getDirFixture().createFile(AFILE);
+    final VirtualFile vf = createFileInCommand(AFILE, "initial content");
     myChangeListManager.addUnversionedFilesToVcs(vf);
     myChangeListManager.checkFilesAreInList(true, vf);
     myChangeListManager.commitFiles(vf);
@@ -64,7 +64,6 @@ public class HgPushTestCase extends HgCollaborativeTestCase {
     assertFalse(HgErrorUtil.isAbort(result));
 
     myParentRepo.update();
-    assertNotNull(myParentRepo.getDirFixture().getFile(AFILE));
+    assertNotNull(myParentRepo.getDir().findChild(AFILE));
   }
-
 }

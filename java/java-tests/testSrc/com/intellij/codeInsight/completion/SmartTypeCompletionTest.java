@@ -884,25 +884,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals(4, myItems.length);
   }
 
-  public void testInsertTypeParametersOnImporting() throws Throwable {
-    doTest();
-  }
+  public void testInsertTypeParametersOnImporting() throws Throwable { doTest(); }
 
-  public void testEmptyListInReturn() throws Throwable {
-    doItemTest();
-  }
+  public void testEmptyListInReturn() throws Throwable { doItemTest(); }
 
-  public void testEmptyListInReturn2() throws Throwable {
-    doTest();
-  }
+  public void testEmptyListInReturn2() throws Throwable { doTest(); }
 
-  public void testEmptyListInReturnTernary() throws Throwable {
-    doItemTest();
-  }
+  public void testEmptyListInReturnTernary() throws Throwable { doItemTest(); }
 
-  public void testEmptyListBeforeSemicolon() throws Throwable {
-    doItemTest();
-  }
+  public void testEmptyListBeforeSemicolon() throws Throwable { doItemTest(); }
+
+  public void testEmptyListWithCollectionsPrefix() throws Throwable { doItemTest(); }
 
   public void testStaticallyImportedMagicMethod() throws Throwable {
     configureByTestName();

@@ -34,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -338,9 +338,9 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (GrTopLevelDefintion defintion : myFile.getTopLevelDefinitions()) {
-      if (!(defintion instanceof PsiClass)) {
-        if (!ResolveUtil.processElement(processor, defintion, state)) return false;
+    for (GrTopLevelDefinition definition : myFile.getTopLevelDefinitions()) {
+      if (!(definition instanceof PsiClass)) {
+        if (!ResolveUtil.processElement(processor, definition, state)) return false;
       }
     }
 
