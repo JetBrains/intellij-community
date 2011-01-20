@@ -71,9 +71,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
     myUi.getDefaults().initTabDefaults(0, "Debug", null);
-
-    ActionGroup topToolbar = getActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
-    myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
   }
 
   private static ActionGroup getActionGroup(final String id) {
@@ -181,31 +178,35 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       return myRunContentDescriptor;
     }
 
-    DefaultActionGroup group = new DefaultActionGroup();
+    DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     if (runner != null && environment != null) {
       RestartAction restartAction = new RestartAction(executor, runner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
                                                      myRunContentDescriptor, environment);
-      group.add(restartAction);
+      leftToolbar.add(restartAction);
       restartAction.registerShortcut(myUi.getComponent());
     }
 
-    final ActionGroup leftToolbar = getActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP);
-    group.add(leftToolbar);
+    leftToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
 
     //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);
-    group.addSeparator();
+    leftToolbar.addSeparator();
 
-    group.add(myUi.getOptions().getLayoutActions());
+    leftToolbar.add(myUi.getOptions().getLayoutActions());
 
-    group.addSeparator();
+    leftToolbar.addSeparator();
 
-    group.add(PinToolwindowTabAction.getPinAction());
-    group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
-    group.add(new ContextHelpAction(executor.getHelpId()));
+    leftToolbar.add(PinToolwindowTabAction.getPinAction());
+    leftToolbar.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
+    leftToolbar.add(new ContextHelpAction(executor.getHelpId()));
 
-    myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
+    DefaultActionGroup topToolbar = new DefaultActionGroup();
+    topToolbar.addAll(getActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
+
+    session.getDebugProcess().registerAdditionalActions(leftToolbar, topToolbar);
+    myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
+    myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
 
     if (environment != null) {
       final RunProfile runConfiguration = environment.getRunProfile();
@@ -216,11 +217,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     rebuildViews();
 
     return myRunContentDescriptor;
-  }
-
-  private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) group.add(action);
   }
 
   public RunnerLayoutUi getUi() {
