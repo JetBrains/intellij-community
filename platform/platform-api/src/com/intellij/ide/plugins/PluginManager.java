@@ -1148,7 +1148,7 @@ public class PluginManager {
 
     @Override
     public String toString() {
-      return myPluginId + ": " + myCount;
+      return myPluginId + " loaded " + myCount + " classes";
     }
   }
 
