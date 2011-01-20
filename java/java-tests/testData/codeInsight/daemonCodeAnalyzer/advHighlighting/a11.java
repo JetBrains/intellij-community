@@ -102,5 +102,13 @@ public class a {
       public void run() {}
     };
   }
+
+  void withanonymous() {
+    new Object() {
+      <error descr="Modifier 'private' not allowed here">private</error> class RT {}
+      private void method() {}
+      private int myI;
+    };
+  }
 }
 
