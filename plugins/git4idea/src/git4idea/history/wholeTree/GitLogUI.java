@@ -40,7 +40,10 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.ui.SearchFieldAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
@@ -60,7 +63,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 
@@ -569,6 +571,8 @@ public class GitLogUI implements Disposable {
     //myJBTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     final TableColumnModel columnModel = myJBTable.getColumnModel();
     final FontMetrics metrics = myJBTable.getFontMetrics(myJBTable.getFont());
+    final int height = metrics.getHeight();
+    myJBTable.setRowHeight((int) (height * 1.1) + 1);
     final int dateWidth = metrics.stringWidth("Yesterday 00:00:00  " + scrollPane.getVerticalScrollBar().getWidth()) + columnModel.getColumnMargin();
     final int nameWidth = metrics.stringWidth("Somelong W. UsernameToDisplay");
     int widthWas = 0;
@@ -737,32 +741,6 @@ public class GitLogUI implements Disposable {
       myWorker.tryHighlight(text);
     }
   }
-  
-  private static class PositionAndBorderContainer implements TableCellRenderer {
-    private final JPanel myPanel;
-    private final ColoredTableCellRenderer myDelegate;
-    private final DottedBorder myDottedBorder;
-
-    public PositionAndBorderContainer(ColoredTableCellRenderer delegate) {
-      myDelegate = delegate;
-      myPanel = new JPanel(new BorderLayout());
-      myPanel.setBackground(UIUtil.getTableBackground());
-      myDottedBorder = new DottedBorder(UIUtil.getFocusedBoundsColor());
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      myPanel.removeAll();
-      final Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, false, row, column);
-      myPanel.add(component, BorderLayout.SOUTH);
-      if (hasFocus) {
-        myDelegate.setBorder(myDottedBorder);
-      } else {
-        myDelegate.setBorder(null);
-      }
-      return myPanel;
-    }
-  }
 
   private class SimpleRenderer extends ColoredTableCellRenderer {
     private final SimpleTextAttributes myAtt;
@@ -909,73 +887,6 @@ public class GitLogUI implements Disposable {
       }
     }
     return bkgColor;
-  }
-
-  private class MyTestDescriptionRenderer implements TableCellRenderer {
-    private JPanel myJPanel;
-    private final ColoredTableCellRenderer myHeaderRenderer;
-    private final ColoredTableCellRenderer myInnerRenderer;
-    private int myHeight;
-    private final DottedBorder myDottedBorder;
-    private int myLeading;
-
-    private MyTestDescriptionRenderer() {
-      myJPanel = new JPanel(new BorderLayout());
-      myDottedBorder = new DottedBorder(UIUtil.getFocusedBoundsColor());
-      myJPanel.setBackground(UIUtil.getTableBackground());
-      myHeaderRenderer = new SimpleRenderer(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, false);
-      myInnerRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES, null);
-      myInnerRenderer.setBorder(null);
-      myHeight = -1;
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (myHeight == -1) {
-        final Font font = myJBTable.getFont();
-        final FontMetrics fm = myJBTable.getFontMetrics(font);
-        final Graphics g = myJBTable.getGraphics();
-        final Rectangle2D bounds = fm.getStringBounds("AWQ", g);
-        final FontMetrics metrics = g.getFontMetrics();
-        myLeading = metrics.getLeading();
-        myHeight = (int) (metrics.getHeight() * 1.3);
-      }
-      if (! (value instanceof GitCommit)) {
-        myInnerRenderer.getTableCellRendererComponent(table, value.toString(), isSelected, hasFocus, row, column);
-        table.setRowHeight(row, myHeight);
-        return myInnerRenderer;
-      }
-      final GitCommit gitCommit = (GitCommit) value;
-      final CommitI commitAt = myTableModel.getCommitAt(row);
-      if (commitAt != null && commitAt.holdsDecoration()) {
-        myJPanel.removeAll();
-        myJPanel.add(myHeaderRenderer, BorderLayout.NORTH);
-        myJPanel.add(myInnerRenderer, BorderLayout.CENTER);
-        myInnerRenderer.getTableCellRendererComponent(table, gitCommit.getDescription(), isSelected, false, row, column);
-        myHeaderRenderer.getTableCellRendererComponent(table, commitAt.getDecorationString(), false, false, row, column);
-        /*if (hasFocus) {
-          myJPanel.setBorder(myDottedBorder);
-        } else {
-          myJPanel.setBorder(null);
-        }*/
-        if (hasFocus) {
-          myInnerRenderer.setBorder(myDottedBorder);
-        } else {
-          myInnerRenderer.setBorder(null);
-        }
-        table.setRowHeight(row, (int) (2 * myHeight));
-        return myJPanel;
-      } else {
-        myInnerRenderer.getTableCellRendererComponent(table, gitCommit.getDescription(), isSelected, false, row, column);
-        if (hasFocus) {
-          myInnerRenderer.setBorder(myDottedBorder);
-        } else {
-          myInnerRenderer.setBorder(null);
-        }
-        table.setRowHeight(row, myHeight);
-        return myInnerRenderer;
-      }
-    }
   }
 
   private final ColumnInfo<Object, String> AUTHOR = new ColumnInfo<Object, String>("Author") {
