@@ -15,9 +15,9 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /**
- * HgHistoryTestCase tests retrieving file history and specific revisions.
+ * HgHistoryTest tests retrieving file history and specific revisions.
  */
-public class HgHistoryTestCase extends HgSingleUserTestCase {
+public class HgHistoryTest extends HgSingleUserTest {
 
   /**
    * 1. Make two versions of a file (create, add, commit, modify, commit).

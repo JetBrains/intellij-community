@@ -37,7 +37,7 @@ import static org.testng.Assert.fail;
  * All Mercurial operations are performed natively to test only HgMergeProvider functionality.
  * @author Kirill Likhodedov
  */
-public class HgMergeProviderTestCase extends HgCollaborativeTestCase {
+public class HgMergeProviderTest extends HgCollaborativeTest {
 
   private MergeProvider myMergeProvider;
 

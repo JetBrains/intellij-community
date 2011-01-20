@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-public class HgMoveTestCase extends HgSingleUserTestCase {
+public class HgMoveTest extends HgSingleUserTest {
 
   @Test
   public void testMoveNewFile() throws Exception {
