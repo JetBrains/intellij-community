@@ -72,7 +72,12 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
     myUi.getDefaults().initTabDefaults(0, "Debug", null);
 
-    myUi.getOptions().setTopToolbar(createTopToolbar(), ActionPlaces.DEBUGGER_TOOLBAR);
+    ActionGroup topToolbar = getActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
+    myUi.getOptions().setTopToolbar(topToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
+  }
+
+  private static ActionGroup getActionGroup(final String id) {
+    return (ActionGroup)ActionManager.getInstance().getAction(id);
   }
 
   private Content createConsoleContent() {
@@ -94,7 +99,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
 
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
+    ActionGroup group = getActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
     watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
     return watchesContent;
   }
@@ -112,21 +117,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     framesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, framesView.getFramesList());
     return framesContent;
-  }
-
-  private static DefaultActionGroup createTopToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    ActionManager actionManager = ActionManager.getInstance();
-    group.add(actionManager.getAction(XDebuggerActions.SHOW_EXECUTION_POINT));
-    group.addSeparator();
-    group.add(actionManager.getAction(XDebuggerActions.STEP_OVER));
-    group.add(actionManager.getAction(XDebuggerActions.STEP_INTO));
-    group.add(actionManager.getAction(XDebuggerActions.FORCE_STEP_INTO));
-    group.add(actionManager.getAction(XDebuggerActions.STEP_OUT));
-    group.add(actionManager.getAction(XDebuggerActions.RUN_TO_CURSOR));
-    group.addSeparator();
-    group.add(actionManager.getAction(XDebuggerActions.TOGGLE_SORT_VALUES));
-    return group;
   }
 
   public XDebugSessionData saveData() {
@@ -200,16 +190,10 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartAction.registerShortcut(myUi.getComponent());
     }
 
-    addActionToGroup(group, XDebuggerActions.RESUME);
-    addActionToGroup(group, XDebuggerActions.PAUSE);
-    addActionToGroup(group, IdeActions.ACTION_STOP_PROGRAM);
+    final ActionGroup leftToolbar = getActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP);
+    group.add(leftToolbar);
 
-    group.addSeparator();
-
-    addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
-    addActionToGroup(group, XDebuggerActions.MUTE_BREAKPOINTS);
-
-    group.addSeparator();
+    //group.addSeparator();
     //addAction(group, DebuggerActions.EXPORT_THREADS);
     group.addSeparator();
 
