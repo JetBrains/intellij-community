@@ -487,7 +487,9 @@ public class HighlightClassUtil {
           // it is an error if base ctr throws exceptions
           String description = checkDefaultConstructorThrowsException(constructor, handledExceptions);
           if (description != null) {
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
+            final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
+            QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperFix(aClass));
+            return info;
           }
           if (refCountHolder != null) {
             refCountHolder.registerLocallyReferenced(constructor);
