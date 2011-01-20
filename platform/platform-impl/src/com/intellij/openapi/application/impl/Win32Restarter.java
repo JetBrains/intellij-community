@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.sun.jna.Native;
 import com.sun.jna.WString;
@@ -30,6 +31,8 @@ import java.io.IOException;
  * @author yole
  */
 public class Win32Restarter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.Win32Restarter");
+
   private Win32Restarter() {
   }
 
@@ -39,7 +42,9 @@ public class Win32Restarter {
     int pid = kernel32.GetCurrentProcessId();
 
     try {
-      Runtime.getRuntime().exec("restarter " + Integer.toString(pid) + " " + cline, null, new File(PathManager.getBinPath()));
+      String command = "restarter " + Integer.toString(pid) + " " + cline;
+      LOG.info("Restarter command: " + command);
+      Runtime.getRuntime().exec(command, null, new File(PathManager.getBinPath()));
     }
     catch (IOException ex) {
       Messages.showMessageDialog("Restart failed: " + ex.getMessage(), "Restart", Messages.getErrorIcon());

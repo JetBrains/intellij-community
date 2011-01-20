@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -36,6 +37,8 @@ import java.util.List;
  * @author yole
  */
 public class CommandLineProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
+
   private CommandLineProcessor() {
   }
 
@@ -107,6 +110,13 @@ public class CommandLineProcessor {
 
   @Nullable
   public static Project processExternalCommandLine(List<String> args) {
+    if (args.size() > 0) {
+      LOG.info("External command line:");
+      for (String arg : args) {
+        LOG.info(arg);
+      }
+    }
+    LOG.info("-----");
     // TODO[yole] handle AppStarters here?
     Project lastOpenedProject = null;
     int line = -1;
