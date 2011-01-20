@@ -59,16 +59,10 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
-        if (actionEnabled) {
-          setForeground(UIUtil.getActiveTextColor());
-          if (getText() != null) {
-            final Rectangle r = getBounds();
-            final Insets insets = getInsets();
-            ARROWS_ICON.paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
-          }
-        }
-        else {
-          setForeground(UIUtil.getInactiveTextColor());
+        if (actionEnabled && getText() != null) {
+          final Rectangle r = getBounds();
+          final Insets insets = getInsets();
+          ARROWS_ICON.paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
         }
       }
     };
@@ -86,7 +80,6 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public void selectionChanged(FileEditorManagerEvent event) {
     update();
   }
-
 
   @Override
   public void fileOpened(FileEditorManager source, VirtualFile file) {
@@ -179,6 +172,20 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     }
     myComponent.setToolTipText(toolTip);
     myComponent.setText(text);
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (actionEnabled) {
+          myComponent.setForeground(UIUtil.getActiveTextColor());
+        }
+        else {
+          myComponent.setForeground(UIUtil.getInactiveTextColor());
+        }
+      }
+    });
+
+
     myStatusBar.updateWidget(ID());
   }
 
