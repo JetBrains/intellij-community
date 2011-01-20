@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.io.IOException;
 public class HgTestRepository {
   @NotNull private final HgAbstractTestCase myTest;
   @NotNull private final TempDirTestFixture myDirFixture;
+  private VirtualFile myDir;
   @Nullable private final HgTestRepository myParent; // cloned from
 
   public HgTestRepository(@NotNull HgAbstractTestCase test, @NotNull TempDirTestFixture dir) {
@@ -86,8 +88,12 @@ public class HgTestRepository {
     return myDirFixture;
   }
 
+  @Nullable
   public VirtualFile getDir() {
-    return myDirFixture.getFile(".");
+    if (myDir == null) {
+      myDir = VcsUtil.getVirtualFile(myDirFixture.getTempDirPath());
+    }
+    return myDir;
   }
 
   /**
@@ -95,8 +101,8 @@ public class HgTestRepository {
    * @param filename relative path to the file.
    * @return The created file.
    */
-  public VirtualFile createFile(String filename) {
-    return myDirFixture.createFile(filename);
+  public VirtualFile createFile(String filename) throws FileNotFoundException {
+    return createFile(filename, "initial content");
   }
 
   /**
@@ -106,9 +112,7 @@ public class HgTestRepository {
    * @return The created file.
    */
   public VirtualFile createFile(String filename, String content) throws FileNotFoundException {
-    final VirtualFile file = createFile(filename);
-    HgTestUtil.printToFile(file, content);
-    return file;
+    return myTest.createFileInCommand(filename, content);
   }
 
   /**

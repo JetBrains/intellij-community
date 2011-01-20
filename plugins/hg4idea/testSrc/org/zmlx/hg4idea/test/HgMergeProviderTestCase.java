@@ -16,17 +16,21 @@
 package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  * Tests HgMergeProvider for different merge situations.
@@ -141,11 +145,22 @@ public class HgMergeProviderTestCase extends HgCollaborativeTestCase {
     verifyMergeData(childFile, "", "local", "server");
   }
 
-  private void verifyMergeData(VirtualFile file, String expectedBase, String expectedLocal, String expectedServer) throws Exception {
-    final MergeData mergeData = myMergeProvider.loadRevisions(file);
-    assertEquals(mergeData.ORIGINAL, expectedBase);
-    assertEquals(mergeData.CURRENT, expectedLocal);
-    assertEquals(mergeData.LAST, expectedServer);
+  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer) throws Exception {
+    final AtomicReference<MergeData> mergeData = new AtomicReference<MergeData>();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          mergeData.set(myMergeProvider.loadRevisions(file));
+        } catch (VcsException e) {
+          fail("Failed to load revisions", e);
+        }
+      }
+    });
+
+    assertEquals(mergeData.get().ORIGINAL, expectedBase);
+    assertEquals(mergeData.get().CURRENT, expectedLocal);
+    assertEquals(mergeData.get().LAST, expectedServer);
   }
 
   private static void assertEquals(byte[] bytes, String s) {
@@ -162,7 +177,8 @@ public class HgMergeProviderTestCase extends HgCollaborativeTestCase {
     myParentRepo.commit();
     myRepo.pull();
     myRepo.update();
-    return Pair.create(parentFile, myRepo.getDirFixture().getFile("a.txt"));
+    final VirtualFile childFile = myRepo.getDir().findChild("a.txt");
+    return Pair.create(parentFile, childFile);
   }
 
 }

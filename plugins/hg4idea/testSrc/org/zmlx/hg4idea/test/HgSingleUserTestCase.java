@@ -15,12 +15,6 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.VcsConfiguration;
-import org.testng.annotations.BeforeMethod;
-import org.zmlx.hg4idea.HgVcs;
-
-import java.io.File;
-
 /**
  * HgSingleUserTestCase is the parent of test cases for single user workflow.
  * It doesn't include collaborate tasks such as cloning, pushing, etc.
@@ -30,20 +24,16 @@ public class HgSingleUserTestCase extends HgAbstractTestCase {
 
   protected HgTestRepository myRepo;
 
-  @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  protected HgTestRepository initRepositories() throws Exception {
     myRepo = HgTestRepository.create(this);
-    myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
-    
-    initProject(myProjectDir);
-    activateVCS(HgVcs.VCS_NAME);
-    myChangeListManager = new HgTestChangeListManager(myProject);
-
-    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
-    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
+    return myRepo;
   }
+
+  @Override
+  protected void tearDownRepositories() throws Exception {
+    myRepo.getDirFixture().tearDown();
+  }
+
 
 }

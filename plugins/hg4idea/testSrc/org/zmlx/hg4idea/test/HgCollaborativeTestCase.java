@@ -15,12 +15,6 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.vcs.VcsConfiguration;
-import org.testng.annotations.BeforeMethod;
-import org.zmlx.hg4idea.HgVcs;
-
-import java.io.File;
-
 /**
  * The parent of all tests, where at least two repositories communicate with each other.
  * This is used to test collaborative tasks, such as push, pull, merge and others.
@@ -31,22 +25,17 @@ public class HgCollaborativeTestCase extends HgAbstractTestCase {
   protected HgTestRepository myParentRepo;
   protected HgTestRepository myRepo;
 
-  @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  protected HgTestRepository initRepositories() throws Exception {
     myParentRepo = HgTestRepository.create(this);
     myRepo = myParentRepo.cloneRepository();
+    return myRepo;
+  }
 
-    myProjectDir = new File(myRepo.getDirFixture().getTempDirPath());
-
-    initProject(myProjectDir);
-    activateVCS(HgVcs.VCS_NAME);
-    myChangeListManager = new HgTestChangeListManager(myProject);
-
-    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
-    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Override
+  protected void tearDownRepositories() throws Exception {
+    myRepo.getDirFixture().tearDown();
+    myParentRepo.getDirFixture().tearDown();
   }
 
 }
