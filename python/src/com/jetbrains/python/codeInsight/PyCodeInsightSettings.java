@@ -33,7 +33,9 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = false;
   public boolean RENAME_SEARCH_NON_CODE_FOR_VARIABLE = false;
 
-  public boolean DJANGO_AUTOINSERT_TAG_CLOSE = true; 
+  public boolean DJANGO_AUTOINSERT_TAG_CLOSE = true;
+
+  public boolean RENAME_CLASS_CONTAINING_FILE = true;
 
   public PyCodeInsightSettings getState() {
     return this;
