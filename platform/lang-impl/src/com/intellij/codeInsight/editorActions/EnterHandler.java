@@ -154,6 +154,7 @@ public class EnterHandler extends BaseEnterHandler {
     );
     action.setForceIndent(forceIndent);
     action.run();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
   }
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
@@ -336,6 +337,7 @@ public class EnterHandler extends BaseEnterHandler {
         {
           final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           
           if (indentInsideJavadoc != null) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
