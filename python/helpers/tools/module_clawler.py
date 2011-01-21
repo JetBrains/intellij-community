@@ -27,12 +27,11 @@ def get_builtins(version):
   return functions_set
 
 
-def get_supported_functions(version):
+def get_modules(version):
   page = urllib2.urlopen(get_address(version))
   soup = BeautifulSoup(page)
 
   modules = dict()
-
   if version < 2.6:
     for dl in soup('dt'):
       a = dl.findChild('a')
@@ -45,35 +44,70 @@ def get_supported_functions(version):
       tt = dl.findChild('tt')
       if tt is not None and a is not None:
         modules[str(tt.text)] = a['href']
-
-  unsupported = set()
-
   page.close()
+  return modules
+
+all_modules = set()
+
+
+def get_functions_from_page(link, module):
+  functions = set()
+  page = urllib2.urlopen(link)
+  soup = BeautifulSoup(page)
+  for dl in soup('dl'):
+    if version < 2.6:
+      child = dl.findChild('tt')
+      if child and child.get('class') == 'function':
+        tt = child
+      else:
+        tt = None
+    else:
+      if dl.get('class') == 'function':
+        tt = dl.findChild('tt', {'class':"descname"})
+      else:
+        tt = None
+    if tt is not None:
+      func = str(tt.text)
+      if func.startswith(module[0] + "."):
+        functions.add(func)
+      else:
+        functions.add(module[0] + "." + func)
+  page.close()
+  return functions
+
+def get_subsections(link):
+  links = list()
+  prefix = link[:link.rfind('/')+1]
+  page = urllib2.urlopen(link)
+  soup = BeautifulSoup(page)
+  child_link = soup.find("ul", {'class':"ChildLinks"})
+  if child_link:
+    children = child_link.findChildren('a')
+    for a in children:
+      links.append(prefix+a['href'])
+    page.close()
+
+  return links
+
+def get_supported_functions(version):
+  global all_modules
+  modules = get_modules(version)
+  all_modules = all_modules.union(modules.keys())
+
+  supported = set()
+
   for module in modules.items():
     link = "http://docs.python.org/release/" + str(version) + "/" + module[1]
-    page = urllib2.urlopen(link)
-    soup = BeautifulSoup(page)
-    for dl in soup('dl'):
-      if version < 2.6:
-        child = dl.findChild('tt')
-        if child and child.get('class') == 'function':
-          tt = child
-        else:
-          tt = None
-      else:
-        if dl.get('class') == 'function':
-          tt = dl.findChild('tt', {'class':"descname"})
-        else:
-          tt = None
-      if tt is not None:
-        func = str(tt.text)
-        if func.startswith(module[0] + "."):
-          unsupported.add(func)
-        else:
-          unsupported.add(module[0] + "." + func)
-    page.close()
-  return unsupported
-    
+    functions = get_functions_from_page(link, module)
+    supported = supported.union(functions)
+
+    links = get_subsections(link)
+    for l in links:
+      functions = get_functions_from_page(l, module)
+      supported = supported.union(functions)
+  return supported
+
+
 doc = minidom.Document()
 all_versions = (2.4, 2.5, 2.6, 2.7, 3.0, 3.1)
 
@@ -94,11 +128,20 @@ for version in all_versions:
   supported = supported.union(builtins)
   unsupported = all_functions.difference(supported)
 
+  unsupported_mods = all_modules.difference(get_modules(version))
+
   for function in unsupported:
     elem = doc.createElement("func")
     text = doc.createTextNode(function)
     elem.appendChild(text)
     version_elem.appendChild(elem)
+
+  for module in unsupported_mods:
+    elem = doc.createElement("module")
+    text = doc.createTextNode(module)
+    elem.appendChild(text)
+    version_elem.appendChild(elem)
+
   root_elem.appendChild(version_elem)
 doc.appendChild(root_elem)
 
