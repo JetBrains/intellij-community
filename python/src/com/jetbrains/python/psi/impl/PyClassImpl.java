@@ -10,12 +10,10 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -303,19 +301,29 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyFunction[] getMethods() {
+    return getClassChildren(PyElementTypes.FUNCTION_DECLARATION, PyFunction.ARRAY_FACTORY);
+  }
+
+  @Override
+  public PyClass[] getNestedClasses() {
+    return getClassChildren(PyElementTypes.CLASS_DECLARATION, PyClass.ARRAY_FACTORY);
+  }
+
+  private <T extends PsiElement> T[] getClassChildren(IElementType elementType, ArrayFactory<T> factory) {
     // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
-      return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, PyFunction.EMPTY_ARRAY);
+      return classStub.getChildrenByType(elementType, factory);
     }
-    List<PyFunction> result = new ArrayList<PyFunction>();
+    List<T> result = new ArrayList<T>();
     final PyStatementList statementList = getStatementList();
     for (PsiElement element : statementList.getChildren()) {
-      if (element instanceof PyFunction) {
-        result.add((PyFunction) element);
+      if (element.getNode().getElementType() == elementType) {
+        //noinspection unchecked
+        result.add((T) element);
       }
     }
-    return result.toArray(new PyFunction[result.size()]);
+    return result.toArray(factory.create(result.size()));
   }
 
   private static class NameFinder<T extends PyElement> implements Processor<T> {
@@ -347,6 +355,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
     visitMethods(proc, inherited);
+    return proc.getResult();
+  }
+
+  @Nullable
+  @Override
+  public PyClass findNestedClass(String name, boolean inherited) {
+    if (name == null) return null;
+    NameFinder<PyClass> proc = new NameFinder<PyClass>(name);
+    visitNestedClasses(proc, inherited);
     return proc.getResult();
   }
 
@@ -609,6 +626,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (inherited) {
       for (PyClass ancestor : iterateAncestors()) {
         if (!ancestor.visitMethods(processor, false)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public boolean visitNestedClasses(Processor<PyClass> processor, boolean inherited) {
+    PyClass[] nestedClasses = getNestedClasses();
+    for (PyClass nestedClass : nestedClasses) {
+      if (!processor.process(nestedClass)) return false;
+    }
+    if (inherited) {
+      for (PyClass ancestor : iterateAncestors()) {
+        if (!((PyClassImpl) ancestor).visitNestedClasses(processor, false)) {
           return false;
         }
       }

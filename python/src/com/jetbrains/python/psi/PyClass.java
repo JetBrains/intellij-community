@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -19,6 +20,13 @@ import java.util.List;
 public interface PyClass extends
   PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>, ScopeOwner, PyDecoratable
 {
+  ArrayFactory<PyClass> ARRAY_FACTORY = new ArrayFactory<PyClass>() {
+    @Override
+    public PyClass[] create(int count) {
+      return new PyClass[count];
+    }
+  };
+
   @Nullable
   ASTNode getNameNode();
 
@@ -81,6 +89,11 @@ public interface PyClass extends
   PyTargetExpression findClassAttribute(String name, boolean inherited);
 
   List<PyTargetExpression> getInstanceAttributes();
+
+  PyClass[] getNestedClasses();
+
+  @Nullable
+  PyClass findNestedClass(String name, boolean inherited);
 
   /**
    * @return true if the class is new-style and descends from 'object'.

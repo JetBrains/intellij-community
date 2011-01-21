@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class RenamePyVariableProcessor extends RenamePsiElementProcessor {
+public class RenamePyVariableProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    // extension ordering in python-plugin-common.xml ensures that classes and variables are handled by their own processors
+    // extension ordering in python-plugin-common.xml ensures that classes and functions are handled by their own processors
     return element instanceof PyElement;
   }
 

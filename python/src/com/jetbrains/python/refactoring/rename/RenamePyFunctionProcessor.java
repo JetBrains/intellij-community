@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class RenamePyFunctionProcessor extends RenamePsiElementProcessor {
+public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFunction;
