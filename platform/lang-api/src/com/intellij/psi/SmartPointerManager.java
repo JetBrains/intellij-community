@@ -44,5 +44,4 @@ public abstract class SmartPointerManager {
    * @return the smart pointer instance.
    */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element);
-  public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
 }
