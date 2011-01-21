@@ -20,13 +20,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +39,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class FocusTrackback {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.FocusTrackback");
-
   private Window myParentWindow;
 
   private Window myRoot;
@@ -66,7 +61,7 @@ public class FocusTrackback {
   private boolean myForcedRestore;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
-    this(requestor, (parent instanceof Window) ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
+    this(requestor, parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
   }
 
   public FocusTrackback(@NotNull Object requestor, Window parent, boolean mustBeShown) {
@@ -281,7 +276,7 @@ public class FocusTrackback {
 
     final FocusTrackback[] all = stack.toArray(new FocusTrackback[stack.size()]);
     for (FocusTrackback each : all) {
-      if (each == null || (each != this && each.isConsumed())) {
+      if (each == null || each != this && each.isConsumed()) {
         stack.remove(each);
       }
     }

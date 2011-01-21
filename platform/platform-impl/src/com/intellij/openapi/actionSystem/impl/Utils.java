@@ -32,7 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -71,22 +72,22 @@ public class Utils{
   }
 
   /**
-   * @param actionManager manager
    * @param list this list contains expanded actions.
+   * @param actionManager manager
    */
   public static void expandActionGroup(@NotNull ActionGroup group,
-                                       ArrayList<AnAction> list,
+                                       List<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        String place, ActionManager actionManager){
     expandActionGroup(group, list, presentationFactory, context, place, actionManager, false);
   }
   /**
-   * @param actionManager manager
    * @param list this list contains expanded actions.
+   * @param actionManager manager
    */
   public static void expandActionGroup(@NotNull ActionGroup group,
-                                       ArrayList<AnAction> list,
+                                       List<AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        String place, ActionManager actionManager,
@@ -118,7 +119,7 @@ public class Utils{
       AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0);
       e1.setInjectedContext(child.isInInjectedContext());
 
-      if ((transparentOnly && child.isTransparentUpdate()) || !transparentOnly) {
+      if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
         if (!doUpdate(child, e1, presentation)) continue;
       }
 

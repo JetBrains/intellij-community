@@ -90,8 +90,7 @@ public abstract class FindUsagesHandler {
     final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<PsiReference>() {
       public boolean processInReadAction(final PsiReference ref) {
         TextRange rangeInElement = ref.getRangeInElement();
-        return processor
-          .process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+        return processor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
       }
     };
 

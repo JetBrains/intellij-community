@@ -58,7 +58,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   private final FileEditorManager myFileEditorManager;
   private final Project myProject;
   private final TemplateManager myTemplateManager;
-  private PsiDocumentManager myPsiDocumentManager;
+  private final PsiDocumentManager myPsiDocumentManager;
 
   public ChangeSignatureGestureDetector(final PsiDocumentManager psiDocumentManager,
                                         final FileDocumentManager documentManager,

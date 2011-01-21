@@ -105,7 +105,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
     public ClassUsageGroup(PsiClass aClass) {
       myQName = aClass.getQualifiedName();
       myText = createText(aClass);
-      myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createLazyPointer(aClass);
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(aClass.getProject());
+      myClassPointer = smartPointerManager.createLazyPointer(aClass);
       update();
     }
 
