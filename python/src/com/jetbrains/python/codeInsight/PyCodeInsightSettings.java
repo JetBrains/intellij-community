@@ -37,6 +37,7 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
 
   public boolean RENAME_CLASS_CONTAINING_FILE = true;
   public boolean RENAME_CLASS_INHERITORS = true;
+  public boolean RENAME_PARAMETERS_IN_HIERARCHY = true;
 
   public PyCodeInsightSettings getState() {
     return this;
