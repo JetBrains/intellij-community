@@ -5,9 +5,9 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class MarkDirtyTest extends CompilerTestCase{
@@ -37,7 +37,7 @@ public class MarkDirtyTest extends CompilerTestCase{
           //assertTrue("Server class should not be marked as dirty", !info.isFileDirty(serverSource));
           //assertTrue("Client class should be marked as dirty", info.isFileDirty(clientSource));
         }
-      }, false);
+      });
     }
   }
 }

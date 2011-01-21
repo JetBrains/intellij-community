@@ -105,7 +105,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         if (forceCompile) {
           assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
-          compilerManager.compile(scope, callback, false);
+          compilerManager.compile(scope, callback);
         }
         else {
           compilerManager.make(scope, filter, callback);

@@ -38,7 +38,7 @@ public class CompilePackageTest extends CompilerTestCase{
 
       CompilerManagerImpl.clearPathsToCompile();
 
-      compileManager.compile(new VirtualFile[] {packageA}, /*packageA, null, null,*/ notification, false);
+      compileManager.compile(new VirtualFile[] {packageA}, /*packageA, null, null,*/ notification);
     }
   }
 
