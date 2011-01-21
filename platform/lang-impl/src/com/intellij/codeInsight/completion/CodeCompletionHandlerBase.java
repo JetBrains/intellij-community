@@ -491,7 +491,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
       } else {
-        LOG.assertTrue(indicator.isZombie(), indicator);
+        //LOG.assertTrue(indicator.isZombie(), indicator);
       }
     }
   }
