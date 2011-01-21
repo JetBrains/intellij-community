@@ -20,6 +20,9 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.formatting.IndentInfo;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -40,7 +43,8 @@ public class JDParamListOwnerComment extends JDComment{
                    myFormatter.getSettings().JD_ALIGN_PARAM_COMMENTS,
                    myFormatter.getSettings().JD_MIN_PARM_NAME_LENGTH,
                    myFormatter.getSettings().JD_MAX_PARM_NAME_LENGTH,
-                   myFormatter.getSettings().JD_KEEP_EMPTY_PARAMETER
+                   myFormatter.getSettings().JD_KEEP_EMPTY_PARAMETER,
+                   myFormatter.getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE
       );
 
       int size = sb.length() - before;
@@ -88,14 +92,14 @@ public class JDParamListOwnerComment extends JDComment{
    * Generates parameters or exceptions
    *
    */
-  protected void generateList(String prefix, StringBuffer sb, ArrayList<NameDesc> list, String tag,
-                            boolean align_comments,
-                            int min_name_length,
-                            int max_name_length,
-                            boolean generate_empty_tags
-                            ) {
+  protected void generateList(String prefix, StringBuffer sb, ArrayList<NameDesc> list, String tag, boolean align_comments,
+                            int min_name_length, int max_name_length, boolean generate_empty_tags, boolean wrapDescription)
+  {
+    CodeStyleSettings settings = myFormatter.getSettings();
+    CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
+    String continuationIndent = new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
     int max = 0;
-    if (align_comments) {
+    if (align_comments && ! wrapDescription) {
       for (Object aList : list) {
         NameDesc nd = (NameDesc)aList;
         int l = nd.name.length();
@@ -112,10 +116,16 @@ public class JDParamListOwnerComment extends JDComment{
     int k = max + 1 + tag.length();
     for (int i = 0; i < k; i++) fill.append(' ');
 
+    String wrapParametersPrefix = prefix + continuationIndent;
+    
     for (Object aList1 : list) {
       NameDesc nd = (NameDesc)aList1;
       if (isNull(nd.desc) && !generate_empty_tags) continue;
-      if (align_comments) {
+      if (wrapDescription && !isNull(nd.desc)) {
+        sb.append(prefix).append(tag).append(nd.name).append("\n");
+        sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, wrapParametersPrefix));
+      }
+      else if (align_comments) {
         sb.append(prefix);
         sb.append(tag);
         sb.append(nd.name);

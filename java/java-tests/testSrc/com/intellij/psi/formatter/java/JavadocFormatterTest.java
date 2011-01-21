@@ -120,4 +120,37 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void testWrappedParameterDescription() throws Exception {
+    // Inspired by IDEA-13072
+    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().JD_PARAM_DESCRIPTION_ON_NEW_LINE = true;
+    doClassTest(
+      "/**\n" +
+      " * test description\n" +
+      " * @param first first description\n" +
+      " * @param second\n" +
+      " * @param third third\n" +
+      " *              description\n" +
+      " * @param forth\n" +
+      " *          forth description\n" +
+      " */\n" +
+      "void test(int first, int second, int third, int forth) {\n" +
+      "}",
+      "/**\n" +
+      " * test description\n" +
+      " *\n" +
+      " * @param first\n" +
+      " *         first description\n" +
+      " * @param second\n" +
+      " * @param third\n" +
+      " *         third description\n" +
+      " * @param forth\n" +
+      " *         forth description\n" +
+      " */\n" +
+      "void test(int first, int second, int third, int forth) {\n" +
+      "}"
+    );
+  }
 }
