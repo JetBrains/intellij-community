@@ -22,6 +22,8 @@ binlog
 bool
 btree
 calc
+cancelable
+cancellable
 capath
 captcha
 ccflags
