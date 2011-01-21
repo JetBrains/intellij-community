@@ -308,8 +308,11 @@
       <keyboard-shortcut first-keystroke="meta M"/>
     </action>
 
+    <action id="Vcs.ShowMessageHistory">
+      <keyboard-shortcut first-keystroke="control M"/>
+    </action>
+
     <action id="EditorScrollToCenter"/> <!-- Disables meta M -->
-    <action id="Vcs.ShowMessageHistory"/> <!-- Disables meta M -->
 
     <action id="QuickChangeScheme">
       <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
