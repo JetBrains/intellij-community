@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from pycharm.fix_getpass import fixGetpass
-from pycharm import django_settings
+from pycharm import django_test_settings
 from django.core.management import execute_manager
 
 if __name__ == "__main__":
