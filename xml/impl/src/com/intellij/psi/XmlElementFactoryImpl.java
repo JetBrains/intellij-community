@@ -21,6 +21,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
@@ -56,7 +57,16 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
 
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, String value) throws IncorrectOperationException {
-    final XmlDocument document = createXmlDocument("<tag " + name + "=\"" + value + "\"/>", "dummy.xml");
+    final char quoteChar;
+    if (!value.contains("\"")) {
+      quoteChar = '"';
+    } else if (!value.contains("'")) {
+      quoteChar = '\'';
+    } else {
+      quoteChar = '"';
+      value = StringUtil.replace(value, "\"", "&quot;");
+    }
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml");
     XmlTag tag = document.getRootTag();
     assert tag != null;
     return tag.getAttributes()[0];
