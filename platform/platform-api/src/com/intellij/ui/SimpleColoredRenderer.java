@@ -43,9 +43,16 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
     myCellState = cellState;
   }
 
+  protected boolean shouldPaintBackground() {
+    return true;
+  }
+
   protected void paintComponent(Graphics g) {
-    g.setColor(getBackground());
-    g.fillRect(0, 0, getWidth(), getHeight());
+    if (shouldPaintBackground()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
+
     super.paintComponent(g);
   }
 }

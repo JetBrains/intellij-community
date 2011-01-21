@@ -17,18 +17,24 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleColoredRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * User: spLeaner
@@ -36,39 +42,65 @@ import java.util.Enumeration;
 public class TreeComboBox extends JComboBox {
   final static int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
+  private String myDefaultText;
 
   public TreeComboBox(@NotNull final TreeModel model) {
+    this(model, true);
+  }
+
+  public TreeComboBox(@NotNull final TreeModel model, final boolean showRootNode) {
+    this(model, showRootNode, null);
+  }
+
+  public TreeComboBox(@NotNull final TreeModel model, final boolean showRootNode, final String defaultText) {
     myTreeModel = model;
-    setModel(new TreeModelWrapper(myTreeModel));
-    setRenderer(new TreeListCellRenderer(this, model));
+    myDefaultText = defaultText;
+    setModel(new TreeModelWrapper(myTreeModel, showRootNode));
+    setRenderer(new TreeListCellRenderer(this, showRootNode, defaultText));
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
+  }
+
+  public void setTreeModel(@NotNull final TreeModel model, final boolean showRootNode) {
+    myTreeModel = model;
+    setModel(new TreeModelWrapper(model, showRootNode));
   }
 
   public TreeModel getTreeModel() {
     return myTreeModel;
   }
 
-  private static class TreeListCellRenderer extends JLabel implements ListCellRenderer {
+  private static class TreeListCellRenderer extends SimpleColoredRenderer implements ListCellRenderer {
     private static final Border SELECTION_PAINTER = (Border)UIManager.get("MenuItem.selectedBackgroundPainter");
 
-    private TreeModel myTreeModel;
     private boolean mySelected;
     private boolean myInList;
     private JComboBox myComboBox;
     private boolean myChecked;
     private boolean myEditable;
-    private int myLevel = 0;
-    private JTree myTree;
     private boolean myUnderAquaLookAndFeel;
+    private boolean myShowRootNode;
+    private String myDefaultText;
 
-    private TreeListCellRenderer(@NotNull final JComboBox comboBox, @NotNull final TreeModel model) {
+    private TreeListCellRenderer(@NotNull final JComboBox comboBox, final boolean showRootNode, @Nullable final String defaultText) {
       myComboBox = comboBox;
-      myTreeModel = model;
-      myTree = new JTree(myTreeModel);
-      TreeUtil.expandAll(myTree);
-      myTree.setRootVisible(true);
+      myShowRootNode = showRootNode;
+      myDefaultText = defaultText;
       myUnderAquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
       setOpaque(!myUnderAquaLookAndFeel);
+    }
+
+    private static Icon getValueIcon(final Object value, final int index) {
+      if (value instanceof CustomPresentation) {
+        return ((CustomPresentation)value).getIcon(index, Iconable.ICON_FLAG_OPEN);
+      } else if (value instanceof Iconable) {
+        return ((Iconable)value).getIcon(Iconable.ICON_FLAG_OPEN);
+      }
+
+      return null;
+    }
+
+    private TreeModelWrapper getTreeModelWrapper() {
+      return ((TreeModelWrapper)myComboBox.getModel());
     }
 
     @Override
@@ -77,6 +109,8 @@ public class TreeComboBox extends JComboBox {
                                                   final int index,
                                                   final boolean isSelected,
                                                   final boolean cellHasFocus) {
+      clear();
+
       myInList = index >= 0;
       if (index >= 0) {
         Object obj1 = myComboBox.getItemAt(index);
@@ -86,25 +120,40 @@ public class TreeComboBox extends JComboBox {
         myChecked = false;
       }
 
-      if (value instanceof Iconable) {
-        setIcon(((Iconable)value).getIcon(Iconable.ICON_FLAG_OPEN));
+      int indent = 0;
+      if (myInList) {
+        final TreePath path = getTreeModelWrapper().getPathForRow(index);
+        indent = path == null ? 0 : (path.getPathCount() - 1 - (myShowRootNode ? 0 : 1)) * INDENT;
       }
 
-      if (myInList) {
-        final TreePath path = myTree.getPathForRow(index);
-        myLevel = path == null ? 0 : path.getPathCount() - 1;
-      } else {
-        myLevel = 0;
-      }
+      setIpad(new Insets(1, !myInList || myEditable ? (myUnderAquaLookAndFeel ? 0 : 5)  : (myUnderAquaLookAndFeel ? 23 : 5) + indent, 1, 5));
+
+      setIcon(getValueIcon(value, index));
+      setIconOpaque(!myUnderAquaLookAndFeel);
 
       myEditable = myComboBox.isEditable();
 
       setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       if (!myUnderAquaLookAndFeel) setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
 
-      setText(value.toString());
+      if (value instanceof CustomPresentation) {
+        ((CustomPresentation)value).append(this, index);
+      } else {
+        if (value == null) {
+          if (index == -1 && myDefaultText != null) {
+            append(myDefaultText, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          } else {
+            append("");
+          }
+        } else {
+          append(value.toString());
+        }
+      }
+
+
       setSelected(isSelected);
       setFont(list.getFont());
+
       return this;
     }
 
@@ -112,13 +161,9 @@ public class TreeComboBox extends JComboBox {
       mySelected = selected;
     }
 
-    public Insets getInsets(Insets insets) {
-      if (insets == null) insets = new Insets(0, 0, 0, 0);
-      insets.top = 1;
-      insets.bottom = 1;
-      insets.right = 5;
-      insets.left = !myInList || myEditable ? (myUnderAquaLookAndFeel ? 0 : 5)  : (myUnderAquaLookAndFeel ? 23 : 5) + (INDENT * myLevel);
-      return insets;
+    @Override
+    protected boolean shouldPaintBackground() {
+      return !myUnderAquaLookAndFeel;
     }
 
     @Override
@@ -142,9 +187,13 @@ public class TreeComboBox extends JComboBox {
   private static class TreeModelWrapper extends AbstractListModel implements ComboBoxModel {
     private TreeModel myTreeModel;
     private Object mySelectedItem;
+    private boolean myShowRootNode;
+    private List<TreeNode> myTreeModelAsList = new ArrayList<TreeNode>();
 
-    private TreeModelWrapper(@NotNull final TreeModel treeModel) {
+    private TreeModelWrapper(@NotNull final TreeModel treeModel, final boolean showRootNode) {
       myTreeModel = treeModel;
+      myShowRootNode = showRootNode;
+      accumulateChildren((TreeNode) treeModel.getRoot(), myTreeModelAsList, showRootNode);
     }
 
     public TreeModel getTreeModel() {
@@ -159,6 +208,26 @@ public class TreeComboBox extends JComboBox {
       }
     }
 
+    private static void accumulateChildren(@NotNull final TreeNode node, @NotNull final List<TreeNode> list, final boolean showRoot) {
+      if (showRoot || node.getParent() != null) list.add(node);
+
+      final int count = node.getChildCount();
+      for (int i = 0; i < count; i++) {
+        accumulateChildren(node.getChildAt(i), list, showRoot);
+      }
+    }
+
+    private TreePath getPathForRow(final int row) {
+      TreeNode node = myTreeModelAsList.get(row);
+      final List<TreeNode> path = new ArrayList<TreeNode>();
+      while (node != null) {
+        path.add(0, node);
+        node = node.getParent();
+      }
+
+      return new TreePath(path.toArray(new TreeNode[path.size()]));
+    }
+
     @Override
     public Object getSelectedItem() {
       return mySelectedItem;
@@ -171,14 +240,17 @@ public class TreeComboBox extends JComboBox {
         e.nextElement();
         count++;
       }
-      return count;
+
+      return count - (myShowRootNode ? 0 : 1);
     }
 
     public Object getElementAt(int index) {
       Enumeration e = new PreorderEnumeration(myTreeModel);
+      if (!myShowRootNode) index++;
       for (int i = 0; i < index; i++) {
         e.nextElement();
       }
+
       return e.nextElement();
     }
   }
@@ -230,4 +302,10 @@ public class TreeComboBox extends JComboBox {
       return node;
     }
   }
+
+  public interface CustomPresentation {
+    void append(SimpleColoredComponent component, int index);
+    Icon getIcon(int index, int flags);
+  }
+
 }
