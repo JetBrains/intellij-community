@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import junit.framework.Assert;
 
@@ -33,6 +34,7 @@ public class EditorListenerTracker {
   private final boolean myDefaultProjectInitialized;
 
   public EditorListenerTracker() {
+    EncodingManager.getInstance(); //adds listeners
     EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
     before = multicaster.getListeners();
     myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
