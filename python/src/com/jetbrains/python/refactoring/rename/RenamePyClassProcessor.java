@@ -3,7 +3,6 @@ package com.jetbrains.python.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -18,7 +17,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class RenamePyClassProcessor extends RenamePsiElementProcessor {
+public class RenamePyClassProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyClass;

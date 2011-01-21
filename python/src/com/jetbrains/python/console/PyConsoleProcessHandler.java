@@ -32,6 +32,8 @@ public class PyConsoleProcessHandler extends ColoredProcessHandler {
   protected void textAvailable(final String text, final Key attributes) {
     final String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
     PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
+    // scroll to end
+    myLanguageConsole.queueUiUpdate(true);
   }
 
   private String processPrompts(final LanguageConsoleImpl languageConsole, String string) {

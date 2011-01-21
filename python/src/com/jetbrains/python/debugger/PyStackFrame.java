@@ -13,6 +13,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +84,7 @@ public class PyStackFrame extends XStackFrame {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          final List<PyDebugValue> values = myDebugProcess.loadFrame();
+          final XValueChildrenList values = myDebugProcess.loadFrame();
           if (!node.isObsolete()) {
             node.addChildren(values, true);
           }

@@ -51,19 +51,19 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
-      final List<? extends PsiElement> member_of_qualifier = qualifierType.resolveMember(referencedName, ctx, myContext);
-      if (member_of_qualifier == null) {
+      final List<? extends PsiElement> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext);
+      if (membersOfQualifier == null) {
         return ret; // qualifier is positive that such name cannot exist in it
       }
-      for (PsiElement resolved : member_of_qualifier) {
+      int rate = RatedResolveResult.RATE_NORMAL;
+      for (PsiElement resolved : membersOfQualifier) {
         PsiElement ref_elt = PyUtil.turnDirIntoInit(resolved);
-        if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
-        // NOTE: maybe rate non-first results lower.
+        if (ref_elt != null) ret.poke(ref_elt, rate);
+        rate = RatedResolveResult.RATE_LOW;
       }
-      // resolve within the type proper
-      addResolveMember(ret, referencedName, qualifierType, ctx);
+
       // enrich the type info with any fields assigned nearby
-      if (qualifier instanceof PyQualifiedExpression && !ret.isEmpty()) {
+      if (qualifier instanceof PyQualifiedExpression && ret.isEmpty()) {
         if (addAssignedAttributes(ret, referencedName, qualifier)) return ret;
       }
     }
@@ -80,17 +80,6 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       addDocReference(ret, qualifier, qualifierType);
     }
     return ret;
-  }
-
-  private void addResolveMember(ResultList ret, String referencedName, PyType qualifierType, AccessDirection context) {
-    final List<? extends PsiElement> members = qualifierType.resolveMember(referencedName, context, myContext);
-    if (members != null) {
-      int rate = RatedResolveResult.RATE_NORMAL;
-      for (PsiElement member : members) {
-        ret.poke(PyUtil.turnDirIntoInit(member), rate);
-        rate = RatedResolveResult.RATE_LOW;
-      }
-    }
   }
 
   private static boolean addAssignedAttributes(ResultList ret, String referencedName, PyExpression qualifier) {

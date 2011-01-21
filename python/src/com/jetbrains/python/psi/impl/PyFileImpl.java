@@ -246,6 +246,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   private static PsiElement findNameInFromImportStatementStub(String name, PyFromImportStatementStub child) {
     if (child.isStarImport()) {
+      if (PyUtil.isClassPrivateName(name)) {
+        return null;
+      }
       final PyFromImportStatement statement = child.getPsi();
       PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
       if (starImportSource != null) {

@@ -23,7 +23,7 @@ IF NOT EXIST "%JAVA_EXE%" goto error
 
 IF "%IDEA_MAIN_CLASS_NAME%" == "" SET IDEA_MAIN_CLASS_NAME=com.intellij.idea.Main
 
-IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=%IDEA_PROPERTIES%
+IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY="-Didea.properties.file=%IDEA_PROPERTIES%"
 
 :: ---------------------------------------------------------------------
 :: You may specify your own JVM arguments in pycharm.exe.vmoptions file. Put one option per line there.

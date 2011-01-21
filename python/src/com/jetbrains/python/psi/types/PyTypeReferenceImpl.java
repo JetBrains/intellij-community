@@ -16,7 +16,10 @@ import java.util.List;
  */
 public abstract class PyTypeReferenceImpl implements PyTypeReference {
   @NotNull
-  public List<? extends PsiElement> resolveMember(String name, AccessDirection direction, PyResolveContext resolveContext) {
+  public List<? extends PsiElement> resolveMember(String name,
+                                                  PyExpression location,
+                                                  AccessDirection direction,
+                                                  PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 

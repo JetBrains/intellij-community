@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +82,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
 
-    PsiElement wrappableBefore = findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES);
-    PsiElement wrappableAfter = findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+    PsiElement wrappableBefore = findWrappable(file, offset, true);
+    PsiElement wrappableAfter = findWrappable(file, offset, false);
     if (!(wrappableBefore instanceof PsiComment)) {
       while (wrappableBefore != null) {
         PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
@@ -109,6 +110,22 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
+  }
+
+  @Nullable
+  private static PsiElement findWrappable(PsiFile file, int offset, boolean before) {
+    PsiElement wrappable = before
+                                 ? findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES)
+                                 : findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+    if (wrappable == null) {
+      PsiElement emptyTuple = before
+                              ? findBeforeCaret(file, offset, PyTupleExpression.class)
+                              : findAfterCaret(file, offset, PyTupleExpression.class);
+      if (emptyTuple != null && emptyTuple.getNode().getFirstChildNode().getElementType() == PyTokenTypes.LPAR) {
+        wrappable = emptyTuple;
+      }
+    }
+    return wrappable;
   }
 
   @Nullable

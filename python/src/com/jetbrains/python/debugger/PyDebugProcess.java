@@ -23,6 +23,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     new ConcurrentHashMap<String, XBreakpoint<PyExceptionBreakpointProperties>>();
 
   private final List<PyThreadInfo> mySuspendedThreads = Lists.newArrayList();
-  private final Map<String, List<PyDebugValue>> myStackFrameCache = Maps.newHashMap();
+  private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newHashMap();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
 
   private boolean myClosing = false;
@@ -249,26 +250,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command);
   }
 
-  public List<PyDebugValue> loadFrame() throws PyDebuggerException {
+  public XValueChildrenList loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
     if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
-      List<PyDebugValue> values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
+      XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId());
       myStackFrameCache.put(frame.getThreadFrameId(), values);
     }
     return applyNewValue(myStackFrameCache.get(frame.getThreadFrameId()), frame.getThreadFrameId());
   }
 
-  private List<PyDebugValue> applyNewValue(List<PyDebugValue> pyDebugValues, String threadFrameId) {
+  private XValueChildrenList applyNewValue(XValueChildrenList pyDebugValues, String threadFrameId) {
     if (myNewVariableValue.containsKey(threadFrameId)) {
       PyDebugValue newValue = myNewVariableValue.get(threadFrameId);
-      List<PyDebugValue> res = Lists.newArrayList();
-      for (PyDebugValue val : pyDebugValues) {
-        if (val.getName().equals(newValue.getName())) {
-          res.add(newValue);
+      XValueChildrenList res = new XValueChildrenList();
+      for (int i = 0; i < pyDebugValues.size(); i++) {
+        final String name = pyDebugValues.getName(i);
+        if (name.equals(newValue.getName())) {
+          res.add(name, newValue);
         }
         else {
-          res.add(val);
+          res.add(name, pyDebugValues.getValue(i));
         }
       }
       return res;
@@ -279,7 +281,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public List<PyDebugValue> loadVariable(final PyDebugValue var) throws PyDebuggerException {
+  public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), var);
   }

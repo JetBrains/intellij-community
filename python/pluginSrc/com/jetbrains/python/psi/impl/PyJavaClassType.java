@@ -24,7 +24,10 @@ public class PyJavaClassType implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
+  public List<? extends PsiElement> resolveMember(final String name,
+                                                  PyExpression location,
+                                                  AccessDirection direction,
+                                                  PyResolveContext resolveContext) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
       return Arrays.asList(methods); // TODO[yole]: correct resolve

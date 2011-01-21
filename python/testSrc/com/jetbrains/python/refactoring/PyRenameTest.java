@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**
@@ -51,6 +52,42 @@ public class PyRenameTest extends PyLightFixtureTestCase {
 
   public void testUpdateAll() {  // PY-986
     doTest("bar");
+  }
+
+  public void testClassNameConflict() {  // PY-2390
+    doRenameConflictTest("Foo", "A class named 'Foo' is already defined in classNameConflict.py");
+  }
+
+  public void testClassVsFunctionConflict() {
+    doRenameConflictTest("Foo", "A function named 'Foo' is already defined in classVsFunctionConflict.py");
+  }
+
+  public void testClassVsVariableConflict() {
+    doRenameConflictTest("Foo", "A variable named 'Foo' is already defined in classVsVariableConflict.py");
+  }
+
+  public void testNestedClassNameConflict() {
+    doRenameConflictTest("Foo", "A class named 'Foo' is already defined in class 'C'");
+  }
+
+  public void testFunctionNameConflict() {
+    doRenameConflictTest("foo", "A function named 'foo' is already defined in functionNameConflict.py");
+  }
+
+  public void testVariableNameConflict() {
+    doRenameConflictTest("foo", "A variable named 'foo' is already defined in variableNameConflict.py");
+  }
+
+  private void doRenameConflictTest(String newName, String expectedConflict) {
+    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
+    try {
+      myFixture.renameElementAtCaret(newName);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ex) {
+      assertEquals(expectedConflict, ex.getMessage());
+      return;
+    }
+    fail("Expected conflict not reported");
   }
 
   private void doTest(final String newName) {

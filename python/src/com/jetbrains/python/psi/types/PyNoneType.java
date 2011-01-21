@@ -20,7 +20,10 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
+  public List<? extends PsiElement> resolveMember(final String name,
+                                                  PyExpression location,
+                                                  AccessDirection direction,
+                                                  PyResolveContext resolveContext) {
     return null;
   }
 

@@ -51,7 +51,7 @@ public class PyCallingNonCallableInspection extends PyInspection {
             return;
           }
           if (!classType.isDefinition()) {
-            final List<? extends PsiElement> calls = classType.resolveMember("__call__", AccessDirection.READ,
+            final List<? extends PsiElement> calls = classType.resolveMember("__call__", null, AccessDirection.READ,
                                                                              PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext));
             if (calls == null || calls.size() == 0) {
               PyClass pyClass = classType.getPyClass();

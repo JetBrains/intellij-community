@@ -93,7 +93,8 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   @Nullable
-  public List<? extends PsiElement> resolveMember(final String name, AccessDirection direction, PyResolveContext resolveContext) {
+  public List<? extends PsiElement> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
+                                                  PyResolveContext resolveContext) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
     if (resolving.contains(key)) {
@@ -122,13 +123,13 @@ public class PyClassType extends UserDataHolderBase implements PyType {
         }
       }
 
-      final PsiElement classMember = resolveClassMember(myClass, name);
+      final PsiElement classMember = resolveClassMember(myClass, name, location);
       if (classMember != null) {
         return new SmartList<PsiElement>(classMember);
       }
 
       for (PyClass superClass : myClass.iterateAncestors()) {
-        PsiElement superMember = resolveClassMember(superClass, name);
+        PsiElement superMember = resolveClassMember(superClass, name, null);
         if (superMember != null) {
           return new SmartList<PsiElement>(superMember);
         }
@@ -141,8 +142,8 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(PyClass aClass, String name) {
-    PsiElement result = resolveInner(aClass, name);
+  private static PsiElement resolveClassMember(PyClass aClass, String name, @Nullable PyExpression location) {
+    PsiElement result = resolveInner(aClass, name, location);
     if (result != null) {
       return result;
     }
@@ -155,9 +156,9 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   @Nullable
-  private static PsiElement resolveInner(PyClass aClass, String name) {
+  private static PsiElement resolveInner(PyClass aClass, String name, @Nullable PyExpression location) {
     ResolveProcessor processor = new ResolveProcessor(name);
-    ((PyClassImpl)aClass).processDeclarations(processor); // our members are strictly within us.
+    ((PyClassImpl)aClass).processDeclarations(processor, location); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
     if (resolveResult != null && resolveResult != aClass) {
@@ -212,7 +213,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     if (slots != null) {
       processor.setAllowedNames(slots);
     }
-    ((PyClassImpl)myClass).processInstanceLevelDeclarations(processor);
+    ((PyClassImpl)myClass).processInstanceLevelDeclarations(processor, expressionHook);
 
     for (LookupElement le : processor.getResultList()) {
       String name = le.getLookupString();

@@ -95,7 +95,7 @@ public class PyStatementEffectInspection extends PyInspection {
           PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
           if (type != null &&
               !type.isBuiltin() &&
-              type.resolveMember(method, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
+              type.resolveMember(method, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
             return true;
           }
           final PyExpression rhs = binary.getRightExpression();
@@ -103,7 +103,7 @@ public class PyStatementEffectInspection extends PyInspection {
             type = myTypeEvalContext.getType(rhs);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (!type.isBuiltin() && type.resolveMember(rmethod, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
+              if (!type.isBuiltin() && type.resolveMember(rmethod, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
                 return true;
               }
             }

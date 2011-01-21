@@ -1,17 +1,17 @@
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.IPyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
 public class GetFrameCommand extends AbstractFrameCommand {
 
   protected final IPyDebugProcess myDebugProcess;
-  private List<PyDebugValue> myFrameVariables = null;
+  private XValueChildrenList myFrameVariables = null;
 
   public GetFrameCommand(final RemoteDebugger debugger, final String threadId, final String frameId) {
     this(debugger, GET_FRAME, threadId, frameId);
@@ -37,10 +37,11 @@ public class GetFrameCommand extends AbstractFrameCommand {
   protected void processResponse(final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final List<PyDebugValue> values = ProtocolParser.parseValues(response.getPayload());
-    myFrameVariables = new ArrayList<PyDebugValue>(values.size());
+    myFrameVariables = new XValueChildrenList(values.size());
     for (PyDebugValue value : values) {
       if (!value.getName().startsWith(RemoteDebugger.TEMP_VAR_PREFIX)) {
-        myFrameVariables.add(extend(value));
+        final PyDebugValue debugValue = extend(value);
+        myFrameVariables.add(debugValue.getName(), debugValue);
       }
     }
   }
@@ -49,7 +50,7 @@ public class GetFrameCommand extends AbstractFrameCommand {
     return new PyDebugValue(value.getName(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(), null, myDebugProcess);
   }
 
-  public List<PyDebugValue> getVariables() {
+  public XValueChildrenList getVariables() {
     return myFrameVariables;
   }
 

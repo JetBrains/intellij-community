@@ -10,12 +10,10 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Icons;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -303,19 +301,29 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyFunction[] getMethods() {
+    return getClassChildren(PyElementTypes.FUNCTION_DECLARATION, PyFunction.ARRAY_FACTORY);
+  }
+
+  @Override
+  public PyClass[] getNestedClasses() {
+    return getClassChildren(PyElementTypes.CLASS_DECLARATION, PyClass.ARRAY_FACTORY);
+  }
+
+  private <T extends PsiElement> T[] getClassChildren(IElementType elementType, ArrayFactory<T> factory) {
     // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
-      return classStub.getChildrenByType(PyElementTypes.FUNCTION_DECLARATION, PyFunction.EMPTY_ARRAY);
+      return classStub.getChildrenByType(elementType, factory);
     }
-    List<PyFunction> result = new ArrayList<PyFunction>();
+    List<T> result = new ArrayList<T>();
     final PyStatementList statementList = getStatementList();
     for (PsiElement element : statementList.getChildren()) {
-      if (element instanceof PyFunction) {
-        result.add((PyFunction) element);
+      if (element.getNode().getElementType() == elementType) {
+        //noinspection unchecked
+        result.add((T) element);
       }
     }
-    return result.toArray(new PyFunction[result.size()]);
+    return result.toArray(factory.create(result.size()));
   }
 
   private static class NameFinder<T extends PyElement> implements Processor<T> {
@@ -347,6 +355,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (name == null) return null;
     NameFinder<PyFunction> proc = new NameFinder<PyFunction>(name);
     visitMethods(proc, inherited);
+    return proc.getResult();
+  }
+
+  @Nullable
+  @Override
+  public PyClass findNestedClass(String name, boolean inherited) {
+    if (name == null) return null;
+    NameFinder<PyClass> proc = new NameFinder<PyClass>(name);
+    visitNestedClasses(proc, inherited);
     return proc.getResult();
   }
 
@@ -420,7 +437,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           for (PyDecorator deco : decolist.getDecorators()) {
             PyQualifiedName deco_name = deco.getQualifiedName();
             if (deco_name != null) {
-              if (deco_name.matches("property")) {
+              if (deco_name.matches(PyNames.PROPERTY)) {
                 getter = new Maybe<PyFunction>(method);
               }
               else if (advanced && deco_name.matches(name, "setter")) {
@@ -616,6 +633,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return true;
   }
 
+  public boolean visitNestedClasses(Processor<PyClass> processor, boolean inherited) {
+    PyClass[] nestedClasses = getNestedClasses();
+    for (PyClass nestedClass : nestedClasses) {
+      if (!processor.process(nestedClass)) return false;
+    }
+    if (inherited) {
+      for (PyClass ancestor : iterateAncestors()) {
+        if (!((PyClassImpl) ancestor).visitNestedClasses(processor, false)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
     List<PyTargetExpression> methods = getClassAttributes();
     for(PyTargetExpression attribute: methods) {
@@ -680,7 +712,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
-        collectInstanceAttributes((PyFunctionImpl)method, result);
+        collectInstanceAttributes(method, result);
       }
     }
 
@@ -688,7 +720,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return new ArrayList<PyTargetExpression>(expressions);
   }
 
-  private static void collectInstanceAttributes(PyFunctionImpl method, final Map<String, PyTargetExpression> result) {
+  private static void collectInstanceAttributes(PyFunction method, final Map<String, PyTargetExpression> result) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
@@ -761,9 +793,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return false;
   }
 
-  public void processDeclarations(@NotNull PsiScopeProcessor processor) {
+  public void processDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
     if (!processClassLevelDeclarations(processor)) return;
-    if (!processInstanceLevelDeclarations(processor)) return;
+    if (!processInstanceLevelDeclarations(processor, location)) return;
     processor.execute(this, ResolveState.initial());
   }
 
@@ -784,8 +816,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return true;
   }
 
-  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor) {
+  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor, @Nullable PyExpression location) {
+    Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
+    PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
+    if (instanceMethod != null && instanceMethod.getContainingClass() == this) {
+      collectInstanceAttributes(instanceMethod, declarationsInMethod);
+      for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
+        if (!processor.execute(targetExpression, ResolveState.initial())) {
+          return false;
+        }
+      }
+    }
     for(PyTargetExpression expr: getInstanceAttributes()) {
+      if (declarationsInMethod.containsKey(expr.getName())) {
+        continue;
+      }
       if (!processor.execute(expr, ResolveState.initial())) return false;
     }
     return true;

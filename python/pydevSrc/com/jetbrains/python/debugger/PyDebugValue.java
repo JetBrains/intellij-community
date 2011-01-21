@@ -7,7 +7,6 @@ import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
@@ -125,7 +124,7 @@ public class PyDebugValue extends XValue {
       value = value.substring(0, MAX_VALUE) + "...";
     }
 
-    node.setPresentation(myName, getValueIcon(), myType, value, myContainer);
+    node.setPresentation(getValueIcon(), myType, value, myContainer);
   }
 
   @Override
@@ -136,7 +135,7 @@ public class PyDebugValue extends XValue {
         if (myDebugProcess == null) return;
 
         try {
-          final List<PyDebugValue> values = myDebugProcess.loadVariable(PyDebugValue.this);
+          final XValueChildrenList values = myDebugProcess.loadVariable(PyDebugValue.this);
           if (!node.isObsolete()) {
             node.addChildren(values, true);
           }

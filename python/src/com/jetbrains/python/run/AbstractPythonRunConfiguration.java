@@ -13,6 +13,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonProduct;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -269,5 +270,11 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     Map<String, String> envs = getEnvs();
     // unbuffered I/O is easier for IDE to handle
     PythonEnvUtil.setPythonUnbuffered(envs);
+  }
+
+  @Override
+  public boolean excludeCompileBeforeLaunchOption() {
+    final Module module = getModule();
+    return module != null ? module.getModuleType() instanceof PythonModuleTypeBase : true;
   }
 }

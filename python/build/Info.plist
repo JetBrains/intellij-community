@@ -27,27 +27,21 @@
     <string>@@version@@</string>
     <key>CFBundleVersion</key>
     <string>@@build@@</string>
+
+    <key>LSArchitecturePriority</key>
+    <array>
+      <string>i386</string>
+      <string>x86_64</string>
+      <string>ppc</string>
+    </array>
+
     <key>Java</key>
-   <dict>
+    <dict>
       <key>ClassPath</key>
       <string>$APP_PACKAGE/lib/bootstrap.jar:$APP_PACKAGE/lib/extensions.jar:$APP_PACKAGE/lib/util.jar:$APP_PACKAGE/lib/jdom.jar:$APP_PACKAGE/lib/log4j.jar</string>
 
       <key>JVMVersion</key>
       <string>@@jdk_req@@</string>
-
-      <key>JVMArchs</key>
-      <array>
-        <string>i386</string>
-        <string>x86_64</string>
-        <string>ppc</string>
-      </array>
-
-      <key>LSArchitecturePriority</key>
-      <array>
-        <string>i386</string>
-        <string>x86_64</string>
-        <string>ppc</string>
-      </array>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>
@@ -86,6 +80,6 @@
 
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
-   </dict>
+    </dict>
   </dict>
 </plist>

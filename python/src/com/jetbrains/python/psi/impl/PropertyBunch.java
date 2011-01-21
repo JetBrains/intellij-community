@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -54,7 +55,7 @@ public abstract class PropertyBunch<MType> {
 
 
   @Nullable
-  protected static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
+  public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
     if (source instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)source;
       PyExpression callee = call.getCallee();
@@ -64,7 +65,7 @@ public abstract class PropertyBunch<MType> {
         boolean is_inside_builtins = false;
         PsiFile psifile = source.getContainingFile();
         is_inside_builtins = psifile != null && psifile.getUserData(PyBuiltinCache.MARKER_KEY) != null;
-        if ("property".equals(callee.getName()) && (is_inside_builtins || !resolvesLocally(ref))) {
+        if (PyNames.PROPERTY.equals(callee.getName()) && (is_inside_builtins || !resolvesLocally(ref))) {
           // we assume that a non-local name 'property' is a built-in name.
           // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
           // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.

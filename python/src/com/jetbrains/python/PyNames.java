@@ -36,6 +36,8 @@ public class PyNames {
   @NonNls public static final String CLASSMETHOD = "classmethod";
   @NonNls public static final String STATICMETHOD = "staticmethod";
 
+  @NonNls public static final String PROPERTY = "property";
+
   @NonNls public static final String ALL = "__all__";
   @NonNls public static final String SLOTS = "__slots__";
   @NonNls public static final String DEBUG = "__debug__";
