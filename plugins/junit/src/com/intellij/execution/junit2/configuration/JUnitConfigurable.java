@@ -315,7 +315,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   }
 
   private void onScopeChanged() {
-    myModule.setEnabled(!myWholeProjectScope.isSelected());
+    myModule.setEnabled(!myWholeProjectScope.isSelected() && !myTestPatternButton.isSelected());
   }
 
   private class TestClassBrowser extends ClassBrowser {
