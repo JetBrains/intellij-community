@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
@@ -122,7 +121,7 @@ public class MavenModuleImporter {
     }
   }
 
-  private DependencyScope selectScope(String mavenScope) {
+  private static DependencyScope selectScope(String mavenScope) {
     if (MavenConstants.SCOPE_RUNTIME.equals(mavenScope)) return DependencyScope.RUNTIME;
     if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
     if (MavenConstants.SCOPE_PROVIDEED.equals(mavenScope)) return DependencyScope.PROVIDED;
@@ -130,17 +129,7 @@ public class MavenModuleImporter {
   }
 
   private void configLanguageLevel() {
-    LanguageLevel level = translateLanguageLevel(myMavenProject.getSourceLevel());
+    final LanguageLevel level = LanguageLevel.parse(myMavenProject.getSourceLevel());
     myRootModelAdapter.setLanguageLevel(level);
-  }
-
-  @Nullable
-  private LanguageLevel translateLanguageLevel(@Nullable String level) {
-    if ("1.3".equals(level)) return LanguageLevel.JDK_1_3;
-    if ("1.4".equals(level)) return LanguageLevel.JDK_1_4;
-    if ("1.5".equals(level)) return LanguageLevel.JDK_1_5;
-    if ("1.6".equals(level)) return LanguageLevel.JDK_1_6;
-
-    return null;
   }
 }
