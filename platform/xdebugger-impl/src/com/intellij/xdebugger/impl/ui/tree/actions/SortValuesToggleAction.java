@@ -38,9 +38,11 @@ public class SortValuesToggleAction extends ToggleAction implements DumbAware {
     XDebuggerSettingsManager.getInstance().getDataViewSettings().setSortValues(state);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
-      final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null) {
-        session.rebuildViews();
+      final XDebugSession[] sessions = XDebuggerManager.getInstance(project).getDebugSessions();
+      for (XDebugSession session : sessions) {
+        if (session.isSuspended()) {
+          session.rebuildViews();
+        }
       }
     }
   }
