@@ -438,10 +438,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
-      final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       Runnable askReloadRunnable = new Runnable() {
         public void run() {
-          if (!unitTestMode) IdeEventQueue.getInstance().removeIdleListener(this);
           if (!file.isValid()) return;
           if (askReloadFromDisk(file, document)) {
             reloadFromDisk(document);
