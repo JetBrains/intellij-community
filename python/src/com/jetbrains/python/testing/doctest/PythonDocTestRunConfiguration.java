@@ -8,7 +8,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonDocTestRunConfigurationParams {
   private String myPattern = ""; // pattern for modules in folder to match against
-
+  protected String myTitle = "Doctests";
   protected PythonDocTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(module, configurationFactory, name);
   }
@@ -51,6 +50,11 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
     JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
   }
 
+  @Override
+  protected String getTitle() {
+    return myTitle;
+  }
+
   public static void copyParams(PythonDocTestRunConfigurationParams source, PythonDocTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
     target.setPattern(source.getPattern());
@@ -62,23 +66,5 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
 
   public void setPattern(String pattern) {
     myPattern = pattern;
-  }
-
-  @Override
-  public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return "Doctests in " + myClassName;
-      case TEST_METHOD:
-        return "Doctests in " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
-        return "Doctests in " + myScriptName;
-      case TEST_FOLDER:
-        return "Doctests in " + FileUtil.toSystemDependentName(myFolderName);
-      case TEST_FUNCTION:
-        return "Doctests in " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
   }
 }

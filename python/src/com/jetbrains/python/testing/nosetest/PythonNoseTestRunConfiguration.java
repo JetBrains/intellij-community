@@ -8,7 +8,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
-
+  protected String myTitle = "Nosetests";
   protected PythonNoseTestRunConfiguration(RunConfigurationModule module,
                                      ConfigurationFactory configurationFactory, String name) {
     super(module, configurationFactory, name);
@@ -47,26 +46,13 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
     JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new PythonNoseTestCommandLineState(this, env);
+  @Override
+  protected String getTitle() {
+    return myTitle;
   }
 
-  @Override
-  public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return "Nosetests in " + myClassName;
-      case TEST_METHOD:
-        return "Nosetests " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
-        return "Nosetests in " + myScriptName;
-      case TEST_FOLDER:
-        return "Nosetests in " + FileUtil.toSystemDependentName(myFolderName);
-      case TEST_FUNCTION:
-        return "Nosetests " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+    return new PythonNoseTestCommandLineState(this, env);
   }
 
   public static void copyParams(PythonNoseTestRunConfigurationParams source, PythonNoseTestRunConfigurationParams target) {

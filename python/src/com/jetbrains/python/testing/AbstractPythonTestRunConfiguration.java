@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -168,4 +169,24 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   public AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams() {
     return this;
   }
+
+  @Override
+  public String suggestedName() {
+    switch (myTestType) {
+      case TEST_CLASS:
+        return getTitle() + " in " + myClassName;
+      case TEST_METHOD:
+        return getTitle() + " in " + myClassName + "." + myMethodName;
+      case TEST_SCRIPT:
+        return getTitle() + " in " + myScriptName;
+      case TEST_FOLDER:
+        return getTitle() + " in " + FileUtil.toSystemDependentName(myFolderName);
+      case TEST_FUNCTION:
+        return getTitle() + " in " + myMethodName;
+      default:
+        throw new IllegalStateException("Unknown test type: " + myTestType);
+    }
+  }
+
+  protected abstract String getTitle();
 }
