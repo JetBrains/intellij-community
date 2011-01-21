@@ -8,6 +8,7 @@ arity
 asensitive
 auth
 authid
+autoboxing
 autocommit
 autoextend
 autoincrement
