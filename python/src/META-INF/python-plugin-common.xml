@@ -218,6 +218,7 @@
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
 
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
 

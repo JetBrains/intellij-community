@@ -36,6 +36,7 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean DJANGO_AUTOINSERT_TAG_CLOSE = true;
 
   public boolean RENAME_CLASS_CONTAINING_FILE = true;
+  public boolean RENAME_CLASS_INHERITORS = true;
 
   public PyCodeInsightSettings getState() {
     return this;

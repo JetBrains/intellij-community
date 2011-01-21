@@ -64,7 +64,7 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename containing file";
+      return "Rename Containing File";
     }
 
     @Override
