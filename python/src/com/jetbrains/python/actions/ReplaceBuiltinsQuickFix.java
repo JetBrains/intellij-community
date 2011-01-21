@@ -1,12 +1,10 @@
-package com.jetbrains.python.codeInsight.intentions;
+package com.jetbrains.python.actions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +15,10 @@ import org.jetbrains.annotations.NotNull;
  * Date: 19.02.2010
  * Time: 18:50:24
  */
-public class ReplaceBuiltinsIntention implements IntentionAction {
+public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
   @NotNull
-  public String getText() {
+  @Override
+  public String getName() {
     return PyBundle.message("INTN.convert.builtin.import");
   }
 
@@ -28,20 +27,15 @@ public class ReplaceBuiltinsIntention implements IntentionAction {
     return PyBundle.message("INTN.Family.convert.builtin");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
-    return (importStatement != null);
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = descriptor.getPsiElement();
     PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
     for (PyImportElement importElement : importStatement.getImportElements()) {
       PyReferenceExpression importReference = importElement.getImportReference();
       if (importReference != null) {
-        if (LanguageLevel.forFile(file.getVirtualFile()).isPy3K()) {
+        if (LanguageLevel.forFile(element.getContainingFile().getVirtualFile()).isPy3K()) {
           if ("__builtin__".equals(importReference.getName())) {
             importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "builtins"));
           }
@@ -52,9 +46,6 @@ public class ReplaceBuiltinsIntention implements IntentionAction {
         }
       }
     }
-  }
 
-  public boolean startInWriteAction() {
-    return true;
   }
 }

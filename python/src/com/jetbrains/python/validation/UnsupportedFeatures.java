@@ -1,11 +1,20 @@
 package com.jetbrains.python.validation;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonProblemDescriptorImpl;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.intentions.*;
+import com.jetbrains.python.actions.*;
+import com.jetbrains.python.codeInsight.intentions.RemoveTrailingLIntention;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
@@ -16,20 +25,6 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class UnsupportedFeatures extends PyAnnotator {
-  /*
-  private static final Set<String> REMOVED_METHODS = new HashSet<String>();
-
-  static {
-    REMOVED_METHODS.add("cmp");
-    REMOVED_METHODS.add("apply");
-    REMOVED_METHODS.add("callable");
-    REMOVED_METHODS.add("coerce");
-    REMOVED_METHODS.add("execfile");
-    REMOVED_METHODS.add("reduce");
-    REMOVED_METHODS.add("reload");
-  }
-  */
-
   @NotNull
   private static LanguageLevel getLanguageLevel(PyElement node) {
     VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
@@ -47,14 +42,23 @@ public class UnsupportedFeatures extends PyAnnotator {
     return getLanguageLevel(node).isPy3K();
   }
 
+  private static IntentionAction createIntention(PyElement node, String message, LocalQuickFix fix) {
+    LocalQuickFix[] quickFixes = {fix};
+    CommonProblemDescriptorImpl descr = new ProblemDescriptorImpl(node, node, message,
+                                                                  quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
+                                                                  node.getTextRange(), true);
+    return QuickFixWrapper.wrap((ProblemDescriptor)descr, 0);
+  }
+
   @Override
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
     LanguageLevel languageLevel = getLanguageLevel(node);
     if (!languageLevel.supportsSetLiterals()) {
+      String message = "Python version " + languageLevel + " does not support dictionary comprehensions";
       getHolder()
-        .createWarningAnnotation(node, "Python version " + languageLevel + " does not support dictionary comprehensions")
-        .registerFix(new ConvertDictCompIntention());
+        .createWarningAnnotation(node, message)
+        .registerFix(createIntention(node, message, new ConvertDictCompQuickFix()));
     }
   }
 
@@ -63,9 +67,10 @@ public class UnsupportedFeatures extends PyAnnotator {
     super.visitPySetLiteralExpression(node);
     LanguageLevel languageLevel = getLanguageLevel(node);
     if (!languageLevel.supportsSetLiterals()) {
+      String message = "Python version " + languageLevel + " does not support set literal expressions";
       getHolder()
-        .createWarningAnnotation(node, "Python version " + languageLevel + " does not support set literal expressions")
-        .registerFix(new ConvertSetLiteralIntention());
+        .createWarningAnnotation(node, message)
+        .registerFix(createIntention(node, message, new ConvertSetLiteralQuickFix()));
     }
   }
 
@@ -99,7 +104,8 @@ public class UnsupportedFeatures extends PyAnnotator {
           element = element.getNextSibling();
         }
         if (element != null && ",".equals(element.getText())) {
-          getHolder().createWarningAnnotation(node, "Python 3 does not support this syntax").registerFix(new ReplaceExceptPartIntention());
+          String message = "Python 3 does not support this syntax";
+          getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new ReplaceExceptPartQuickFix()));
         }
       }
     }
@@ -114,13 +120,16 @@ public class UnsupportedFeatures extends PyAnnotator {
       if (qName != null) {
         if (isPy2(node)) {
           if (qName.matches("builtins")) {
-            getHolder().createWarningAnnotation(node, "There is no module builtins in Python 2")
-              .registerFix(new ReplaceBuiltinsIntention());
+            String message = "There is no module builtins in Python 2";
+            getHolder().createWarningAnnotation(node, message)
+              .registerFix(createIntention(node, message, new ReplaceBuiltinsQuickFix()));
           }
         }
         else {
           if (qName.matches("__builtin__")) {
-            getHolder().createWarningAnnotation(node, "Module __builtin__ renamed to builtins").registerFix(new ReplaceBuiltinsIntention());
+            String message =  "Module __builtin__ renamed to builtins";
+            getHolder().createWarningAnnotation(node, "Module __builtin__ renamed to builtins")
+              .registerFix(createIntention(node, message, new ReplaceBuiltinsQuickFix()));
           }
         }
       }
@@ -142,18 +151,20 @@ public class UnsupportedFeatures extends PyAnnotator {
         }
       }
     }
-    /* incorrectly working functionality temporarily removed (PY-1424, PY-1820)
     else {
-      final String name = node.getCallee().getName();
-      if ("raw_input".equals(name)) {
-        getHolder().createWarningAnnotation(node.getCallee(), PyBundle.message("ANN.method.$0.removed.use.$1", name, "input")).
-                        registerFix(new ReplaceMethodIntention("input"));
-      }
-      else if (REMOVED_METHODS.contains(name)) {
-        getHolder().createWarningAnnotation(node.getCallee(), PyBundle.message("ANN.method.$0.removed", name));
+      PyExpression callee = node.getCallee();
+      assert callee != null;
+      PsiReference reference = callee.getReference();
+      if (reference != null) {
+        PsiElement resolved = reference.resolve();
+        if (resolved == null) {
+          final String name = callee.getText();
+          if (UnsupportedFeaturesUtil.BUILTINS.get(getLanguageLevel(callee)).contains(name)) {
+            getHolder().createWarningAnnotation(callee, PyBundle.message("ANN.method.$0.removed", name));
+          }
+        }
       }
     }
-    */
   }
 
   @Override
@@ -167,9 +178,9 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
     super.visitPyBinaryExpression(node);
-    if (node.isOperator("<>")) {
+    if (isPy3K(node) && node.isOperator("<>")) {
       final String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
-      getHolder().createWarningAnnotation(node, message).registerFix(new ReplaceNotEqOperatorIntention());
+      getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new ReplaceNotEqOperatorQuickFix()));
     }
   }
 
@@ -197,9 +208,8 @@ public class UnsupportedFeatures extends PyAnnotator {
             }
           }
           if (!isNull) {
-            getHolder().createWarningAnnotation(node,
-                                              "Python 3 requires '0o' prefix for octal literals")
-              .registerFix(new ReplaceOctalNumericLiteralIntention());
+            final String message = "Python 3 requires '0o' prefix for octal literals";
+            getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new ReplaceOctalNumericLiteralQuickFix()));
           }
         }
       }
@@ -212,9 +222,8 @@ public class UnsupportedFeatures extends PyAnnotator {
     if (isPy3K(node)) {
       final String text = node.getText();
       if (text.startsWith("u") || text.startsWith("U")) {
-        getHolder().createWarningAnnotation(node,
-                                            "String literals do not support a leading \'u\' or \'U\' in Python 3")
-          .registerFix(new RemoveLeadingUIntention());
+        final String message = "String literals do not support a leading \'u\' or \'U\' in Python 3";
+        getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new RemoveLeadingUQuickFix()));
       }
     }
   }
@@ -222,12 +231,14 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyListCompExpression(final PyListCompExpression node) {
     super.visitPyListCompExpression(node);
-    final List<ComprhForComponent> forComponents = node.getForComponents();
-    for (ComprhForComponent forComponent : forComponents) {
-      final PyExpression iteratedList = forComponent.getIteratedList();
-      if (iteratedList instanceof PyTupleExpression) {
-        getHolder().createWarningAnnotation(iteratedList,
-                                            "List comprehensions do not support this syntax in Python 3").registerFix(new ReplaceListComprehensionsIntention());
+    if (isPy3K(node)) {
+      final List<ComprhForComponent> forComponents = node.getForComponents();
+      for (ComprhForComponent forComponent : forComponents) {
+        final PyExpression iteratedList = forComponent.getIteratedList();
+        if (iteratedList instanceof PyTupleExpression) {
+          final String message = "List comprehensions do not support this syntax in Python 3";
+          getHolder().createWarningAnnotation(iteratedList, message).registerFix(createIntention(iteratedList, message, new ReplaceListComprehensionsQuickFix()));
+        }
       }
     }
   }
@@ -235,33 +246,14 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
-    final PyExpression[] expressions = node.getExpressions();
-    if (expressions.length > 0) {
-      if (expressions.length < 2) {
-        return;
-      }
-
-      if (isPy3K(node)) {
-        if (expressions.length == 3) {
-          getHolder().createWarningAnnotation(node, "Python 3 does not support this syntax")
-            .registerFix(new ReplaceRaiseStatementIntention());
-          return;
-        }
-        PsiElement element = expressions[0].getNextSibling();
-        while (element instanceof PsiWhiteSpace) {
-          element = element.getNextSibling();
-        }
-        if (element != null && ",".equals(element.getText())) {
-          getHolder().createWarningAnnotation(node, "Python 3 does not support this syntax")
-            .registerFix(new ReplaceRaiseStatementIntention());
-        }
-      }
+    boolean hasProblem = UnsupportedFeaturesUtil.raiseHasNoArgs(node, LanguageLevel.forElement(node));
+    if (hasProblem) {
+      getHolder().createErrorAnnotation(node, "raise with no arguments can only be used in an except block");
     }
-    else if (isPy3K(node)) {
-      final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
-      if (exceptPart == null) {
-        getHolder().createErrorAnnotation(node, "raise with no arguments can only be used in an except block");
-      }
+    hasProblem = UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, LanguageLevel.forElement(node));
+    if (hasProblem) {
+      final String message = "Python 3 does not support this syntax";
+      getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new ReplaceRaiseStatementQuickFix()));
     }
   }
 
@@ -269,7 +261,8 @@ public class UnsupportedFeatures extends PyAnnotator {
   public void visitPyReprExpression(PyReprExpression node) {
     super.visitPyReprExpression(node);
     if (isPy3K(node)) {
-      getHolder().createWarningAnnotation(node, "Backquote is not supported in Python 3, use repr() instead").registerFix(new ReplaceBackquoteExpressionIntention());
+      final String message = "Backquote is not supported in Python 3, use repr() instead";
+      getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, new ReplaceBackquoteExpressionQuickFix()));
     }
   }
 
@@ -283,6 +276,25 @@ public class UnsupportedFeatures extends PyAnnotator {
         for (int i = 1; i < items.length; i++) {
           getHolder().createWarningAnnotation(items [i], "Python version " + languageLevel + " does not support multiple context managers");
         }
+      }
+    }
+  }
+  @Override
+  public void visitPyClass(PyClass node) {  //PY-2719
+    if (getLanguageLevel(node) == LanguageLevel.PYTHON24) {
+      PyArgumentList list = node.getSuperClassExpressionList();
+      if (list != null && list.getArguments().length == 0)
+        getHolder().createWarningAnnotation(list, "Python version 2.4 does not support this syntax.");
+    }
+  }
+
+  @Override
+  public void visitPyPrintStatement(PyPrintStatement node) {
+    PsiElement[] arguments = node.getChildren();
+    if (getLanguageLevel(node).isPy3K()) {
+      for (PsiElement element : arguments) {
+        if (!(element instanceof PyParenthesizedExpression))
+          getHolder().createWarningAnnotation(element, "Python versions >= 3.0 do not support this syntax. The print statement has been replaced with a print() function");
       }
     }
   }

@@ -52,6 +52,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyAugmentAssignmentInspection.class,
       PyChainedComparisonsInspection.class,
       PyOldStyleClassesInspection.class,
+      PyCompatibilityInspection.class,
     };
   }
 }
