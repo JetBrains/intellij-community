@@ -162,8 +162,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
         appendLogicalPosition(caret, message);
         if (selectionModel.hasSelection()) {
           int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-          message.append("/");
-          message.append(len);
+          if (len != 0) message.append("/").append(len);
         }
       }
 

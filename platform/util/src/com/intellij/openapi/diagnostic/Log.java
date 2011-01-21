@@ -20,14 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a very primitive fast logging class, primary for race-conditions debugging 
+ * This is a very primitive fast logging class, primary for race-conditions debugging.
  */
-
 public class Log {
+  private static final List<String> myStrings = new ArrayList<String>();
+  private static final List<Throwable> myThrowables = new ArrayList<Throwable>();
+  private static final Object LOCK = new Object();
 
-  private static List<String> myStrings = new ArrayList<String>();
-  private static List<Throwable> myThrowables = new ArrayList<Throwable>();
-  private static Object LOCK = new Object();
+  private Log() { }
 
   public static void print(String text) {
     print(text, false);
@@ -40,6 +40,7 @@ public class Log {
     }
   }
 
+  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "UseOfSystemOutOrSystemErr"})
   public static void flush() {
     synchronized (LOCK) {
       for (int i = 0; i < myStrings.size(); i++) {

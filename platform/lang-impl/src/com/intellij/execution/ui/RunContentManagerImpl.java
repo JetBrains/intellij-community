@@ -59,6 +59,7 @@ import java.util.*;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Topic<RunContentWithExecutorListener> RUN_CONTENT_TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
+  public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentManagerImpl");
   private static final Key<RunContentDescriptor> DESCRIPTOR_KEY = new Key<RunContentDescriptor>("Descriptor");
 
@@ -574,8 +575,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         destroyProcess = true;
       }
       else {
+        //todo[nik] this is a temporary solution for the following problem: some configurations should not allow user to choose between 'terminating' and 'detaching'
+        final boolean useDefault = Boolean.TRUE.equals(processHandler.getUserData(ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
         final TerminateRemoteProcessDialog terminateDialog = new TerminateRemoteProcessDialog(myProject, descriptor.getDisplayName(),
-                                                                                              processHandler.detachIsDefault());
+                                                                                              processHandler.detachIsDefault(),
+                                                                                              useDefault);
         terminateDialog.show();
         if (terminateDialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return false;
         destroyProcess = terminateDialog.forceTermination();
