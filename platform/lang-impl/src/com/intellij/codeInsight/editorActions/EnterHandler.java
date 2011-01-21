@@ -327,7 +327,7 @@ public class EnterHandler extends BaseEnterHandler {
         
         if (commentContext.docAsterisk) {
           commentContext.docAsterisk = insertDocAsterisk(commentContext.lineStart, commentContext.docAsterisk,
-                                                         indentInsideJavadoc != null, commentContext.commenter);
+                                                         !StringUtil.isEmpty(indentInsideJavadoc), commentContext.commenter);
         }
 
         boolean docIndentApplied = false;
@@ -339,7 +339,7 @@ public class EnterHandler extends BaseEnterHandler {
           myOffset = codeStyleManager.adjustLineIndent(myFile, myOffset);
           PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           
-          if (indentInsideJavadoc != null) {
+          if (!StringUtil.isEmpty(indentInsideJavadoc)) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
             myOffset += indentInsideJavadoc.length();
             docIndentApplied = true;
