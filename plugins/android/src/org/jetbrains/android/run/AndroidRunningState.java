@@ -574,6 +574,10 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         myApplicationDeployed = true;
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
+
+      if (!checkDdms()) {
+        return false;
+      }
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
         if (client != null) {
@@ -598,6 +602,15 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       getProcessHandler().notifyTextAvailable("I/O Error" + (message != null ? ": " + message : "") + '\n', STDERR);
       return false;
     }
+  }
+
+  private boolean checkDdms() {
+    if (myDebugMode && AndroidRunConfigurationBase.isDdmsCorrupted(myFacet)) {
+      getProcessHandler()
+        .notifyTextAvailable("Debug info is not available. Please close other application using ADB: DDMS, Eclipse\n", STDERR);
+      return false;
+    }
+    return true;
   }
 
   private boolean uploadAndInstallDependentModules(@NotNull IDevice device) throws IOException {
