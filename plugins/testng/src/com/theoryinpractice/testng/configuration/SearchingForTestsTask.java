@@ -363,8 +363,10 @@ public class SearchingForTestsTask extends Task.Backgroundable {
       //for a group, we include all classes
       PsiClass[] testClasses = TestNGUtil
         .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myProject, true, true), false);
-      for (PsiClass c : testClasses) {
-        classes.put(c, new HashSet<PsiMethod>());
+      if (testClasses != null) {
+        for (PsiClass c : testClasses) {
+          classes.put(c, new HashSet<PsiMethod>());
+        }
       }
     }
   }
