@@ -105,7 +105,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       }
       MethodUsageGroup group = (MethodUsageGroup) object;
       if (isValid() && group.isValid()) {
-        return SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, group.myMethodPointer);
+        return getMethod().getManager().areElementsEquivalent(getMethod(), group.getMethod());
       }
       return Comparing.equal(myName, ((MethodUsageGroup)object).myName);
     }
@@ -151,12 +151,10 @@ public class MethodGroupingRule implements UsageGroupingRule {
         LOG.error("MethodUsageGroup expected but " + usageGroup.getClass() + " found");
       }
       MethodUsageGroup other = (MethodUsageGroup)usageGroup;
-      if (!SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, other.myMethodPointer)) {
-        PsiMethod myMethod = myMethodPointer.getElement();
-        PsiMethod otherMethod = other.myMethodPointer.getElement();
-        if (myMethod != null && otherMethod != null && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
-          return myMethod.getTextOffset() < otherMethod.getTextOffset() ? -1 : 1;
-        }
+      PsiMethod myMethod = myMethodPointer.getElement();
+      PsiMethod otherMethod = other.myMethodPointer.getElement();
+      if (myMethod != null && otherMethod != null && !UsageViewSettings.getInstance().IS_SORT_MEMBERS_ALPHABETICALLY) {
+        return myMethod.getTextOffset() < otherMethod.getTextOffset() ? -1 : 1;
       }
 
       return myName.compareTo(other.myName);
