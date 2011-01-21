@@ -510,7 +510,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       boolean installed = false;
 
       public void deviceConnected(IDevice device) {
-        if (isMyDevice(device)) {
+        if (device.getAvdName() == null || isMyDevice(device)) {
           getProcessHandler().notifyTextAvailable("Device connected: " + device.getSerialNumber() + '\n', STDOUT);
         }
       }
@@ -528,7 +528,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
               if (myTargetDeviceSerialNumbers.length == 0) {
                 myTargetDeviceSerialNumbers = new String[]{device.getSerialNumber()};
               }
-              getProcessHandler().notifyTextAvailable("Device is online.\n", STDOUT);
+              getProcessHandler().notifyTextAvailable("Device is online: " + device.getSerialNumber() + "\n", STDOUT);
               installed = true;
               if ((!prepareAndStartApp(device) || !myDebugMode) && !myStopped) {
                 getProcessHandler().destroyProcess();
