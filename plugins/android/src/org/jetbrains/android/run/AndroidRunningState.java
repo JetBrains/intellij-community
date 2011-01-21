@@ -106,6 +106,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean myDeploy = true;
 
+  private volatile boolean myApplicationDeployed = false;
+
   public void setDebugMode(boolean debugMode) {
     myDebugMode = debugMode;
   }
@@ -404,6 +406,9 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myDebugLauncher == null) {
         return;
       }
+      if (myDeploy && !myApplicationDeployed) {
+        return;
+      }
       IDevice device = client.getDevice();
       if (isMyDevice(device) && device.isOnline()) {
         if (myTargetDeviceSerialNumbers.length == 0) {
@@ -566,6 +571,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       if (myDeploy) {
         if (!uploadAndInstall(device, myPackageName, myFacet)) return false;
         if (!uploadAndInstallDependentModules(device)) return false;
+        myApplicationDeployed = true;
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
       synchronized (myDebugLock) {
