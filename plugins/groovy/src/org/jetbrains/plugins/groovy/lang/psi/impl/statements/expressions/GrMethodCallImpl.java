@@ -62,7 +62,10 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
 
   @Nullable
   public GrExpression getInvokedExpression() {
-    return findChildByClass(GrExpression.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) return (GrExpression)cur;
+    }
+    return null;
   }
 
   public PsiMethod resolveMethod() {
