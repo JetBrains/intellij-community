@@ -211,16 +211,16 @@ public class CompilerManagerImpl extends CompilerManager {
     return myAfterTasks.toArray(new CompileTask[myAfterTasks.size()]);
   }
 
-  public void compile(@NotNull VirtualFile[] files, CompileStatusNotification callback, final boolean trackDependencies) {
-    compile(createFilesCompileScope(files), callback, trackDependencies);
+  public void compile(@NotNull VirtualFile[] files, CompileStatusNotification callback) {
+    compile(createFilesCompileScope(files), callback);
   }
 
-  public void compile(@NotNull Module module, CompileStatusNotification callback, final boolean trackDependencies) {
-    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback), trackDependencies, true);
+  public void compile(@NotNull Module module, CompileStatusNotification callback) {
+    new CompileDriver(myProject).compile(createModuleCompileScope(module, false), new ListenerNotificator(callback), true);
   }
 
-  public void compile(@NotNull CompileScope scope, CompileStatusNotification callback, final boolean trackDependencies) {
-    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), trackDependencies, false);
+  public void compile(@NotNull CompileScope scope, CompileStatusNotification callback) {
+    new CompileDriver(myProject).compile(scope, new ListenerNotificator(callback), false);
   }
 
   public void make(CompileStatusNotification callback) {

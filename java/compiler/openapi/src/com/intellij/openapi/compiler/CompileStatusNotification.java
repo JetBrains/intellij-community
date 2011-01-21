@@ -19,7 +19,7 @@ package com.intellij.openapi.compiler;
  * A callback interface passed to ComplerManager methods. Provides notification similar to
  * {@link CompilationStatusListener}.
  *
- * @see CompilerManager#compile(CompileScope, CompileStatusNotification, boolean)
+ * @see CompilerManager#compile(CompileScope, CompileStatusNotification)
  */
 public interface CompileStatusNotification {
   /**

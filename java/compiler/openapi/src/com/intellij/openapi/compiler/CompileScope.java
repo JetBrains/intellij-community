@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Interface describing the current compilation scope.
  * Only sources that belong to the scope are compiled.
  *
- * @see CompilerManager#compile(CompileScope, CompileStatusNotification, boolean)
+ * @see CompilerManager#compile(CompileScope, CompileStatusNotification)
  */
 public interface CompileScope extends UserDataHolder {
   CompileScope[] EMPTY_ARRAY = new CompileScope[0];

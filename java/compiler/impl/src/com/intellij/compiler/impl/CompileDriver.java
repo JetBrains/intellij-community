@@ -22,7 +22,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.compiler.*;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
@@ -44,8 +43,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -76,13 +73,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -185,7 +177,7 @@ public class CompileDriver {
   public void make(CompileScope scope, CompileStatusNotification callback) {
     scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     if (validateCompilerConfiguration(scope, false)) {
-      startup(scope, false, false, callback, null, true, false);
+      startup(scope, false, false, callback, null, true);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -224,7 +216,7 @@ public class CompileDriver {
           myAllOutputDirectories = getAllOutputDirectories(compileContext);
           // need this for updating zip archives experiment, uncomment if the feature is turned on
           //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
-          status.set(doCompile(compileContext, false, false, false, true));
+          status.set(doCompile(compileContext, false, false, true));
         }
         finally {
           compileContext.commitZipFiles(); // just to be on the safe side; normally should do nothing if called in isUpToDate()
@@ -244,13 +236,10 @@ public class CompileDriver {
     return new DependencyCache(myCachesDirectoryPath + File.separator + ".dependency-info");
   }
 
-  public void compile(CompileScope scope, CompileStatusNotification callback, boolean trackDependencies, boolean clearingOutputDirsPossible) {
+  public void compile(CompileScope scope, CompileStatusNotification callback, boolean clearingOutputDirsPossible) {
     myShouldClearOutputDirectory &= clearingOutputDirsPossible;
-    if (trackDependencies) {
-      scope = new TrackDependenciesScope(scope);
-    }
     if (validateCompilerConfiguration(scope, false)) {
-      startup(scope, false, true, callback, null, true, trackDependencies);
+      startup(scope, false, true, callback, null, true);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -333,7 +322,7 @@ public class CompileDriver {
                          final boolean checkCachesVersion,
                          final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope, true)) {
-      startup(compileScope, true, false, callback, message, checkCachesVersion, false);
+      startup(compileScope, true, false, callback, message, checkCachesVersion);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -399,8 +388,7 @@ public class CompileDriver {
                        final boolean forceCompile,
                        final CompileStatusNotification callback,
                        final CompilerMessage message,
-                       final boolean checkCachesVersion,
-                       final boolean trackDependencies) {
+                       final boolean checkCachesVersion) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CompilerTask compileTask = new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
                                                     forceCompile
@@ -444,7 +432,7 @@ public class CompileDriver {
             compileContext.addMessage(message);
           }
           TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject);
-          doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion, trackDependencies);
+          doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
         }
         finally {
           compileContext.commitZipFiles();
@@ -470,11 +458,11 @@ public class CompileDriver {
               new String[]{"Make", "Rebuild"}, 0, Messages.getQuestionIcon()
           );
           if (rv == 0 /*yes, please, do run make*/) {
-            startup(scope, false, false, callback, null, checkCachesVersion, trackDependencies);
+            startup(scope, false, false, callback, null, checkCachesVersion);
             return;
           }
         }
-        startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion, trackDependencies);
+        startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
   }
@@ -483,8 +471,7 @@ public class CompileDriver {
                          final boolean isRebuild,
                          final boolean forceCompile,
                          final CompileStatusNotification callback,
-                         final boolean checkCachesVersion,
-                         final boolean trackDependencies) {
+                         final boolean checkCachesVersion) {
     ExitStatus status = ExitStatus.ERRORS;
     boolean wereExceptions = false;
     final long vfsTimestamp = ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
@@ -503,7 +490,7 @@ public class CompileDriver {
       myAllOutputDirectories = getAllOutputDirectories(compileContext);
       // need this for updating zip archives experiment, uncomment if the feature is turned on
       //myOutputFinder = new OutputPathFinder(myAllOutputDirectories);
-      status = doCompile(compileContext, isRebuild, forceCompile, trackDependencies, false);
+      status = doCompile(compileContext, isRebuild, forceCompile, false);
     }
     catch (Throwable ex) {
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(ex);
@@ -629,10 +616,7 @@ public class CompileDriver {
     }
   }
 
-  private ExitStatus doCompile(final CompileContextEx context,
-                               boolean isRebuild,
-                               final boolean forceCompile,
-                               final boolean trackDependencies, final boolean onlyCheckStatus) {
+  private ExitStatus doCompile(final CompileContextEx context, boolean isRebuild, final boolean forceCompile, final boolean onlyCheckStatus) {
     try {
       if (isRebuild) {
         deleteAll(context);
@@ -763,7 +747,7 @@ public class CompileDriver {
         }, SOURCE_PROCESSING_ONLY);
         context.addScope(intermediateSources);
 
-        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, trackDependencies, onlyCheckStatus);
+        didSomething |= translate(context, compilerManager, forceCompile, isRebuild, onlyCheckStatus);
 
         didSomething |= invokeFileProcessingCompilers(compilerManager, context, ClassInstrumentingCompiler.class,
                                                       FILE_PROCESSING_COMPILER_ADAPTER_FACTORY, isRebuild, false, onlyCheckStatus);
@@ -955,7 +939,7 @@ public class CompileDriver {
                             final CompilerManager compilerManager,
                             final boolean forceCompile,
                             boolean isRebuild,
-                            final boolean trackDependencies, final boolean onlyCheckStatus) throws ExitException {
+                            final boolean onlyCheckStatus) throws ExitException {
 
     boolean didSomething = false;
 
@@ -1030,7 +1014,7 @@ public class CompileDriver {
                 _context = context;
               }
               final boolean compiledSomething =
-                compileSources(_context, currentChunk, compiler, chunkFiles, round == 0? forceCompile : true, isRebuild, trackDependencies, onlyCheckStatus, sink);
+                compileSources(_context, currentChunk, compiler, chunkFiles, round == 0? forceCompile : true, isRebuild, onlyCheckStatus, sink);
   
               processed += chunkFiles.size();
               _context.getProgressIndicator().setFraction(((double)processed) / total);
@@ -1667,10 +1651,12 @@ public class CompileDriver {
     };
   }
 
-  private boolean compileSources(final CompileContextEx context, final Chunk<Module> moduleChunk, final TranslatingCompiler compiler, final Collection<VirtualFile> srcSnapshot,
+  private boolean compileSources(final CompileContextEx context,
+                                 final Chunk<Module> moduleChunk,
+                                 final TranslatingCompiler compiler,
+                                 final Collection<VirtualFile> srcSnapshot,
                                  final boolean forceCompile,
                                  final boolean isRebuild,
-                                 final boolean trackDependencies,
                                  final boolean onlyCheckStatus,
                                  TranslatingCompiler.OutputSink sink) throws ExitException {
 
@@ -1682,23 +1668,9 @@ public class CompileDriver {
     try {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-
           TranslatingCompilerFilesMonitor.getInstance().collectFiles(
             context, compiler, srcSnapshot.iterator(), forceCompile, isRebuild, toCompile, toDelete
           );
-          if (trackDependencies && !toCompile.isEmpty()) { // should add dependent files
-            // todo: drop this?
-            final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-            final PsiManager psiManager = PsiManager.getInstance(myProject);
-            for (final VirtualFile file : VfsUtil.toVirtualFileArray(toCompile)) {
-              if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
-                final PsiFile psiFile = psiManager.findFile(file);
-                if (psiFile != null) {
-                  addDependentFiles(psiFile, toCompile, compiler, context);
-                }
-              }
-            }
-          }
         }
       });
 
@@ -1803,33 +1775,6 @@ public class CompileDriver {
       }
     });
     return wereFilesDeleted[0];
-  }
-
-  private void addDependentFiles(final PsiFile psiFile, Set<VirtualFile> toCompile, TranslatingCompiler compiler, CompileContext context) {
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile));
-    builder.analyze();
-    final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
-    final Set<PsiFile> dependentFiles = dependencies.get(psiFile);
-    if (dependentFiles != null && !dependentFiles.isEmpty()) {
-      final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-      for (final PsiFile dependentFile : dependentFiles) {
-        if (dependentFile instanceof PsiCompiledElement) {
-          continue;
-        }
-        final VirtualFile vFile = dependentFile.getVirtualFile();
-        if (vFile == null || toCompile.contains(vFile)) {
-          continue;
-        }
-        if (!compiler.isCompilableFile(vFile, context)) {
-          continue;
-        }
-        if (!monitor.isMarkedForCompilation(myProject, vFile)) {
-          continue; // no need to compile since already compiled
-        }
-        toCompile.add(vFile);
-        addDependentFiles(dependentFile, toCompile, compiler, context);
-      }
-    }
   }
 
   // [mike] performance optimization - this method is accessed > 15,000 times in Aurora
