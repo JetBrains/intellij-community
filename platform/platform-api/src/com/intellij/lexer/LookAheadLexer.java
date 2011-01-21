@@ -47,8 +47,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   protected void lookAhead(Lexer baseLexer) {
-    addToken(baseLexer.getTokenType());
-    baseLexer.advance();
+    advanceLexer(baseLexer);
   }
 
   public void advance() {
@@ -122,7 +121,6 @@ public abstract class LookAheadLexer extends LexerBase{
     final int lastOffset = myLastOffset;
     final int lastState = myLastState;
     final int tokenStart = myTokenStart;
-    final int curState = getState();
     final int advanceCount = myTypeCache.size() - 1;
     final ImmutableUserMap customMap;
 
@@ -142,4 +140,14 @@ public abstract class LookAheadLexer extends LexerBase{
       return lastState;
     }
   }
+
+  protected final void advanceLexer( Lexer lexer ) {
+    advanceAs(lexer, lexer.getTokenType());
+  }
+
+  protected final void advanceAs(Lexer lexer, IElementType type) {
+    addToken(type);
+    lexer.advance();
+  }
+
 }
