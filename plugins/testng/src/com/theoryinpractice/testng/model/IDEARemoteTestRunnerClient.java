@@ -17,6 +17,10 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.testng.remote.strprotocol.*;
 
 import java.net.SocketTimeoutException;
@@ -30,8 +34,10 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
   private TestNGRemoteListener myListener;
   private int myPort;
 
-  public synchronized void startListening() {
-      final StringMessageSender messageSender = new StringMessageSender("localhost", myPort);
+  public synchronized void startListening(TestNGConfiguration config) {
+      final IMessageSender messageSender = TestNGRunnableState.supportSerializationProtocol(config)
+                                           ? new SerializedMessageSender("localhost", myPort)
+                                           : new StringMessageSender("localhost", myPort);
       final ServerConnection srvConnection = new ServerConnection(messageSender) {
         @Override
         protected void handleThrowable(Throwable cause) {

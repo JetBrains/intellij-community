@@ -57,6 +57,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.*;
@@ -69,7 +72,9 @@ import org.testng.CommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
 import org.testng.annotations.AfterClass;
+import org.testng.remote.RemoteArgs;
 import org.testng.remote.strprotocol.MessageHelper;
+import org.testng.remote.strprotocol.SerializedMessageSender;
 
 import javax.swing.*;
 import java.io.File;
@@ -278,7 +283,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     final TestData data = config.getPersistantData();
 
-    javaParameters.getProgramParametersList().add(CommandLineArgs.PORT, String.valueOf(port));
+    javaParameters.getProgramParametersList().add(supportSerializationProtocol(config) ? RemoteArgs.PORT : CommandLineArgs.PORT, String.valueOf(port));
 
     if (data.getOutputDirectory() != null && !"".equals(data.getOutputDirectory())) {
       javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
@@ -362,5 +367,21 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                                               final TestNGConfiguration config,
                                                               final File tempFile) {
     return new SearchingForTestsTask(serverSocket, config, tempFile, client);
+  }
+
+  public static boolean supportSerializationProtocol(TestNGConfiguration config) {
+    final Project project = config.getProject();
+    final GlobalSearchScope scopeToDetermineTestngIn;
+    if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
+      scopeToDetermineTestngIn = GlobalSearchScope.allScope(project);
+    }
+    else {
+      scopeToDetermineTestngIn = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(config.getConfigurationModule().getModule());
+    }
+
+    final TestData data = config.getPersistantData();
+
+    return JavaPsiFacade.getInstance(project)
+      .findClass(SerializedMessageSender.class.getName(), scopeToDetermineTestngIn) != null;
   }
 }

@@ -102,7 +102,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
     writeTempFile();
     connect();
 
-    myClient.startListening();
+    myClient.startListening(myConfig);
   }
 
   @Override
