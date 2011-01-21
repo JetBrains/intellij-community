@@ -457,6 +457,7 @@
   <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
   <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
+  <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
   <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
   <!-- Colors & Fonts-->
   <editorOptionsProvider implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>

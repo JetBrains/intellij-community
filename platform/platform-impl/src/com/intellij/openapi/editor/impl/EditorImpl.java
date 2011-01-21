@@ -5350,6 +5350,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final CharSequence text = myDocument.getCharsNoThreadCheck();
         int end = myDocument.getTextLength();
         int x = 0;
+        boolean lastLineLengthCalculated = false;
         final int fontSize = myScheme.getEditorFontSize();
         final String fontName = myScheme.getEditorFontName();
 
@@ -5358,6 +5359,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         for (int line = 0; line < lineCount; line++) {
           if (myLineWidths.getQuick(line) != -1) continue;
+          if (line == lineCount - 1) {
+            lastLineLengthCalculated = true;
+          }
+          
           x = 0;
           int offset = myDocument.getLineStartOffset(line);
 
@@ -5429,7 +5434,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
 
-        if (lineCount > 0) {
+        if (lineCount > 0 && lastLineLengthCalculated) {
           myLineWidths.set(lineCount - 1,
                            x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
         }
