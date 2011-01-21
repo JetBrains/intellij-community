@@ -110,7 +110,7 @@ public class TestsPattern extends TestObject {
     if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning("No pattern selected");
     }
-    final GlobalSearchScope searchScope = data.getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    final GlobalSearchScope searchScope = GlobalSearchScope.allScope(myConfiguration.getProject());
     for (String pattern : patterns) {
       final PsiClass psiClass = JavaExecutionUtil.findMainClass(myConfiguration.getProject(), pattern, searchScope);
       if (psiClass == null) {
