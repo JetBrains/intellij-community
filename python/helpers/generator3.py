@@ -382,10 +382,17 @@ return_type = Group(
 # this is our ideal target, with balancing paren and a multiline rest of doc.
 paramSeqAndRest = paramSeq + Suppress(')') + Optional(return_type) + Suppress(Optional(Regex(".*(?s)")))
 
+_is_verbose = False # controlled by -v
+def note(msg, *data):
+    if _is_verbose:
+        sys.stderr.write(msg % data)
+        sys.stderr.write("\n")
+
 _current_action = "nothing yet"
 def action(msg, *data):
     global _current_action
     _current_action = msg % data
+    note(msg, *data)
 
 def transformSeq(results, toplevel=True):
     "Transforms a tree of ParseResults into a param spec string."
@@ -1140,15 +1147,15 @@ class ModuleRedeclarator(object):
                         s = cleanup(repr(p_value))
                         if found_name:
                             if found_name == as_name:
-                                notice = " # (!) real value is " + s
+                                notice = " # (!) real value is %r" % s
                                 s = "None"
                             else:
-                                notice = " # (!) forward: " + found_name + ", real value is " + s
+                                notice = " # (!) forward: %s, real value is %r" % (found_name, s)
                         if SANE_REPR_RE.match(s):
                             out(indent, prefix, s, postfix, notice)
                         else:
                             if not found_name:
-                                notice = " # (!) real value is " + s
+                                notice = " # (!) real value is %r" % s
                             out(indent, prefix, "None", postfix, notice)
 
 
@@ -1298,10 +1305,6 @@ class ModuleRedeclarator(object):
             ret_hint = match.group(1)
             params, ret_literal, note = self.restoreByDocString(func_doc[match.end():], class_name, deco, ret_hint)
             spec = func_name + flatten(params)
-            # if "NOTE" in note:
-            # print "------\n", func_name, "@", match.end()
-            # print "------\n", func_doc
-            # print
             return (spec, ret_literal, note)
         else:
             return (None, None, None)
@@ -1645,6 +1648,11 @@ class ModuleRedeclarator(object):
             out(0, "# from file " + self.module.__file__)
         self.outDocAttr(out, self.module, 0)
 
+    def addImportHeaderIfNeeded(self):
+        if self.imports_buf.isEmpty():
+            self.imports_buf.out(0, "")
+            self.imports_buf.out(0, "# imports")
+
     def redo(self, p_name, imported_module_names):
         """
         Restores module declarations.
@@ -1655,24 +1663,15 @@ class ModuleRedeclarator(object):
         self.redoSimpleHeader(p_name)
         # find whatever other self.imported_modules the module knows; effectively these are imports
         module_type = type(sys)
-        def addImportHeaderIfNeeded():
-            if self.imports_buf.isEmpty():
-                self.imports_buf.out(0, "")
-                self.imports_buf.out(0, "# imports")
-
         for item_name, item in self.module.__dict__.items():
             if isinstance(item, module_type):
                 self.imported_modules[item_name] = item
-                addImportHeaderIfNeeded()
+                self.addImportHeaderIfNeeded()
                 ref_notice = getattr(item, "__file__", str(item))
                 if hasattr(item, "__name__"):
                     self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
                 else:
                     self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
-#        for module_name, module_obj in sys.modules.items():
-#            if module_name in imported_module_names and module_obj != self.module and module_name not in self.imported_modules and module_obj:
-#                self.imported_modules[module_name] = module_obj
-#                self.imports_buf.out(0, "import ", module_name)
 
         # group what else we have into buckets
         vars_simple = {}
@@ -1700,15 +1699,33 @@ class ModuleRedeclarator(object):
                 except NameError:
                     pass
             import_from_top = our_package.startswith(packageOf(mod_name, True)) # e.g. p_name="pygame.rect" and mod_name="pygame"
+            want_to_import = False
             if (mod_name \
                 and mod_name not in BUILTIN_MOD_NAME \
                 and mod_name != p_name \
                 and not import_from_top\
             ):
-                import_list = self.used_imports[mod_name]
-                if item_name not in import_list:
-                    import_list.append(item_name)
-            else:
+                # import looks valid, but maybe it's a .py file? we're cenrtain not to import from .py
+                # e.g. this rules out _collections import collections and builtins import site.
+                try:
+                    imported = __import__(mod_name) # ok to repeat, Python caches for us
+                    if imported:
+                        qualifieds = name.split(".")[1:]
+                        for qual in qualifieds:
+                            imported = getattr(imported, qual, None)
+                            if not imported:
+                                break
+                        imported_path = getattr(imported, '__file__', "").lower()
+                        note("path of %r is %r", mod_name, imported_path)
+                        want_to_import = not (imported_path.endswith(".py") or imported_path.endswith(".pyc"))
+                except ImportError:
+                    want_to_import = False
+                # NOTE: if we fail to import, we define 'imported' names here lest we lose them at all
+                if want_to_import:
+                    import_list = self.used_imports[mod_name]
+                    if item_name not in import_list:
+                        import_list.append(item_name)
+            if not want_to_import:
                 if isinstance(item, type) or item is FakeClassObj: # some classes are callable, check them before functions
                     classes[item_name] = item
                 elif isCallable(item):
@@ -1720,20 +1737,9 @@ class ModuleRedeclarator(object):
                         vars_simple[item_name] = item
                     else:
                         vars_complex[item_name] = item
-                    #
-                    # sort and output every bucket
-        if self.used_imports:
-            addImportHeaderIfNeeded()
-            # XXX allows 'import' from collections to _collections, etc
-            # .so never imports things from .py; don't put it to used_imports
-            for mod_name in sortedNoCase(self.used_imports.keys()):
-                names = self.used_imports[mod_name]
-                if names:
-                    self.imports_buf.out(0, "from % s import %s" % (mod_name, ", ".join(names)))
-                    self._defined[mod_name] = True
-                    for n in names:
-                        self._defined[n] = True
-            self.imports_buf.out(0, "") # empty line after group
+        #
+        # sort and output every bucket
+        self.outputImportFroms()
         #
         omitted_names = self.OMIT_NAME_IN_MODULE.get(p_name, [])
         if vars_simple:
@@ -1840,6 +1846,38 @@ class ModuleRedeclarator(object):
             self.imports_buf.out(0, "# no imports")
         self.imports_buf.out(0, "") # empty line after imports
 
+    def outputImportFroms(self):
+        "Mention all imported names known within the module, wrapping as per PEP."
+        if self.used_imports:
+            self.addImportHeaderIfNeeded()
+            for mod_name in sortedNoCase(self.used_imports.keys()):
+                names = self.used_imports[mod_name]
+                if names:
+                    self._defined[mod_name] = True
+                    right_pos = 0 # tracks width of list to fold it at right margin
+                    import_heading = "from % s import " % mod_name
+                    right_pos += len(import_heading)
+                    names_pack = [import_heading]
+                    indent_level = 0
+                    for n in sorted(names):
+                        self._defined[n] = True
+                        len_n = len(n)
+                        if right_pos + len_n >= 78:
+                            self.imports_buf.out(indent_level, *names_pack)
+                            names_pack = [n, ", "]
+                            if indent_level == 0:
+                                indent_level = 1 # all but first line is indented
+                            right_pos = self.indent_size + len_n + 2
+                        else:
+                            names_pack.append(n)
+                            names_pack.append(", ")
+                            right_pos += (len_n + 2)
+                    if names_pack: # last line
+                        self.imports_buf.out(indent_level, *names_pack[:-1]) # cut last comma
+
+            self.imports_buf.out(0, "") # empty line after group
+
+
 
 
 def buildOutputName(subdir, name):
@@ -1914,22 +1952,24 @@ if __name__ == "__main__":
         fopen = open
 
     # handle cmdline
-    helptext = \
-        'Generates interface skeletons for python modules.' '\n'\
-        'Usage: generator [options] [name ...]' '\n'\
-        'Every "name" is a (qualified) module name, e.g. "foo.bar"' '\n'\
-        'Output files will be named as modules plus ".py" suffix.' '\n'\
-        'Normally every name processed will be printed and stdout flushed.' '\n'\
-        'Options are:' '\n'\
-        ' -h -- prints this help message.' '\n'\
-        ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'\
-        ' -b -- use names from sys.builtin_module_names' '\n'\
-        ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'\
-        ' -u -- update, only recreate skeletons for newer files, and skip unchanged.' '\n'\
-        ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'\
-        ' -c modules -- import CLR assemblies with specified names' '\n'\
+    helptext = (
+        'Generates interface skeletons for python modules.' '\n'
+        'Usage: generator [options] [name ...]' '\n'
+        'Every "name" is a (qualified) module name, e.g. "foo.bar"' '\n'
+        'Output files will be named as modules plus ".py" suffix.' '\n'
+        'Normally every name processed will be printed and stdout flushed.' '\n'
+        'Options are:' '\n'
+        ' -h -- prints this help message.' '\n'
+        ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'
+        ' -b -- use names from sys.builtin_module_names' '\n'
+        ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'
+        ' -u -- update, only recreate skeletons for newer files, and skip unchanged.' '\n'
+        ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'
+        ' -v -- be verbose, print lots of debug output to stderr' '\n'
+        ' -c modules -- import CLR assemblies with specified names' '\n'
         ' -p -- run CLR profiler ' '\n'
-    opts, fnames = getopt(sys.argv[1:], "d:hbquxc:p")
+    )
+    opts, fnames = getopt(sys.argv[1:], "d:hbquxvc:p")
     opts = dict(opts)
     if not opts or '-h' in opts:
         print(helptext)
@@ -1940,6 +1980,7 @@ if __name__ == "__main__":
     quiet = '-q' in opts
     update_mode = "-u" in opts
     debug_mode = "-x" in opts
+    _is_verbose = '-v' in opts
     subdir = opts.get('-d', '')
     # determine names
     names = fnames
