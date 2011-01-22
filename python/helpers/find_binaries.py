@@ -115,7 +115,7 @@ if __name__ == "__main__":
   On filesystems that don't honour case properly, module_name may have a wrong
   case. Python import should be able to cope with this, though.
   If no dirs are given. sys.path will be the list of dirs.
-    -l print some log messages to stderr.
+    -v verbose: print some log messages to stderr.
     -h print this text.
   """
   opts, dirs = getopt(sys.argv[1:], "hl")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     print(helptext)
     sys.exit(0)
       
-  logging = '-l' in opts
+  logging = '-v' in opts
 
   if not dirs:
     dirs = sys.path
