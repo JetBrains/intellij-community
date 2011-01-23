@@ -64,7 +64,7 @@ public class AuthenticationDialog extends DialogWrapper {
         new AbstractAction (CommonBundle.getOkButtonText()) {
           public void actionPerformed(ActionEvent e) {
             HttpConfigurable.getInstance().PROXY_LOGIN = panel.getLogin();
-            HttpConfigurable.getInstance().setPlainProxyPassword(panel.getPassword());
+            HttpConfigurable.getInstance().setPlainProxyPassword(String.valueOf(panel.getPassword()));
             HttpConfigurable.getInstance().PROXY_AUTHENTICATION = true;
             HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD = panel.isRememberPassword();
 
