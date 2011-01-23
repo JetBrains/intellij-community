@@ -58,10 +58,6 @@ public abstract class GitTest extends AbstractVcsTestCase {
       myClientBinaryPath = new File(pluginRoot, "tests/git4idea/tests/data/bin");
     }
 
-    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
-    File executable = new File(myClientBinaryPath, SystemInfo.isWindows ? GIT_EXECUTABLE + ".exe" : GIT_EXECUTABLE);
-    settings.setPathToGit(executable.getPath());
-
     myMainRepo = initRepositories();
 
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
@@ -76,6 +72,10 @@ public abstract class GitTest extends AbstractVcsTestCase {
         }
       }
     });
+
+    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    File executable = new File(myClientBinaryPath, SystemInfo.isWindows ? GIT_EXECUTABLE + ".exe" : GIT_EXECUTABLE);
+    settings.setPathToGit(executable.getPath());
 
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
