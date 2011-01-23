@@ -35,7 +35,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   public PyCompatibilityInspection () {
     super();
-    if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON30.toString();
+    if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON31.toString();
     myVersionsToProcess = new Vector<LanguageLevel>();
     updateVersionsToProcess();
   }
