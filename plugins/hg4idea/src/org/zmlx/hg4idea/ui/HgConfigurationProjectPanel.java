@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -107,6 +108,8 @@ public class HgConfigurationProjectPanel {
 
   private void createUIComponents() {
     myPathSelector = new HgSetExecutablePathPanel(myProjectSettings);
+    myRunHgAsBashCheckBox = new JCheckBox();
+    myRunHgAsBashCheckBox.setVisible(!SystemInfo.isWindows);
   }
 
 }
