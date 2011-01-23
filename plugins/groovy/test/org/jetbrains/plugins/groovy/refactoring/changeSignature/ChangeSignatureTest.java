@@ -232,12 +232,16 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo[0]);
   }
 
+  public void testChangeJavaDoc() {
+    doTest(new SimpleInfo("newName", 0), new SimpleInfo(1));
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
 
 
-  private void doTest(SimpleInfo[] parameterInfos) {
+  private void doTest(SimpleInfo... parameterInfos) {
     doTest("public", null, null, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 

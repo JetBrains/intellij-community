@@ -22,6 +22,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
@@ -74,9 +75,14 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
   }
 
   public GrDocTagValueToken getValueElement() {
-    final GrDocParameterReference reference = findChildByClass(GrDocParameterReference.class);
+    final GrDocParameterReference reference = getDocParameterReference();
     if (reference == null) return null;
     return reference.getReferenceNameElement();
+  }
+
+  @Nullable
+  public GrDocParameterReference getDocParameterReference() {
+    return findChildByClass(GrDocParameterReference.class);
   }
 
   public PsiElement[] getDataElements() {
@@ -90,5 +96,10 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     final GrDocComment comment = factory.createDocCommentFromText("/** @" + name + "*/");
     nameElement.replace(comment.getTags()[0].getNameElement());
     return this;
+  }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    getParent().deleteChildRange(this, this);
   }
 }

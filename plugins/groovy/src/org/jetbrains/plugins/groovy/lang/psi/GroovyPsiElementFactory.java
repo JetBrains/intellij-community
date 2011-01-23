@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -179,6 +180,8 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrLabel createLabel(@NotNull String name);
 
   public abstract GrDocComment createDocCommentFromText(String text) ;
+
+  public abstract GrDocTag createDocTagFromText(String text) ;
 
   public abstract GrConstructorInvocation createConstructorInvocation(String text);
 

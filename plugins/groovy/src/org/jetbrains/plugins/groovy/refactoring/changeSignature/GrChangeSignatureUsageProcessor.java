@@ -37,6 +37,9 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -54,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -223,6 +225,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrParameter anchor = null;
+    final GrDocComment docComment = method.getDocComment();
+    final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
+
     for (JavaParameterInfo newParameter : newParameters) {
       PsiType type;
       if (newParameter instanceof GrParameterInfo && ((GrParameterInfo)newParameter).hasNoType()) {
@@ -230,6 +235,21 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
       else {
         type = substitutor.substitute(newParameter.createType(context, method.getManager()));
+      }
+
+      if (docComment != null) {
+        if (newParameter.getOldIndex() >= 0) {
+          final GrParameter oldParameter = oldParameters[newParameter.getOldIndex()];
+          final String oldName = oldParameter.getName();
+          for (GrDocTag tag : tags) {
+            if ("@param".equals(tag.getName())) {
+              final GrDocParameterReference parameterReference = tag.getDocParameterReference();
+              if (parameterReference != null && oldName.equals(parameterReference.getText())) {
+                parameterReference.handleElementRename(newParameter.getName());
+              }
+            }
+          }
+        }
       }
 
       GrParameter grParameter = factory

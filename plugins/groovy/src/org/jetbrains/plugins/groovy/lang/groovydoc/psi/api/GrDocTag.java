@@ -29,4 +29,7 @@ public interface GrDocTag extends GroovyDocPsiElement, PsiDocTag {
 
   @Nullable
   GrDocTagValueToken getValueElement();
+
+  @Nullable
+  GrDocParameterReference getDocParameterReference();
 }

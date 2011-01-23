@@ -579,8 +579,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrDocComment createDocCommentFromText(String text) {
     StringBuilder builder = new StringBuilder();
     builder.append(text);
-    builder.append(" def foo(){}");
-    return (GrDocComment)createGroovyFile(text+"def foo(){}").getFirstChild();
+    return (GrDocComment)createGroovyFile(text).getFirstChild();
+  }
+
+  @Override
+  public GrDocTag createDocTagFromText(String text) {
+    final GrDocComment docComment = createDocCommentFromText("/**" + text + "*/");
+    return docComment.getTags()[0];
   }
 
   @Override
