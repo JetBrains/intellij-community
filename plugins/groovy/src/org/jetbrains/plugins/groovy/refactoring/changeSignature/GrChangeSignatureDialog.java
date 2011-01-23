@@ -23,8 +23,8 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import com.intellij.refactoring.changeSignature.ExceptionsTableModel;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -358,7 +358,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         return false;
       }
       String defaultValue = info.getDefaultValue();
-      if (info.getOldIndex() < 0 && (defaultValue == null || defaultValue.trim().length() == 0)) {
+      final String initializer = info.getDefaultInitializerFragment().getText();
+      if (info.getOldIndex() < 0 && defaultValue.trim().length() == 0 && initializer.trim().length() == 0) {
         showErrorHint(message("specify.default.value", info.getName()));
         return false;
       }
