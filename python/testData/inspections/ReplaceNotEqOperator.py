@@ -1,0 +1,1 @@
+print(<warning descr="Python versions 3.0 do not support <>, use != instead.">a<caret> <> b</warning>)

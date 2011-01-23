@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
@@ -34,6 +35,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   public PyCompatibilityInspection () {
     super();
+    if (ApplicationManager.getApplication().isUnitTestMode()) toVersion = LanguageLevel.PYTHON30.toString();
     myVersionsToProcess = new Vector<LanguageLevel>();
     updateVersionsToProcess();
   }
