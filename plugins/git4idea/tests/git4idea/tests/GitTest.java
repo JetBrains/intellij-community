@@ -24,6 +24,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitVcsApplicationSettings;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -56,6 +57,10 @@ public abstract class GitTest extends AbstractVcsTestCase {
       final File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
       myClientBinaryPath = new File(pluginRoot, "tests/git4idea/tests/data/bin");
     }
+
+    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    File executable = new File(myClientBinaryPath, SystemInfo.isWindows ? GIT_EXECUTABLE + ".exe" : GIT_EXECUTABLE);
+    settings.setPathToGit(executable.getPath());
 
     myMainRepo = initRepositories();
 
