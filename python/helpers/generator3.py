@@ -1087,6 +1087,7 @@ class ModuleRedeclarator(object):
             if imported_name:
                 out(indent, prefix, imported_name, postfix)
                 # TODO: kind of self.used_imports[imported_name].append(p_value) but split imported_name
+                # else we could potentially return smth we did not otherwise import. but not likely.
             else:
                 if isinstance(p_value, (list, tuple)):
                     if not seen_values:
@@ -1114,7 +1115,10 @@ class ModuleRedeclarator(object):
                           seen_values = [p_value]
                         out(indent, prefix, "{")
                         keys = list(p_value.keys())
-                        keys.sort()
+                        try:
+                            keys.sort()
+                        except TypeError:
+                            pass # unsortable keys happen, e,g, in py3k _ctypes
                         for k in keys:
                             v = p_value[k]
                             if v in seen_values:
