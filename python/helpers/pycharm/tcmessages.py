@@ -36,7 +36,11 @@ class TeamcityServiceMessages:
     def testIgnored(self, testName, message=''):
         self.message('testIgnored', name=testName, message=message)
         
-    def testFailed(self, testName, message='', details=''):
+    def testFailed(self, testName, message='', details='', expected='', actual=''):
+      if expected and actual:
+        self.message('testFailed', type='comparisonFailure', name=testName, message=message,
+                   details=details, expected=expected, actual=actual)
+      else:
         self.message('testFailed', name=testName, message=message, details=details)
 
     def testError(self, testName, message='', details=''):
