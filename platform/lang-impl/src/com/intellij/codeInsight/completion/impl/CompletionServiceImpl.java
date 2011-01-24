@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
@@ -187,6 +188,7 @@ public class CompletionServiceImpl extends CompletionService{
 
   public static void setCompletionPhase(@NotNull CompletionPhase phase) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    Disposer.dispose(ourPhase);
     ourPhase = phase;
     ourPhaseTrace = DebugUtil.currentStackTrace();
   }

@@ -3,9 +3,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.LightweightHint;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -14,7 +11,6 @@ public class CompletionState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionState");
   private boolean myCompletionDisposed;
   private boolean myShownLookup;
-  private LightweightHint myCompletionHint;
   private Boolean myToRestart;
   private boolean myRestartScheduled;
   private boolean myModifiersChanged;
@@ -22,7 +18,6 @@ public class CompletionState {
   private boolean myBackgrounded;
   private volatile boolean myFocusLookupWhenDone;
   private volatile int myCount;
-  private Runnable myZombieCleanup;
 
   public CompletionState(boolean shownLookup) {
     myShownLookup = shownLookup;
@@ -35,7 +30,6 @@ public class CompletionState {
   public void setCompletionDisposed(boolean completionDisposed) {
     LOG.assertTrue(!myCompletionDisposed, this);
     LOG.assertTrue(!isWaitingAfterAutoInsertion(), this);
-    LOG.assertTrue(myCompletionHint == null, this);
     myCompletionDisposed = completionDisposed;
   }
 
@@ -45,21 +39,6 @@ public class CompletionState {
 
   public void setShownLookup(boolean shownLookup) {
     myShownLookup = shownLookup;
-  }
-
-  public LightweightHint getCompletionHint() {
-    return myCompletionHint;
-  }
-
-  public void goZombie(@Nullable LightweightHint completionHint, @NotNull Runnable cleanup) {
-    LOG.assertTrue(myZombieCleanup == null, this);
-    if (completionHint != null) {
-      LOG.assertTrue(myCompletionHint == null, this);
-    } else {
-      LOG.assertTrue(!myModifiersChanged, this);
-    }
-    myCompletionHint = completionHint;
-    myZombieCleanup = cleanup;
   }
 
   public boolean isToRestart() {
@@ -92,10 +71,16 @@ public class CompletionState {
   }
 
   public boolean isWaitingAfterAutoInsertion() {
-    return myRestorePrefix != null && isZombie();
+    CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+    if (phase instanceof CompletionPhase.InsertedSingleItem && ((CompletionPhase.InsertedSingleItem)phase).indicator.getCompletionState() == this) {
+      LOG.assertTrue(myRestorePrefix != null, this);
+      return true;
+    }
+    return false;
   }
 
   public void setRestorePrefix(Runnable restorePrefix) {
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     myRestorePrefix = restorePrefix;
   }
 
@@ -122,27 +107,17 @@ public class CompletionState {
   }
 
   public void restorePrefix() {
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     if (myRestorePrefix != null) {
       myRestorePrefix.run();
       myRestorePrefix = null;
     }
   }
 
-  public void handleDeath(boolean afterDeath) {
+  public void handleDeath() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean zombie = isZombie();
-    LOG.assertTrue(afterDeath == zombie, this);
     assertDisposed();
-    if (zombie) {
-      myZombieCleanup.run();
-    }
-    myZombieCleanup = null;
-    myCompletionHint = null;
-    setRestorePrefix(null);
-  }
-
-  public boolean isZombie() {
-    return myZombieCleanup != null;
+    myRestorePrefix = null;
   }
 
   int incCount() {
@@ -159,7 +134,6 @@ public class CompletionState {
            "phase=" + CompletionServiceImpl.getCompletionPhase() +
            ", myCompletionDisposed=" + myCompletionDisposed +
            ", myShownLookup=" + myShownLookup +
-           ", myCompletionHint=" + myCompletionHint +
            ", myToRestart=" + myToRestart +
            ", myRestartScheduled=" + myRestartScheduled +
            ", myModifiersReleased=" + myModifiersChanged +
@@ -167,7 +141,6 @@ public class CompletionState {
            ", myBackgrounded=" + myBackgrounded +
            ", myFocusLookupWhenDone=" + myFocusLookupWhenDone +
            ", myCount=" + myCount +
-           ", myZombieCleanup=" + myZombieCleanup +
            '}';
   }
 }

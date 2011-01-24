@@ -120,7 +120,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
 
-    final CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    if (indicator != null) {
+      indicator.closeAndFinish(false);
+    } else {
+      CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
+      if (phase instanceof CompletionPhase.ZombiePhase) {
+        indicator = ((CompletionPhase.ZombiePhase)phase).indicator;
+      }
+    }
+
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+
     if (indicator != null) {
       boolean repeated = indicator.isRepeatedInvocation(myCompletionType, editor);
       if (repeated && !indicator.isRunning() && (!isAutocompleteCommonPrefixOnInvocation() || indicator.fillInCommonPrefix(true))) {
@@ -130,8 +141,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       if (repeated) {
         time = Math.max(indicator.getParameters().getInvocationCount() + 1, 2);
         indicator.restorePrefix();
-      } else {
-        indicator.closeAndFinish(false);
       }
     }
 
@@ -492,11 +501,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
-      if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
-        indicator.liveAfterDeath(null);
-        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem());
-      } else {
-        LOG.assertTrue(!indicator.isZombie(), indicator);
+      if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
+          !ApplicationManager.getApplication().isUnitTestMode()) {
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.InsertedSingleItem(indicator));
+        assert indicator.getCompletionState().isWaitingAfterAutoInsertion();
       }
     }
   }
@@ -601,21 +609,26 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (!invokedExplicitly) {
       return CompletionPhase.NoCompletion;
     }
+    indicator.assertDisposed();
+    assert !indicator.isAutopopupCompletion();
 
-    CompletionPhase result = CompletionPhase.NoCompletion;
+    final CompletionPhase[] result = {CompletionPhase.NoCompletion};
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
         final EditorHintListener listener = new EditorHintListener() {
           public void hintShown(final Project project, final LightweightHint hint, final int flags) {
-            indicator.liveAfterDeath(hint);
+            if (!indicator.areModifiersChanged()) {
+              result[0] = new CompletionPhase.NoSuggestionsHint(hint, indicator);
+              CompletionServiceImpl.setCompletionPhase(result[0]);
+            }
           }
         };
         final MessageBusConnection connection = project.getMessageBus().connect();
         connection.subscribe(EditorHintListener.TOPIC, listener);
+        assert text != null;
         HintManager.getInstance().showErrorHint(editor, text);
         connection.disconnect();
-        result = new CompletionPhase.NoSuggestionsHint();
         break;
       }
     }
@@ -623,7 +636,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (codeAnalyzer != null) {
       codeAnalyzer.updateVisibleHighlighters(editor);
     }
-    return result;
+    return result[0];
   }
 
   private static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,

@@ -25,11 +25,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -47,8 +43,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +56,6 @@ import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
-import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -198,6 +191,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
+  public CompletionState getCompletionState() {
+    return myState;
+  }
+
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
     final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
     for (TextRange range : ranges) {
@@ -288,18 +285,18 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       private void processModifier(KeyEvent e) {
         final int code = e.getKeyCode();
         if (code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_META || code == KeyEvent.VK_ALT || code == KeyEvent.VK_SHIFT) {
+          contentComponent.removeKeyListener(this);
           myState.modifiersChanged();
           if (myState.isWaitingAfterAutoInsertion()) {
-            unregisterItself(true);
+            myState.handleDeath();
+            CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+            assert currentCompletion == null : currentCompletion;
+
+            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
-          contentComponent.removeKeyListener(this);
         }
       }
     });
-  }
-
-  boolean isZombie() {
-    return myState.isZombie();
   }
 
   private void setMergeCommand() {
@@ -322,63 +319,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(this);
   }
 
-  public void liveAfterDeath(@Nullable final LightweightHint hint) {
+  void assertDisposed() {
     myState.assertDisposed();
+  }
 
-    if (myState.areModifiersChanged() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-
-    registerItself();
-
-
-    final HintListener hintListener = new HintListener() {
-      public void hintHidden(final EventObject event) {
-        unregisterItself(true);
-      }
-    };
-    final DocumentAdapter documentListener = new DocumentAdapter() {
-      @Override
-      public void beforeDocumentChange(DocumentEvent e) {
-        unregisterItself(true);
-      }
-    };
-    final SelectionListener selectionListener = new SelectionListener() {
-      public void selectionChanged(SelectionEvent e) {
-        unregisterItself(true);
-      }
-    };
-    final CaretListener caretListener = new CaretListener() {
-      public void caretPositionChanged(CaretEvent e) {
-        unregisterItself(true);
-      }
-    };
-
-    final Document document = myEditor.getDocument();
-    final SelectionModel selectionModel = myEditor.getSelectionModel();
-    final CaretModel caretModel = myEditor.getCaretModel();
-
-
-    if (hint != null) {
-      hint.addHintListener(hintListener);
-    }
-    document.addDocumentListener(documentListener);
-    selectionModel.addSelectionListener(selectionListener);
-    caretModel.addCaretListener(caretListener);
-
-    myState.goZombie(hint, new Runnable() {
-      @Override
-      public void run() {
-        if (hint != null) {
-          hint.removeHintListener(hintListener);
-        }
-        document.removeDocumentListener(documentListener);
-        selectionModel.removeSelectionListener(selectionListener);
-        caretModel.removeCaretListener(caretListener);
-      }
-    });
-
+  boolean areModifiersChanged() {
+    return myState.areModifiersChanged();
   }
 
   public CodeCompletionHandlerBase getHandler() {
@@ -454,10 +400,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void closeAndFinish(boolean hideLookup) {
     LOG.assertTrue(this == CompletionServiceImpl.getCompletionService().getCurrentCompletion());
 
-    if (myState.getCompletionHint() != null) {
-      myState.getCompletionHint().hide();
-    }
-
     Lookup lookup = LookupManager.getActiveLookup(myEditor);
     if (lookup != null) {
       LOG.assertTrue(lookup == myLookup);
@@ -480,8 +422,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.dispose(myQueue);
-    unregisterItself(false);
 
+    myState.handleDeath();
+
+    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+    assert currentCompletion == this : currentCompletion + "!=" + this;
+    CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
+
+    CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
@@ -491,19 +439,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (currentCompletion != null) {
       currentCompletion.finishCompletionProcess();
     }
-  }
-
-  private void unregisterItself(boolean afterDeath) {
-    if (afterDeath) {
-      CompletionServiceImpl.assertPhase(CompletionPhase.NoSuggestionsHint.class, CompletionPhase.InsertedSingleItem.class);
-    } else {
-      CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
-    }
-
-    myState.handleDeath(afterDeath);
-    CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    assert currentCompletion == this : currentCompletion + "!=" + this;
-    CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
   }
 
   public void stop() {
@@ -599,8 +534,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void restorePrefix() {
-    closeAndFinish(false);
-
     new WriteCommandAction(getProject(), getCompletionCommandName()) {
       @Override
       protected void run(Result result) throws Throwable {
