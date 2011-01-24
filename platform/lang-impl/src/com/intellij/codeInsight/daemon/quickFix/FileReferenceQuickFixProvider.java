@@ -85,6 +85,8 @@ public class FileReferenceQuickFixProvider {
               context = defaultContext;
             }
             else if (module != null && module == getModuleForContext(defaultContext)) {
+              // fixes IDEA-64156
+              // todo: fix it on PsiFileReferenceHelper level in 10.X
               context = defaultContext;
               break;
             }
