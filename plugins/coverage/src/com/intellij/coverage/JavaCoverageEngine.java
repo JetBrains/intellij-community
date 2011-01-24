@@ -175,14 +175,15 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public boolean recompileProjectAndRerunAction(@NotNull Module module, @NotNull final CoverageSuitesBundle suite,
+  public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
     if ((outputpath == null && isModuleOutputNeeded(module, false)) || (suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, true))) {
       final Project project = module.getProject();
-
+      if (suite.isModuleChecked(module)) return false;
+      suite.checkModule(module);
       final Runnable runnable = new Runnable() {
         public void run() {
           if (Messages.showOkCancelDialog(
@@ -200,6 +201,8 @@ public class JavaCoverageEngine extends CoverageEngine {
                 });
               }
             });
+          } else if (!project.isDisposed()) {
+            CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
           }
         }
       };
