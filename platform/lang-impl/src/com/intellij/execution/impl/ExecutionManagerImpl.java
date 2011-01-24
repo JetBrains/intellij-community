@@ -96,7 +96,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
-  public void compileAndRun(final Runnable startRunnable, final RunProfile configuration, final RunProfileState state, @Nullable final Runnable onCancelRunnable) {
+  public void compileAndRun(final Runnable startRunnable, final RunProfile configuration, final @Nullable RunProfileState state, @Nullable final Runnable onCancelRunnable) {
     if (configuration instanceof RunConfiguration) {
       final RunConfiguration runConfiguration = (RunConfiguration)configuration;
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
@@ -112,7 +112,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       if (!activeProviders.isEmpty()) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            ConfigurationPerRunnerSettings configurationSettings = state.getConfigurationSettings();
+            ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
             DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
 
             final DataContext dataContext = configurationSettings != null ? SimpleDataContext
