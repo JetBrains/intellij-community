@@ -49,9 +49,12 @@ import java.awt.*;
 import java.util.List;
 
 public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, Disposable {
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretModelImpl");
+  
   private final EditorImpl myEditor;
   private final List<CaretListener> myCaretListeners = ContainerUtil.createEmptyCOWList();
+  
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myCaretInfo;
   private VisualPosition myVisibleCaret;
@@ -61,6 +64,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private TextAttributes myTextAttributes;
   private boolean myIsInUpdate;
   private RangeMarker savedBeforeBulkCaretMarker;
+
+  /**
+   * There is a possible case that user defined non-monospaced font for editor. That means that various symbols have different
+   * visual widths. That means that if we move caret vertically it may deviate to the left/right. However, we can try to preserve
+   * its initial visual position when possible.
+   * <p/>
+   * This field holds desired value for visual <code>'x'</code> caret coordinate (negative value if no coordinate should be preserved).
+   */
+  private int myDesiredX = -1;
 
   public CaretModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -188,8 +200,21 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     EditorSettings editorSettings = myEditor.getSettings();
     VisualPosition visualCaret = getVisualPosition();
 
-    int newColumnNumber = visualCaret.column + columnShift;
+    int desiredX = myDesiredX;
+    if (columnShift == 0) {
+      if (myDesiredX < 0) {
+        desiredX = myEditor.visualPositionToXY(visualCaret).x;
+      }
+    }
+    else {
+      myDesiredX = desiredX = -1;
+    }
+
     int newLineNumber = visualCaret.line + lineShift;
+    int newColumnNumber = visualCaret.column + columnShift;
+    if (desiredX >= 0) {
+      newColumnNumber = myEditor.xyToVisualPosition(new Point(desiredX, newLineNumber * myEditor.getLineHeight())).column;
+    }
 
     Document document = myEditor.getDocument();
     if (!editorSettings.isVirtualSpace() && columnShift == 0 && getLogicalPosition().softWrapLinesOnCurrentLogicalLine <= 0) {
@@ -295,6 +320,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (scrollToCaret) {
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
+    
+    if (desiredX >= 0) {
+      myDesiredX = desiredX;
+    }
   }
 
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {
@@ -303,6 +332,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   private void moveToLogicalPosition(LogicalPosition pos, boolean locateBeforeSoftWrap) {
     assertIsDispatchThread();
+    myDesiredX = -1;
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
