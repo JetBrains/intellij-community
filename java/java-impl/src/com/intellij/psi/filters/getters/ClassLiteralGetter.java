@@ -58,14 +58,15 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
       return;
     }
 
-    addClassLiteralLookupElement(classParameter, result, parameters.getPosition());
+    PsiFile file = parameters.getPosition().getContainingFile();
+    addClassLiteralLookupElement(classParameter, result, file);
     if (addInheritors) {
-      addInheritorClassLiterals(parameters.getPosition(), shortNameCondition, classParameter, result);
+      addInheritorClassLiterals(file, shortNameCondition, classParameter, result);
     }
 
   }
 
-  private static void addInheritorClassLiterals(PsiElement context,
+  private static void addInheritorClassLiterals(PsiFile context,
                                                 Condition<String> shortNameCondition,
                                                 final PsiType classParameter,
                                                 CompletionResultSet result) {
@@ -79,7 +80,7 @@ public class ClassLiteralGetter extends CompletionProvider<JavaSmartCompletionPa
     }
   }
 
-  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final CompletionResultSet resultSet, final PsiElement context) {
+  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final CompletionResultSet resultSet, final PsiFile context) {
     if (type instanceof PsiClassType &&
         PsiUtil.resolveClassInType(type) != null &&
         !((PsiClassType)type).hasParameters() &&
