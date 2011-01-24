@@ -47,7 +47,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   private final ScriptingLibraryManager myLibraryManager;
   private final Map<VirtualFile, CompoundLibrary> myCompoundLibMap = new HashMap<VirtualFile, CompoundLibrary>();
   private CompoundLibrary myProjectLibs = new CompoundLibrary();
-  private Set<VirtualFile> myProjectLibFiles;
 
   public ScriptingLibraryMappings(final Project project, final LibraryType libraryType) {
     super(project);
@@ -96,7 +95,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
   public void setMappings(Map<VirtualFile, ScriptingLibraryTable.LibraryModel> mappings) {
     super.setMappings(mappings);
     updateDependencies(mappings);
-    updateProjectLibraryFiles();
   }
 
   private static boolean dependencyExists(ModuleRootManager rootManager, Library library) {
@@ -173,7 +171,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
       setMapping(file, container);
     }
     updateDependencies(getMappings());
-    updateProjectLibraryFiles();
   }
   
   public boolean isAssociatedWith(VirtualFile file, String libName) {
@@ -403,28 +400,6 @@ public class ScriptingLibraryMappings extends LanguagePerFileMappings<ScriptingL
     }
     return isApplicable(libFile, srcFile.getParent());
   }
-
-  private void updateProjectLibraryFiles() {
-    myProjectLibFiles = new HashSet<VirtualFile>();
-    for (CompoundLibrary container : myCompoundLibMap.values()) {
-      for (ScriptingLibraryTable.LibraryModel libModel : container.getLibraries()) {
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-        myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
-      }
-    }
-    for (ScriptingLibraryTable.LibraryModel libModel : myProjectLibs.getLibraries()) {
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getSourceFiles()));
-      myProjectLibFiles.addAll(Arrays.asList(libModel.getCompactFiles()));
-    }
-  }
-
-  public Set<VirtualFile> getProjectLibraryFiles() {
-    if (myProjectLibFiles == null) {
-      updateProjectLibraryFiles();
-    }
-    return myProjectLibFiles;
-  }
-  
 
 
 }
