@@ -138,7 +138,13 @@ public class CompletionServiceImpl extends CompletionService{
       final String newLookupString = handleCaseInsensitiveVariant(prefix, oldLookupString);
       if (!newLookupString.equals(oldLookupString)) {
         final Document document = context.getEditor().getDocument();
-        document.replaceString(context.getStartOffset(), context.getTailOffset(), newLookupString);
+        int startOffset = context.getStartOffset();
+        int tailOffset = context.getTailOffset();
+
+        assert startOffset >= 0 : "stale startOffset";
+        assert tailOffset >= 0 : "stale tailOffset";
+
+        document.replaceString(startOffset, tailOffset, newLookupString);
         PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
       }
     }
