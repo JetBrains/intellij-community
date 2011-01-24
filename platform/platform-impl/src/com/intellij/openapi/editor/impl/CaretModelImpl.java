@@ -192,7 +192,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     int newLineNumber = visualCaret.line + lineShift;
 
     Document document = myEditor.getDocument();
-    if (!editorSettings.isVirtualSpace() && columnShift == 0) {
+    if (!editorSettings.isVirtualSpace() && columnShift == 0 && getLogicalPosition().softWrapLinesOnCurrentLogicalLine <= 0) {
       newColumnNumber = myEditor.getLastColumnNumber();
     }
     else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == 1) {
