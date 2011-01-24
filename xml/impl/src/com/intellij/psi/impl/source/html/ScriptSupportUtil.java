@@ -22,6 +22,8 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -35,7 +37,7 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 public class ScriptSupportUtil {
-  private static final Key<XmlTag[]> CachedScriptTagsKey = Key.create("script tags");
+  private static final Key<CachedValue<XmlTag[]>> CachedScriptTagsKey = Key.create("script tags");
   private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
   private static final @NonNls String SCRIPT_TAG = "script";
 
@@ -46,61 +48,71 @@ public class ScriptSupportUtil {
     element.putUserData(CachedScriptTagsKey,null);
   }
 
-  public static boolean processDeclarations(XmlFile element, PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
-    XmlTag[] myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
-
+  public static boolean processDeclarations(final XmlFile element,
+                                            PsiScopeProcessor processor,
+                                            ResolveState state,
+                                            PsiElement lastParent,
+                                            PsiElement place) {
+    CachedValue<XmlTag[]> myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
     if (myCachedScriptTags == null) {
-      final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-      final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
+      myCachedScriptTags = element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlTag[]>() {
+        @Override
+        public Result<XmlTag[]> compute() {
+          final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
+          final XmlDocument document = HtmlUtil.getRealXmlDocument(element.getDocument());
 
-      if (document != null) {
-        XmlUtil.processXmlElements(document,
-          new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
-            if (element instanceof XmlTag) {
-              final XmlTag tag = (XmlTag)element;
+          if (document != null) {
+            PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
+              public boolean execute(final PsiElement element) {
+                if (element instanceof XmlTag) {
+                  final XmlTag tag = (XmlTag)element;
 
-              if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
-                final XmlElementDescriptor descriptor = tag.getDescriptor();
-                if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
-                  scriptTags.add(tag);
+                  if (SCRIPT_TAG.equalsIgnoreCase(tag.getName())) {
+                    final XmlElementDescriptor descriptor = tag.getDescriptor();
+                    if (descriptor != null && SCRIPT_TAG.equals(descriptor.getName())) {
+                      scriptTags.add(tag);
+                    }
+                  }
                 }
+                return true;
               }
-            }
-            return true;
+            };
+            XmlUtil.processXmlElements(document,psiElementProcessor, true);
           }
-        }, true);
-      }
 
-      myCachedScriptTags = scriptTags.toArray(new XmlTag[scriptTags.size()]);
+          return new Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
+        }
+      }, false);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }
 
     if (ProcessingDeclarationsFlag.get() != null) return true;
-    
+
     try {
       ProcessingDeclarationsFlag.set("");
 
-      for (XmlTag tag : myCachedScriptTags) {
+      for (XmlTag tag : myCachedScriptTags.getValue()) {
         final XmlTagChild[] children = tag.getValue().getChildren();
         for (XmlTagChild child : children) {
           if (!child.processDeclarations(processor, state, null, place)) return false;
         }
 
-        if(tag.getAttributeValue("src") != null) {
+        if (tag.getAttributeValue("src") != null) {
           final XmlAttribute attribute = tag.getAttribute("src", null);
 
           if (attribute != null) {
             final PsiFile psiFile = FileReferenceUtil.findFile(attribute.getValueElement());
 
             if (psiFile != null && psiFile.isValid()) {
-              if(!psiFile.processDeclarations(processor, state, null, place))
+              if (!psiFile.processDeclarations(processor, state, null, place)) {
                 return false;
+              }
             }
           }
         }
       }
-    } finally {
+    }
+    finally {
       ProcessingDeclarationsFlag.set(null);
     }
 
