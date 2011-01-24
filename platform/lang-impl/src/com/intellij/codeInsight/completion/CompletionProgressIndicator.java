@@ -146,7 +146,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void notifyBackgrounded() {
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.bgCalculation);
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.BgCalculation);
     myState.setBackgrounded();
   }
 
@@ -482,7 +482,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
     unregisterItself(false);
 
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.noCompletion);
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
   @TestOnly
@@ -495,9 +495,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void unregisterItself(boolean afterDeath) {
     if (afterDeath) {
-      CompletionServiceImpl.assertPhase(CompletionPhase.noSuggestionsHint, CompletionPhase.insertedSingleItem);
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoSuggestionsHint, CompletionPhase.InsertedSingleItem);
     } else {
-      CompletionServiceImpl.assertPhase(CompletionPhase.bgCalculation, CompletionPhase.itemsCalculated, CompletionPhase.synchronous, CompletionPhase.restarted);
+      CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation, CompletionPhase.ItemsCalculated, CompletionPhase.Synchronous, CompletionPhase.Restarted);
     }
 
     myState.handleDeath(afterDeath);
@@ -533,7 +533,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           if (!isAutopopupCompletion()) {
             CompletionServiceImpl.setCompletionPhase(myHandler.handleEmptyLookup(getProject(), myEditor, myParameters, CompletionProgressIndicator.this));
           } else {
-            CompletionServiceImpl.setCompletionPhase(CompletionPhase.noCompletion);
+            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
         else {
@@ -541,7 +541,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setFocused(true);
           }
           updateLookup();
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.itemsCalculated);
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.ItemsCalculated);
         }
       }
     }, myQueue.getModalityState());
@@ -554,7 +554,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
         LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.emptyAutoPopup);
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.EmptyAutoPopup);
         return true;
       }
 
@@ -562,7 +562,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
           LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.possiblyDisturbingAutoPopup);
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.PossiblyDisturbingAutoPopup);
           return true;
         }
       }
@@ -690,7 +690,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myState.scheduleRestart();
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.restarted);
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.Restarted);
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -699,7 +699,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (isOutdated()) {
           return;
         }
-        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.restarted) {
+        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.Restarted) {
           return;
         }
 

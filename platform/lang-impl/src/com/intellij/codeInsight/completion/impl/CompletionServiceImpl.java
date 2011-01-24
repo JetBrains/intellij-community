@@ -37,7 +37,7 @@ public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
   private CompletionProgressIndicator myCurrentCompletion;
-  private static CompletionPhase ourPhase = CompletionPhase.noCompletion;
+  private static CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
   public static CompletionServiceImpl getCompletionService() {

@@ -19,15 +19,15 @@ package com.intellij.codeInsight.completion;
  * @author peter
  */
 public enum CompletionPhase {
-  noCompletion,
-  autoPopupAlarm,
-  synchronous,
-  bgCalculation,
-  itemsCalculated,
-  restarted,
-  insertedSingleItem,
-  noSuggestionsHint,
-  possiblyDisturbingAutoPopup,
-  emptyAutoPopup,
+  NoCompletion,
+  AutoPopupAlarm,
+  Synchronous,
+  BgCalculation,
+  ItemsCalculated,
+  Restarted,
+  InsertedSingleItem,
+  NoSuggestionsHint,
+  PossiblyDisturbingAutoPopup,
+  EmptyAutoPopup,
 
 }
