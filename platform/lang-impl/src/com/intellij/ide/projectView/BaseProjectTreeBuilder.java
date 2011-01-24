@@ -109,7 +109,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected final void expandNodeChildren(final DefaultMutableTreeNode node) {
-    Object element = ((NodeDescriptor)node.getUserObject()).getElement();
+    final NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
+    if (userObject == null) return;
+    Object element = userObject.getElement();
     VirtualFile virtualFile = getFileToRefresh(element);
     super.expandNodeChildren(node);
     if (virtualFile != null) {
