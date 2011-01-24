@@ -178,20 +178,6 @@ public abstract class ParserUtils {
     marker.error(msg);
   }
 
-  public static void waitNextRCurly(PsiBuilder builder) {
-    int i = 0;
-    PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() && !GroovyElementTypes.mRCURLY.equals(builder.getTokenType())) {
-      builder.advanceLexer();
-      i++;
-    }
-    if (i > 0) {
-      em.error(GroovyBundle.message("rcurly.expected"));
-    } else {
-      em.drop();
-    }
-  }
-
   public static void advance(PsiBuilder builder, int count) {
     for (int i = 0; i < count; i++) {
       builder.getTokenText();
