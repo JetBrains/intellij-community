@@ -209,6 +209,9 @@
       <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
+    <action id="NewElementSamePlace">
+      <keyboard-shortcut first-keystroke="control alt N"/>
+    </action>
     <action id="Generate">
       <keyboard-shortcut first-keystroke="control N"/>
       <keyboard-shortcut first-keystroke="control ENTER"/>
