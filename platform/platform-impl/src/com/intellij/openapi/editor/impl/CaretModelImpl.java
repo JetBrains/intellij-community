@@ -111,6 +111,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
+    myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
 
