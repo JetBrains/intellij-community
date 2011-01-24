@@ -47,7 +47,7 @@ public class LoadController implements Loader {
   public void loadSkeleton(final Mediator.Ticket ticket,
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
-                           final Collection<ChangesFilter.Filter> filters,
+                           final Collection<Collection<ChangesFilter.Filter>> filters,
                            String[] possibleHashes,
                            final LoadGrowthController loadGrowthController) {
     if (myPreviousAlgorithm != null) {
@@ -63,18 +63,40 @@ public class LoadController implements Loader {
 
       if (filters.isEmpty()) {
         final LoaderAndRefresherImpl loaderAndRefresher =
-        new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                   loadGrowthController.getId());
+        new LoaderAndRefresherImpl(ticket, Collections.<ChangesFilter.Filter>emptyList(), myMediator, startingPoints, myDetailsCache,
+                                   myProject, rootHolder, myUsersIndex, loadGrowthController.getId());
         list.add(loaderAndRefresher);
       } else {
-        for (ChangesFilter.Filter filter : filters) {
+        Collection<Collection<ChangesFilter.Filter>> reordered = new ArrayList<Collection<ChangesFilter.Filter>>();
+        final Iterator<Collection<ChangesFilter.Filter>> iterator = filters.iterator();
+        if (iterator.hasNext()) {
+          final Collection<ChangesFilter.Filter> first = iterator.next();
+          for (ChangesFilter.Filter filter : first) {
+            final ArrayList<ChangesFilter.Filter> newList = new ArrayList<ChangesFilter.Filter>();
+            newList.add(filter);
+            reordered.add(newList);
+          }
+        }
+        while (iterator.hasNext()) {
+          final Collection<ChangesFilter.Filter> next = iterator.next();
+          final Collection<Collection<ChangesFilter.Filter>> reorderedCopy = reordered;
+          reordered = new ArrayList<Collection<ChangesFilter.Filter>>();
+          for (ChangesFilter.Filter filter : next) {
+            for (Collection<ChangesFilter.Filter> filterCollection : reorderedCopy) {
+              final ArrayList<ChangesFilter.Filter> newList = new ArrayList<ChangesFilter.Filter>(filterCollection);
+              newList.add(filter);
+              reordered.add(newList);
+            }
+          }
+        }
+
+        for (Collection<ChangesFilter.Filter> filterCollection : reordered) {
           final LoaderAndRefresherImpl loaderAndRefresher =
-          new LoaderAndRefresherImpl(ticket, Collections.singletonList(filter), myMediator, startingPoints, myDetailsCache, myProject,
-                                     rootHolder, myUsersIndex, loadGrowthController.getId());
+          new LoaderAndRefresherImpl(ticket, filterCollection, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
+                                     loadGrowthController.getId());
           list.add(loaderAndRefresher);
         }
       }
-
       ++ i;
     }
 

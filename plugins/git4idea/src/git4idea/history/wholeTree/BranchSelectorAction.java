@@ -12,27 +12,14 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.history.browser.SymbolicRefs;
 
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.CompoundBorder;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.TreeSet;
 
 /**
@@ -100,7 +87,7 @@ public class BranchSelectorAction extends BasePopupAction {
     doAction(null);
   }
 
-  private class SelectBranchAction extends AnAction {
+  private class SelectBranchAction extends DumbAwareAction {
     private final String myValue;
 
     private SelectBranchAction(String text, String value) {

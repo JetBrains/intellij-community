@@ -102,7 +102,7 @@ public class MediatorImpl implements Mediator {
   @Override
   public void reload(final RootsHolder rootsHolder,
                      final Collection<String> startingPoints,
-                     final Collection<ChangesFilter.Filter> filters,
+                     final Collection<Collection<ChangesFilter.Filter>> filters,
                      String[] possibleHashes) {
     myTicket.increment();
     myTableWrapper.reset();

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vcs.CheckSamePattern;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;

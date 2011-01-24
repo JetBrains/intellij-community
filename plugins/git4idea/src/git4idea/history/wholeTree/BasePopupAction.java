@@ -19,9 +19,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
@@ -34,11 +35,11 @@ import java.awt.event.MouseEvent;
 /**
  * @author irengrig
  */
-public abstract class BasePopupAction extends AnAction implements CustomComponentAction {
+public abstract class BasePopupAction extends DumbAwareAction implements CustomComponentAction {
   private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
   protected final JLabel myLabel;
-  private final JPanel myPanel;
-  private final Project myProject;
+  protected final JPanel myPanel;
+  protected final Project myProject;
 
   public BasePopupAction(final Project project, final String labeltext) {
     myProject = project;
@@ -83,7 +84,7 @@ public abstract class BasePopupAction extends AnAction implements CustomComponen
     final DefaultActionGroup group = createActionGroup();
     final DataContext parent = DataManager.getInstance().getDataContext((Component) myPanel.getParent());
     final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
-    final ListPopup popup = JBPopupFactory.getInstance()
+    final JBPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               new Runnable() {
                                 @Override

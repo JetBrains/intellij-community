@@ -27,7 +27,7 @@ import java.util.List;
 public interface Mediator {
   void reload(RootsHolder rootsHolder,
               final Collection<String> startingPoints,
-              final Collection<ChangesFilter.Filter> filters,
+              final Collection<Collection<ChangesFilter.Filter>> filters,
               @Nullable String[] possibleHashes);
 
   /**

@@ -15,7 +15,6 @@ package git4idea.history.browser;
 import git4idea.GitBranch;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -27,6 +26,7 @@ public class SymbolicRefs {
   private final TreeSet<String> myLocalBranches;
   private final TreeSet<String> myRemoteBranches;
   private String myTrackedRemoteName;
+  private String myUsername;
 
   public SymbolicRefs() {
     myTags = new TreeSet<String>();
@@ -92,6 +92,14 @@ public class SymbolicRefs {
 
   public String getTrackedRemoteName() {
     return myTrackedRemoteName;
+  }
+
+  public String getUsername() {
+    return myUsername;
+  }
+
+  public void setUsername(String username) {
+    myUsername = username;
   }
 
   public static enum Kind {

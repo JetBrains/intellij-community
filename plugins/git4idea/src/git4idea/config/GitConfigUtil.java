@@ -34,6 +34,8 @@ import java.util.Map;
  * Git utilities for working with configuration
  */
 public class GitConfigUtil {
+  public static final String USER_NAME = "user.name";
+
   /**
    * A private constructor for utility class
    */

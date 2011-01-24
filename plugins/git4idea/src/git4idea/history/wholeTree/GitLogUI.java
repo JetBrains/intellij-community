@@ -27,10 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractFilterChildren;
-import com.intellij.openapi.vcs.ComparableComparator;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
@@ -93,6 +90,7 @@ public class GitLogUI implements Disposable {
 //  private JTextField myFilterField;
   private String myPreviousFilter;
   private List<String> mySearchContext;
+  private List<String> myUsersSearchContext;
   private String mySelectedBranch;
   private BranchSelectorAction myBranchSelectorAction;
   private MySpecificDetails myDetails;
@@ -102,10 +100,14 @@ public class GitLogUI implements Disposable {
 
   private StepType myState;
   private MoreAction myMoreAction;
+  private UsersFilterAction myUsersFilterAction;
+  private MyFilterUi myUserFilterI;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
     myMediator = mediator;
+    mySearchContext = new ArrayList<String>();
+    myUsersSearchContext = new ArrayList<String>();
     myRefs = new HashMap<VirtualFile, SymbolicRefs>();
     myRecalculatedCommon = new SymbolicRefs();
     myPreviousFilter = "";
@@ -113,7 +115,6 @@ public class GitLogUI implements Disposable {
     myDescriptionRenderer = new DescriptionRenderer();
     mySelectionSpeedometer = new Speedometer(20, 400);
     createTableModel();
-    mySearchContext = new ArrayList<String>();
     myState = StepType.CONTINUE;
 
     myUIRefresh = new UIRefresh() {
@@ -149,21 +150,23 @@ public class GitLogUI implements Disposable {
         myRecalculatedCommon.clear();
         if (myRefs.isEmpty()) return;
 
-        String current = null;
-        boolean same = true;
+        final CheckSamePattern<String> currentUser = new CheckSamePattern<String>();
+        final CheckSamePattern<String> currentBranch = new CheckSamePattern<String>();
         for (SymbolicRefs refs : myRefs.values()) {
           myRecalculatedCommon.addLocals(refs.getLocalBranches());
           myRecalculatedCommon.addRemotes(refs.getRemoteBranches());
           myRecalculatedCommon.addTags(refs.getTags());
           final String currentFromRefs = refs.getCurrent() == null ? null : refs.getCurrent().getFullName();
-          if (current == null) {
-            current = currentFromRefs;
-          } else if (! current.equals(currentFromRefs)) {
-            same = false;
-          }
+          currentBranch.iterate(currentFromRefs);
+          currentUser.iterate(refs.getUsername());
         }
-        if (same) {
+        if (currentBranch.isSame()) {
           myRecalculatedCommon.setCurrent(myRefs.values().iterator().next().getCurrent());
+        }
+        if (currentUser.isSame()) {
+          final String username = currentUser.getSameValue();
+          myRecalculatedCommon.setUsername(username);
+          myUserFilterI.setMe(username);
         }
 
         myBranchSelectorAction.setSymbolicRefs(myRecalculatedCommon);
@@ -445,9 +448,17 @@ public class GitLogUI implements Disposable {
         reloadRequest();
       }
     });
+    myUserFilterI = new MyFilterUi(new Runnable() {
+      @Override
+      public void run() {
+        reloadRequest();
+      }
+    });
+    myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
     myFilterAction = new FilterAction(myProject);
     group.add(new MyTextFieldAction());
     group.add(myBranchSelectorAction);
+    group.add(myUsersFilterAction);
     // first create filters...
     //group.add(myFilterAction);
     group.add(new MyCherryPick());
@@ -599,6 +610,7 @@ public class GitLogUI implements Disposable {
     mySearchContext.clear();
     final List<String> words = new ArrayList<String>();
     for (String string : strings) {
+      if (string.trim().length() == 0) continue;
       mySearchContext.add(string.toLowerCase());
       final String word = StringUtil.escapeToRegexp(string);
       sb.append(word).append(".*");
@@ -652,6 +664,7 @@ public class GitLogUI implements Disposable {
   }
 
   List<ColumnInfo> columns() {
+    initAuthor();
     return Arrays.asList((ColumnInfo)COMMENT, AUTHOR, DATE);
   }
 
@@ -673,7 +686,13 @@ public class GitLogUI implements Disposable {
     }
   };
 
-  private abstract class HighlightingRendererBase {
+  private static abstract class HighlightingRendererBase {
+    private final List<String> mySearchContext;
+
+    protected HighlightingRendererBase(List<String> searchContext) {
+      mySearchContext = searchContext;
+    }
+
     protected abstract void usual(final String s);
     protected abstract void highlight(final String s);
 
@@ -708,13 +727,16 @@ public class GitLogUI implements Disposable {
 
   private class HighLightingRenderer extends ColoredTableCellRenderer {
     private final SimpleTextAttributes myHighlightAttributes;
+    private final List<String> mySearchContext;
     private final SimpleTextAttributes myUsualAttributes;
     protected final HighlightingRendererBase myWorker;
 
-    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes) {
+    public HighLightingRenderer(SimpleTextAttributes highlightAttributes, SimpleTextAttributes usualAttributes,
+                                final List<String> searchContext) {
       myHighlightAttributes = highlightAttributes;
+      mySearchContext = searchContext;
       myUsualAttributes = usualAttributes == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : usualAttributes;
-      myWorker = new HighlightingRendererBase() {
+      myWorker = new HighlightingRendererBase(searchContext) {
         @Override
         protected void usual(String s) {
           append(s, myUsualAttributes);
@@ -844,7 +866,7 @@ public class GitLogUI implements Disposable {
       private final Consumer<String> myConsumer;
 
       private Inner() {
-        super(HIGHLIGHT_TEXT_ATTRIBUTES, null);
+        super(HIGHLIGHT_TEXT_ATTRIBUTES, null, mySearchContext);
         myIssueLinkRenderer = new IssueLinkRenderer(myProject, this);
         myConsumer = new Consumer<String>() {
           @Override
@@ -889,22 +911,28 @@ public class GitLogUI implements Disposable {
     return bkgColor;
   }
 
-  private final ColumnInfo<Object, String> AUTHOR = new ColumnInfo<Object, String>("Author") {
-    private final TableCellRenderer myRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  private ColumnInfo<Object, String> AUTHOR;
 
-    @Override
-    public String valueOf(Object o) {
-      if (o instanceof GitCommit) {
-        return ((GitCommit) o).getAuthor();
+  private void initAuthor() {
+    AUTHOR = new ColumnInfo<Object, String>("Author") {
+      private final TableCellRenderer myRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,
+                                                                            SimpleTextAttributes.REGULAR_ATTRIBUTES, myUsersSearchContext);
+
+      @Override
+      public String valueOf(Object o) {
+        if (o instanceof GitCommit) {
+          return ((GitCommit)o).getAuthor();
+        }
+        return "";
       }
-      return "";
-    }
 
-    @Override
-    public TableCellRenderer getRenderer(Object o) {
-      return myRenderer;
-    }
-  };
+      @Override
+      public TableCellRenderer getRenderer(Object o) {
+        return myRenderer;
+      }
+    };
+  }
+
   private final ColumnInfo<Object, String> DATE = new ColumnInfo<Object, String>("Date") {
     private final TableCellRenderer myRenderer = new SimpleRenderer(SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
 
@@ -963,20 +991,35 @@ public class GitLogUI implements Disposable {
     myDetailsCache.resetBranchesCache();
     final Collection<String> startingPoints = mySelectedBranch == null ? Collections.<String>emptyList() : Collections.singletonList(mySelectedBranch);
     myDescriptionRenderer.resetIcons();
-    if (StringUtil.isEmptyOrSpaces(myPreviousFilter)) {
-      mySearchContext.clear();
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, Collections.<ChangesFilter.Filter>emptyList(), null);
-    } else {
-      final List<ChangesFilter.Filter> filters = new ArrayList<ChangesFilter.Filter>();
-      final Pair<String, List<String>> preparse = preparse(myPreviousFilter);
-      filters.add(new ChangesFilter.Comment(preparse.getFirst()));
+    final boolean commentFilterEmpty = StringUtil.isEmptyOrSpaces(myPreviousFilter);
+    mySearchContext.clear();
+    myUsersSearchContext.clear();
 
-      for (String s : preparse.getSecond()) {
-        filters.add(new ChangesFilter.Author(s));
-        filters.add(new ChangesFilter.Committer(s));
+    if (commentFilterEmpty && (myUserFilterI.myFilter == null)) {
+      myUsersSearchContext.clear();
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, Collections.<Collection<ChangesFilter.Filter>>emptyList(), null);
+    } else {
+      final List<Collection<ChangesFilter.Filter>> filters = new ArrayList<Collection<ChangesFilter.Filter>>();
+
+      if (! commentFilterEmpty) {
+        final Pair<String, List<String>> preparse = preparse(myPreviousFilter);
+        final String first = preparse.getFirst();
+        filters.add(Collections.<ChangesFilter.Filter>singletonList(new ChangesFilter.Comment(first)));
+      }
+      if (myUserFilterI.myFilter != null) {
+        final String[] strings = myUserFilterI.myFilter.split(",");
+        final List<ChangesFilter.Filter> userFilters = new ArrayList<ChangesFilter.Filter>();
+        for (String string : strings) {
+          string = string.trim();
+          if (string.length() == 0) continue;
+          myUsersSearchContext.add(string.toLowerCase());
+          final String regexp = StringUtil.escapeToRegexp(string);
+          userFilters.add(new ChangesFilter.Committer(regexp));
+        }
+        filters.add(userFilters);
       }
 
-      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, filters, myPreviousFilter.split("[\\s]"));
+      myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, filters, commentFilterEmpty ? null : myPreviousFilter.split("[\\s]"));
     }
     updateMoreVisibility();
     selectionChanged();
@@ -1107,6 +1150,7 @@ public class GitLogUI implements Disposable {
     private final StringBuilder mySb;
 
     private HtmlHighlighter(String text) {
+      super(mySearchContext);
       myText = text;
       mySb = new StringBuilder();
     }
@@ -1204,6 +1248,50 @@ public class GitLogUI implements Disposable {
       myMoreAction.setEnabled(false);
     } else {
       myMoreAction.setVisible(false);
+    }
+  }
+
+  private static class MyFilterUi implements UserFilterI {
+    private boolean myMeIsKnown;
+    private String myMe;
+    private String myFilter;
+    private final Runnable myReloadCallback;
+
+    public MyFilterUi(Runnable reloadCallback) {
+      myReloadCallback = reloadCallback;
+    }
+
+    @Override
+    public void allSelected() {
+      myFilter = null;
+      myReloadCallback.run();
+    }
+
+    @Override
+    public void meSelected() {
+      myFilter = myMe;
+      myReloadCallback.run();
+    }
+
+    @Override
+    public void filter(String s) {
+      myFilter = s;
+      myReloadCallback.run();
+    }
+
+    @Override
+    public boolean isMeKnown() {
+      return myMeIsKnown;
+    }
+
+    @Override
+    public String getMe() {
+      return myMe;
+    }
+
+    public void setMe(final String me) {
+      myMeIsKnown = ! StringUtil.isEmptyOrSpaces(me);
+      myMe = me == null ? "" : me.trim();
     }
   }
 }

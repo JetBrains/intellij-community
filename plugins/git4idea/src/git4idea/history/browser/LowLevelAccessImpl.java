@@ -26,6 +26,7 @@ import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
 import git4idea.commands.GitFileUtils;
+import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +109,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     if (current != null) {
       refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
     }
+    refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
     return refs;
   }
 
