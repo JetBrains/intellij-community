@@ -26,9 +26,18 @@ public class FormBuilder {
 
   private int line = 0;
   private final JPanel panel;
+  private boolean vertical;
+
+  /**
+   * @param vertical labels will be placed on their own rows
+   */
+  public FormBuilder(final boolean vertical) {
+    this.vertical = vertical;
+    panel = new JPanel(new GridBagLayout());
+  }
 
   public FormBuilder() {
-    panel = new JPanel(new GridBagLayout());
+    this(false);
   }
 
   public FormBuilder addLabeledComponent(String labelText, JComponent component) {
@@ -38,24 +47,49 @@ public class FormBuilder {
 
     GridBagConstraints c = new GridBagConstraints();
     int verticalInset = line > 0 ? 10 : 0;
-    
-    c.gridx = 0;
-    c.gridy = line;
-    c.weightx = 0;
-    c.anchor = GridBagConstraints.EAST;
-    c.insets = new Insets(verticalInset, 0, 0, 5);
 
-    panel.add(label, c);
+    if (vertical) {
+      c.gridwidth = 1;
 
-    c.gridx = 1;
-    c.gridy = line;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.WEST;
-    c.weightx = 1;
-    c.insets = new Insets(verticalInset, 0, 0, 0);
-    panel.add(component, c);
+      c.gridx = 0;
+      c.gridy = line;
+      c.weightx = 1.0;
+      c.fill = GridBagConstraints.NONE;
+      c.anchor = GridBagConstraints.WEST;
+      c.insets = new Insets(verticalInset, 0, 0, 5);
 
-    line++;
+      panel.add(label, c);
+
+      c.gridx = 0;
+      c.gridy = line + 1;
+      c.weightx = 1.0;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.anchor = GridBagConstraints.WEST;
+      c.insets = new Insets(0, 0, 0, 5);
+
+      panel.add(component, c);
+
+      line += 2;
+    }
+    else {
+      c.gridx = 0;
+      c.gridy = line;
+      c.weightx = 0;
+      c.anchor = GridBagConstraints.EAST;
+      c.insets = new Insets(verticalInset, 0, 0, 5);
+
+      panel.add(label, c);
+
+      c.gridx = 1;
+      c.gridy = line;
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.anchor = GridBagConstraints.WEST;
+      c.weightx = 1;
+      c.insets = new Insets(verticalInset, 0, 0, 0);
+      panel.add(component, c);
+
+      line++;
+    }
 
     return this;
   }
