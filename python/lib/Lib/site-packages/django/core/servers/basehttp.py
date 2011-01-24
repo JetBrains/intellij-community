@@ -8,16 +8,18 @@ been reviewed for security issues. Don't use it for production use.
 """
 
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import mimetypes
 import os
 import re
-import stat
+import socket
 import sys
 import urllib
+import warnings
 
 from django.core.management.color import color_style
 from django.utils.http import http_date
 from django.utils._os import safe_join
+
+from django.contrib.staticfiles import handlers, views as static
 
 __version__ = "0.1"
 __all__ = ['WSGIServer','WSGIRequestHandler']
@@ -525,6 +527,11 @@ class WSGIServer(HTTPServer):
     """BaseHTTPServer that implements the Python WSGI protocol"""
     application = None
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.pop('ipv6', False):
+            self.address_family = socket.AF_INET6
+        HTTPServer.__init__(self, *args, **kwargs)
+
     def server_bind(self):
         """Override server_bind to store the server name."""
         try:
@@ -633,89 +640,57 @@ class WSGIRequestHandler(BaseHTTPRequestHandler):
 
         sys.stderr.write(msg)
 
-class AdminMediaHandler(object):
+
+class AdminMediaHandler(handlers.StaticFilesHandler):
     """
     WSGI middleware that intercepts calls to the admin media directory, as
     defined by the ADMIN_MEDIA_PREFIX setting, and serves those images.
     Use this ONLY LOCALLY, for development! This hasn't been tested for
     security and is not super efficient.
+
+    This is pending for deprecation since 1.3.
     """
-    def __init__(self, application, media_dir=None):
+    def get_base_dir(self):
+        import django
+        return os.path.join(django.__path__[0], 'contrib', 'admin', 'media')
+
+    def get_base_url(self):
         from django.conf import settings
-        self.application = application
-        if not media_dir:
-            import django
-            self.media_dir = \
-                os.path.join(django.__path__[0], 'contrib', 'admin', 'media')
-        else:
-            self.media_dir = media_dir
-        self.media_url = settings.ADMIN_MEDIA_PREFIX
+        from django.core.exceptions import ImproperlyConfigured
+        if not settings.ADMIN_MEDIA_PREFIX:
+            raise ImproperlyConfigured(
+                "The ADMIN_MEDIA_PREFIX setting can't be empty "
+                "when using the AdminMediaHandler, e.g. with runserver.")
+        return settings.ADMIN_MEDIA_PREFIX
 
     def file_path(self, url):
         """
         Returns the path to the media file on disk for the given URL.
 
-        The passed URL is assumed to begin with ADMIN_MEDIA_PREFIX.  If the
-        resultant file path is outside the media directory, then a ValueError
+        The passed URL is assumed to begin with ``self.base_url``.  If the
+        resulting file path is outside the media directory, then a ValueError
         is raised.
         """
-        # Remove ADMIN_MEDIA_PREFIX.
-        relative_url = url[len(self.media_url):]
+        relative_url = url[len(self.base_url[2]):]
         relative_path = urllib.url2pathname(relative_url)
-        return safe_join(self.media_dir, relative_path)
+        return safe_join(self.base_dir, relative_path)
 
-    def __call__(self, environ, start_response):
-        import os.path
+    def serve(self, request):
+        document_root, path = os.path.split(self.file_path(request.path))
+        return static.serve(request, path,
+            document_root=document_root, insecure=True)
 
-        # Ignore requests that aren't under ADMIN_MEDIA_PREFIX. Also ignore
-        # all requests if ADMIN_MEDIA_PREFIX isn't a relative URL.
-        if self.media_url.startswith('http://') or self.media_url.startswith('https://') \
-            or not environ['PATH_INFO'].startswith(self.media_url):
-            return self.application(environ, start_response)
+    def _should_handle(self, path):
+        """
+        Checks if the path should be handled. Ignores the path if:
 
-        # Find the admin file and serve it up, if it exists and is readable.
-        try:
-            file_path = self.file_path(environ['PATH_INFO'])
-        except ValueError: # Resulting file path was not valid.
-            status = '404 NOT FOUND'
-            headers = {'Content-type': 'text/plain'}
-            output = ['Page not found: %s' % environ['PATH_INFO']]
-            start_response(status, headers.items())
-            return output
-        if not os.path.exists(file_path):
-            status = '404 NOT FOUND'
-            headers = {'Content-type': 'text/plain'}
-            output = ['Page not found: %s' % environ['PATH_INFO']]
-        else:
-            try:
-                fp = open(file_path, 'rb')
-            except IOError:
-                status = '401 UNAUTHORIZED'
-                headers = {'Content-type': 'text/plain'}
-                output = ['Permission denied: %s' % environ['PATH_INFO']]
-            else:
-                # This is a very simple implementation of conditional GET with
-                # the Last-Modified header. It makes media files a bit speedier
-                # because the files are only read off disk for the first
-                # request (assuming the browser/client supports conditional
-                # GET).
-                mtime = http_date(os.stat(file_path)[stat.ST_MTIME])
-                headers = {'Last-Modified': mtime}
-                if environ.get('HTTP_IF_MODIFIED_SINCE', None) == mtime:
-                    status = '304 NOT MODIFIED'
-                    output = []
-                else:
-                    status = '200 OK'
-                    mime_type = mimetypes.guess_type(file_path)[0]
-                    if mime_type:
-                        headers['Content-Type'] = mime_type
-                    output = [fp.read()]
-                    fp.close()
-        start_response(status, headers.items())
-        return output
+        * the host is provided as part of the base_url
+        * the request's path isn't under the base path
+        """
+        return path.startswith(self.base_url[2]) and not self.base_url[1]
 
-def run(addr, port, wsgi_handler):
+def run(addr, port, wsgi_handler, ipv6=False):
     server_address = (addr, port)
-    httpd = WSGIServer(server_address, WSGIRequestHandler)
+    httpd = WSGIServer(server_address, WSGIRequestHandler, ipv6=ipv6)
     httpd.set_app(wsgi_handler)
     httpd.serve_forever()

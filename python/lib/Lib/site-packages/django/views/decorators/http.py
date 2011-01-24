@@ -13,11 +13,14 @@ from email.Utils import formatdate
 
 from django.utils.decorators import decorator_from_middleware, available_attrs
 from django.utils.http import parse_etags, quote_etag
+from django.utils.log import getLogger
 from django.middleware.http import ConditionalGetMiddleware
 from django.http import HttpResponseNotAllowed, HttpResponseNotModified, HttpResponse
 
-
 conditional_page = decorator_from_middleware(ConditionalGetMiddleware)
+
+logger = getLogger('django.request')
+
 
 def require_http_methods(request_method_list):
     """
@@ -33,6 +36,12 @@ def require_http_methods(request_method_list):
     def decorator(func):
         def inner(request, *args, **kwargs):
             if request.method not in request_method_list:
+                logger.warning('Method Not Allowed (%s): %s' % (request.method, request.path),
+                    extra={
+                        'status_code': 405,
+                        'request': request
+                    }
+                )
                 return HttpResponseNotAllowed(request_method_list)
             return func(request, *args, **kwargs)
         return wraps(func, assigned=available_attrs(func))(inner)
@@ -111,9 +120,21 @@ def condition(etag_func=None, last_modified_func=None):
                     if request.method in ("GET", "HEAD"):
                         response = HttpResponseNotModified()
                     else:
+                        logger.warning('Precondition Failed: %s' % request.path,
+                            extra={
+                                'status_code': 412,
+                                'request': request
+                            }
+                        )
                         response = HttpResponse(status=412)
                 elif if_match and ((not res_etag and "*" in etags) or
                         (res_etag and res_etag not in etags)):
+                    logger.warning('Precondition Failed: %s' % request.path,
+                        extra={
+                            'status_code': 412,
+                            'request': request
+                        }
+                    )
                     response = HttpResponse(status=412)
                 elif (not if_none_match and if_modified_since and
                         request.method == "GET" and

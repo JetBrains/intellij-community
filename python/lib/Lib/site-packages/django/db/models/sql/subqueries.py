@@ -4,11 +4,13 @@ Query subclasses which provide extra functionality beyond simple data retrieval.
 
 from django.core.exceptions import FieldError
 from django.db import connections
+from django.db.models.fields import DateField, FieldDoesNotExist
 from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import Date
 from django.db.models.sql.expressions import SQLEvaluator
 from django.db.models.sql.query import Query
 from django.db.models.sql.where import AND, Constraint
+
 
 __all__ = ['DeleteQuery', 'UpdateQuery', 'InsertQuery', 'DateQuery',
         'AggregateQuery']
@@ -26,16 +28,17 @@ class DeleteQuery(Query):
         self.where = where
         self.get_compiler(using).execute_sql(None)
 
-    def delete_batch(self, pk_list, using):
+    def delete_batch(self, pk_list, using, field=None):
         """
         Set up and execute delete queries for all the objects in pk_list.
 
         More than one physical query may be executed if there are a
         lot of values in pk_list.
         """
+        if not field:
+            field = self.model._meta.pk
         for offset in range(0, len(pk_list), GET_ITERATOR_CHUNK_SIZE):
             where = self.where_class()
-            field = self.model._meta.pk
             where.add((Constraint(None, field.column, field), 'in',
                     pk_list[offset : offset + GET_ITERATOR_CHUNK_SIZE]), AND)
             self.do_query(self.model._meta.db_table, where, using=using)
@@ -67,20 +70,14 @@ class UpdateQuery(Query):
                 related_updates=self.related_updates.copy(), **kwargs)
 
 
-    def clear_related(self, related_field, pk_list, using):
-        """
-        Set up and execute an update query that clears related entries for the
-        keys in pk_list.
-
-        This is used by the QuerySet.delete_objects() method.
-        """
+    def update_batch(self, pk_list, values, using):
+        pk_field = self.model._meta.pk
+        self.add_update_values(values)
         for offset in range(0, len(pk_list), GET_ITERATOR_CHUNK_SIZE):
             self.where = self.where_class()
-            f = self.model._meta.pk
-            self.where.add((Constraint(None, f.column, f), 'in',
+            self.where.add((Constraint(None, pk_field.column, pk_field), 'in',
                     pk_list[offset : offset + GET_ITERATOR_CHUNK_SIZE]),
                     AND)
-            self.values = [(related_field, None, None)]
             self.get_compiler(using).execute_sql(None)
 
     def add_update_values(self, values):
@@ -184,12 +181,24 @@ class DateQuery(Query):
 
     compiler = 'SQLDateCompiler'
 
-    def add_date_select(self, field, lookup_type, order='ASC'):
+    def add_date_select(self, field_name, lookup_type, order='ASC'):
         """
         Converts the query into a date extraction query.
         """
-        result = self.setup_joins([field.name], self.get_meta(),
-                self.get_initial_alias(), False)
+        try:
+            result = self.setup_joins(
+                field_name.split(LOOKUP_SEP),
+                self.get_meta(),
+                self.get_initial_alias(),
+                False
+            )
+        except FieldError:
+            raise FieldDoesNotExist("%s has no field named '%s'" % (
+                self.model._meta.object_name, field_name
+            ))
+        field = result[0]
+        assert isinstance(field, DateField), "%r isn't a DateField." \
+                % field.name
         alias = result[3][-1]
         select = Date((alias, field.column), lookup_type)
         self.select = [select]
@@ -198,6 +207,9 @@ class DateQuery(Query):
         self.set_extra_mask([])
         self.distinct = True
         self.order_by = order == 'ASC' and [1] or [-1]
+
+        if field.null:
+            self.add_filter(("%s__isnull" % field_name, False))
 
 class AggregateQuery(Query):
     """

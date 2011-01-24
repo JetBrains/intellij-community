@@ -1,3 +1,4 @@
+import warnings
 from django.utils.translation import ugettext_lazy as _
 
 # Reference: http://id.wikipedia.org/wiki/Daftar_provinsi_Indonesia
@@ -5,7 +6,13 @@ from django.utils.translation import ugettext_lazy as _
 # Indonesia does not have an official Province code standard.
 # I decided to use unambiguous and consistent (some are common) 3-letter codes.
 
+warnings.warn(
+    'There have been recent changes to the ID localflavor. See the release notes for details',
+    RuntimeWarning
+)
+
 PROVINCE_CHOICES = (
+    ('ACE', _('Aceh')),
     ('BLI', _('Bali')),
     ('BTN', _('Banten')),
     ('BKL', _('Bengkulu')),
@@ -25,7 +32,6 @@ PROVINCE_CHOICES = (
     ('LPG', _('Lampung')),
     ('MLK', _('Maluku')),
     ('MUT', _('Maluku Utara')),
-    ('NAD', _('Nanggroe Aceh Darussalam')),
     ('NTB', _('Nusa Tenggara Barat')),
     ('NTT', _('Nusa Tenggara Timur')),
     ('PPA', _('Papua')),

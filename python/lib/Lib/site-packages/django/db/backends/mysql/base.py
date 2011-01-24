@@ -124,6 +124,14 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     allows_group_by_pk = True
     related_fields_match_type = True
     allow_sliced_subqueries = False
+    supports_forward_references = False
+    supports_long_model_names = False
+    supports_microsecond_precision = False
+    supports_regex_backreferencing = False
+    supports_date_lookup_using_string = False
+    supports_timezones = False
+    requires_explicit_null_ordering_when_grouping = True
+    allows_primary_key_0 = False
 
 class DatabaseOperations(BaseDatabaseOperations):
     compiler_module = "django.db.backends.mysql.compiler"
@@ -149,6 +157,10 @@ class DatabaseOperations(BaseDatabaseOperations):
             format_str = ''.join([f for f in format[:i]] + [f for f in format_def[i:]])
             sql = "CAST(DATE_FORMAT(%s, '%s') AS DATETIME)" % (field_name, format_str)
         return sql
+
+    def date_interval_sql(self, sql, connector, timedelta):
+        return "(%s %s INTERVAL '%d 0:0:%d:%d' DAY_MICROSECOND)" % (sql, connector,
+                timedelta.days, timedelta.seconds, timedelta.microseconds)
 
     def drop_foreignkey_sql(self):
         return "DROP FOREIGN KEY"
@@ -231,7 +243,7 @@ class DatabaseOperations(BaseDatabaseOperations):
         return 64
 
 class DatabaseWrapper(BaseDatabaseWrapper):
-
+    vendor = 'mysql'
     operators = {
         'exact': '= %s',
         'iexact': 'LIKE %s',
@@ -253,7 +265,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
         self.server_version = None
-        self.features = DatabaseFeatures()
+        self.features = DatabaseFeatures(self)
         self.ops = DatabaseOperations()
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
@@ -297,7 +309,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             self.connection = Database.connect(**kwargs)
             self.connection.encoders[SafeUnicode] = self.connection.encoders[unicode]
             self.connection.encoders[SafeString] = self.connection.encoders[str]
-            connection_created.send(sender=self.__class__)
+            connection_created.send(sender=self.__class__, connection=self)
         cursor = CursorWrapper(self.connection.cursor())
         return cursor
 

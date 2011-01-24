@@ -21,7 +21,7 @@ import re
 import time
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import get_cache
 from django.utils.encoding import smart_str, iri_to_uri
 from django.utils.http import http_date
 from django.utils.hashcompat import md5_constructor
@@ -101,7 +101,7 @@ def patch_response_headers(response, cache_timeout=None):
         cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
     if cache_timeout < 0:
         cache_timeout = 0 # Can't have max-age negative
-    if not response.has_header('ETag'):
+    if settings.USE_ETAGS and not response.has_header('ETag'):
         response['ETag'] = '"%s"' % md5_constructor(response.content).hexdigest()
     if not response.has_header('Last-Modified'):
         response['Last-Modified'] = http_date()
@@ -143,7 +143,7 @@ def _i18n_cache_key_suffix(request, cache_key):
         cache_key += '.%s' % getattr(request, 'LANGUAGE_CODE', get_language())
     return cache_key
 
-def _generate_cache_key(request, headerlist, key_prefix):
+def _generate_cache_key(request, method, headerlist, key_prefix):
     """Returns a cache key from the headers given in the header list."""
     ctx = md5_constructor()
     for header in headerlist:
@@ -151,8 +151,8 @@ def _generate_cache_key(request, headerlist, key_prefix):
         if value is not None:
             ctx.update(value)
     path = md5_constructor(iri_to_uri(request.path))
-    cache_key = 'views.decorators.cache.cache_page.%s.%s.%s' % (
-        key_prefix, path.hexdigest(), ctx.hexdigest())
+    cache_key = 'views.decorators.cache.cache_page.%s.%s.%s.%s' % (
+        key_prefix, request.method, path.hexdigest(), ctx.hexdigest())
     return _i18n_cache_key_suffix(request, cache_key)
 
 def _generate_cache_header_key(key_prefix, request):
@@ -162,7 +162,7 @@ def _generate_cache_header_key(key_prefix, request):
         key_prefix, path.hexdigest())
     return _i18n_cache_key_suffix(request, cache_key)
 
-def get_cache_key(request, key_prefix=None):
+def get_cache_key(request, key_prefix=None, method='GET', cache=None):
     """
     Returns a cache key based on the request path. It can be used in the
     request phase because it pulls the list of headers to take into account
@@ -175,13 +175,15 @@ def get_cache_key(request, key_prefix=None):
     if key_prefix is None:
         key_prefix = settings.CACHE_MIDDLEWARE_KEY_PREFIX
     cache_key = _generate_cache_header_key(key_prefix, request)
+    if cache is None:
+        cache = get_cache(settings.CACHE_MIDDLEWARE_ALIAS)
     headerlist = cache.get(cache_key, None)
     if headerlist is not None:
-        return _generate_cache_key(request, headerlist, key_prefix)
+        return _generate_cache_key(request, method, headerlist, key_prefix)
     else:
         return None
 
-def learn_cache_key(request, response, cache_timeout=None, key_prefix=None):
+def learn_cache_key(request, response, cache_timeout=None, key_prefix=None, cache=None):
     """
     Learns what headers to take into account for some request path from the
     response object. It stores those headers in a global path registry so that
@@ -199,16 +201,18 @@ def learn_cache_key(request, response, cache_timeout=None, key_prefix=None):
     if cache_timeout is None:
         cache_timeout = settings.CACHE_MIDDLEWARE_SECONDS
     cache_key = _generate_cache_header_key(key_prefix, request)
+    if cache is None:
+        cache = get_cache(settings.CACHE_MIDDLEWARE_ALIAS)
     if response.has_header('Vary'):
         headerlist = ['HTTP_'+header.upper().replace('-', '_')
                       for header in cc_delim_re.split(response['Vary'])]
         cache.set(cache_key, headerlist, cache_timeout)
-        return _generate_cache_key(request, headerlist, key_prefix)
+        return _generate_cache_key(request, request.method, headerlist, key_prefix)
     else:
         # if there is no Vary header, we still need a cache key
         # for the request.path
         cache.set(cache_key, [], cache_timeout)
-        return _generate_cache_key(request, [], key_prefix)
+        return _generate_cache_key(request, request.method, [], key_prefix)
 
 
 def _to_tuple(s):

@@ -15,6 +15,12 @@ ngettext_lazy = ngettext
 def ungettext(singular, plural, number):
     return force_unicode(ngettext(singular, plural, number))
 
+def pgettext(context, message):
+    return ugettext(message)
+
+def npgettext(context, singular, plural, number):
+    return ungettext(singular, plural, number)
+
 activate = lambda x: None
 deactivate = deactivate_all = lambda: None
 get_language = lambda: settings.LANGUAGE_CODE
@@ -59,7 +65,7 @@ def get_date_formats():
     warnings.warn(
         '`django.utils.translation.get_date_formats` is deprecated. '
         'Please update your code to use the new i18n aware formatting.',
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     return settings.DATE_FORMAT, settings.DATETIME_FORMAT, settings.TIME_FORMAT
 
@@ -67,6 +73,6 @@ def get_partial_date_formats():
     warnings.warn(
         '`django.utils.translation.get_partial_date_formats` is deprecated. '
         'Please update your code to use the new i18n aware formatting.',
-        PendingDeprecationWarning
+        DeprecationWarning
     )
     return settings.YEAR_MONTH_FORMAT, settings.MONTH_DAY_FORMAT

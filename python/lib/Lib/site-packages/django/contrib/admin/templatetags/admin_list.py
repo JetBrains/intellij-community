@@ -6,7 +6,6 @@ from django.contrib.admin.views.main import ALL_VAR, EMPTY_CHANGELIST_VALUE
 from django.contrib.admin.views.main import ORDER_VAR, ORDER_TYPE_VAR, PAGE_VAR, SEARCH_VAR
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.forms.forms import pretty_name
 from django.utils import formats
 from django.utils.html import escape, conditional_escape
 from django.utils.safestring import mark_safe
@@ -189,7 +188,7 @@ def items_for_result(cl, result, form):
             else:
                 result_repr = conditional_escape(result_repr)
             yield mark_safe(u'<td%s>%s</td>' % (row_class, result_repr))
-    if form:
+    if form and not form[cl.model._meta.pk.name].is_hidden:
         yield mark_safe(u'<td>%s</td>' % force_unicode(form[cl.model._meta.pk.name]))
 
 def results(cl):
@@ -200,11 +199,18 @@ def results(cl):
         for res in cl.result_list:
             yield list(items_for_result(cl, res, None))
 
+def result_hidden_fields(cl):
+    if cl.formset:
+        for res, form in zip(cl.result_list, cl.formset.forms):
+            if form[cl.model._meta.pk.name].is_hidden:
+                yield mark_safe(force_unicode(form[cl.model._meta.pk.name]))
+
 def result_list(cl):
     """
     Displays the headers and data list together
     """
     return {'cl': cl,
+            'result_hidden_fields': list(result_hidden_fields(cl)),
             'result_headers': list(result_headers(cl)),
             'results': list(results(cl))}
 result_list = register.inclusion_tag("admin/change_list_results.html")(result_list)
@@ -224,6 +230,16 @@ def date_hierarchy(cl):
         day_lookup = cl.params.get(day_field)
 
         link = lambda d: cl.get_query_string(d, [field_generic])
+
+        if not (year_lookup or month_lookup or day_lookup):
+            # select appropriate start level
+            date_range = cl.query_set.aggregate(first=models.Min(field_name),
+                                                last=models.Max(field_name))
+            if date_range['first'] and date_range['last']:
+                if date_range['first'].year == date_range['last'].year:
+                    year_lookup = date_range['first'].year
+                    if date_range['first'].month == date_range['last'].month:
+                        month_lookup = date_range['first'].month
 
         if year_lookup and month_lookup and day_lookup:
             day = datetime.date(int(year_lookup), int(month_lookup), int(day_lookup))

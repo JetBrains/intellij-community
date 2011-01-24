@@ -4,7 +4,6 @@ from django.contrib.admin.util import flatten_fieldsets, lookup_field
 from django.contrib.admin.util import display_for_field, label_for_field
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.fields import FieldDoesNotExist
 from django.db.models.fields.related import ManyToManyRel
 from django.forms.util import flatatt
 from django.template.defaultfilters import capfirst
@@ -127,6 +126,9 @@ class AdminField(object):
             classes.append(u'inline')
         attrs = classes and {'class': u' '.join(classes)} or {}
         return self.field.label_tag(contents=contents, attrs=attrs)
+
+    def errors(self):
+        return mark_safe(self.field.errors.as_ul())
 
 class AdminReadonlyField(object):
     def __init__(self, form, field, is_first, model_admin=None):

@@ -1,6 +1,6 @@
 from django.http import HttpResponse, Http404
 from django.template import loader
-from django.contrib.sites.models import Site
+from django.contrib.sites.models import get_current_site
 from django.core import urlresolvers
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.contrib.gis.db.models.fields import GeometryField
@@ -15,7 +15,7 @@ def index(request, sitemaps):
     This view generates a sitemap index that uses the proper view
     for resolving geographic section sitemap URLs.
     """
-    current_site = Site.objects.get_current()
+    current_site = get_current_site(request)
     sites = []
     protocol = request.is_secure() and 'https' or 'http'
     for section, site in sitemaps.items():
@@ -46,12 +46,13 @@ def sitemap(request, sitemaps, section=None):
         maps = sitemaps.values()
 
     page = request.GET.get("p", 1)
+    current_site = get_current_site(request)
     for site in maps:
         try:
             if callable(site):
-                urls.extend(site().get_urls(page))
+                urls.extend(site().get_urls(page=page, site=current_site))
             else:
-                urls.extend(site.get_urls(page))
+                urls.extend(site.get_urls(page=page, site=current_site))
         except EmptyPage:
             raise Http404("Page %s empty" % page)
         except PageNotAnInteger:
@@ -93,7 +94,7 @@ def kml(request, label, model, field_name=None, compress=False, using=DEFAULT_DB
         else:
             qs = klass._default_manager.using(using).all()
         for mod in qs:
-            setattr(mod, 'kml', getattr(mod, field_name).kml)
+            mod.kml = getattr(mod, field_name).kml
             placemarks.append(mod)
 
     # Getting the render function and rendering to the correct.
