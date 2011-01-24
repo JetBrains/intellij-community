@@ -51,6 +51,7 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -535,6 +536,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
               if (currentDiff == diff) {
                 toPreselect = each;
                 toPreselectFixed = true;
+                break;
               }
             }
 
@@ -597,7 +599,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if (typed == null) return null;
     LookupFile lastFound = myFinder.find(typed);
     if (lastFound == null) return null;
-    if (lastFound.exists()) return lastFound;
+    if (lastFound.exists()) {
+      if (typed.charAt(typed.length() - 1) != File.separatorChar) return lastFound.getParent();
+      return lastFound;
+    }
 
     final String[] splits = myFinder.normalize(typed).split(myFileSpitRegExp);
     StringBuffer fullPath = new StringBuffer();
