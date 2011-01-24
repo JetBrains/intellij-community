@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.LightweightHint;
@@ -155,7 +156,8 @@ public class CompletionState {
   @Override
   public String toString() {
     return "CompletionState{" +
-           "myCompletionDisposed=" + myCompletionDisposed +
+           "phase=" + CompletionServiceImpl.getCompletionPhase() +
+           ", myCompletionDisposed=" + myCompletionDisposed +
            ", myShownLookup=" + myShownLookup +
            ", myCompletionHint=" + myCompletionHint +
            ", myToRestart=" + myToRestart +

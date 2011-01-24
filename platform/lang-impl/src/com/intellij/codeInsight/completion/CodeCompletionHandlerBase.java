@@ -267,6 +267,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final LookupImpl lookup = obtainLookup(editor);
 
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.synchronous);
+
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
@@ -467,12 +469,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                                     final LookupElement[] items) {
     if (items.length == 0) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
-      handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator);
+      CompletionServiceImpl.setCompletionPhase(
+        handleEmptyLookup(indicator.getProject(), indicator.getEditor(), indicator.getParameters(), indicator));
       return;
     }
 
     final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
     if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.itemsCalculated);
       indicator.getLookup().setCalculating(false);
       indicator.showLookup();
       if (isAutocompleteCommonPrefixOnInvocation() && items.length > 1) {
@@ -490,6 +494,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null) {
         indicator.liveAfterDeath(null);
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.insertedSingleItem);
       } else {
         LOG.assertTrue(!indicator.isZombie(), indicator);
       }
@@ -591,12 +596,13 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
-  protected void handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  protected CompletionPhase handleEmptyLookup(Project project, Editor editor, final CompletionParameters parameters, final CompletionProgressIndicator indicator) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return CompletionPhase.noCompletion;
     if (!invokedExplicitly) {
-      return;
+      return CompletionPhase.noCompletion;
     }
 
+    CompletionPhase result = CompletionPhase.noCompletion;
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       final String text = contributor.handleEmptyLookup(parameters, editor);
       if (StringUtil.isNotEmpty(text)) {
@@ -609,6 +615,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         connection.subscribe(EditorHintListener.TOPIC, listener);
         HintManager.getInstance().showErrorHint(editor, text);
         connection.disconnect();
+        result = CompletionPhase.noSuggestionsHint;
         break;
       }
     }
@@ -616,6 +623,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (codeAnalyzer != null) {
       codeAnalyzer.updateVisibleHighlighters(editor);
     }
+    return result;
   }
 
   private static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,8 @@ public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
   private CompletionProgressIndicator myCurrentCompletion;
+  private static CompletionPhase ourPhase = CompletionPhase.noCompletion;
+  private static String ourPhaseTrace;
 
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl)CompletionService.getCompletionService();
@@ -168,4 +172,23 @@ public class CompletionServiceImpl extends CompletionService{
     return lookupString;
   }
 
+  public static void assertPhase(CompletionPhase... possibilities) {
+    assert isPhase(possibilities) : ourPhase + "; set at " + ourPhaseTrace;
+  }
+
+  public static boolean isPhase(CompletionPhase... possibilities) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return Sets.newHashSet(possibilities).contains(ourPhase);
+  }
+
+  public static void setCompletionPhase(@NotNull CompletionPhase phase) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    ourPhase = phase;
+    ourPhaseTrace = DebugUtil.currentStackTrace();
+  }
+
+  public static CompletionPhase getCompletionPhase() {
+//    ApplicationManager.getApplication().assertIsDispatchThread();
+    return ourPhase;
+  }
 }
