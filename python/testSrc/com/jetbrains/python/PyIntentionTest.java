@@ -55,10 +55,6 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON30);
   }
 
-  public void testReplaceNotEqOperator() {
-    doTest(PyBundle.message("INTN.replace.noteq.operator"));
-  }
-
   public void testRemoveLeadingU() {
     doTest(PyBundle.message("INTN.remove.leading.u"), LanguageLevel.PYTHON30);
   }

@@ -1,18 +1,18 @@
 package com.jetbrains.python.testing.pytest;
 
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jdom.Element;
 
 import java.io.File;
 
@@ -106,6 +106,7 @@ public class PyTestRunConfiguration extends AbstractPythonRunConfiguration {
     if (runner.exists()) return runner.getPath();
     return null;
   }
+
   @Override
   public String suggestedName() {
     return "py.test in " + getName();

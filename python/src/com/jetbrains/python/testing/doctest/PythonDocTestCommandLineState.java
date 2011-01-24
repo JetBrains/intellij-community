@@ -43,7 +43,7 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
     return pythonPath;
   }
 
-  private List<String> getTestSpecs() {
+  protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
     switch (myConfig.getTestType()) {

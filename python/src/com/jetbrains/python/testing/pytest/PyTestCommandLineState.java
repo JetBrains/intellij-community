@@ -6,6 +6,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -26,10 +29,19 @@ public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(GROUP_SCRIPT);
     assert script_params != null;
     script_params.addParameters("-p", "pytest_teamcity");
-    script_params.addParameter(myConfiguration.getTestToRun());
+    script_params.addParameters(getTestSpecs());
+
+  }
+
+  @Override
+  protected List<String> getTestSpecs() {
+    List<String> specs = new ArrayList<String>();
+    specs.add(myConfiguration.getTestToRun());
     String keywords = myConfiguration.getKeywords();
     if (!StringUtil.isEmptyOrSpaces(keywords)) {
-      script_params.addParameters("-k", keywords);
-    }    
+      specs.add("-k");
+      specs.add(keywords);
+    }
+    return specs;
   }
 }

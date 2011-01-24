@@ -110,4 +110,5 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);
+  protected abstract List<String> getTestSpecs();
 }

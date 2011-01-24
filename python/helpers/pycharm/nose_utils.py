@@ -44,11 +44,9 @@ class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
                 if isfail:
                     test.passed = False
                 storage.append((test, exc_info))
-                self.printLabel(label, err)
                 return
         self.errors.append((test, exc_info))
         test.passed = False
-        self.printLabel('ERROR')
 
         err = self.formatErr(err)
 

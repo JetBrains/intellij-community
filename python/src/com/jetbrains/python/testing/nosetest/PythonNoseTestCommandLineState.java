@@ -29,7 +29,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
     script_params.addParameters(getTestSpecs());
   }
 
-  private List<String> getTestSpecs() {
+  protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
     switch (myConfig.getTestType()) {

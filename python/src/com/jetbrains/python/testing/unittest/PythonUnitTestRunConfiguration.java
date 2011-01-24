@@ -8,7 +8,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +20,7 @@ public class PythonUnitTestRunConfiguration extends
                                               implements PythonUnitTestRunConfigurationParams {
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean myIsPureUnittest = true;
+  protected String myTitle = "Unittests";
 
   protected PythonUnitTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(module, configurationFactory, name);
@@ -56,21 +56,8 @@ public class PythonUnitTestRunConfiguration extends
   }
 
   @Override
-  public String suggestedName() {
-    switch (myTestType) {
-      case TEST_CLASS:
-        return "Tests in " + myClassName;
-      case TEST_METHOD:
-        return "Test " + myClassName + "." + myMethodName;
-      case TEST_SCRIPT:
-        return "Tests in " + myScriptName;
-      case TEST_FOLDER:
-        return "Tests in " + FileUtil.toSystemDependentName(myFolderName);
-      case TEST_FUNCTION:
-        return "Test " + myMethodName;
-      default:
-        throw new IllegalStateException("Unknown test type: " + myTestType);
-    }
+  protected String getTitle() {
+    return myTitle;
   }
 
   public static void copyParams(PythonUnitTestRunConfigurationParams source, PythonUnitTestRunConfigurationParams target) {

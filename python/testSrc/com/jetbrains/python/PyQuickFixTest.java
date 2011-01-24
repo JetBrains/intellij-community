@@ -209,6 +209,12 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("UnresolvedRefCreateFunction.py", PyUnresolvedReferencesInspection.class,
                           PyBundle.message("QFIX.unresolved.reference.create.function"), true, true);
   }
+
+  public void testReplaceNotEqOperator() {
+    doInspectionTest("ReplaceNotEqOperator.py", PyCompatibilityInspection.class,
+                     PyBundle.message("INTN.replace.noteq.operator"), true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
