@@ -64,3 +64,14 @@ class A(object):
   def bar(self):
     return None
 
+class Ghostbusters(object):
+  def __call__(self):
+    return "Who do you call?"
+
+gb = Ghostbusters()
+
+class B(object):
+  x = property(gb) # pass
+  y = property(Ghostbusters()) # pass
+  z = property(Ghostbusters) # fail: not callable
+
