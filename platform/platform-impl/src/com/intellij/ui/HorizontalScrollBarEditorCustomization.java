@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.AbstractUnappliableEditorCustomization;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +26,20 @@ import java.util.Set;
  *         Date: 12/6/10
  *         Time: 10:18 AM
  */
-public class HorizontalScrollBarEditorCustomization extends AbstractUnappliableEditorCustomization {
+public class HorizontalScrollBarEditorCustomization implements EditorCustomization {
   public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.NO_HORIZONTAL_SCROLLBAR);
+    return EnumSet.of(Feature.HORIZONTAL_SCROLLBAR);
   }
 
   public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    if (Feature.NO_HORIZONTAL_SCROLLBAR.equals(feature)) {
+    if (Feature.HORIZONTAL_SCROLLBAR.equals(feature)) {
+      editor.setHorizontalScrollbarVisible(true);
+    }
+  }
+
+  @Override
+  public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
+    if (Feature.HORIZONTAL_SCROLLBAR.equals(feature)) {
       editor.setHorizontalScrollbarVisible(false);
     }
   }

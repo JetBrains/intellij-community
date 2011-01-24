@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +29,28 @@ import org.jetbrains.annotations.NotNull;
 public interface EditorTextFieldProvider {
 
   /**
+   * @param language  target language used by document that will be displayed by returned editor
    * @param project   target project
    * @param features  features to use within the returned editor text field
    * @return          Multiline {@link EditorTextField} with spell checking support.
    */
+  @NotNull
   EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project, @NotNull EditorCustomization.Feature ... features);
+
+  /**
+   * It's possible either {@link EditorCustomization#addCustomization(EditorEx, EditorCustomization.Feature) apply} or
+   * {@link EditorCustomization#removeCustomization(EditorEx, EditorCustomization.Feature) remove} customizations from
+   * editor. This factory method allows to create editor where some customizations are explicitly enabled and
+   * another customizations are explicitly disabled.
+   * 
+   * @param language          target language used by document that will be displayed by returned editor
+   * @param project           target project
+   * @param enabledFeatures   explicitly enabled features for returned editor
+   * @param disabledFeatures  explicitly disabled features for returned editor
+   * @return
+   */
+  @NotNull
+  EditorTextField getEditorField(@NotNull Language language, @NotNull  Project project,
+                                 @NotNull Iterable<EditorCustomization.Feature> enabledFeatures,
+                                 @NotNull Iterable<EditorCustomization.Feature> disabledFeatures);
 }

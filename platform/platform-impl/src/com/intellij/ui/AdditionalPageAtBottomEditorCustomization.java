@@ -22,7 +22,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * {@link EditorCustomization} for {@link EditorCustomization.Feature#NO_ADDITIONAL_PAGE_AT_BOTTOM}.
+ * {@link EditorCustomization} for {@link EditorCustomization.Feature#ADDITIONAL_PAGE_AT_BOTTOM}.
  * 
  * @author Denis Zhdanov
  * @since 1/21/11 4:06 PM
@@ -31,16 +31,16 @@ public class AdditionalPageAtBottomEditorCustomization implements EditorCustomiz
 
   @Override
   public Set<Feature> getSupportedFeatures() {
-    return EnumSet.of(Feature.NO_ADDITIONAL_PAGE_AT_BOTTOM);
+    return EnumSet.of(Feature.ADDITIONAL_PAGE_AT_BOTTOM);
   }
 
   @Override
   public void addCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setAdditionalPageAtBottom(false);
+    editor.getSettings().setAdditionalPageAtBottom(true);
   }
 
   @Override
   public void removeCustomization(@NotNull EditorEx editor, @NotNull Feature feature) {
-    editor.getSettings().setAdditionalPageAtBottom(true);
+    editor.getSettings().setAdditionalPageAtBottom(false);
   }
 }

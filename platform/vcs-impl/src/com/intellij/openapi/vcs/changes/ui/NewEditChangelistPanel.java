@@ -30,15 +30,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.util.Consumer;
 
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import java.awt.*;
 import java.util.EnumSet;
 
 public abstract class NewEditChangelistPanel extends JPanel {
@@ -172,14 +165,15 @@ public abstract class NewEditChangelistPanel extends JPanel {
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
-    final EnumSet<EditorCustomization.Feature> features = EnumSet.of(EditorCustomization.Feature.SPELL_CHECK);
+    final EnumSet<EditorCustomization.Feature> enabledFeatures = EnumSet.of(EditorCustomization.Feature.SPELL_CHECK);
+    final EnumSet<EditorCustomization.Feature> disabledFeatures = EnumSet.noneOf(EditorCustomization.Feature.class);
     if (defaultLines == 1) {
-      features.add(EditorCustomization.Feature.NO_HORIZONTAL_SCROLLBAR);
-      features.add(EditorCustomization.Feature.ONE_LINE);
+      disabledFeatures.add(EditorCustomization.Feature.HORIZONTAL_SCROLLBAR);
+      enabledFeatures.add(EditorCustomization.Feature.ONE_LINE);
     } else {
-      features.add(EditorCustomization.Feature.SOFT_WRAP);
+      enabledFeatures.add(EditorCustomization.Feature.SOFT_WRAP);
     }
-    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features.toArray(new EditorCustomization.Feature[features.size()]));
+    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, enabledFeatures, disabledFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
     editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
     return editorField;

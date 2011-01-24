@@ -79,15 +79,12 @@ public class CommitMessage extends JPanel implements Disposable {
 
   private static EditorTextField createEditorField(final Project project, final boolean checkSpelling) {
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    Set<EditorCustomization.Feature> features = EnumSet.of(
-      EditorCustomization.Feature.SOFT_WRAP, EditorCustomization.Feature.NO_ADDITIONAL_PAGE_AT_BOTTOM
-    );
+    Set<EditorCustomization.Feature> enabledFeatures = EnumSet.of(EditorCustomization.Feature.SOFT_WRAP);
     if (checkSpelling) {
-      features.add(EditorCustomization.Feature.SPELL_CHECK);
+      enabledFeatures.add(EditorCustomization.Feature.SPELL_CHECK);
     }
-    EditorTextField editorField = service.getEditorField(
-      FileTypes.PLAIN_TEXT.getLanguage(), project, features.toArray(new EditorCustomization.Feature[features.size()])
-    );
+    Set<EditorCustomization.Feature> disabledFeatures = EnumSet.of(EditorCustomization.Feature.ADDITIONAL_PAGE_AT_BOTTOM);
+    EditorTextField editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, enabledFeatures, disabledFeatures);
     editorField.getDocument().putUserData(DATA_CONTEXT_KEY, DataManager.getInstance().getDataContext(editorField.getComponent()));
     return editorField;
   }
