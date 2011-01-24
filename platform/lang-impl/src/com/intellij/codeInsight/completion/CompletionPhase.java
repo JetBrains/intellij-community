@@ -18,16 +18,17 @@ package com.intellij.codeInsight.completion;
 /**
  * @author peter
  */
-public enum CompletionPhase {
-  NoCompletion,
-  AutoPopupAlarm,
-  Synchronous,
-  BgCalculation,
-  ItemsCalculated,
-  Restarted,
-  InsertedSingleItem,
-  NoSuggestionsHint,
-  PossiblyDisturbingAutoPopup,
-  EmptyAutoPopup,
+public abstract class CompletionPhase {
+  public static final CompletionPhase NoCompletion = new CompletionPhase() {};
+
+  public static class AutoPopupAlarm extends CompletionPhase {}
+  public static class Synchronous extends CompletionPhase {}
+  public static class BgCalculation extends CompletionPhase {}
+  public static class ItemsCalculated extends CompletionPhase {}
+  public static class Restarted extends CompletionPhase {}
+  public static class InsertedSingleItem extends CompletionPhase {}
+  public static class NoSuggestionsHint extends CompletionPhase {}
+  public static class PossiblyDisturbingAutoPopup extends CompletionPhase {}
+  public static class EmptyAutoPopup extends CompletionPhase {}
 
 }

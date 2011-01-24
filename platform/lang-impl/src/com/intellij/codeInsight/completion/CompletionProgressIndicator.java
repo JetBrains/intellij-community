@@ -146,7 +146,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   void notifyBackgrounded() {
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.BgCalculation);
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation());
     myState.setBackgrounded();
   }
 
@@ -495,9 +495,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void unregisterItself(boolean afterDeath) {
     if (afterDeath) {
-      CompletionServiceImpl.assertPhase(CompletionPhase.NoSuggestionsHint, CompletionPhase.InsertedSingleItem);
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoSuggestionsHint.class, CompletionPhase.InsertedSingleItem.class);
     } else {
-      CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation, CompletionPhase.ItemsCalculated, CompletionPhase.Synchronous, CompletionPhase.Restarted);
+      CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
     }
 
     myState.handleDeath(afterDeath);
@@ -541,7 +541,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             myLookup.setFocused(true);
           }
           updateLookup();
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.ItemsCalculated);
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated());
         }
       }
     }, myQueue.getModalityState());
@@ -554,7 +554,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       if (items.isEmpty() && !myLookup.isCalculating()) {
         myLookup.hideLookup(false);
         LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.EmptyAutoPopup);
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.EmptyAutoPopup());
         return true;
       }
 
@@ -562,7 +562,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if ((item.getPrefixMatcher().getPrefix() + myLookup.getAdditionalPrefix()).equals(item.getLookupString())) {
           myLookup.hideLookup(true); // so that the autopopup attempts to restart after the next typed character
           LOG.assertTrue(CompletionServiceImpl.getCompletionService().getCurrentCompletion() == null);
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.PossiblyDisturbingAutoPopup);
+          CompletionServiceImpl.setCompletionPhase(new CompletionPhase.PossiblyDisturbingAutoPopup());
           return true;
         }
       }
@@ -690,7 +690,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myState.scheduleRestart();
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.Restarted);
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Restarted());
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -699,7 +699,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (isOutdated()) {
           return;
         }
-        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.Restarted) {
+        if (!CompletionServiceImpl.isPhase(CompletionPhase.Restarted.class)) {
           return;
         }
 

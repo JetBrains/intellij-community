@@ -94,12 +94,12 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.AutoPopupAlarm);
+    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.AutoPopupAlarm());
 
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (CompletionServiceImpl.getCompletionPhase() != CompletionPhase.AutoPopupAlarm) return;
+        if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class)) return;
 
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
@@ -157,14 +157,14 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    if (CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm, CompletionPhase.EmptyAutoPopup, CompletionPhase.PossiblyDisturbingAutoPopup)) {
+    if (CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class, CompletionPhase.EmptyAutoPopup.class, CompletionPhase.PossiblyDisturbingAutoPopup.class)) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
       assert currentCompletion == null;
     } else {
       if (currentCompletion != null) {
         currentCompletion.closeAndFinish(true);
       }
-      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion);
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
     state.stopAutoPopup();

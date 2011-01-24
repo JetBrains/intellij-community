@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
@@ -172,13 +171,18 @@ public class CompletionServiceImpl extends CompletionService{
     return lookupString;
   }
 
-  public static void assertPhase(CompletionPhase... possibilities) {
+  public static void assertPhase(Class<? extends CompletionPhase>... possibilities) {
     assert isPhase(possibilities) : ourPhase + "; set at " + ourPhaseTrace;
   }
 
-  public static boolean isPhase(CompletionPhase... possibilities) {
+  public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return Sets.newHashSet(possibilities).contains(ourPhase);
+    for (Class<? extends CompletionPhase> possibility : possibilities) {
+      if (possibility.isInstance(ourPhase)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void setCompletionPhase(@NotNull CompletionPhase phase) {
