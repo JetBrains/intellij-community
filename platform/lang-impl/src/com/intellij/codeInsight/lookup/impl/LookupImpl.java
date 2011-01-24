@@ -543,6 +543,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     final PsiFile file = getPsiFile();
     if (file != null && !WriteCommandAction.ensureFilesWritable(myProject, Arrays.asList(file))) {
+      fireItemSelected(null, completionChar);
       return;
     }
 
