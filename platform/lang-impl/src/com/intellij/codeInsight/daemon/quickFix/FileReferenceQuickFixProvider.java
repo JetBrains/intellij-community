@@ -24,6 +24,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -33,6 +35,8 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,12 +74,20 @@ public class FileReferenceQuickFixProvider {
         return Collections.emptyList();
       }
 
+      PsiElement element = reference.getElement();
+      Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
+
       for (PsiFileSystemItem defaultContext : defaultContexts) {
         if (defaultContext != null) {
           final VirtualFile virtualFile = defaultContext.getVirtualFile();
           if (virtualFile != null && defaultContext.isDirectory() && virtualFile.isInLocalFileSystem()) {
-            context = defaultContext;
-            break;
+            if (context == null) {
+              context = defaultContext;
+            }
+            else if (module != null && module == getModuleForContext(defaultContext)) {
+              context = defaultContext;
+              break;
+            }
           }
         }
       }
@@ -134,4 +146,10 @@ public class FileReferenceQuickFixProvider {
     return Arrays.asList(action);
   }
 
+
+  @Nullable
+  private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
+    VirtualFile file = context.getVirtualFile();
+    return file != null ? ModuleUtil.findModuleForFile(file, context.getProject()) : null;
+  }
 }
