@@ -78,8 +78,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<HgUpdater> OUTGOING_TOPIC =
     new Topic<HgUpdater>("hg4idea.outgoing", HgUpdater.class);
 
-  public static final Icon MERCURIAL_ICON = IconLoader.getIcon("/images/mercurial.png");
-
   private static final Icon INCOMING_ICON = IconLoader.getIcon("/actions/moveDown.png");
   private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
 
