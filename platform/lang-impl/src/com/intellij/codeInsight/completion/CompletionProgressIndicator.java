@@ -623,7 +623,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myState.scheduleRestart();
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.Restarted());
+    final CompletionPhase phase = new CompletionPhase.Restarted();
+    CompletionServiceImpl.setCompletionPhase(phase);
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -632,7 +633,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         if (isOutdated()) {
           return;
         }
-        if (!CompletionServiceImpl.isPhase(CompletionPhase.Restarted.class)) {
+        if (phase != CompletionServiceImpl.getCompletionPhase()) {
           return;
         }
 

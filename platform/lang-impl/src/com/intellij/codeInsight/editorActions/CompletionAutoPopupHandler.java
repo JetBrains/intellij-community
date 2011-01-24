@@ -94,12 +94,13 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
-    CompletionServiceImpl.setCompletionPhase(new CompletionPhase.AutoPopupAlarm());
+    final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm();
+    CompletionServiceImpl.setCompletionPhase(phase);
 
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (!CompletionServiceImpl.isPhase(CompletionPhase.AutoPopupAlarm.class)) return;
+        if (CompletionServiceImpl.getCompletionPhase() != phase) return;
 
         if (project.isDisposed() || !file.isValid()) return;
         if (editor.isDisposed() || isMainEditor && FileEditorManager.getInstance(project).getSelectedTextEditor() != editor) return;
